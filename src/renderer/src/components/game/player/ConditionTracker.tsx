@@ -1,0 +1,98 @@
+import type { EntityCondition } from '../../../types/game-state'
+
+interface ConditionTrackerProps {
+  conditions: EntityCondition[]
+  isHost: boolean
+  onRemoveCondition: (conditionId: string) => void
+}
+
+const CONDITION_ICONS: Record<string, string> = {
+  blinded: '\u{1F441}',
+  charmed: '\u{1F495}',
+  deafened: '\u{1F442}',
+  frightened: '\u{1F631}',
+  grappled: '\u{270B}',
+  incapacitated: '\u{1F4A4}',
+  invisible: '\u{1F47B}',
+  paralyzed: '\u{26A1}',
+  petrified: '\u{1FAA8}',
+  poisoned: '\u{2620}',
+  prone: '\u{1F938}',
+  restrained: '\u{26D3}',
+  stunned: '\u{1F4AB}',
+  unconscious: '\u{1F634}',
+  exhaustion: '\u{1F62B}',
+  // PF2e conditions
+  clumsy: '\u{1F9B6}',
+  confused: '\u{2753}',
+  dazzled: '\u{2728}',
+  doomed: '\u{1F480}',
+  drained: '\u{1F4A7}',
+  enfeebled: '\u{1F494}',
+  fascinated: '\u{1F929}',
+  'flat-footed': '\u{1F463}',
+  fleeing: '\u{1F3C3}',
+  hidden: '\u{1F575}',
+  immobilized: '\u{1F512}',
+  persistent: '\u{1F525}',
+  quickened: '\u{23E9}',
+  sickened: '\u{1F922}',
+  slowed: '\u{1F422}',
+  stupefied: '\u{1F635}',
+  wounded: '\u{1FA78}'
+}
+
+export default function ConditionTracker({
+  conditions,
+  isHost,
+  onRemoveCondition
+}: ConditionTrackerProps): JSX.Element {
+  if (conditions.length === 0) {
+    return (
+      <div className="text-xs text-gray-500 text-center py-2">
+        No active conditions
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1">
+      {conditions.map((cond) => {
+        const icon = CONDITION_ICONS[cond.condition.toLowerCase()] ?? '\u{26A0}'
+        const durationText =
+          cond.duration === 'permanent'
+            ? 'Permanent'
+            : `${cond.duration} round${cond.duration !== 1 ? 's' : ''} remaining`
+
+        return (
+          <div
+            key={cond.id}
+            className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-800/50 text-xs"
+          >
+            <span className="text-base">{icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-200 font-medium capitalize">
+                  {cond.condition}
+                </span>
+                {cond.value !== undefined && (
+                  <span className="text-amber-400 font-semibold">{cond.value}</span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-500 truncate">{durationText}</p>
+            </div>
+            {(isHost || true) && (
+              <button
+                onClick={() => onRemoveCondition(cond.id)}
+                className="text-gray-500 hover:text-red-400 cursor-pointer text-xs flex-shrink-0"
+                title="Remove condition"
+              >
+                &#x2715;
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

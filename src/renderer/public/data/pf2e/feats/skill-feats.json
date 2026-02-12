@@ -1,0 +1,317 @@
+[
+  {
+    "id": "assurance",
+    "name": "Assurance",
+    "level": 1,
+    "skill": "any",
+    "traits": ["general", "skill"],
+    "description": "Even in the worst circumstances, you can perform basic tasks. Choose a skill you're trained in. You can forgo rolling a skill check for that skill to instead receive a result of 10 + your proficiency bonus (do not apply any other bonuses, penalties, or modifiers).",
+    "prerequisites": "Trained in at least one skill"
+  },
+  {
+    "id": "dubious-knowledge",
+    "name": "Dubious Knowledge",
+    "level": 1,
+    "skill": "any (Recall Knowledge)",
+    "traits": ["general", "skill"],
+    "description": "You're a treasure trove of information, but not all of it is accurate. When you fail a Recall Knowledge check using any skill, you learn a bit of true knowledge and a bit of erroneous knowledge, but you might not be able to tell which is which.",
+    "prerequisites": "Trained in a skill with the Recall Knowledge action"
+  },
+  {
+    "id": "bargain-hunter",
+    "name": "Bargain Hunter",
+    "level": 1,
+    "skill": "Diplomacy",
+    "traits": ["general", "skill"],
+    "description": "You can Earn Income using Diplomacy, spending your days hunting for bargains and negotiating better deals. You also gain a +2 circumstance bonus to your initial check when you use the Earn Income downtime activity with Diplomacy.",
+    "prerequisites": "Trained in Diplomacy"
+  },
+  {
+    "id": "battle-medicine",
+    "name": "Battle Medicine",
+    "level": 1,
+    "skill": "Medicine",
+    "traits": ["general", "skill", "healing", "manipulate"],
+    "description": "You can patch up yourself or an adjacent ally, even in combat. Attempt a Medicine check with the same DC as for Treat Wounds, and provide the corresponding amount of healing. As with Treat Wounds, you can attempt checks against higher DCs if you have the minimum proficiency rank. The target is then temporarily immune to your Battle Medicine for 1 day.",
+    "prerequisites": "Trained in Medicine"
+  },
+  {
+    "id": "bon-mot",
+    "name": "Bon Mot",
+    "level": 1,
+    "skill": "Diplomacy",
+    "traits": ["general", "skill", "auditory", "concentrate", "emotion", "linguistic", "mental"],
+    "description": "You launch an insightful quip at a foe, distracting them. Choose a foe within 30 feet and roll a Diplomacy check against the target's Will DC. On a success, the target takes a -2 status penalty to Perception and Will saves for 1 minute. On a critical success, the penalty is -3. On a critical failure, you take the penalty instead.",
+    "prerequisites": "Trained in Diplomacy"
+  },
+  {
+    "id": "cat-fall",
+    "name": "Cat Fall",
+    "level": 1,
+    "skill": "Acrobatics",
+    "traits": ["general", "skill"],
+    "description": "Your catlike aerial acrobatics allow you to cushion your falls. Treat falls as 10 feet shorter. If you're an expert in Acrobatics, treat falls as 25 feet shorter. If you're a master in Acrobatics, treat falls as 50 feet shorter. If you're legendary in Acrobatics, you always land on your feet and don't take damage from falls, regardless of distance.",
+    "prerequisites": "Trained in Acrobatics"
+  },
+  {
+    "id": "charming-liar",
+    "name": "Charming Liar",
+    "level": 1,
+    "skill": "Deception",
+    "traits": ["general", "skill"],
+    "description": "Your charm allows you to win over those you lie to. When you get a critical success using the Lie action, the target's attitude toward you improves by one step, as though you'd succeeded at using Diplomacy to Make an Impression.",
+    "prerequisites": "Trained in Deception"
+  },
+  {
+    "id": "experienced-smuggler",
+    "name": "Experienced Smuggler",
+    "level": 1,
+    "skill": "Stealth",
+    "traits": ["general", "skill"],
+    "description": "You often smuggle things past the authorities. When the GM rolls your Stealth check to see if a suspicious-looking item or substance you are carrying is detected, the GM uses the result of your Stealth check, even if you didn't attempt a check.",
+    "prerequisites": "Trained in Stealth"
+  },
+  {
+    "id": "fascinating-performance",
+    "name": "Fascinating Performance",
+    "level": 1,
+    "skill": "Performance",
+    "traits": ["general", "skill"],
+    "description": "When you Perform, compare your result to the Will DC of one observer. If you succeed, the target is fascinated by you for 1 round. If the observer is in a situation that demands immediate attention, such as combat, you must critically succeed to fascinate them and they remain fascinated only so long as you continue to Perform each round.",
+    "prerequisites": "Trained in Performance"
+  },
+  {
+    "id": "forager",
+    "name": "Forager",
+    "level": 1,
+    "skill": "Survival",
+    "traits": ["general", "skill"],
+    "description": "While using Survival to Subsist, if you roll any result worse than a success, you get a success. On a critical success, you can provide subsistence living for yourself and 4 additional creatures, and you can usually find something to eat or drink even in areas that don't normally support foraging.",
+    "prerequisites": "Trained in Survival"
+  },
+  {
+    "id": "group-impression",
+    "name": "Group Impression",
+    "level": 1,
+    "skill": "Diplomacy",
+    "traits": ["general", "skill"],
+    "description": "When you Make an Impression, you can compare your Diplomacy check result to the Will DCs of two targets instead of one. It's possible to get a different degree of success for each target. The number of targets increases to four if you're an expert, 10 if you're a master, and 25 if you're legendary.",
+    "prerequisites": "Trained in Diplomacy"
+  },
+  {
+    "id": "hefty-hauler",
+    "name": "Hefty Hauler",
+    "level": 1,
+    "skill": "Athletics",
+    "traits": ["general", "skill"],
+    "description": "You can carry more than your frame would suggest. Increase your maximum and encumbered Bulk limits by 2.",
+    "prerequisites": "Trained in Athletics"
+  },
+  {
+    "id": "hobnobber",
+    "name": "Hobnobber",
+    "level": 1,
+    "skill": "Diplomacy",
+    "traits": ["general", "skill"],
+    "description": "You are skilled at learning information through conversation. The Gather Information exploration activity takes you half as long as normal (typically reducing the time to 1 hour). If you're a master in Diplomacy and you Gather Information at the normal speed, you can attempt a second check to Gather Information using a different topic.",
+    "prerequisites": "Trained in Diplomacy"
+  },
+  {
+    "id": "intimidating-glare",
+    "name": "Intimidating Glare",
+    "level": 1,
+    "skill": "Intimidation",
+    "traits": ["general", "skill"],
+    "description": "You can Demoralize with a mere glare. When you do, Demoralize loses the auditory trait and gains the visual trait, and you don't take a penalty if the creature doesn't understand your language.",
+    "prerequisites": "Trained in Intimidation"
+  },
+  {
+    "id": "lie-to-me",
+    "name": "Lie to Me",
+    "level": 1,
+    "skill": "Deception",
+    "traits": ["general", "skill"],
+    "description": "You can use Deception instead of Perception to Sense Motive. When you Sense Motive using Deception, you compare your Deception check to the target's Deception DC instead of their Perception DC.",
+    "prerequisites": "Trained in Deception"
+  },
+  {
+    "id": "multilingual",
+    "name": "Multilingual",
+    "level": 1,
+    "skill": "Society",
+    "traits": ["general", "skill"],
+    "description": "You easily pick up new languages. You learn two new languages, chosen from common languages, uncommon languages, and any others you have access to. You learn an additional language if you are or become a master in Society and again if you are or become legendary.",
+    "prerequisites": "Trained in Society"
+  },
+  {
+    "id": "natural-medicine",
+    "name": "Natural Medicine",
+    "level": 1,
+    "skill": "Nature",
+    "traits": ["general", "skill"],
+    "description": "You can apply natural cures to heal your allies. You can use Nature instead of Medicine to Treat Wounds. If you're in the wilderness, you might have easier access to fresh ingredients, gaining a +2 circumstance bonus to your check to Treat Wounds using Nature, subject to the GM's determination.",
+    "prerequisites": "Trained in Nature"
+  },
+  {
+    "id": "pickpocket",
+    "name": "Pickpocket",
+    "level": 1,
+    "skill": "Thievery",
+    "traits": ["general", "skill"],
+    "description": "You can Steal or Palm an Object that's closely guarded, such as in a pocket, without taking the -5 penalty. You can't steal objects that would be extremely noticeable or time-consuming to remove (like worn shoes or armor or actively wielded objects). If you're a master in Thievery, you can attempt to Steal from a creature in combat or otherwise on guard.",
+    "prerequisites": "Trained in Thievery"
+  },
+  {
+    "id": "quick-coercion",
+    "name": "Quick Coercion",
+    "level": 1,
+    "skill": "Intimidation",
+    "traits": ["general", "skill"],
+    "description": "You can bully others with just a few choice words. You can Coerce a creature after 1 round of conversation instead of 1 minute. You still can't Coerce a creature in the middle of combat, or without engaging in a conversation.",
+    "prerequisites": "Trained in Intimidation"
+  },
+  {
+    "id": "quick-identification",
+    "name": "Quick Identification",
+    "level": 1,
+    "skill": "Arcana, Nature, Occultism, or Religion",
+    "traits": ["general", "skill"],
+    "description": "You can Identify Magic swiftly. You take only 1 minute when using Identify Magic to determine the properties of an item, ongoing effect, or location, rather than 10 minutes.",
+    "prerequisites": "Trained in Arcana, Nature, Occultism, or Religion"
+  },
+  {
+    "id": "steady-balance",
+    "name": "Steady Balance",
+    "level": 1,
+    "skill": "Acrobatics",
+    "traits": ["general", "skill"],
+    "description": "You can keep your balance easily, even in adverse conditions. Whenever you roll a success using the Balance action, you get a critical success instead. You're not flat-footed while Balancing on narrow surfaces and uneven ground. This doesn't make those surfaces and ground not difficult terrain.",
+    "prerequisites": "Trained in Acrobatics"
+  },
+  {
+    "id": "streetwise",
+    "name": "Streetwise",
+    "level": 1,
+    "skill": "Society",
+    "traits": ["general", "skill"],
+    "description": "You know about life on the streets and feel the pulse of your local settlement. You can use your Society modifier instead of your Diplomacy modifier to Gather Information. In any settlement you frequent regularly, you can use the Recall Knowledge action with Society to know the same sorts of information that you could discover with Diplomacy to Gather Information.",
+    "prerequisites": "Trained in Society"
+  },
+  {
+    "id": "terrain-expertise",
+    "name": "Terrain Expertise",
+    "level": 1,
+    "skill": "Survival",
+    "traits": ["general", "skill"],
+    "description": "Your experience in navigating a certain type of terrain makes you supremely confident in those surroundings. You gain a +1 circumstance bonus to Survival checks in one of the following types of terrain, chosen when you select this feat: aquatic, arctic, desert, forest, mountain, plains, sky, swamp, or underground.",
+    "prerequisites": "Trained in Survival"
+  },
+  {
+    "id": "titan-wrestler",
+    "name": "Titan Wrestler",
+    "level": 1,
+    "skill": "Athletics",
+    "traits": ["general", "skill"],
+    "description": "You can attempt to Disarm, Grapple, Shove, or Trip creatures up to two sizes larger than you, or up to three sizes larger than you if you're legendary in Athletics.",
+    "prerequisites": "Trained in Athletics"
+  },
+  {
+    "id": "train-animal",
+    "name": "Train Animal",
+    "level": 1,
+    "skill": "Nature",
+    "traits": ["general", "skill", "downtime", "manipulate"],
+    "description": "You spend time teaching an animal to do a certain action. You can either select a basic action the animal already knows how to do (typically those listed in the Command an Animal action) or attempt to teach the animal a new basic action. The GM determines the DC of the check and the amount of time the training takes.",
+    "prerequisites": "Trained in Nature"
+  },
+  {
+    "id": "trick-magic-item",
+    "name": "Trick Magic Item",
+    "level": 1,
+    "skill": "Arcana, Nature, Occultism, or Religion",
+    "traits": ["general", "skill", "manipulate"],
+    "description": "You examine a magic item you normally couldn't use in an effort to fool it and activate it temporarily. For example, if you tried to trick a wand, you'd use Arcana, Nature, Occultism, or Religion, depending on the item's tradition.",
+    "prerequisites": "Trained in Arcana, Nature, Occultism, or Religion"
+  },
+  {
+    "id": "underwater-marauder",
+    "name": "Underwater Marauder",
+    "level": 1,
+    "skill": "Athletics",
+    "traits": ["general", "skill"],
+    "description": "You've learned to fight underwater. You don't take the -2 circumstance penalty for making bludgeoning or slashing melee Strikes underwater. In addition, you don't need to succeed at a flat check to use melee Strikes underwater.",
+    "prerequisites": "Trained in Athletics"
+  },
+  {
+    "id": "magical-shorthand",
+    "name": "Magical Shorthand",
+    "level": 2,
+    "skill": "Arcana, Nature, Occultism, or Religion",
+    "traits": ["general", "skill"],
+    "description": "Learning spells comes easily to you. If you're an expert in a tradition's associated skill, you take 10 minutes per spell level to learn a spell, rather than 1 hour. If you fail to learn the spell, you can retry after 1 week or after you gain a level, whichever comes first.",
+    "prerequisites": "Expert in Arcana, Nature, Occultism, or Religion"
+  },
+  {
+    "id": "quick-jump",
+    "name": "Quick Jump",
+    "level": 1,
+    "skill": "Athletics",
+    "traits": ["general", "skill"],
+    "description": "You can use High Jump and Long Jump as a single action instead of 2 actions. If you do, you don't perform the initial Stride.",
+    "prerequisites": "Trained in Athletics"
+  },
+  {
+    "id": "intimidating-prowess",
+    "name": "Intimidating Prowess",
+    "level": 2,
+    "skill": "Intimidation",
+    "traits": ["general", "skill"],
+    "description": "In situations where you can physically menace the target when you Demoralize, you gain a +1 circumstance bonus to your Intimidation check and a +2 circumstance bonus if you're a master in Intimidation. If the target has a lower Strength modifier than you, you gain the bonus regardless of the situation.",
+    "prerequisites": "Strength 16, Expert in Intimidation"
+  },
+  {
+    "id": "automatic-knowledge",
+    "name": "Automatic Knowledge",
+    "level": 2,
+    "skill": "any (Recall Knowledge)",
+    "traits": ["general", "skill"],
+    "description": "You know basic facts on sight. You can use Recall Knowledge as a free action once per round. To do so, you must be a master in the relevant skill.",
+    "prerequisites": "Expert in a skill with the Recall Knowledge action, Assurance in that skill"
+  },
+  {
+    "id": "kip-up",
+    "name": "Kip Up",
+    "level": 7,
+    "skill": "Acrobatics",
+    "traits": ["general", "skill"],
+    "description": "You stand up. This movement doesn't trigger reactions. You can use this free action when you are prone. You must be a master in Acrobatics to use this feat.",
+    "prerequisites": "Master in Acrobatics"
+  },
+  {
+    "id": "cloud-jump",
+    "name": "Cloud Jump",
+    "level": 7,
+    "skill": "Athletics",
+    "traits": ["general", "skill"],
+    "description": "Your unparalleled athletic skill allows you to jump impossible distances. Triple the distance you Long Jump (so you could jump 60 feet on a successful DC 20 check). When you High Jump, use the calculation for a Long Jump but don't triple the distance.",
+    "prerequisites": "Master in Athletics"
+  },
+  {
+    "id": "terrified-retreat",
+    "name": "Terrified Retreat",
+    "level": 7,
+    "skill": "Intimidation",
+    "traits": ["general", "skill"],
+    "description": "When you critically succeed at the Demoralize action, the target must flee from you on its next turn as if affected by the fleeing condition for 1 round, though it can still attempt to defend itself.",
+    "prerequisites": "Master in Intimidation"
+  },
+  {
+    "id": "legendary-sneak",
+    "name": "Legendary Sneak",
+    "level": 15,
+    "skill": "Stealth",
+    "traits": ["general", "skill"],
+    "description": "You're always sneaking unless you choose to be seen, even in combat. You can Hide and Sneak without having any cover or being concealed. When you employ an exploration tactic other than Avoiding Notice, you also gain the benefits of Avoiding Notice unless you choose not to.",
+    "prerequisites": "Legendary in Stealth"
+  }
+]

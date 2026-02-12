@@ -1,0 +1,497 @@
+[
+  {
+    "id": "natural-ambition",
+    "name": "Natural Ambition",
+    "level": 1,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "You were raised to be ambitious and are always seeking to further your abilities. You gain a 1st-level class feat for your class. You must meet the prerequisites, but you can select the feat later in the character creation process in order to determine which class feat you gain.",
+    "prerequisites": ""
+  },
+  {
+    "id": "haughty-obstinacy",
+    "name": "Haughty Obstinacy",
+    "level": 1,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "Your powerful ego makes it harder for others to order you around. If you roll a success on a saving throw against a mental effect that attempts to directly control your actions, you critically succeed instead. If a creature rolls a failure on a check to Coerce you using Intimidation, it gets a critical failure instead.",
+    "prerequisites": ""
+  },
+  {
+    "id": "general-training",
+    "name": "General Training",
+    "level": 1,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "Your adaptability manifests in your mastery of a range of useful abilities. You gain a 1st-level general feat.",
+    "prerequisites": ""
+  },
+  {
+    "id": "cooperative-nature",
+    "name": "Cooperative Nature",
+    "level": 1,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "The short-lived nature of your people encourages you to work with others to accomplish your goals. You gain a +4 circumstance bonus on checks to Aid.",
+    "prerequisites": ""
+  },
+  {
+    "id": "natural-skill",
+    "name": "Natural Skill",
+    "level": 1,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "Your ingenuity allows you to learn a wide variety of skills. You become trained in two additional skills of your choice.",
+    "prerequisites": ""
+  },
+  {
+    "id": "adaptive-adept",
+    "name": "Adaptive Adept",
+    "level": 5,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "You've continued adapting your magic to blend your tradition with your adapted tradition. Choose a cantrip or 1st-level spell from the same tradition as your cantrip from Adapted Cantrip. You gain that spell, adding it to your spell repertoire, spellbook, or prepared spells just like the cantrip from Adapted Cantrip.",
+    "prerequisites": "Adapted Cantrip, can cast 3rd-level spells"
+  },
+  {
+    "id": "clever-improviser",
+    "name": "Clever Improviser",
+    "level": 5,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "You've learned how to handle situations when you're out of your depth. You gain the Untrained Improvisation general feat. In addition, you can attempt skill actions that normally require you to be trained, even if you are untrained.",
+    "prerequisites": ""
+  },
+  {
+    "id": "multitalented",
+    "name": "Multitalented",
+    "level": 9,
+    "ancestry": "human",
+    "traits": ["human"],
+    "description": "You've learned to split your focus between multiple classes with great success. You gain a 2nd-level multiclass dedication feat, even if you normally couldn't take another dedication feat until you take more feats from your current archetype.",
+    "prerequisites": ""
+  },
+  {
+    "id": "rock-runner",
+    "name": "Rock Runner",
+    "level": 1,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "Your innate connection to stone makes you nimble on rocky terrain. You can move across rocky terrain and unworked stone as though it were difficult terrain, and you can move across worked stone and crystalline terrain as though it were normal terrain.",
+    "prerequisites": ""
+  },
+  {
+    "id": "dwarven-lore",
+    "name": "Dwarven Lore",
+    "level": 1,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "You eagerly absorbed the old stories and traditions of your ancestors, your clan, and your people, studying in subjects and techniques passed down for generation upon generation. You gain the trained proficiency rank in Crafting and Religion. If you would automatically become trained in one of those skills, you instead become trained in a skill of your choice. You also become trained in Dwarven Lore.",
+    "prerequisites": ""
+  },
+  {
+    "id": "unburdened-iron",
+    "name": "Unburdened Iron",
+    "level": 1,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "You've learned techniques first devised by your ancestors during their ancient wars, allowing you to comfortably wear massive suits of armor. Your Speed is never reduced by armor you wear. In addition, any time you're taking a penalty to your Speed from armor, reduce that penalty by 5 feet (to a minimum of no penalty).",
+    "prerequisites": ""
+  },
+  {
+    "id": "dwarven-weapon-familiarity",
+    "name": "Dwarven Weapon Familiarity",
+    "level": 1,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "Your kin have instilled in you an affinity for hard-hitting weapons, and you prefer these to more elegant arms. You are trained with the battle axe, pick, and warhammer. You also gain access to all uncommon dwarf weapons. For the purpose of determining your proficiency, martial dwarf weapons are simple weapons and advanced dwarf weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "forge-days-rest",
+    "name": "Forge-Day's Rest",
+    "level": 1,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "Your people are known for their ability to find rest anywhere. As long as you are near stone or earth, you can find comfort in resting. You need only 6 hours of rest to be fully rested, and you gain a +1 circumstance bonus to Fortitude saves against effects that would leave you fatigued.",
+    "prerequisites": ""
+  },
+  {
+    "id": "boulder-roll",
+    "name": "Boulder Roll",
+    "level": 5,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "Your looming presence makes your foes back up. You Stride up to your Speed. You can move through the space of a creature that is your size or smaller, and that creature must attempt a Fortitude save against your Athletics DC. On a failure, the creature falls prone and takes bludgeoning damage equal to your level.",
+    "prerequisites": "Rock Runner"
+  },
+  {
+    "id": "mountain-s-stoutness",
+    "name": "Mountain's Stoutness",
+    "level": 9,
+    "ancestry": "dwarf",
+    "traits": ["dwarf"],
+    "description": "Your hardiness lets you withstand more punishment than most before falling. Increase your maximum Hit Points by your level. When you have the dying condition, the DC of your recovery checks is equal to 9 + your dying value (instead of 10 + your dying value).",
+    "prerequisites": ""
+  },
+  {
+    "id": "ancestral-longevity",
+    "name": "Ancestral Longevity",
+    "level": 1,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "You have accumulated a vast array of lived knowledge over the years. During your daily preparations, you can become trained in one skill of your choice. This proficiency lasts until you prepare again. Since this proficiency is temporary, you can't use it as a prerequisite for a skill increase or a permanent character option like a feat.",
+    "prerequisites": ""
+  },
+  {
+    "id": "elven-lore",
+    "name": "Elven Lore",
+    "level": 1,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "You've studied in the magic and lore of your people. You gain the trained proficiency rank in Arcana and Nature. If you would automatically become trained in one of those skills, you instead become trained in a skill of your choice. You also become trained in Elven Lore.",
+    "prerequisites": ""
+  },
+  {
+    "id": "elven-weapon-familiarity",
+    "name": "Elven Weapon Familiarity",
+    "level": 1,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "You favor bows and other elegant weapons. You are trained with longbows, composite longbows, longswords, rapiers, shortbows, and composite shortbows. In addition, you gain access to all uncommon elf weapons. For the purpose of determining your proficiency, martial elf weapons are simple weapons and advanced elf weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "nimble-elf",
+    "name": "Nimble Elf",
+    "level": 1,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "Your muscles are tightly honed. Your Speed increases by 5 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "forlorn",
+    "name": "Forlorn",
+    "level": 1,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "Watching your friends age and die throughout the years has hardened you. You gain a +1 circumstance bonus to saving throws against emotion effects. If you roll a success on a saving throw against an emotion effect, you get a critical success instead.",
+    "prerequisites": ""
+  },
+  {
+    "id": "elven-instincts",
+    "name": "Elven Instincts",
+    "level": 5,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "Your senses are finely tuned from centuries of awareness. You gain a +2 circumstance bonus to Perception checks to Seek hidden or undetected creatures within 30 feet of you. When you target a hidden creature, reduce the DC of the flat check to 3 instead of 5.",
+    "prerequisites": ""
+  },
+  {
+    "id": "expert-longevity",
+    "name": "Expert Longevity",
+    "level": 9,
+    "ancestry": "elf",
+    "traits": ["elf"],
+    "description": "You've honed your translations over your vast life span. You gain an additional skill increase from Ancestral Longevity, and the skill you choose can be one you're already trained in, increasing your proficiency to expert instead.",
+    "prerequisites": "Ancestral Longevity"
+  },
+  {
+    "id": "animal-accomplice",
+    "name": "Animal Accomplice",
+    "level": 1,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "You build a rapport with an animal, which becomes magically bonded to you. You gain a familiar using the rules for familiars. The type of animal is up to you, but most gnomes choose animals with a strong connection to the natural world.",
+    "prerequisites": ""
+  },
+  {
+    "id": "fey-fellowship",
+    "name": "Fey Fellowship",
+    "level": 1,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "Your enhanced fey connection affords you a warmer reception from creatures of the First World as well as tools to deal with those creatures. You gain a +2 circumstance bonus to both Perception checks and saving throws against fey. In addition, whenever you meet a fey creature in a social situation, you can immediately attempt a Diplomacy check to Make an Impression on that creature rather than needing to converse for 1 minute.",
+    "prerequisites": ""
+  },
+  {
+    "id": "gnome-weapon-familiarity",
+    "name": "Gnome Weapon Familiarity",
+    "level": 1,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "You favor unusual weapons tied to your people, such as blades with curved and peculiar shapes. You are trained with the glaive and kukri. In addition, you gain access to all uncommon gnome weapons. For the purpose of determining your proficiency, martial gnome weapons are simple weapons and advanced gnome weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "illusion-sense",
+    "name": "Illusion Sense",
+    "level": 1,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "Your fey blood makes you especially aware of illusions. You gain a +1 circumstance bonus to both Perception checks and Will saves against illusions. When you come within 10 feet of an illusion that can be disbelieved, the GM rolls a secret check for you to disbelieve it, even if you didn't spend an action to Interact with the illusion.",
+    "prerequisites": ""
+  },
+  {
+    "id": "energized-font",
+    "name": "Energized Font",
+    "level": 5,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "The magic within you provides increased energy you can channel into your innate spells. You can cast your chosen 1st-level innate spell one additional time per day. You can do so only if you've used First World Magic or a similar gnome heritage ability to gain an innate spell.",
+    "prerequisites": "a focus pool, a gnome innate cantrip"
+  },
+  {
+    "id": "first-world-adept",
+    "name": "First World Adept",
+    "level": 9,
+    "ancestry": "gnome",
+    "traits": ["gnome"],
+    "description": "Over time your fey magic has grown stronger. You gain faerie fire and invisibility as 2nd-level primal innate spells. You can cast each of these primal innate spells once per day.",
+    "prerequisites": ""
+  },
+  {
+    "id": "burn-it",
+    "name": "Burn It!",
+    "level": 1,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "Fire distracts you. You deal an additional 1 fire damage with all fire effects and weapons. Additionally, when you critically succeed at a fire damage roll, you can choose to set the target on fire, causing 1d4 persistent fire damage.",
+    "prerequisites": ""
+  },
+  {
+    "id": "goblin-lore",
+    "name": "Goblin Lore",
+    "level": 1,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "You've picked up skills and tales from your goblin community. You gain the trained proficiency rank in Nature and Stealth. If you would automatically become trained in one of those skills, you instead become trained in a skill of your choice. You also become trained in Goblin Lore.",
+    "prerequisites": ""
+  },
+  {
+    "id": "goblin-weapon-familiarity",
+    "name": "Goblin Weapon Familiarity",
+    "level": 1,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "Others may look askance at the bizarre assortment of weapons goblins use, but you know how to make the most of these varied armaments. You are trained with the dogslicer and horsechopper. In addition, you gain access to all uncommon goblin weapons. For the purpose of determining your proficiency, martial goblin weapons are simple weapons and advanced goblin weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "rough-rider",
+    "name": "Rough Rider",
+    "level": 1,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "You are especially good at riding traditional goblin mounts. You gain the Ride general feat, even if you don't meet the prerequisites. You gain a +1 circumstance bonus to Nature checks to use Command an Animal on a goblin dog or wolf mount.",
+    "prerequisites": ""
+  },
+  {
+    "id": "very-sneaky",
+    "name": "Very Sneaky",
+    "level": 1,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "Taller folk rarely notice you sneaking about. You can move 5 feet farther when you take the Sneak action, up to your full Speed. In addition, as long as you continue to use Sneak actions and succeed at your Stealth check, you don't become observed if you don't have cover or greater cover and aren't concealed at the end of the Sneak action, as long as you have cover or greater cover or are concealed at the end of your turn.",
+    "prerequisites": ""
+  },
+  {
+    "id": "goblin-scuttle",
+    "name": "Goblin Scuttle",
+    "level": 5,
+    "ancestry": "goblin",
+    "traits": ["goblin"],
+    "description": "You take advantage of your ally's movement to adjust your position. When a flanking ally ends a move action adjacent to you, you can use a reaction to Step.",
+    "prerequisites": ""
+  },
+  {
+    "id": "distracting-shadows",
+    "name": "Distracting Shadows",
+    "level": 1,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "You have learned to remain hidden by using larger folk as a distraction. You can use creatures that are at least one size larger than you as cover for the Hide and Sneak actions, even if they aren't providing cover to you.",
+    "prerequisites": ""
+  },
+  {
+    "id": "halfling-lore",
+    "name": "Halfling Lore",
+    "level": 1,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "You've dutifully learned how to keep your traveler's life comfortable and how to protect yourself from the dangers of the road. You gain the trained proficiency rank in Acrobatics and Stealth. If you would automatically become trained in one of those skills, you instead become trained in a skill of your choice. You also become trained in Halfling Lore.",
+    "prerequisites": ""
+  },
+  {
+    "id": "halfling-weapon-familiarity",
+    "name": "Halfling Weapon Familiarity",
+    "level": 1,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "You favor the weapons of your people. You are trained with the sling, halfling sling staff, and shortsword. In addition, you gain access to all uncommon halfling weapons. For the purpose of determining your proficiency, martial halfling weapons are simple weapons and advanced halfling weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "halfling-luck",
+    "name": "Halfling Luck",
+    "level": 1,
+    "ancestry": "halfling",
+    "traits": ["halfling", "fortune"],
+    "description": "Your happy-go-lucky nature makes it seem like misfortune avoids you, and to an extent, that might even be true. You can use this reaction when you fail a skill check or saving throw. You reroll the triggering check, but you must use the new result, even if it's worse than your first roll.",
+    "prerequisites": ""
+  },
+  {
+    "id": "sure-feet",
+    "name": "Sure Feet",
+    "level": 1,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "Whether keeping your balance or scrambling up a tricky climb, your feet have you covered. You gain a +2 circumstance bonus to your Reflex DC when targeted by attempts to Trip you. You also gain a +1 circumstance bonus to Acrobatics checks to Balance and Athletics checks to Climb.",
+    "prerequisites": ""
+  },
+  {
+    "id": "cultural-adaptability",
+    "name": "Cultural Adaptability",
+    "level": 5,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "During your travels, you've been exposed to many diverse cultures, picking up varied skills along the way. You gain the Adopted Ancestry general feat and a 1st-level ancestry feat from the ancestry you chose for the Adopted Ancestry feat.",
+    "prerequisites": ""
+  },
+  {
+    "id": "guiding-luck",
+    "name": "Guiding Luck",
+    "level": 9,
+    "ancestry": "halfling",
+    "traits": ["halfling"],
+    "description": "Your luck extends to those around you. You can use Halfling Luck once per day as a free action, triggered when an ally within 30 feet fails a skill check or saving throw, to allow that ally to reroll the triggering check instead.",
+    "prerequisites": "Halfling Luck"
+  },
+  {
+    "id": "grasping-reach",
+    "name": "Grasping Reach",
+    "level": 1,
+    "ancestry": "leshy",
+    "traits": ["leshy"],
+    "description": "You can extend your limbs beyond their normal length. You can interact with objects up to 10 feet away, and your melee unarmed Strikes gain the reach trait.",
+    "prerequisites": ""
+  },
+  {
+    "id": "leshy-superstition",
+    "name": "Leshy Superstition",
+    "level": 1,
+    "ancestry": "leshy",
+    "traits": ["leshy"],
+    "description": "You have an instinctive distrust of magic that protects you from spells. You gain a +1 circumstance bonus to saving throws against spells and magical effects.",
+    "prerequisites": ""
+  },
+  {
+    "id": "seedpod",
+    "name": "Seedpod",
+    "level": 1,
+    "ancestry": "leshy",
+    "traits": ["leshy"],
+    "description": "Your body produces a hard seedpod that you can hurl at foes. You gain a seedpod ranged unarmed attack with a range increment of 30 feet that deals 1d4 bludgeoning damage. On a critical hit, the seedpod bursts, dealing 1 persistent poison damage to the target.",
+    "prerequisites": ""
+  },
+  {
+    "id": "leshy-glide",
+    "name": "Leshy Glide",
+    "level": 1,
+    "ancestry": "leshy",
+    "traits": ["leshy"],
+    "description": "Using your body's natural structure, you can slow your fall. You gain a +1 circumstance bonus to saves against falling damage. When you would take falling damage, you can use a reaction to reduce the effective distance of the fall by 10 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "shadow-of-the-wilds",
+    "name": "Shadow of the Wilds",
+    "level": 1,
+    "ancestry": "leshy",
+    "traits": ["leshy"],
+    "description": "You are one with the wild places of the world. In natural terrain (forests, jungles, plains, swamps, or underground), you can attempt to Hide and Sneak even without cover or being concealed.",
+    "prerequisites": ""
+  },
+  {
+    "id": "bark-and-brambles",
+    "name": "Bark and Brambles",
+    "level": 5,
+    "ancestry": "leshy",
+    "traits": ["leshy", "morph", "primal", "transmutation"],
+    "description": "Your body hardens with protective bark and sprouts thorny brambles. You gain resistance to physical damage equal to 2 + half your level for 1 minute. During this time, any creature that hits you with a melee unarmed attack or Grabs you takes 1d4 piercing damage.",
+    "prerequisites": ""
+  },
+  {
+    "id": "regrowth",
+    "name": "Regrowth",
+    "level": 9,
+    "ancestry": "leshy",
+    "traits": ["leshy", "healing", "primal"],
+    "description": "Your plant body naturally regenerates. You gain fast healing equal to half your level (minimum 1) when you are in bright light or sunlight. This fast healing stops if you enter dim light or darkness.",
+    "prerequisites": ""
+  },
+  {
+    "id": "orc-ferocity",
+    "name": "Orc Ferocity",
+    "level": 1,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "Fierceness in battle runs through your blood, and you refuse to fall from your injuries. You avoid being knocked out and remain at 1 Hit Point, and your wounded condition increases by 1. You can use this reaction once per day, plus once more per day at 9th level and again at 17th level.",
+    "prerequisites": ""
+  },
+  {
+    "id": "orc-weapon-familiarity",
+    "name": "Orc Weapon Familiarity",
+    "level": 1,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "In combat, you favor the brutal weapons traditionally used by your people. You are trained with the falchion and greataxe. In addition, you gain access to all uncommon orc weapons. For the purpose of determining your proficiency, martial orc weapons are simple weapons and advanced orc weapons are martial weapons.",
+    "prerequisites": ""
+  },
+  {
+    "id": "iron-fists",
+    "name": "Iron Fists",
+    "level": 1,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "Your fists have been trained against hard surfaces since your youth. Your fist unarmed attacks are no longer nonlethal and gain the shove weapon trait.",
+    "prerequisites": ""
+  },
+  {
+    "id": "orc-lore",
+    "name": "Orc Lore",
+    "level": 1,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "The oral traditions of your people have passed on much knowledge to you. You gain the trained proficiency rank in Athletics and Intimidation. If you would automatically become trained in one of those skills, you instead become trained in a skill of your choice. You also become trained in Orc Lore.",
+    "prerequisites": ""
+  },
+  {
+    "id": "tusks",
+    "name": "Tusks",
+    "level": 1,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "You have particularly long, sharp tusks perfect for gouging enemies. You gain a tusks unarmed attack that deals 1d6 piercing damage. Your tusks are in the brawling group and have the finesse and unarmed traits.",
+    "prerequisites": ""
+  },
+  {
+    "id": "beast-trainer",
+    "name": "Beast Trainer",
+    "level": 5,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "You have a way with fierce beasts, gaining their respect and cooperation. You gain the Train Animal skill feat even if you don't meet the prerequisites. If you already have Train Animal, you instead gain a +1 circumstance bonus to Nature checks to Command an Animal. You can use this ability to command animals of a level equal to or lower than your own.",
+    "prerequisites": ""
+  },
+  {
+    "id": "orc-weapon-carnage",
+    "name": "Orc Weapon Carnage",
+    "level": 9,
+    "ancestry": "orc",
+    "traits": ["orc"],
+    "description": "You know how to wield your people's vicious weapons to devastating effect. Whenever you score a critical hit using an orc weapon, you apply the weapon's critical specialization effect.",
+    "prerequisites": "Orc Weapon Familiarity"
+  }
+]

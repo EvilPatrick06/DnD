@@ -1,0 +1,410 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Religion",
+    "skillFeat": "Student of the Canon",
+    "description": "You spent your early days in a religious monastery or cloister. You may have traveled out into the world to spread the message of your religion or because you cast doubt on the teachings of the faith."
+  },
+  {
+    "id": "acrobat",
+    "name": "Acrobat",
+    "abilityBoosts": ["dexterity", "strength", "free"],
+    "skillTraining": "Acrobatics",
+    "skillFeat": "Steady Balance",
+    "description": "In a circus or on the streets, you earned your pay by performing feats of agility and balance. You might have walked tightropes, tumbled through flaming hoops, or dazzled crowds with aerial acrobatics."
+  },
+  {
+    "id": "ambassador",
+    "name": "Ambassador",
+    "abilityBoosts": ["charisma", "intelligence", "free"],
+    "skillTraining": "Diplomacy",
+    "skillFeat": "Bon Mot",
+    "description": "You represented a nation, city, or organization in diplomatic matters. Your sharp tongue and political acumen helped you navigate tense negotiations and forge alliances between rival powers."
+  },
+  {
+    "id": "animal-whisperer",
+    "name": "Animal Whisperer",
+    "abilityBoosts": ["wisdom", "charisma", "free"],
+    "skillTraining": "Nature",
+    "skillFeat": "Train Animal",
+    "description": "You have always had a way with animals. Whether through patience, instinct, or some innate gift, beasts that would flee from or attack others seem calm and trusting in your presence."
+  },
+  {
+    "id": "artisan",
+    "name": "Artisan",
+    "abilityBoosts": ["intelligence", "strength", "free"],
+    "skillTraining": "Crafting",
+    "skillFeat": "Specialty Crafting",
+    "description": "You practiced a particular form of building or crafting, working with your hands to create wondrous goods. When the opportunity came, you used your skills to explore the world or further your craft."
+  },
+  {
+    "id": "astrologer",
+    "name": "Astrologer",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Occultism",
+    "skillFeat": "Oddity Identification",
+    "description": "You studied the movements of the stars and planets, charting celestial patterns to divine meaning. Whether your predictions were genuine insight or clever interpretation, others sought your counsel."
+  },
+  {
+    "id": "bandit",
+    "name": "Bandit",
+    "abilityBoosts": ["dexterity", "strength", "free"],
+    "skillTraining": "Intimidation",
+    "skillFeat": "Intimidating Glare",
+    "description": "You once made your living by waylaying travelers and taking what you needed by force or threat. Whether you robbed from greed or desperation, the roads were your hunting grounds."
+  },
+  {
+    "id": "barkeep",
+    "name": "Barkeep",
+    "abilityBoosts": ["constitution", "charisma", "free"],
+    "skillTraining": "Diplomacy",
+    "skillFeat": "Hobnobber",
+    "description": "You ran or worked in a tavern, inn, or other drinking establishment. Listening to tales from travelers, settling disputes, and keeping the ale flowing taught you much about people and their ways."
+  },
+  {
+    "id": "barrister",
+    "name": "Barrister",
+    "abilityBoosts": ["intelligence", "charisma", "free"],
+    "skillTraining": "Diplomacy",
+    "skillFeat": "Group Impression",
+    "description": "You practiced law, arguing cases before magistrates and courts. Your training sharpened your ability to construct persuasive arguments and navigate the intricacies of legal systems."
+  },
+  {
+    "id": "blacksmith",
+    "name": "Blacksmith",
+    "abilityBoosts": ["strength", "constitution", "free"],
+    "skillTraining": "Crafting",
+    "skillFeat": "Specialty Crafting",
+    "description": "You worked the forge, shaping metal into tools, weapons, and armor. The heat of the furnace and the ring of hammer on anvil were the rhythm of your daily life."
+  },
+  {
+    "id": "bookkeeper",
+    "name": "Bookkeeper",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Society",
+    "skillFeat": "Eye for Numbers",
+    "description": "You maintained ledgers, tracked inventories, and balanced accounts for a business, guild, or noble house. Your meticulous attention to detail made you invaluable to those who employed you."
+  },
+  {
+    "id": "bounty-hunter",
+    "name": "Bounty Hunter",
+    "abilityBoosts": ["strength", "wisdom", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Experienced Tracker",
+    "description": "You tracked down fugitives and criminals for a living, bringing them to justice -- or at least to whoever was paying. Your quarry learned to fear your tenacity and skill."
+  },
+  {
+    "id": "charlatan",
+    "name": "Charlatan",
+    "abilityBoosts": ["charisma", "intelligence", "free"],
+    "skillTraining": "Deception",
+    "skillFeat": "Charming Liar",
+    "description": "You traveled from place to place, peddling false fortunes and snake-oil remedies, never staying long enough to be shown up. You relied on your wits and your charm to bilk rubes of their coin."
+  },
+  {
+    "id": "cook",
+    "name": "Cook",
+    "abilityBoosts": ["constitution", "intelligence", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Seasoned",
+    "description": "You prepared meals for a household, tavern, army, or ship's crew. Your knowledge of ingredients, flavors, and preservation techniques kept bellies full and morale high."
+  },
+  {
+    "id": "courier",
+    "name": "Courier",
+    "abilityBoosts": ["dexterity", "intelligence", "free"],
+    "skillTraining": "Athletics",
+    "skillFeat": "Assurance (Athletics)",
+    "description": "You carried messages, parcels, and documents across dangerous terrain. Speed, reliability, and the ability to navigate unfamiliar roads were essential to your trade."
+  },
+  {
+    "id": "criminal",
+    "name": "Criminal",
+    "abilityBoosts": ["dexterity", "intelligence", "free"],
+    "skillTraining": "Stealth",
+    "skillFeat": "Experienced Smuggler",
+    "description": "As an unscrupulous independent or as a member of an underworld organization, you lived your life outside the law. You might have survived by robbing travelers, or you ran a confidence game or worked as a burglar."
+  },
+  {
+    "id": "cultist",
+    "name": "Cultist",
+    "abilityBoosts": ["intelligence", "charisma", "free"],
+    "skillTraining": "Occultism",
+    "skillFeat": "Schooled in Secrets",
+    "description": "You were drawn into the orbit of a secret society or forbidden cult. Whether you were a true believer or a reluctant participant, you learned esoteric rites and hidden lore before breaking free."
+  },
+  {
+    "id": "dancer",
+    "name": "Dancer",
+    "abilityBoosts": ["dexterity", "charisma", "free"],
+    "skillTraining": "Performance",
+    "skillFeat": "Fascinating Performance",
+    "description": "You expressed yourself through the art of dance, whether in royal courts, public festivals, or sacred ceremonies. Your grace and body control are second nature."
+  },
+  {
+    "id": "detective",
+    "name": "Detective",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Society",
+    "skillFeat": "Streetwise",
+    "description": "You solved crimes, investigated mysteries, and uncovered hidden truths. Whether working for the city watch or as a private investigator, your keen eye for detail and sharp reasoning brought criminals to light."
+  },
+  {
+    "id": "drunkard",
+    "name": "Drunkard",
+    "abilityBoosts": ["constitution", "charisma", "free"],
+    "skillTraining": "Medicine",
+    "skillFeat": "Inoculation",
+    "description": "You spent too many nights at the bottom of a tankard, but your body grew resilient from years of abuse. Your time in taverns gave you an unexpected understanding of ailments and remedies."
+  },
+  {
+    "id": "emissary",
+    "name": "Emissary",
+    "abilityBoosts": ["intelligence", "charisma", "free"],
+    "skillTraining": "Society",
+    "skillFeat": "Multilingual",
+    "description": "You served as a go-between for two or more groups, facilitating communication and understanding. Your travels exposed you to diverse cultures and languages."
+  },
+  {
+    "id": "entertainer",
+    "name": "Entertainer",
+    "abilityBoosts": ["charisma", "dexterity", "free"],
+    "skillTraining": "Performance",
+    "skillFeat": "Fascinating Performance",
+    "description": "Through an education in the arts or sheer natural talent, you are a skilled performer, inspiring an audience with your art. You might have been an actor, a musician, a street performer, or any other sort of professional entertainer."
+  },
+  {
+    "id": "farmer",
+    "name": "Farmer",
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "skillTraining": "Athletics",
+    "skillFeat": "Assurance (Athletics)",
+    "description": "With a strong back and an understanding of seasonal cycles, you tilled the soil and harvested crops. Your farm could have been a lonely homestead or a sprawling estate. You might have left to seek adventure or were forced off your land."
+  },
+  {
+    "id": "field-medic",
+    "name": "Field Medic",
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "skillTraining": "Medicine",
+    "skillFeat": "Battle Medicine",
+    "description": "You tended to the wounded on battlefields or in the aftermath of disasters. Working under pressure with limited supplies taught you to act quickly and decisively to save lives."
+  },
+  {
+    "id": "fortune-teller",
+    "name": "Fortune Teller",
+    "abilityBoosts": ["intelligence", "charisma", "free"],
+    "skillTraining": "Occultism",
+    "skillFeat": "Oddity Identification",
+    "description": "You peered into the future through cards, bones, tea leaves, or the stars. Whether your divinations were genuine or merely convincing performances, people paid well for a glimpse of what fate had in store."
+  },
+  {
+    "id": "gambler",
+    "name": "Gambler",
+    "abilityBoosts": ["dexterity", "charisma", "free"],
+    "skillTraining": "Deception",
+    "skillFeat": "Lie to Me",
+    "description": "You made your fortune -- and lost it -- at the gambling table. Cards, dice, and games of chance sharpened your ability to read people and calculate odds in the blink of an eye."
+  },
+  {
+    "id": "gladiator",
+    "name": "Gladiator",
+    "abilityBoosts": ["charisma", "strength", "free"],
+    "skillTraining": "Performance",
+    "skillFeat": "Impressive Performance",
+    "description": "The roar of the crowd and the thrill of combat are your lifeblood. You fought in arenas and pits, earning your keep with your skill at arms and your ability to play to the crowd."
+  },
+  {
+    "id": "grave-digger",
+    "name": "Grave Digger",
+    "abilityBoosts": ["strength", "wisdom", "free"],
+    "skillTraining": "Religion",
+    "skillFeat": "Student of the Canon",
+    "description": "You interred the dead and maintained burial grounds. The work was grim and solitary, but it gave you a practical understanding of death, funerary rites, and the restless spirits that sometimes refuse to stay buried."
+  },
+  {
+    "id": "guard",
+    "name": "Guard",
+    "abilityBoosts": ["strength", "charisma", "free"],
+    "skillTraining": "Intimidation",
+    "skillFeat": "Quick Coercion",
+    "description": "You served as a guard for a settlement, caravan, or noble household. Standing watch, patrolling streets, and keeping the peace taught you to project authority and spot trouble before it starts."
+  },
+  {
+    "id": "handler",
+    "name": "Handler",
+    "abilityBoosts": ["wisdom", "charisma", "free"],
+    "skillTraining": "Nature",
+    "skillFeat": "Bonded Animal",
+    "description": "You raised, trained, and cared for animals in service of others -- war horses, hunting hounds, messenger birds, or exotic beasts. Your bond with your charges runs deep."
+  },
+  {
+    "id": "herbalist",
+    "name": "Herbalist",
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "skillTraining": "Nature",
+    "skillFeat": "Natural Medicine",
+    "description": "You studied the natural world to learn the properties of plants, fungi, and other organisms. Your knowledge of herbal remedies and natural poisons made you a sought-after healer in communities far from trained physicians."
+  },
+  {
+    "id": "hermit",
+    "name": "Hermit",
+    "abilityBoosts": ["constitution", "intelligence", "free"],
+    "skillTraining": "Nature",
+    "skillFeat": "Dubious Knowledge",
+    "description": "In an isolated place -- like a cave, remote homestead, or secluded grove -- you contemplated the world's deeper truths and reflected on its flaws. You might have been driven to this life by a revelation, fled there to escape danger, or simply wished for a simpler way of living."
+  },
+  {
+    "id": "hunter",
+    "name": "Hunter",
+    "abilityBoosts": ["dexterity", "wisdom", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Survey Wildlife",
+    "description": "You stalked and took down animals and other creatures of the wild. Skinning animals, harvesting their flesh, and selling their parts to buyers were your primary means of survival, and you know how to track prey through almost any terrain."
+  },
+  {
+    "id": "insurgent",
+    "name": "Insurgent",
+    "abilityBoosts": ["strength", "wisdom", "free"],
+    "skillTraining": "Deception",
+    "skillFeat": "Charming Liar",
+    "description": "You fought against an oppressive regime from the shadows, organizing resistance and sabotaging the powerful. Secrecy and misdirection were your greatest weapons."
+  },
+  {
+    "id": "laborer",
+    "name": "Laborer",
+    "abilityBoosts": ["constitution", "strength", "free"],
+    "skillTraining": "Athletics",
+    "skillFeat": "Hefty Hauler",
+    "description": "You have spent years performing manual labor. You might have been a dock worker, a gravedigger, a farmhand, or a builder. Your hard work made you tough and resilient."
+  },
+  {
+    "id": "librarian",
+    "name": "Librarian",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Arcana",
+    "skillFeat": "Arcane Sense",
+    "description": "You curated and protected a collection of books, scrolls, and manuscripts. Your dedication to preserving knowledge gave you broad familiarity with arcane texts and forgotten lore."
+  },
+  {
+    "id": "lumberjack",
+    "name": "Lumberjack",
+    "abilityBoosts": ["strength", "constitution", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Forager",
+    "description": "You felled trees and processed timber in the wilderness. The hard, dangerous work built your endurance and taught you to live off the land far from civilization."
+  },
+  {
+    "id": "martial-disciple",
+    "name": "Martial Disciple",
+    "abilityBoosts": ["strength", "dexterity", "free"],
+    "skillTraining": "Athletics",
+    "skillFeat": "Cat Fall",
+    "description": "You dedicated yourself to the study of martial arts under a demanding master. Years of rigorous training honed your body into a weapon and taught you discipline that extends beyond combat."
+  },
+  {
+    "id": "merchant",
+    "name": "Merchant",
+    "abilityBoosts": ["charisma", "intelligence", "free"],
+    "skillTraining": "Diplomacy",
+    "skillFeat": "Bargain Hunter",
+    "description": "In a market, on the roads, or via shipping routes, you traded goods or brokered deals for others. You might have been a traveling salesperson, a shopkeeper, a merchant prince, or a buyer for a trading company."
+  },
+  {
+    "id": "miner",
+    "name": "Miner",
+    "abilityBoosts": ["strength", "wisdom", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Terrain Expertise (Underground)",
+    "description": "You worked deep beneath the earth, extracting ore, gems, or other valuable materials. The dark, cramped tunnels taught you to navigate underground and recognize the signs of unstable ground."
+  },
+  {
+    "id": "noble",
+    "name": "Noble",
+    "abilityBoosts": ["charisma", "intelligence", "free"],
+    "skillTraining": "Society",
+    "skillFeat": "Courtly Graces",
+    "description": "To the manor born, you carry a noble title, and your family has influence in politics and society. You might have been raised to manage an estate, negotiate among peers, or simply live a life of privilege."
+  },
+  {
+    "id": "nomad",
+    "name": "Nomad",
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Assurance (Survival)",
+    "description": "You lived a life without permanent roots, traveling with a caravan, following herds, or simply wandering where the road took you. Adaptation and self-reliance are second nature to you."
+  },
+  {
+    "id": "pilgrim",
+    "name": "Pilgrim",
+    "abilityBoosts": ["wisdom", "charisma", "free"],
+    "skillTraining": "Religion",
+    "skillFeat": "Pilgrim's Token",
+    "description": "You undertook a long and arduous journey to a sacred site, enduring hardship along the way. The pilgrimage deepened your faith and exposed you to diverse peoples and customs."
+  },
+  {
+    "id": "plague-doctor",
+    "name": "Plague Doctor",
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "skillTraining": "Medicine",
+    "skillFeat": "Assurance (Medicine)",
+    "description": "You treated the sick during outbreaks of disease, venturing into quarantined areas where others feared to tread. Your knowledge of contagion and treatment was hard-won through grim experience."
+  },
+  {
+    "id": "prisoner",
+    "name": "Prisoner",
+    "abilityBoosts": ["strength", "constitution", "free"],
+    "skillTraining": "Stealth",
+    "skillFeat": "Experienced Smuggler",
+    "description": "You spent time locked away in a jail, dungeon, or labor camp. Whether you were wrongfully convicted or truly guilty, the experience taught you to be resourceful and to move without being noticed."
+  },
+  {
+    "id": "sailor",
+    "name": "Sailor",
+    "abilityBoosts": ["dexterity", "strength", "free"],
+    "skillTraining": "Athletics",
+    "skillFeat": "Underwater Marauder",
+    "description": "You heard the call of the sea from a young age. You might have been a deckhand, a sailor, a fisherman, or even a pirate. You learned to manage the rigging and sails, work with a crew, and survive the storm-tossed seas."
+  },
+  {
+    "id": "scholar",
+    "name": "Scholar",
+    "abilityBoosts": ["intelligence", "wisdom", "free"],
+    "skillTraining": "Arcana",
+    "skillFeat": "Assurance (Arcana)",
+    "description": "You have a knack for learning, and sequestered yourself from the outside world to learn all you could. You read many books and heard many lectures on a wide variety of topics."
+  },
+  {
+    "id": "scout",
+    "name": "Scout",
+    "abilityBoosts": ["dexterity", "wisdom", "free"],
+    "skillTraining": "Survival",
+    "skillFeat": "Forager",
+    "description": "You called the wilderness home as you found trails and guided travelers. You may have worked as a hired guide, as part of a scouting party, or as an independent explorer charting new territory."
+  },
+  {
+    "id": "street-urchin",
+    "name": "Street Urchin",
+    "abilityBoosts": ["dexterity", "constitution", "free"],
+    "skillTraining": "Stealth",
+    "skillFeat": "Pickpocket",
+    "description": "You grew up on the streets, surviving by your wits and quick fingers. Begging, stealing, and running from trouble were daily occurrences, and you learned to vanish into a crowd at a moment's notice."
+  },
+  {
+    "id": "tinker",
+    "name": "Tinker",
+    "abilityBoosts": ["dexterity", "intelligence", "free"],
+    "skillTraining": "Crafting",
+    "skillFeat": "Specialty Crafting",
+    "description": "You repaired and invented small mechanical devices, from clockwork toys to practical tools. Your curiosity about how things work drove you to take apart everything you could get your hands on."
+  },
+  {
+    "id": "warrior",
+    "name": "Warrior",
+    "abilityBoosts": ["constitution", "strength", "free"],
+    "skillTraining": "Intimidation",
+    "skillFeat": "Intimidating Glare",
+    "description": "In your younger days, you waded into battle as a soldier, a militia member, or a mercenary. You might have been part of a city watch, a national army, or a private guard force."
+  }
+]

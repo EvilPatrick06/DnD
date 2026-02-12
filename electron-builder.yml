@@ -1,0 +1,42 @@
+appId: com.dnd-vtt.app
+productName: D&D Virtual Tabletop
+directories:
+  buildResources: resources
+  output: dist
+extraResources:
+  - from: resources/icon.ico
+    to: icon.ico
+  - from: resources/icon.png
+    to: icon.png
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!**/*.ps1'
+  - '!CLAUDE.md'
+publish: null
+win:
+  executableName: dnd-vtt
+  icon: resources/icon.ico
+  legalTrademarks: "D&D Virtual Tabletop"
+  requestedExecutionLevel: asInvoker
+  signAndEditExecutable: false
+  target:
+    - nsis
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  deleteAppDataOnUninstall: false
+
+# --- Code Signing (uncomment when certificate is purchased) ---
+# Set env vars: WIN_CSC_LINK=path/to/certificate.pfx  WIN_CSC_KEY_PASSWORD=yourpassword
+# Then under win: change signAndEditExecutable to true
+# electron-builder reads WIN_CSC_LINK and WIN_CSC_KEY_PASSWORD automatically from env

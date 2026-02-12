@@ -1,0 +1,207 @@
+{
+  "alchemist": {
+    "features": [
+      {"level":1,"name":"Alchemy","description":"You understand the complex interactions of natural and unnatural substances and can concoct alchemical items. You gain the Alchemical Crafting feat, access to four common 1st-level alchemical formulas, and a formula book. Each day during your daily preparations, you can create a number of alchemical items using your reagents—you gain a pool of reagents equal to your level + your Intelligence modifier."},
+      {"level":1,"name":"Research Field","description":"Your inquiries into the alchemical nature of the universe have led you to focus on one particular field of research. Choose a research field: bomber, chirurgeon, or mutagenist. Your field gives you a special ability and grants additional benefits at higher levels."},
+      {"level":5,"name":"Field Discovery","description":"You learn a special discovery depending on your research field."},
+      {"level":7,"name":"Alchemical Weapon Expertise","description":"You've trained with the alchemical weapons you create. Your proficiency rank for simple weapons, alchemical bombs, and unarmed attacks increases to expert."},
+      {"level":9,"name":"Alertness","description":"You remain alert to threats around you. Your proficiency rank for Perception increases to expert."},
+      {"level":11,"name":"Juggernaut","description":"Your body has become accustomed to physical hazards and resistant to ailments. Your proficiency rank for Fortitude saves increases to master. When you roll a success on a Fortitude save, you get a critical success instead."},
+      {"level":13,"name":"Greater Field Discovery","description":"You learn an enhanced version of your field discovery."},
+      {"level":15,"name":"Light Armor Expertise","description":"You've learned how to dodge while wearing light or no armor. Your proficiency rank for light armor and unarmored defense increases to expert."},
+      {"level":17,"name":"Weapon Specialization","description":"You've learned how to inflict greater injuries with the weapons you know best. You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "barbarian": {
+    "features": [
+      {"level":1,"name":"Rage","description":"You gain the Rage action. You can enter a rage as a single action. While raging, you deal additional damage with melee Strikes (+2 at 1st level), gain temporary Hit Points equal to your level + Constitution modifier, take a -1 penalty to AC, and can't use concentrate actions. Your rage lasts for 1 minute, until there are no enemies you can perceive, or until you fall unconscious."},
+      {"level":1,"name":"Instinct","description":"Your rage wells up from a dominant instinct—one you learned from a tradition or that comes naturally to you. Choose an instinct: animal, dragon, fury, giant, spirit, or superstition. Your instinct gives you an instinct ability, determines your anathema, and grants additional abilities at higher levels."},
+      {"level":3,"name":"Deny Advantage","description":"Your foes struggle to pass your defenses. You aren't flat-footed to hidden, undetected, or flanking creatures of your level or lower, or creatures of your level or lower using surprise attack."},
+      {"level":5,"name":"Brutality","description":"Your fury makes your weapons lethal. Your proficiency rank for simple weapons, martial weapons, and unarmed attacks increases to expert."},
+      {"level":7,"name":"Weapon Specialization","description":"Your rage helps you hit harder. You deal 2 additional damage with weapons and unarmed attacks in which you are an expert. This increases to 3 at 15th level (greater weapon specialization) and 4 at 19th."},
+      {"level":9,"name":"Lightning Reflexes","description":"Your reflexes are lightning fast. Your proficiency rank for Reflex saves increases to expert."},
+      {"level":11,"name":"Mighty Rage","description":"Your rage intensifies and lets you burst into action. You gain the Mighty Rage free action, which allows you to use a 1-action activity related to your rage when you enter a rage."},
+      {"level":13,"name":"Greater Juggernaut","description":"You have a stalwart physiology. Your proficiency rank for Fortitude saves increases to legendary. When you roll a critical failure on a Fortitude save, you get a failure instead."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"Your fury makes your weapons brutally lethal. The extra damage from weapon specialization increases to 3 with expert weapons, 4 with master weapons."},
+      {"level":17,"name":"Indomitable Will","description":"Your rage makes it difficult to control you. Your proficiency rank for Will saves increases to master. When you roll a success on a Will save, you get a critical success instead."},
+      {"level":19,"name":"Devastator","description":"Your Strikes are so powerful they can tear through resistance. Your melee Strikes ignore 10 points of a creature's resistance to their physical damage type."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "bard": {
+    "features": [
+      {"level":1,"name":"Occult Spellcasting","description":"You draw upon magic from emotions, defensive force, and the mysteries of the mind. You can cast occult spells using the Cast a Spell activity, and you can supply material, somatic, and verbal components. You use Charisma as your spellcasting ability."},
+      {"level":1,"name":"Muse","description":"As a bard, you select one muse at 1st level: enigma, maestro, or polymath. Your muse leads you to certain feats and additional spell slots."},
+      {"level":1,"name":"Composition Spells","description":"You can infuse your performances with magic. You learn the counter performance composition cantrip and the inspire courage composition cantrip."},
+      {"level":3,"name":"Signature Spells","description":"You've learned to cast some of your spells more flexibly. For each spell level you have access to, choose one spell of that level to be a signature spell. You can heighten signature spells freely."},
+      {"level":7,"name":"Expert Spellcaster","description":"Your proficiency rank for occult spell attack rolls and spell DCs increases to expert."},
+      {"level":9,"name":"Great Fortitude","description":"Your proficiency rank for Fortitude saves increases to expert."},
+      {"level":11,"name":"Resolve","description":"You've steeled your mind with resolve. Your proficiency rank for Will saves increases to master. When you roll a success on a Will save, you get a critical success instead."},
+      {"level":15,"name":"Master Spellcaster","description":"You've mastered the occult. Your proficiency rank for occult spell attack rolls and spell DCs increases to master."},
+      {"level":19,"name":"Legendary Spellcaster","description":"You are a legend among occult spellcasters. Your proficiency rank for occult spell attack rolls and spell DCs increases to legendary."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": {"1":{"cantrips":5,"1":2},"2":{"cantrips":5,"1":3},"3":{"cantrips":5,"1":3,"2":2},"4":{"cantrips":5,"1":3,"2":3},"5":{"cantrips":5,"1":3,"2":3,"3":2},"6":{"cantrips":5,"1":3,"2":3,"3":3},"7":{"cantrips":5,"1":3,"2":3,"3":3,"4":2},"8":{"cantrips":5,"1":3,"2":3,"3":3,"4":3},"9":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":2},"10":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3},"11":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":2},"12":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3},"13":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":2},"14":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3},"15":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":2},"16":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3},"17":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":2},"18":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3},"19":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1},"20":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1}}
+  },
+  "champion": {
+    "features": [
+      {"level":1,"name":"Champion's Code","description":"You follow a code of conduct, beginning with tenets shared by all champions of an alignment, then living by tenets more specific to your cause."},
+      {"level":1,"name":"Deity and Cause","description":"Champions are divine servants of a deity. Choose a deity and a cause (paladin for LG, redeemer for NG, or liberator for CG). Your cause determines your champion's reaction."},
+      {"level":1,"name":"Champion's Reaction","description":"Your cause gives you a special reaction: Retributive Strike (paladin), Glimpse of Redemption (redeemer), or Liberating Step (liberator)."},
+      {"level":1,"name":"Devotion Spells","description":"Your deity's power grants you special divine spells. You gain a focus pool of 1 Focus Point and the lay on hands devotion spell."},
+      {"level":1,"name":"Shield Block","description":"You gain the Shield Block general feat, a reaction that lets you block damage with a raised shield."},
+      {"level":3,"name":"Divine Ally","description":"Your deity grants you a special ally: a blade ally (weapon rune), a shield ally (enhanced shield), or a steed ally (young animal companion)."},
+      {"level":7,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."},
+      {"level":9,"name":"Champion Expertise","description":"You've improved your ability to help others as well as your proficiency in heavy armor. Your proficiency ranks for divine spell attack rolls and DCs, Fortitude saves, and Reflex saves increase to expert."},
+      {"level":9,"name":"Divine Smite","description":"Your champion's reaction gains additional power. You add your Charisma modifier to the damage dealt in your champion's reaction."},
+      {"level":11,"name":"Juggernaut","description":"Your body is accustomed to physical hazards. Your proficiency rank for Fortitude saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"The extra damage from weapon specialization increases to 3 with expert weapons, 4 with master weapons."},
+      {"level":19,"name":"Hero's Defiance","description":"You can defy defeat. You gain the hero's defiance devotion spell, which lets you avoid being reduced to 0 HP."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "cleric": {
+    "features": [
+      {"level":1,"name":"Divine Spellcasting","description":"Your deity bestows on you the power to cast divine spells. You can cast divine spells using the Cast a Spell activity. Wisdom is your spellcasting ability."},
+      {"level":1,"name":"Divine Font","description":"Through your deity's body, you gain additional heal or harm spells. If your deity's font is heal, you gain additional prepared heal spells equal to 1 + your Charisma modifier. If harm, the same for harm spells."},
+      {"level":1,"name":"Doctrine","description":"You follow a particular doctrine of your church. Choose cloistered cleric (full caster focus) or warpriest (martial focus). This determines your initial proficiencies and scaling."},
+      {"level":5,"name":"Alertness","description":"You remain alert to threats around you. Your proficiency rank for Perception increases to expert."},
+      {"level":7,"name":"Expert Spellcaster","description":"Your proficiency rank for divine spell attack rolls and spell DCs increases to expert."},
+      {"level":9,"name":"Resolve","description":"You've steeled your mind with resolve. Your proficiency rank for Will saves increases to master. When you roll a success on a Will save, you get a critical success instead."},
+      {"level":11,"name":"Lightning Reflexes","description":"Your reflexes are lightning fast. Your proficiency rank for Reflex saves increases to expert."},
+      {"level":13,"name":"Divine Defense","description":"Your proficiency rank for unarmored defense increases to expert."},
+      {"level":15,"name":"Master Spellcaster","description":"Your proficiency rank for divine spell attack rolls and spell DCs increases to master."},
+      {"level":19,"name":"Legendary Spellcaster","description":"Your proficiency rank for divine spell attack rolls and spell DCs increases to legendary."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": {"1":{"cantrips":5,"1":2},"2":{"cantrips":5,"1":3},"3":{"cantrips":5,"1":3,"2":2},"4":{"cantrips":5,"1":3,"2":3},"5":{"cantrips":5,"1":3,"2":3,"3":2},"6":{"cantrips":5,"1":3,"2":3,"3":3},"7":{"cantrips":5,"1":3,"2":3,"3":3,"4":2},"8":{"cantrips":5,"1":3,"2":3,"3":3,"4":3},"9":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":2},"10":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3},"11":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":2},"12":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3},"13":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":2},"14":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3},"15":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":2},"16":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3},"17":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":2},"18":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3},"19":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1},"20":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1}}
+  },
+  "druid": {
+    "features": [
+      {"level":1,"name":"Primal Spellcasting","description":"The power of the wild world flows through you. You can cast primal spells using the Cast a Spell activity. Wisdom is your spellcasting ability."},
+      {"level":1,"name":"Druidic Order","description":"Upon becoming a druid, you align yourself with a druidic order: animal, leaf, storm, or wild. Your order grants you a special order spell (focus spell), a trained skill, and an order feat."},
+      {"level":1,"name":"Druidic Language","description":"You know Druidic, a secret language known to members of the druidic tradition."},
+      {"level":1,"name":"Wild Empathy","description":"You have a connection to the creatures of the natural world. You can use Diplomacy to Make an Impression on animals and to make very simple Requests of them."},
+      {"level":3,"name":"Alertness","description":"Your proficiency rank for Perception increases to expert."},
+      {"level":5,"name":"Lightning Reflexes","description":"Your proficiency rank for Reflex saves increases to expert."},
+      {"level":7,"name":"Expert Spellcaster","description":"Your proficiency rank for primal spell attack rolls and spell DCs increases to expert."},
+      {"level":11,"name":"Druid Weapon Expertise","description":"You've improved your proficiency with weapons. Your proficiency rank for simple weapons and unarmed attacks increases to expert."},
+      {"level":11,"name":"Resolve","description":"Your proficiency rank for Will saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":15,"name":"Master Spellcaster","description":"Your proficiency rank for primal spell attack rolls and spell DCs increases to master."},
+      {"level":19,"name":"Legendary Spellcaster","description":"Your proficiency rank for primal spell attack rolls and spell DCs increases to legendary."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": {"1":{"cantrips":5,"1":2},"2":{"cantrips":5,"1":3},"3":{"cantrips":5,"1":3,"2":2},"4":{"cantrips":5,"1":3,"2":3},"5":{"cantrips":5,"1":3,"2":3,"3":2},"6":{"cantrips":5,"1":3,"2":3,"3":3},"7":{"cantrips":5,"1":3,"2":3,"3":3,"4":2},"8":{"cantrips":5,"1":3,"2":3,"3":3,"4":3},"9":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":2},"10":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3},"11":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":2},"12":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3},"13":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":2},"14":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3},"15":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":2},"16":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3},"17":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":2},"18":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3},"19":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1},"20":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1}}
+  },
+  "fighter": {
+    "features": [
+      {"level":1,"name":"Attack of Opportunity","description":"You swiftly attack foes who leave an opening. You gain the Attack of Opportunity reaction: when a creature within your reach uses a manipulate action or a move action, makes a ranged attack, or leaves a square during a move action, you can make a melee Strike against that creature."},
+      {"level":1,"name":"Shield Block","description":"You gain the Shield Block general feat, a reaction that lets you block damage with your shield."},
+      {"level":3,"name":"Bravery","description":"Having faced danger many times, you have developed a powerful will. Your proficiency rank for Will saves increases to expert. When you roll a success on a Will save against a fear effect, you get a critical success instead."},
+      {"level":5,"name":"Fighter Weapon Mastery","description":"Your proficiency ranks for simple weapons and martial weapons increase to master. You also gain access to the critical specialization effects of all simple and martial weapons."},
+      {"level":7,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert, 3 with master, 4 with legendary."},
+      {"level":9,"name":"Battlefield Surveyor","description":"Your proficiency rank for Perception increases to master."},
+      {"level":9,"name":"Combat Flexibility","description":"Through your experience with many types of weapons and techniques, you gain access to one fighter feat of 8th level or lower at the start of each day. You must meet all the feat's other prerequisites."},
+      {"level":11,"name":"Juggernaut","description":"Your body is accustomed to physical hazards. Your proficiency rank for Fortitude saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":13,"name":"Weapon Legend","description":"You've learned fighting techniques that apply to all weapons. Your proficiency ranks for simple weapons, martial weapons, and unarmed attacks increase to legendary."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"The extra damage from weapon specialization increases to 4 with master weapons, 6 with legendary weapons."},
+      {"level":15,"name":"Evasion","description":"Your proficiency rank for Reflex saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":17,"name":"Armor Mastery","description":"Your proficiency ranks for light armor, medium armor, heavy armor, and unarmored defense increase to master."},
+      {"level":19,"name":"Versatile Legend","description":"You are nigh-Loss to any weapon. Your proficiency ranks for simple weapons, martial weapons, and unarmed attacks increase to legendary. You gain access to the critical specialization effects of all simple and martial weapons when attacking."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "monk": {
+    "features": [
+      {"level":1,"name":"Flurry of Blows","description":"You can attack rapidly with fists, feet, elbows, knees, and other unarmed attacks. You gain the Flurry of Blows action: make two unarmed Strikes. If both hit the same creature, combine their damage for resistance and weaknesses."},
+      {"level":1,"name":"Powerful Fist","description":"You know how to wield your fists as deadly weapons. The damage die for your fist increases to 1d6 instead of 1d4. Most people take a -2 circumstance penalty when making a lethal attack with nonlethal unarmed attacks; you don't take this penalty."},
+      {"level":3,"name":"Incredible Movement","description":"You move like the wind. You gain a +10-foot status bonus to your Speed whenever you're not wearing armor. The bonus increases by 5 feet for every 4 levels you have beyond 3rd."},
+      {"level":3,"name":"Mystic Strikes","description":"Focusing your will on your fists, you bolster them with spiritual energy. Your unarmed attacks become magical, allowing them to get past resistances to nonmagical attacks."},
+      {"level":5,"name":"Alertness","description":"Your proficiency rank for Perception increases to expert."},
+      {"level":7,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."},
+      {"level":9,"name":"Metal Strikes","description":"You can adjust your body to strike as hard as iron. Your unarmed attacks are treated as cold iron and silver, allowing you to deal more damage to certain types of creatures."},
+      {"level":9,"name":"Monk Expertise","description":"Your proficiency rank for your monk class DC increases to expert. If you have ki spells, your proficiency rank for spell attack rolls and spell DCs increases to expert."},
+      {"level":11,"name":"Second Path","description":"You've learned to move across surfaces that could not normally support you. You can balance on narrow surfaces and uneven ground as if you were on normal ground."},
+      {"level":13,"name":"Graceful Mastery","description":"You move with unparalleled grace. Your proficiency rank for unarmored defense increases to master."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"The extra damage from weapon specialization increases."},
+      {"level":17,"name":"Adamantine Strikes","description":"When you hit with an unarmed attack, your unarmed attacks are treated as adamantine."},
+      {"level":19,"name":"Perfected Form","description":"You have purified your body. When you roll a failure on a Fortitude save, you get a success instead. When you roll a success on a Fortitude or Reflex save, you get a critical success instead."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "ranger": {
+    "features": [
+      {"level":1,"name":"Hunt Prey","description":"You designate a single creature as your prey and focus your attacks against that creature. You gain the Hunt Prey action. You must spend 1 action to designate your prey. You gain a +2 circumstance bonus to Perception checks to Seek your prey and to Survival checks to Track your prey."},
+      {"level":1,"name":"Hunter's Edge","description":"You have a particular prowess with your chosen weapons. Choose a hunter's edge: flurry (multiple attacks), precision (+1d8 damage on first hit), or outwit (+2 circumstance bonus to Deception, Intimidation, Stealth, and Recall Knowledge checks)."},
+      {"level":3,"name":"Iron Will","description":"Your training has hardened your will. Your proficiency rank for Will saves increases to expert."},
+      {"level":5,"name":"Trackless Step","description":"When you walk through natural terrain, you don't leave tracks or other signs of your passage."},
+      {"level":5,"name":"Weapon Expertise","description":"Your proficiency ranks for simple weapons, martial weapons, and unarmed attacks increase to expert."},
+      {"level":7,"name":"Evasion","description":"Your proficiency rank for Reflex saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":7,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."},
+      {"level":9,"name":"Nature's Edge","description":"You always find the weakest point in your target's defenses when they stand on unfavorable ground. Creatures are flat-footed to you if they are in natural difficult terrain or in difficult terrain resulting from a snare."},
+      {"level":11,"name":"Wild Stride","description":"You move quickly through obstacles. You ignore the movement penalty from difficult terrain caused by natural foliage."},
+      {"level":13,"name":"Weapon Mastery","description":"Your proficiency ranks for simple weapons, martial weapons, and unarmed attacks increase to master."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"The extra damage from weapon specialization increases."},
+      {"level":17,"name":"Masterful Hunter","description":"You have honed your abilities to a masterful point. Your proficiency rank for your ranger class DC increases to master. When using a ranged weapon that you are master with and hunting your prey, you don't take the volley penalty."},
+      {"level":19,"name":"Swift Prey","description":"You size up your prey almost instantly. You can use Hunt Prey as a free action if it's the first thing you do on your turn."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "rogue": {
+    "features": [
+      {"level":1,"name":"Surprise Attack","description":"You spring into combat faster than foes can react. On the first round of combat, if you roll Deception or Stealth for initiative, creatures that haven't acted are flat-footed to you."},
+      {"level":1,"name":"Sneak Attack","description":"When your enemy can't properly defend itself, you take advantage of the opportunity to deal extra damage. If you Strike a flat-footed creature, you deal an additional 1d6 precision damage. This increases to 2d6 at 5th, 3d6 at 11th, and 4d6 at 17th level."},
+      {"level":1,"name":"Rogue's Racket","description":"As you started on the path of the rogue, you began to develop your own style to achieve your goals. Choose a rogue's racket: ruffian, scoundrel, or thief."},
+      {"level":3,"name":"Deny Advantage","description":"You aren't flat-footed to hidden, undetected, or flanking creatures of your level or lower."},
+      {"level":5,"name":"Weapon Tricks","description":"Your proficiency rank for simple weapons and unarmed attacks increases to expert."},
+      {"level":7,"name":"Evasion","description":"Your proficiency rank for Reflex saves increases to master. When you roll a success on a Reflex save, you get a critical success instead."},
+      {"level":7,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."},
+      {"level":9,"name":"Debilitating Strike","description":"When your Strike hits a flat-footed creature and deals damage, you can apply one of these debilitations: -10-foot status penalty to Speed, or the creature becomes enfeebled 1 until the start of your next turn."},
+      {"level":11,"name":"Rogue Expertise","description":"Your proficiency rank for your rogue class DC increases to expert."},
+      {"level":13,"name":"Improved Evasion","description":"Your proficiency rank for Reflex saves increases to legendary. When you roll a failure on a Reflex save, you get a success instead. When you roll a critical failure, you get a failure instead."},
+      {"level":15,"name":"Greater Weapon Specialization","description":"The extra damage from weapon specialization increases."},
+      {"level":19,"name":"Master Strike","description":"Your ability to strike foes' weak points is legendary. If you Strike a flat-footed creature and deal damage, the target must attempt a Fortitude save against your class DC. It's then temporarily immune to your Master Strike for 1 day. Critical Success: unaffected. Success: enfeebled 2 until end of your next turn. Failure: paralyzed for 4 rounds. Critical Failure: paralyzed for 4 rounds, then slowed 2 for 4 rounds."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": null
+  },
+  "sorcerer": {
+    "features": [
+      {"level":1,"name":"Bloodline","description":"You carry within your body the magical essence of a supernatural bloodline. Choose a bloodline: aberrant, angelic, demonic, diabolic, draconic, elemental, fey, hag, imperial, or undead. Your bloodline determines your tradition, granted spells, and bloodline-specific abilities. Charisma is your spellcasting ability."},
+      {"level":1,"name":"Sorcerer Spellcasting","description":"Your bloodline provides you with incredible magical power. You can cast spells of your bloodline's tradition using the Cast a Spell activity. You are a spontaneous caster."},
+      {"level":3,"name":"Signature Spells","description":"You've learned to cast some of your spells more flexibly. For each spell level you have access to, choose one spell of that level to be a signature spell. You can heighten signature spells freely."},
+      {"level":7,"name":"Expert Spellcaster","description":"Your proficiency rank for spell attack rolls and spell DCs of your bloodline's tradition increases to expert."},
+      {"level":9,"name":"Lightning Reflexes","description":"Your proficiency rank for Reflex saves increases to expert."},
+      {"level":11,"name":"Alertness","description":"Your proficiency rank for Perception increases to expert."},
+      {"level":13,"name":"Weapon Specialization","description":"You deal 2 additional damage with weapons and unarmed attacks in which you are an expert."},
+      {"level":15,"name":"Master Spellcaster","description":"Your proficiency rank for spell attack rolls and spell DCs of your bloodline's tradition increases to master."},
+      {"level":19,"name":"Legendary Spellcaster","description":"Your proficiency rank for spell attack rolls and spell DCs of your bloodline's tradition increases to legendary. You gain a 10th-level spell slot."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": {"1":{"cantrips":5,"1":3},"2":{"cantrips":5,"1":4},"3":{"cantrips":5,"1":4,"2":3},"4":{"cantrips":5,"1":4,"2":4},"5":{"cantrips":5,"1":4,"2":4,"3":3},"6":{"cantrips":5,"1":4,"2":4,"3":4},"7":{"cantrips":5,"1":4,"2":4,"3":4,"4":3},"8":{"cantrips":5,"1":4,"2":4,"3":4,"4":4},"9":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":3},"10":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4},"11":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":3},"12":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4},"13":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":3},"14":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4},"15":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":3},"16":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":4},"17":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":4,"9":3},"18":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":4,"9":4},"19":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":4,"9":4,"10":1},"20":{"cantrips":5,"1":4,"2":4,"3":4,"4":4,"5":4,"6":4,"7":4,"8":4,"9":4,"10":1}}
+  },
+  "wizard": {
+    "features": [
+      {"level":1,"name":"Arcane Spellcasting","description":"Through dedicated study, you can cast arcane spells using the Cast a Spell activity. You are a prepared spellcaster. Intelligence is your spellcasting ability. Each day, you prepare spells from your spellbook."},
+      {"level":1,"name":"Arcane School","description":"If you specialize in an arcane school, you gain additional spell slots for spells of that school, and you learn a school spell (a focus spell). Choose a school: abjuration, conjuration, divination, enchantment, evocation, illusion, necromancy, or transmutation."},
+      {"level":1,"name":"Arcane Bond","description":"You place some of your magical power in a bonded item. Each day, you can cast one spell you prepared today and already cast by expending your bonded item rather than a spell slot."},
+      {"level":5,"name":"Lightning Reflexes","description":"Your proficiency rank for Reflex saves increases to expert."},
+      {"level":7,"name":"Expert Spellcaster","description":"Your proficiency rank for arcane spell attack rolls and spell DCs increases to expert."},
+      {"level":9,"name":"Magical Fortitude","description":"Magical power has improved your body's resiliency. Your proficiency rank for Fortitude saves increases to expert."},
+      {"level":11,"name":"Alertness","description":"Your proficiency rank for Perception increases to expert."},
+      {"level":11,"name":"Wizard Weapon Expertise","description":"Your proficiency rank for simple weapons and unarmed attacks increases to expert."},
+      {"level":15,"name":"Master Spellcaster","description":"Your proficiency rank for arcane spell attack rolls and spell DCs increases to master."},
+      {"level":17,"name":"Resolve","description":"Your proficiency rank for Will saves increases to master. When you roll a success, you get a critical success instead."},
+      {"level":19,"name":"Legendary Spellcaster","description":"Your proficiency rank for arcane spell attack rolls and spell DCs increases to legendary. You gain a 10th-level spell slot."}
+    ],
+    "subclassLevel": 1,
+    "spellSlots": {"1":{"cantrips":5,"1":2},"2":{"cantrips":5,"1":3},"3":{"cantrips":5,"1":3,"2":2},"4":{"cantrips":5,"1":3,"2":3},"5":{"cantrips":5,"1":3,"2":3,"3":2},"6":{"cantrips":5,"1":3,"2":3,"3":3},"7":{"cantrips":5,"1":3,"2":3,"3":3,"4":2},"8":{"cantrips":5,"1":3,"2":3,"3":3,"4":3},"9":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":2},"10":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3},"11":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":2},"12":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3},"13":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":2},"14":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3},"15":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":2},"16":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3},"17":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":2},"18":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3},"19":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1},"20":{"cantrips":5,"1":3,"2":3,"3":3,"4":3,"5":3,"6":3,"7":3,"8":3,"9":3,"10":1}}
+  }
+}

@@ -1,0 +1,426 @@
+[
+  {
+    "id": "potion-of-healing",
+    "name": "Potion of Healing",
+    "rarity": "common",
+    "type": "potion",
+    "attunement": false,
+    "description": "You regain 2d4 + 2 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+  },
+  {
+    "id": "potion-of-climbing",
+    "name": "Potion of Climbing",
+    "rarity": "common",
+    "type": "potion",
+    "attunement": false,
+    "description": "When you drink this potion, you gain a climbing speed equal to your walking speed for 1 hour. During this time, you have advantage on Strength (Athletics) checks you make to climb. The potion is separated into brown, silver, and gray layers resembling bands of stone. Shaking the bottle fails to mix the colors."
+  },
+  {
+    "id": "spell-scroll-1st-level",
+    "name": "Spell Scroll (1st Level)",
+    "rarity": "common",
+    "type": "scroll",
+    "attunement": false,
+    "description": "A spell scroll bears the words of a single spell, written in a mystical cipher. If the spell is on your class's spell list, you can read the scroll and cast its spell without providing any material components. Otherwise, the scroll is unintelligible. The spell save DC is 13 and the attack bonus is +5. Once the spell is cast, the words on the scroll fade, and it crumbles to dust."
+  },
+  {
+    "id": "spell-scroll-cantrip",
+    "name": "Spell Scroll (Cantrip)",
+    "rarity": "common",
+    "type": "scroll",
+    "attunement": false,
+    "description": "A spell scroll bears the words of a single cantrip, written in a mystical cipher. If the cantrip is on your class's spell list, you can read the scroll and cast its spell without providing any material components. The spell save DC is 13 and the attack bonus is +5. Once the spell is cast, the words on the scroll fade, and it crumbles to dust."
+  },
+  {
+    "id": "candle-of-the-deep",
+    "name": "Candle of the Deep",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "The flame of this candle is not extinguished when immersed in water. It gives off light and heat like a normal candle."
+  },
+  {
+    "id": "cloak-of-billowing",
+    "name": "Cloak of Billowing",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While wearing this cloak, you can use a bonus action to make it billow dramatically."
+  },
+  {
+    "id": "clockwork-amulet",
+    "name": "Clockwork Amulet",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This copper amulet contains tiny interlocking gears and is powered by magic from Mechanus, a plane of clockwork predictability. A creature that puts an ear to the amulet can hear faint ticking and whirring noises coming from within. When you make an attack roll while wearing the amulet, you can forgo rolling the d20 to get a 10 on the die. Once used, this property can't be used again until the next dawn."
+  },
+  {
+    "id": "dread-helm",
+    "name": "Dread Helm",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This fearsome steel helm makes your eyes glow red while you wear it."
+  },
+  {
+    "id": "ear-horn-of-hearing",
+    "name": "Ear Horn of Hearing",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While held up to your ear, this horn suppresses the effects of the deafened condition on you, allowing you to hear normally."
+  },
+  {
+    "id": "enduring-spellbook",
+    "name": "Enduring Spellbook",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This spellbook, along with anything written on its pages, can't be damaged by fire or immersion in water. In addition, the spellbook doesn't deteriorate with age."
+  },
+  {
+    "id": "hat-of-wizardry",
+    "name": "Hat of Wizardry",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "This antiquated, cone-shaped hat is adorned with gold crescent moons and stars. While you are wearing it, you gain the following benefits:\n- You can use the hat as a spellcasting focus for your wizard spells.\n- You can try to cast a cantrip that you don't know. The cantrip must be on the wizard spell list, and you must make a DC 10 Intelligence (Arcana) check. If the check succeeds, you cast the spell. If the check fails, so does the spell, and the action used to cast the spell is wasted. In either case, you can't use this property again until you finish a long rest."
+  },
+  {
+    "id": "hewards-handy-spice-pouch",
+    "name": "Heward's Handy Spice Pouch",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This belt pouch appears empty and has 10 charges. While holding the pouch, you can use an action to expend 1 of its charges, speak the name of any nonmagical food seasoning (such as salt, pepper, saffron, or cilantro), and remove a pinch of the desired seasoning from the pouch. A pinch is enough to season a single meal. The pouch regains 1d6 + 4 expended charges daily at dawn."
+  },
+  {
+    "id": "mystery-key",
+    "name": "Mystery Key",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "A question mark is worked into the head of this key. The key has a 5 percent chance of unlocking any lock into which it's inserted. Once it unlocks something, the key disappears."
+  },
+  {
+    "id": "pole-of-collapsing",
+    "name": "Pole of Collapsing",
+    "rarity": "common",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While holding this 10-foot pole, you can use an action to speak a command word and cause it to collapse into a 1-foot-long rod, for ease of storage. The pole's weight doesn't change. You can use an action to speak a different command word and cause the rod to revert to a pole; however, the rod will only do so if there is sufficient space to extend to full size."
+  },
+  {
+    "id": "wand-of-pyrotechnics",
+    "name": "Wand of Pyrotechnics",
+    "rarity": "common",
+    "type": "wand",
+    "attunement": false,
+    "description": "This wand has 7 charges. While holding it, you can use an action to expend 1 of its charges and create a harmless burst of multicolored light at a point you can see up to 60 feet away, generating a dazzling display of fireworks, accompanied by an audible crackling noise that can be heard up to 300 feet away. The light is as bright as a torch flame but lasts only a second. The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand's last charge, roll a d20. On a 1, the wand erupts in a harmless pyrotechnic display and is destroyed."
+  },
+  {
+    "id": "plus-1-weapon",
+    "name": "+1 Weapon",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": false,
+    "description": "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+  },
+  {
+    "id": "weapon-of-warning",
+    "name": "Weapon of Warning",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": true,
+    "description": "This magic weapon warns you of danger. While the weapon is on your person, you have advantage on initiative rolls. In addition, you and any of your companions within 30 feet of you can't be surprised, except when incapacitated by something other than nonmagical sleep. The weapon magically awakens you and your companions within range if any of you are sleeping naturally when combat begins."
+  },
+  {
+    "id": "javelin-of-lightning",
+    "name": "Javelin of Lightning",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": false,
+    "description": "This javelin is a magic weapon. When you hurl it and speak its command word, it transforms into a bolt of lightning, forming a line 5 feet wide that extends out from you to a target within 120 feet. Each creature in the line excluding you and the target must make a DC 13 Dexterity saving throw, taking 4d6 lightning damage on a failed save, and half as much damage on a successful one. The lightning bolt turns back into a javelin when it reaches the target. Make a ranged weapon attack against the target. On a hit, the target takes damage from the javelin plus 4d6 lightning damage. The javelin's property can't be used again until the next dawn."
+  },
+  {
+    "id": "flame-tongue",
+    "name": "Flame Tongue",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": true,
+    "description": "You can use a bonus action to speak this magic sword's command word, causing flames to erupt from the blade. These flames shed bright light in a 40-foot radius and dim light for an additional 40 feet. While the sword is ablaze, it deals an extra 2d6 fire damage to any target it hits. The flames last until you use a bonus action to speak the command word again or until you drop or sheathe the sword."
+  },
+  {
+    "id": "moon-touched-sword",
+    "name": "Moon-Touched Sword",
+    "rarity": "common",
+    "type": "weapon",
+    "attunement": false,
+    "description": "In darkness, the unsheathed blade of this sword sheds moonlight, creating bright light in a 15-foot radius and dim light for an additional 15 feet."
+  },
+  {
+    "id": "sword-of-vengeance",
+    "name": "Sword of Vengeance",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": true,
+    "description": "You gain a +1 bonus to attack and damage rolls made with this magic weapon. This sword is cursed and possessed by a vengeful spirit. Becoming attuned to it extends the curse to you. As long as you remain cursed, you are unwilling to part with the sword, keeping it on your person at all times. While attuned to this weapon, you have disadvantage on attack rolls made with weapons other than this one. In addition, while the sword is on your person, you must succeed on a DC 15 Wisdom saving throw whenever you take damage in combat. On a failed save, you must attack the creature that damaged you until you drop to 0 hit points or it does, or until you can't reach the creature to make a melee attack against it."
+  },
+  {
+    "id": "trident-of-fish-command",
+    "name": "Trident of Fish Command",
+    "rarity": "uncommon",
+    "type": "weapon",
+    "attunement": true,
+    "description": "This trident is a magic weapon. It has 3 charges. While you carry it, you can use an action and expend 1 charge to cast Dominate Beast (save DC 15) from it on a beast that has an innate swimming speed. The trident regains 1d3 expended charges daily at dawn."
+  },
+  {
+    "id": "plus-1-armor",
+    "name": "+1 Armor",
+    "rarity": "uncommon",
+    "type": "armor",
+    "attunement": false,
+    "description": "You have a +1 bonus to AC while wearing this armor."
+  },
+  {
+    "id": "plus-1-shield",
+    "name": "+1 Shield",
+    "rarity": "uncommon",
+    "type": "armor",
+    "attunement": false,
+    "description": "While holding this shield, you have a +1 bonus to AC. This bonus is in addition to the shield's normal bonus to AC."
+  },
+  {
+    "id": "adamantine-armor",
+    "name": "Adamantine Armor",
+    "rarity": "uncommon",
+    "type": "armor",
+    "attunement": false,
+    "description": "This suit of armor is reinforced with adamantine, one of the hardest substances in existence. While you're wearing it, any critical hit against you becomes a normal hit."
+  },
+  {
+    "id": "mithral-armor",
+    "name": "Mithral Armor",
+    "rarity": "uncommon",
+    "type": "armor",
+    "attunement": false,
+    "description": "Mithral is a light, flexible metal. A mithral chain shirt or breastplate can be worn under normal clothes. If the armor normally imposes disadvantage on Dexterity (Stealth) checks or has a Strength requirement, the mithral version of the armor doesn't."
+  },
+  {
+    "id": "shield-of-expression",
+    "name": "Shield of Expression",
+    "rarity": "common",
+    "type": "armor",
+    "attunement": false,
+    "description": "The front of this shield is shaped in the likeness of a face. While bearing the shield, you can use a bonus action to alter the face's expression."
+  },
+  {
+    "id": "sentinel-shield",
+    "name": "Sentinel Shield",
+    "rarity": "uncommon",
+    "type": "armor",
+    "attunement": false,
+    "description": "While holding this shield, you have advantage on initiative rolls and Wisdom (Perception) checks. The shield is emblazoned with a symbol of an eye."
+  },
+  {
+    "id": "bag-of-holding",
+    "name": "Bag of Holding",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, regardless of its contents. Retrieving an item from the bag requires an action. If the bag is overloaded, pierced, or torn, it ruptures and is destroyed, and its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth, unharmed, but the bag must be put right before it can be used again. Breathing creatures inside the bag can survive up to a number of minutes equal to 10 divided by the number of creatures (minimum 1 minute), after which time they begin to suffocate. Placing a bag of holding inside an extradimensional space created by a Heward's handy haversack, portable hole, or similar item instantly destroys both items and opens a gate to the Astral Plane."
+  },
+  {
+    "id": "boots-of-elvenkind",
+    "name": "Boots of Elvenkind",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While you wear these boots, your steps make no sound, regardless of the surface you are moving across. You also have advantage on Dexterity (Stealth) checks that rely on moving silently."
+  },
+  {
+    "id": "bracers-of-archery",
+    "name": "Bracers of Archery",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While wearing these bracers, you have proficiency with the longbow and shortbow, and you gain a +2 bonus to damage rolls on ranged attacks made with such weapons."
+  },
+  {
+    "id": "brooch-of-shielding",
+    "name": "Brooch of Shielding",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While wearing this brooch, you have resistance to force damage, and you have immunity to damage from the Magic Missile spell."
+  },
+  {
+    "id": "cloak-of-elvenkind",
+    "name": "Cloak of Elvenkind",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While you wear this cloak with its hood up, Wisdom (Perception) checks made to see you have disadvantage, and you have advantage on Dexterity (Stealth) checks made to hide, as the cloak's color shifts to camouflage you. Pulling the hood up or down requires an action."
+  },
+  {
+    "id": "cloak-of-protection",
+    "name": "Cloak of Protection",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "You gain a +1 bonus to AC and saving throws while you wear this cloak."
+  },
+  {
+    "id": "decanter-of-endless-water",
+    "name": "Decanter of Endless Water",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This stoppered flask sloshes when shaken, as if it contains water. The decanter weighs 2 pounds. You can use an action to remove the stopper and speak one of three command words, whereupon an amount of fresh water or salt water (your choice) pours out of the flask. The water stops pouring out at the start of your next turn. Choose from the following options:\n- 'Stream' produces 1 gallon of water.\n- 'Fountain' produces 5 gallons of water.\n- 'Geyser' produces 30 gallons of water that gushes forth in a geyser 30 feet long and 1 foot wide. As a bonus action while holding the decanter, you can aim the geyser at a creature you can see within 30 feet of you. The target must succeed on a DC 13 Strength saving throw or take 1d4 bludgeoning damage and fall prone."
+  },
+  {
+    "id": "dust-of-disappearance",
+    "name": "Dust of Disappearance",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "Found in a small packet, this powder resembles very fine sand. There is enough of it for one use. When you use an action to throw the dust into the air, you and each creature and object within 10 feet of you become invisible for 2d4 minutes. The duration is the same for all subjects, and the dust is consumed when its magic takes effect. If a creature affected by the dust attacks or casts a spell, the invisibility ends for that creature."
+  },
+  {
+    "id": "eversmoking-bottle",
+    "name": "Eversmoking Bottle",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "Smoke leaks from the lead-stoppered mouth of this brass bottle, which weighs 1 pound. When you use an action to remove the stopper, a cloud of thick smoke pours out in a 60-foot radius from the bottle. The cloud's area is heavily obscured. Each minute the bottle remains open and within the cloud, the radius increases by 10 feet until it reaches its maximum radius of 120 feet. The cloud persists as long as the bottle is open. Closing the bottle requires you to speak its command word as an action. Once the bottle is closed, the cloud disperses after 10 minutes."
+  },
+  {
+    "id": "eyes-of-minute-seeing",
+    "name": "Eyes of Minute Seeing",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "These crystal lenses fit over the eyes. While wearing them, you can see much better than normal out to a range of 1 foot. You have advantage on Intelligence (Investigation) checks that rely on sight while searching an area or studying an object within that range."
+  },
+  {
+    "id": "gauntlets-of-ogre-power",
+    "name": "Gauntlets of Ogre Power",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "Your Strength score is 19 while you wear these gauntlets. They have no effect on you if your Strength is already 19 or higher."
+  },
+  {
+    "id": "gloves-of-missile-snaring",
+    "name": "Gloves of Missile Snaring",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "These gloves seem to almost meld into your hands when you don them. When a ranged weapon attack hits you while you're wearing them, you can use your reaction to reduce the damage by 1d10 + your Dexterity modifier, provided that you have a free hand. If you reduce the damage to 0, you can catch the missile if it is small enough for you to hold in that hand."
+  },
+  {
+    "id": "goggles-of-night",
+    "name": "Goggles of Night",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While wearing these dark lenses, you have darkvision out to a range of 60 feet. If you already have darkvision, wearing the goggles increases its range by 60 feet."
+  },
+  {
+    "id": "headband-of-intellect",
+    "name": "Headband of Intellect",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "Your Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is already 19 or higher."
+  },
+  {
+    "id": "immovable-rod",
+    "name": "Immovable Rod",
+    "rarity": "uncommon",
+    "type": "rod",
+    "attunement": false,
+    "description": "This flat iron rod has a button on one end. You can use an action to press the button, which causes the rod to become magically fixed in place. Until you or another creature uses an action to push the button again, the rod doesn't move, even if it is defying gravity. The rod can hold up to 8,000 pounds of weight. More weight causes the rod to deactivate and fall. A creature can use an action to make a DC 30 Strength check, moving the fixed rod up to 10 feet on a success."
+  },
+  {
+    "id": "lantern-of-revealing",
+    "name": "Lantern of Revealing",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "While lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding bright light in a 30-foot radius and dim light for an additional 30 feet. Invisible creatures and objects are visible as long as they are in the lantern's bright light. You can use an action to lower the hood, reducing the light to dim light in a 5-foot radius."
+  },
+  {
+    "id": "medallion-of-thoughts",
+    "name": "Medallion of Thoughts",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "The medallion has 3 charges. While wearing it, you can use an action and expend 1 charge to cast the Detect Thoughts spell (save DC 13) from it. The medallion regains 1d3 expended charges daily at dawn."
+  },
+  {
+    "id": "necklace-of-adaptation",
+    "name": "Necklace of Adaptation",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While wearing this necklace, you can breathe normally in any environment, and you have advantage on saving throws made against harmful gases and vapors (such as cloudkill and stinking cloud effects, inhaled poisons, and the breath weapons of some dragons)."
+  },
+  {
+    "id": "periapt-of-wound-closure",
+    "name": "Periapt of Wound Closure",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While you wear this pendant, you stabilize whenever you are dying at the start of your turn. In addition, whenever you roll a Hit Die to regain hit points, double the number of hit points it restores."
+  },
+  {
+    "id": "ring-of-jumping",
+    "name": "Ring of Jumping",
+    "rarity": "uncommon",
+    "type": "ring",
+    "attunement": true,
+    "description": "While wearing this ring, you can cast the Jump spell from it as a bonus action at will, but can target only yourself when you do so."
+  },
+  {
+    "id": "ring-of-swimming",
+    "name": "Ring of Swimming",
+    "rarity": "uncommon",
+    "type": "ring",
+    "attunement": false,
+    "description": "You have a swimming speed of 40 feet while wearing this ring."
+  },
+  {
+    "id": "rope-of-climbing",
+    "name": "Rope of Climbing",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "description": "This 60-foot length of silk rope weighs 3 pounds and can hold up to 3,000 pounds. If you hold one end of the rope and use an action to speak the command word, the rope animates. As a bonus action, you can command the other end to move toward a destination you choose. That end moves 10 feet on your turn when you first command it and 10 feet on each of your turns until reaching its destination, up to its maximum length away, or until you tell it to stop. You can also tell the rope to fasten itself securely to an object or to unfasten itself, to knot or unknot itself, or to coil itself for carrying. If you tell the rope to knot, large knots appear at 1-foot intervals along the rope. While knotted, the rope shortens to a 50-foot length and grants advantage on checks made to climb it. The rope has AC 20 and 20 hit points. It regains 1 hit point every 5 minutes as long as it has at least 1 hit point. If the rope drops to 0 hit points, it is destroyed."
+  },
+  {
+    "id": "stone-of-good-luck",
+    "name": "Stone of Good Luck",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While this polished agate is on your person, you gain a +1 bonus to ability checks and saving throws."
+  },
+  {
+    "id": "winged-boots",
+    "name": "Winged Boots",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "description": "While you wear these boots, you have a flying speed equal to your walking speed. You can use the boots to fly for up to 4 hours, all at once or in several shorter flights, each one using a minimum of 1 minute from the duration. If you are flying when the duration expires, you descend at a rate of 30 feet per round until you land. The boots regain 2 hours of flying capability for every 12 hours they aren't in use."
+  },
+  {
+    "id": "wand-of-magic-detection",
+    "name": "Wand of Magic Detection",
+    "rarity": "uncommon",
+    "type": "wand",
+    "attunement": false,
+    "description": "This wand has 3 charges. While holding it, you can expend 1 charge as an action to cast the Detect Magic spell from it. The wand regains 1d3 expended charges daily at dawn."
+  }
+]

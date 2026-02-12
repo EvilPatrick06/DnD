@@ -1,0 +1,440 @@
+[
+  {
+    "id": "human",
+    "name": "Human",
+    "hp": 8,
+    "size": "Medium",
+    "speed": 25,
+    "abilityBoosts": ["free", "free"],
+    "abilityFlaws": [],
+    "languages": ["Common"],
+    "additionalLanguages": ["Dwarven", "Elven", "Gnomish", "Goblin", "Halfling", "Jotun", "Orcish", "Sylvan", "Undercommon", "Draconic", "Celestial", "Infernal", "Abyssal", "Aklo", "Aquan", "Auran", "Ignan", "Terran", "Necril", "Shadowtongue"],
+    "traits": [
+      {
+        "name": "Human",
+        "description": "A creature with this trait is a member of the human ancestry. Humans are a diverse array of people known for their adaptability."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [],
+    "heritages": [
+      {
+        "id": "skilled-heritage",
+        "name": "Skilled Heritage",
+        "description": "Your ingenuity allows you to train in a wide variety of skills. You become trained in one skill of your choice. At 5th level, you become an expert in the chosen skill."
+      },
+      {
+        "id": "versatile-heritage",
+        "name": "Versatile Heritage",
+        "description": "Humanity's versatility and ambition have fueled its ascendance to be the most common ancestry in most nations throughout the world. Select a general feat of your choice for which you meet the prerequisites."
+      },
+      {
+        "id": "wintertouched-human",
+        "name": "Wintertouched Human",
+        "description": "Your ancestors lived in cold, harsh environments. You gain cold resistance equal to half your level (minimum 1) and treat environmental cold effects as if they were one step less extreme."
+      },
+      {
+        "id": "half-elf",
+        "name": "Half-Elf",
+        "description": "Either one of your parents was an elf, or one or both were half-elves. You have pointed ears and other telltale signs of elf heritage. You gain the Elf trait and low-light vision. In addition, you can select elf, half-elf, and human feats whenever you gain an ancestry feat."
+      },
+      {
+        "id": "half-orc",
+        "name": "Half-Orc",
+        "description": "One of your parents was an orc, or one or both were half-orcs. You have a green tinge to your skin and other orcish features. You gain the Orc trait and low-light vision. In addition, you can select orc, half-orc, and human feats whenever you gain an ancestry feat."
+      }
+    ],
+    "description": "As unpredictable and varied as any of the world's peoples, humans have exceptional drive and the capacity to endure and expand. Though many civilizations thrived before humanity rose to prominence, humans have built some of the greatest and most terrible societies throughout the course of history."
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "hp": 10,
+    "size": "Medium",
+    "speed": 20,
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "abilityFlaws": ["charisma"],
+    "languages": ["Common", "Dwarven"],
+    "additionalLanguages": ["Gnomish", "Goblin", "Jotun", "Orcish", "Terran", "Undercommon"],
+    "traits": [
+      {
+        "name": "Dwarf",
+        "description": "A creature with this trait is a member of the dwarf ancestry. Dwarves are stout folk who often live underground and typically have darkvision."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Darkvision",
+        "description": "You can see in darkness and dim light just as well as you can see in bright light, though your vision in darkness is in black and white."
+      },
+      {
+        "name": "Clan Dagger",
+        "description": "You get one clan dagger of your clan for free, as it was given to you at birth. Selling this dagger is a taboo act."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "ancient-blooded-dwarf",
+        "name": "Ancient-Blooded Dwarf",
+        "description": "Dwarven heroes of old could shrug off magic. You gain the Call on Ancient Blood reaction, which grants you a +1 circumstance bonus to the triggering saving throw against a magical effect."
+      },
+      {
+        "id": "death-warden-dwarf",
+        "name": "Death Warden Dwarf",
+        "description": "Your ancestors have been tomb guardians for generations, giving you an innate familiarity with the dead. You gain a +1 circumstance bonus to saving throws against undead effects, and your successes on saving throws against effects from undead creatures are critical successes instead."
+      },
+      {
+        "id": "forge-dwarf",
+        "name": "Forge Dwarf",
+        "description": "You have a remarkable adaptation to hot environments from ancestors who inhabited blazing deserts or volcanic chambers beneath the surface. You gain fire resistance equal to half your level (minimum 1), and you treat environmental heat effects as if they were one step less extreme."
+      },
+      {
+        "id": "rock-dwarf",
+        "name": "Rock Dwarf",
+        "description": "Your ancestors lived and worked among the great ancient stones of the mountains or the depths of the earth. This makes you solid as a rock when you plant your feet. You gain a +2 circumstance bonus to your Fortitude or Reflex DC against attempts to Shove or Trip you."
+      },
+      {
+        "id": "strong-blooded-dwarf",
+        "name": "Strong-Blooded Dwarf",
+        "description": "Your blood runs hearty and strong, and you can shake off toxins. You gain poison resistance equal to half your level (minimum 1), and each of your successful saving throws against a poison affliction reduces its stage by 2, or by 1 for a virulent poison."
+      }
+    ],
+    "description": "Dwarves have a well-earned reputation as a stoic and stern people, ensconced within citadels and cities carved from solid rock. While some see them as dour and humorless crafters of stone and metal, dwarves and those who have spent time among them understand their wide range of passion and the bonds of kinship and culture."
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "hp": 6,
+    "size": "Medium",
+    "speed": 30,
+    "abilityBoosts": ["dexterity", "intelligence", "free"],
+    "abilityFlaws": ["constitution"],
+    "languages": ["Common", "Elven"],
+    "additionalLanguages": ["Celestial", "Draconic", "Gnoll", "Gnomish", "Goblin", "Orcish", "Sylvan"],
+    "traits": [
+      {
+        "name": "Elf",
+        "description": "A creature with this trait is a member of the elf ancestry. Elves are mysterious people with rich traditions of magic and scholarship who typically have low-light vision."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Low-Light Vision",
+        "description": "You can see in dim light as though it were bright light, so you ignore the concealed condition due to dim light."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "arctic-elf",
+        "name": "Arctic Elf",
+        "description": "You dwell deep in the frozen north and have gained incredible resilience against cold environments, granting you cold resistance equal to half your level (minimum 1). You treat environmental cold effects as if they were one step less extreme."
+      },
+      {
+        "id": "cavern-elf",
+        "name": "Cavern Elf",
+        "description": "You were born or spent many years in underground tunnels or caverns where light is scarce. You gain darkvision."
+      },
+      {
+        "id": "seer-elf",
+        "name": "Seer Elf",
+        "description": "You have an inborn ability to detect and understand magical essence. You can cast the detect magic cantrip as an arcane innate spell at will. A cantrip is heightened to a spell level equal to half your level rounded up."
+      },
+      {
+        "id": "whisper-elf",
+        "name": "Whisper Elf",
+        "description": "Your ears are finely tuned, able to detect even the slightest of sounds. As long as you can hear normally, you can use the Seek action to sense undetected creatures in a 60-foot cone instead of a 30-foot cone. You also gain a +2 circumstance bonus to locate undetected creatures that you could hear within 30 feet with a Seek action."
+      },
+      {
+        "id": "woodland-elf",
+        "name": "Woodland Elf",
+        "description": "You're adapted to life in the forest or the deep jungle, and you know how to climb trees and use foliage to your advantage. When Climbing trees, vines, and other foliage, you move at half your Speed on a success and at full Speed on a critical success (and you move at full Speed on a success if you have Quick Climb). You can always use the Take Cover action when you are within forest terrain to gain cover, even if you're not next to an obstacle you could Take Cover behind."
+      }
+    ],
+    "description": "As an ancient people, elves have seen great change and have the perspective that can come only from watching the arc of history. After leaving the world in ancient times, they returned to a changed land, and they still struggle to reclaim their ancestral homes, most notably from terrible demons that have carved out portions of their nation."
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "hp": 8,
+    "size": "Small",
+    "speed": 25,
+    "abilityBoosts": ["constitution", "charisma", "free"],
+    "abilityFlaws": ["strength"],
+    "languages": ["Common", "Gnomish", "Sylvan"],
+    "additionalLanguages": ["Draconic", "Dwarven", "Elven", "Goblin", "Jotun", "Orcish"],
+    "traits": [
+      {
+        "name": "Gnome",
+        "description": "A creature with this trait is a member of the gnome ancestry. Gnomes are small people skilled at magic who seek out new experiences and usually have low-light vision."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Low-Light Vision",
+        "description": "You can see in dim light as though it were bright light, so you ignore the concealed condition due to dim light."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "chameleon-gnome",
+        "name": "Chameleon Gnome",
+        "description": "The color of your hair and skin is mutable, possibly due to latent magic. You can slowly change the vibrancy of your hair and skin colors, taking about 10 minutes for a significant change in coloring. When you are in an area where your coloration is roughly similar to the environment, you can use a single action to make minor changes, gaining a +2 circumstance bonus to Stealth checks until your surroundings shift in a way that your coloration no longer matches."
+      },
+      {
+        "id": "fey-touched-gnome",
+        "name": "Fey-Touched Gnome",
+        "description": "The blood of the fey is strong in you, granting you fey magic. You gain the fey trait. Choose one cantrip from the primal spell list. You can cast this spell as a primal innate spell at will. A cantrip is heightened to a spell level equal to half your level rounded up."
+      },
+      {
+        "id": "sensate-gnome",
+        "name": "Sensate Gnome",
+        "description": "You see all colors as brighter, hear all sounds as richer, and especially smell all scents with incredible detail. You gain a special sense: imprecise scent with a range of 30 feet. This means you can use your sense of smell to determine a creature's location."
+      },
+      {
+        "id": "umbral-gnome",
+        "name": "Umbral Gnome",
+        "description": "Whether from living underground, from spending time in the Shadow Plane, or another reason, your eyes have adapted to see in the dark. You gain darkvision."
+      },
+      {
+        "id": "wellspring-gnome",
+        "name": "Wellspring Gnome",
+        "description": "Some other source of magic has a defensive connection to your innate magic. Whenever you would be drained as a result of a spell or magical effect, you can attempt a DC 13 flat check. On a success, the condition value is reduced by 1 (to a minimum of 0). You gain one cantrip from the primal or arcane spell list. You can cast this as an innate spell at will."
+      }
+    ],
+    "description": "Long ago, early gnomes emigrated from the First World, realm of the fey. While it is unclear why the first gnomes wandered to Golarion, this lineage manifests in modern gnomes as bizarre reasoning, appearance, and personality. Always hungry for new experiences, gnomes constantly wander both mentally and physically, attempting to stave off a terrible ailment that threatens all of their people."
+  },
+  {
+    "id": "goblin",
+    "name": "Goblin",
+    "hp": 6,
+    "size": "Small",
+    "speed": 25,
+    "abilityBoosts": ["dexterity", "charisma", "free"],
+    "abilityFlaws": ["wisdom"],
+    "languages": ["Common", "Goblin"],
+    "additionalLanguages": ["Draconic", "Dwarven", "Gnoll", "Gnomish", "Halfling", "Orcish"],
+    "traits": [
+      {
+        "name": "Goblin",
+        "description": "A creature with this trait can be one of several kinds of creature, including goblins, hobgoblins, and bugbears. Goblins tend to have darkvision."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Darkvision",
+        "description": "You can see in darkness and dim light just as well as you can see in bright light, though your vision in darkness is in black and white."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "charhide-goblin",
+        "name": "Charhide Goblin",
+        "description": "Your ancestors have always had a connection to fire and lived among the ash. You gain fire resistance equal to half your level (minimum 1). You can also recover from being on fire more easily. Your flat check to remove persistent fire damage is DC 10 instead of DC 15, which is reduced to DC 5 if another creature uses a particularly appropriate action to help."
+      },
+      {
+        "id": "irongut-goblin",
+        "name": "Irongut Goblin",
+        "description": "You can subsist on food that most folks would consider spoiled. You can keep yourself fed with poor meals in a settlement as long as garbage is plentiful, without using the Subsist downtime activity. You gain a +2 circumstance bonus to saving throws against afflictions, against gaining the sickened condition, and to remove the sickened condition."
+      },
+      {
+        "id": "razortooth-goblin",
+        "name": "Razortooth Goblin",
+        "description": "Your family's teeth are especially sharp and vicious. You gain a jaws unarmed attack that deals 1d6 piercing damage. Your jaws are in the brawling group and have the finesse and unarmed traits."
+      },
+      {
+        "id": "snow-goblin",
+        "name": "Snow Goblin",
+        "description": "You are acclimated to living in frigid lands and have light bluish coloring and thin, wiry fur. You gain cold resistance equal to half your level (minimum 1). You treat environmental cold effects as if they were one step less extreme."
+      },
+      {
+        "id": "unbreakable-goblin",
+        "name": "Unbreakable Goblin",
+        "description": "You're able to bounce back from injuries easily due to an exceptionally thick skull, cartilaginous bones, or some other mutation. You gain 4 additional Hit Points with your ancestry Hit Points instead of the normal amount. When you fall, reduce the falling damage you take as though you had fallen half the distance."
+      }
+    ],
+    "description": "The connotation of the word goblin conjures images of the green-skinned, cackling menaces that haunt the dungeons and wilds of the world. Goblins are a people more than any horror that ignorant communities portray them as. They have rich traditions, a vibrant culture, and a history of song and artistry. They are also increasingly common in human cities, and some have risen to prominence in those communities."
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "hp": 6,
+    "size": "Small",
+    "speed": 25,
+    "abilityBoosts": ["dexterity", "wisdom", "free"],
+    "abilityFlaws": ["strength"],
+    "languages": ["Common", "Halfling"],
+    "additionalLanguages": ["Dwarven", "Elven", "Gnomish", "Goblin"],
+    "traits": [
+      {
+        "name": "Halfling",
+        "description": "A creature with this trait is a member of the halfling ancestry. These small people are friendly wanderers considered to be lucky. Halflings typically have keen vision."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Keen Eyes",
+        "description": "Your eyes are sharp, allowing you to make out small details about concealed or even invisible creatures that others might miss. You gain a +2 circumstance bonus when using the Seek action to find hidden or undetected creatures within 30 feet of you. When you target an opponent that is concealed from you or hidden from you, reduce the DC of the flat check to 3 for a concealed target or 9 for a hidden one."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "gutsy-halfling",
+        "name": "Gutsy Halfling",
+        "description": "Your family line is known for keeping a level head and staring down threats. You gain a +1 circumstance bonus to saving throws against emotion effects. If you roll a success on a saving throw against an emotion effect, you get a critical success instead."
+      },
+      {
+        "id": "hillock-halfling",
+        "name": "Hillock Halfling",
+        "description": "Accustomed to a calm life in the hills, your people find rest and relaxation especially replenishing, particularly when indulging in creature comforts. When you regain Hit Points overnight, add your level to the Hit Points regained. When someone successfully uses the Medicine skill to Treat your Wounds, you regain 5 additional Hit Points with a successful check, or 10 if the check is a critical success."
+      },
+      {
+        "id": "nomadic-halfling",
+        "name": "Nomadic Halfling",
+        "description": "Your ancestors have traveled from place to place for generations, never settling down permanently. You gain two additional languages of your choice, chosen from among Common and Uncommon languages available to you, and every time you take the Multilingual feat, you gain another new language."
+      },
+      {
+        "id": "twilight-halfling",
+        "name": "Twilight Halfling",
+        "description": "Your ancestors performed many of their tasks under the cover of dusk, giving you eyes that are well adapted to seeing in dim conditions. You gain low-light vision."
+      },
+      {
+        "id": "wildwood-halfling",
+        "name": "Wildwood Halfling",
+        "description": "You hail from deep in a jungle or forest, and you have learned how to use your small size to navigate the dense undergrowth. You ignore difficult terrain from trees, underbrush, and other non-magical foliage."
+      }
+    ],
+    "description": "Claiming no place as their own, halflings control few settlements larger than villages. Instead, they frequently live among humans within the walls of larger cities, carving out small communities alongside taller folk. Many halflings lead perfectly fulfilling lives in the shadow of their larger neighbors, while others prefer a nomadic existence, traveling the world and taking advantage of opportunities and adventures as they come."
+  },
+  {
+    "id": "leshy",
+    "name": "Leshy",
+    "hp": 8,
+    "size": "Small",
+    "speed": 25,
+    "abilityBoosts": ["constitution", "wisdom", "free"],
+    "abilityFlaws": ["intelligence"],
+    "languages": ["Common", "Fey"],
+    "additionalLanguages": ["Draconic", "Elven", "Gnomish", "Goblin", "Halfling", "Undercommon", "Sylvan"],
+    "traits": [
+      {
+        "name": "Leshy",
+        "description": "A creature with this trait is a member of the leshy ancestry. Leshies are small, sentient plant creatures animated by nature spirits."
+      },
+      {
+        "name": "Plant",
+        "description": "Vegetable creatures have the plant trait. They are distinct from normal combatants and typically don't have a living physiology."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Low-Light Vision",
+        "description": "You can see in dim light as though it were bright light, so you ignore the concealed condition due to dim light."
+      },
+      {
+        "name": "Plant Nourishment",
+        "description": "You gain nourishment from photosynthesis, but you can also eat food normally."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "fungus-leshy",
+        "name": "Fungus Leshy",
+        "description": "You are a fungi-based leshy. You gain darkvision. Your plant nourishment takes the form of directly absorbing nutrients from the living organisms around you."
+      },
+      {
+        "id": "leaf-leshy",
+        "name": "Leaf Leshy",
+        "description": "Your body is made mostly of broad leaves. You gain a 25-foot glide speed, allowing you to descend 5 feet for every 25 feet you move forward."
+      },
+      {
+        "id": "vine-leshy",
+        "name": "Vine Leshy",
+        "description": "The tendrils winding around your body can grasp onto other surfaces. You gain a 10-foot climb Speed."
+      },
+      {
+        "id": "gourd-leshy",
+        "name": "Gourd Leshy",
+        "description": "Your head or body is partially made of a gourd. You can store objects inside your gourd head or body, similar to a bag of holding, that hold up to 1 Bulk of items."
+      }
+    ],
+    "description": "Leshies are small, sentient plant creatures animated by nature spirits. They are guardians of the natural world, each linked to a particular type of plant."
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "hp": 10,
+    "size": "Medium",
+    "speed": 25,
+    "abilityBoosts": ["strength", "free", "free"],
+    "abilityFlaws": [],
+    "languages": ["Common", "Orcish"],
+    "additionalLanguages": ["Goblin", "Jotun", "Terran", "Undercommon", "Dwarven"],
+    "traits": [
+      {
+        "name": "Orc",
+        "description": "A creature with this trait is a member of the orc ancestry. Orcs are people of deep tradition and fierce loyalty, with a culture built around strength, honor, and survival."
+      },
+      {
+        "name": "Humanoid",
+        "description": "Humanoid creatures reason and act much like humans. They typically stand upright and have two arms and two legs."
+      }
+    ],
+    "specialAbilities": [
+      {
+        "name": "Darkvision",
+        "description": "You can see in darkness and dim light just as well as you can see in bright light, though your vision in darkness is in black and white."
+      }
+    ],
+    "heritages": [
+      {
+        "id": "badlands-orc",
+        "name": "Badlands Orc",
+        "description": "You come from sun-scorched badlands. You gain fire resistance equal to half your level (minimum 1), and environmental heat effects are one step less extreme for you."
+      },
+      {
+        "id": "deep-orc",
+        "name": "Deep Orc",
+        "description": "Your people lived deep underground. You gain darkvision that extends to 120 feet instead of the normal 60 feet."
+      },
+      {
+        "id": "hold-scarred-orc",
+        "name": "Hold-Scarred Orc",
+        "description": "You are covered in scars from head to toe. Whenever you would gain the wounded condition, reduce the value by 1 (minimum 0)."
+      },
+      {
+        "id": "rainfall-orc",
+        "name": "Rainfall Orc",
+        "description": "Your ancestors lived in lush jungles. You gain a 10-foot climb Speed whenever you are climbing in rain or wet conditions."
+      },
+      {
+        "id": "battle-ready-orc",
+        "name": "Battle-Ready Orc",
+        "description": "Your people are bred for war. You are trained in Athletics and gain the Titan Wrestler skill feat."
+      }
+    ],
+    "description": "Orcs are forged in the fires of hardship and conflict. They are a people of deep tradition and fierce loyalty, with a culture built around strength, honor, and survival."
+  }
+]

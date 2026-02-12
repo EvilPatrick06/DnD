@@ -1,0 +1,766 @@
+[
+  {
+    "id": "alchemist",
+    "name": "Alchemist",
+    "hp": 8,
+    "keyAbility": ["intelligence"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "expert",
+      "will": "trained"
+    },
+    "skills": {
+      "trained": 3,
+      "options": ["Arcana", "Crafting", "Deception", "Medicine", "Nature", "Occultism", "Society"]
+    },
+    "mandatorySkills": ["Crafting"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained",
+      "alchemicalBombs": "trained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Alchemy",
+      "Research Field",
+      "Formula Book",
+      "Advanced Alchemy",
+      "Quick Alchemy"
+    ],
+    "startingEquipment": [
+      { "name": "Dagger", "quantity": 1 },
+      { "name": "Studded Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Alchemist's Fire", "quantity": 2 },
+      { "name": "Formula Book", "quantity": 1 }
+    ],
+    "description": "There's no sight more beautiful to you than a strange brew bubbling in a beaker, and you consume your various creations with abandon. You're constantly experimenting in your lab or on the go with inventive concoctions for every situation. You are fearless in the face of risk, hurling explosive or toxic creations at your foes. Your creations are volatile and ephemeral, but effective."
+  },
+  {
+    "id": "barbarian",
+    "name": "Barbarian",
+    "hp": 12,
+    "keyAbility": ["strength"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 3,
+      "options": ["Acrobatics", "Athletics", "Crafting", "Intimidation", "Nature", "Survival"]
+    },
+    "mandatorySkills": ["Athletics"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "trained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "trained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Rage",
+      "Instinct",
+      "Deny Advantage"
+    ],
+    "startingEquipment": [
+      { "name": "Greataxe", "quantity": 1 },
+      { "name": "Hatchet", "quantity": 4 },
+      { "name": "Hide", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 }
+    ],
+    "description": "Rage consumes you in battle. You delight in carving through your enemies using powerful weapons and strikes, relying on your astonishing durability to get you through a fight. You cast off your heavy armor and embrace your animal instinct, large body, or burning rage to become a brutal, fearsome combatant."
+  },
+  {
+    "id": "bard",
+    "name": "Bard",
+    "hp": 8,
+    "keyAbility": ["charisma"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 4,
+      "options": ["Acrobatics", "Arcana", "Crafting", "Deception", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society", "Stealth"]
+    },
+    "mandatorySkills": ["Occultism", "Performance"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained",
+      "longsword": "trained",
+      "rapier": "trained",
+      "sap": "trained",
+      "shortbow": "trained",
+      "shortsword": "trained",
+      "whip": "trained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "occult",
+      "type": "spontaneous",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Occult Spellcasting",
+      "Muse",
+      "Composition Spells",
+      "Spell Repertoire"
+    ],
+    "startingEquipment": [
+      { "name": "Rapier", "quantity": 1 },
+      { "name": "Dagger", "quantity": 1 },
+      { "name": "Studded Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Handheld Instrument", "quantity": 1 }
+    ],
+    "description": "You are a master of artistry, a scholar of hidden secrets, and a captivating persuader. Using powerful performances, you influence minds and inspire allies to ever-greater feats of valor. You might use your powers to become a charismatic leader, or perhaps you might instead be a counselor, manipulator, scholar, scoundrel, or virtuoso."
+  },
+  {
+    "id": "champion",
+    "name": "Champion",
+    "hp": 10,
+    "keyAbility": ["strength", "dexterity"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 2,
+      "options": ["Athletics", "Crafting", "Diplomacy", "Intimidation", "Medicine", "Nature", "Religion", "Society"]
+    },
+    "mandatorySkills": ["Religion"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "trained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "trained",
+      "heavy": "trained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "divine",
+      "type": "prepared",
+      "proficiency": "trained",
+      "note": "Devotion spells (focus spells) only"
+    },
+    "classFeatures": [
+      "Champion's Code",
+      "Deity and Cause",
+      "Deific Weapon",
+      "Champion's Reaction",
+      "Devotion Spells",
+      "Shield Block"
+    ],
+    "startingEquipment": [
+      { "name": "Longsword", "quantity": 1 },
+      { "name": "Steel Shield", "quantity": 1 },
+      { "name": "Chain Mail", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Religious Symbol (Silver)", "quantity": 1 },
+      { "name": "Javelin", "quantity": 4 }
+    ],
+    "description": "You are an emissary of a deity, a devoted servant who has taken up a cause and pledged to uphold a code of conduct. You are a mortal champion of your deity's will, granted power to act on their behalf. Your deity's cause drives your every action, and the ideals of your faith guide your path."
+  },
+  {
+    "id": "cleric",
+    "name": "Cleric",
+    "hp": 8,
+    "keyAbility": ["wisdom"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 2,
+      "options": ["Crafting", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society"]
+    },
+    "mandatorySkills": ["Religion"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "divine",
+      "type": "prepared",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Deity",
+      "Divine Spellcasting",
+      "Divine Font",
+      "Doctrine"
+    ],
+    "startingEquipment": [
+      { "name": "Mace", "quantity": 1 },
+      { "name": "Wooden Shield", "quantity": 1 },
+      { "name": "Scale Mail", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Religious Symbol (Silver)", "quantity": 1 },
+      { "name": "Healer's Tools", "quantity": 1 }
+    ],
+    "description": "Deities work their will upon the world in infinite ways, and you serve as one of their most stalwart mortal servants. Blessed with divine magic, you live the ideals of your faith, adorn yourself with the symbols of your church, and train diligently to wield your deity's favored weapon."
+  },
+  {
+    "id": "druid",
+    "name": "Druid",
+    "hp": 8,
+    "keyAbility": ["wisdom"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 2,
+      "options": ["Arcana", "Athletics", "Crafting", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society", "Survival"]
+    },
+    "mandatorySkills": ["Nature"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "trained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "primal",
+      "type": "prepared",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Primal Spellcasting",
+      "Druidic Language",
+      "Druidic Order",
+      "Shield Block",
+      "Wild Empathy",
+      "Anathema (metallic armor and shields)"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Holly and Mistletoe", "quantity": 1 }
+    ],
+    "description": "The power of nature is impossible to resist. It can bring ruin to the stoutest fortress in minutes, reduce the mightiest works to rubble, and unmake the most cunning of plans. It can also provide for all who nurture it, and it rewards those who treat it with respect. You are one of those combatants, serving as nature's voice and wielding its might."
+  },
+  {
+    "id": "fighter",
+    "name": "Fighter",
+    "hp": 10,
+    "keyAbility": ["strength", "dexterity"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "expert",
+      "will": "trained"
+    },
+    "skills": {
+      "trained": 3,
+      "options": ["Acrobatics", "Athletics", "Crafting", "Intimidation", "Medicine", "Survival"]
+    },
+    "mandatorySkills": [],
+    "attacks": {
+      "simple": "expert",
+      "martial": "expert",
+      "unarmed": "expert",
+      "advanced": "trained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "trained",
+      "heavy": "trained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Attack of Opportunity",
+      "Shield Block"
+    ],
+    "startingEquipment": [
+      { "name": "Longsword", "quantity": 1 },
+      { "name": "Steel Shield", "quantity": 1 },
+      { "name": "Chain Mail", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Javelin", "quantity": 4 },
+      { "name": "Dagger", "quantity": 1 }
+    ],
+    "description": "Fighting for honor, greed, loyalty, or simply the thrill of battle, you are an undisputed master of weaponry and combat techniques. You combine your actions through clever combinations of opening moves, finishing strikes, and counterattacks whenever your foes are foolish enough to drop their guard. Whether you are a knight, mercenary, sharpshooter, or blade master, you have honed your martial skills into an art form and perform devastating critical attacks on your enemies."
+  },
+  {
+    "id": "monk",
+    "name": "Monk",
+    "hp": 10,
+    "keyAbility": ["strength", "dexterity"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "expert",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 4,
+      "options": ["Acrobatics", "Athletics", "Crafting", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society", "Stealth", "Survival"]
+    },
+    "mandatorySkills": [],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "expert",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Flurry of Blows",
+      "Powerful Fist",
+      "Graceful Momentum"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Explorer's Clothing", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Climbing Kit", "quantity": 1 }
+    ],
+    "description": "The strength of your fist flows from your mind and spirit. You seek perfection through the discipline of martial arts and the rigors of strict practice, pushing your body beyond the limits of what is physically possible. You are a fierce combatant renowned for your martial arts skills and your ability to fight unarmed with devastating power."
+  },
+  {
+    "id": "ranger",
+    "name": "Ranger",
+    "hp": 10,
+    "keyAbility": ["strength", "dexterity"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "expert",
+      "reflex": "expert",
+      "will": "trained"
+    },
+    "skills": {
+      "trained": 4,
+      "options": ["Acrobatics", "Athletics", "Crafting", "Deception", "Intimidation", "Medicine", "Nature", "Stealth", "Survival"]
+    },
+    "mandatorySkills": ["Nature", "Survival"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "trained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "trained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Hunt Prey",
+      "Hunter's Edge"
+    ],
+    "startingEquipment": [
+      { "name": "Shortsword", "quantity": 1 },
+      { "name": "Shortbow", "quantity": 1 },
+      { "name": "Studded Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Dagger", "quantity": 2 }
+    ],
+    "description": "Some rangers believe civilization wears down the soul, but still needs to be protected from wild creatures. Others say nature needs to be protected from the expanding reach of civilization. You could champion either cause, or simply be an independent hunter, taking on whatever jobs you can to make a living."
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "hp": 8,
+    "keyAbility": ["dexterity"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "expert",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 7,
+      "options": ["Acrobatics", "Arcana", "Athletics", "Crafting", "Deception", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society", "Stealth", "Survival", "Thievery"]
+    },
+    "mandatorySkills": ["Stealth"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained",
+      "rapier": "trained",
+      "sap": "trained",
+      "shortbow": "trained",
+      "shortsword": "trained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Sneak Attack",
+      "Surprise Attack",
+      "Rogue's Racket",
+      "Deny Advantage"
+    ],
+    "startingEquipment": [
+      { "name": "Rapier", "quantity": 1 },
+      { "name": "Dagger", "quantity": 2 },
+      { "name": "Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Thieves' Tools", "quantity": 1 }
+    ],
+    "description": "You are skilled and subtle, and you take advantage of an opening that others do not even notice. You strike a foe with a weapon you have trained to use, then exploit their weaknesses. You rely on skill, speed, and your wits rather than brute force. You delight in perfecting your skills, learning new ones, and outwitting your foes."
+  },
+  {
+    "id": "sorcerer",
+    "name": "Sorcerer",
+    "hp": 6,
+    "keyAbility": ["charisma"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 2,
+      "options": ["Arcana", "Crafting", "Deception", "Diplomacy", "Intimidation", "Nature", "Occultism", "Religion", "Society"]
+    },
+    "mandatorySkills": [],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "varies (by bloodline: arcane, divine, occult, or primal)",
+      "type": "spontaneous",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Bloodline",
+      "Spontaneous Spellcasting",
+      "Spell Repertoire"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Dagger", "quantity": 1 },
+      { "name": "Explorer's Clothing", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 }
+    ],
+    "description": "You did not choose to become a spellcaster -- you were born one. There is magic in your blood, whether a direct gift bestowed by a deity, a lineage from a magical creature, or the influence of a powerful planar force. This magic is a part of you, building and flowing through your veins, driving your actions, and channeling through your spells."
+  },
+  {
+    "id": "wizard",
+    "name": "Wizard",
+    "hp": 6,
+    "keyAbility": ["intelligence"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 2,
+      "options": ["Arcana", "Crafting", "Diplomacy", "Intimidation", "Lore", "Medicine", "Nature", "Occultism", "Religion", "Society"]
+    },
+    "mandatorySkills": ["Arcana"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "arcane",
+      "type": "prepared",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Arcane Spellcasting",
+      "Arcane School",
+      "Arcane Bond",
+      "Arcane Thesis",
+      "Spellbook"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Explorer's Clothing", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Spellbook", "quantity": 1 },
+      { "name": "Writing Set", "quantity": 1 }
+    ],
+    "description": "You are an eternal student of the arcane secrets of the universe, using your mastery of magic to cast powerful and devastating spells. You treat magic like a science, cross-referencing the latest texts on a variety of topics and practicing spells repeatedly until you understand them inside and out."
+  },
+  {
+    "id": "investigator",
+    "name": "Investigator",
+    "hp": 8,
+    "keyAbility": ["intelligence"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "expert",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 6,
+      "options": ["Arcana", "Crafting", "Deception", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Religion", "Society", "Stealth", "Survival"]
+    },
+    "mandatorySkills": ["Society"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained",
+      "rapier": "trained",
+      "sap": "trained",
+      "shortbow": "trained",
+      "swordCane": "trained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Methodology",
+      "Pursue a Lead",
+      "Clue In",
+      "Devise a Stratagem"
+    ],
+    "startingEquipment": [
+      { "name": "Rapier", "quantity": 1 },
+      { "name": "Studded Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Writing Set", "quantity": 1 },
+      { "name": "Spyglass", "quantity": 1 }
+    ],
+    "description": "You seek to uncover the truth, doggedly pursuing leads to reveal the plots of devious villains, discover ancient secrets, or unravel other mysteries. Your analytical mind quickly picks apart clues and deduces answers, and your keen instincts and sharp deductions allow you to stay one step ahead of danger. Using intellect and observation, you piece together information others overlook."
+  },
+  {
+    "id": "oracle",
+    "name": "Oracle",
+    "hp": 8,
+    "keyAbility": ["charisma"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 3,
+      "options": ["Crafting", "Deception", "Diplomacy", "Intimidation", "Medicine", "Nature", "Occultism", "Performance", "Religion", "Society"]
+    },
+    "mandatorySkills": ["Religion"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "divine",
+      "type": "spontaneous",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Mystery",
+      "Revelation Spells",
+      "Curse"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Explorer's Clothing", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Religious Symbol (Wooden)", "quantity": 1 }
+    ],
+    "description": "Your conduit to divine power eschews the traditional path of prayer and servitude -- instead, you have been granted a mystery that bestows upon you the power of a divine oracle. This power comes with a curse, a double-edged burden that grows as you channel greater and greater divine energy. Your mystery might be a divine blessing, a cosmic accident, or an ancient pact, but it grants you spells and abilities tied to your mystery's theme."
+  },
+  {
+    "id": "swashbuckler",
+    "name": "Swashbuckler",
+    "hp": 10,
+    "keyAbility": ["dexterity"],
+    "perception": "expert",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "expert",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 5,
+      "options": ["Acrobatics", "Athletics", "Crafting", "Deception", "Diplomacy", "Intimidation", "Performance", "Society", "Stealth"]
+    },
+    "mandatorySkills": ["Acrobatics"],
+    "attacks": {
+      "simple": "trained",
+      "martial": "trained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "trained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": null,
+    "classFeatures": [
+      "Style",
+      "Panache",
+      "Precise Strike",
+      "Confident Finisher",
+      "Opportune Riposte"
+    ],
+    "startingEquipment": [
+      { "name": "Rapier", "quantity": 1 },
+      { "name": "Main-Gauche", "quantity": 1 },
+      { "name": "Leather", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 },
+      { "name": "Dagger", "quantity": 1 }
+    ],
+    "description": "Many warriors rely on brute strength, but you prefer the art of the blade. You are a daring combatant who fights with flair and style, leveraging agility and charm in equal measure. To you, the thrill of a fight is as important as the outcome. Your panache fuels your daring deeds and devastating finishing moves, making you a whirlwind of steel and swagger on the battlefield."
+  },
+  {
+    "id": "witch",
+    "name": "Witch",
+    "hp": 6,
+    "keyAbility": ["intelligence"],
+    "perception": "trained",
+    "savingThrows": {
+      "fortitude": "trained",
+      "reflex": "trained",
+      "will": "expert"
+    },
+    "skills": {
+      "trained": 3,
+      "options": ["Arcana", "Crafting", "Deception", "Diplomacy", "Intimidation", "Nature", "Occultism", "Religion", "Society"]
+    },
+    "mandatorySkills": [],
+    "attacks": {
+      "simple": "trained",
+      "martial": "untrained",
+      "unarmed": "trained",
+      "advanced": "untrained"
+    },
+    "defenses": {
+      "unarmored": "trained",
+      "light": "untrained",
+      "medium": "untrained",
+      "heavy": "untrained"
+    },
+    "classDC": "trained",
+    "spellcasting": {
+      "tradition": "varies by patron",
+      "type": "prepared",
+      "proficiency": "trained"
+    },
+    "classFeatures": [
+      "Patron",
+      "Familiar",
+      "Hex Cantrips",
+      "Lessons"
+    ],
+    "startingEquipment": [
+      { "name": "Staff", "quantity": 1 },
+      { "name": "Dagger", "quantity": 1 },
+      { "name": "Explorer's Clothing", "quantity": 1 },
+      { "name": "Adventurer's Pack", "quantity": 1 }
+    ],
+    "description": "You have formed a pact with a mysterious entity known as your patron, who grants you magical power through your familiar. This patron might be a powerful fey, a cosmic force, an enigmatic spirit, or some other being of great magical significance. Through your familiar, your patron teaches you powerful hexes and spells, and you channel this borrowed magic to weave curses and enchantments."
+  }
+]

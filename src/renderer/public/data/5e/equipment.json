@@ -1,0 +1,944 @@
+{
+  "weapons": [
+    {
+      "name": "Club",
+      "category": "Simple Melee",
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "weight": 2,
+      "properties": ["Light"],
+      "cost": "1 sp",
+      "description": "A simple bludgeon, light enough to wield in the off hand."
+    },
+    {
+      "name": "Dagger",
+      "category": "Simple Melee",
+      "damage": "1d4",
+      "damageType": "piercing",
+      "weight": 1,
+      "properties": ["Finesse", "Light", "Thrown (20/60)"],
+      "cost": "2 gp",
+      "description": "A versatile short blade usable with Strength or Dexterity, throwable at range."
+    },
+    {
+      "name": "Greatclub",
+      "category": "Simple Melee",
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "weight": 10,
+      "properties": ["Two-handed"],
+      "cost": "2 sp",
+      "description": "A heavy two-handed wooden club dealing significant bludgeoning damage."
+    },
+    {
+      "name": "Handaxe",
+      "category": "Simple Melee",
+      "damage": "1d6",
+      "damageType": "slashing",
+      "weight": 2,
+      "properties": ["Light", "Thrown (20/60)"],
+      "cost": "5 gp",
+      "description": "A light axe suitable for melee or throwing, usable in the off hand."
+    },
+    {
+      "name": "Javelin",
+      "category": "Simple Melee",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": ["Thrown (30/120)"],
+      "cost": "5 sp",
+      "description": "A light throwing spear with good range."
+    },
+    {
+      "name": "Light hammer",
+      "category": "Simple Melee",
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "weight": 2,
+      "properties": ["Light", "Thrown (20/60)"],
+      "cost": "2 gp",
+      "description": "A small hammer usable in melee or thrown, suitable for off-hand use."
+    },
+    {
+      "name": "Mace",
+      "category": "Simple Melee",
+      "damage": "1d6",
+      "damageType": "bludgeoning",
+      "weight": 4,
+      "properties": [],
+      "cost": "5 gp",
+      "description": "A standard one-handed bludgeon favored by clerics."
+    },
+    {
+      "name": "Quarterstaff",
+      "category": "Simple Melee",
+      "damage": "1d6",
+      "damageType": "bludgeoning",
+      "weight": 4,
+      "properties": ["Versatile (1d8)"],
+      "cost": "2 sp",
+      "description": "A versatile wooden staff; deals 1d8 when wielded two-handed."
+    },
+    {
+      "name": "Sickle",
+      "category": "Simple Melee",
+      "damage": "1d4",
+      "damageType": "slashing",
+      "weight": 2,
+      "properties": ["Light"],
+      "cost": "1 gp",
+      "description": "A curved blade for harvesting, light enough for off-hand use."
+    },
+    {
+      "name": "Spear",
+      "category": "Simple Melee",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 3,
+      "properties": ["Thrown (20/60)", "Versatile (1d8)"],
+      "cost": "1 gp",
+      "description": "A throwable polearm; deals 1d8 when wielded two-handed."
+    },
+    {
+      "name": "Light crossbow",
+      "category": "Simple Ranged",
+      "damage": "1d8",
+      "damageType": "piercing",
+      "weight": 5,
+      "properties": ["Ammunition (80/320)", "Loading", "Two-handed"],
+      "cost": "25 gp",
+      "description": "A two-handed crossbow requiring an action to reload. Good range and damage."
+    },
+    {
+      "name": "Dart",
+      "category": "Simple Ranged",
+      "damage": "1d4",
+      "damageType": "piercing",
+      "weight": 0.25,
+      "properties": ["Finesse", "Thrown (20/60)"],
+      "cost": "5 cp",
+      "description": "A small thrown projectile usable with Strength or Dexterity."
+    },
+    {
+      "name": "Shortbow",
+      "category": "Simple Ranged",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": ["Ammunition (80/320)", "Two-handed"],
+      "cost": "25 gp",
+      "description": "A two-handed bow with moderate range, no loading required."
+    },
+    {
+      "name": "Sling",
+      "category": "Simple Ranged",
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "weight": 0,
+      "properties": ["Ammunition (30/120)"],
+      "cost": "1 sp",
+      "description": "A simple ranged weapon using stones or sling bullets as ammunition."
+    },
+    {
+      "name": "Battleaxe",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "slashing",
+      "weight": 4,
+      "properties": ["Versatile (1d10)"],
+      "cost": "10 gp",
+      "description": "A sturdy axe; deals 1d10 when wielded two-handed."
+    },
+    {
+      "name": "Flail",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "weight": 2,
+      "properties": [],
+      "cost": "10 gp",
+      "description": "A spiked ball on a chain, effective against shields."
+    },
+    {
+      "name": "Glaive",
+      "category": "Martial Melee",
+      "damage": "1d10",
+      "damageType": "slashing",
+      "weight": 6,
+      "properties": ["Heavy", "Reach", "Two-handed"],
+      "cost": "20 gp",
+      "description": "A heavy polearm with 10-foot reach. Small creatures have disadvantage."
+    },
+    {
+      "name": "Greataxe",
+      "category": "Martial Melee",
+      "damage": "1d12",
+      "damageType": "slashing",
+      "weight": 7,
+      "properties": ["Heavy", "Two-handed"],
+      "cost": "30 gp",
+      "description": "A massive two-handed axe dealing the highest single-die damage."
+    },
+    {
+      "name": "Greatsword",
+      "category": "Martial Melee",
+      "damage": "2d6",
+      "damageType": "slashing",
+      "weight": 6,
+      "properties": ["Heavy", "Two-handed"],
+      "cost": "50 gp",
+      "description": "A large two-handed sword with the highest average damage among martial weapons."
+    },
+    {
+      "name": "Halberd",
+      "category": "Martial Melee",
+      "damage": "1d10",
+      "damageType": "slashing",
+      "weight": 6,
+      "properties": ["Heavy", "Reach", "Two-handed"],
+      "cost": "20 gp",
+      "description": "An axe-bladed polearm with 10-foot reach."
+    },
+    {
+      "name": "Lance",
+      "category": "Martial Melee",
+      "damage": "1d12",
+      "damageType": "piercing",
+      "weight": 6,
+      "properties": ["Reach", "Special"],
+      "cost": "10 gp",
+      "description": "A mounted weapon with 10-foot reach. Disadvantage against adjacent targets. One-handed while mounted."
+    },
+    {
+      "name": "Longsword",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "slashing",
+      "weight": 3,
+      "properties": ["Versatile (1d10)"],
+      "cost": "15 gp",
+      "description": "A standard martial sword; deals 1d10 when wielded two-handed."
+    },
+    {
+      "name": "Maul",
+      "category": "Martial Melee",
+      "damage": "2d6",
+      "damageType": "bludgeoning",
+      "weight": 10,
+      "properties": ["Heavy", "Two-handed"],
+      "cost": "10 gp",
+      "description": "A massive two-handed hammer with high average bludgeoning damage."
+    },
+    {
+      "name": "Morningstar",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "piercing",
+      "weight": 4,
+      "properties": [],
+      "cost": "15 gp",
+      "description": "A spiked mace dealing piercing damage, no special properties."
+    },
+    {
+      "name": "Pike",
+      "category": "Martial Melee",
+      "damage": "1d10",
+      "damageType": "piercing",
+      "weight": 18,
+      "properties": ["Heavy", "Reach", "Two-handed"],
+      "cost": "5 gp",
+      "description": "A long, heavy spear with 10-foot reach."
+    },
+    {
+      "name": "Rapier",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": ["Finesse"],
+      "cost": "25 gp",
+      "description": "The best one-handed finesse weapon, usable with Strength or Dexterity."
+    },
+    {
+      "name": "Scimitar",
+      "category": "Martial Melee",
+      "damage": "1d6",
+      "damageType": "slashing",
+      "weight": 3,
+      "properties": ["Finesse", "Light"],
+      "cost": "25 gp",
+      "description": "A curved finesse blade, light enough for dual wielding."
+    },
+    {
+      "name": "Shortsword",
+      "category": "Martial Melee",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": ["Finesse", "Light"],
+      "cost": "10 gp",
+      "description": "A light finesse blade ideal for dual wielding with piercing damage."
+    },
+    {
+      "name": "Trident",
+      "category": "Martial Melee",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 4,
+      "properties": ["Thrown (20/60)", "Versatile (1d8)"],
+      "cost": "5 gp",
+      "description": "A three-pronged spear that can be thrown; deals 1d8 two-handed."
+    },
+    {
+      "name": "War pick",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": [],
+      "cost": "5 gp",
+      "description": "A military pick for piercing armor, no special properties."
+    },
+    {
+      "name": "Warhammer",
+      "category": "Martial Melee",
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "weight": 2,
+      "properties": ["Versatile (1d10)"],
+      "cost": "15 gp",
+      "description": "A martial hammer; deals 1d10 when wielded two-handed."
+    },
+    {
+      "name": "Whip",
+      "category": "Martial Melee",
+      "damage": "1d4",
+      "damageType": "slashing",
+      "weight": 3,
+      "properties": ["Finesse", "Reach"],
+      "cost": "2 gp",
+      "description": "A finesse weapon with 10-foot reach but low damage."
+    },
+    {
+      "name": "Blowgun",
+      "category": "Martial Ranged",
+      "damage": "1",
+      "damageType": "piercing",
+      "weight": 1,
+      "properties": ["Ammunition (25/100)", "Loading"],
+      "cost": "10 gp",
+      "description": "A tube for shooting needles, often used with poison. Minimal damage."
+    },
+    {
+      "name": "Hand crossbow",
+      "category": "Martial Ranged",
+      "damage": "1d6",
+      "damageType": "piercing",
+      "weight": 3,
+      "properties": ["Ammunition (30/120)", "Light", "Loading"],
+      "cost": "75 gp",
+      "description": "A one-handed crossbow, light enough for dual wielding. Requires loading."
+    },
+    {
+      "name": "Heavy crossbow",
+      "category": "Martial Ranged",
+      "damage": "1d10",
+      "damageType": "piercing",
+      "weight": 18,
+      "properties": ["Ammunition (100/400)", "Heavy", "Loading", "Two-handed"],
+      "cost": "50 gp",
+      "description": "A powerful two-handed crossbow with excellent range and high damage. Requires loading."
+    },
+    {
+      "name": "Longbow",
+      "category": "Martial Ranged",
+      "damage": "1d8",
+      "damageType": "piercing",
+      "weight": 2,
+      "properties": ["Ammunition (150/600)", "Heavy", "Two-handed"],
+      "cost": "50 gp",
+      "description": "A large two-handed bow with the longest range of any weapon. Small creatures have disadvantage."
+    },
+    {
+      "name": "Net",
+      "category": "Martial Ranged",
+      "damage": "0",
+      "damageType": "none",
+      "weight": 3,
+      "properties": ["Special", "Thrown (5/15)"],
+      "cost": "1 gp",
+      "description": "Restrains a Large or smaller creature on hit. Deals no damage. Target can escape with DC 10 Strength check or by dealing 5 slashing damage to the net (AC 10)."
+    }
+  ],
+  "armor": [
+    {
+      "name": "Padded",
+      "category": "Light Armor",
+      "baseAC": 11,
+      "dexBonus": true,
+      "dexBonusMax": null,
+      "weight": 8,
+      "stealthDisadvantage": true,
+      "cost": "5 gp",
+      "description": "Quilted layers of cloth. Light armor with stealth disadvantage."
+    },
+    {
+      "name": "Leather",
+      "category": "Light Armor",
+      "baseAC": 11,
+      "dexBonus": true,
+      "dexBonusMax": null,
+      "weight": 10,
+      "stealthDisadvantage": false,
+      "cost": "10 gp",
+      "description": "Breastplate and shoulder protectors made of stiffened leather. No stealth penalty."
+    },
+    {
+      "name": "Studded leather",
+      "category": "Light Armor",
+      "baseAC": 12,
+      "dexBonus": true,
+      "dexBonusMax": null,
+      "weight": 13,
+      "stealthDisadvantage": false,
+      "cost": "45 gp",
+      "description": "Leather reinforced with rivets. The best light armor for AC."
+    },
+    {
+      "name": "Hide",
+      "category": "Medium Armor",
+      "baseAC": 12,
+      "dexBonus": true,
+      "dexBonusMax": 2,
+      "weight": 12,
+      "stealthDisadvantage": false,
+      "cost": "10 gp",
+      "description": "Crude armor of thick furs and pelts. No stealth penalty."
+    },
+    {
+      "name": "Chain shirt",
+      "category": "Medium Armor",
+      "baseAC": 13,
+      "dexBonus": true,
+      "dexBonusMax": 2,
+      "weight": 20,
+      "stealthDisadvantage": false,
+      "cost": "50 gp",
+      "description": "Interlocking metal rings worn under clothing. Good AC without stealth penalty."
+    },
+    {
+      "name": "Scale mail",
+      "category": "Medium Armor",
+      "baseAC": 14,
+      "dexBonus": true,
+      "dexBonusMax": 2,
+      "weight": 45,
+      "stealthDisadvantage": true,
+      "cost": "50 gp",
+      "description": "Overlapping metal scales on leather. Stealth disadvantage."
+    },
+    {
+      "name": "Breastplate",
+      "category": "Medium Armor",
+      "baseAC": 14,
+      "dexBonus": true,
+      "dexBonusMax": 2,
+      "weight": 20,
+      "stealthDisadvantage": false,
+      "cost": "400 gp",
+      "description": "A fitted metal chest piece. Same AC as scale mail without stealth penalty."
+    },
+    {
+      "name": "Half plate",
+      "category": "Medium Armor",
+      "baseAC": 15,
+      "dexBonus": true,
+      "dexBonusMax": 2,
+      "weight": 40,
+      "stealthDisadvantage": true,
+      "cost": "750 gp",
+      "description": "Metal plates covering most of the body. Best medium armor AC. Stealth disadvantage."
+    },
+    {
+      "name": "Ring mail",
+      "category": "Heavy Armor",
+      "baseAC": 14,
+      "dexBonus": false,
+      "dexBonusMax": 0,
+      "weight": 40,
+      "stealthDisadvantage": true,
+      "cost": "30 gp",
+      "description": "Leather with heavy metal rings sewn in. Entry-level heavy armor."
+    },
+    {
+      "name": "Chain mail",
+      "category": "Heavy Armor",
+      "baseAC": 16,
+      "dexBonus": false,
+      "dexBonusMax": 0,
+      "weight": 55,
+      "stealthDisadvantage": true,
+      "cost": "75 gp",
+      "strengthRequirement": 13,
+      "description": "Interlocking metal rings. Requires Str 13 or speed is reduced by 10 ft."
+    },
+    {
+      "name": "Splint",
+      "category": "Heavy Armor",
+      "baseAC": 17,
+      "dexBonus": false,
+      "dexBonusMax": 0,
+      "weight": 60,
+      "stealthDisadvantage": true,
+      "cost": "200 gp",
+      "strengthRequirement": 15,
+      "description": "Vertical metal strips riveted to backing. Requires Str 15 or speed is reduced by 10 ft."
+    },
+    {
+      "name": "Plate",
+      "category": "Heavy Armor",
+      "baseAC": 18,
+      "dexBonus": false,
+      "dexBonusMax": 0,
+      "weight": 65,
+      "stealthDisadvantage": true,
+      "cost": "1500 gp",
+      "strengthRequirement": 15,
+      "description": "Full plate armor offering the highest AC. Requires Str 15 or speed is reduced by 10 ft."
+    },
+    {
+      "name": "Shield",
+      "category": "Shield",
+      "baseAC": 2,
+      "dexBonus": false,
+      "dexBonusMax": 0,
+      "weight": 6,
+      "stealthDisadvantage": false,
+      "cost": "10 gp",
+      "description": "Held in one hand. Grants +2 AC. Can be donned or doffed as an action."
+    }
+  ],
+  "gear": [
+    {
+      "name": "Abacus",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "2 gp",
+      "description": "A standard calculating tool."
+    },
+    {
+      "name": "Backpack",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "2 gp",
+      "description": "Holds up to 30 pounds of gear, not exceeding 1 cubic foot."
+    },
+    {
+      "name": "Bedroll",
+      "category": "Adventuring Gear",
+      "weight": 7,
+      "cost": "1 gp",
+      "description": "A portable sleeping pad."
+    },
+    {
+      "name": "Bell",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A small metal bell."
+    },
+    {
+      "name": "Blanket",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "5 sp",
+      "description": "A heavy woolen blanket."
+    },
+    {
+      "name": "Caltrops (bag of 20)",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "1 gp",
+      "description": "Scattered on ground to slow pursuers. Creatures entering the area must succeed on DC 15 Dexterity save or take 1 piercing damage and stop moving."
+    },
+    {
+      "name": "Candle",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 cp",
+      "description": "Sheds bright light in a 5-foot radius and dim light for an additional 5 feet for 1 hour."
+    },
+    {
+      "name": "Chain (10 feet)",
+      "category": "Adventuring Gear",
+      "weight": 10,
+      "cost": "5 gp",
+      "description": "Has 10 hit points. Can be burst with a DC 20 Strength check."
+    },
+    {
+      "name": "Chalk (1 piece)",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 cp",
+      "description": "A stick of chalk for marking surfaces."
+    },
+    {
+      "name": "Climber's kit",
+      "category": "Adventuring Gear",
+      "weight": 12,
+      "cost": "25 gp",
+      "description": "Includes pitons, boot tips, gloves, and a harness. Lets you anchor yourself when climbing."
+    },
+    {
+      "name": "Component pouch",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "25 gp",
+      "description": "A small leather belt pouch with compartments for material components and other special items for spellcasting."
+    },
+    {
+      "name": "Crowbar",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "2 gp",
+      "description": "Grants advantage on Strength checks where leverage can be applied."
+    },
+    {
+      "name": "Flask",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "2 cp",
+      "description": "A glass or metal container holding about 1 pint of liquid."
+    },
+    {
+      "name": "Grappling hook",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "2 gp",
+      "description": "An iron hook used with rope for climbing."
+    },
+    {
+      "name": "Hammer",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "1 gp",
+      "description": "A standard hammer, useful for driving pitons."
+    },
+    {
+      "name": "Healer's kit",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "5 gp",
+      "description": "10 uses. Stabilize a dying creature without a Wisdom (Medicine) check."
+    },
+    {
+      "name": "Holy symbol",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "5 gp",
+      "description": "A representation of a god or pantheon, used as a spellcasting focus for divine casters."
+    },
+    {
+      "name": "Hourglass",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "25 gp",
+      "description": "Measures the passage of time in increments."
+    },
+    {
+      "name": "Ink (1 ounce bottle)",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "10 gp",
+      "description": "A small bottle of black ink."
+    },
+    {
+      "name": "Ink pen",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "2 cp",
+      "description": "A pen for writing with ink."
+    },
+    {
+      "name": "Lantern, bullseye",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "10 gp",
+      "description": "Casts bright light in a 60-foot cone and dim light for an additional 60 feet. Burns for 6 hours on a flask of oil."
+    },
+    {
+      "name": "Lantern, hooded",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "5 gp",
+      "description": "Casts bright light in a 30-foot radius and dim light for an additional 30 feet. Burns for 6 hours on a flask of oil."
+    },
+    {
+      "name": "Lock",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A basic lock with a key. DC 15 Dexterity check with thieves' tools to pick."
+    },
+    {
+      "name": "Manacles",
+      "category": "Adventuring Gear",
+      "weight": 6,
+      "cost": "2 gp",
+      "description": "Bind a creature. DC 20 Strength check or DC 15 Dexterity check with thieves' tools to escape."
+    },
+    {
+      "name": "Mess kit",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "2 sp",
+      "description": "A tin box containing a cup and simple cutlery. The box clamps together and can be used as a cooking pan."
+    },
+    {
+      "name": "Mirror, steel",
+      "category": "Adventuring Gear",
+      "weight": 0.5,
+      "cost": "5 gp",
+      "description": "A small steel mirror for personal use or looking around corners."
+    },
+    {
+      "name": "Oil (flask)",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 sp",
+      "description": "Burns for 2 rounds if lit and thrown (5-foot splash, 5 fire damage). Fuels lanterns for 6 hours."
+    },
+    {
+      "name": "Paper (one sheet)",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "2 sp",
+      "description": "A single sheet of paper."
+    },
+    {
+      "name": "Piton",
+      "category": "Adventuring Gear",
+      "weight": 0.25,
+      "cost": "5 cp",
+      "description": "An iron spike for anchoring rope when climbing."
+    },
+    {
+      "name": "Potion of healing",
+      "category": "Adventuring Gear",
+      "weight": 0.5,
+      "cost": "50 gp",
+      "description": "Regain 2d4 + 2 hit points when you drink this potion."
+    },
+    {
+      "name": "Pouch",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "5 sp",
+      "description": "A cloth or leather belt pouch holding up to 6 pounds or 1/5 cubic foot."
+    },
+    {
+      "name": "Quiver",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 gp",
+      "description": "Holds up to 20 arrows."
+    },
+    {
+      "name": "Rations (1 day)",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "5 sp",
+      "description": "Dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+    },
+    {
+      "name": "Rope, hempen (50 feet)",
+      "category": "Adventuring Gear",
+      "weight": 10,
+      "cost": "1 gp",
+      "description": "Has 2 hit points. Can be burst with a DC 17 Strength check."
+    },
+    {
+      "name": "Rope, silk (50 feet)",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "10 gp",
+      "description": "Has 2 hit points. Can be burst with a DC 17 Strength check. Lighter and finer than hempen rope."
+    },
+    {
+      "name": "Sack",
+      "category": "Adventuring Gear",
+      "weight": 0.5,
+      "cost": "1 cp",
+      "description": "A cloth sack holding up to 30 pounds or 1 cubic foot."
+    },
+    {
+      "name": "Sealing wax",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "5 sp",
+      "description": "Wax used to seal letters and documents."
+    },
+    {
+      "name": "Shovel",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "2 gp",
+      "description": "A standard digging shovel."
+    },
+    {
+      "name": "Signal whistle",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "5 cp",
+      "description": "A small whistle for signaling."
+    },
+    {
+      "name": "Spellbook",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "50 gp",
+      "description": "Essential for wizards. 100 blank vellum pages suitable for recording spells."
+    },
+    {
+      "name": "Spyglass",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1000 gp",
+      "description": "Objects viewed through the spyglass are magnified to twice their size."
+    },
+    {
+      "name": "Tent, two-person",
+      "category": "Adventuring Gear",
+      "weight": 20,
+      "cost": "2 gp",
+      "description": "A simple portable canvas shelter for two."
+    },
+    {
+      "name": "Tinderbox",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "5 sp",
+      "description": "Lights a torch or anything else with exposed fuel as an action. Lighting any other fire takes 1 minute."
+    },
+    {
+      "name": "Torch",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 cp",
+      "description": "Burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. Deals 1 fire damage if used as an improvised weapon."
+    },
+    {
+      "name": "Vial",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A small glass container holding up to 4 ounces of liquid."
+    },
+    {
+      "name": "Waterskin",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "2 sp",
+      "description": "Holds up to 4 pints of liquid. Full weight listed; empty weighs 0 pounds."
+    },
+    {
+      "name": "Whetstone",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 cp",
+      "description": "A small stone used for sharpening blades."
+    },
+    {
+      "name": "Arcane focus (crystal)",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A crystal used as a spellcasting focus for arcane casters."
+    },
+    {
+      "name": "Arcane focus (orb)",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "20 gp",
+      "description": "An orb used as a spellcasting focus for arcane casters."
+    },
+    {
+      "name": "Arcane focus (rod)",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "10 gp",
+      "description": "A rod used as a spellcasting focus for arcane casters."
+    },
+    {
+      "name": "Arcane focus (staff)",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "5 gp",
+      "description": "A staff used as a spellcasting focus for arcane casters."
+    },
+    {
+      "name": "Arcane focus (wand)",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A wand used as a spellcasting focus for arcane casters."
+    },
+    {
+      "name": "Druidic focus (sprig of mistletoe)",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A sprig of mistletoe used as a spellcasting focus for druids."
+    },
+    {
+      "name": "Druidic focus (totem)",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A carved totem used as a spellcasting focus for druids."
+    },
+    {
+      "name": "Druidic focus (wooden staff)",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "5 gp",
+      "description": "A wooden staff used as a spellcasting focus for druids."
+    },
+    {
+      "name": "Druidic focus (yew wand)",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A yew wand used as a spellcasting focus for druids."
+    },
+    {
+      "name": "Arrows (20)",
+      "category": "Ammunition",
+      "weight": 1,
+      "cost": "1 gp",
+      "description": "Standard arrows for a shortbow or longbow."
+    },
+    {
+      "name": "Crossbow bolts (20)",
+      "category": "Ammunition",
+      "weight": 1.5,
+      "cost": "1 gp",
+      "description": "Standard bolts for a crossbow."
+    },
+    {
+      "name": "Sling bullets (20)",
+      "category": "Ammunition",
+      "weight": 1.5,
+      "cost": "4 cp",
+      "description": "Lead bullets for a sling."
+    },
+    {
+      "name": "Blowgun needles (50)",
+      "category": "Ammunition",
+      "weight": 1,
+      "cost": "1 gp",
+      "description": "Thin needles for a blowgun."
+    }
+  ]
+}

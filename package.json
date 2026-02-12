@@ -1,0 +1,49 @@
+{
+  "name": "dnd-vtt",
+  "version": "2.1.0",
+  "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "build:win": "npm run build && electron-builder --win"
+  },
+  "keywords": [
+    "dnd",
+    "virtual-tabletop",
+    "electron"
+  ],
+  "author": {
+    "name": "D&D Virtual Tabletop"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
+    "electron-vite": "^5.0.0",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@pixi/react": "^8.0.5",
+    "peerjs": "^1.5.5",
+    "pixi.js": "^8.16.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "^7.13.0",
+    "uuid": "^13.0.0",
+    "zustand": "^5.0.11"
+  }
+}

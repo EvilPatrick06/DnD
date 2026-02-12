@@ -1,0 +1,225 @@
+[
+  {
+    "id": "path-of-the-berserker",
+    "name": "Path of the Berserker",
+    "class": "barbarian",
+    "level": 3,
+    "description": "For some barbarians, rage is a means to an end — that end being violence. The Path of the Berserker is a path of untrammeled fury, slick with blood. As you enter the berserker's rage, you thrill in the chaos of battle, heedless of your own health or well-being.",
+    "features": [
+      {
+        "name": "Frenzy",
+        "level": 3,
+        "description": "Starting when you choose this path at 3rd level, you can go into a frenzy when you rage. If you do so, for the duration of your rage you can make a single melee weapon attack as a bonus action on each of your turns after this one. When your rage ends, you suffer one level of exhaustion."
+      }
+    ]
+  },
+  {
+    "id": "college-of-lore",
+    "name": "College of Lore",
+    "class": "bard",
+    "level": 3,
+    "description": "Bards of the College of Lore know something about most things, collecting bits of knowledge from sources as diverse as scholarly tomes and peasant tales. Whether singing folk ballads in taverns or elaborate compositions in royal courts, these bards use their gifts to hold audiences spellbound.",
+    "features": [
+      {
+        "name": "Bonus Proficiencies",
+        "level": 3,
+        "description": "When you join the College of Lore at 3rd level, you gain proficiency with three skills of your choice."
+      },
+      {
+        "name": "Cutting Words",
+        "level": 3,
+        "description": "Also at 3rd level, you learn how to use your wit to distract, confuse, and otherwise sap the confidence and competence of others. When a creature that you can see within 60 feet of you makes an attack roll, an ability check, or a damage roll, you can use your reaction to expend one of your uses of Bardic Inspiration, rolling a Bardic Inspiration die and subtracting the number rolled from the creature's roll. You can choose to use this feature after the creature makes its roll, but before the DM determines whether the attack roll or ability check succeeds or fails, or before the creature deals its damage. The creature is immune if it can't hear you or if it's immune to being charmed."
+      }
+    ]
+  },
+  {
+    "id": "life-domain",
+    "name": "Life Domain",
+    "class": "cleric",
+    "level": 1,
+    "description": "The Life domain focuses on the vibrant positive energy — one of the fundamental forces of the universe — that sustains all life. The gods of life promote vitality and health through healing the sick and wounded, caring for those in need, and driving away the forces of death and undeath.",
+    "features": [
+      {
+        "name": "Bonus Proficiency",
+        "level": 1,
+        "description": "When you choose this domain at 1st level, you gain proficiency with heavy armor."
+      },
+      {
+        "name": "Disciple of Life",
+        "level": 1,
+        "description": "Also starting at 1st level, your healing spells are more effective. Whenever you use a spell of 1st level or higher to restore hit points to a creature, the creature regains additional hit points equal to 2 + the spell's level."
+      },
+      {
+        "name": "Life Domain Spells",
+        "level": 1,
+        "description": "You gain domain spells at the cleric levels listed: 1st level — Bless, Cure Wounds; 3rd level — Lesser Restoration, Spiritual Weapon; 5th level — Beacon of Hope, Revivify; 7th level — Death Ward, Guardian of Faith; 9th level — Mass Cure Wounds, Raise Dead."
+      }
+    ]
+  },
+  {
+    "id": "circle-of-the-land",
+    "name": "Circle of the Land",
+    "class": "druid",
+    "level": 2,
+    "description": "The Circle of the Land is made up of mystics and sages who safeguard ancient knowledge and rites through a vast oral tradition. These druids meet within sacred circles of trees or standing stones to whisper primal secrets in Druidic. The circle's wisest members preside as the chief priests of communities that hold to the Old Faith and serve as advisors to the rulers of those folk.",
+    "features": [
+      {
+        "name": "Bonus Cantrip",
+        "level": 2,
+        "description": "When you choose this circle at 2nd level, you learn one additional druid cantrip of your choice."
+      },
+      {
+        "name": "Natural Recovery",
+        "level": 2,
+        "description": "Starting at 2nd level, you can regain some of your magical energy by sitting in meditation and communing with nature. During a short rest, you choose expended spell slots to recover. The spell slots can have a combined level that is equal to or less than half your druid level (rounded up), and none of the slots can be 6th level or higher. You can't use this feature again until you finish a long rest."
+      },
+      {
+        "name": "Circle Spells",
+        "level": 2,
+        "description": "Your mystical connection to the land infuses you with the ability to cast certain spells. At 3rd, 5th, 7th, and 9th level you gain access to circle spells connected to the land where you became a druid. Choose that land — arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark — and consult the associated list of spells. Once you gain access to a circle spell, you always have it prepared, and it doesn't count against the number of spells you can prepare each day."
+      }
+    ]
+  },
+  {
+    "id": "champion",
+    "name": "Champion",
+    "class": "fighter",
+    "level": 3,
+    "description": "The archetypal Champion focuses on the development of raw physical power honed to deadly perfection. Those who model themselves on this archetype combine rigorous training with physical excellence to deal devastating blows.",
+    "features": [
+      {
+        "name": "Improved Critical",
+        "level": 3,
+        "description": "Beginning when you choose this archetype at 3rd level, your weapon attacks score a critical hit on a roll of 19 or 20."
+      }
+    ]
+  },
+  {
+    "id": "way-of-the-open-hand",
+    "name": "Way of the Open Hand",
+    "class": "monk",
+    "level": 3,
+    "description": "Monks of the Way of the Open Hand are the ultimate masters of martial arts combat, whether armed or unarmed. They learn techniques to push and trip their opponents, manipulate ki to heal damage to their bodies, and practice advanced meditation that can protect them from harm.",
+    "features": [
+      {
+        "name": "Open Hand Technique",
+        "level": 3,
+        "description": "Starting when you choose this tradition at 3rd level, you can manipulate your enemy's ki when you harness your own. Whenever you hit a creature with one of the attacks granted by your Flurry of Blows, you can impose one of the following effects on that target: It must succeed on a Dexterity saving throw or be knocked prone. It must make a Strength saving throw. If it fails, you can push it up to 15 feet away from you. It can't take reactions until the end of your next turn."
+      }
+    ]
+  },
+  {
+    "id": "oath-of-devotion",
+    "name": "Oath of Devotion",
+    "class": "paladin",
+    "level": 3,
+    "description": "The Oath of Devotion binds a paladin to the loftiest ideals of justice, virtue, and order. Sometimes called cavaliers, white knights, or holy warriors, these paladins meet the ideal of the knight in shining armor, acting with honor in pursuit of justice and the greater good.",
+    "features": [
+      {
+        "name": "Oath Spells",
+        "level": 3,
+        "description": "You gain oath spells at the paladin levels listed: 3rd level — Protection from Evil and Good, Sanctuary; 5th level — Lesser Restoration, Zone of Truth; 9th level — Beacon of Hope, Dispel Magic; 13th level — Freedom of Movement, Guardian of Faith; 17th level — Commune, Flame Strike."
+      },
+      {
+        "name": "Channel Divinity: Sacred Weapon",
+        "level": 3,
+        "description": "As an action, you can imbue one weapon that you are holding with positive energy, using your Channel Divinity. For 1 minute, you add your Charisma modifier to attack rolls made with that weapon (with a minimum bonus of +1). The weapon also emits bright light in a 20-foot radius and dim light 20 feet beyond that. If the weapon is not already magical, it becomes magical for the duration. You can end this effect on your turn as part of any other action. If you are no longer holding or carrying this weapon, or if you fall unconscious, this effect ends."
+      },
+      {
+        "name": "Channel Divinity: Turn the Unholy",
+        "level": 3,
+        "description": "As an action, you present your holy symbol and speak a prayer censuring fiends and undead, using your Channel Divinity. Each fiend or undead that can see or hear you within 30 feet of you must make a Wisdom saving throw. If the creature fails its saving throw, it is turned for 1 minute or until it takes damage. A turned creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If there's nowhere to move, the creature can use the Dodge action."
+      }
+    ]
+  },
+  {
+    "id": "hunter",
+    "name": "Hunter",
+    "class": "ranger",
+    "level": 3,
+    "description": "Emulating the Hunter archetype means accepting your place as a bulwark between civilization and the terrors of the wilderness. As you walk the Hunter's path, you learn specialized techniques for fighting the threats you face, from rampaging ogres and hordes of orcs to towering giants and terrifying dragons.",
+    "features": [
+      {
+        "name": "Hunter's Prey",
+        "level": 3,
+        "description": "At 3rd level, you gain one of the following features of your choice. Colossus Slayer: Your tenacity can wear down the most potent foes. When you hit a creature with a weapon attack, the creature takes an extra 1d8 damage if it's below its hit point maximum. You can deal this extra damage only once per turn. Giant Killer: When a Large or larger creature within 5 feet of you hits or misses you with an attack, you can use your reaction to attack that creature immediately after its attack, provided that you can see the creature. Horde Breaker: Once on each of your turns when you make a weapon attack, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target and within range of your weapon."
+      }
+    ]
+  },
+  {
+    "id": "thief",
+    "name": "Thief",
+    "class": "rogue",
+    "level": 3,
+    "description": "You hone your skills in the larcenous arts. Burglars, bandits, cutpurses, and other criminals typically follow this archetype, but so do rogues who prefer to think of themselves as professional treasure seekers, explorers, delvers, and investigators.",
+    "features": [
+      {
+        "name": "Fast Hands",
+        "level": 3,
+        "description": "Starting at 3rd level, you can use the bonus action granted by your Cunning Action to make a Dexterity (Sleight of Hand) check, use your thieves' tools to disarm a trap or open a lock, or take the Use an Object action."
+      },
+      {
+        "name": "Second-Story Work",
+        "level": 3,
+        "description": "When you choose this archetype at 3rd level, you gain the ability to climb faster than normal; climbing no longer costs you extra movement. In addition, when you make a running jump, the distance you cover increases by a number of feet equal to your Dexterity modifier."
+      }
+    ]
+  },
+  {
+    "id": "draconic-bloodline",
+    "name": "Draconic Bloodline",
+    "class": "sorcerer",
+    "level": 1,
+    "description": "Your innate magic comes from draconic magic that was mingled with your blood or that of your ancestors. Most often, sorcerers with this origin trace their descent back to a mighty sorcerer of ancient times who made a bargain with a dragon or who might even have claimed a dragon parent.",
+    "features": [
+      {
+        "name": "Dragon Ancestor",
+        "level": 1,
+        "description": "At 1st level, you choose one type of dragon as your ancestor. The damage type associated with each dragon is used by features you gain later. You can speak, read, and write Draconic. Additionally, whenever you make a Charisma check when interacting with dragons, your proficiency bonus is doubled if it applies to the check."
+      },
+      {
+        "name": "Draconic Resilience",
+        "level": 1,
+        "description": "As magic flows through your body, it causes physical traits of your dragon ancestors to emerge. At 1st level, your hit point maximum increases by 1 and increases by 1 again whenever you gain a level in this class. Additionally, parts of your skin are covered by a thin sheen of dragon-like scales. When you aren't wearing armor, your AC equals 13 + your Dexterity modifier."
+      }
+    ]
+  },
+  {
+    "id": "the-fiend",
+    "name": "The Fiend",
+    "class": "warlock",
+    "level": 1,
+    "description": "You have made a pact with a fiend from the lower planes of existence, a being whose aims are evil, even if you strive against those aims. Such beings desire the corruption or destruction of all things, ultimately including you.",
+    "features": [
+      {
+        "name": "Expanded Spell List",
+        "level": 1,
+        "description": "The Fiend lets you choose from an expanded list of spells when you learn a warlock spell. The following spells are added to the warlock spell list for you: 1st level — Burning Hands, Command; 2nd level — Blindness/Deafness, Scorching Ray; 3rd level — Fireball, Stinking Cloud; 4th level — Fire Shield, Wall of Fire; 5th level — Flame Strike, Hallow."
+      },
+      {
+        "name": "Dark One's Blessing",
+        "level": 1,
+        "description": "Starting at 1st level, when you reduce a hostile creature to 0 hit points, you gain temporary hit points equal to your Charisma modifier + your warlock level (minimum of 1)."
+      }
+    ]
+  },
+  {
+    "id": "school-of-evocation",
+    "name": "School of Evocation",
+    "class": "wizard",
+    "level": 2,
+    "description": "You focus your study on magic that creates powerful elemental effects such as bitter cold, searing flame, rolling thunder, crackling lightning, and burning acid. Some evokers find employment in military forces, serving as artillery to blast enemy armies from afar. Others use their spectacular power to protect the weak, while some seek their own gain as bandits, adventurers, or aspiring tyrants.",
+    "features": [
+      {
+        "name": "Evocation Savant",
+        "level": 2,
+        "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy an evocation spell into your spellbook is halved."
+      },
+      {
+        "name": "Sculpt Spells",
+        "level": 2,
+        "description": "Beginning at 2nd level, you can create pockets of relative safety within the effects of your evocation spells. When you cast an evocation spell that affects other creatures that you can see, you can choose a number of them equal to 1 + the spell's level. The chosen creatures automatically succeed on their saving throws against the spell, and they take no damage if they would normally take half damage on a successful save."
+      }
+    ]
+  }
+]

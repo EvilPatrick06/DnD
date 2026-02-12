@@ -1,0 +1,494 @@
+[
+  {
+    "id": "alchemist-dedication",
+    "name": "Alchemist Dedication",
+    "type": "multiclass",
+    "prerequisites": "Intelligence 14",
+    "description": "You put your alchemical knowledge to use, gaining access to basic alchemy and the ability to craft alchemical items.",
+    "dedicationFeat": {
+      "id": "alchemist-dedication-feat",
+      "name": "Alchemist Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in Crafting and gain the Alchemical Crafting skill feat. You gain the alchemist's infused reagents class feature, gaining a number of batches of infused reagents equal to your level. You also gain a formula book with 4 common 1st-level alchemical formulas.",
+      "prerequisites": "Intelligence 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-concoction",
+        "name": "Basic Concoction",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level alchemist feat of your choice.",
+        "prerequisites": "Alchemist Dedication"
+      },
+      {
+        "id": "advanced-concoction",
+        "name": "Advanced Concoction",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one alchemist feat of your choice. For the purpose of meeting its prerequisites, your alchemist level is equal to half your character level.",
+        "prerequisites": "Basic Concoction"
+      },
+      {
+        "id": "expert-alchemy",
+        "name": "Expert Alchemy",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "Your proficiency rank for Crafting increases to expert, and you can create alchemical items up to your level - 3 (instead of your level - 5).",
+        "prerequisites": "Alchemist Dedication"
+      }
+    ]
+  },
+  {
+    "id": "barbarian-dedication",
+    "name": "Barbarian Dedication",
+    "type": "multiclass",
+    "prerequisites": "Strength 14, Constitution 12",
+    "description": "You channel your inner fury, gaining the barbarian's rage and combat prowess.",
+    "dedicationFeat": {
+      "id": "barbarian-dedication-feat",
+      "name": "Barbarian Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in Athletics and gain the Rage action. You can Rage as the barbarian class feature, gaining a +2 bonus to damage with melee Strikes and taking a -1 penalty to AC. You can use this ability once per day, and your rage lasts for 3 rounds.",
+      "prerequisites": "Strength 14, Constitution 12"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-fury",
+        "name": "Basic Fury",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level barbarian feat of your choice.",
+        "prerequisites": "Barbarian Dedication"
+      },
+      {
+        "id": "advanced-fury",
+        "name": "Advanced Fury",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one barbarian feat of your choice. For the purpose of meeting its prerequisites, your barbarian level is equal to half your character level.",
+        "prerequisites": "Basic Fury"
+      },
+      {
+        "id": "instinct-ability",
+        "name": "Instinct Ability",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain the instinct ability for a barbarian instinct of your choice. If the instinct ability requires a specific weapon, you're trained in that weapon.",
+        "prerequisites": "Barbarian Dedication"
+      }
+    ]
+  },
+  {
+    "id": "bard-dedication",
+    "name": "Bard Dedication",
+    "type": "multiclass",
+    "prerequisites": "Charisma 14",
+    "description": "You gain access to occult spellcasting and the bard's muse-inspired performances.",
+    "dedicationFeat": {
+      "id": "bard-dedication-feat",
+      "name": "Bard Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You cast spells like a bard, gaining a spell repertoire with two common cantrips from the occult spell list. You're trained in spell attack rolls and spell DCs for occult spells. Your key spellcasting ability is Charisma. You become trained in Occultism and Performance.",
+      "prerequisites": "Charisma 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-bard-spellcasting",
+        "name": "Basic Bard Spellcasting",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the basic spellcasting benefits for bard. At 4th level you gain a 1st-level spell slot.",
+        "prerequisites": "Bard Dedication"
+      },
+      {
+        "id": "basic-muse-feat",
+        "name": "Basic Muse's Whispers",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level bard feat of your choice.",
+        "prerequisites": "Bard Dedication"
+      },
+      {
+        "id": "inspire-courage",
+        "name": "Inspire Courage",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain the Inspire Courage composition cantrip, which grants allies within 60 feet a +1 status bonus to attack rolls, damage rolls, and saves against fear effects for 1 round.",
+        "prerequisites": "Bard Dedication"
+      }
+    ]
+  },
+  {
+    "id": "champion-dedication",
+    "name": "Champion Dedication",
+    "type": "multiclass",
+    "prerequisites": "Strength 14, Charisma 14",
+    "description": "You follow a deity and champion their cause, gaining divine protection and the ability to shield your allies.",
+    "dedicationFeat": {
+      "id": "champion-dedication-feat",
+      "name": "Champion Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "Choose a deity and cause as a champion would. You become trained in light armor, medium armor, and the Religion skill. You gain the champion's reaction associated with your cause (such as Retributive Strike for paladins).",
+      "prerequisites": "Strength 14, Charisma 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-devotion",
+        "name": "Basic Devotion",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level champion feat of your choice.",
+        "prerequisites": "Champion Dedication"
+      },
+      {
+        "id": "champion-resiliency",
+        "name": "Champion Resiliency",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain 3 additional Hit Points for each champion dedication feat you have. As you continue your champion training, you gain additional Hit Points.",
+        "prerequisites": "Champion Dedication"
+      },
+      {
+        "id": "healing-touch",
+        "name": "Healing Touch",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain the devotion spell lay on hands. It costs 1 Focus Point to cast. You gain a focus pool of 1 Focus Point.",
+        "prerequisites": "Champion Dedication"
+      }
+    ]
+  },
+  {
+    "id": "cleric-dedication",
+    "name": "Cleric Dedication",
+    "type": "multiclass",
+    "prerequisites": "Wisdom 14",
+    "description": "You embrace your deity's divine power, gaining access to divine spellcasting and the cleric's font of healing or harm.",
+    "dedicationFeat": {
+      "id": "cleric-dedication-feat",
+      "name": "Cleric Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You cast spells like a cleric, gaining a spell repertoire with two common cantrips from the divine spell list. You're trained in spell attack rolls and spell DCs for divine spells. Your key spellcasting ability is Wisdom. You become trained in Religion.",
+      "prerequisites": "Wisdom 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-cleric-spellcasting",
+        "name": "Basic Cleric Spellcasting",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the basic spellcasting benefits for cleric. At 4th level you gain a 1st-level spell slot.",
+        "prerequisites": "Cleric Dedication"
+      },
+      {
+        "id": "basic-dogma",
+        "name": "Basic Dogma",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level cleric feat of your choice.",
+        "prerequisites": "Cleric Dedication"
+      },
+      {
+        "id": "divine-breadth",
+        "name": "Divine Breadth",
+        "level": 8,
+        "traits": ["archetype"],
+        "description": "You can cast more divine spells each day. Increase the spell slots you gain from cleric archetype feats by 1 for each spell level other than your two highest spell levels.",
+        "prerequisites": "Basic Cleric Spellcasting"
+      }
+    ]
+  },
+  {
+    "id": "druid-dedication",
+    "name": "Druid Dedication",
+    "type": "multiclass",
+    "prerequisites": "Wisdom 14",
+    "description": "You attune to the natural world and gain primal spellcasting, following one of the druidic orders.",
+    "dedicationFeat": {
+      "id": "druid-dedication-feat",
+      "name": "Druid Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You cast spells like a druid, gaining a spell repertoire with two common cantrips from the primal spell list. You're trained in spell attack rolls and spell DCs for primal spells. Your key spellcasting ability is Wisdom. You become trained in Nature and gain the Druidic language and a druidic order.",
+      "prerequisites": "Wisdom 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-druid-spellcasting",
+        "name": "Basic Druid Spellcasting",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the basic spellcasting benefits for druid. At 4th level you gain a 1st-level spell slot.",
+        "prerequisites": "Druid Dedication"
+      },
+      {
+        "id": "basic-wilding",
+        "name": "Basic Wilding",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level druid feat of your choice.",
+        "prerequisites": "Druid Dedication"
+      },
+      {
+        "id": "order-spell",
+        "name": "Order Spell",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain the initial order spell from your druidic order. If you don't already have one, you gain a focus pool of 1 Focus Point.",
+        "prerequisites": "Druid Dedication"
+      }
+    ]
+  },
+  {
+    "id": "fighter-dedication",
+    "name": "Fighter Dedication",
+    "type": "multiclass",
+    "prerequisites": "Strength 14 or Dexterity 14",
+    "description": "You train in the ways of martial combat, gaining proficiency with weapons and the fighter's combat techniques.",
+    "dedicationFeat": {
+      "id": "fighter-dedication-feat",
+      "name": "Fighter Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in all martial weapons. You become trained in your choice of Acrobatics or Athletics, and you gain the Attack of Opportunity reaction.",
+      "prerequisites": "Strength 14 or Dexterity 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-maneuver",
+        "name": "Basic Maneuver",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level fighter feat of your choice.",
+        "prerequisites": "Fighter Dedication"
+      },
+      {
+        "id": "advanced-maneuver",
+        "name": "Advanced Maneuver",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one fighter feat of your choice. For the purpose of meeting its prerequisites, your fighter level is equal to half your character level.",
+        "prerequisites": "Basic Maneuver"
+      },
+      {
+        "id": "fighter-resiliency",
+        "name": "Fighter Resiliency",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain 3 additional Hit Points for each fighter dedication feat you have. As you continue your fighter training, you gain additional Hit Points.",
+        "prerequisites": "Fighter Dedication"
+      }
+    ]
+  },
+  {
+    "id": "monk-dedication",
+    "name": "Monk Dedication",
+    "type": "multiclass",
+    "prerequisites": "Strength 14 or Dexterity 14",
+    "description": "You study martial arts, gaining the monk's unarmed combat techniques and inner focus.",
+    "dedicationFeat": {
+      "id": "monk-dedication-feat",
+      "name": "Monk Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in unarmed attacks and gain the Flurry of Blows action. You can use Flurry of Blows to make two unarmed Strikes using one action. You become trained in your choice of Acrobatics or Athletics.",
+      "prerequisites": "Strength 14 or Dexterity 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-kata",
+        "name": "Basic Kata",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level monk feat of your choice.",
+        "prerequisites": "Monk Dedication"
+      },
+      {
+        "id": "advanced-kata",
+        "name": "Advanced Kata",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one monk feat of your choice. For the purpose of meeting its prerequisites, your monk level is equal to half your character level.",
+        "prerequisites": "Basic Kata"
+      },
+      {
+        "id": "monk-resiliency",
+        "name": "Monk Resiliency",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain 3 additional Hit Points for each monk dedication feat you have. As you continue your monk training, you gain additional Hit Points.",
+        "prerequisites": "Monk Dedication"
+      }
+    ]
+  },
+  {
+    "id": "ranger-dedication",
+    "name": "Ranger Dedication",
+    "type": "multiclass",
+    "prerequisites": "Dexterity 14",
+    "description": "You adopt the ways of a ranger, learning to track prey and fight with precision in the wild.",
+    "dedicationFeat": {
+      "id": "ranger-dedication-feat",
+      "name": "Ranger Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in Survival and gain the Hunt Prey action. You can use Hunt Prey to designate a creature you can see or track as your prey. You gain a +2 circumstance bonus to Perception checks to Seek your prey and to Survival checks to Track your prey.",
+      "prerequisites": "Dexterity 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-hunter-trick",
+        "name": "Basic Hunter's Trick",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level ranger feat of your choice.",
+        "prerequisites": "Ranger Dedication"
+      },
+      {
+        "id": "advanced-hunter-trick",
+        "name": "Advanced Hunter's Trick",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one ranger feat of your choice. For the purpose of meeting its prerequisites, your ranger level is equal to half your character level.",
+        "prerequisites": "Basic Hunter's Trick"
+      },
+      {
+        "id": "ranger-resiliency",
+        "name": "Ranger Resiliency",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain 3 additional Hit Points for each ranger dedication feat you have. As you continue your ranger training, you gain additional Hit Points.",
+        "prerequisites": "Ranger Dedication"
+      }
+    ]
+  },
+  {
+    "id": "rogue-dedication",
+    "name": "Rogue Dedication",
+    "type": "multiclass",
+    "prerequisites": "Dexterity 14",
+    "description": "You train in the rogue's subtle arts, gaining proficiency in stealth and the ability to exploit weaknesses.",
+    "dedicationFeat": {
+      "id": "rogue-dedication-feat",
+      "name": "Rogue Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You become trained in Stealth, gain a skill feat, and gain the rogue's Surprise Attack class feature. If you already have Surprise Attack, you instead gain a 1st-level rogue feat of your choice.",
+      "prerequisites": "Dexterity 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-trickery",
+        "name": "Basic Trickery",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level rogue feat of your choice.",
+        "prerequisites": "Rogue Dedication"
+      },
+      {
+        "id": "sneak-attacker",
+        "name": "Sneak Attacker",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the sneak attack class feature, dealing an extra 1d6 precision damage to flat-footed creatures. This increases to 2d6 at 6th level.",
+        "prerequisites": "Rogue Dedication"
+      },
+      {
+        "id": "advanced-trickery",
+        "name": "Advanced Trickery",
+        "level": 6,
+        "traits": ["archetype"],
+        "description": "You gain one rogue feat of your choice. For the purpose of meeting its prerequisites, your rogue level is equal to half your character level.",
+        "prerequisites": "Basic Trickery"
+      }
+    ]
+  },
+  {
+    "id": "sorcerer-dedication",
+    "name": "Sorcerer Dedication",
+    "type": "multiclass",
+    "prerequisites": "Charisma 14",
+    "description": "You awaken the power of your bloodline, gaining access to spontaneous spellcasting from your innate magical heritage.",
+    "dedicationFeat": {
+      "id": "sorcerer-dedication-feat",
+      "name": "Sorcerer Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "Choose a bloodline. You become trained in the bloodline's two skills, gain the bloodline's initial bloodline spell as a focus spell, and cast spells from a spell repertoire with two common cantrips from the tradition associated with your bloodline. Your key spellcasting ability is Charisma.",
+      "prerequisites": "Charisma 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-sorcerer-spellcasting",
+        "name": "Basic Sorcerer Spellcasting",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the basic spellcasting benefits for sorcerer. At 4th level you gain a 1st-level spell slot.",
+        "prerequisites": "Sorcerer Dedication"
+      },
+      {
+        "id": "basic-blood-potency",
+        "name": "Basic Blood Potency",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level sorcerer feat of your choice.",
+        "prerequisites": "Sorcerer Dedication"
+      },
+      {
+        "id": "bloodline-breadth",
+        "name": "Bloodline Breadth",
+        "level": 8,
+        "traits": ["archetype"],
+        "description": "Your repertoire expands, and you can cast more spells of your bloodline's tradition each day. Increase the spell slots you gain from sorcerer archetype feats by 1 for each spell level other than your two highest spell levels.",
+        "prerequisites": "Basic Sorcerer Spellcasting"
+      }
+    ]
+  },
+  {
+    "id": "wizard-dedication",
+    "name": "Wizard Dedication",
+    "type": "multiclass",
+    "prerequisites": "Intelligence 14",
+    "description": "You study arcane magic, gaining access to a spellbook and the wizard's prepared spellcasting tradition.",
+    "dedicationFeat": {
+      "id": "wizard-dedication-feat",
+      "name": "Wizard Dedication",
+      "level": 2,
+      "traits": ["archetype", "dedication", "multiclass"],
+      "description": "You cast spells like a wizard, gaining a spellbook with four common arcane cantrips of your choice. You can prepare two of these cantrips each day. You're trained in spell attack rolls and spell DCs for arcane spells. Your key spellcasting ability is Intelligence. You become trained in Arcana.",
+      "prerequisites": "Intelligence 14"
+    },
+    "additionalFeats": [
+      {
+        "id": "basic-wizard-spellcasting",
+        "name": "Basic Wizard Spellcasting",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain the basic spellcasting benefits for wizard. At 4th level you gain a 1st-level spell slot that you can prepare from your spellbook.",
+        "prerequisites": "Wizard Dedication"
+      },
+      {
+        "id": "basic-arcana",
+        "name": "Basic Arcana",
+        "level": 4,
+        "traits": ["archetype"],
+        "description": "You gain a 1st- or 2nd-level wizard feat of your choice.",
+        "prerequisites": "Wizard Dedication"
+      },
+      {
+        "id": "arcane-breadth",
+        "name": "Arcane Breadth",
+        "level": 8,
+        "traits": ["archetype"],
+        "description": "You can prepare more arcane spells each day. Increase the spell slots you gain from wizard archetype feats by 1 for each spell level other than your two highest spell levels.",
+        "prerequisites": "Basic Wizard Spellcasting"
+      }
+    ]
+  }
+]

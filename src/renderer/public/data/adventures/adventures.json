@@ -1,0 +1,139 @@
+[
+  {
+    "id": "lost-mines",
+    "name": "Lost Mine of Phandelver",
+    "system": "dnd5e",
+    "description": "A classic introductory adventure for D&D 5th Edition. Escort a wagon to Phandalin and uncover a lost mine.",
+    "icon": "pick",
+    "chapters": [
+      { "title": "Goblin Arrows", "description": "Ambush on the road to Phandalin. A goblin ambush party attacks the heroes while they escort a supply wagon.", "maps": ["forest-road"], "encounters": ["goblin-ambush"] },
+      { "title": "Phandalin", "description": "Explore the frontier town of Phandalin, meet the townsfolk, and learn about the Redbrands terrorizing the area.", "maps": ["town-square"], "encounters": [] },
+      { "title": "The Spider's Web", "description": "Track the villainous Black Spider through various locations around the Sword Coast.", "maps": ["dungeon-room"], "encounters": ["spider-lair"] },
+      { "title": "Wave Echo Cave", "description": "The legendary lost mine of the Phandelver's Pact awaits deep underground.", "maps": ["cave-entrance"], "encounters": ["final-battle"] }
+    ],
+    "npcs": [
+      { "id": "gundren", "name": "Gundren Rockseeker", "description": "A dwarf entrepreneur who hired the party to escort his supply wagon. He's discovered the entrance to the legendary Wave Echo Cave.", "location": "Phandalin", "role": "ally" },
+      { "id": "sildar", "name": "Sildar Hallwinter", "description": "A human warrior and agent of the Lords' Alliance, traveling with Gundren. Captured by goblins.", "location": "Cragmaw Hideout", "role": "ally" },
+      { "id": "glasstaff", "name": "Glasstaff (Iarno Albrek)", "description": "A wizard who leads the Redbrand ruffians from beneath Tresendar Manor. Secretly working for the Black Spider.", "location": "Redbrand Hideout", "role": "enemy" },
+      { "id": "black-spider", "name": "The Black Spider (Nezznar)", "description": "A drow wizard seeking to harness the magical power of the Forge of Spells in Wave Echo Cave.", "location": "Wave Echo Cave", "role": "enemy" }
+    ]
+  },
+  {
+    "id": "dragon-icespire",
+    "name": "Dragon of Icespire Peak",
+    "system": "dnd5e",
+    "description": "A young white dragon has claimed Icespire Peak, driving dangerous creatures into the surrounding area. Take on quests from the Phandalin job board to protect the town.",
+    "icon": "dragon",
+    "chapters": [
+      { "title": "Phandalin Quests", "description": "Take on starter quests from the job board: Umbrage Hill, Dwarven Excavation, and Gnomengarde.", "maps": ["town-square"], "encounters": ["manticore", "ochre-jelly"] },
+      { "title": "Follow-Up Quests", "description": "Investigate the growing threat: Butterskull Ranch, Loggers' Camp, and the Mountain's Toe Gold Mine.", "maps": ["forest-road"], "encounters": ["orcs", "wererats"] },
+      { "title": "Advanced Quests", "description": "Confront Dragon Barrow, Woodland Manse, and the Tower of Storms as Cryovain draws closer.", "maps": ["dungeon-room"], "encounters": ["dragon-cultists"] },
+      { "title": "Icespire Hold", "description": "Climb to the dragon's lair and face Cryovain, the young white dragon, in a final showdown.", "maps": ["cave-entrance"], "encounters": ["cryovain"] }
+    ],
+    "npcs": [
+      { "id": "townmaster", "name": "Harbin Wester", "description": "The nervous and cowardly townmaster of Phandalin who posts quests on the job board.", "location": "Phandalin", "role": "neutral" },
+      { "id": "adabra", "name": "Adabra Gwynn", "description": "A midwife and healer living at Umbrage Hill who needs rescue from a manticore.", "location": "Umbrage Hill", "role": "ally" },
+      { "id": "cryovain", "name": "Cryovain", "description": "A young white dragon that has claimed Icespire Peak as its lair, terrorizing the region.", "location": "Icespire Hold", "role": "enemy" }
+    ]
+  },
+  {
+    "id": "death-house",
+    "name": "Curse of Strahd: Death House",
+    "system": "dnd5e",
+    "description": "An introductory adventure leading into the dark realm of Barovia. Explore a haunted townhouse with a terrible secret in its basement.",
+    "icon": "skull",
+    "chapters": [
+      { "title": "The Durst Manor", "description": "Two ghostly children beckon the heroes into their home, begging them to save their baby brother from the monster in the basement.", "maps": ["tavern-interior"], "encounters": ["animated-armor"] },
+      { "title": "Upper Floors", "description": "Explore the increasingly disturbing upper floors of the manor, uncovering the dark history of the Durst family.", "maps": ["dungeon-room"], "encounters": ["spectre"] },
+      { "title": "The Dungeon Level", "description": "Descend into the hidden cult dungeon beneath the house, where the Dursts once performed dark rituals.", "maps": ["cave-entrance"], "encounters": ["cult-ritual", "shambling-mound"] }
+    ],
+    "npcs": [
+      { "id": "rosavalda", "name": "Rose and Thorn Durst", "description": "The ghostly children of Gustav and Elisabeth Durst, trapped in the attic where they starved to death.", "location": "Durst Manor", "role": "neutral" },
+      { "id": "strahd-hint", "name": "Strahd von Zarovich (Referenced)", "description": "The vampire lord of Barovia. His dark influence permeates the mists. Referenced in letters found in the house.", "location": "Castle Ravenloft", "role": "enemy" }
+    ]
+  },
+  {
+    "id": "sunless-citadel",
+    "name": "The Sunless Citadel",
+    "system": "dnd5e",
+    "description": "A classic dungeon crawl into a ruined fortress that has sunk into the earth. Goblins, kobolds, and a corrupted druid guard its depths.",
+    "icon": "fortress",
+    "chapters": [
+      { "title": "Into the Ravine", "description": "Descend into the ravine to find the sunken citadel. Navigate traps and encounter kobold sentries.", "maps": ["cave-entrance"], "encounters": ["kobold-guards"] },
+      { "title": "The Fortress Level", "description": "Explore the upper level of the citadel, currently occupied by warring goblin and kobold factions.", "maps": ["dungeon-room"], "encounters": ["goblin-ambush", "kobold-traps"] },
+      { "title": "The Grove Level", "description": "Descend to the underground grove where the Gulthias Tree grows, corrupting all around it.", "maps": ["dungeon-room"], "encounters": ["twig-blights", "belak-druid"] }
+    ],
+    "npcs": [
+      { "id": "meepo", "name": "Meepo", "description": "A forlorn kobold who has lost his clan's dragon wyrmling, Calcryx. He begs the adventurers for help.", "location": "Kobold Territory", "role": "ally" },
+      { "id": "belak", "name": "Belak the Outcast", "description": "A mad druid who tends the corrupted Gulthias Tree deep within the citadel.", "location": "The Grove", "role": "enemy" },
+      { "id": "calcryx", "name": "Calcryx", "description": "A white dragon wyrmling captured by goblins from the kobolds.", "location": "Goblin Territory", "role": "neutral" }
+    ]
+  },
+  {
+    "id": "beginners-box",
+    "name": "Beginner Box: Menace Under Otari",
+    "system": "pf2e",
+    "description": "An introductory Pathfinder 2e adventure beneath the town of Otari.",
+    "icon": "scroll",
+    "chapters": [
+      { "title": "Fishery Basement", "description": "Investigate strange noises coming from the basement of Tamily Tanderveil's fishery.", "maps": ["dungeon-room"], "encounters": ["rat-swarm"] },
+      { "title": "Kobold Warrens", "description": "Descend deeper underground into twisting kobold tunnels.", "maps": ["cave-entrance"], "encounters": ["kobold-fight"] },
+      { "title": "The Shrine", "description": "Discover an ancient shrine to a forgotten deity — the true source of the menace.", "maps": ["dungeon-room"], "encounters": ["boss-fight"] }
+    ],
+    "npcs": [
+      { "id": "tamily", "name": "Tamily Tanderveil", "description": "Owner of the fishery above the dungeon. She hires the adventurers to investigate the noises.", "location": "Otari", "role": "ally" },
+      { "id": "zolgran", "name": "Zolgran", "description": "The cunning kobold leader who commands the warrens beneath Otari.", "location": "Kobold Warrens", "role": "enemy" }
+    ]
+  },
+  {
+    "id": "troubles-otari",
+    "name": "Troubles in Otari",
+    "system": "pf2e",
+    "description": "Continue the adventure in Otari! New threats emerge as the heroes become local protectors. A follow-up to the Beginner Box adventure.",
+    "icon": "shield",
+    "chapters": [
+      { "title": "The Osprey Cove Caves", "description": "Smugglers have set up operations in sea caves near Otari. Investigate their dealings and root them out.", "maps": ["cave-entrance"], "encounters": ["smuggler-fight"] },
+      { "title": "Stonescale Kobolds", "description": "A new kobold tribe, the Stonescales, have emerged and are raiding outlying farms.", "maps": ["forest-road"], "encounters": ["kobold-raiders"] },
+      { "title": "The Gauntlight Ruins", "description": "Strange lights emanate from the ruins of an ancient lighthouse. What lurks within?", "maps": ["dungeon-room"], "encounters": ["undead-encounter"] },
+      { "title": "Showdown at Otari", "description": "All threats converge on the town of Otari. Defend it against a coordinated assault.", "maps": ["town-square"], "encounters": ["final-defense"] }
+    ],
+    "npcs": [
+      { "id": "captain-longsaddle", "name": "Captain Longsaddle", "description": "The grizzled captain of the Otari town guard. A retired adventurer who provides guidance.", "location": "Otari", "role": "ally" },
+      { "id": "smuggler-boss", "name": "Jaul Mezmin", "description": "The ruthless leader of the Osprey Cove smuggling ring.", "location": "Osprey Cove", "role": "enemy" }
+    ]
+  },
+  {
+    "id": "fall-plaguestone",
+    "name": "The Fall of Plaguestone",
+    "system": "pf2e",
+    "description": "A caravan journey turns deadly when a fellow traveler is murdered. Investigate the crime and uncover a sinister alchemical plot threatening the village of Etran's Folly.",
+    "icon": "potion",
+    "chapters": [
+      { "title": "Murder on the Road", "description": "During the caravan's stop at Plaguestone, a merchant is murdered. The heroes must investigate.", "maps": ["town-square"], "encounters": ["bar-brawl"] },
+      { "title": "The Blight", "description": "Follow the trail of clues to discover the source of a strange blight affecting the village's crops.", "maps": ["forest-road"], "encounters": ["blighted-wolves"] },
+      { "title": "The Alchemist's Lab", "description": "Storm the hidden laboratory where a deranged alchemist is creating weapons of mass destruction.", "maps": ["dungeon-room"], "encounters": ["alchemist-boss"] }
+    ],
+    "npcs": [
+      { "id": "bort", "name": "Bort Bargith", "description": "The murdered merchant whose death kicks off the investigation.", "location": "Plaguestone", "role": "neutral" },
+      { "id": "vilree", "name": "Vilree", "description": "A bitter alchemist seeking revenge on the village that wronged her family. The main antagonist.", "location": "Hidden Laboratory", "role": "enemy" },
+      { "id": "sir-lawren", "name": "Sir Lawren", "description": "A kind knight and caravan guard who helps the party in their investigation.", "location": "Plaguestone", "role": "ally" }
+    ]
+  },
+  {
+    "id": "abomination-vaults",
+    "name": "Abomination Vaults: Gauntlight",
+    "system": "pf2e",
+    "description": "Explore the first level of the Abomination Vaults megadungeon beneath Gauntlight, an ancient lighthouse that has begun to glow with eerie light.",
+    "icon": "lighthouse",
+    "chapters": [
+      { "title": "The Gauntlight", "description": "Investigate the mysterious lighthouse above the dungeon. Its light pulses with necromantic energy.", "maps": ["town-square"], "encounters": ["will-o-wisps"] },
+      { "title": "Level One: The Ruins", "description": "Enter the first level of the vaults — crumbling ruins inhabited by creatures drawn to the dark magic.", "maps": ["dungeon-room"], "encounters": ["mitflits", "giant-spiders"] },
+      { "title": "The Belcorra Connection", "description": "Discover clues about Belcorra Haruvex, the sorceress whose evil still permeates the vaults.", "maps": ["dungeon-room"], "encounters": ["undead-guards", "animated-statues"] },
+      { "title": "The First Seal", "description": "Reach and weaken the first seal keeping Belcorra's power contained — but at what cost?", "maps": ["cave-entrance"], "encounters": ["vault-guardian"] }
+    ],
+    "npcs": [
+      { "id": "wrin", "name": "Wrin Sivinxi", "description": "An eccentric elf astrologer and shop owner in Otari who first notices the Gauntlight's strange behavior.", "location": "Otari", "role": "ally" },
+      { "id": "belcorra", "name": "Belcorra Haruvex (Legacy)", "description": "An ancient sorceress whose malevolence created the Abomination Vaults centuries ago. Her influence persists.", "location": "Abomination Vaults", "role": "enemy" }
+    ]
+  }
+]

@@ -1,0 +1,452 @@
+[
+  {
+    "id": "alchemical-familiar",
+    "name": "Alchemical Familiar",
+    "level": 1,
+    "class": "alchemist",
+    "traits": ["alchemist"],
+    "description": "You have used alchemy to create life, a homunculus that is your familiar. It is a tiny construct that follows your commands. You gain a familiar.",
+    "prerequisites": ""
+  },
+  {
+    "id": "quick-bomber",
+    "name": "Quick Bomber",
+    "level": 1,
+    "class": "alchemist",
+    "traits": ["alchemist"],
+    "description": "You keep your bombs in easy-to-reach pouches from which you draw without thinking. You Interact to draw a bomb, then Strike with it.",
+    "prerequisites": ""
+  },
+  {
+    "id": "far-lobber",
+    "name": "Far Lobber",
+    "level": 1,
+    "class": "alchemist",
+    "traits": ["alchemist"],
+    "description": "You've learned techniques to throw your bombs farther. Increase the range increment of your alchemical bombs by 10 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "calculated-splash",
+    "name": "Calculated Splash",
+    "level": 2,
+    "class": "alchemist",
+    "traits": ["alchemist"],
+    "description": "You calculate the perfect trajectory for a splash. When you throw an alchemical bomb with the splash trait, you can cause the bomb's splash damage to deal extra damage equal to your Intelligence modifier (minimum 0) instead of the normal splash damage.",
+    "prerequisites": ""
+  },
+  {
+    "id": "smoke-bomb",
+    "name": "Smoke Bomb",
+    "level": 4,
+    "class": "alchemist",
+    "traits": ["alchemist", "additive 1"],
+    "description": "You cause a bomb to create a cloud of thick smoke in addition to its normal effects. When you use Quick Alchemy to craft an alchemical bomb, you can add a smoke component. The resulting bomb also creates a cloud of smoke in a 10-foot radius on impact. Creatures within this smoke are concealed.",
+    "prerequisites": ""
+  },
+  {
+    "id": "rage",
+    "name": "Rage",
+    "level": 1,
+    "class": "barbarian",
+    "traits": ["barbarian", "concentrate", "emotion", "mental"],
+    "description": "You tap into your inner fury. You gain a number of temporary Hit Points equal to your level plus your Constitution modifier. This frenzy lasts for 1 minute, until there are no enemies you can perceive, or until you fall unconscious, whichever comes first. You can't voluntarily stop raging. While raging, you deal 2 additional damage with melee weapons and unarmed attacks, and you take a -1 penalty to AC.",
+    "prerequisites": ""
+  },
+  {
+    "id": "raging-intimidation",
+    "name": "Raging Intimidation",
+    "level": 1,
+    "class": "barbarian",
+    "traits": ["barbarian"],
+    "description": "Your fury fills your foes with fear. While you are raging, your Demoralize and Intimidation checks to Coerce gain a +2 status bonus, and you don't take a penalty for not sharing a language.",
+    "prerequisites": ""
+  },
+  {
+    "id": "no-escape",
+    "name": "No Escape",
+    "level": 1,
+    "class": "barbarian",
+    "traits": ["barbarian", "rage"],
+    "description": "You keep pace with a retreating foe. You Stride up to your Speed, following the foe and keeping it in reach throughout its movement until it stops moving or you've moved your full Speed. You can use No Escape as a reaction triggered when a foe within your reach attempts to move away from you.",
+    "prerequisites": ""
+  },
+  {
+    "id": "acute-vision",
+    "name": "Acute Vision",
+    "level": 2,
+    "class": "barbarian",
+    "traits": ["barbarian"],
+    "description": "When you are raging, your visual senses improve, granting you darkvision.",
+    "prerequisites": ""
+  },
+  {
+    "id": "swipe",
+    "name": "Swipe",
+    "level": 4,
+    "class": "barbarian",
+    "traits": ["barbarian", "flourish"],
+    "description": "You make a wide, arcing swing. Make a single melee Strike and compare the attack roll result to the ACs of up to two foes, each of whom must be within your melee reach and adjacent to each other. Roll damage only once and apply it to each creature you hit.",
+    "prerequisites": ""
+  },
+  {
+    "id": "lingering-composition",
+    "name": "Lingering Composition",
+    "level": 1,
+    "class": "bard",
+    "traits": ["bard"],
+    "description": "By adding a flourish, you can make your compositions last longer. You learn the lingering composition focus spell. Increase the number of Focus Points in your focus pool by 1. When you cast a composition cantrip while using this ability, attempt a Performance check. The DC is usually a standard-difficulty DC of a level equal to the highest-level target.",
+    "prerequisites": "maestro muse"
+  },
+  {
+    "id": "reach-spell-bard",
+    "name": "Reach Spell",
+    "level": 1,
+    "class": "bard",
+    "traits": ["bard", "concentrate", "metamagic"],
+    "description": "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. If the spell normally has a range of touch, you extend its range to 30 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "versatile-performance",
+    "name": "Versatile Performance",
+    "level": 1,
+    "class": "bard",
+    "traits": ["bard"],
+    "description": "You can rely on the grandeur of your performances rather than ordinary social skills. You can use Performance instead of Diplomacy to Make an Impression and instead of Intimidation to Demoralize. You can also use an acting Performance instead of Deception to Impersonate.",
+    "prerequisites": "polymath muse"
+  },
+  {
+    "id": "melodious-spell",
+    "name": "Melodious Spell",
+    "level": 4,
+    "class": "bard",
+    "traits": ["bard", "concentrate", "metamagic"],
+    "description": "You weave your spellcasting into your performance. If the next action you use is to Cast a Spell, attempt a Performance check against all observers' Perception DCs. If your Performance check is successful against an observer's Perception DC, that observer doesn't notice that you are Casting a Spell, even though normally the manipulate and concentrate traits would make spellcasting obvious.",
+    "prerequisites": ""
+  },
+  {
+    "id": "deity-s-domain",
+    "name": "Deity's Domain",
+    "level": 1,
+    "class": "champion",
+    "traits": ["champion"],
+    "description": "You embody an aspect of your deity. Choose one of your deity's domains. You gain the domain's initial domain spell as a devotion spell.",
+    "prerequisites": ""
+  },
+  {
+    "id": "ranged-reprisal",
+    "name": "Ranged Reprisal",
+    "level": 1,
+    "class": "champion",
+    "traits": ["champion"],
+    "description": "You can use Retributive Strike with a ranged weapon. In addition, if the foe that triggered your reaction is within 5 feet of your reach but not in your reach, as part of your reaction you can Step to put the foe in your reach before making a melee Retributive Strike.",
+    "prerequisites": "paladin cause"
+  },
+  {
+    "id": "unimpeded-step",
+    "name": "Unimpeded Step",
+    "level": 1,
+    "class": "champion",
+    "traits": ["champion"],
+    "description": "With a burst of divine speed, you charge forward. You Step, ignoring difficult terrain. If you have the liberator cause, your ally can also Step and ignore difficult terrain.",
+    "prerequisites": "liberator cause"
+  },
+  {
+    "id": "weight-of-guilt",
+    "name": "Weight of Guilt",
+    "level": 4,
+    "class": "champion",
+    "traits": ["champion"],
+    "description": "Guilt clouds the minds of those who sin against you. When you use your champion's reaction and the triggering creature is evil, it must attempt a Will save against your class DC. On a failure, the creature is stupefied 1 for 1 round (stupefied 2 on a critical failure).",
+    "prerequisites": ""
+  },
+  {
+    "id": "healing-hands",
+    "name": "Healing Hands",
+    "level": 1,
+    "class": "cleric",
+    "traits": ["cleric"],
+    "description": "Your positive energy healing is especially potent. When you cast heal, you roll d10s instead of d8s.",
+    "prerequisites": ""
+  },
+  {
+    "id": "harming-hands",
+    "name": "Harming Hands",
+    "level": 1,
+    "class": "cleric",
+    "traits": ["cleric"],
+    "description": "The harm you channel is particularly vicious. When you cast harm, you roll d10s instead of d8s.",
+    "prerequisites": ""
+  },
+  {
+    "id": "holy-castigation",
+    "name": "Holy Castigation",
+    "level": 1,
+    "class": "cleric",
+    "traits": ["cleric"],
+    "description": "You combine holy energy with positive energy to damage demons, devils, and their evil ilk. You deal extra good damage equal to your level to undead and fiends when you cast heal to damage them.",
+    "prerequisites": "good alignment"
+  },
+  {
+    "id": "channel-smite",
+    "name": "Channel Smite",
+    "level": 4,
+    "class": "cleric",
+    "traits": ["cleric", "divine", "necromancy"],
+    "description": "You sap the foe's vitality as you strike. Make a melee Strike and add the spell's damage to the Strike's damage. This is negative damage if you expend a harm spell slot or positive damage if you expend a heal spell slot.",
+    "prerequisites": ""
+  },
+  {
+    "id": "animal-companion-druid",
+    "name": "Animal Companion",
+    "level": 1,
+    "class": "druid",
+    "traits": ["druid"],
+    "description": "You gain the service of a young animal companion that travels with you on your adventures and obeys any simple commands you give it to the best of its abilities.",
+    "prerequisites": ""
+  },
+  {
+    "id": "leshy-familiar",
+    "name": "Leshy Familiar",
+    "level": 1,
+    "class": "druid",
+    "traits": ["druid"],
+    "description": "You gain a leshy familiar, a tiny plant that embodies one of the many spirits of nature. This leshy is a familiar with the plant trait that can have only familiar abilities that would be appropriate for a plant.",
+    "prerequisites": "leaf order"
+  },
+  {
+    "id": "reach-spell-druid",
+    "name": "Reach Spell",
+    "level": 1,
+    "class": "druid",
+    "traits": ["druid", "concentrate", "metamagic"],
+    "description": "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. If the spell normally has a range of touch, you extend its range to 30 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "poison-resistance-druid",
+    "name": "Poison Resistance",
+    "level": 4,
+    "class": "druid",
+    "traits": ["druid"],
+    "description": "Your proximity to the natural world grants you resistance to toxins. You gain poison resistance equal to half your level.",
+    "prerequisites": ""
+  },
+  {
+    "id": "power-attack",
+    "name": "Power Attack",
+    "level": 1,
+    "class": "fighter",
+    "traits": ["fighter", "flourish"],
+    "description": "You unleash a particularly powerful attack that clobbers your foe but leaves you a bit unsteady. Make a melee Strike. This counts as two attacks when calculating your multiple attack penalty. If this Strike hits, you deal an extra die of weapon damage.",
+    "prerequisites": ""
+  },
+  {
+    "id": "double-slice",
+    "name": "Double Slice",
+    "level": 1,
+    "class": "fighter",
+    "traits": ["fighter"],
+    "description": "You lash out at your foe with both weapons. Make two Strikes, one with each of your two melee weapons, each using your current multiple attack penalty. Both Strikes must have the same target. If the second Strike is made with a weapon that doesn't have the agile trait, it takes a -2 penalty. If both attacks hit, combine their damage, and then add any other applicable enhancements from runes or abilities. You add any precision damage only once.",
+    "prerequisites": ""
+  },
+  {
+    "id": "exacting-strike",
+    "name": "Exacting Strike",
+    "level": 1,
+    "class": "fighter",
+    "traits": ["fighter", "press"],
+    "description": "You make a controlled attack, fully accounting for your momentum. Make a Strike. The Strike gains the following failure effect: This attack does not count toward your multiple attack penalty.",
+    "prerequisites": ""
+  },
+  {
+    "id": "knockdown",
+    "name": "Knockdown",
+    "level": 4,
+    "class": "fighter",
+    "traits": ["fighter", "flourish"],
+    "description": "You make an attack to knock a foe off balance, then follow up immediately with a sweep to topple them. Make a melee Strike. If it hits, you can attempt an Athletics check to Trip that creature.",
+    "prerequisites": "trained in Athletics"
+  },
+  {
+    "id": "crane-stance",
+    "name": "Crane Stance",
+    "level": 1,
+    "class": "monk",
+    "traits": ["monk", "stance"],
+    "description": "You enter the stance of a crane, holding your arms in an imitation of a crane's wings and using flowing, defensive motions. You gain a +1 circumstance bonus to AC, but the only Strikes you can make are crane wing attacks. These deal 1d6 bludgeoning damage; are in the brawling group; and have the agile, finesse, nonlethal, and unarmed traits.",
+    "prerequisites": "unarmored"
+  },
+  {
+    "id": "dragon-stance",
+    "name": "Dragon Stance",
+    "level": 1,
+    "class": "monk",
+    "traits": ["monk", "stance"],
+    "description": "You enter the stance of a dragon and make powerful lunging attacks. The only Strikes you can make are dragon tail attacks. These deal 1d10 bludgeoning damage; are in the brawling group; and have the backswing, nonlethal, and unarmed traits. While in Dragon Stance, you can ignore the first square of difficult terrain when you Stride.",
+    "prerequisites": ""
+  },
+  {
+    "id": "tiger-stance",
+    "name": "Tiger Stance",
+    "level": 1,
+    "class": "monk",
+    "traits": ["monk", "stance"],
+    "description": "You enter the stance of a tiger and can make tiger claw attacks. These deal 1d8 slashing damage; are in the brawling group; and have the agile, finesse, nonlethal, and unarmed traits. On a critical success with your tiger claws, if you deal damage, the target takes 1d4 persistent bleed damage. As long as your Speed is at least 20 feet while in Tiger Stance, you can Step 10 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "stunning-fist",
+    "name": "Stunning Fist",
+    "level": 2,
+    "class": "monk",
+    "traits": ["monk"],
+    "description": "The focused power of your flurry threatens to overwhelm your opponent. When you target the same creature with two Strikes from your Flurry of Blows, you can try to stun the creature. If both Strikes hit, the target must attempt a Fortitude save against your class DC. On a failure, the target is stunned 1.",
+    "prerequisites": "Flurry of Blows"
+  },
+  {
+    "id": "animal-companion-ranger",
+    "name": "Animal Companion",
+    "level": 1,
+    "class": "ranger",
+    "traits": ["ranger"],
+    "description": "You gain the service of a young animal companion that travels with you on your adventures and obeys any simple commands you give it to the best of its abilities.",
+    "prerequisites": ""
+  },
+  {
+    "id": "crossbow-ace",
+    "name": "Crossbow Ace",
+    "level": 1,
+    "class": "ranger",
+    "traits": ["ranger"],
+    "description": "You have a deep understanding of the crossbow. When you're wielding a crossbow and use Hunt Prey or use Interact to reload your crossbow, you gain a +2 circumstance bonus to the damage roll on your next Strike with that crossbow.",
+    "prerequisites": ""
+  },
+  {
+    "id": "hunted-shot",
+    "name": "Hunted Shot",
+    "level": 1,
+    "class": "ranger",
+    "traits": ["ranger", "flourish"],
+    "description": "You take two quick shots against the one you hunt. Make two Strikes against your hunted prey. If both hit the same creature, combine their damage for the purpose of resistances and weaknesses. Apply your multiple attack penalty to each Strike normally.",
+    "prerequisites": ""
+  },
+  {
+    "id": "quick-draw-ranger",
+    "name": "Quick Draw",
+    "level": 2,
+    "class": "ranger",
+    "traits": ["ranger"],
+    "description": "You draw your weapon and attack with blazing speed. You Interact to draw a weapon, then Strike with that weapon.",
+    "prerequisites": ""
+  },
+  {
+    "id": "nimble-dodge",
+    "name": "Nimble Dodge",
+    "level": 1,
+    "class": "rogue",
+    "traits": ["rogue"],
+    "description": "You deftly dodge out of the way, gaining a +2 circumstance bonus to AC against the triggering attack. You can use this reaction when a creature targets you with a melee or ranged attack.",
+    "prerequisites": ""
+  },
+  {
+    "id": "trap-finder",
+    "name": "Trap Finder",
+    "level": 1,
+    "class": "rogue",
+    "traits": ["rogue"],
+    "description": "You have an intuitive sense that alerts you to the dangers and presence of traps. You gain a +1 circumstance bonus to Perception checks to find traps, to AC against attacks made by traps, and to saves against traps. Even if you aren't Searching, you get a check to find traps that normally require you to be Searching.",
+    "prerequisites": ""
+  },
+  {
+    "id": "twin-feint",
+    "name": "Twin Feint",
+    "level": 1,
+    "class": "rogue",
+    "traits": ["rogue"],
+    "description": "You make a dazzling series of attacks with both weapons, using the first attack to throw your foe off guard against a second attack at a different angle. Make one Strike with each of your two melee weapons, each using your current multiple attack penalty. The second Strike gains the benefits of flanking.",
+    "prerequisites": ""
+  },
+  {
+    "id": "dread-striker",
+    "name": "Dread Striker",
+    "level": 4,
+    "class": "rogue",
+    "traits": ["rogue"],
+    "description": "You capitalize on your enemies' fear to slip past their defenses. Any creature that has the frightened condition is also flat-footed against your attacks.",
+    "prerequisites": ""
+  },
+  {
+    "id": "counterspell-sorcerer",
+    "name": "Counterspell",
+    "level": 1,
+    "class": "sorcerer",
+    "traits": ["sorcerer", "abjuration"],
+    "description": "When a foe Casts a Spell and you can see its manifestations, you can use your own innate magic to disrupt it. You expend one of your spell slots to counter the triggering creature's casting of a spell that you have in your repertoire. You lose your spell slot as if you had cast the triggering spell. You then attempt to counteract the triggering spell.",
+    "prerequisites": ""
+  },
+  {
+    "id": "dangerous-sorcery",
+    "name": "Dangerous Sorcery",
+    "level": 1,
+    "class": "sorcerer",
+    "traits": ["sorcerer"],
+    "description": "Your legacy of magic boosts your dangerous spells. When you Cast a Spell from your spell slots, if the spell deals damage and doesn't have a duration, you gain a status bonus to that spell's damage equal to the spell's level.",
+    "prerequisites": ""
+  },
+  {
+    "id": "reach-spell-sorcerer",
+    "name": "Reach Spell",
+    "level": 1,
+    "class": "sorcerer",
+    "traits": ["sorcerer", "concentrate", "metamagic"],
+    "description": "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. If the spell normally has a range of touch, you extend its range to 30 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "arcane-evolution",
+    "name": "Arcane Evolution",
+    "level": 4,
+    "class": "sorcerer",
+    "traits": ["sorcerer", "arcane"],
+    "description": "Your arcane legacy grants you an exceptional aptitude for intellectual and living magic. You become trained in one skill of your choice. Additionally, you can add one spell from the arcane list to your spell repertoire each day during your daily preparations.",
+    "prerequisites": "arcane bloodline"
+  },
+  {
+    "id": "counterspell-wizard",
+    "name": "Counterspell",
+    "level": 1,
+    "class": "wizard",
+    "traits": ["wizard", "abjuration", "arcane"],
+    "description": "When a foe Casts a Spell you know and you can see its manifestations, you can use your own magic to disrupt it. You expend a prepared spell to counter the triggering creature's casting of that same spell. You lose your spell slot as if you had cast the triggering spell. You then attempt to counteract the triggering spell.",
+    "prerequisites": ""
+  },
+  {
+    "id": "eschew-materials",
+    "name": "Eschew Materials",
+    "level": 1,
+    "class": "wizard",
+    "traits": ["wizard"],
+    "description": "You can cast many of your spells without requiring material components. You can use the Interact action to touch your bonded item instead of retrieving material components. This allows you to Cast a Spell while keeping a hand free or keeping your bonded item stowed.",
+    "prerequisites": ""
+  },
+  {
+    "id": "reach-spell-wizard",
+    "name": "Reach Spell",
+    "level": 1,
+    "class": "wizard",
+    "traits": ["wizard", "concentrate", "metamagic"],
+    "description": "You can extend the range of your spells. If the next action you use is to Cast a Spell that has a range, increase that spell's range by 30 feet. As is standard for increasing spell ranges, if the spell normally has a range of touch, you extend its range to 30 feet.",
+    "prerequisites": ""
+  },
+  {
+    "id": "conceal-spell",
+    "name": "Conceal Spell",
+    "level": 2,
+    "class": "wizard",
+    "traits": ["wizard", "concentrate", "manipulate", "metamagic"],
+    "description": "Hiding your gestures and disguising your verbal components as normal speech, you attempt to conceal the fact that you are Casting a Spell. If the next action you take is to Cast a Spell, attempt a Stealth check against each observer's Perception DC. On a success, you hide your spellcasting from that observer.",
+    "prerequisites": ""
+  }
+]

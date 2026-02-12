@@ -1,0 +1,349 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "proficiencies": {
+      "skills": ["Insight", "Religion"],
+      "tools": ["Calligrapher's Supplies"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Calligrapher's Supplies", "quantity": 1 },
+      { "name": "Book (prayers)", "quantity": 1 },
+      { "name": "Holy Symbol", "quantity": 1 },
+      { "name": "Parchment (10 sheets)", "quantity": 1 },
+      { "name": "Robe", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Shelter of the Faithful",
+      "description": "You and your companions can expect free healing and care at any temple of your faith, and the faithful will support you with food and shelter."
+    },
+    "startingGold": 8,
+    "originFeat": "Magic Initiate (Cleric)"
+  },
+  {
+    "id": "artisan",
+    "name": "Artisan",
+    "proficiencies": {
+      "skills": ["Investigation", "Persuasion"],
+      "tools": ["Artisan's Tools (one of your choice)"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Artisan's Tools (one of your choice)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 },
+      { "name": "Pouch", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Maker's Mark",
+      "description": "Your crafted items carry a distinctive mark. Fellow artisans recognize your work and are more inclined to offer trade discounts and professional courtesies."
+    },
+    "startingGold": 32,
+    "originFeat": "Crafter"
+  },
+  {
+    "id": "charlatan",
+    "name": "Charlatan",
+    "proficiencies": {
+      "skills": ["Deception", "Sleight of Hand"],
+      "tools": ["Forgery Kit"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Forgery Kit", "quantity": 1 },
+      { "name": "Costume", "quantity": 1 },
+      { "name": "Fine Clothes", "quantity": 1 },
+      { "name": "Pouch", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "False Identity",
+      "description": "You have a second identity with documentation, established acquaintances, and disguises to assume that persona. You can forge documents if you have seen an example."
+    },
+    "startingGold": 15,
+    "originFeat": "Skilled"
+  },
+  {
+    "id": "criminal",
+    "name": "Criminal",
+    "proficiencies": {
+      "skills": ["Sleight of Hand", "Stealth"],
+      "tools": ["Thieves' Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Thieves' Tools", "quantity": 1 },
+      { "name": "Crowbar", "quantity": 1 },
+      { "name": "Dark Common Clothes with Hood", "quantity": 1 },
+      { "name": "Pouch", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Criminal Contact",
+      "description": "You have a reliable contact who acts as a liaison to a criminal network. You know how to get messages to and from your contact, even over great distances."
+    },
+    "startingGold": 16,
+    "originFeat": "Alert"
+  },
+  {
+    "id": "entertainer",
+    "name": "Entertainer",
+    "proficiencies": {
+      "skills": ["Acrobatics", "Performance"],
+      "tools": ["Musical Instrument (one of your choice)"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Musical Instrument (one of your choice)", "quantity": 1 },
+      { "name": "Costume (x2)", "quantity": 1 },
+      { "name": "Mirror", "quantity": 1 },
+      { "name": "Perfume", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "By Popular Demand",
+      "description": "You can always find a place to perform, usually in an inn or tavern. You receive free lodging and food of a modest standard, as long as you perform each night."
+    },
+    "startingGold": 11,
+    "originFeat": "Musician"
+  },
+  {
+    "id": "farmer",
+    "name": "Farmer",
+    "proficiencies": {
+      "skills": ["Animal Handling", "Nature"],
+      "tools": ["Carpenter's Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Carpenter's Tools", "quantity": 1 },
+      { "name": "Healer's Kit", "quantity": 1 },
+      { "name": "Iron Pot", "quantity": 1 },
+      { "name": "Shovel", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Harvest Knowledge",
+      "description": "You have practical knowledge of agriculture and animal husbandry. You can identify edible plants, predict weather changes, and find suitable land for farming."
+    },
+    "startingGold": 18,
+    "originFeat": "Tough"
+  },
+  {
+    "id": "guard",
+    "name": "Guard",
+    "proficiencies": {
+      "skills": ["Athletics", "Perception"],
+      "tools": ["Gaming Set (one of your choice)"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Gaming Set (one of your choice)", "quantity": 1 },
+      { "name": "Hooded Lantern", "quantity": 1 },
+      { "name": "Manacles", "quantity": 1 },
+      { "name": "Quiver", "quantity": 1 },
+      { "name": "Shortbow", "quantity": 1 },
+      { "name": "Arrows (20)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Watcher's Eye",
+      "description": "Your experience has honed your watchfulness. You have Advantage on Perception checks to detect concealed creatures or objects within 30 feet when you are not blinded or deafened."
+    },
+    "startingGold": 12,
+    "originFeat": "Alert"
+  },
+  {
+    "id": "guide",
+    "name": "Guide",
+    "proficiencies": {
+      "skills": ["Stealth", "Survival"],
+      "tools": ["Cartographer's Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Cartographer's Tools", "quantity": 1 },
+      { "name": "Bedroll", "quantity": 1 },
+      { "name": "Tent (2-person)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Wanderer",
+      "description": "You have an excellent memory for maps and geography. You can always recall the general layout of terrain, settlements, and other features. You can find food and fresh water for yourself and up to five others each day."
+    },
+    "startingGold": 2,
+    "originFeat": "Magic Initiate (Druid)"
+  },
+  {
+    "id": "hermit",
+    "name": "Hermit",
+    "proficiencies": {
+      "skills": ["Medicine", "Religion"],
+      "tools": ["Herbalism Kit"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Herbalism Kit", "quantity": 1 },
+      { "name": "Bedroll", "quantity": 1 },
+      { "name": "Book (philosophy)", "quantity": 1 },
+      { "name": "Lamp", "quantity": 1 },
+      { "name": "Oil (3 flasks)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Discovery",
+      "description": "Your hermitage gave you access to a unique and powerful discovery. The exact nature depends on your seclusion—a great truth about the cosmos, the deities, or the forces of nature."
+    },
+    "startingGold": 3,
+    "originFeat": "Healer"
+  },
+  {
+    "id": "merchant",
+    "name": "Merchant",
+    "proficiencies": {
+      "skills": ["Animal Handling", "Persuasion"],
+      "tools": ["Navigator's Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Navigator's Tools", "quantity": 1 },
+      { "name": "Fine Clothes", "quantity": 1 },
+      { "name": "Pouch", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Supply Chain",
+      "description": "You have contacts among suppliers, merchants, and moneylenders. You can always find where to buy and sell goods, and you can secure 20% discounts on nonmagical gear when in a city."
+    },
+    "startingGold": 22,
+    "originFeat": "Lucky"
+  },
+  {
+    "id": "noble",
+    "name": "Noble",
+    "proficiencies": {
+      "skills": ["History", "Persuasion"],
+      "tools": ["Gaming Set (one of your choice)"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Gaming Set (one of your choice)", "quantity": 1 },
+      { "name": "Fine Clothes", "quantity": 1 },
+      { "name": "Perfume", "quantity": 1 },
+      { "name": "Signet Ring", "quantity": 1 },
+      { "name": "Pouch", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Position of Privilege",
+      "description": "Thanks to your noble birth, people are inclined to think the best of you. You are welcome in high society. Common folk make every effort to accommodate you and avoid your displeasure."
+    },
+    "startingGold": 28,
+    "originFeat": "Skilled"
+  },
+  {
+    "id": "sage",
+    "name": "Sage",
+    "proficiencies": {
+      "skills": ["Arcana", "History"],
+      "tools": ["Calligrapher's Supplies"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Calligrapher's Supplies", "quantity": 1 },
+      { "name": "Book (lore)", "quantity": 1 },
+      { "name": "Parchment (8 sheets)", "quantity": 1 },
+      { "name": "Robe", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Researcher",
+      "description": "When you attempt to learn or recall lore, if you don't know the information, you often know where to find it—a library, scriptorium, university, or a sage."
+    },
+    "startingGold": 8,
+    "originFeat": "Magic Initiate (Wizard)"
+  },
+  {
+    "id": "sailor",
+    "name": "Sailor",
+    "proficiencies": {
+      "skills": ["Acrobatics", "Perception"],
+      "tools": ["Navigator's Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Navigator's Tools", "quantity": 1 },
+      { "name": "Rope (50 feet)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Ship's Passage",
+      "description": "You can secure free passage on a sailing ship for yourself and your adventuring companions. You might sail on the ship you served on, or another you have good relations with."
+    },
+    "startingGold": 20,
+    "originFeat": "Tavern Brawler"
+  },
+  {
+    "id": "scribe",
+    "name": "Scribe",
+    "proficiencies": {
+      "skills": ["Investigation", "Perception"],
+      "tools": ["Calligrapher's Supplies"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Calligrapher's Supplies", "quantity": 1 },
+      { "name": "Fine Clothes", "quantity": 1 },
+      { "name": "Lamp", "quantity": 1 },
+      { "name": "Oil (3 flasks)", "quantity": 1 },
+      { "name": "Parchment (12 sheets)", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Official Correspondence",
+      "description": "Your experience with official documents means you can identify forgeries and know how to draft documents that carry legal weight. Officials are more inclined to trust your written communications."
+    },
+    "startingGold": 23,
+    "originFeat": "Skilled"
+  },
+  {
+    "id": "soldier",
+    "name": "Soldier",
+    "proficiencies": {
+      "skills": ["Athletics", "Intimidation"],
+      "tools": ["Gaming Set (one of your choice)"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Gaming Set (one of your choice)", "quantity": 1 },
+      { "name": "Healer's Kit", "quantity": 1 },
+      { "name": "Quiver", "quantity": 1 },
+      { "name": "Shortbow", "quantity": 1 },
+      { "name": "Arrows (20)", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Military Rank",
+      "description": "You have a military rank from your career as a soldier. Soldiers loyal to your former organization still recognize your authority and influence, and they defer to you if they are of a lower rank."
+    },
+    "startingGold": 14,
+    "originFeat": "Savage Attacker"
+  },
+  {
+    "id": "wayfarer",
+    "name": "Wayfarer",
+    "proficiencies": {
+      "skills": ["Insight", "Stealth"],
+      "tools": ["Thieves' Tools"],
+      "languages": 0
+    },
+    "equipment": [
+      { "name": "Thieves' Tools", "quantity": 1 },
+      { "name": "Bedroll", "quantity": 1 },
+      { "name": "Mess Kit", "quantity": 1 },
+      { "name": "Mirror", "quantity": 1 },
+      { "name": "Waterskin", "quantity": 1 },
+      { "name": "Traveler's Clothes", "quantity": 1 }
+    ],
+    "feature": {
+      "name": "Wanderer's Instincts",
+      "description": "You have a knack for finding your way and surviving on the road. You can always find a safe route through dangerous terrain and have a sense for trouble before it arrives."
+    },
+    "startingGold": 16,
+    "originFeat": "Lucky"
+  }
+]
