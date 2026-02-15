@@ -4,195 +4,254 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Environment Setup
 
-Node.js is not on the default PATH. All shell commands need:
-```powershell
-$env:PATH = "C:\Program Files\nodejs;" + $env:PATH
+Node.js is not on the default PATH. Use PowerShell helper scripts that set PATH automatically, or prefix bash commands:
+
+```bash
+# Bash (Claude Code shell) — prefix each command
+PATH="/c/Program Files/nodejs:$PATH" npx electron-vite dev
 ```
-Adjust the path if Node.js is installed elsewhere. Use PowerShell scripts (`.ps1`) when `$env:PATH` must be set, since `$` gets escaped in inline commands.
+
+For PowerShell scripts (`.ps1` files), use `$env:PATH = "C:\Program Files\nodejs;" + $env:PATH`. Use `.ps1` scripts when `$env:PATH` must be set inline, since `$` gets escaped in bash.
 
 ## Common Commands
 
-```powershell
-# Development
-npx electron-vite dev
+```bash
+# Development (hot reload)
+powershell -File scripts/run-dev.ps1
+# or: PATH="/c/Program Files/nodejs:$PATH" npx electron-vite dev
+
+# Type checking (composite project — no incremental, checks all 3 targets)
+powershell -File scripts/typecheck.ps1
+# or: PATH="/c/Program Files/nodejs:$PATH" npx tsc --build
 
 # Production build (vite only)
-npx electron-vite build
+PATH="/c/Program Files/nodejs:$PATH" npx electron-vite build
 
 # Build Windows installer (NSIS)
-npx electron-builder --win
+PATH="/c/Program Files/nodejs:$PATH" npx electron-builder --win
 
 # Full build pipeline
-npm run build:win
-
-# Type checking (composite project)
-npx tsc --build
+PATH="/c/Program Files/nodejs:$PATH" npm run build:win
 ```
 
-Helper scripts: `scripts/run-dev.ps1` (dev server), `scripts/build.ps1` (vite build), `scripts/build-installer.ps1` (electron-builder), `scripts/typecheck.ps1` (tsc --build).
-
-No test framework or linter is configured.
+Helper scripts: `scripts/run-dev.ps1`, `scripts/build.ps1`, `scripts/build-installer.ps1`, `scripts/typecheck.ps1`. No test framework or linter is configured.
 
 ## Architecture
 
-**Electron three-process model:**
-- **Main** (`src/main/`) — IPC handlers (`ipc/index.ts`), window lifecycle, CSP headers, path-validated file I/O. Storage uses async `fs/promises` writing JSON to `app.getPath('userData')/{characters,campaigns}/`.
-- **Preload** (`src/preload/`) — Context bridge exposing `window.api` with typed methods for character CRUD, campaign CRUD, file dialogs, and raw file I/O. Types in `index.d.ts`, included in `tsconfig.web.json`.
-- **Renderer** (`src/renderer/src/`) — React 19 SPA with MemoryRouter (not BrowserRouter — Electron requirement). Global JSX declaration in `global.d.ts` needed for React 19 + tsc.
+### Electron Three-Process Model
 
-**State management (Zustand v5):** Seven stores, each owning a distinct domain:
-- `useCharacterStore` — Character CRUD via `window.api`. Includes `toggleArmorEquipped()` for equip/unequip toggling.
-- `useBuilderStore` — Character creation state machine (`system-select → building → complete`), split into 6 slices at `stores/builder/slices/` (core, ability-score, selection, character-details, build-actions, save)
-- `useCampaignStore` — Campaign CRUD via `window.api`. `loadCampaigns()` merges disk data with in-memory campaigns (preserving campaigns injected via `addCampaignToState()` from network peers).
-- `useNetworkStore` — PeerJS connection lifecycle, host/client message routing. Stores `campaignId` (real UUID) received from the host during `game:state-full` handshake.
-- `useLobbyStore` — Pre-game lobby state (players, chat, voice status, ready system, slow mode, file sharing toggle). `LobbyPlayer` includes `color`, `isDeafened`, `isCoDM`. `ChatMessage` supports file attachments (`isFile`, `fileData`, `mimeType`).
-- `useGameStore` — In-game state (map, tokens, initiative, fog of war, shop inventory)
-- `useUIStore` — UI state (sidebar toggle)
+- **Main** (`src/main/`) — IPC handlers (`ipc/index.ts`), window lifecycle, CSP headers, path-validated file I/O. Storage uses async `fs/promises` writing JSON to `app.getPath('userData')/{characters,campaigns,bastions}/`.
+- **Preload** (`src/preload/`) — Context bridge exposing `window.api` with typed methods. Types in `index.d.ts`, included in `tsconfig.web.json`.
+- **Renderer** (`src/renderer/src/`) — React 19 SPA with MemoryRouter (not BrowserRouter — Electron `file://` requirement). Global JSX declaration in `global.d.ts` needed for React 19 + tsc.
 
-**Game system plugin architecture** (`systems/`):
-- `types.ts` — `GameSystemPlugin` interface: spell slots, spell lists, class features, equipment, skills, sheet config
-- `registry.ts` — `registerSystem()` / `getSystem(id)` / `getAllSystems()` backed by a Map
-- `dnd5e/index.ts` — 5e plugin implementation
-- `pf2e/index.ts` — PF2e plugin implementation
-- `init.ts` — Registers both plugins at app startup
+**TypeScript composite project:** Root `tsconfig.json` references `tsconfig.node.json` (main + preload) and `tsconfig.web.json` (renderer + preload types). `tsc --build` checks both.
 
-Plugins expose `getSheetConfig()` returning `SheetConfig` (showInitiative, showPerception, showClassDC, showBulk, showElectrum, showFocusPoints, proficiencyStyle). Sheet components use this to conditionally render system-specific UI.
+### State Management (Zustand v5)
 
-**Networking (PeerJS WebRTC P2P):** Located in `network/`. Host-authoritative model:
-- `peer-manager.ts` — PeerJS instance lifecycle, invite code generation (6-char alphanumeric, ambiguous chars removed)
-- `host-manager.ts` — Accepts connections, routes messages, manages peer registry. Exports `setCampaignId()`/`getCampaignId()` so joining clients learn the real campaign UUID. Also handles ban list (`bannedPeers` Set), chat mute timeouts (`chatMutedPeers` Map), auto-moderation word filtering, rate limiting (10 msg/sec per peer), and message size validation (64KB default, 8MB for file messages).
-- `client-manager.ts` — Connects to host, handles incoming messages. Validates all incoming messages (type, payload shape, string lengths) before processing. Uses `handleForcedDisconnection()` for kick/ban (no reconnect attempts) vs `handleDisconnection()` for network errors (retries up to 3 times).
-- `voice-manager.ts` — WebRTC media calls, VAD, force-mute/deafen, per-peer local mute. Supports listen-only mode (graceful degradation when no microphone). Exports `resumeAllAudio()` to unblock browser autoplay policy and `isListenOnly()` to check mic status.
-- `message-handler.ts` — Message routing utility
-- `types.ts` — `MessageType` union, `PeerInfo`, all payload interfaces
+Nine stores: `useCharacterStore` (CRUD), `useBuilderStore` (creation, 6 slices at `stores/builder/slices/`), `useCampaignStore`, `useBastionStore`, `useNetworkStore` (PeerJS), `useLobbyStore` (lobby), `useGameStore` (in-game), `useLevelUpStore` (level-up flow), `useUIStore`.
 
-Messages flow: client → host (rebroadcasts) → all clients. The host processes and relays; clients don't talk directly to each other. DM moderation (force-mute, kick, ban, chat timeout, co-DM promotion) is host-initiated via direct broadcast. The host validates all incoming messages: rate limiting, size limits, payload shape validation, senderId/senderName overwrite (spoofing prevention), and optional word filtering before relay. Kick uses `dm:kick-player`, ban uses `dm:ban-player` (distinct message types so clients show appropriate feedback).
+### Character Flow: Make vs Sheet vs Level Up
 
-**Invite code vs campaign UUID:** Invite codes (e.g., "DX29YF") are 6-char strings used as PeerJS peer IDs for connecting. Campaign IDs are UUIDs. When a client joins, the host sends the real `campaignId` in the `game:state-full` handshake. `JoinGamePage` waits for this UUID before navigating to `/lobby/${campaignId}`. Never use the invite code as a campaign ID for store lookups.
+1. **Make Character** (builder, `/characters/create`) — Four tabs: About, Special Abilities, Languages, Spells. Equipment lives on Sheet. `save-slice.ts` assembles the `Character` object.
+2. **Character Sheet** (`/characters/:id`) — Full view/edit. Toolbar: Edit/Save toggle, Short Rest, Long Rest, Make Character, Level Up. Permission-gated.
+3. **Level Up** (`/characters/:id/levelup`) — Per-level HP, ASI, feat/spell choices. `useLevelUpStore.applyLevelUp()` merges delta.
 
-**Lobby bridge pattern:** `useNetworkStore` and `useLobbyStore` are deliberately separate stores. `LobbyPage.tsx` acts as the bridge:
-- Syncs `networkStore.peers` → `lobbyStore.players` via useEffect (adds/updates/removes remote players)
-- Registers additional `onHostMessage`/`onClientMessage` listeners for `chat:message` → adds to `lobbyStore.chatMessages`
-- Bridges `player:character-select` messages to store remote character data in `lobbyStore.remoteCharacters` (keyed by characterId)
-- Bridges `dm:character-update` messages: when DM edits a remote player's character and saves, sends updated data; client saves locally and updates `lobbyStore.remoteCharacters`
-- Bridges `dm:force-mute`/`dm:force-deafen` explicitly to `lobbyStore` player updates
-- Bridges `chat:file` messages for image/character/campaign file sharing (base64 over WebRTC, max 5MB images, 2MB .dndchar/.dndcamp)
-- Bridges `player:color-change`, `dm:promote-codm`/`dm:demote-codm`, `dm:slow-mode`, and `dm:file-sharing` to lobby store
-- UI components (`ChatInput`, `ReadyButton`, `LobbyLayout`) call both `lobbyStore` (local state) and `networkStore.sendMessage()` (network relay)
-- Dice rolls (`/roll`) are processed locally in `useLobbyStore.sendChat()`, then the result is broadcast via `chat:message` with `isDiceRoll`/`diceResult` fields so other players see the roll
-- Own chat messages are filtered by `senderId !== localPeerId` to avoid duplicates from host rebroadcast
-- Watches `connectionState` for forced disconnection (kick/ban) → navigates to home page
+ViewCharactersPage → Sheet (not builder). XP/Milestone leveling via `levelingMode: 'xp' | 'milestone'`.
 
-**Network data sync:** Some data lives only on one machine (campaigns on DM's disk, characters on each player's disk). To make it available across peers:
-- `player:character-select` includes full `characterData` in the payload so other players can view character sheets. Stored in `lobbyStore.remoteCharacters`.
-- `dm:game-start` includes the full `campaign` object. Clients receive it and call `useCampaignStore.addCampaignToState()` (in-memory only, no disk persistence) before navigating to `/game/${payload.campaign.id}`.
-- `dm:character-update` sends updated character data to a specific player after DM edits their character in the lobby.
-- `dm:shop-update` broadcasts shop inventory to all players. `GameLayout.tsx` registers a message listener for this and calls `gameStore.openShop()`/`setShopInventory()`.
-- `PlayerList` looks up characters from both local `useCharacterStore` and `lobbyStore.remoteCharacters`.
+### Character Sheet Layout
 
-**Multi-system support:** D&D 5e and Pathfinder 2e. Per-system files follow the pattern `*-{5e,pf2e}.ts`:
-- Build tree generators (`services/build-tree-*.ts`) — create level-based build slots
-- Stat calculators (`services/stat-calculator-*.ts`) — compute derived stats from build choices
-- Auto-populate services (`services/auto-populate-*.ts`) — fill in defaults for new characters. `auto-populate-5e.ts` includes `getSpellsFromTraits()` which generically detects spell-granting features via the `spellGranted` field on species traits (no hardcoded race checks)
-- Character types (`types/character-*.ts`) — system-specific Character interfaces. `BuildChoices5e` includes `subclassId`, `asiChoices`, `chosenLanguages`, `speciesAbilityBonuses` for edit persistence. `BuildChoicesPf2e` includes `chosenLanguages` and `pf2eAbilityBoosts`.
-- SRD data (`renderer/public/data/{5e,pf2e}/`) — JSON files for species/ancestries, classes, backgrounds, feats, spells, class features, equipment, subclasses, magic items (5e), archetypes (PF2e). PF2e feats are split into `feats/{general,skill,ancestry,class}-feats.json`. 5e feats have `category` ("Origin" | "General" | "Fighting Style") and `level` fields. 5e data uses 2024 PHB (10 species with flexible ability scores, 16 backgrounds with origin feats).
+Two-column grid: SheetHeader → CombatStatsBar → AbilityScoresGrid (full width), then Left (Class Resources, Saves, Skills, Conditions, Features, Actions[PF2e]) / Right (Offense, Defense, Spellcasting, Equipment & Currency, Crafting[5e]). Notes always at bottom.
 
-**Character sheet** (`components/sheet/`): Unified section-based layout for both systems. Each section component accepts a `Character` union and uses type guards (`is5eCharacter`/`isPf2eCharacter`) or plugin `SheetConfig` to handle system differences:
-- `CharacterSheet.tsx` — Main slide-out panel, 2-column layout
-- `SheetHeader`, `CombatStatsBar`, `AbilityScoresGrid` — Identity and combat stats
-- `SavingThrowsSection`, `SkillsSection` — Proficiency-based sections (dots for 5e, TEML for PF2e). Skills are expandable with descriptions from `data/skills.ts`.
-- `SpellcastingSection`, `OffenseSection`, `DefenseSection` — Combat mechanics. `DefenseSection` includes armor equip/unequip toggles.
-- `ConditionsSection` — Active conditions and buffs with picker. Data from `data/conditions.ts` (system-specific conditions + buffs).
-- `FeaturesSection`, `EquipmentSection`, `NotesSection` — Inventory and character details. `EquipmentSection` shows weapons with attack/damage, armor with AC/properties.
-- `ProficiencyIndicator` — Polymorphic: dots (5e) or TEML bubbles (PF2e)
+**Key sheet behaviors:**
+- **Dynamic AC**: Computed from equipped armor, not stored `character.armorClass`. 5e: `equippedArmor.acBonus + cappedDex + shieldBonus` (unarmored varies by class). `ArmorEntry.acBonus` = full base AC (e.g., 17 for Splint), NOT modifier.
+- **Dynamic weapon stats**: Attack bonuses/damage computed from current ability scores + proficiency. Stored `weapon.attackBonus` ignored.
+- **Dynamic spellcasting**: Save DC / attack bonus recomputed via `computeSpellcastingInfo()`. Stored `spellcasting` field used for persistence only.
+- **Currency**: Coin badges with cross-denomination buy/sell via `utils/currency.ts`. Equipment packs expand into individual items on purchase.
 
-**SRD data loading:** `services/data-provider.ts` fetches JSON from `./data/{system}/`, caches in a Map, and transforms raw data into `SelectableOption` format for the builder UI. Also exposes typed loaders (`load5eSpells`, `load5eMagicItems`, `loadPf2eEquipment`, etc.) used by plugins. PF2e feat loading uses `getOptionsForSlot()` with categories `ancestry-feat`, `class-feat`, `skill-feat`, `general-feat` which load from the `feats/` subdirectory.
+### Game System Plugin Architecture (`src/renderer/src/systems/`)
 
-**Game data files:**
-- `data/conditions.ts` — `CONDITIONS_5E`, `CONDITIONS_PF2E`, `BUFFS_5E`, `BUFFS_PF2E` arrays. Each has `name`, `description`, `hasValue?`, `maxValue?` (PF2e leveled conditions).
-- `data/skills.ts` — System-specific skill descriptions with common uses. `getSkillDescription(name, system)`.
-- `data/moderation.ts` — `DEFAULT_BLOCKED_WORDS` array and `filterMessage()` for chat auto-moderation. Used by host-manager when moderation is enabled.
-- `services/spell-data.ts` — Shared spell slot/cantrip tables (`FULL_CASTER_SLOTS`, `CANTRIPS_KNOWN`, `getCantripsKnown()`, `getSlotProgression()`). Used by both `SpellsTab` (builder) and `SpellcastingSection` (sheet).
-- `services/adventure-loader.ts` — Loads `./data/adventures/adventures.json` with caching. `Adventure` includes `chapters[]` and `npcs[]` (each with `role: 'ally' | 'enemy' | 'neutral'`).
+- `GameSystemPlugin` interface → `dnd5e/index.ts` and `pf2e/index.ts`, auto-registered in `init.ts`
+- Per-system files: `*-{5e,pf2e}.ts` (build-tree, stat-calculator, auto-populate, character types)
+- SRD data: `renderer/public/data/{5e,pf2e}/` (species, classes, backgrounds, feats, spells, equipment, subclasses, class-features, crafting, magic-items, trinkets, invocations, metamagic)
+- **Component tree split**: `components/{builder,sheet,levelup}/{5e,pf2e}/`, shared UI in `*/shared/`
+- **Page split**: `CharacterSheet5ePage.tsx` / `CharacterSheetPf2ePage.tsx`, `LevelUp5ePage.tsx` / `LevelUpPf2ePage.tsx`
 
-**In-game rendering:** PixiJS via `@pixi/react`. Map canvas (`components/game/MapCanvas.tsx`) with grid, token, fog, and measurement layers as PixiJS display objects (not React components).
+### Services Layer
 
-**In-game layout** (`components/game/GameLayout.tsx`): Three-panel layout with tabs:
-- **Left panel** — Initiative tracker (collapsible)
-- **Center** — MapCanvas with DM toolbar overlay
-- **Right panel** — DM tabs: tokens, fog, npcs, notes, shop. Player tabs: character, conditions, spells.
-- **Bottom panel** — Actions, dice, chat tabs
-- **Shop integration** — `ShopPanel` (DM: manage inventory with preset items, broadcast) and `ShopView` (player: browse/buy). `GameLayout` registers `dm:shop-update` message listener.
-- **Player overlay** — `ShopView` appears above `PlayerHUD` when shop is open
+| Service | Purpose |
+|---------|---------|
+| `data-provider.ts` | SRD data loading with caching. Exports `load5eInvocations()`, `load5eMetamagic()`, `load5eFeats()`, `load5eMagicItems()`, `load5eSpecies()`, `load5eSpells()`, `getHeritageOptions5e()`, `getOptionsForCategory()`. |
+| `spell-data.ts` | Spell slot tables, `PREPARED_SPELLS`, `computeSpellcastingInfo()`, Warlock Pact Magic (`isWarlockPactMagic()`, `getWarlockPactSlots()`), third-caster support. |
+| `build-tree-5e.ts` / `build-tree-pf2e.ts` | Build slot tree generation |
+| `stat-calculator-5e.ts` / `stat-calculator-pf2e.ts` | Ability scores, HP, AC, saves. `calculateHPBonusFromTraits()` for Dwarven Toughness/Tough. |
+| `auto-populate-5e.ts` / `auto-populate-pf2e.ts` | Auto-fill equipment/proficiencies. `getSpeciesSpellProgression()` for heritage spells. |
+| `character-io.ts` / `campaign-io.ts` | Import/export via native file dialogs |
 
-**Character builder flow:** User selects game system → foundation slots (ancestry/species, class, background, ability scores) → level-based slots (ASI, feats, features) → `buildCharacter5e()`/`buildCharacterPf2e()` (async, returns `Promise<Character>`) in `save-slice.ts` assembles final Character object (including armor parsed from equipment via `buildArmorFromEquipment5e()`) → saved via IPC. Equipment assembly merges starting equipment, background equipment, AND shop-purchased items (source-tracked). `SpellsTab` enforces cantrip limits and spells-known limits (for bard/sorcerer/ranger/warlock); `spell-data.ts` has `SPELLS_KNOWN` tables. Non-caster classes with racial spells (e.g., High Elf barbarian) show a "Racial Spells" section instead of blocking the tab.
+### Level Up System
 
-**Character builder persistence:** `save-slice.ts` handles both saving and restoring for edit:
-- `loadCharacterForEdit5e()` restores subclass slot selection, ASI selections, `chosenLanguages`, and `selectedSpellIds` from `buildChoices`/`knownSpells`
-- `loadCharacterForEditPf2e()` restores `chosenLanguages`, `pf2eAbilityBoosts`, and `selectedSpellIds` from `buildChoices`/`knownSpells`
-- `buildCharacter5e()` uses `getSpellsFromTraits()` to populate racial `knownSpells`, merges with builder-selected spells from `selectedSpellIds` (deduped by name), and saves `speciesAbilityBonuses` into `buildChoices`
-- `selectedSpellIds` lives in `CharacterDetailsSliceState` (not local component state) so it persists through the builder flow
+`components/levelup/{5e,pf2e}/` with `useLevelUpStore`. Separate `apply5eLevelUp()` / `applyPf2eLevelUp()` handling: ASI retroactive CON bonus, spell slot delta, class features from `class-features.json`, HP bonus delta, Epic Boon (lv19), General Feat at ASI levels, Fighting Style, Invocations (Warlock), Metamagic (Sorcerer), Divine/Primal Order.
 
-**Routing** (`App.tsx`):
-- `/` → Main menu
-- `/characters`, `/characters/create`, `/characters/edit/:id` → Character management (both systems, editable)
-- `/make` → Campaign creation wizard
-- `/campaign/:id` → Campaign detail
-- `/join` → Join game by invite code
-- `/lobby/:campaignId` → Pre-game lobby (voice auto-initializes on connect)
-- `/game/:campaignId` → In-game view (DM tools vs player HUD based on role)
-- `/calendar` → Fantasy calendar
-- `/about` → About page (version, features, tech stack)
+### Networking (PeerJS WebRTC P2P)
+
+`network/` directory. **Host-authoritative**: client → host (validates & relays) → all clients. Files: `peer-manager.ts`, `host-manager.ts`, `client-manager.ts`, `voice-manager.ts`, `message-handler.ts`, `types.ts`.
+
+**Invite code vs campaign UUID:** Invite codes are PeerJS peer IDs. Campaign IDs are UUIDs from `game:state-full` handshake. Never mix them.
+
+**Lobby bridge:** `LobbyPage.tsx` bridges `useNetworkStore` ↔ `useLobbyStore`. Filter own messages by `senderId !== localPeerId`.
+
+### Routing (`App.tsx`)
+
+System-prefixed routes: `/characters/5e/create`, `/characters/5e/edit/:id`, `/characters/5e/:id`, `/characters/5e/:id/levelup` (same for `pf2e`). Legacy routes (`/characters/:id`, `/characters/edit/:id`, `/characters/:id/levelup`) redirect to system-prefixed. Other: `/` (menu), `/characters` (list), `/bastions`, `/make`, `/campaign/:id`, `/join`, `/lobby/:campaignId`, `/game/:campaignId`, `/calendar`, `/about`.
 
 ## Security Hardening
 
-**Sandbox enabled:** `BrowserWindow` uses `sandbox: true`. The preload script can only use `contextBridge` and `ipcRenderer` — all Node.js work (fs, path, dialog) happens in main process IPC handlers. Never set `sandbox: false`.
-
-**Content Security Policy:** CSP headers are injected via `session.webRequest.onHeadersReceived` in `main/index.ts`. External resources cannot be loaded in the renderer. Whitelisted origins: `ws:/wss:` and `https://0.peerjs.com` for PeerJS signaling, `blob:` for voice/media, `'unsafe-inline'` only for style-src (Tailwind). No `'unsafe-eval'`.
-
-**Restricted file I/O:** `fs:read-file` and `fs:write-file` IPC handlers validate paths against an allowlist (`main/ipc/index.ts`). Only two categories of paths are permitted:
-1. Paths under `app.getPath('userData')` (the app's own data directory)
-2. Paths returned by `dialog:show-save` or `dialog:show-open` (consumed after single use)
-
-Any other path throws `"Access denied: path not allowed"`. This means file export/import must always follow the pattern: call dialog first → use returned path for read/write. Paths are normalized with `path.normalize()` for Windows compatibility.
-
-**Network security:** `host-manager.ts` enforces a multi-layer security pipeline on all incoming peer messages:
-1. **Size limit** — Messages > 64KB rejected (exception: `chat:file` up to 8MB)
-2. **Rate limit** — Sliding window of 10 messages/second per peer; excess dropped
-3. **Payload validation** — `player:join` (displayName max 32 chars), `chat:message` (max 2000 chars), `chat:file` (allowed MIME types only)
-4. **SenderId spoofing prevention** — Host overwrites `senderId`/`senderName` with actual peer info from `peerInfoMap` before relay
-5. **Chat moderation** — Optional word filter (`data/moderation.ts`) replaces blocked words with `***` before relay
-6. **Ban enforcement** — Banned peers rejected immediately on connection attempt. Bans are persisted to `userData/bans/{campaignId}.json` via IPC and restored on `setCampaignId()` or `startHosting()`.
-
-**Client-side validation:** `client-manager.ts` validates all incoming messages from host: type must match known `MessageType`, payload must be an object, string fields have max length checks (displayName 100, message 5000).
-
-Chat messages are also truncated to 2000 chars client-side in `useLobbyStore.sendChat()`.
-
-**Code signing prep:** `electron-builder.yml` has `signAndEditExecutable: false`. When a certificate is purchased, set `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` env vars (electron-builder reads them automatically), then change `signAndEditExecutable` to `true`.
+- **Sandbox enabled** (`sandbox: true`). Never set `sandbox: false`.
+- **CSP headers** via `session.webRequest.onHeadersReceived`. No `'unsafe-eval'`.
+- **Restricted file I/O**: Paths validated against `app.getPath('userData')` allowlist + dialog-returned paths (60s TTL).
+- **UUID validation** on all storage IDs (prevents path traversal).
+- **Network security pipeline**: Size limit → rate limit → type allowlist → payload validation → senderId rewrite → word filter → ban enforcement.
+- **Client-side validation**: `client-manager.ts` validates all host messages.
 
 ## Key Conventions
 
-- **Styling:** Tailwind CSS v4 with `@tailwindcss/vite` plugin. Dark theme: gray-950 backgrounds, amber accents.
-- **Path alias:** `@renderer` maps to `src/renderer/src` (configured in electron-vite and tsconfig).
-- **UI components:** Reusable primitives in `components/ui/` (Button, Card, Input, Modal, EmptyState, BackButton) exported via barrel file.
-- **Character types:** Union type `Character = Character5e | CharacterPf2e` with type guards `is5eCharacter()`/`isPf2eCharacter()` in `types/character.ts`. Common types (SpellEntry, WeaponEntry, ArmorEntry, Currency, ClassFeatureEntry, ActiveCondition) in `character-common.ts`. Both systems use `Currency` (`{ cp, sp, gp, pp, ep? }`) for treasure. Both have `heroPoints`, `pets`, `conditions` fields.
-- **Campaign types:** `Campaign` in `types/campaign.ts` includes `lore: LoreEntry[]` for world-building entries with player visibility toggles, `npcs: NPC[]` for campaign NPCs, and `customRules: CustomRule[]`. `CampaignDetailPage` provides full CRUD for NPCs, lore, maps, and custom rules.
-- **Readonly character sheets:** `CharacterSheet`, `SheetHeader`, `CombatStatsBar`, and `DefenseSection` accept an optional `readonly` prop. When true, level editing, HP editing, and armor equip toggles are disabled and the Edit button is hidden. Used in the lobby when players view other players' sheets (DM gets edit access, players get readonly).
-- **Adding a game system:** Implement `GameSystemPlugin` interface, register in `systems/init.ts`, add character type + build tree + stat calculator + auto-populate service, add SRD data files under `renderer/public/data/{system}/`.
-- **Data fetch paths:** All `fetch()` calls for SRD data MUST use relative paths (`./data/5e/races.json`, not `/data/5e/races.json`). In Electron production builds, absolute `/data/` resolves to the filesystem root under the `file://` protocol and will 404.
-- **Network types:** `PeerInfo` is the canonical player descriptor used across network, lobby, and game stores. Fields include `isDeafened`, `color?`, `isCoDM?`. When adding fields to `PeerInfo`, update all construction sites (host-manager `handleJoin`, network store `player:join` handler, lobby page peer sync bridge).
-- **Player colors:** 12-color preset palette (`PLAYER_COLORS` in `network/types.ts`). Auto-assigned on join (first unused color). `LobbyPlayer.color` used in `PlayerCard` avatars and `ChatPanel` sender names.
-- **Lobby moderation:** `host-manager.ts` exports `banPeer()`, `chatMutePeer()`, `setModerationEnabled()`, `setCustomBlockedWords()`. `PlayerCard` renders DM controls (kick, ban, timeout, co-DM promote). `ChatInput` supports slow mode and file attachments.
-- **PeerJS serialization:** Must use `serialization: 'raw'` for data connections. PeerJS's `binary` serializer (the default) doesn't bundle correctly with Vite, and `'none'` doesn't exist. Valid values: `raw`, `json`, `binary`, `binary-utf8`, `default`. The codebase manually calls `JSON.stringify()`/`JSON.parse()` so `raw` is correct.
-- **Navigation state for return paths:** When navigating to `/characters/create` from within the lobby, `CharacterSelector` passes `{ state: { returnTo: '/lobby/${campaignId}' } }`. `CharacterBuilder` and `CreateCharacterPage` read `location.state.returnTo` and navigate there instead of the default `/characters` after save or back. This prevents players from losing their lobby connection when creating a character mid-session.
-- **DM remote character edits:** When DM edits a remote player's character, `PlayerList` sets `playerId` to the remote player's peerId. After save, `CharacterBuilder` checks if `role === 'host'` and `character.playerId !== 'local'`, then sends `dm:character-update` with the updated character data.
-- **Persistence:** One JSON file per entity (character/campaign), named by UUID. Storage functions return `StorageResult<T>` with `{ success, data?, error? }`.
-- **Build targets:** NSIS installer only (portable build removed). Configured in `electron-builder.yml` with `requestedExecutionLevel: asInvoker` (no admin elevation). Building the installer requires an admin terminal (symlink permissions for code signing cache).
-- **App icon path:** `main/index.ts` uses `app.isPackaged` to resolve `icon.ico` — dev uses `__dirname`-relative, production uses `process.resourcesPath`. `electron-builder.yml` has `extraResources` to copy the icon into the packaged app.
-- **Single-instance lock:** `main/index.ts` calls `app.requestSingleInstanceLock()` to prevent multiple app instances. A second launch focuses the existing window instead.
-- **Equipment source tracking:** `EquipmentItem` (5e) and `EquipmentItemPf2e` have an optional `source` field (`'class'`, `'background'`, `'shop'`). This enables source-based filtering during save and proper preservation of shop-purchased items on edit.
-- **Shop currency:** `GearTab.tsx` uses `parseCost()` to extract cost from item strings (e.g., "50 gp" → 50 gold) and `deductWithConversion()` to subtract from builder currency with cross-denomination conversion and change-making (e.g., breaking gold into silver/copper).
-- **Store circular dependency avoidance:** `useNetworkStore` uses dynamic `import('./useGameStore')` and `save-slice.ts` uses dynamic `import('../../useCharacterStore')` to avoid circular dependencies between stores. These cause harmless Vite build warnings ("dynamically imported by ... but also statically imported by ...") — do not "fix" these warnings by converting to static imports.
-- **Weapon persistence:** `Character5e` has a `weapons: WeaponEntry[]` field (same as PF2e). `buildCharacter5e()` and `buildCharacterPf2e()` preserve existing weapons on edit and auto-populate from starting equipment for new characters via `buildWeaponsFromEquipment5e()`/`buildWeaponsFromEquipmentPf2e()`.
-- **Spell level validation:** `SpellsTab.tsx` filters available spells by max accessible level (5e: derived from slot progression; PF2e: ceil(level/2)) and validates in `toggleSpell()`. Players cannot see or select spells above their accessible level.
-- **UUID validation:** All storage functions (`characterStorage`, `campaignStorage`, ban IPC handlers) validate IDs against UUID regex before constructing filesystem paths. Prevents path traversal attacks via malicious IDs.
+### Critical Patterns
+
+- **Sheet save pattern (effectiveCharacter):** All sheet components must use `useCharacterStore.getState().characters.find(c => c.id === character.id) || character` before spreading updates. Never use stale `character` prop. Always set `updatedAt: new Date().toISOString()`.
+- **DM broadcast pattern:** After saving, check `role === 'host' && character.playerId !== 'local'`, then broadcast `dm:character-update` with `targetPeerId` and call `setRemoteCharacter()`.
+- **Data fetch paths:** Always use relative paths (`./data/5e/species.json`). Absolute paths break under `file://` in production.
+- **Store circular deps:** Dynamic imports in `useNetworkStore` and `save-slice.ts`. Harmless Vite warnings — do not convert to static.
+- **PeerJS serialization:** Must use `serialization: 'raw'` with manual `JSON.stringify()`/`JSON.parse()`.
+
+### Adding a Class-Specific Build Slot
+
+Pattern for new class-level choices (e.g., Fighting Style, Primal Order, Divine Order):
+
+1. Add category to `BuildSlotCategory` in `character-common.ts`
+2. Add `getXxxLevel(classId)` in `build-tree-5e.ts`, generate slots in `generate5eBuildSlots()` + `generate5eLevelUpSlots()`
+3. Add icon mapping in `BuildSlotItem.tsx`
+4. Add inline options in `data-provider.ts` → `getOptionsForCategory()`
+5. Add store state/setter/reset in `useLevelUpStore.ts`
+6. Add selector component in `LevelSection5e.tsx`
+7. Add `buildChoices.xxxChoice` field in `character-5e.ts`
+8. Add restore/save in `save-slice-5e.ts`
+9. Wire proficiency effects in `save-slice-5e.ts` (builder) and `apply5eLevelUp()` (level-up)
+
+### Shared Utilities
+
+- `utils/currency.ts`: `parseCost()`, `deductWithConversion()`, `addCurrency()`, `computeSellPrice()`
+- `utils/ac-calculator.ts`: `computeDynamicAC(character)` — shared by CharacterCard and CombatStatsBar
+- `utils/character-routes.ts`: `getCharacterSheetPath()`, `getBuilderCreatePath()`, `getBuilderEditPath()`, `getLevelUpPath()`
+- `data/xp-thresholds.ts`: `shouldLevelUp()` — 5e lookup table, PF2e 1000/level
+- `data/class-resources.ts`: `getClassResources(classId, classLevel)` → per-rest trackers
+- `data/weapon-mastery.ts`: 8 mastery properties (Cleave, Graze, Nick, Push, Sap, Slow, Topple, Vex)
+- `data/language-descriptions.ts`, `data/wearable-items.ts`, `data/skills.ts`, `data/starting-equipment-table.ts`
+
+### Character Types
+
+- Union `Character = Character5e | CharacterPf2e` with type guards `is5eCharacter()`/`isPf2eCharacter()`
+- Common types in `character-common.ts`: SpellEntry (`source?`, `innateUses?` where -1 = PB uses), WeaponEntry, ArmorEntry, Currency, ActiveCondition, ClassResource
+- 5e-specific: `classes: CharacterClass5e[]`, `hitDiceRemaining`, `deathSaves`, `attunement`, `heroicInspiration?`, `weaponMasteryChoices?`, `magicItems?`, `pactMagicSlotLevels?`, `classResources?`, `wildShapeUses?`, `invocationsKnown?`, `metamagicKnown?`, `subspecies?`
+- PF2e-specific: `heroPoints`, `dying`, `wounded`, `actions: Pf2eAction[]`, `focusPoints`, `spellTradition`
+- One JSON file per entity, named by UUID. `StorageResult<T>` with `{ success, data?, error? }`
+
+### Builder Persistence
+
+- `save-slice.ts` dispatches to `save-slice-5e.ts` / `save-slice-pf2e.ts`
+- `loadCharacterForEdit*()` restores subclass, ASI, languages, spells, HP, fighting style, heritage, versatileFeatId, speciesExtraSkillCount, speciesSpellcastingAbility, keenSensesSkill
+- `buildCharacter*()` preserves ALL sheet-edited fields via spread operator — new character fields auto-survive re-saves
+- `selectedSpellIds` in `CharacterDetailsSliceState` (persists through builder flow)
+- `CharacterSummaryBar` loads real SRD data for correct HP/ability score calculation
+
+### Networking Conventions
+
+- **DM remote edits:** Check `role === 'host' && character.playerId !== 'local'`, broadcast `dm:character-update` with `targetPeerId`.
+- **`PeerInfo`** fields: `isDeafened`, `color?`, `isCoDM?`. Update all construction sites when adding fields.
+- **Return paths:** Pass `{ state: { returnTo: '/lobby/${campaignId}' } }` when navigating away from lobby.
+
+### Rest System
+
+- Rest logic in `CharacterSheet5ePage.tsx` (Long Rest) and `ShortRestDialog5e.tsx` (Short Rest). Both use effectiveCharacter pattern.
+- **5e Long Rest**: ALL hit dice recovered, all spell/pact slots, all class resources + wild shape, all innate spells, clear death saves/temp HP, Exhaustion -1. Humans get Heroic Inspiration. High Elf cantrip swap dialog.
+- **5e Short Rest**: Class resources per `shortRestRestore`, Hit Point Dice spending (no limit), Warlock Pact slots, wild shape +1.
+
+### Sheet Permission Logic
+
+```
+canEdit = (character.playerId === 'local') || (role === 'host') || (localPlayer?.isCoDM) || (character.playerId === localPeerId)
+```
+
+### Styling and UI
+
+- Tailwind CSS v4 with `@tailwindcss/vite`. Dark theme: gray-950 backgrounds, amber accents.
+- `@renderer` alias → `src/renderer/src`. Reusable primitives in `components/ui/`.
+
+### PF2e-Specific Notes
+
+- Equipment uses `traits` (not `properties`), `acBonus`/`dexCap`/`checkPenalty`/`speedPenalty`
+- Feats split: `feats/{general,skill,ancestry,class}-feats.json`
+- HP deterministic: `ancestryHP + (classHP + conMod) * level`
+- Actions/Reactions: `Pf2eAction[]` with action cost diamonds. Custom Lore skills. Extended personality fields.
+- Dying (0-4) + Wounded in CombatStatsBar when HP <= 0
+
+### 5e 2024 PHB Notes
+
+**Species & Heritage:**
+- "Race" → "Species". Data: `species.json`. 6 species have lineages via `subraces[]` with `traitModifications` and optional `spellProgression`. Heritage slot injected dynamically. Always use `derivedSpeciesTraits` (not `speciesTraits`).
+- Species spell progression at levels 3/5 via `getSpeciesSpellProgression()`. `innateUses: -1` = PB uses/long rest.
+- Elf/Tiefling/Gnome: species spellcasting ability choice (INT/WIS/CHA). High Elf: cantrip swap on Long Rest. Elf Keen Senses: Insight/Perception/Survival choice.
+- Human: Skillful (+1 skill), Extra Language (+1 lang), Versatile (free Origin feat via `versatileFeatId`).
+- Background ASI (not species). Custom background: any 3 abilities.
+
+**Build Order & Feats:**
+- Class → Background → Species → Heritage → Ability Scores → Skills. All subclasses at level 3.
+- ASI at 4, 8, 12, 16 (Fighter +6/14, Rogue +10). Level 19: Epic Boon.
+- 4 feat categories: Origin (lv1), General (lv4+), Fighting Style, Epic Boon (lv19+). 4 repeatable feats.
+- ASI/Feat toggle: at ASI levels choose ASI feat OR General feat.
+
+**Class Features:**
+- Fighting Style: Fighter(lv1), Paladin(lv2), Ranger(lv2). `getFightingStyleLevel()`.
+- Cleric Divine Order (lv1): Protector/Thaumaturge. Druid Primal Order (lv1): Magician/Warden.
+- Druid Wild Shape: tracking via `wildShapeUses`. Elemental Fury (lv7): Potent Spellcasting/Primal Strike.
+- Druid auto-grants: Druidic language, Speak with Animals always-prepared.
+- Warlock Pact Magic: separate system (max 4 slots, max 5th-level). Invocations: `invocations.json` (42). Count: 1/3/5/6/7/8/9.
+- Sorcerer Metamagic: `metamagic.json` (10). Count: 2/3/4.
+- Weapon mastery: 8 properties. `weaponMastery: { count, progression }` in classes.json.
+
+**Equipment & Gold:**
+- Class starting equipment options (A/B/C choices). Background 50 GP toggle replaces background equipment.
+- Starting equipment at higher levels: bonus gold + magic item slots per PHB table.
+- Crafting: tool-based recipes in `crafting.json`. Spell scroll crafting with Arcana/Calligrapher's.
+- Trinkets: d100 table in `trinkets.json`.
+
+**Combat & Conditions:**
+- Heroic Inspiration (renamed from inspiration). Humans gain on Long Rest.
+- Hit Point Dice (renamed from Hit Dice in UI). Long Rest recovers ALL.
+- Exhaustion: 6 levels (-2 D20 Tests, -5 ft Speed each). Level 6 = death.
+- Bloodied: auto-indicator when HP > 0 and HP <= half max.
+- Spell lists: arcane/divine/primal. Spell components shown with "M" badge.
+- No background features in 2024 PHB. No Hero Points for 5e.
+
+### 5e Multiclassing
+
+- `Character5e.classes: CharacterClass5e[]` (array of `{ name, level, subclass?, hitDie }`)
+- `BuildChoices5e.multiclassEntries?: MulticlassEntry[]`
+- `classes.json`: `multiclassPrerequisites` and `multiclassProficiencies` per class
+- Level-up: `classLevelChoices: Record<number, string>` maps level → classId. `ClassLevelSelector` shows eligible classes via `meetsPrerequisites()`
+- Spell slots: `getMulticlassSpellSlots()` combines caster levels. Warlock Pact Magic separate (`pactMagicSlotLevels`).
+- Sheet: "Level X (Fighter 5 / Wizard 3)" format, multiclass hit dice display
+
+### Bastion System
+
+Types in `types/bastion.ts`. 15 room definitions in `BASTION_ROOM_DEFINITIONS`. Storage in `main/storage/bastionStorage.ts`. Store: `useBastionStore`. Page: `BastionPage.tsx` at `/bastions`.
+
+### Build Configuration
+
+NSIS installer only. `requestedExecutionLevel: asInvoker`. Single-instance lock. Code signing via `WIN_CSC_LINK` + `WIN_CSC_KEY_PASSWORD` env vars.
+
+## Common Pitfalls
+
+- **Edit tool `replace_all` substring danger**: Substring matches inside identifiers get mangled. Always use targeted, unique-context replacements.
+- **Gold stacking on save**: Background `startingGold` loaded at selection. Additive gold logic must account for existing `currency.gp` to avoid double-counting.
+- **Relative fetch paths**: `fetch('./data/...')` works. `fetch('/data/...')` breaks under `file://`. Always relative.
+- **MemoryRouter, not BrowserRouter**: Never switch — `file://` origin breaks BrowserRouter.
+- **PeerJS `serialization: 'raw'`**: Don't change to `'binary'` or `'json'` — binary doesn't bundle with Vite.
