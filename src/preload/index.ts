@@ -23,6 +23,14 @@ const api = {
   loadBastion: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_BASTION, id),
   deleteBastion: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_BASTION, id),
 
+  // Homebrew storage
+  saveHomebrew: (entry: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_HOMEBREW, entry),
+  loadHomebrewByCategory: (category: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.LOAD_HOMEBREW_BY_CATEGORY, category),
+  loadAllHomebrew: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_ALL_HOMEBREW),
+  deleteHomebrew: (category: string, id: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.DELETE_HOMEBREW, category, id),
+
   // File dialogs
   showSaveDialog: (options: { title: string; filters: Array<{ name: string; extensions: string[] }> }) =>
     ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SAVE, options),

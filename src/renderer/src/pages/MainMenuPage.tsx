@@ -16,6 +16,11 @@ const menuItems = [
     description: 'View, create, and manage your campaigns'
   },
   {
+    label: 'Library',
+    path: '/library',
+    description: 'Browse spells, monsters, items, classes, and all your content'
+  },
+  {
     label: 'Join Game',
     path: '/join',
     description: 'Connect to a game hosted by your Dungeon Master'
