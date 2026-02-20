@@ -200,14 +200,17 @@ export default function AboutPage(): JSX.Element {
               </div>
             )}
 
-            {/* Install & Restart button */}
+            {/* Update & Restart button */}
             {updateStatus === 'downloaded' && (
-              <button
-                onClick={() => window.api.update.installUpdate()}
-                className="px-4 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-500 text-white cursor-pointer"
-              >
-                Install &amp; Restart
-              </button>
+              <>
+                <button
+                  onClick={() => window.api.update.installUpdate()}
+                  className="px-4 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-500 text-white cursor-pointer"
+                >
+                  Update &amp; Restart
+                </button>
+                <p className="text-[10px] text-gray-500">Will also install automatically on next app close</p>
+              </>
             )}
           </div>
         </div>

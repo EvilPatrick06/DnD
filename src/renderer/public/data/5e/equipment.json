@@ -597,21 +597,21 @@
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "25 gp",
-      "description": "As a Bonus Action, you can splash the contents onto a creature within 5 feet or throw the vial up to 20 feet, shattering on impact. Make a ranged attack against a creature or object, treating the acid as a Simple weapon. On a hit, the target takes 2d6 Acid damage."
+      "description": "As part of the Attack action, a creature can splash the contents of this vial onto a creature within 5 feet or hurl it up to 20 feet, shattering on impact. The target must succeed on a Dexterity saving throw (DC 8 + your Dexterity modifier + your Proficiency Bonus) or take 2d6 Acid damage."
     },
     {
       "name": "Alchemist's Fire",
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "50 gp",
-      "description": "As a Bonus Action, you can throw this flask up to 20 feet, shattering on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as a Simple weapon. On a hit, the target takes 1d4 Fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames."
+      "description": "As part of the Attack action, a creature can hurl this flask up to 20 feet, shattering on impact. The target must succeed on a Dexterity saving throw (DC 8 + your Dexterity modifier + your Proficiency Bonus) or take 1d4 Fire damage and have the Burning condition."
     },
     {
       "name": "Antitoxin",
       "category": "Adventuring Gear",
       "weight": 0,
       "cost": "50 gp",
-      "description": "As a Bonus Action, you can drink this or administer it to a creature within 5 feet. The drinker has Advantage on saving throws against being Poisoned for 1 hour."
+      "description": "As a Bonus Action, you can drink this or administer it to a creature within 5 feet. The drinker has Advantage on saving throws to avoid or end the Poisoned condition for 1 hour."
     },
     {
       "name": "Backpack",
@@ -625,7 +625,7 @@
       "category": "Adventuring Gear",
       "weight": 2,
       "cost": "1 gp",
-      "description": "As a Utilize action, you can spill ball bearings from their pouch to cover a level, 5-foot-square area. A creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or have the Prone condition. Moving at half speed avoids the save."
+      "description": "As a Utilize action, you can spill ball bearings from their pouch to cover a level, 10-foot-square area. A creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or have the Prone condition. Moving at half speed avoids the save."
     },
     {
       "name": "Barrel",
@@ -821,7 +821,7 @@
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "25 gp",
-      "description": "As a Bonus Action, you can splash the contents onto a creature within 5 feet or throw the flask up to 20 feet, shattering on impact. Make a ranged attack treating it as a Simple weapon. On a hit, an Undead or Fiend takes 2d8 Radiant damage."
+      "description": "As part of the Attack action, a creature can splash the contents of this flask onto a creature within 5 feet or hurl it up to 20 feet, shattering on impact. The target must succeed on a Dexterity saving throw (DC 8 + your Dexterity modifier + your Proficiency Bonus) or take 2d8 Radiant damage. The target must be a Fiend or Undead."
     },
     {
       "name": "Hunting Trap",
@@ -919,7 +919,7 @@
       "category": "Adventuring Gear",
       "weight": 3,
       "cost": "1 gp",
-      "description": "As a Utilize action, you can throw this at a Large or smaller creature within 15 feet. Make a ranged attack treating the net as a Simple weapon. On a hit, the target has the Restrained condition until it escapes. A creature can use its action to make a DC 10 Strength (Athletics) check, freeing itself or another creature within its reach on a success. Dealing 5 Slashing damage to the net (AC 10) also frees the creature without harming it."
+      "description": "As part of the Attack action, a creature can use a Net to try to restrain another creature within 15 feet. The target must succeed on a Dexterity saving throw (DC 8 + your Dexterity modifier + your Proficiency Bonus) or have the Restrained condition until freed. A creature can free the Restrained creature by using its action to make a DC 10 Strength (Athletics) check. Dealing 5 Slashing damage (AC 10) to the Net also ends the effect, destroying the Net."
     },
     {
       "name": "Oil (flask)",
@@ -954,7 +954,7 @@
       "category": "Adventuring Gear",
       "weight": 0,
       "cost": "100 gp",
-      "description": "As a Bonus Action, you can apply this poison to a weapon or piece of ammunition. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 Poison damage. Once applied, the poison retains potency for 1 minute or until the weapon hits."
+      "description": "As a Bonus Action, you can use this poison to coat one weapon or up to three pieces of ammunition. A creature that takes damage from the coated weapon or ammunition takes an extra 1d4 Poison damage. Once applied, the poison retains its potency for 1 minute or until the weapon hits."
     },
     {
       "name": "Pole",
@@ -1017,7 +1017,7 @@
       "category": "Adventuring Gear",
       "weight": 5,
       "cost": "1 gp",
-      "description": "50 feet of rope. Has 2 Hit Points. Can be burst with a DC 17 Strength (Athletics) check."
+      "description": "50 feet of rope. Can be burst with a DC 20 Strength (Athletics) check."
     },
     {
       "name": "Sack",
@@ -1641,7 +1641,7 @@
       "description": "A sprig of mistletoe used as a druidic focus for druid spells. Can be used in place of any Material component that doesn't have a specific cost."
     },
     {
-      "name": "Druidic Focus (Totem)",
+      "name": "Druidic Focus (Totem) (Legacy)",
       "category": "Spellcasting Focus",
       "weight": 0,
       "cost": "1 gp",

@@ -140,9 +140,9 @@
         {
           "order": "recruit",
           "name": "Recruit: Defenders",
-          "description": "Recruit up to 4 Bastion Defenders (CR 1/4 Guards). Each costs 50 GP to recruit.",
+          "description": "Recruit up to 4 Bastion Defenders. The recruitment costs no money.",
           "daysRequired": 7,
-          "cost": 200
+          "cost": 0
         }
       ]
     },
@@ -163,11 +163,7 @@
         "harvest"
       ],
       "allowMultiple": true,
-      "charm": {
-        "name": "Garden Charm",
-        "description": "You can cast Goodberry without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "harvest",
@@ -216,11 +212,7 @@
         "research"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Library Charm",
-        "description": "You can cast Comprehend Languages without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "research",
@@ -297,11 +289,7 @@
         "trade"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Smithy Charm",
-        "description": "You can cast Mending without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "craft",
@@ -377,11 +365,7 @@
         "craft"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Workshop Charm",
-        "description": "You gain proficiency with one type of Artisan's Tools of your choice for 7 days. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "craft",
@@ -391,7 +375,7 @@
           "cost": -1
         }
       ],
-      "permanentBenefit": "Source of Inspiration: After finishing a Long Rest in the Workshop, you gain Heroic Inspiration. This benefit lasts until you finish another Long Rest."
+      "permanentBenefit": "Source of Inspiration: After spending an entire Short Rest in your Workshop, you gain Heroic Inspiration. You can't gain this benefit again until you finish a Long Rest."
     },
     {
       "type": "gaming-hall",
@@ -410,11 +394,7 @@
         "trade"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Gaming Hall Charm",
-        "description": "You can cast Enhance Ability (any option) without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "trade",
@@ -476,11 +456,7 @@
         "harvest"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Greenhouse Charm",
-        "description": "You can cast Speak with Plants without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "fruitOfRestoration": {
         "description": "One plant in your Greenhouse has three magical fruits growing on it. Any creature that eats one of these fruits gains the benefit of a Lesser Restoration spell. Fruits that aren't eaten within 24 hours of being picked lose their magic. The plant replaces all picked fruits daily at dawn, and it can't be transplanted without killing it.",
         "fruitsPerDay": 3,
@@ -518,11 +494,7 @@
         "craft"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Laboratory Charm",
-        "description": "You can cast Detect Poison and Disease without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "craft",
@@ -617,11 +589,7 @@
         "craft"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Scriptorium Charm",
-        "description": "You can cast Sending without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "craft",
@@ -657,7 +625,7 @@
     {
       "type": "stable",
       "name": "Stable",
-      "description": "Housing for mounts and beasts of burden. A Roomy stable can hold up to 6 Large creatures; a Vast stable can hold up to 12.",
+      "description": "Housing for mounts and beasts of burden. A Roomy stable can hold up to 3 Large creatures; a Vast stable can hold up to 6 Large creatures.",
       "level": 9,
       "setting": "core",
       "prerequisite": {
@@ -731,11 +699,7 @@
         "empower"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Theater Charm",
-        "description": "You can cast Enthrall without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "empower",
@@ -770,11 +734,7 @@
         "empower"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Training Area Charm",
-        "description": "You gain proficiency with one weapon of your choice for 7 days. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "empower",
@@ -865,11 +825,7 @@
         "research"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Archive Charm",
-        "description": "You can cast Legend Lore without expending a spell slot or using Material components. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "research",
@@ -901,11 +857,7 @@
         "empower"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Meditation Chamber Charm",
-        "description": "You can cast Rary's Telepathic Bond without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "empower",
@@ -1082,11 +1034,7 @@
         "research"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "Pub Charm",
-        "description": "You can cast Heroism without expending a spell slot. Once you use this charm, it vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "research",
@@ -1315,11 +1263,7 @@
         "recruit"
       ],
       "allowMultiple": false,
-      "charm": {
-        "name": "War Room Charm",
-        "description": "You can cast Sending without expending a spell slot (up to 3 times). Once all uses are expended, the charm vanishes.",
-        "duration": "7 days"
-      },
+      "charm": null,
       "orderOptions": [
         {
           "order": "research",

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { ConfirmDialog } from '../components/ui'
 import Modal from '../components/ui/Modal'
+import { addToast } from '../hooks/useToast'
 import { load5eBastionFacilities } from '../services/data-provider'
 import { useBastionStore } from '../stores/useBastionStore'
 import { useCharacterStore } from '../stores/useCharacterStore'
@@ -70,6 +72,7 @@ export default function BastionPage(): JSX.Element {
   const loadBastions = useBastionStore((s) => s.loadBastions)
   const saveBastion = useBastionStore((s) => s.saveBastion)
   const deleteBastion = useBastionStore((s) => s.deleteBastion)
+  const deleteAllBastions = useBastionStore((s) => s.deleteAllBastions)
   const setFacilityDefs = useBastionStore((s) => s.setFacilityDefs)
   const facilityDefs = useBastionStore((s) => s.facilityDefs)
 
@@ -112,6 +115,7 @@ export default function BastionPage(): JSX.Element {
   const [showTreasuryModal, setShowTreasuryModal] = useState(false)
   const [showAdvanceTime, setShowAdvanceTime] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
 
   // Create form
   const [newName, setNewName] = useState('')
@@ -335,12 +339,23 @@ export default function BastionPage(): JSX.Element {
           <div className="w-px h-4 bg-gray-700" />
           <span className="text-xs text-gray-500">Bastions (2024 DMG)</span>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded font-semibold transition-colors"
-        >
-          + New Bastion
-        </button>
+        <div className="flex items-center gap-2">
+          {bastions.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAllConfirm(true)}
+              className="px-3 py-1.5 text-sm border border-gray-600 hover:border-red-600 hover:bg-gray-800
+                text-gray-400 hover:text-red-400 rounded font-semibold transition-colors cursor-pointer"
+            >
+              Delete All
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded font-semibold transition-colors cursor-pointer"
+          >
+            + New Bastion
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -1147,6 +1162,21 @@ export default function BastionPage(): JSX.Element {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={showDeleteAllConfirm}
+        title="Delete All Bastions?"
+        message={`This will permanently delete all ${bastions.length} bastion${bastions.length !== 1 ? 's' : ''} and their data. This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={async () => {
+          await deleteAllBastions()
+          setSelectedBastionId(null)
+          setShowDeleteAllConfirm(false)
+          addToast('All bastions deleted', 'success')
+        }}
+        onCancel={() => setShowDeleteAllConfirm(false)}
+      />
     </div>
   )
 }

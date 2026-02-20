@@ -27,6 +27,7 @@ interface BastionState {
   loadBastions: () => Promise<void>
   saveBastion: (bastion: Bastion) => Promise<void>
   deleteBastion: (id: string) => Promise<void>
+  deleteAllBastions: () => Promise<void>
   setFacilityDefs: (defs: SpecialFacilityDef[]) => void
 
   // Basic Facilities
@@ -149,6 +150,18 @@ export const useBastionStore = create<BastionState>((set, get) => ({
     } catch (error) {
       console.error('Failed to delete bastion:', error)
     }
+  },
+
+  deleteAllBastions: async () => {
+    const { bastions } = get()
+    for (const b of bastions) {
+      try {
+        await window.api.deleteBastion(b.id)
+      } catch (error) {
+        console.error('Failed to delete bastion:', b.id, error)
+      }
+    }
+    set({ bastions: [] })
   },
 
   setFacilityDefs: (defs) => set({ facilityDefs: defs }),

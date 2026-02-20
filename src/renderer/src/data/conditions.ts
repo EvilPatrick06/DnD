@@ -57,7 +57,7 @@ export const CONDITIONS_5E: ConditionDef[] = [
   {
     name: 'Petrified',
     description:
-      "Turned to Inanimate Substance. You are transformed, along with any nonmagical objects you are wearing and carrying, into a solid inanimate substance (usually stone). Your weight increases by a factor of ten, and you cease aging. Incapacitated. You have the Incapacitated condition. Speed 0. Your Speed is 0 and can't increase. Attacks Affected. Attack rolls against you have Advantage. Saving Throws Affected. You automatically fail Strength and Dexterity saving throws. Resist Damage. You have Resistance to all damage. Poison Immunity. You have Immunity to the Poisoned condition.",
+      "Transformed into Inanimate Substance. You are transformed, along with any nonmagical objects you are wearing and carrying, into a solid inanimate substance (usually stone). You can't move, speak, or be aware of your surroundings. Your weight increases by a factor of ten, and you cease aging. Incapacitated. You have the Incapacitated condition. Attacks Affected. Attack rolls against you have Advantage. Saving Throws Affected. You automatically fail Strength and Dexterity saving throws. Resist Damage. You have Resistance to all damage. Poison Immunity. You have Immunity to the Poisoned condition and Poison damage, although a poison already in your system is suspended, not neutralized.",
     system: 'dnd5e'
   },
   {
@@ -86,7 +86,7 @@ export const CONDITIONS_5E: ConditionDef[] = [
   {
     name: 'Unconscious',
     description:
-      "Inert. You have the Incapacitated and Prone conditions, and you drop whatever you're holding. When this condition ends, you remain Prone. Speed 0. Your Speed is 0 and can't increase. Attacks Affected. Attack rolls against you have Advantage. Saving Throws Affected. You automatically fail Strength and Dexterity saving throws. Automatic Critical Hits. Any attack roll that hits you is a Critical Hit if the attacker is within 5 feet of you. Unaware. You're unaware of your surroundings.",
+      "Inert. You have the Incapacitated and Prone conditions, and you drop whatever you're holding. You can't move or speak. Unaware. You're unaware of your surroundings. Attacks Affected. Attack rolls against you have Advantage. Saving Throws Affected. You automatically fail Strength and Dexterity saving throws. Automatic Critical Hits. Any attack roll that hits you is a Critical Hit if the attacker is within 5 feet of you.",
     system: 'dnd5e'
   },
   {

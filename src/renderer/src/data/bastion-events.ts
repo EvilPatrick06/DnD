@@ -491,7 +491,7 @@ export function rollBastionEvent(): BastionEventResult {
 
     case 'extraordinary-opportunity': {
       description =
-        'Extraordinary Opportunity! A rare chance presents itself — a visiting artisan, a cache of rare materials, or an unusual discovery. If you invest 500 GP, one facility of your choice can issue a special order this turn at no additional cost and with double the usual benefit.'
+        'Extraordinary Opportunity! Your Bastion is given the opportunity to host an important festival or celebration, fund the research of a powerful spellcaster, or appease a domineering noble. If you invest 500 GP, the DM rolls again on the Bastion Events table (rerolling this result if it comes up again). If you decline, nothing happens.'
       break
     }
 
@@ -518,15 +518,8 @@ export function rollBastionEvent(): BastionEventResult {
     }
 
     case 'magical-discovery': {
-      const discoveryType = rollD(2)
-      subRolls['d2-discovery'] = discoveryType
-      if (discoveryType === 1) {
-        description =
-          'Magical Discovery! Your hirelings uncover a Potion of Healing hidden in the bastion — wedged behind a loose stone, buried in the garden, or found in an old crate.'
-      } else {
-        description =
-          'Magical Discovery! Your hirelings find a Spell Scroll of a random 1st-level spell tucked away in an overlooked corner of the bastion.'
-      }
+      description =
+        'Magical Discovery! Your hirelings discover or accidentally create an Uncommon magic item of your choice at no cost to you. The magic item must be a Potion or Scroll.'
       break
     }
 
@@ -543,7 +536,7 @@ export function rollBastionEvent(): BastionEventResult {
 
     case 'request-for-aid': {
       description =
-        'Request for Aid! A neighboring settlement or allied faction sends a plea for help. You may send some of your defenders to assist. For each defender sent, roll 1d6 — on a 4 or higher, that defender survives and returns. On a 3 or lower, they are lost. If the total of all dice is 10 or higher, the mission is a success and you earn a favor or reward.'
+        'Request for Aid! Your Bastion is called on to help a local leader. You may send one or more Bastion Defenders. Roll 1d6 for each defender sent. If the total is 10 or higher, the problem is solved and you earn 1d6 × 100 GP. If the total is less than 10, the problem is still solved, but the reward is halved and one defender is killed.'
       break
     }
 
@@ -568,47 +561,32 @@ export function rollBastionEvent(): BastionEventResult {
 }
 
 /**
- * Resolve an Attack bastion event. Rolls 6d6 (or more/fewer depending on
- * modifiers). Each die showing a 1 means one defender is killed.
+ * Resolve an Attack bastion event. Rolls 6d6 by default; each 1 kills a
+ * defender. Armory upgrades dice to d8s; defensive walls reduce dice count by 2.
  *
  * @param defenderCount  - Number of defenders currently in the bastion.
- * @param hasArmory      - If true, reroll one die that shows a 1 (armory benefit).
- * @param hasWalls       - If true, subtract 1 from the number of 1s (walls benefit, min 0).
+ * @param hasArmory      - If true, roll d8s instead of d6s (stocked armory).
+ * @param hasWalls       - If true, roll 4 dice instead of 6 (fully enclosed walls).
  * @returns The attack outcome including dice results.
  */
 export function resolveAttackEvent(defenderCount: number, hasArmory: boolean, hasWalls: boolean): AttackEventResult {
-  const attackDice = rollND(6, 6)
-  let onesCount = attackDice.filter((d) => d === 1).length
-
-  // Armory benefit: reroll one die that shows 1
-  if (hasArmory && onesCount > 0) {
-    const firstOneIndex = attackDice.indexOf(1)
-    if (firstOneIndex >= 0) {
-      const reroll = rollD(6)
-      attackDice[firstOneIndex] = reroll
-      if (reroll !== 1) {
-        onesCount--
-      }
-    }
-  }
-
-  // Defensive walls benefit: reduce casualties by 1
-  if (hasWalls && onesCount > 0) {
-    onesCount = Math.max(0, onesCount - 1)
-  }
+  const diceCount = hasWalls ? 4 : 6
+  const diceSides = hasArmory ? 8 : 6
+  const attackDice = rollND(diceCount, diceSides)
+  const onesCount = attackDice.filter((d) => d === 1).length
 
   const defendersLost = Math.min(onesCount, defenderCount)
   const facilityShutdown = defenderCount === 0
 
   let description: string
   if (facilityShutdown) {
-    description = `Attack on the bastion! With no defenders present, a random facility is shut down for 1d6 days. Dice: [${attackDice.join(', ')}].`
+    description = `Attack on the bastion! With no defenders present, a random facility is shut down until after the next Bastion turn. Dice: [${attackDice.join(', ')}].`
   } else if (defendersLost === 0) {
     description = `Attack on the bastion! Your defenders repel the assault with no losses. Dice: [${attackDice.join(', ')}].`
   } else {
     description = `Attack on the bastion! ${defendersLost} defender(s) killed in the fighting. Dice: [${attackDice.join(', ')}].`
-    if (hasArmory) description += ' (Armory: rerolled one casualty die.)'
-    if (hasWalls) description += ' (Walls: absorbed one casualty.)'
+    if (hasArmory) description += ' (Armory: rolled d8s instead of d6s.)'
+    if (hasWalls) description += ' (Defensive Walls: reduced dice count by 2.)'
   }
 
   return {

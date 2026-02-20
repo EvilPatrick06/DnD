@@ -1408,6 +1408,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             onDowntime={() => setActiveModal('downtime')}
             onSpellRef={() => setActiveModal('spellRef')}
             onShortcutRef={() => setActiveModal('shortcutRef')}
+            onWhisper={() => setActiveModal('whisper')}
             playerName={playerName}
             campaign={campaign}
             collapsed={bottomCollapsed}
@@ -1682,7 +1683,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         {activeModal === 'hiddenDice' && effectiveIsDM && <HiddenDiceModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'dmRoller' && effectiveIsDM && <DmRollerModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'shop' && effectiveIsDM && <DMShopModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'whisper' && effectiveIsDM && <WhisperModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'whisper' && <WhisperModal isDM={effectiveIsDM} senderName={playerName} onClose={() => setActiveModal(null)} />}
         {activeModal === 'quickCondition' && <QuickConditionModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'timer' && effectiveIsDM && <TimerModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'initiative' && effectiveIsDM && <InitiativeModal onClose={() => setActiveModal(null)} />}

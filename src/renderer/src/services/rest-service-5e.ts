@@ -2,6 +2,7 @@ import type { Character5e, HitDiceEntry, HitPoints } from '../types/character-5e
 import { totalHitDiceRemaining, totalHitDiceMaximum } from '../types/character-5e'
 import type { ActiveCondition, ClassResource, SpellEntry } from '../types/character-common'
 import { abilityModifier } from '../types/character-common'
+import { cryptoRandom } from '../utils/crypto-random'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -159,7 +160,7 @@ export function getShortRestPreview(character: Character5e): ShortRestPreview {
 export function rollShortRestDice(count: number, dieSize: number, conMod: number): ShortRestDiceRoll[] {
   const rolls: ShortRestDiceRoll[] = []
   for (let i = 0; i < count; i++) {
-    const rawRoll = Math.floor(Math.random() * dieSize) + 1
+    const rawRoll = Math.floor(cryptoRandom() * dieSize) + 1
     const healing = Math.max(1, rawRoll + conMod)
     rolls.push({ dieSize, rawRoll, conMod, healing })
   }

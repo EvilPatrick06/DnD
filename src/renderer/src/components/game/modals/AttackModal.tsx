@@ -892,16 +892,19 @@ export default function AttackModal({
                       onClick={() => {
                         const dc = unarmedStrikeDC(character.abilityScores.strength, profBonus)
                         const roll = rollD20()
-                        const success = roll >= dc || roll === 20
+                        const targetMod = selectedTarget.saveMod ?? 0
+                        const saveTotal = roll + targetMod
+                        const success = saveTotal >= dc || roll === 20
                         const fail = roll === 1 || !success
+                        const modStr = targetMod >= 0 ? `+${targetMod}` : `${targetMod}`
                         const msg =
                           roll === 20
-                            ? `Natural 20! ${selectedTarget.label} resists the ${unarmedMode}!`
+                            ? `Natural 20! ${selectedTarget.label} resists the ${unarmedMode}! (${roll}${modStr}=${saveTotal} vs DC ${dc})`
                             : roll === 1
                               ? `Natural 1! ${selectedTarget.label} fails the ${unarmedMode} save!`
                               : success
-                                ? `Rolled ${roll} vs DC ${dc} — ${selectedTarget.label} resists!`
-                                : `Rolled ${roll} vs DC ${dc} — ${selectedTarget.label} fails!`
+                                ? `${selectedTarget.label} resists! (${roll}${modStr}=${saveTotal} vs DC ${dc})`
+                                : `${selectedTarget.label} fails! (${roll}${modStr}=${saveTotal} vs DC ${dc})`
                         setGrappleResult({ success: !fail || roll === 20, message: msg })
 
                         // Apply effects on failure
