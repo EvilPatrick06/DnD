@@ -143,7 +143,6 @@ export interface SessionZeroConfig {
   tone: string
   pvpAllowed: boolean
   characterDeathExpectation: string
-  homebrewNotes: string
   playSchedule: string
   additionalNotes: string
 }

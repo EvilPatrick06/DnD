@@ -24,6 +24,27 @@ const TYPES: CreatureType[] = [
   'Undead'
 ]
 
+const COMMON_SKILLS = [
+  'Acrobatics',
+  'Animal Handling',
+  'Arcana',
+  'Athletics',
+  'Deception',
+  'History',
+  'Insight',
+  'Intimidation',
+  'Investigation',
+  'Medicine',
+  'Nature',
+  'Perception',
+  'Performance',
+  'Persuasion',
+  'Religion',
+  'Sleight of Hand',
+  'Stealth',
+  'Survival'
+]
+
 function CollapsibleSection({
   title,
   children,
@@ -382,6 +403,109 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
         </div>
       </CollapsibleSection>
 
+      {/* Saving Throws */}
+      <CollapsibleSection title="Saving Throws">
+        <div className="grid grid-cols-3 gap-2">
+          {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map((ab) => {
+            const saves = value.savingThrows ?? {}
+            const isActive = saves[ab] !== undefined
+            return (
+              <div key={ab} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => {
+                    const next = { ...saves }
+                    if (e.target.checked) {
+                      next[ab] = 0
+                    } else {
+                      delete next[ab]
+                    }
+                    onChange({
+                      ...value,
+                      savingThrows: Object.keys(next).length > 0 ? next : undefined
+                    })
+                  }}
+                  className="rounded"
+                />
+                <label className="text-[10px] text-gray-500 uppercase w-6">{ab}</label>
+                {isActive && (
+                  <input
+                    type="number"
+                    value={saves[ab] ?? 0}
+                    onChange={(e) =>
+                      update('savingThrows', { ...saves, [ab]: parseInt(e.target.value, 10) || 0 })
+                    }
+                    className="w-10 bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-[10px] text-gray-100 text-center"
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </CollapsibleSection>
+
+      {/* Skills */}
+      <CollapsibleSection title={`Skills (${Object.keys(value.skills ?? {}).length})`}>
+        <div className="space-y-1">
+          {Object.entries(value.skills ?? {}).map(([skill, bonus]) => (
+            <div key={skill} className="flex gap-1 items-center">
+              <select
+                value={skill}
+                onChange={(e) => {
+                  const next = { ...(value.skills ?? {}) }
+                  const val = next[skill]
+                  delete next[skill]
+                  next[e.target.value] = val ?? 0
+                  update('skills', next)
+                }}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-xs text-gray-200"
+              >
+                {COMMON_SKILLS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={bonus}
+                onChange={(e) =>
+                  update('skills', {
+                    ...(value.skills ?? {}),
+                    [skill]: parseInt(e.target.value, 10) || 0
+                  })
+                }
+                className="w-12 bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-xs text-gray-100 text-center"
+              />
+              <button
+                onClick={() => {
+                  const next = { ...(value.skills ?? {}) }
+                  delete next[skill]
+                  onChange({
+                    ...value,
+                    skills: Object.keys(next).length > 0 ? next : undefined
+                  })
+                }}
+                className="text-red-400 hover:text-red-300 text-xs px-1 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => {
+            const used = new Set(Object.keys(value.skills ?? {}))
+            const available = COMMON_SKILLS.find((s) => !used.has(s)) ?? 'Custom'
+            update('skills', { ...(value.skills ?? {}), [available]: 0 })
+          }}
+          className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer mt-1"
+        >
+          + Add Skill
+        </button>
+      </CollapsibleSection>
+
       {/* Defenses */}
       <CollapsibleSection title="Defenses">
         <div className="space-y-1">
@@ -522,6 +646,78 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
 
       {/* Reactions */}
       <ActionListEditor label="Reactions" actions={value.reactions ?? []} onChange={(a) => update('reactions', a)} />
+
+      {/* Legendary Actions */}
+      <CollapsibleSection title={`Legendary Actions (${value.legendaryActions?.actions.length ?? 0})`}>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] text-gray-500">Uses per round</label>
+            <input
+              type="number"
+              value={value.legendaryActions?.uses ?? 3}
+              onChange={(e) =>
+                update('legendaryActions', {
+                  uses: parseInt(e.target.value, 10) || 3,
+                  actions: value.legendaryActions?.actions ?? []
+                })
+              }
+              className="w-12 bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-[10px] text-gray-100 text-center"
+              min={1}
+            />
+          </div>
+          {(value.legendaryActions?.actions ?? []).map((action, i) => (
+            <div key={i} className="space-y-1 bg-gray-800/30 rounded p-2">
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={action.name}
+                  onChange={(e) => {
+                    const actions = [...(value.legendaryActions?.actions ?? [])]
+                    actions[i] = { ...actions[i], name: e.target.value }
+                    update('legendaryActions', { uses: value.legendaryActions?.uses ?? 3, actions })
+                  }}
+                  placeholder="Action name"
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100"
+                />
+                <button
+                  onClick={() => {
+                    const actions = (value.legendaryActions?.actions ?? []).filter((_, idx) => idx !== i)
+                    if (actions.length === 0) {
+                      onChange({ ...value, legendaryActions: undefined })
+                    } else {
+                      update('legendaryActions', { uses: value.legendaryActions?.uses ?? 3, actions })
+                    }
+                  }}
+                  className="text-red-400 hover:text-red-300 text-xs px-1 cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+              <textarea
+                value={action.description}
+                onChange={(e) => {
+                  const actions = [...(value.legendaryActions?.actions ?? [])]
+                  actions[i] = { ...actions[i], description: e.target.value }
+                  update('legendaryActions', { uses: value.legendaryActions?.uses ?? 3, actions })
+                }}
+                placeholder="Description"
+                className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 h-12 resize-none"
+              />
+            </div>
+          ))}
+          <button
+            onClick={() =>
+              update('legendaryActions', {
+                uses: value.legendaryActions?.uses ?? 3,
+                actions: [...(value.legendaryActions?.actions ?? []), { name: '', description: '' }]
+              })
+            }
+            className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
+          >
+            + Add Legendary Action
+          </button>
+        </div>
+      </CollapsibleSection>
     </div>
   )
 }

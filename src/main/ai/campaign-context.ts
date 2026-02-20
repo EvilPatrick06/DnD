@@ -111,6 +111,27 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
     }
   }
 
+  // Session Zero preferences
+  const sessionZero = campaign.sessionZero as {
+    contentLimits?: string[]
+    tone?: string
+    pvpAllowed?: boolean
+    characterDeathExpectation?: string
+    playSchedule?: string
+    additionalNotes?: string
+  } | undefined
+  if (sessionZero) {
+    parts.push('')
+    parts.push('Session Zero Preferences:')
+    if (sessionZero.tone) parts.push(`- Campaign Tone: ${sessionZero.tone}`)
+    if (sessionZero.pvpAllowed !== undefined) parts.push(`- PvP Allowed: ${sessionZero.pvpAllowed ? 'Yes' : 'No'}`)
+    if (sessionZero.characterDeathExpectation) parts.push(`- Character Death: ${sessionZero.characterDeathExpectation}`)
+    if (sessionZero.contentLimits && sessionZero.contentLimits.length > 0) {
+      parts.push(`- Content Limits (AVOID these topics): ${sessionZero.contentLimits.join(', ')}`)
+    }
+    if (sessionZero.additionalNotes) parts.push(`- Additional Notes: ${sessionZero.additionalNotes}`)
+  }
+
   parts.push('[/CAMPAIGN DATA]')
   return parts.join('\n')
 }
