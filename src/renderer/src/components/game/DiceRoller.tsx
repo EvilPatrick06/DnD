@@ -8,6 +8,7 @@ interface DiceRollerProps {
   system: GameSystem
   rollerName: string
   onRoll?: (result: { formula: string; total: number; rolls: number[] }) => void
+  allowCritDoubling?: boolean
 }
 
 interface RollResult {
@@ -32,7 +33,7 @@ const DICE = [
   { sides: 100, label: 'd100' }
 ]
 
-export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerProps): JSX.Element {
+export default function DiceRoller({ system, rollerName, onRoll, allowCritDoubling = true }: DiceRollerProps): JSX.Element {
   const [modifier, setModifier] = useState(0)
   const [customFormula, setCustomFormula] = useState('')
   const [advantage, setAdvantage] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')
@@ -115,9 +116,8 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
     const parsed = parseDiceFormula(customFormula)
     if (!parsed) return
 
-    // Double dice count if last roll was a crit and this isn't a d20 roll
-    const diceCount = lastRollWasCrit && parsed.sides !== 20 ? parsed.count * 2 : parsed.count
-    const isCritDamage = lastRollWasCrit && parsed.sides !== 20
+    const diceCount = allowCritDoubling && lastRollWasCrit && parsed.sides !== 20 ? parsed.count * 2 : parsed.count
+    const isCritDamage = allowCritDoubling && lastRollWasCrit && parsed.sides !== 20
 
     const rolls = rollDice(diceCount, parsed.sides)
     const total = rolls.reduce((sum, r) => sum + r, 0) + parsed.modifier + modifier

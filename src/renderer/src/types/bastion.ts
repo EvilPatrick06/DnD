@@ -268,10 +268,10 @@ export const ENLARGE_COSTS: Record<string, { gp: number; days: number }> = {
 }
 
 export const SPECIAL_FACILITY_COSTS: Record<number, { gp: number; days: number }> = {
-  5: { gp: 2000, days: 60 },
-  9: { gp: 5000, days: 125 },
-  13: { gp: 15000, days: 125 },
-  17: { gp: 50000, days: 250 }
+  5: { gp: 0, days: 0 },
+  9: { gp: 0, days: 0 },
+  13: { gp: 0, days: 0 },
+  17: { gp: 0, days: 0 }
 }
 
 // ---- Helper Functions ----

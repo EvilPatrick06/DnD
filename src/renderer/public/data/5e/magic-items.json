@@ -1755,8 +1755,8 @@
     "treasureTheme": "Armaments"
   },
   {
-    "id": "keoghtoms-ointment",
-    "name": "Keoghtom's Ointment",
+    "id": "keoghtons-ointment",
+    "name": "Keoghton's Ointment",
     "rarity": "uncommon",
     "type": "potion",
     "attunement": false,
@@ -2009,24 +2009,14 @@
     "treasureTheme": "Implements"
   },
   {
-    "id": "nature-s-mantle",
-    "name": "Nature's Mantle",
-    "rarity": "uncommon",
-    "type": "wondrous",
-    "attunement": true,
-    "cost": "250 gp",
-    "description": "Requires attunement by a Druid or Ranger. This cloak shifts color and texture to blend with the terrain surrounding you. While wearing the cloak, you can use it as a Spellcasting Focus for your Druid and Ranger spells.\n\nWhile you are in an area that is Lightly Obscured, you can Hide as a Bonus Action even if you are being directly observed.",
-    "treasureTheme": "Arcana"
-  },
-  {
     "id": "natures-mantle",
     "name": "Nature's Mantle",
     "rarity": "uncommon",
     "type": "wondrous",
     "attunement": true,
-    "cost": "350 gp",
-    "description": "Requires Attunement by a Druid or Ranger. This cloak shifts color and texture to blend with the terrain surrounding you. While wearing the cloak, you can use it as a Spellcasting Focus for your Druid and Ranger spells. While you are in an area that is Lightly Obscured, you can Hide as a Bonus Action even if you are being directly observed.",
-    "treasureTheme": "Arcana"
+    "cost": "400 gp",
+    "description": "Requires Attunement by a Druid or Ranger. This cloak shifts color and texture to blend with the terrain surrounding you. While wearing the cloak, you can use it as a Spellcasting Focus for your Druid and Ranger spells.\n\nWhile you are in an area that is Lightly Obscured, you can Hide as a Bonus Action even if you are being directly observed.",
+    "treasureTheme": "Implements"
   },
   {
     "id": "necklace-of-adaptation",
@@ -3919,16 +3909,6 @@
     "attunement": false,
     "cost": "200,000 gp",
     "description": "This tube holds milky liquid with a strong alcohol smell. You can use an action to pour the contents of the tube onto a surface within reach. The liquid instantly dissolves up to 1 square foot of adhesive it touches, including Sovereign Glue.",
-    "treasureTheme": "Implements"
-  },
-  {
-    "id": "veteran-s-cane",
-    "name": "Veteran's Cane",
-    "rarity": "common",
-    "type": "wondrous",
-    "attunement": false,
-    "cost": "75 gp",
-    "description": "As a Bonus Action, you can transform this walking cane into an ordinary Longsword or change the Longsword back into a walking cane. In either case, you must be holding the item.",
     "treasureTheme": "Implements"
   },
   {

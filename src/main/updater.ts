@@ -96,6 +96,8 @@ export function registerUpdateHandlers(): void {
 
       await autoUpdater.downloadUpdate()
 
+      autoUpdater.autoInstallOnAppQuit = true
+
       currentStatus = { state: 'downloaded', version: pendingVersion }
       sendStatus(win)
       return currentStatus
@@ -109,7 +111,7 @@ export function registerUpdateHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, async () => {
     try {
       const autoUpdater = getAutoUpdater()
-      autoUpdater.quitAndInstall(false, true)
+      autoUpdater.quitAndInstall(true, true)
     } catch {
       // Fallback: just quit
     }

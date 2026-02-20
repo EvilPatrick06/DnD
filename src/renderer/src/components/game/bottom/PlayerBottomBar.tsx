@@ -30,6 +30,7 @@ interface PlayerBottomBarProps {
   onDowntime?: () => void
   onSpellRef?: () => void
   onShortcutRef?: () => void
+  onWhisper?: () => void
   playerName: string
   campaign: Campaign
   collapsed?: boolean
@@ -54,6 +55,7 @@ export default function PlayerBottomBar({
   onDowntime,
   onSpellRef,
   onShortcutRef,
+  onWhisper,
   playerName,
   campaign,
   collapsed,
@@ -285,11 +287,22 @@ export default function PlayerBottomBar({
                     Shortcut Reference
                   </button>
 
-                  {/* Session */}
+                  {/* Social */}
                   <div className="border-t border-gray-700/40 mx-2 mt-1" />
                   <div className="px-2 pt-2 pb-1">
-                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Session</span>
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Social</span>
                   </div>
+                  {onWhisper && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onWhisper()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-purple-300 hover:bg-gray-800 hover:text-purple-200 transition-colors cursor-pointer"
+                    >
+                      Whisper
+                    </button>
+                  )}
                   {onCheckTime && (
                     <button
                       onClick={() => {
@@ -304,7 +317,16 @@ export default function PlayerBottomBar({
                   <button
                     onClick={() => {
                       setToolsOpen(false)
-                      sendMessage('player:rest-request', { playerName, restType: 'short' })
+                      const msg = `${playerName} requests a Short Rest.`
+                      addChatMessage({
+                        id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+                        senderId: 'system',
+                        senderName: 'System',
+                        content: msg,
+                        timestamp: Date.now(),
+                        isSystem: true
+                      })
+                      sendMessage('chat:message', { message: msg, isSystem: true })
                     }}
                     className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
                   >
@@ -313,7 +335,16 @@ export default function PlayerBottomBar({
                   <button
                     onClick={() => {
                       setToolsOpen(false)
-                      sendMessage('player:rest-request', { playerName, restType: 'long' })
+                      const msg = `${playerName} requests a Long Rest.`
+                      addChatMessage({
+                        id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+                        senderId: 'system',
+                        senderName: 'System',
+                        content: msg,
+                        timestamp: Date.now(),
+                        isSystem: true
+                      })
+                      sendMessage('chat:message', { message: msg, isSystem: true })
                     }}
                     className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
                   >
