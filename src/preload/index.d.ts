@@ -29,6 +29,13 @@ interface BastionAPI {
   deleteBastion: (id: string) => Promise<boolean>
 }
 
+interface HomebrewAPI {
+  saveHomebrew: (entry: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  loadHomebrewByCategory: (category: string) => Promise<Record<string, unknown>[]>
+  loadAllHomebrew: () => Promise<Record<string, unknown>[]>
+  deleteHomebrew: (category: string, id: string) => Promise<boolean>
+}
+
 interface FileDialogOptions {
   title: string
   filters: Array<{ name: string; extensions: string[] }>
@@ -308,6 +315,7 @@ declare global {
     api: CharacterAPI &
       CampaignAPI &
       BastionAPI &
+      HomebrewAPI &
       GameStateStorageAPI &
       DialogAPI &
       BanAPI &

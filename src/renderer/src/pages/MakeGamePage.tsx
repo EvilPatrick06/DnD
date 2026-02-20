@@ -33,9 +33,14 @@ export default function MakeGamePage(): JSX.Element {
 
       <div className="flex items-center justify-between mb-6 max-w-2xl">
         <h1 className="text-3xl font-bold">Choose your Campaign or Create a New One</h1>
-        <Button variant="secondary" onClick={handleImport} disabled={importing}>
-          {importing ? 'Importing...' : 'Import .dndcamp'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => navigate('/library?from=/make')}>
+            Library
+          </Button>
+          <Button variant="secondary" onClick={handleImport} disabled={importing}>
+            {importing ? 'Importing...' : 'Import .dndcamp'}
+          </Button>
+        </div>
       </div>
 
       {importError && (

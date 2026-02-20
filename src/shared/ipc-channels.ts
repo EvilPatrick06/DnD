@@ -107,6 +107,12 @@ export const IPC_CHANNELS = {
   UPDATE_INSTALL: 'update:install',
   UPDATE_STATUS: 'update:status',
 
+  // === Storage: Homebrew ===
+  SAVE_HOMEBREW: 'storage:save-homebrew',
+  LOAD_HOMEBREW_BY_CATEGORY: 'storage:load-homebrew-by-category',
+  LOAD_ALL_HOMEBREW: 'storage:load-all-homebrew',
+  DELETE_HOMEBREW: 'storage:delete-homebrew',
+
   // === Settings ===
   SAVE_SETTINGS: 'storage:save-settings',
   LOAD_SETTINGS: 'storage:load-settings',

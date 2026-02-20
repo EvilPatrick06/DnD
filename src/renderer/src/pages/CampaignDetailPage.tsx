@@ -3,7 +3,12 @@ import { useNavigate, useParams } from 'react-router'
 import AdventureWizard from '../components/campaign/AdventureWizard'
 import type { AdventureData } from '../components/campaign/AdventureWizard'
 import AiDmStep from '../components/campaign/AiDmStep'
-import MagicItemTracker from '../components/campaign/MagicItemTracker'
+import AudioStep from '../components/campaign/AudioStep'
+import type { CustomAudioEntry } from '../components/campaign/AudioStep'
+import CalendarStep from '../components/campaign/CalendarStep'
+import SessionZeroStep from '../components/campaign/SessionZeroStep'
+import type { SessionZeroData } from '../components/campaign/SessionZeroStep'
+import VoiceChatStep from '../components/campaign/VoiceChatStep'
 import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
 import StatBlockEditor from '../components/game/dm/StatBlockEditor'
 import { BackButton, Button, Card, ConfirmDialog, Modal } from '../components/ui'
@@ -12,7 +17,7 @@ import { exportCampaignToFile } from '../services/campaign-io'
 import { load5eMonsterById, loadAllStatBlocks, searchMonsters } from '../services/data-provider'
 import { useCampaignStore } from '../stores/useCampaignStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
-import type { Campaign, CustomRule, LoreEntry, NPC } from '../types/campaign'
+import type { AdventureEntry, CalendarConfig, Campaign, CustomRule, LoreEntry, NPC, TurnMode } from '../types/campaign'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { GameMap } from '../types/map'
 import type { MonsterStatBlock } from '../types/monster'
@@ -106,6 +111,77 @@ export default function CampaignDetailPage(): JSX.Element {
   // Map state
   const [showMapModal, setShowMapModal] = useState(false)
   const [mapForm, setMapForm] = useState({ name: '', gridType: 'square' as 'square' | 'hex', cellSize: 40 })
+
+  // Overview edit state
+  const [showOverviewEdit, setShowOverviewEdit] = useState(false)
+  const [overviewForm, setOverviewForm] = useState({
+    name: '',
+    description: '',
+    maxPlayers: 4,
+    turnMode: 'initiative' as TurnMode,
+    levelMin: 1,
+    levelMax: 20,
+    lobbyMessage: ''
+  })
+
+  // Session Zero edit state
+  const [showSessionZeroEdit, setShowSessionZeroEdit] = useState(false)
+  const [editSessionZero, setEditSessionZero] = useState<SessionZeroData>({
+    contentLimits: [],
+    tone: 'heroic',
+    pvpAllowed: false,
+    characterDeathExpectation: 'possible',
+    playSchedule: '',
+    additionalNotes: ''
+  })
+  const [editSessionZeroRules, setEditSessionZeroRules] = useState<CustomRule[]>([])
+
+  // Calendar edit state
+  const [showCalendarEdit, setShowCalendarEdit] = useState(false)
+  const [editCalendar, setEditCalendar] = useState<CalendarConfig | null>(null)
+
+  // Voice chat edit state
+  const [showVoiceChatEdit, setShowVoiceChatEdit] = useState(false)
+  const [editVoiceChat, setEditVoiceChat] = useState({
+    mode: 'local' as 'local' | 'cloud',
+    apiKey: '',
+    apiSecret: '',
+    serverUrl: ''
+  })
+
+  // Audio edit state
+  const [showAudioAdd, setShowAudioAdd] = useState(false)
+  const [newAudioEntries, setNewAudioEntries] = useState<CustomAudioEntry[]>([])
+  const [editingAudioId, setEditingAudioId] = useState<string | null>(null)
+  const [audioEntryForm, setAudioEntryForm] = useState({
+    displayName: '',
+    category: 'effect' as 'ambient' | 'effect' | 'music'
+  })
+
+  // Map edit state
+  const [editingMapId, setEditingMapId] = useState<string | null>(null)
+  const [mapEditForm, setMapEditForm] = useState({
+    name: '',
+    gridType: 'square' as 'square' | 'hex',
+    cellSize: 40,
+    gridColor: '#4b5563',
+    gridOpacity: 0.4
+  })
+
+  // Adventure edit state
+  const [editingAdventureId, setEditingAdventureId] = useState<string | null>(null)
+  const [adventureForm, setAdventureForm] = useState({
+    title: '',
+    levelTier: '1-4',
+    premise: '',
+    hook: '',
+    villain: '',
+    setting: '',
+    playerStakes: '',
+    encounters: '',
+    climax: '',
+    resolution: ''
+  })
 
   const campaign: Campaign | undefined = campaigns.find((c) => c.id === id)
 
@@ -394,6 +470,208 @@ export default function CampaignDetailPage(): JSX.Element {
     setMapForm({ name: '', gridType: 'square', cellSize: 40 })
   }
 
+  // --- Overview edit handlers ---
+  const openOverviewEdit = (): void => {
+    if (!campaign) return
+    setOverviewForm({
+      name: campaign.name,
+      description: campaign.description,
+      maxPlayers: campaign.settings.maxPlayers,
+      turnMode: campaign.turnMode,
+      levelMin: campaign.settings.levelRange.min,
+      levelMax: campaign.settings.levelRange.max,
+      lobbyMessage: campaign.settings.lobbyMessage
+    })
+    setShowOverviewEdit(true)
+  }
+  const handleSaveOverview = async (): Promise<void> => {
+    if (!campaign) return
+    await saveCampaign({
+      ...campaign,
+      name: overviewForm.name.trim() || campaign.name,
+      description: overviewForm.description,
+      turnMode: overviewForm.turnMode,
+      settings: {
+        ...campaign.settings,
+        maxPlayers: overviewForm.maxPlayers,
+        levelRange: { min: overviewForm.levelMin, max: overviewForm.levelMax },
+        lobbyMessage: overviewForm.lobbyMessage
+      },
+      updatedAt: new Date().toISOString()
+    })
+    setShowOverviewEdit(false)
+  }
+
+  // --- Session Zero edit handlers ---
+  const openSessionZeroEdit = (): void => {
+    if (!campaign) return
+    const sz = campaign.sessionZero
+    setEditSessionZero(
+      sz
+        ? { ...sz }
+        : {
+            contentLimits: [],
+            tone: 'heroic',
+            pvpAllowed: false,
+            characterDeathExpectation: 'possible',
+            playSchedule: '',
+            additionalNotes: ''
+          }
+    )
+    setEditSessionZeroRules([...campaign.customRules])
+    setShowSessionZeroEdit(true)
+  }
+  const handleSaveSessionZero = async (): Promise<void> => {
+    if (!campaign) return
+    await saveCampaign({
+      ...campaign,
+      sessionZero: editSessionZero,
+      customRules: editSessionZeroRules,
+      updatedAt: new Date().toISOString()
+    })
+    setShowSessionZeroEdit(false)
+  }
+
+  // --- Calendar edit handlers ---
+  const openCalendarEdit = (): void => {
+    if (!campaign) return
+    setEditCalendar(campaign.calendar ?? null)
+    setShowCalendarEdit(true)
+  }
+  const handleSaveCalendar = async (): Promise<void> => {
+    if (!campaign) return
+    await saveCampaign({
+      ...campaign,
+      calendar: editCalendar ?? undefined,
+      updatedAt: new Date().toISOString()
+    })
+    setShowCalendarEdit(false)
+  }
+
+  // --- Voice chat edit handlers ---
+  const openVoiceChatEdit = (): void => {
+    if (!campaign) return
+    const vc = campaign.voiceChat
+    setEditVoiceChat({
+      mode: vc?.mode ?? 'local',
+      apiKey: vc?.apiKey ?? '',
+      apiSecret: vc?.apiSecret ?? '',
+      serverUrl: vc?.serverUrl ?? ''
+    })
+    setShowVoiceChatEdit(true)
+  }
+  const handleSaveVoiceChat = async (): Promise<void> => {
+    if (!campaign) return
+    await saveCampaign({
+      ...campaign,
+      voiceChat: {
+        mode: editVoiceChat.mode,
+        apiKey: editVoiceChat.apiKey || undefined,
+        apiSecret: editVoiceChat.apiSecret || undefined,
+        serverUrl: editVoiceChat.serverUrl || undefined
+      },
+      updatedAt: new Date().toISOString()
+    })
+    setShowVoiceChatEdit(false)
+  }
+
+  // --- Audio handlers ---
+  const openEditAudioEntry = (audio: {
+    id: string
+    displayName: string
+    category: 'ambient' | 'effect' | 'music'
+  }): void => {
+    setEditingAudioId(audio.id)
+    setAudioEntryForm({ displayName: audio.displayName, category: audio.category })
+  }
+  const handleSaveAudioEntry = async (): Promise<void> => {
+    if (!campaign || !editingAudioId) return
+    const customAudio = (campaign.customAudio ?? []).map((a) =>
+      a.id === editingAudioId
+        ? { ...a, displayName: audioEntryForm.displayName.trim() || a.displayName, category: audioEntryForm.category }
+        : a
+    )
+    await saveCampaign({ ...campaign, customAudio, updatedAt: new Date().toISOString() })
+    setEditingAudioId(null)
+  }
+  const handleDeleteAudioEntry = async (audioId: string): Promise<void> => {
+    if (!campaign) return
+    await saveCampaign({
+      ...campaign,
+      customAudio: (campaign.customAudio ?? []).filter((a) => a.id !== audioId),
+      updatedAt: new Date().toISOString()
+    })
+  }
+  const handleAddAudio = async (): Promise<void> => {
+    if (!campaign || newAudioEntries.length === 0) return
+    await saveCampaign({
+      ...campaign,
+      customAudio: [...(campaign.customAudio ?? []), ...newAudioEntries],
+      updatedAt: new Date().toISOString()
+    })
+    setShowAudioAdd(false)
+    setNewAudioEntries([])
+  }
+
+  // --- Map edit handlers ---
+  const openEditMap = (map: GameMap): void => {
+    setEditingMapId(map.id)
+    setMapEditForm({
+      name: map.name,
+      gridType: map.grid.type,
+      cellSize: map.grid.cellSize,
+      gridColor: map.grid.color,
+      gridOpacity: map.grid.opacity
+    })
+  }
+  const handleSaveMapEdit = async (): Promise<void> => {
+    if (!campaign || !editingMapId) return
+    const maps = campaign.maps.map((m) =>
+      m.id === editingMapId
+        ? {
+            ...m,
+            name: mapEditForm.name.trim() || m.name,
+            grid: {
+              ...m.grid,
+              type: mapEditForm.gridType,
+              cellSize: mapEditForm.cellSize,
+              color: mapEditForm.gridColor,
+              opacity: mapEditForm.gridOpacity
+            }
+          }
+        : m
+    )
+    await saveCampaign({ ...campaign, maps, updatedAt: new Date().toISOString() })
+    setEditingMapId(null)
+  }
+
+  // --- Adventure edit handlers ---
+  const openEditAdventure = (adv: AdventureEntry): void => {
+    setEditingAdventureId(adv.id)
+    setAdventureForm({
+      title: adv.title,
+      levelTier: adv.levelTier,
+      premise: adv.premise,
+      hook: adv.hook,
+      villain: adv.villain,
+      setting: adv.setting,
+      playerStakes: adv.playerStakes,
+      encounters: adv.encounters,
+      climax: adv.climax,
+      resolution: adv.resolution
+    })
+  }
+  const handleSaveAdventure = async (): Promise<void> => {
+    if (!campaign || !editingAdventureId) return
+    const adventures = (campaign.adventures ?? []).map((a) =>
+      a.id === editingAdventureId
+        ? { ...a, ...adventureForm, title: adventureForm.title.trim() || a.title }
+        : a
+    )
+    await saveCampaign({ ...campaign, adventures, updatedAt: new Date().toISOString() })
+    setEditingAdventureId(null)
+  }
+
   if (loading) {
     return (
       <div className="p-8 h-screen overflow-y-auto">
@@ -437,6 +715,9 @@ export default function CampaignDetailPage(): JSX.Element {
           </div>
         </div>
         <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => navigate(`/library?from=/campaign/${id}`)}>
+            Library
+          </Button>
           <Button variant="secondary" onClick={handleExport} disabled={exporting}>
             {exporting ? 'Exporting...' : 'Export'}
           </Button>
@@ -454,7 +735,13 @@ export default function CampaignDetailPage(): JSX.Element {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
         {/* Overview */}
-        <Card title="Overview">
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Overview</h3>
+            <button onClick={openOverviewEdit} className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer">
+              Edit
+            </button>
+          </div>
           {campaign.description ? (
             <p className="text-gray-300 text-sm mb-4">{campaign.description}</p>
           ) : (
@@ -516,6 +803,12 @@ export default function CampaignDetailPage(): JSX.Element {
                             Active
                           </span>
                         )}
+                        <button
+                          onClick={() => openEditMap(map)}
+                          className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={() => handleDeleteMap(map.id)}
                           className="text-xs text-gray-400 hover:text-red-400 cursor-pointer"
@@ -723,7 +1016,16 @@ export default function CampaignDetailPage(): JSX.Element {
 
         {/* Session Zero */}
         {campaign.sessionZero && (
-          <Card title="Session Zero">
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Session Zero</h3>
+              <button
+                onClick={openSessionZeroEdit}
+                className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
+              >
+                Edit
+              </button>
+            </div>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-gray-500">Tone:</span>
@@ -761,11 +1063,6 @@ export default function CampaignDetailPage(): JSX.Element {
           </Card>
         )}
 
-        {/* Magic Item Tracker */}
-        <Card title="Magic Items Distributed">
-          <MagicItemTracker campaign={campaign} />
-        </Card>
-
         {/* Adventures */}
         <Card title={`Adventures (${(campaign.adventures ?? []).length})`}>
           {showAdventureWizard ? (
@@ -801,6 +1098,12 @@ export default function CampaignDetailPage(): JSX.Element {
                           <span className="text-[10px] text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded">
                             Lvl {adv.levelTier}
                           </span>
+                          <button
+                            onClick={() => openEditAdventure(adv)}
+                            className="text-[10px] text-amber-400 hover:text-amber-300 cursor-pointer"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={() => {
                               saveCampaign({
@@ -883,7 +1186,13 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Calendar */}
-        <Card title="Calendar">
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Calendar</h3>
+            <button onClick={openCalendarEdit} className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer">
+              Edit
+            </button>
+          </div>
           {campaign.calendar ? (
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
@@ -917,7 +1226,13 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Voice Chat */}
-        <Card title="Voice Chat">
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Voice Chat</h3>
+            <button onClick={openVoiceChatEdit} className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer">
+              Edit
+            </button>
+          </div>
           {campaign.voiceChat ? (
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
@@ -937,7 +1252,10 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Custom Audio */}
-        <Card title={`Custom Audio (${(campaign.customAudio ?? []).length})`}>
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Custom Audio ({(campaign.customAudio ?? []).length})</h3>
+          </div>
           {(campaign.customAudio ?? []).length === 0 ? (
             <p className="text-gray-500 text-sm">No custom audio files added.</p>
           ) : (
@@ -948,17 +1266,44 @@ export default function CampaignDetailPage(): JSX.Element {
                     <span className="font-semibold text-sm">{audio.displayName}</span>
                     <span className="text-gray-500 text-xs ml-2">{audio.fileName}</span>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    audio.category === 'music' ? 'bg-purple-900/40 text-purple-300' :
-                    audio.category === 'ambient' ? 'bg-blue-900/40 text-blue-300' :
-                    'bg-amber-900/40 text-amber-300'
-                  }`}>
-                    {audio.category}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        audio.category === 'music'
+                          ? 'bg-purple-900/40 text-purple-300'
+                          : audio.category === 'ambient'
+                            ? 'bg-blue-900/40 text-blue-300'
+                            : 'bg-amber-900/40 text-amber-300'
+                      }`}
+                    >
+                      {audio.category}
+                    </span>
+                    <button
+                      onClick={() => openEditAudioEntry(audio)}
+                      className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAudioEntry(audio.id)}
+                      className="text-xs text-gray-400 hover:text-red-400 cursor-pointer"
+                    >
+                      Del
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+          <button
+            onClick={() => {
+              setNewAudioEntries([])
+              setShowAudioAdd(true)
+            }}
+            className="mt-3 text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
+          >
+            + Add Audio
+          </button>
         </Card>
 
         {/* Journal */}
@@ -1427,6 +1772,373 @@ export default function CampaignDetailPage(): JSX.Element {
           </Button>
           <Button onClick={handleAddMap} disabled={!mapForm.name.trim()}>
             Add Map
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Overview Edit Modal */}
+      <Modal open={showOverviewEdit} onClose={() => setShowOverviewEdit(false)} title="Edit Overview">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Campaign Name *</label>
+            <input
+              type="text"
+              value={overviewForm.name}
+              onChange={(e) => setOverviewForm((f) => ({ ...f, name: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Description</label>
+            <textarea
+              value={overviewForm.description}
+              onChange={(e) => setOverviewForm((f) => ({ ...f, description: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-20 resize-none"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Max Players</label>
+              <input
+                type="number"
+                value={overviewForm.maxPlayers}
+                onChange={(e) =>
+                  setOverviewForm((f) => ({ ...f, maxPlayers: Math.max(1, Math.min(8, parseInt(e.target.value, 10) || 1)) }))
+                }
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+                min={1}
+                max={8}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Turn Mode</label>
+              <select
+                value={overviewForm.turnMode}
+                onChange={(e) => setOverviewForm((f) => ({ ...f, turnMode: e.target.value as TurnMode }))}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+              >
+                <option value="initiative">Initiative</option>
+                <option value="free">Free</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Level Min</label>
+              <input
+                type="number"
+                value={overviewForm.levelMin}
+                onChange={(e) => setOverviewForm((f) => ({ ...f, levelMin: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+                min={1}
+                max={20}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Level Max</label>
+              <input
+                type="number"
+                value={overviewForm.levelMax}
+                onChange={(e) => setOverviewForm((f) => ({ ...f, levelMax: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+                min={1}
+                max={20}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Lobby Message</label>
+            <textarea
+              value={overviewForm.lobbyMessage}
+              onChange={(e) => setOverviewForm((f) => ({ ...f, lobbyMessage: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+              placeholder="Message shown to players in the lobby"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowOverviewEdit(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveOverview} disabled={!overviewForm.name.trim()}>
+            Save
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Session Zero Edit Modal */}
+      <Modal open={showSessionZeroEdit} onClose={() => setShowSessionZeroEdit(false)} title="Edit Session Zero">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          <SessionZeroStep
+            data={editSessionZero}
+            onChange={setEditSessionZero}
+            customRules={editSessionZeroRules}
+            onRulesChange={setEditSessionZeroRules}
+          />
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowSessionZeroEdit(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveSessionZero}>Save</Button>
+        </div>
+      </Modal>
+
+      {/* Calendar Edit Modal */}
+      <Modal open={showCalendarEdit} onClose={() => setShowCalendarEdit(false)} title="Edit Calendar">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          <CalendarStep calendar={editCalendar} onChange={setEditCalendar} />
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowCalendarEdit(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveCalendar}>Save</Button>
+        </div>
+      </Modal>
+
+      {/* Voice Chat Edit Modal */}
+      <Modal open={showVoiceChatEdit} onClose={() => setShowVoiceChatEdit(false)} title="Edit Voice Chat">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          <VoiceChatStep config={editVoiceChat} onChange={setEditVoiceChat} />
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowVoiceChatEdit(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveVoiceChat}>Save</Button>
+        </div>
+      </Modal>
+
+      {/* Add Audio Modal */}
+      <Modal open={showAudioAdd} onClose={() => setShowAudioAdd(false)} title="Add Custom Audio">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          <AudioStep audioEntries={newAudioEntries} onChange={setNewAudioEntries} />
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowAudioAdd(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleAddAudio} disabled={newAudioEntries.length === 0}>
+            Add
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Audio Entry Edit Modal */}
+      <Modal
+        open={editingAudioId !== null}
+        onClose={() => setEditingAudioId(null)}
+        title="Edit Audio Entry"
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Display Name</label>
+            <input
+              type="text"
+              value={audioEntryForm.displayName}
+              onChange={(e) => setAudioEntryForm((f) => ({ ...f, displayName: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Category</label>
+            <select
+              value={audioEntryForm.category}
+              onChange={(e) =>
+                setAudioEntryForm((f) => ({ ...f, category: e.target.value as 'ambient' | 'effect' | 'music' }))
+              }
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            >
+              <option value="music">Music</option>
+              <option value="ambient">Ambient</option>
+              <option value="effect">Effect</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setEditingAudioId(null)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveAudioEntry}>Save</Button>
+        </div>
+      </Modal>
+
+      {/* Map Edit Modal */}
+      <Modal
+        open={editingMapId !== null}
+        onClose={() => setEditingMapId(null)}
+        title="Edit Map"
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Map Name *</label>
+            <input
+              type="text"
+              value={mapEditForm.name}
+              onChange={(e) => setMapEditForm((f) => ({ ...f, name: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Grid Type</label>
+            <select
+              value={mapEditForm.gridType}
+              onChange={(e) => setMapEditForm((f) => ({ ...f, gridType: e.target.value as 'square' | 'hex' }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            >
+              <option value="square">Square</option>
+              <option value="hex">Hex</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Cell Size (px)</label>
+            <input
+              type="number"
+              value={mapEditForm.cellSize}
+              onChange={(e) => setMapEditForm((f) => ({ ...f, cellSize: parseInt(e.target.value, 10) || 40 }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+              min={10}
+              max={200}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Grid Color</label>
+            <input
+              type="color"
+              value={mapEditForm.gridColor}
+              onChange={(e) => setMapEditForm((f) => ({ ...f, gridColor: e.target.value }))}
+              className="w-12 h-8 bg-gray-800 border border-gray-700 rounded cursor-pointer"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Grid Opacity</label>
+            <input
+              type="range"
+              value={mapEditForm.gridOpacity}
+              onChange={(e) => setMapEditForm((f) => ({ ...f, gridOpacity: parseFloat(e.target.value) }))}
+              min={0}
+              max={1}
+              step={0.05}
+              className="w-full"
+            />
+            <span className="text-xs text-gray-500">{Math.round(mapEditForm.gridOpacity * 100)}%</span>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setEditingMapId(null)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveMapEdit} disabled={!mapEditForm.name.trim()}>
+            Save
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Adventure Edit Modal */}
+      <Modal
+        open={editingAdventureId !== null}
+        onClose={() => setEditingAdventureId(null)}
+        title="Edit Adventure"
+      >
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Title *</label>
+            <input
+              type="text"
+              value={adventureForm.title}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, title: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Level Tier</label>
+            <select
+              value={adventureForm.levelTier}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, levelTier: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+            >
+              <option value="1-4">1-4 (Local Heroes)</option>
+              <option value="5-10">5-10 (Heroes of the Realm)</option>
+              <option value="11-16">11-16 (Masters of the Realm)</option>
+              <option value="17-20">17-20 (Masters of the World)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Premise</label>
+            <textarea
+              value={adventureForm.premise}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, premise: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Adventure Hook</label>
+            <textarea
+              value={adventureForm.hook}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, hook: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Villain / Antagonist</label>
+              <input
+                type="text"
+                value={adventureForm.villain}
+                onChange={(e) => setAdventureForm((f) => ({ ...f, villain: e.target.value }))}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-xs mb-1">Setting</label>
+              <input
+                type="text"
+                value={adventureForm.setting}
+                onChange={(e) => setAdventureForm((f) => ({ ...f, setting: e.target.value }))}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Player Stakes</label>
+            <textarea
+              value={adventureForm.playerStakes}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, playerStakes: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Encounters</label>
+            <textarea
+              value={adventureForm.encounters}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, encounters: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Climax</label>
+            <textarea
+              value={adventureForm.climax}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, climax: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-400 text-xs mb-1">Resolution</label>
+            <textarea
+              value={adventureForm.resolution}
+              onChange={(e) => setAdventureForm((f) => ({ ...f, resolution: e.target.value }))}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setEditingAdventureId(null)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveAdventure} disabled={!adventureForm.title.trim()}>
+            Save
           </Button>
         </div>
       </Modal>

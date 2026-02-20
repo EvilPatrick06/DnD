@@ -5,6 +5,12 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { isValidUUID } from '../../shared/utils/uuid'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastionStorage'
+import {
+  deleteHomebrewEntry,
+  loadAllHomebrew,
+  loadHomebrewEntries,
+  saveHomebrewEntry
+} from '../storage/homebrewStorage'
 import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaignStorage'
 import {
   deleteCharacter,
@@ -188,6 +194,31 @@ export function registerIpcHandlers(): void {
       return result.data
     }
     return false
+  })
+
+  // --- Homebrew storage ---
+
+  ipcMain.handle(IPC_CHANNELS.SAVE_HOMEBREW, async (_event, entry) => {
+    const result = await saveHomebrewEntry(entry)
+    return { success: result.success, error: result.error }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOAD_HOMEBREW_BY_CATEGORY, async (_event, category: string) => {
+    const result = await loadHomebrewEntries(category)
+    if (result.success) return result.data
+    return { success: false, error: result.error ?? 'Failed to load homebrew entries' }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOAD_ALL_HOMEBREW, async () => {
+    const result = await loadAllHomebrew()
+    if (result.success) return result.data
+    return { success: false, error: result.error ?? 'Failed to load all homebrew' }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_HOMEBREW, async (_event, category: string, id: string) => {
+    const result = await deleteHomebrewEntry(category, id)
+    if (result.success) return result.data
+    return { success: false, error: result.error ?? 'Failed to delete homebrew entry' }
   })
 
   // --- Ban storage ---

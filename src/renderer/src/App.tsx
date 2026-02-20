@@ -19,6 +19,7 @@ const CharacterSheet5ePage = lazy(() => import('./pages/CharacterSheet5ePage'))
 const LevelUp5ePage = lazy(() => import('./pages/LevelUp5ePage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const LibraryPage = lazy(() => import('./pages/LibraryPage'))
 
 function App(): JSX.Element {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -89,6 +90,7 @@ function App(): JSX.Element {
             <Route path="/game/:campaignId" element={<ErrorBoundary><InGamePage /></ErrorBoundary>} />
             <Route path="/bastions" element={<BastionPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/library" element={<LibraryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
