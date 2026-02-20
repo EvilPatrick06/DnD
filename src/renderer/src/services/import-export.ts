@@ -124,6 +124,134 @@ export async function importCampaign(): Promise<any | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Full backup: Export / Import ALL data
+// ---------------------------------------------------------------------------
+
+const BACKUP_VERSION = 1
+const BACKUP_FILTER = [{ name: 'D&D VTT Backup', extensions: ['dndbackup'] }]
+
+const PREFERENCE_PREFIX = 'dnd-vtt-'
+
+interface BackupPayload {
+  version: number
+  exportedAt: string
+  characters: Record<string, unknown>[]
+  campaigns: Record<string, unknown>[]
+  bastions: Record<string, unknown>[]
+  appSettings: Record<string, unknown>
+  preferences: Record<string, string>
+}
+
+function gatherLocalStoragePreferences(): Record<string, string> {
+  const prefs: Record<string, string> = {}
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key?.startsWith(PREFERENCE_PREFIX)) {
+      prefs[key] = localStorage.getItem(key) ?? ''
+    }
+  }
+  return prefs
+}
+
+export interface BackupStats {
+  characters: number
+  campaigns: number
+  bastions: number
+}
+
+/**
+ * Gather all app data (characters, campaigns, bastions, settings, preferences)
+ * and write it to a single .dndbackup file via a save dialog.
+ */
+export async function exportAllData(): Promise<BackupStats | null> {
+  const [characters, campaigns, bastions, appSettings] = await Promise.all([
+    window.api.loadCharacters().catch(() => []),
+    window.api.loadCampaigns().catch(() => []),
+    window.api.loadBastions().catch(() => []),
+    window.api.loadSettings().catch(() => ({}))
+  ])
+
+  const payload: BackupPayload = {
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    characters: Array.isArray(characters) ? characters : [],
+    campaigns: Array.isArray(campaigns) ? campaigns : [],
+    bastions: Array.isArray(bastions) ? bastions : [],
+    appSettings: appSettings ?? {},
+    preferences: gatherLocalStoragePreferences()
+  }
+
+  const filePath = await window.api.showSaveDialog({
+    title: 'Export All Data',
+    filters: BACKUP_FILTER
+  })
+  if (!filePath) return null
+
+  await window.api.writeFile(filePath, JSON.stringify(payload, null, 2))
+  return {
+    characters: payload.characters.length,
+    campaigns: payload.campaigns.length,
+    bastions: payload.bastions.length
+  }
+}
+
+/**
+ * Read a .dndbackup file, validate its structure, and restore all data.
+ * Existing data with the same IDs will be overwritten.
+ */
+export async function importAllData(): Promise<BackupStats | null> {
+  const filePath = await window.api.showOpenDialog({
+    title: 'Import All Data',
+    filters: BACKUP_FILTER
+  })
+  if (!filePath) return null
+
+  const raw = await window.api.readFile(filePath)
+  let payload: BackupPayload
+  try {
+    payload = JSON.parse(raw)
+  } catch {
+    throw new Error('Invalid backup file: malformed JSON')
+  }
+
+  if (!payload || typeof payload !== 'object' || payload.version !== BACKUP_VERSION) {
+    throw new Error('Invalid or unsupported backup file version')
+  }
+
+  const chars = Array.isArray(payload.characters) ? payload.characters : []
+  const camps = Array.isArray(payload.campaigns) ? payload.campaigns : []
+  const basts = Array.isArray(payload.bastions) ? payload.bastions : []
+
+  for (const c of chars) {
+    await window.api.saveCharacter(c as Record<string, unknown>)
+  }
+  for (const c of camps) {
+    await window.api.saveCampaign(c as Record<string, unknown>)
+  }
+  for (const b of basts) {
+    await window.api.saveBastion(b as Record<string, unknown>)
+  }
+
+  if (payload.appSettings && typeof payload.appSettings === 'object') {
+    await window.api.saveSettings(payload.appSettings as Parameters<typeof window.api.saveSettings>[0]).catch(() => {})
+  }
+
+  if (payload.preferences && typeof payload.preferences === 'object') {
+    for (const [key, value] of Object.entries(payload.preferences)) {
+      if (key.startsWith(PREFERENCE_PREFIX) && typeof value === 'string') {
+        localStorage.setItem(key, value)
+      }
+    }
+  }
+
+  return {
+    characters: chars.length,
+    campaigns: camps.length,
+    bastions: basts.length
+  }
+}
+
+// ---------------------------------------------------------------------------
 // D&D Beyond import
 // ---------------------------------------------------------------------------
 
@@ -296,7 +424,7 @@ export async function importDndBeyondCharacter(): Promise<any | null> {
         maximum: maxHP,
         temporary: tempHP
       },
-      hitDiceRemaining: totalLevel,
+      hitDice: classes.map((cls) => ({ current: cls.level, maximum: cls.level, dieType: cls.hitDie })),
       armorClass: 10,
       initiative: 0,
       speed: 30,

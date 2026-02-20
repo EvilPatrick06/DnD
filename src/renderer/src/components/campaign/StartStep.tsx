@@ -1,8 +1,48 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { AUTO_REJOIN_KEY, LAST_SESSION_KEY } from '../../config/constants'
+import { addToast } from '../../hooks/useToast'
 import { exportCampaignToFile } from '../../services/campaign-io'
 import { useCampaignStore } from '../../stores/useCampaignStore'
 import type { Campaign } from '../../types/campaign'
+import { ConfirmDialog } from '../ui'
+
+interface LastSession {
+  inviteCode: string
+  displayName: string
+  campaignId: string
+  campaignName: string
+  timestamp: number
+}
+
+function loadLastSession(): LastSession | null {
+  try {
+    const raw = localStorage.getItem(LAST_SESSION_KEY)
+    if (!raw) return null
+    const session = JSON.parse(raw)
+    if (!session.inviteCode || !session.displayName) return null
+    return session as LastSession
+  } catch {
+    return null
+  }
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'yesterday'
+  return `${days}d ago`
+}
+
+function maskInviteCode(code: string): string {
+  if (code.length <= 3) return code
+  return code[0] + code[1] + '*'.repeat(code.length - 3) + code[code.length - 1]
+}
 
 interface StartStepProps {
   onNewCampaign: () => void
@@ -13,9 +53,12 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
   const campaigns = useCampaignStore((s) => s.campaigns)
   const loadCampaigns = useCampaignStore((s) => s.loadCampaigns)
   const deleteCampaign = useCampaignStore((s) => s.deleteCampaign)
+  const deleteAllCampaigns = useCampaignStore((s) => s.deleteAllCampaigns)
 
   const [showExisting, setShowExisting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
+  const [lastSession, setLastSession] = useState<LastSession | null>(loadLastSession)
 
   useEffect(() => {
     loadCampaigns()
@@ -28,6 +71,23 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
   const handleDelete = async (id: string): Promise<void> => {
     await deleteCampaign(id)
     setConfirmDelete(null)
+  }
+
+  const handleDeleteAll = async (): Promise<void> => {
+    await deleteAllCampaigns()
+    setShowDeleteAllConfirm(false)
+    addToast('All campaigns deleted', 'success')
+  }
+
+  const handleRejoin = (): void => {
+    if (!lastSession) return
+    localStorage.setItem(AUTO_REJOIN_KEY, 'true')
+    navigate('/join')
+  }
+
+  const handleDismissSession = (): void => {
+    try { localStorage.removeItem(LAST_SESSION_KEY) } catch { /* ignore */ }
+    setLastSession(null)
   }
 
   const formatDate = (dateStr: string): string => {
@@ -46,6 +106,44 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
     <div className="max-w-2xl">
       <h2 className="text-2xl font-bold text-gray-100 mb-2">Campaign Setup</h2>
       <p className="text-gray-400 text-sm mb-8">Create a new campaign or load an existing one.</p>
+
+      {/* Rejoin Last Game card */}
+      {lastSession && (
+        <div className="mb-6 p-4 rounded-xl border border-emerald-700/50 bg-emerald-900/15 flex items-center gap-4">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-800/40 flex items-center justify-center text-emerald-400 text-lg">
+            &#8634;
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-100 truncate">
+              {lastSession.campaignName || 'Unknown Campaign'}
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Code: <span className="font-mono text-gray-400">{maskInviteCode(lastSession.inviteCode)}</span>
+              <span className="mx-1.5">&middot;</span>
+              {formatTimeAgo(lastSession.timestamp)}
+              <span className="mx-1.5">&middot;</span>
+              as {lastSession.displayName}
+            </p>
+          </div>
+          <button
+            onClick={handleRejoin}
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500
+              text-white transition-colors cursor-pointer flex-shrink-0"
+          >
+            Rejoin
+          </button>
+          <button
+            onClick={handleDismissSession}
+            className="p-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-gray-700/50
+              transition-colors cursor-pointer flex-shrink-0"
+            title="Dismiss"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 mb-8">
         {/* New Campaign */}
@@ -88,7 +186,17 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
           {campaigns.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500 text-sm">No saved campaigns. Create one first!</div>
           ) : (
-            <div className="max-h-80 overflow-y-auto divide-y divide-gray-800">
+            <div>
+              <div className="px-4 py-2 flex justify-end border-b border-gray-800">
+                <button
+                  onClick={() => setShowDeleteAllConfirm(true)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-700 hover:bg-red-600/30
+                    text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                >
+                  Delete All Campaigns
+                </button>
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-gray-800">
               {campaigns.map((c) => (
                 <div key={c.id} className="px-4 py-3 flex items-center gap-3 hover:bg-gray-800/50">
                   <div className="flex-1 min-w-0">
@@ -155,9 +263,20 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
                 </div>
               ))}
             </div>
+            </div>
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteAllConfirm}
+        title="Delete All Campaigns?"
+        message={`This will permanently delete all ${campaigns.length} campaign${campaigns.length !== 1 ? 's' : ''} and their data. This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={handleDeleteAll}
+        onCancel={() => setShowDeleteAllConfirm(false)}
+      />
     </div>
   )
 }

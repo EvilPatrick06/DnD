@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { banPeer, chatMutePeer, kickPeer } from '../../network/host-manager'
 import { useCampaignStore } from '../../stores/useCampaignStore'
@@ -29,12 +30,15 @@ export default function PlayerList(): JSX.Element {
   const aiDmModel = campaign?.aiDm?.model ?? 'sonnet'
   const aiDmOllamaModel = campaign?.aiDm?.ollamaModel ?? 'llama3.1'
 
-  // Sort: host first, then alphabetical by display name
-  const sortedPlayers = [...players].sort((a, b) => {
-    if (a.isHost && !b.isHost) return -1
-    if (!a.isHost && b.isHost) return 1
-    return a.displayName.localeCompare(b.displayName)
-  })
+  const sortedPlayers = useMemo(
+    () =>
+      [...players].sort((a, b) => {
+        if (a.isHost && !b.isHost) return -1
+        if (!a.isHost && b.isHost) return 1
+        return a.displayName.localeCompare(b.displayName)
+      }),
+    [players]
+  )
 
   const handleViewCharacter = (characterId: string | null): void => {
     if (!characterId) return
@@ -108,7 +112,7 @@ export default function PlayerList(): JSX.Element {
                 key={player.peerId}
                 player={player}
                 isLocal={isLocal}
-                isLocallyMuted={locallyMutedPeers.has(player.peerId)}
+                isLocallyMuted={locallyMutedPeers.includes(player.peerId)}
                 onToggleLocalMute={() => toggleLocalMutePlayer(player.peerId)}
                 isHostView={isHostView}
                 onForceMute={(force) => forceMutePlayer(player.peerId, force)}

@@ -135,7 +135,7 @@ export default function MountModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-200">{isMounted ? 'Mounted Combat' : 'Mount / Dismount'}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

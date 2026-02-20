@@ -90,7 +90,7 @@ export default function HandoutModal({ onClose, onShareHandout }: HandoutModalPr
           <h3 className="text-sm font-semibold text-gray-200">
             {editingId ? 'Edit Handout' : 'Handouts'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

@@ -1,12 +1,9 @@
 import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
+import { isValidUUID } from '../../shared/utils/uuid'
+import { CURRENT_SCHEMA_VERSION, migrateData } from './migrations'
 import type { StorageResult } from './types'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-function isValidUUID(str: string): boolean {
-  return UUID_RE.test(str)
-}
 
 let bastionsDirReady: Promise<string> | null = null
 
@@ -44,6 +41,7 @@ export async function saveBastion(bastion: Record<string, unknown>): Promise<Sto
     if (!isValidUUID(id)) {
       return { success: false, error: 'Invalid bastion ID' }
     }
+    bastion.schemaVersion = CURRENT_SCHEMA_VERSION
     const path = await getBastionPath(id)
     await writeFile(path, JSON.stringify(bastion, null, 2), 'utf-8')
     return { success: true }
@@ -86,7 +84,7 @@ export async function loadBastion(id: string): Promise<StorageResult<Record<stri
       return { success: true, data: null }
     }
     const data = await readFile(path, 'utf-8')
-    return { success: true, data: JSON.parse(data) }
+    return { success: true, data: migrateData(JSON.parse(data)) }
   } catch (err) {
     return { success: false, error: `Failed to load bastion: ${(err as Error).message}` }
   }

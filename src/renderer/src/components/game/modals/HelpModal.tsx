@@ -136,7 +136,7 @@ export default function HelpModal({
                   ? 'Assist Ability Check'
                   : 'Assist Attack Roll'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

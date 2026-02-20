@@ -141,18 +141,21 @@ export interface StateUpdatePayload {
 }
 
 export interface TokenMovePayload {
+  mapId: string
   tokenId: string
   gridX: number
   gridY: number
 }
 
 export interface FogRevealPayload {
+  mapId: string
   cells: Array<{ x: number; y: number }>
   reveal: boolean
 }
 
 export interface MapChangePayload {
   mapId: string
+  mapData?: NetworkMap
 }
 
 export interface CharacterSelectPayload {
@@ -253,6 +256,49 @@ export interface SellItemPayload {
 export interface GameStateFullPayload {
   peers: PeerInfo[]
   campaignId?: string
+  gameState?: NetworkGameState
+}
+
+export interface NetworkGameState {
+  activeMapId: string | null
+  maps: NetworkMap[]
+  turnMode: 'initiative' | 'free'
+  initiative: unknown
+  round: number
+  conditions: unknown[]
+  isPaused: boolean
+  turnStates: Record<string, unknown>
+  underwaterCombat: boolean
+  flankingEnabled: boolean
+  groupInitiativeEnabled: boolean
+  ambientLight: 'bright' | 'dim' | 'darkness'
+  diagonalRule: 'standard' | 'alternate'
+  travelPace: 'fast' | 'normal' | 'slow' | null
+  marchingOrder: string[]
+  inGameTime: { totalSeconds: number } | null
+  allies: unknown[]
+  enemies: unknown[]
+  places: unknown[]
+  handouts: unknown[]
+  shopOpen?: boolean
+  shopName?: string
+  shopInventory?: ShopItem[]
+}
+
+export interface NetworkMap {
+  id: string
+  name: string
+  campaignId: string
+  imageData?: string
+  imagePath: string
+  width: number
+  height: number
+  grid: unknown
+  tokens: unknown[]
+  fogOfWar: unknown
+  wallSegments?: unknown[]
+  terrain: unknown[]
+  createdAt: string
 }
 
 export interface BanPayload {

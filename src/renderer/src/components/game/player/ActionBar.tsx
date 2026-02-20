@@ -26,7 +26,7 @@ const ACTIONS_5E = [
     label: 'Dodge',
     type: 'action' as const,
     tooltip:
-      'Until your next turn: attacks against you have Disadvantage (if you can see attacker), DEX saves have Advantage. Lost if Incapacitated or Speed is 0.'
+      'Until your next turn: attacks against you have Disadvantage, DEX saves have Advantage. Lost if Incapacitated or Speed is 0.'
   },
   {
     id: 'help',

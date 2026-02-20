@@ -18,7 +18,12 @@ export function exportCampaign(campaign: Campaign): string {
  * Re-generates timestamps so the imported campaign is treated as new.
  */
 export function importCampaign(json: string): Campaign {
-  const parsed = JSON.parse(json)
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    throw new Error('Invalid campaign file: malformed JSON')
+  }
 
   // Validate required fields
   const required: Array<keyof Campaign> = ['id', 'name', 'system', 'type', 'dmId', 'inviteCode', 'turnMode', 'settings']
@@ -39,7 +44,7 @@ export function importCampaign(json: string): Campaign {
   const now = new Date().toISOString()
   parsed.updatedAt = now
 
-  return parsed as Campaign
+  return parsed as unknown as Campaign
 }
 
 /**

@@ -5,16 +5,16 @@ import { isBloodied } from '../types/character-common'
 describe('CONDITIONS_5E — PHB 2024 accuracy', () => {
   const findCondition = (name: string) => CONDITIONS_5E.find((c) => c.name === name)
 
-  it('has all 15 standard conditions plus Burning', () => {
+  it('has all 15 standard conditions plus Bloodied and Burning', () => {
     const expected = [
       'Blinded', 'Charmed', 'Deafened', 'Exhaustion', 'Frightened',
       'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified',
-      'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Burning'
+      'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Bloodied', 'Burning'
     ]
     for (const name of expected) {
       expect(findCondition(name), `Missing condition: ${name}`).toBeDefined()
     }
-    expect(CONDITIONS_5E.length).toBe(16)
+    expect(CONDITIONS_5E.length).toBe(17)
   })
 
   it('Exhaustion: max level is 6 (not 10)', () => {

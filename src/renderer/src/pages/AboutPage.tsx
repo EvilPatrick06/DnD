@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { ConfirmDialog } from '../components/ui'
+import { addToast } from '../hooks/useToast'
+import { exportAllData, importAllData } from '../services/import-export'
 
 const FEATURES = [
   'Character Builder (D&D 5e 2024 PHB rules)',
@@ -48,15 +51,21 @@ export default function AboutPage(): JSX.Element {
   const [updateStatus, setUpdateStatus] = useState<
     'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error'
   >('idle')
-  const [appVersion, setAppVersion] = useState('1.0.0')
+  const [appVersion, setAppVersion] = useState(
+    typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'
+  )
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [downloadPercent, setDownloadPercent] = useState(0)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [showImportConfirm, setShowImportConfirm] = useState(false)
 
   useEffect(() => {
     window.api
       .getVersion()
       .then(setAppVersion)
-      .catch(() => {})
+      .catch(() => console.warn('[About] Failed to fetch app version'))
     window.api.update.onStatus((status) => {
       if (status.state === 'not-available') setUpdateStatus('up-to-date')
       else if (status.state === 'available') {
@@ -68,13 +77,53 @@ export default function AboutPage(): JSX.Element {
       } else if (status.state === 'downloaded') {
         setUpdateStatus('downloaded')
         if (status.version) setUpdateVersion(status.version)
-      } else if (status.state === 'error') setUpdateStatus('error')
+      } else if (status.state === 'error') {
+        setUpdateStatus('error')
+        if (status.message) setErrorMsg(status.message)
+      }
       else if (status.state === 'checking') setUpdateStatus('checking')
     })
     return () => {
       window.api.update.removeStatusListener()
     }
   }, [])
+
+  const handleExportAll = async (): Promise<void> => {
+    setExporting(true)
+    try {
+      const stats = await exportAllData()
+      if (stats) {
+        addToast(
+          `Exported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}`,
+          'success'
+        )
+      }
+    } catch (err) {
+      console.error('Export all failed:', err)
+      addToast('Failed to export data', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleImportAll = async (): Promise<void> => {
+    setImporting(true)
+    try {
+      const stats = await importAllData()
+      if (stats) {
+        addToast(
+          `Imported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}`,
+          'success'
+        )
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to import data'
+      addToast(message, 'error')
+    } finally {
+      setImporting(false)
+      setShowImportConfirm(false)
+    }
+  }
 
   return (
     <div className="h-screen bg-gray-950 text-gray-100 overflow-y-auto">
@@ -107,7 +156,10 @@ export default function AboutPage(): JSX.Element {
                       setUpdateStatus('error')
                     }
                   })
-                  .catch(() => setUpdateStatus('up-to-date'))
+                  .catch((e) => {
+                    setUpdateStatus('error')
+                    setErrorMsg(e instanceof Error ? e.message : String(e))
+                  })
               }}
               disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
               className="px-4 py-1.5 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -118,7 +170,7 @@ export default function AboutPage(): JSX.Element {
               {updateStatus === 'available' && `Update ${updateVersion ?? ''} available!`}
               {updateStatus === 'downloading' && 'Downloading...'}
               {updateStatus === 'downloaded' && 'Update ready!'}
-              {updateStatus === 'error' && 'Check failed'}
+              {updateStatus === 'error' && `Check failed${errorMsg ? `: ${errorMsg}` : ''}`}
             </button>
 
             {/* Download button */}
@@ -164,6 +216,34 @@ export default function AboutPage(): JSX.Element {
           A desktop application for playing Dungeons & Dragons 5th Edition online with friends. Create characters, build
           campaigns, and adventure together — no browser required.
         </p>
+
+        {/* Data Management */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-5 mb-6">
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Data Management</h2>
+          <p className="text-gray-500 text-sm mb-4">
+            Export all your characters, campaigns, bastions, and preferences to a single backup file, or restore from a
+            previous backup.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleExportAll}
+              disabled={exporting}
+              className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg
+                font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? 'Exporting...' : 'Export All Data'}
+            </button>
+            <button
+              onClick={() => setShowImportConfirm(true)}
+              disabled={importing}
+              className="px-5 py-2.5 border border-gray-600 hover:border-amber-600 hover:bg-gray-800
+                text-gray-300 hover:text-amber-400 rounded-lg font-semibold text-sm
+                transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {importing ? 'Importing...' : 'Import Data'}
+            </button>
+          </div>
+        </div>
 
         {/* Supported Systems */}
         <div className="flex gap-4 mb-10 justify-center">
@@ -277,6 +357,16 @@ export default function AboutPage(): JSX.Element {
           <div className="mt-1">Game content used under Creative Commons Attribution 4.0 International License.</div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showImportConfirm}
+        title="Import Data from Backup?"
+        message="Importing will restore characters, campaigns, bastions, and preferences from the backup file. Existing data with the same IDs will be overwritten."
+        confirmLabel="Import"
+        variant="warning"
+        onConfirm={handleImportAll}
+        onCancel={() => setShowImportConfirm(false)}
+      />
     </div>
   )
 }

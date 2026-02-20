@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { memo, useEffect, useRef, useState } from 'react'
 import { type CommandContext, executeCommand } from '../../../services/chat-commands'
 import { useAiDmStore } from '../../../stores/useAiDmStore'
+import type { ChatMessage } from '../../../stores/useLobbyStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'
 import type { Campaign } from '../../../types/campaign'
@@ -11,6 +13,59 @@ import DiceResult from '../DiceResult'
 import { trigger3dDice } from '../dice3d'
 import SkillRollButton from '../SkillRollButton'
 import CommandAutocomplete from './CommandAutocomplete'
+
+const BottomChatMessage = memo(function BottomChatMessage({
+  msg,
+  isDM,
+  onDispute
+}: {
+  msg: ChatMessage
+  isDM: boolean
+  onDispute?: (ruling: string) => void
+}): JSX.Element {
+  if (msg.isDiceRoll && msg.diceResult) {
+    return (
+      <DiceResult
+        formula={msg.diceResult.formula}
+        rolls={msg.diceResult.rolls}
+        total={msg.diceResult.total}
+        rollerName={msg.senderName}
+      />
+    )
+  }
+  if (msg.senderId === 'ai-dm') {
+    return (
+      <div className="py-1 pl-2 border-l-2 border-amber-500/50 group">
+        <div className="flex items-start justify-between">
+          <span className="text-[10px] font-semibold text-amber-400 block mb-0.5">Dungeon Master</span>
+          {isDM && onDispute && (
+            <button
+              onClick={() => onDispute(msg.content)}
+              className="text-[9px] text-gray-600 hover:text-amber-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Dispute this ruling"
+            >
+              Dispute
+            </button>
+          )}
+        </div>
+        <span className="text-sm text-gray-100 font-sans">{msg.content}</span>
+      </div>
+    )
+  }
+  if (msg.isSystem) {
+    return (
+      <div className="text-sm text-gray-400 text-center py-0.5 font-sans">{msg.content}</div>
+    )
+  }
+  return (
+    <div className="py-0.5">
+      <span className="text-xs font-medium font-sans" style={{ color: msg.senderColor || '#9CA3AF' }}>
+        {msg.senderName}:
+      </span>
+      <span className="text-sm text-gray-100 ml-1 font-sans">{msg.content}</span>
+    </div>
+  )
+})
 
 interface ChatPanelProps {
   isDM: boolean
@@ -46,14 +101,20 @@ export default function ChatPanel({
   const aiLastError = useAiDmStore((s) => s.lastError)
   const aiMessages = useAiDmStore((s) => s.messages)
 
+  const virtualizer = useVirtualizer({
+    count: chatMessages.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 36,
+    overscan: 10
+  })
+
   const showAutocomplete = input.startsWith('/') && !input.includes(' ')
 
-  // Auto-scroll to bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    if (chatMessages.length > 0) {
+      virtualizer.scrollToIndex(chatMessages.length - 1, { align: 'end' })
     }
-  }, [])
+  }, [chatMessages.length, virtualizer])
 
   const addSysMsg = (content: string): void => {
     addChatMessage({
@@ -145,6 +206,7 @@ export default function ChatPanel({
       <div className="flex items-center gap-1 w-full">
         <input
           ref={inputRef}
+          data-chat-input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -170,58 +232,31 @@ export default function ChatPanel({
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-2 min-h-0" aria-live="polite">
         {chatMessages.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">No messages yet</p>
         ) : (
-          chatMessages.map((msg) => {
-            if (msg.isDiceRoll && msg.diceResult) {
+          <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const msg = chatMessages[virtualItem.index]
               return (
-                <DiceResult
+                <div
                   key={msg.id}
-                  formula={msg.diceResult.formula}
-                  rolls={msg.diceResult.rolls}
-                  total={msg.diceResult.total}
-                  rollerName={msg.senderName}
-                />
-              )
-            }
-            // AI DM messages get special styling
-            if (msg.senderId === 'ai-dm') {
-              return (
-                <div key={msg.id} className="py-1 pl-2 border-l-2 border-amber-500/50 group">
-                  <div className="flex items-start justify-between">
-                    <span className="text-[10px] font-semibold text-amber-400 block mb-0.5">Dungeon Master</span>
-                    {isDM && onDispute && (
-                      <button
-                        onClick={() => onDispute(msg.content)}
-                        className="text-[9px] text-gray-600 hover:text-amber-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Dispute this ruling"
-                      >
-                        Dispute
-                      </button>
-                    )}
-                  </div>
-                  <span className="text-sm text-gray-100 font-sans">{msg.content}</span>
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`
+                  }}
+                >
+                  <BottomChatMessage msg={msg} isDM={isDM} onDispute={onDispute} />
                 </div>
               )
-            }
-            if (msg.isSystem) {
-              return (
-                <div key={msg.id} className="text-sm text-gray-400 text-center py-0.5 font-sans">
-                  {msg.content}
-                </div>
-              )
-            }
-            return (
-              <div key={msg.id} className="py-0.5">
-                <span className="text-xs font-medium font-sans" style={{ color: msg.senderColor || '#9CA3AF' }}>
-                  {msg.senderName}:
-                </span>
-                <span className="text-sm text-gray-100 ml-1 font-sans">{msg.content}</span>
-              </div>
-            )
-          })
+            })}
+          </div>
         )}
 
         {/* AI typing indicator */}
@@ -274,6 +309,7 @@ export default function ChatPanel({
         <div className="flex gap-1">
           <input
             ref={inputRef}
+            data-chat-input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}

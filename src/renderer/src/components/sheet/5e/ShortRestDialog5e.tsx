@@ -21,10 +21,10 @@ interface ShortRestDialog5eProps {
 
 export default function ShortRestDialog5e({ character, open, onClose }: ShortRestDialog5eProps): JSX.Element | null {
   const preview = getShortRestPreview(character)
-  const isMulticlass = character.classes.length > 1
-  const hitDie = character.classes[0]?.hitDie ?? 8
+  const isMulticlass = character.hitDice.length > 1
+  const hitDie = character.hitDice[0]?.dieType ?? 8
   const conMod = abilityModifier(character.abilityScores.constitution)
-  const remaining = character.hitDiceRemaining
+  const remaining = character.hitDice.reduce((s, h) => s + h.current, 0)
   const maxSpend = remaining
 
   const [diceCount, setDiceCount] = useState(Math.min(1, maxSpend))
@@ -34,7 +34,7 @@ export default function ShortRestDialog5e({ character, open, onClose }: ShortRes
   const [arcaneRecoverySlots, setArcaneRecoverySlots] = useState<number[]>([])
 
   // Available die sizes from all classes
-  const dieSizes = [...new Set(character.classes.map((c) => c.hitDie))].sort((a, b) => b - a)
+  const dieSizes = [...new Set(character.hitDice.map((h) => h.dieType))].sort((a, b) => b - a)
 
   const roll = (): void => {
     const dieToUse = isMulticlass ? selectedDieSize : hitDie
@@ -115,14 +115,14 @@ export default function ShortRestDialog5e({ character, open, onClose }: ShortRes
           Hit Point Dice:{' '}
           {isMulticlass ? (
             <span className="text-amber-400 font-semibold">
-              {remaining}/{character.level} ({character.classes.map((c) => `${c.level}d${c.hitDie}`).join(' + ')})
+              {remaining}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)} ({character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})
             </span>
           ) : (
             <span className="text-amber-400 font-semibold">
               {remaining}d{hitDie}
             </span>
           )}{' '}
-          ({remaining} of {character.level} remaining)
+          ({remaining} of {character.hitDice.reduce((s, h) => s + h.maximum, 0)} remaining)
         </div>
 
         {remaining === 0 ? (

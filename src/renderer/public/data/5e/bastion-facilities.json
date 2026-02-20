@@ -462,7 +462,7 @@
     {
       "type": "greenhouse",
       "name": "Greenhouse",
-      "description": "A glass-roofed garden for growing rare herbs and exotic plants year-round, regardless of weather or climate.",
+      "description": "An enclosure where rare plants and fungi are nurtured in a controlled climate.",
       "level": 9,
       "setting": "core",
       "prerequisite": {
@@ -481,20 +481,26 @@
         "description": "You can cast Speak with Plants without expending a spell slot. Once you use this charm, it vanishes.",
         "duration": "7 days"
       },
+      "fruitOfRestoration": {
+        "description": "One plant in your Greenhouse has three magical fruits growing on it. Any creature that eats one of these fruits gains the benefit of a Lesser Restoration spell. Fruits that aren't eaten within 24 hours of being picked lose their magic. The plant replaces all picked fruits daily at dawn, and it can't be transplanted without killing it.",
+        "fruitsPerDay": 3,
+        "spell": "Lesser Restoration"
+      },
       "orderOptions": [
         {
           "order": "harvest",
-          "name": "Harvest: Rare Herbs",
-          "description": "Harvest 2d4 doses of rare herbs. Each dose can be used as a component for a potion.",
+          "name": "Harvest: Healing Herbs",
+          "description": "Commission the hireling to create a Potion of Healing (Greater) made from healing herbs. The work takes 7 days and costs no money.",
           "daysRequired": 7,
           "cost": 0
         },
         {
           "order": "harvest",
-          "name": "Harvest: Exotic Plants",
-          "description": "Harvest exotic plants worth 2d4 x 25 GP.",
+          "name": "Harvest: Poison",
+          "description": "Commission the hireling to extract one application of a poison from rare plants or fungi. Choose from: Assassin's Blood, Malice, Pale Tincture, or Truth Serum. The work takes 7 days and costs no money.",
           "daysRequired": 7,
-          "cost": 0
+          "cost": 0,
+          "poisonOptions": ["Assassin's Blood", "Malice", "Pale Tincture", "Truth Serum"]
         }
       ]
     },
@@ -1083,44 +1089,38 @@
       },
       "orderOptions": [
         {
-          "order": "trade",
-          "name": "Trade: Serve Beverages",
-          "description": "Serve beverages to visitors. Earn 2d4 x 25 GP in sales.",
+          "order": "research",
+          "name": "Research: Information Gathering",
+          "description": "Commission the bartender to gather information from spies aware of important events within 10 miles of your Bastion over the next 7 days. These spies can divulge the location of any creature familiar to you within 50 miles (not hidden by magic). They also learn where that creature has been for the previous 7 days.",
           "daysRequired": 7,
-          "cost": 25
-        },
-        {
-          "order": "trade",
-          "name": "Trade: Magical Beverage",
-          "description": "Serve one of the Pub's magical beverages to an ally. They gain its special benefit.",
-          "daysRequired": 7,
-          "cost": 50
+          "cost": 0
         }
       ],
       "tables": {
         "specials": [
           {
             "name": "Bigby's Burden",
-            "effect": "For 24 hours, the drinker is affected as if by the Enlarge/Reduce spell (Enlarge option, no concentration)."
+            "effect": "Drinking a pint grants you the 'enlarge' effect of an Enlarge/Reduce spell with a duration of 24 hours (no saving throw allowed)."
           },
           {
             "name": "Kiss of the Spider Queen",
-            "effect": "For 24 hours, the drinker gains the benefits of Spider Climb (can climb difficult surfaces, including ceilings, without needing an ability check)."
+            "effect": "Drinking a pint grants you the effect of a Spider Climb spell with a duration of 24 hours."
           },
           {
             "name": "Moonlight Serenade",
-            "effect": "For 24 hours, the drinker gains Darkvision out to 60 feet."
+            "effect": "Drinking a pint gives you Darkvision out to 60 feet for 24 hours. If you already have Darkvision, its range is extended by 60 feet for the same duration."
           },
           {
             "name": "Positive Reinforcement",
-            "effect": "For 24 hours, the drinker has Resistance to Necrotic damage."
+            "effect": "Drinking a pint gives you Resistance to Necrotic damage for 24 hours."
           },
           {
             "name": "Sterner Stuff",
-            "effect": "For 24 hours, the drinker automatically succeeds on saving throws against the Frightened condition."
+            "effect": "For 24 hours after drinking a pint, you automatically succeed on saving throws to avoid or end the Frightened condition."
           }
         ]
-      }
+      },
+      "enlargeDescription": "You can enlarge your Pub to a Vast facility by spending 2,000 GP. If you do so, the Pub can have two magical beverages from the Pub Special list on tap at a time. A Vast Pub gains three additional hirelings (servers), for a total of four."
     },
     {
       "type": "reliquary",

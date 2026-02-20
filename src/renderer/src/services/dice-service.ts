@@ -9,6 +9,7 @@
 import { trigger3dDice } from '../components/game/dice3d'
 import { useLobbyStore } from '../stores/useLobbyStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
+import { cryptoRandom } from '../utils/crypto-random'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -50,14 +51,14 @@ export function setLastRoll(roll: typeof _lastRoll) {
 
 /** Roll a single die with the given number of sides */
 export function rollSingle(sides: number): number {
-  return Math.floor(Math.random() * sides) + 1
+  return Math.floor(cryptoRandom() * sides) + 1
 }
 
 /** Roll multiple dice of the same type */
 export function rollMultiple(count: number, sides: number): number[] {
   const rolls: number[] = []
   for (let i = 0; i < count; i++) {
-    rolls.push(Math.floor(Math.random() * sides) + 1)
+    rolls.push(Math.floor(cryptoRandom() * sides) + 1)
   }
   return rolls
 }
@@ -66,9 +67,13 @@ export function rollMultiple(count: number, sides: number): number[] {
 export function parseFormula(formula: string): { count: number; sides: number; modifier: number } | null {
   const match = formula.trim().match(/^(\d*)d(\d+)([+-]\d+)?$/)
   if (!match) return null
+  const count = match[1] ? parseInt(match[1], 10) : 1
+  const sides = parseInt(match[2], 10)
+  if (count < 1 || count > 100) return null
+  if (sides < 1 || sides > 1000) return null
   return {
-    count: match[1] ? parseInt(match[1], 10) : 1,
-    sides: parseInt(match[2], 10),
+    count,
+    sides,
     modifier: match[3] ? parseInt(match[3], 10) : 0
   }
 }
@@ -222,7 +227,7 @@ export function revealRoll(result: DiceRollResult, label?: string): void {
 function getLocalPlayerName(): string {
   const localPeerId = useNetworkStore.getState().localPeerId
   const players = useLobbyStore.getState().players
-  const localPlayer = localPeerId ? players.find((p) => p.peerId === localPeerId) : players[0]
+  const localPlayer = localPeerId ? players.find((p) => p.peerId === localPeerId) : (players.length > 0 ? players[0] : undefined)
   return localPlayer?.displayName || 'Player'
 }
 

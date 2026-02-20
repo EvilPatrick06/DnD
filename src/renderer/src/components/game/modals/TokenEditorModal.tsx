@@ -101,7 +101,7 @@ export default function TokenEditorModal({ token, mapId, onClose }: TokenEditorM
       <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-5 w-96 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-200">Edit Token</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

@@ -7,14 +7,29 @@ const ENTITY_COLORS: Record<string, number> = {
   npc: 0xeab308 // yellow
 }
 
-const CONDITION_DOT_COLORS = [
-  0xa855f7, // purple
-  0x22c55e, // green
-  0xf97316, // orange
-  0x06b6d4, // cyan
-  0xec4899, // pink
-  0x64748b // slate
-]
+const CONDITION_COLOR_MAP: Record<string, number> = {
+  poisoned: 0x22c55e,
+  stunned: 0xeab308,
+  prone: 0x6b7280,
+  frightened: 0xa855f7,
+  blinded: 0x1e293b,
+  charmed: 0xec4899,
+  deafened: 0x78716c,
+  grappled: 0xf97316,
+  incapacitated: 0x64748b,
+  invisible: 0x06b6d4,
+  paralyzed: 0xfbbf24,
+  petrified: 0x92400e,
+  restrained: 0xf97316,
+  unconscious: 0x991b1b,
+  exhaustion: 0x854d0e,
+  bloodied: 0xef4444,
+  concentrating: 0x3b82f6
+}
+
+const CONDITION_DOT_FALLBACK = [0xa855f7, 0x22c55e, 0xf97316, 0x06b6d4, 0xec4899, 0x64748b]
+
+const MAX_VISIBLE_DOTS = 3
 
 /**
  * Creates a PixiJS Container representing a map token.
@@ -30,7 +45,8 @@ export function createTokenSprite(
   token: MapToken,
   cellSize: number,
   isSelected: boolean,
-  isActiveTurn = false
+  isActiveTurn = false,
+  showHpBar = true
 ): Container {
   const container = new Container()
   container.label = `token-${token.id}`
@@ -84,8 +100,8 @@ export function createTokenSprite(
   text.y = cy
   container.addChild(text)
 
-  // HP bar below the token
-  if (token.maxHP !== undefined && token.maxHP > 0 && token.currentHP !== undefined) {
+  // HP bar below the token (gated by showHpBar)
+  if (showHpBar && token.maxHP !== undefined && token.maxHP > 0 && token.currentHP !== undefined) {
     const barWidth = tokenSize - 8
     const barHeight = 4
     const barX = 4
@@ -106,20 +122,40 @@ export function createTokenSprite(
     }
   }
 
-  // Condition indicator dots
+  // Condition indicator dots (color-coded, max 3 visible + overflow)
   if (token.conditions.length > 0) {
     const dotRadius = 3
     const dotSpacing = 8
-    const startX = cx - ((token.conditions.length - 1) * dotSpacing) / 2
+    const visibleCount = Math.min(token.conditions.length, MAX_VISIBLE_DOTS)
+    const overflow = token.conditions.length - MAX_VISIBLE_DOTS
+    const totalSlots = overflow > 0 ? visibleCount + 1 : visibleCount
+    const startX = cx - ((totalSlots - 1) * dotSpacing) / 2
     const dotY = -dotRadius - 2
 
-    token.conditions.forEach((_, i) => {
+    for (let i = 0; i < visibleCount; i++) {
+      const condName = token.conditions[i].toLowerCase()
+      const dotColor = CONDITION_COLOR_MAP[condName] ?? CONDITION_DOT_FALLBACK[i % CONDITION_DOT_FALLBACK.length]
       const dot = new Graphics()
-      const dotColor = CONDITION_DOT_COLORS[i % CONDITION_DOT_COLORS.length]
       dot.circle(startX + i * dotSpacing, dotY, dotRadius)
       dot.fill({ color: dotColor, alpha: 1 })
       container.addChild(dot)
-    })
+    }
+
+    if (overflow > 0) {
+      const overflowX = startX + visibleCount * dotSpacing
+      const overflowStyle = new TextStyle({
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 7,
+        fontWeight: 'bold',
+        fill: 0xffffff,
+        align: 'center'
+      })
+      const overflowText = new Text({ text: `+${overflow}`, style: overflowStyle })
+      overflowText.anchor.set(0.5, 0.5)
+      overflowText.x = overflowX
+      overflowText.y = dotY
+      container.addChild(overflowText)
+    }
   }
 
   // Elevation badge (shown in top-right when elevation != 0)

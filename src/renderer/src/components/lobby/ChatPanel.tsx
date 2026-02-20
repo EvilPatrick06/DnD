@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { memo, useEffect, useRef } from 'react'
 import { type ChatMessage, useLobbyStore } from '../../stores/useLobbyStore'
 import ChatInput from './ChatInput'
 
@@ -7,7 +8,7 @@ function formatTime(timestamp: number): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-function FileAttachment({ msg }: { msg: ChatMessage }): JSX.Element {
+const FileAttachment = memo(function FileAttachment({ msg }: { msg: ChatMessage }): JSX.Element {
   const isImage = msg.mimeType?.startsWith('image/')
 
   if (isImage && msg.fileData && msg.mimeType) {
@@ -65,9 +66,9 @@ function FileAttachment({ msg }: { msg: ChatMessage }): JSX.Element {
       </button>
     </div>
   )
-}
+})
 
-function MessageBubble({ msg }: { msg: ChatMessage }): JSX.Element {
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: ChatMessage }): JSX.Element {
   // System messages
   if (msg.isSystem) {
     return (
@@ -156,18 +157,24 @@ function MessageBubble({ msg }: { msg: ChatMessage }): JSX.Element {
       <p className={`text-sm ml-14 ${isWhisper ? 'text-purple-300 italic' : 'text-gray-300'}`}>{msg.content}</p>
     </div>
   )
-}
+})
 
 export default function ChatPanel(): JSX.Element {
   const chatMessages = useLobbyStore((s) => s.chatMessages)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const parentRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when new messages arrive
+  const virtualizer = useVirtualizer({
+    count: chatMessages.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 10
+  })
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    if (chatMessages.length > 0) {
+      virtualizer.scrollToIndex(chatMessages.length - 1, { align: 'end' })
     }
-  }, [])
+  }, [chatMessages.length, virtualizer])
 
   return (
     <div className="flex flex-col h-full">
@@ -175,18 +182,36 @@ export default function ChatPanel(): JSX.Element {
         <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Chat</h2>
       </div>
 
-      {/* Message list */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto py-2">
+      <div ref={parentRef} className="flex-1 overflow-y-auto py-2" aria-live="polite">
         {chatMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-sm text-gray-600">No messages yet. Say hello!</p>
           </div>
         ) : (
-          chatMessages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)
+          <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const msg = chatMessages[virtualItem.index]
+              return (
+                <div
+                  key={msg.id}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`
+                  }}
+                >
+                  <MessageBubble msg={msg} />
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
 
-      {/* Input area */}
       <ChatInput />
     </div>
   )

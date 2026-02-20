@@ -245,7 +245,7 @@ function PrintSheet5e({ character, onClose }: { character: Character5e; onClose:
                   <div className="text-base font-bold" style={{ fontSize: '12pt' }}>
                     {hitDiceStr}
                   </div>
-                  <div className="text-[7pt] text-gray-500">{character.hitDiceRemaining} remaining</div>
+                  <div className="text-[7pt] text-gray-500">{character.hitDice.reduce((s, h) => s + h.current, 0)} remaining</div>
                 </div>
               </div>
               {character.spellcasting && (

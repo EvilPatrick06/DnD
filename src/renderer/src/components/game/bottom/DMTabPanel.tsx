@@ -1,10 +1,14 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useAiDmStore } from '../../../stores/useAiDmStore'
 import { useGameStore } from '../../../stores/useGameStore'
+import { useLobbyStore } from '../../../stores/useLobbyStore'
 import type { Campaign } from '../../../types/campaign'
 
 const DMAudioPanel = lazy(() => import('./DMAudioPanel'))
 const AiContextPanel = lazy(() => import('./AiContextPanel'))
+const DiseaseCurseTracker = lazy(() => import('../panels/DiseaseCurseTracker'))
+const EnvironmentalEffectsPanel = lazy(() => import('../panels/EnvironmentalEffectsPanel'))
+const TrapPlacerPanel = lazy(() => import('../panels/TrapPlacerPanel'))
 
 interface DMTabPanelProps {
   onOpenModal: (modal: string) => void
@@ -54,6 +58,9 @@ export default function DMTabPanel({
   const cancelStream = useAiDmStore((s) => s.cancelStream)
   const dmApprovalRequired = useAiDmStore((s) => s.dmApprovalRequired)
   const setDmApprovalRequired = useAiDmStore((s) => s.setDmApprovalRequired)
+
+  // Lobby store for broadcasting disease/curse messages
+  const addChatMessage = useLobbyStore((s) => s.addChatMessage)
 
   // Game store environment toggles
   const underwaterCombat = useGameStore((s) => s.underwaterCombat)
@@ -169,6 +176,9 @@ export default function DMTabPanel({
             <button className={btnClass} onClick={() => onOpenModal('groupRoll')}>
               Group Roll
             </button>
+            <button className={btnClass} onClick={() => onOpenModal('npcGenerator')}>
+              Generate NPC
+            </button>
 
             {/* Environment toggles */}
             <div className="w-full border-t border-gray-700/40 mt-1 pt-1.5">
@@ -257,6 +267,81 @@ export default function DMTabPanel({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Disease & Curse Tracker */}
+            <div className="w-full border-t border-gray-700/40 mt-2 pt-2">
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
+                Diseases & Curses
+              </span>
+              <Suspense
+                fallback={
+                  <div className="text-[10px] text-gray-500">Loading tracker...</div>
+                }
+              >
+                <DiseaseCurseTracker
+                  onBroadcastResult={(message) => {
+                    addChatMessage({
+                      id: `disease-curse-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
+                      senderId: 'system',
+                      senderName: 'System',
+                      content: message,
+                      timestamp: Date.now(),
+                      isSystem: true
+                    })
+                  }}
+                />
+              </Suspense>
+            </div>
+
+            {/* Environmental Effects */}
+            <div className="w-full border-t border-gray-700/40 mt-2 pt-2">
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
+                Environmental Effects
+              </span>
+              <Suspense
+                fallback={
+                  <div className="text-[10px] text-gray-500">Loading effects...</div>
+                }
+              >
+                <EnvironmentalEffectsPanel
+                  onBroadcastResult={(message) => {
+                    addChatMessage({
+                      id: `env-effect-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
+                      senderId: 'system',
+                      senderName: 'System',
+                      content: message,
+                      timestamp: Date.now(),
+                      isSystem: true
+                    })
+                  }}
+                />
+              </Suspense>
+            </div>
+
+            {/* Trap Placer */}
+            <div className="w-full border-t border-gray-700/40 mt-2 pt-2">
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
+                Traps
+              </span>
+              <Suspense
+                fallback={
+                  <div className="text-[10px] text-gray-500">Loading traps...</div>
+                }
+              >
+                <TrapPlacerPanel
+                  onBroadcastResult={(message) => {
+                    addChatMessage({
+                      id: `trap-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
+                      senderId: 'system',
+                      senderName: 'System',
+                      content: message,
+                      timestamp: Date.now(),
+                      isSystem: true
+                    })
+                  }}
+                />
+              </Suspense>
             </div>
           </div>
         )

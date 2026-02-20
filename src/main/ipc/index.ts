@@ -1,21 +1,29 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join, relative, resolve } from 'node:path'
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { isValidUUID } from '../../shared/utils/uuid'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastionStorage'
 import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaignStorage'
-import { deleteCharacter, loadCharacter, loadCharacters, saveCharacter } from '../storage/characterStorage'
+import {
+  deleteCharacter,
+  listCharacterVersions,
+  loadCharacter,
+  loadCharacters,
+  restoreCharacterVersion,
+  saveCharacter
+} from '../storage/characterStorage'
+import {
+  deleteGameState,
+  loadGameState as loadGameStateStorage,
+  saveGameState as saveGameStateStorage
+} from '../storage/gameStateStorage'
 import type { AppSettings } from '../storage/settingsStorage'
 import { loadSettings, saveSettings } from '../storage/settingsStorage'
 import { registerAiHandlers } from './ai-handlers'
 import { registerAudioHandlers } from './audio-handlers'
 import { registerVoiceHandlers } from './voice-handlers'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-function isValidUUID(str: string): boolean {
-  return UUID_RE.test(str)
-}
 
 // Tracks paths returned by file dialogs so fs:read-file / fs:write-file
 // only operate on user-selected locations or the app's own data directory.
@@ -45,7 +53,7 @@ function isPathAllowed(targetPath: string): boolean {
   // Allow anything under the app's userData directory
   // Use path.relative() to prevent traversal attacks (e.g., "userData/../../../etc/passwd")
   const rel = relative(userData, resolved)
-  if (rel && !rel.startsWith('..') && !resolve(userData, rel).startsWith('..')) {
+  if (rel && !rel.startsWith('..') && !isAbsolute(rel)) {
     return true
   }
 
@@ -70,7 +78,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return []
+    return { success: false, error: result.error ?? 'Failed to load characters' }
   })
 
   ipcMain.handle(IPC_CHANNELS.LOAD_CHARACTER, async (_event, id: string) => {
@@ -78,7 +86,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return null
+    return { success: false, error: result.error ?? 'Failed to load character' }
   })
 
   ipcMain.handle(IPC_CHANNELS.DELETE_CHARACTER, async (_event, id: string) => {
@@ -86,7 +94,15 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return false
+    return { success: false, error: result.error ?? 'Failed to delete character' }
+  })
+
+  ipcMain.handle('storage:character-versions', async (_event, id: string) => {
+    return listCharacterVersions(id)
+  })
+
+  ipcMain.handle('storage:character-restore-version', async (_event, id: string, fileName: string) => {
+    return restoreCharacterVersion(id, fileName)
   })
 
   // --- Campaign storage ---
@@ -101,7 +117,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return []
+    return { success: false, error: result.error ?? 'Failed to load campaigns' }
   })
 
   ipcMain.handle(IPC_CHANNELS.LOAD_CAMPAIGN, async (_event, id: string) => {
@@ -109,7 +125,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return null
+    return { success: false, error: result.error ?? 'Failed to load campaign' }
   })
 
   ipcMain.handle(IPC_CHANNELS.DELETE_CAMPAIGN, async (_event, id: string) => {
@@ -117,7 +133,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return false
+    return { success: false, error: result.error ?? 'Failed to delete campaign' }
   })
 
   // --- Bastion storage ---
@@ -132,7 +148,7 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return []
+    return { success: false, error: result.error ?? 'Failed to load bastions' }
   })
 
   ipcMain.handle(IPC_CHANNELS.LOAD_BASTION, async (_event, id: string) => {
@@ -140,11 +156,34 @@ export function registerIpcHandlers(): void {
     if (result.success) {
       return result.data
     }
-    return null
+    return { success: false, error: result.error ?? 'Failed to load bastion' }
   })
 
   ipcMain.handle(IPC_CHANNELS.DELETE_BASTION, async (_event, id: string) => {
     const result = await deleteBastion(id)
+    if (result.success) {
+      return result.data
+    }
+    return { success: false, error: result.error ?? 'Failed to delete bastion' }
+  })
+
+  // --- Game state storage ---
+
+  ipcMain.handle(IPC_CHANNELS.SAVE_GAME_STATE, async (_event, campaignId: string, state: Record<string, unknown>) => {
+    const result = await saveGameStateStorage(campaignId, state)
+    return { success: result.success, error: result.error }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOAD_GAME_STATE, async (_event, campaignId: string) => {
+    const result = await loadGameStateStorage(campaignId)
+    if (result.success) {
+      return result.data
+    }
+    return null
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_GAME_STATE, async (_event, campaignId: string) => {
+    const result = await deleteGameState(campaignId)
     if (result.success) {
       return result.data
     }
@@ -222,7 +261,7 @@ export function registerIpcHandlers(): void {
     IPC_CHANNELS.DIALOG_SAVE,
     async (_event, options: { title: string; filters: Array<{ name: string; extensions: string[] }> }) => {
       const win = BrowserWindow.getFocusedWindow()
-      const result = await dialog.showSaveDialog(win!, {
+      const result = await dialog.showSaveDialog(win ?? BrowserWindow.getAllWindows()[0], {
         title: options.title,
         filters: options.filters
       })
@@ -238,7 +277,7 @@ export function registerIpcHandlers(): void {
     IPC_CHANNELS.DIALOG_OPEN,
     async (_event, options: { title: string; filters: Array<{ name: string; extensions: string[] }> }) => {
       const win = BrowserWindow.getFocusedWindow()
-      const result = await dialog.showOpenDialog(win!, {
+      const result = await dialog.showOpenDialog(win ?? BrowserWindow.getAllWindows()[0], {
         title: options.title,
         filters: options.filters,
         properties: ['openFile']
@@ -253,15 +292,23 @@ export function registerIpcHandlers(): void {
 
   // --- File I/O (restricted to dialog-selected paths and userData) ---
 
+  const MAX_READ_SIZE = 50 * 1024 * 1024 // 50 MB
+  const MAX_WRITE_SIZE = 10 * 1024 * 1024 // 10 MB
+
   ipcMain.handle(IPC_CHANNELS.FS_READ, async (_event, filePath: string) => {
     if (!isPathAllowed(filePath)) {
       throw new Error('Access denied: path not allowed')
     }
     const resolvedPath = resolve(filePath)
     try {
+      const fileStats = await stat(resolvedPath)
+      if (fileStats.size > MAX_READ_SIZE) {
+        throw new Error(`File too large: ${fileStats.size} bytes (max ${MAX_READ_SIZE})`)
+      }
       const content = await readFile(resolvedPath, 'utf-8')
       return content
     } catch (err) {
+      if (err instanceof Error && err.message.startsWith('File too large')) throw err
       console.error('fs:read-file failed:', err)
       throw err
     } finally {
@@ -272,6 +319,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.FS_WRITE, async (_event, filePath: string, content: string) => {
     if (!isPathAllowed(filePath)) {
       throw new Error('Access denied: path not allowed')
+    }
+    if (typeof content === 'string' && content.length > MAX_WRITE_SIZE) {
+      throw new Error(`Content too large: ${content.length} bytes (max ${MAX_WRITE_SIZE})`)
     }
     const resolvedPath = resolve(filePath)
     try {

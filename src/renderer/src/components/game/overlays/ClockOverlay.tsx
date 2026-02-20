@@ -98,7 +98,7 @@ export default function ClockOverlay({
     .filter((ls) => ls.remaining === Infinity || ls.remaining > 0)
 
   return (
-    <div className="absolute top-3 right-28 z-20">
+    <div className="relative">
       {/* Collapsed pill */}
       {!expanded ? (
         <button

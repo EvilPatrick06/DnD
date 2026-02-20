@@ -1,9 +1,16 @@
 import { create } from 'zustand'
 import type { ShopItem } from '../network/types'
 import type { ActiveLightSource, CombatTimerConfig } from '../types/campaign'
+import type {
+  ActiveCurse,
+  ActiveDisease,
+  ActiveEnvironmentalEffect,
+  PlacedTrap
+} from '../types/dm-toolbox'
 import type { CustomEffect } from '../types/effects'
 import type {
   CombatLogEntry,
+  DiceRollRecord,
   EntityCondition,
   GameState,
   GroupRollRequest,
@@ -84,6 +91,11 @@ interface GameStoreState extends GameState {
   hiddenDiceResults: HiddenDiceResult[]
   addHiddenDiceResult: (result: HiddenDiceResult) => void
   clearHiddenDiceResults: () => void
+
+  // Dice roll history (session-wide)
+  diceHistory: DiceRollRecord[]
+  addDiceRoll: (roll: DiceRollRecord) => void
+  clearDiceHistory: () => void
 
   // Turn state (combat)
   initTurnState: (entityId: string, speed: number) => void
@@ -229,6 +241,31 @@ interface GameStoreState extends GameState {
   // Combat timer config
   combatTimer: CombatTimerConfig | null
   setCombatTimer: (config: CombatTimerConfig | null) => void
+
+  // Diseases
+  activeDiseases: ActiveDisease[]
+  addDisease: (disease: ActiveDisease) => void
+  updateDisease: (id: string, updates: Partial<ActiveDisease>) => void
+  removeDisease: (id: string) => void
+
+  // Curses
+  activeCurses: ActiveCurse[]
+  addCurse: (curse: ActiveCurse) => void
+  updateCurse: (id: string, updates: Partial<ActiveCurse>) => void
+  removeCurse: (id: string) => void
+
+  // Environmental effects
+  activeEnvironmentalEffects: ActiveEnvironmentalEffect[]
+  addEnvironmentalEffect: (effect: ActiveEnvironmentalEffect) => void
+  removeEnvironmentalEffect: (id: string) => void
+
+  // Placed traps
+  placedTraps: PlacedTrap[]
+  addPlacedTrap: (trap: PlacedTrap) => void
+  removeTrap: (id: string) => void
+  triggerTrap: (id: string) => void
+  revealTrap: (id: string) => void
+  updatePlacedTrap: (id: string, updates: Partial<PlacedTrap>) => void
 }
 
 export interface SessionLogEntry {
@@ -258,7 +295,8 @@ const initialState: GameState = {
   diagonalRule: 'standard',
   ambientLight: 'bright',
   travelPace: null,
-  marchingOrder: []
+  marchingOrder: [],
+  hpBarsVisibility: 'all'
 }
 
 function createTurnState(entityId: string, speed: number): TurnState {
@@ -298,6 +336,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   // --- Hidden dice ---
   hiddenDiceResults: [],
+
+  // --- Dice roll history ---
+  diceHistory: [],
 
   openShop: (name?: string) => set({ shopOpen: true, shopName: name ?? 'General Store' }),
   closeShop: () => set({ shopOpen: false }),
@@ -418,7 +459,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   nextTurn: () => {
     const { initiative, turnStates, inGameTime } = get()
-    if (!initiative) return
+    if (!initiative || initiative.entries.length === 0) return
 
     const { entries, currentIndex } = initiative
     const nextIndex = (currentIndex + 1) % entries.length
@@ -431,6 +472,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     // Reset the next entity's turn state
     const nextEntity = entries[nextIndex]
+    if (!nextEntity) return
     const existingTs = turnStates[nextEntity.entityId]
     const speed = existingTs?.movementMax ?? 30
 
@@ -491,7 +533,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   prevTurn: () => {
     const { initiative } = get()
-    if (!initiative) return
+    if (!initiative || initiative.entries.length === 0) return
 
     const { entries, currentIndex } = initiative
     const prevIndex = currentIndex === 0 ? entries.length - 1 : currentIndex - 1
@@ -564,10 +606,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     const entries = [...initiative.entries]
     const [moved] = entries.splice(fromIndex, 1)
+    if (!moved) return
     entries.splice(toIndex, 0, moved)
 
     // Track the currently active entry by ID so it stays active after reorder
-    const activeId = initiative.entries[initiative.currentIndex]?.id
+    const activeEntry = initiative.entries[initiative.currentIndex]
+    const activeId = activeEntry?.id
     const newCurrentIndex = entries.findIndex((e) => e.id === activeId)
 
     set({
@@ -755,6 +799,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   clearHiddenDiceResults: () => set({ hiddenDiceResults: [] }),
 
+  // --- Dice roll history ---
+  addDiceRoll: (roll: DiceRollRecord) => {
+    set((state) => ({ diceHistory: [...state.diceHistory, roll] }))
+  },
+  clearDiceHistory: () => set({ diceHistory: [] }),
+
   // --- Turn state (combat) ---
 
   initTurnState: (entityId: string, speed: number) => {
@@ -928,6 +978,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       timerRunning: false,
       timerTargetName: '',
       hiddenDiceResults: [],
+      diceHistory: [],
       underwaterCombat: false,
       flankingEnabled: false,
       groupInitiativeEnabled: false,
@@ -945,7 +996,15 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       savedWeatherPresets: [],
       showWeatherOverlay: true,
       handouts: [],
-      combatTimer: null
+      combatTimer: null,
+      customEffects: [],
+      combatLog: [],
+      pendingGroupRoll: null,
+      groupRollResults: [],
+      centerOnEntityId: null,
+      sessionLog: [],
+      currentSessionId: `session-${Date.now()}`,
+      currentSessionLabel: `Session 1`
     }),
 
   loadGameState: (
@@ -1236,5 +1295,68 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   combatTimer: null,
   setCombatTimer: (config: CombatTimerConfig | null) => {
     set({ combatTimer: config })
+  },
+
+  // --- Diseases ---
+  activeDiseases: [],
+  addDisease: (disease: ActiveDisease) => {
+    set((s) => ({ activeDiseases: [...s.activeDiseases, disease] }))
+  },
+  updateDisease: (id: string, updates: Partial<ActiveDisease>) => {
+    set((s) => ({
+      activeDiseases: s.activeDiseases.map((d) => (d.id === id ? { ...d, ...updates } : d))
+    }))
+  },
+  removeDisease: (id: string) => {
+    set((s) => ({ activeDiseases: s.activeDiseases.filter((d) => d.id !== id) }))
+  },
+
+  // --- Curses ---
+  activeCurses: [],
+  addCurse: (curse: ActiveCurse) => {
+    set((s) => ({ activeCurses: [...s.activeCurses, curse] }))
+  },
+  updateCurse: (id: string, updates: Partial<ActiveCurse>) => {
+    set((s) => ({
+      activeCurses: s.activeCurses.map((c) => (c.id === id ? { ...c, ...updates } : c))
+    }))
+  },
+  removeCurse: (id: string) => {
+    set((s) => ({ activeCurses: s.activeCurses.filter((c) => c.id !== id) }))
+  },
+
+  // --- Environmental Effects ---
+  activeEnvironmentalEffects: [],
+  addEnvironmentalEffect: (effect: ActiveEnvironmentalEffect) => {
+    set((s) => ({ activeEnvironmentalEffects: [...s.activeEnvironmentalEffects, effect] }))
+  },
+  removeEnvironmentalEffect: (id: string) => {
+    set((s) => ({
+      activeEnvironmentalEffects: s.activeEnvironmentalEffects.filter((e) => e.id !== id)
+    }))
+  },
+
+  // --- Placed Traps ---
+  placedTraps: [],
+  addPlacedTrap: (trap: PlacedTrap) => {
+    set((s) => ({ placedTraps: [...s.placedTraps, trap] }))
+  },
+  removeTrap: (id: string) => {
+    set((s) => ({ placedTraps: s.placedTraps.filter((t) => t.id !== id) }))
+  },
+  triggerTrap: (id: string) => {
+    set((s) => ({
+      placedTraps: s.placedTraps.map((t) => (t.id === id ? { ...t, armed: false } : t))
+    }))
+  },
+  revealTrap: (id: string) => {
+    set((s) => ({
+      placedTraps: s.placedTraps.map((t) => (t.id === id ? { ...t, revealed: true } : t))
+    }))
+  },
+  updatePlacedTrap: (id: string, updates: Partial<PlacedTrap>) => {
+    set((s) => ({
+      placedTraps: s.placedTraps.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    }))
   }
 }))

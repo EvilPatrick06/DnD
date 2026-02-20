@@ -1,9 +1,16 @@
 import { create } from 'zustand'
 import type { DiceColors } from '../components/game/dice3d'
 import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
+import { MAX_CHAT_LENGTH } from '../config/constants'
 import { PLAYER_COLORS } from '../network/types'
+import { rollFormula } from '../services/dice-engine'
 import { setDeafened, setMuted, setRemotePeerMuted } from '../network/voice-manager'
 import type { Character } from '../types/character'
+
+function getNetworkStore(): typeof import('./useNetworkStore').useNetworkStore {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return (require('./useNetworkStore') as typeof import('./useNetworkStore')).useNetworkStore
+}
 
 export interface LobbyPlayer {
   peerId: string
@@ -46,7 +53,7 @@ interface LobbyState {
   localMuted: boolean
   localDeafened: boolean
   isHost: boolean
-  locallyMutedPeers: Set<string>
+  locallyMutedPeers: string[]
   remoteCharacters: Record<string, Character>
   slowModeSeconds: number
   fileSharingEnabled: boolean
@@ -79,29 +86,7 @@ function generateMessageId(): string {
   return `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 }
 
-function parseDiceFormula(formula: string): { count: number; sides: number; modifier: number } | null {
-  // Matches patterns like: 1d20, 2d6+3, 4d8-1, d12
-  const match = formula.match(/^(\d*)d(\d+)([+-]\d+)?$/)
-  if (!match) return null
-  return {
-    count: match[1] ? parseInt(match[1], 10) : 1,
-    sides: parseInt(match[2], 10),
-    modifier: match[3] ? parseInt(match[3], 10) : 0
-  }
-}
-
-function rollDice(formula: string): { formula: string; total: number; rolls: number[] } | null {
-  const parsed = parseDiceFormula(formula)
-  if (!parsed) return null
-
-  const rolls: number[] = []
-  for (let i = 0; i < parsed.count; i++) {
-    rolls.push(Math.floor(Math.random() * parsed.sides) + 1)
-  }
-  const total = rolls.reduce((sum, r) => sum + r, 0) + parsed.modifier
-
-  return { formula, total, rolls }
-}
+// Dice rolling delegated to services/dice-engine.ts
 
 export const useLobbyStore = create<LobbyState>((set, get) => ({
   campaignId: null,
@@ -110,7 +95,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   localMuted: false,
   localDeafened: false,
   isHost: false,
-  locallyMutedPeers: new Set<string>(),
+  locallyMutedPeers: [],
   remoteCharacters: {},
   slowModeSeconds: 0,
   fileSharingEnabled: true,
@@ -180,18 +165,21 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   addChatMessage: (msg) => {
     set((state) => ({
-      chatMessages: [...state.chatMessages, msg]
+      chatMessages: [...state.chatMessages, msg].slice(-500)
     }))
   },
 
   sendChat: (content) => {
-    const trimmed = content.trim().slice(0, 2000)
+    const trimmed = content.trim().slice(0, MAX_CHAT_LENGTH)
     if (!trimmed) return
+
+    const { role, sendMessage } = getNetworkStore().getState()
+    const isNetworked = role === 'host' || role === 'client'
 
     // Handle /roll command
     if (trimmed.startsWith('/roll ')) {
       const formula = trimmed.slice(6).trim()
-      const result = rollDice(formula)
+      const result = rollFormula(formula)
 
       if (result) {
         const msg: ChatMessage = {
@@ -205,8 +193,16 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
           diceResult: result
         }
         get().addChatMessage(msg)
+
+        if (isNetworked) {
+          sendMessage('chat:message', {
+            message: `rolled ${result.formula}`,
+            isSystem: false,
+            isDiceRoll: true,
+            diceResult: result
+          })
+        }
       } else {
-        // Invalid dice formula
         const msg: ChatMessage = {
           id: generateMessageId(),
           senderId: 'system',
@@ -223,20 +219,49 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     // Handle /w whisper command
     if (trimmed.startsWith('/w ')) {
       const rest = trimmed.slice(3).trim()
-      const spaceIdx = rest.indexOf(' ')
-      if (spaceIdx > 0) {
-        const targetName = rest.slice(0, spaceIdx)
-        const whisperContent = rest.slice(spaceIdx + 1)
-
-        const msg: ChatMessage = {
-          id: generateMessageId(),
-          senderId: 'local',
-          senderName: 'You',
-          content: `[Whisper to ${targetName}]: ${whisperContent}`,
-          timestamp: Date.now(),
-          isSystem: false
+      // Support quoted names: /w "Name With Spaces" message
+      let targetName: string
+      let whisperContent: string
+      if (rest.startsWith('"')) {
+        const closeQuote = rest.indexOf('"', 1)
+        if (closeQuote > 1) {
+          targetName = rest.slice(1, closeQuote)
+          whisperContent = rest.slice(closeQuote + 1).trim()
+        } else {
+          return
         }
-        get().addChatMessage(msg)
+      } else {
+        const spaceIdx = rest.indexOf(' ')
+        if (spaceIdx <= 0) return
+        targetName = rest.slice(0, spaceIdx)
+        whisperContent = rest.slice(spaceIdx + 1)
+      }
+
+      if (!whisperContent) return
+
+      const msg: ChatMessage = {
+        id: generateMessageId(),
+        senderId: 'local',
+        senderName: 'You',
+        content: `[Whisper to ${targetName}]: ${whisperContent}`,
+        timestamp: Date.now(),
+        isSystem: false
+      }
+      get().addChatMessage(msg)
+
+      if (isNetworked) {
+        // Find the target peer by display name (case-insensitive)
+        const peers = getNetworkStore().getState().peers
+        const target = peers.find(
+          (p) => p.displayName.toLowerCase() === targetName.toLowerCase()
+        )
+        if (target) {
+          sendMessage('chat:whisper', {
+            message: whisperContent,
+            targetPeerId: target.peerId,
+            targetName: target.displayName
+          })
+        }
       }
       return
     }
@@ -251,6 +276,10 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       isSystem: false
     }
     get().addChatMessage(msg)
+
+    if (isNetworked) {
+      sendMessage('chat:message', { message: trimmed, isSystem: false })
+    }
   },
 
   toggleMute: () => {
@@ -278,15 +307,13 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   toggleLocalMutePlayer: (peerId: string) => {
     set((state) => {
-      const newSet = new Set(state.locallyMutedPeers)
-      const isMuted = newSet.has(peerId)
-      if (isMuted) {
-        newSet.delete(peerId)
-      } else {
-        newSet.add(peerId)
-      }
+      const isMuted = state.locallyMutedPeers.includes(peerId)
       setRemotePeerMuted(peerId, !isMuted)
-      return { locallyMutedPeers: newSet }
+      return {
+        locallyMutedPeers: isMuted
+          ? state.locallyMutedPeers.filter((id) => id !== peerId)
+          : [...state.locallyMutedPeers, peerId]
+      }
     })
   },
 
@@ -326,7 +353,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   getLocalDiceColors: () => {
     const { players } = get()
-    const localPlayer = players.find((p) => p.isHost) || players[0]
+    const localPlayer = players.find((p) => p.isHost) ?? (players.length > 0 ? players[0] : undefined)
     return localPlayer?.diceColors || DEFAULT_DICE_COLORS
   },
 
@@ -338,7 +365,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       localMuted: false,
       localDeafened: false,
       isHost: false,
-      locallyMutedPeers: new Set<string>(),
+      locallyMutedPeers: [],
       remoteCharacters: {},
       slowModeSeconds: 0,
       fileSharingEnabled: true,

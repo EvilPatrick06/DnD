@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { trigger3dDice } from '../../../components/game/dice3d'
 import { rollSingle } from '../../../services/dice-service'
 import type { ShopItem, ShopItemCategory } from '../../../network/types'
@@ -94,8 +95,10 @@ function addCurrency(character: Character, price: ShopItem['price']): Character 
 }
 
 export default function ShopView(): JSX.Element | null {
-  const { shopOpen, shopName, shopInventory, closeShop } = useGameStore()
-  const { characters } = useCharacterStore()
+  const { shopOpen, shopName, shopInventory, closeShop } = useGameStore(
+    useShallow((s) => ({ shopOpen: s.shopOpen, shopName: s.shopName, shopInventory: s.shopInventory, closeShop: s.closeShop }))
+  )
+  const characters = useCharacterStore((s) => s.characters)
   const saveCharacter = useCharacterStore((s) => s.saveCharacter)
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const localPeerId = useNetworkStore((s) => s.localPeerId)

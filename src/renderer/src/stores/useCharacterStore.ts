@@ -10,6 +10,7 @@ interface CharacterState {
   loadCharacters: () => Promise<void>
   saveCharacter: (character: Character) => Promise<void>
   deleteCharacter: (id: string) => Promise<void>
+  deleteAllCharacters: () => Promise<void>
   toggleArmorEquipped: (characterId: string, armorId: string) => Promise<void>
   addCondition: (characterId: string, condition: ActiveCondition) => Promise<void>
   removeCondition: (characterId: string, conditionName: string) => Promise<void>
@@ -27,7 +28,15 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     set({ loading: true })
     try {
       const rawData = await window.api.loadCharacters()
-      const characters = rawData as unknown as Character[]
+      if (!Array.isArray(rawData)) {
+        const err = rawData as { success?: boolean; error?: string } | undefined
+        console.error('Failed to load characters:', err?.error ?? 'unexpected response')
+        set({ loading: false })
+        return
+      }
+      const characters = (rawData
+        .filter((c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string')
+      ) as unknown as Character[]
       set({ characters, loading: false })
     } catch (error) {
       console.error('Failed to load characters:', error)
@@ -62,6 +71,18 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     } catch (error) {
       console.error('Failed to delete character:', error)
     }
+  },
+
+  deleteAllCharacters: async () => {
+    const { characters } = get()
+    for (const c of characters) {
+      try {
+        await window.api.deleteCharacter(c.id)
+      } catch (error) {
+        console.error('Failed to delete character:', c.id, error)
+      }
+    }
+    set({ characters: [], selectedCharacterId: null })
   },
 
   toggleArmorEquipped: async (characterId: string, armorId: string) => {

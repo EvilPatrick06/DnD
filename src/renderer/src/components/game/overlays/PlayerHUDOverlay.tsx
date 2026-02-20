@@ -10,6 +10,29 @@ import type { Character5e } from '../../../types/character-5e'
 import { abilityModifier, formatMod } from '../../../types/character-common'
 import type { EntityCondition } from '../../../types/game-state'
 
+function ConnectionBadge(): JSX.Element | null {
+  const role = useNetworkStore((s) => s.role)
+  const latencyMs = useNetworkStore((s) => s.latencyMs)
+  if (role !== 'client' || latencyMs === null) return null
+
+  const color =
+    latencyMs < 100
+      ? 'bg-green-500'
+      : latencyMs < 300
+        ? 'bg-yellow-500'
+        : 'bg-red-500'
+
+  return (
+    <span
+      className="flex items-center gap-1 shrink-0"
+      title={`Latency: ${latencyMs}ms`}
+    >
+      <span className={`w-2 h-2 rounded-full ${color}`} />
+      <span className="text-[9px] text-gray-500">{latencyMs}ms</span>
+    </span>
+  )
+}
+
 interface PlayerHUDOverlayProps {
   character: Character | null
   conditions: EntityCondition[]
@@ -126,12 +149,15 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
         newCurrent = Math.min(latest.hitPoints.maximum, newCurrent + delta)
       }
 
-      const updated = {
-        ...latest,
+      const wasAtZero = latest.hitPoints.current === 0
+      const updates: Partial<typeof latest> = {
         hitPoints: { ...latest.hitPoints, current: newCurrent, temporary: newTemp },
         updatedAt: new Date().toISOString()
       }
-      saveAndBroadcast(updated)
+      if (wasAtZero && newCurrent > 0 && latest.deathSaves) {
+        updates.deathSaves = { successes: 0, failures: 0 }
+      }
+      saveAndBroadcast({ ...latest, ...updates })
     },
     [char5e, saveAndBroadcast]
   )
@@ -352,6 +378,7 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
         <div className="px-3 py-2 flex items-center gap-3 flex-wrap">
           {/* Name */}
           <span className="text-sm font-semibold text-gray-100 shrink-0">{character.name}</span>
+          <ConnectionBadge />
 
           {/* HP bar (click to edit) */}
           <div className="flex items-center gap-1 min-w-[140px]">
@@ -673,11 +700,11 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
               <span className="text-[10px] text-gray-500">
                 Hit Dice:{' '}
                 <span className="text-amber-300">
-                  {char5e.hitDiceRemaining}/{char5e.level}
+                  {char5e.hitDice.reduce((s, h) => s + h.current, 0)}/{char5e.hitDice.reduce((s, h) => s + h.maximum, 0)}
                 </span>
-                {char5e.classes.length > 1
-                  ? ` (${char5e.classes.map((c) => `d${c.hitDie}`).join('/')})`
-                  : ` d${char5e.classes[0]?.hitDie ?? 8}`}
+                {char5e.hitDice.length > 1
+                  ? ` (${char5e.hitDice.map((h) => `d${h.dieType}`).join('/')})`
+                  : ` d${char5e.hitDice[0]?.dieType ?? 8}`}
               </span>
               <button
                 onClick={toggleInspiration}

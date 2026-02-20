@@ -256,14 +256,16 @@ export default function DMMapEditor({ campaign, onClose }: DMMapEditorProps): JS
   const handleNpcToInitiative = useCallback(
     (npc: NPC) => {
       const roll = Math.floor(Math.random() * 20) + 1
+      const dexScore = npc.customStats?.abilityScores?.dex
+      const modifier = dexScore != null ? Math.floor((dexScore - 10) / 2) : 0
       const entry: InitiativeEntry = {
         id: crypto.randomUUID(),
         entityId: npc.id,
         entityName: npc.name,
         entityType: 'npc',
         roll,
-        modifier: 0,
-        total: roll,
+        modifier,
+        total: roll + modifier,
         isActive: false
       }
       gameStore.addToInitiative(entry)

@@ -112,7 +112,7 @@ function createWindow(): void {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' data: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'"
+          "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self'; connect-src 'self' data: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'"
         ]
       }
     })

@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SPELL_SCHOOLS } from '../../../constants/spell-schools'
+import { load5eEquipment, load5eMonsters } from '../../../services/data-provider'
 import { loadSpells } from '../../../services/spell-data'
 import type { SpellEntry } from '../../../types/character-common'
+import type { EquipmentFile } from '../../../types/data'
+import type { MonsterStatBlock } from '../../../types/monster'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type TabId = 'actions' | 'conditions' | 'cover' | 'damage-types' | 'weapons' | 'dcs' | 'spells'
+type TabId = 'actions' | 'conditions' | 'cover' | 'damage-types' | 'weapons' | 'dcs' | 'spells' | 'monsters' | 'equipment'
 
 interface ReferenceItem {
   title: string
@@ -29,61 +32,63 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'damage-types', label: 'Damage Types' },
   { id: 'weapons', label: 'Weapons' },
   { id: 'dcs', label: 'DCs' },
-  { id: 'spells', label: 'Spells' }
+  { id: 'spells', label: 'Spells' },
+  { id: 'monsters', label: 'Monsters' },
+  { id: 'equipment', label: 'Equipment' }
 ]
 
 const ACTIONS: ReferenceItem[] = [
   {
     title: 'Attack',
-    description: 'Make one melee or ranged attack (more with Extra Attack).'
-  },
-  {
-    title: 'Cast a Spell',
-    description: 'Cast a spell with a casting time of 1 action.'
+    description:
+      'Attack with a weapon or Unarmed Strike. Unarmed Strike options: Damage (1 + STR mod Bludgeoning), Grapple (target makes STR/DEX save vs DC 8 + STR mod + PB), or Shove (same save; push 5 ft. or knock Prone).'
   },
   {
     title: 'Dash',
-    description: 'Gain extra movement equal to your speed for the current turn.'
+    description: 'For the rest of the turn, give yourself extra movement equal to your Speed.'
   },
   {
     title: 'Disengage',
-    description: "Your movement doesn't provoke opportunity attacks for the rest of the turn."
+    description: "Your movement doesn't provoke Opportunity Attacks for the rest of the turn."
   },
   {
     title: 'Dodge',
-    description: 'Attacks against you have disadvantage and you have advantage on DEX saves until your next turn.'
+    description:
+      'Until the start of your next turn, attack rolls against you have Disadvantage, and you make DEX saves with Advantage. Lost if Incapacitated or Speed is 0.'
   },
   {
     title: 'Help',
-    description: 'Give an ally advantage on their next ability check or attack roll.'
+    description:
+      "Help another creature's ability check or attack roll, or administer First Aid (DC 10 WIS (Medicine) to stabilize a creature with 0 HP)."
   },
   {
     title: 'Hide',
-    description: 'Make a Stealth check to become hidden from enemies.'
+    description: 'Make a Dexterity (Stealth) check to become hidden.'
   },
   {
     title: 'Influence',
-    description: "Make a Charisma check to influence an NPC's attitude."
+    description:
+      "Make a Charisma (Deception, Intimidation, Performance, or Persuasion) or Wisdom (Animal Handling) check to alter a creature's attitude."
   },
   {
     title: 'Magic',
-    description: 'Use a magic item or activate a special magical ability.'
+    description: 'Cast a spell, use a magic item, or use a magical feature.'
   },
   {
     title: 'Ready',
-    description: 'Prepare an action to trigger on a specified condition (uses your reaction).'
+    description: 'Prepare to take an action in response to a trigger you define (uses your Reaction).'
   },
   {
     title: 'Search',
-    description: 'Make a Perception or Investigation check to find something.'
+    description: 'Make a Wisdom (Insight, Medicine, Perception, or Survival) check.'
   },
   {
     title: 'Study',
-    description: 'Make an ability check to recall or discern information about a creature, object, or environment.'
+    description: 'Make an Intelligence (Arcana, History, Investigation, Nature, or Religion) check.'
   },
   {
     title: 'Utilize',
-    description: 'Use a non-magical object or interact with the environment.'
+    description: 'Use a nonmagical object.'
   }
 ]
 
@@ -154,6 +159,10 @@ const CONDITIONS: ReferenceItem[] = [
     title: 'Unconscious',
     description:
       'Incapacitated, prone, drop held items. Auto-fail STR/DEX saves. Attacks against have advantage. Melee hits are automatic critical hits.'
+  },
+  {
+    title: 'Bloodied',
+    description: 'A creature is Bloodied while it has half its Hit Points or fewer remaining.'
   }
 ]
 
@@ -423,6 +432,249 @@ function SpellsTab(): JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
+// Monsters Tab
+// ---------------------------------------------------------------------------
+
+function MonstersTab(): JSX.Element {
+  const [monsters, setMonsters] = useState<MonsterStatBlock[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [crFilter, setCrFilter] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    load5eMonsters().then((data) => {
+      if (!cancelled) {
+        setMonsters(data)
+        setLoading(false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const crValues = useMemo(() => {
+    const crs = new Set(monsters.map((m) => m.cr ?? String(Math.floor(m.hp / 15))))
+    return ['0', '1/8', '1/4', '1/2', ...Array.from({ length: 30 }, (_, i) => String(i + 1))].filter((cr) => crs.has(cr))
+  }, [monsters])
+
+  const filtered = useMemo(() => {
+    let result = monsters
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      result = result.filter(
+        (m) => m.name.toLowerCase().includes(q) || m.type.toLowerCase().includes(q)
+      )
+    }
+    if (crFilter) {
+      result = result.filter((m) => (m.cr ?? '') === crFilter)
+    }
+    return result.slice(0, 100)
+  }, [monsters, search, crFilter])
+
+  if (loading) return <p className="text-xs text-gray-500 text-center py-4">Loading monsters...</p>
+
+  return (
+    <div className="flex flex-col gap-2 min-h-0">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search monsters..."
+        className="w-full px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500/60"
+      />
+
+      <div className="flex flex-wrap gap-1">
+        <button
+          onClick={() => setCrFilter(null)}
+          className={`px-1.5 py-0.5 text-[10px] rounded cursor-pointer transition-colors ${
+            crFilter === null ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          All CR
+        </button>
+        {crValues.slice(0, 15).map((cr) => (
+          <button
+            key={cr}
+            onClick={() => setCrFilter(crFilter === cr ? null : cr)}
+            className={`px-1.5 py-0.5 text-[10px] rounded cursor-pointer transition-colors ${
+              crFilter === cr ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {cr}
+          </button>
+        ))}
+      </div>
+
+      <div className="text-[10px] text-gray-500">
+        {filtered.length} monster{filtered.length !== 1 ? 's' : ''}{filtered.length === 100 ? '+' : ''}
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-gray-500 text-center py-4">No matching monsters</p>
+        ) : (
+          filtered.map((m) => <MonsterCard key={m.id} monster={m} />)
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MonsterCard({ monster }: { monster: MonsterStatBlock }): JSX.Element {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div
+      className="bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/30 cursor-pointer hover:border-gray-600/50 transition-colors"
+      onClick={() => setExpanded(!expanded)}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-amber-400 truncate">{monster.name}</div>
+        <div className="text-[10px] text-gray-500 shrink-0">CR {monster.cr ?? '?'}</div>
+      </div>
+      <div className="text-[10px] text-gray-400 mt-0.5">
+        {monster.size} {monster.type}{monster.subtype ? ` (${monster.subtype})` : ''}
+      </div>
+      {expanded && (
+        <div className="mt-2 pt-2 border-t border-gray-700/30 space-y-1">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-0.5 text-[10px]">
+            <span className="text-gray-500">AC</span>
+            <span className="text-gray-300 col-span-2">{monster.ac}{monster.acType ? ` (${monster.acType})` : ''}</span>
+            <span className="text-gray-500">HP</span>
+            <span className="text-gray-300 col-span-2">{monster.hp} ({monster.hitDice})</span>
+            <span className="text-gray-500">Speed</span>
+            <span className="text-gray-300 col-span-2">
+              {monster.speed.walk}ft
+              {monster.speed.fly ? `, fly ${monster.speed.fly}ft` : ''}
+              {monster.speed.swim ? `, swim ${monster.speed.swim}ft` : ''}
+            </span>
+          </div>
+          <div className="flex gap-2 text-[10px] mt-1">
+            <span className="text-gray-500">STR {monster.abilityScores.str}</span>
+            <span className="text-gray-500">DEX {monster.abilityScores.dex}</span>
+            <span className="text-gray-500">CON {monster.abilityScores.con}</span>
+            <span className="text-gray-500">INT {monster.abilityScores.int}</span>
+            <span className="text-gray-500">WIS {monster.abilityScores.wis}</span>
+            <span className="text-gray-500">CHA {monster.abilityScores.cha}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Equipment Tab
+// ---------------------------------------------------------------------------
+
+function EquipmentTab(): JSX.Element {
+  const [equipment, setEquipment] = useState<EquipmentFile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'weapons' | 'armor' | 'gear'>('all')
+
+  useEffect(() => {
+    let cancelled = false
+    load5eEquipment().then((data) => {
+      if (!cancelled) {
+        setEquipment(data)
+        setLoading(false)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!equipment) return []
+    const q = search.trim().toLowerCase()
+
+    type ItemWithCategory = { name: string; category: string; details: string }
+    const items: ItemWithCategory[] = []
+
+    if (categoryFilter === 'all' || categoryFilter === 'weapons') {
+      for (const w of equipment.weapons) {
+        const details = `${w.damage ?? ''} ${w.damageType ?? ''} | ${w.properties?.join(', ') ?? ''}`
+        if (!q || w.name.toLowerCase().includes(q)) {
+          items.push({ name: w.name, category: 'Weapon', details: details.trim() })
+        }
+      }
+    }
+    if (categoryFilter === 'all' || categoryFilter === 'armor') {
+      for (const a of equipment.armor) {
+        const details = `AC ${a.baseAC}${a.stealthDisadvantage ? ' (stealth disadv.)' : ''}`
+        if (!q || a.name.toLowerCase().includes(q)) {
+          items.push({ name: a.name, category: 'Armor', details })
+        }
+      }
+    }
+    if (categoryFilter === 'all' || categoryFilter === 'gear') {
+      for (const g of equipment.gear) {
+        const details = g.cost ? `${g.cost}` : ''
+        if (!q || g.name.toLowerCase().includes(q)) {
+          items.push({ name: g.name, category: 'Gear', details })
+        }
+      }
+    }
+
+    return items.slice(0, 100)
+  }, [equipment, search, categoryFilter])
+
+  if (loading) return <p className="text-xs text-gray-500 text-center py-4">Loading equipment...</p>
+
+  return (
+    <div className="flex flex-col gap-2 min-h-0">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search equipment..."
+        className="w-full px-2.5 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500/60"
+      />
+
+      <div className="flex gap-1">
+        {(['all', 'weapons', 'armor', 'gear'] as const).map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategoryFilter(cat)}
+            className={`px-2 py-0.5 text-[10px] font-semibold rounded cursor-pointer capitalize transition-colors ${
+              categoryFilter === cat
+                ? 'bg-amber-600 text-white'
+                : 'bg-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="text-[10px] text-gray-500">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</div>
+
+      <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-gray-500 text-center py-4">No matching equipment</p>
+        ) : (
+          filtered.map((item, i) => (
+            <div key={`${item.name}-${i}`} className="bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/30">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-amber-400 truncate">{item.name}</div>
+                <span className="text-[10px] text-gray-500 shrink-0">{item.category}</span>
+              </div>
+              {item.details && (
+                <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">{item.details}</p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -445,6 +697,10 @@ export default function QuickReferencePanel({ onClose }: QuickReferencePanelProp
         return <ReferenceList items={DCS} />
       case 'spells':
         return <SpellsTab />
+      case 'monsters':
+        return <MonstersTab />
+      case 'equipment':
+        return <EquipmentTab />
     }
   }
 

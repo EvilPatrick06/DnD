@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import AdventureWizard from '../components/campaign/AdventureWizard'
+import type { AdventureData } from '../components/campaign/AdventureWizard'
 import AiDmStep from '../components/campaign/AiDmStep'
+import MagicItemTracker from '../components/campaign/MagicItemTracker'
 import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
 import StatBlockEditor from '../components/game/dm/StatBlockEditor'
-import { BackButton, Button, Card, Modal } from '../components/ui'
+import { BackButton, Button, Card, ConfirmDialog, Modal } from '../components/ui'
+import { addToast } from '../hooks/useToast'
 import { exportCampaignToFile } from '../services/campaign-io'
 import { load5eMonsterById, searchMonsters } from '../services/data-provider'
 import { useCampaignStore } from '../stores/useCampaignStore'
@@ -37,6 +41,7 @@ export default function CampaignDetailPage(): JSX.Element {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [showAdventureWizard, setShowAdventureWizard] = useState(false)
 
   // NPC state
   const [showNPCModal, setShowNPCModal] = useState(false)
@@ -131,6 +136,7 @@ export default function CampaignDetailPage(): JSX.Element {
   const handleDelete = async (): Promise<void> => {
     if (!id) return
     await deleteCampaign(id)
+    addToast('Campaign deleted', 'success')
     navigate('/')
   }
 
@@ -138,7 +144,6 @@ export default function CampaignDetailPage(): JSX.Element {
     if (!campaign) return
     setStarting(true)
     try {
-      // Safety: disconnect if a previous session is still alive
       const networkState = useNetworkStore.getState()
       if (networkState.role !== 'none') {
         networkState.disconnect()
@@ -151,13 +156,24 @@ export default function CampaignDetailPage(): JSX.Element {
     }
   }
 
+  const handleStartSolo = (): void => {
+    if (!campaign) return
+    const networkState = useNetworkStore.getState()
+    if (networkState.role !== 'none') {
+      networkState.disconnect()
+    }
+    navigate(`/game/${campaign.id}`)
+  }
+
   const handleExport = async (): Promise<void> => {
     if (!campaign) return
     setExporting(true)
     try {
       await exportCampaignToFile(campaign)
+      addToast('Campaign exported', 'success')
     } catch (error) {
       console.error('Failed to export campaign:', error)
+      addToast('Failed to export campaign', 'error')
     } finally {
       setExporting(false)
     }
@@ -429,8 +445,11 @@ export default function CampaignDetailPage(): JSX.Element {
           <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
             Delete
           </Button>
+          <Button variant="secondary" onClick={handleStartSolo}>
+            Solo Play
+          </Button>
           <Button onClick={handleStartGame} disabled={starting}>
-            {starting ? 'Starting...' : 'Start Game'}
+            {starting ? 'Starting...' : 'Host Game'}
           </Button>
         </div>
       </div>
@@ -712,6 +731,124 @@ export default function CampaignDetailPage(): JSX.Element {
           )}
         </Card>
 
+        {/* Session Zero */}
+        {campaign.sessionZero && (
+          <Card title="Session Zero">
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Tone:</span>
+                <span className="text-gray-200 capitalize">{campaign.sessionZero.tone}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">PvP:</span>
+                <span className={campaign.sessionZero.pvpAllowed ? 'text-red-400' : 'text-green-400'}>
+                  {campaign.sessionZero.pvpAllowed ? 'Allowed' : 'Not Allowed'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Character Death:</span>
+                <span className="text-gray-200 capitalize">{campaign.sessionZero.characterDeathExpectation}</span>
+              </div>
+              {campaign.sessionZero.contentLimits.length > 0 && (
+                <div>
+                  <span className="text-gray-500">Content Limits:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {campaign.sessionZero.contentLimits.map((l) => (
+                      <span key={l} className="text-[10px] bg-red-900/30 text-red-300 px-2 py-0.5 rounded">
+                        {l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {campaign.sessionZero.playSchedule && (
+                <div>
+                  <span className="text-gray-500">Schedule:</span>{' '}
+                  <span className="text-gray-200">{campaign.sessionZero.playSchedule}</span>
+                </div>
+              )}
+              {campaign.sessionZero.homebrewNotes && (
+                <div>
+                  <span className="text-gray-500">Homebrew:</span>{' '}
+                  <span className="text-gray-200">{campaign.sessionZero.homebrewNotes}</span>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Magic Item Tracker */}
+        <Card title="Magic Items Distributed">
+          <MagicItemTracker campaign={campaign} />
+        </Card>
+
+        {/* Adventures */}
+        <Card title={`Adventures (${(campaign.adventures ?? []).length})`}>
+          {showAdventureWizard ? (
+            <AdventureWizard
+              onSave={(adventureData: AdventureData) => {
+                const entry = {
+                  id: crypto.randomUUID(),
+                  ...adventureData,
+                  createdAt: new Date().toISOString()
+                }
+                saveCampaign({
+                  ...campaign,
+                  adventures: [...(campaign.adventures ?? []), entry],
+                  updatedAt: new Date().toISOString()
+                })
+                setShowAdventureWizard(false)
+              }}
+              onCancel={() => setShowAdventureWizard(false)}
+            />
+          ) : (
+            <>
+              {(campaign.adventures ?? []).length === 0 ? (
+                <p className="text-gray-500 text-sm mb-3">
+                  No adventures planned yet. Use the DMG 4-step process to create one.
+                </p>
+              ) : (
+                <div className="space-y-2 mb-3">
+                  {(campaign.adventures ?? []).map((adv) => (
+                    <div key={adv.id} className="bg-gray-800/50 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-gray-200">{adv.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded">
+                            Lvl {adv.levelTier}
+                          </span>
+                          <button
+                            onClick={() => {
+                              saveCampaign({
+                                ...campaign,
+                                adventures: (campaign.adventures ?? []).filter((a) => a.id !== adv.id),
+                                updatedAt: new Date().toISOString()
+                              })
+                            }}
+                            className="text-[10px] text-red-400 hover:text-red-300 cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 line-clamp-2">{adv.premise}</div>
+                      {adv.villain && (
+                        <div className="text-[10px] text-gray-500 mt-1">Antagonist: {adv.villain}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => setShowAdventureWizard(true)}
+                className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
+              >
+                + Create Adventure
+              </button>
+            </>
+          )}
+        </Card>
+
         {/* AI Dungeon Master */}
         <Card title="AI Dungeon Master">
           {campaign.aiDm?.enabled ? (
@@ -787,21 +924,15 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Campaign?">
-        <p className="text-gray-400 text-sm mb-4">
-          This action cannot be undone. The campaign &ldquo;{campaign.name}&rdquo; and all its data will be permanently
-          deleted.
-        </p>
-        <div className="flex gap-3 justify-end">
-          <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Campaign?"
+        message={`This action cannot be undone. The campaign "${campaign.name}" and all its data will be permanently deleted.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
       {/* NPC Modal */}
       <Modal open={showNPCModal} onClose={() => setShowNPCModal(false)} title={editingNPC ? 'Edit NPC' : 'Add NPC'}>

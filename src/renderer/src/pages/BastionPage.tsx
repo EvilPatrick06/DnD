@@ -642,7 +642,7 @@ export default function BastionPage(): JSX.Element {
           <div className="max-h-72 overflow-y-auto space-y-2">
             {filteredFacilities.map((def) => {
               const eligibility = owner5e ? getFacilityEligibility(owner5e, def) : { eligible: true }
-              const isFaction = def.prerequisite.type === 'faction-renown'
+              const isFaction = def.prerequisite?.type === 'faction-renown'
               const canSelect = eligibility.eligible || (isFaction && factionOverride)
               const isSelected = selectedSpecialType === def.type
               return (

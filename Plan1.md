@@ -217,3 +217,30 @@
 4. Introduce a simple toast system for user feedback.
 5. Extract magic numbers into constants.
 6. Split `GameLayout` into smaller components.
+
+---
+
+## DMG 2024 Markdown Reference Files
+
+All 18 files live in `5.5e References/DMG2024/markdown/`.
+
+| File | Chapter | Content |
+|------|---------|---------|
+| `ch1-the-basics.md` | Ch 1 | DM role, tips, session prep, example of play |
+| `ch2-running-the-game.md` | Ch 2 | Know your players, narration, combat, exploration, social interaction |
+| `ch3-dms-toolbox.md` | Ch 3 | Alignment, backgrounds, creatures, spells, chases, curses, death, doors, dungeons, environment, fear, firearms, gods, hazards, mobs, NPCs, poison, prestige, renown, settlements, siege, gifts, traps |
+| `ch4-creating-adventures.md` | Ch 4 | Premise, encounters, hooks, adventure situations by level, sample adventures |
+| `ch5-creating-campaigns.md` | Ch 5 | Campaign creation, journal, premise, characters, conflicts, flavors of fantasy, settings, Greyhawk |
+| `ch6-cosmology.md` | Ch 6 | Planes overview, Great Wheel, planar travel, portals, Blood War, full Tour of the Multiverse (30+ planes) |
+| `ch7-treasure-tables.md` | Ch 7 | Coins, trade bars, trade goods, gemstones, art objects, treasure themes, random treasure tables |
+| `ch7-magic-item-rules.md` | Ch 7 | Categories, rarity, attunement, crafting, charges, cursed items, sentient items, artifacts, random magic item tables |
+| `ch7-magic-items-a-b.md` | Ch 7 | Magic items A–B |
+| `ch7-magic-items-c-d.md` | Ch 7 | Magic items C–D |
+| `ch7-magic-items-e-h.md` | Ch 7 | Magic items E–H |
+| `ch7-magic-items-i-o.md` | Ch 7 | Magic items I–O |
+| `ch7-magic-items-p-r.md` | Ch 7 | Magic items P–R |
+| `ch7-magic-items-s-z.md` | Ch 7 | Magic items S–Z |
+| `ch8-bastions.md` | Ch 8 | Bastion rules, basic/special facilities, orders, hirelings, events |
+| `appendix-a-lore-glossary.md` | App A | Lore glossary of iconic people and places |
+| `appendix-b-maps.md` | App B | Map descriptions and references |
+| `index.md` | Index | Full alphabetical index with page numbers |

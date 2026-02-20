@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { rollDice } from '../../utils/dice-utils'
 import DiceResult from './DiceResult'
 
@@ -23,17 +24,61 @@ interface ChatPanelProps {
   localPlayerName: string
 }
 
+const GameChatMessageItem = memo(function GameChatMessageItem({ msg }: { msg: GameChatMessage }): JSX.Element {
+  if (msg.isDiceRoll && msg.diceResult) {
+    return (
+      <DiceResult
+        formula={msg.diceResult.formula}
+        rolls={msg.diceResult.rolls}
+        total={msg.diceResult.total}
+        rollerName={msg.senderName}
+      />
+    )
+  }
+  if (msg.isSystem) {
+    return (
+      <div className="text-[10px] text-gray-500 text-center italic py-0.5">{msg.content}</div>
+    )
+  }
+  if (msg.isWhisper) {
+    return (
+      <div className="bg-purple-900/20 border border-purple-700/30 rounded p-1.5">
+        <span className="text-[10px] text-purple-400 font-medium">
+          {msg.senderName} whispers to {msg.whisperTarget}:
+        </span>
+        <p className="text-xs text-purple-200">{msg.content}</p>
+      </div>
+    )
+  }
+  if (msg.isAiDm) {
+    const displayName = msg.senderName.includes('(AI)') ? msg.senderName : `${msg.senderName} (AI)`
+    return (
+      <div className="bg-purple-900/10 border-l-2 border-purple-500 pl-2 py-1">
+        <span className="text-[10px] text-purple-400 font-semibold">{displayName}</span>
+        <p className="text-xs text-gray-200">{msg.content}</p>
+      </div>
+    )
+  }
+  if (msg.isDM) {
+    return (
+      <div className="bg-amber-900/10 border-l-2 border-amber-500 pl-2 py-1">
+        <span className="text-[10px] text-amber-400 font-semibold">{msg.senderName} (DM)</span>
+        <p className="text-xs text-gray-200">{msg.content}</p>
+      </div>
+    )
+  }
+  return (
+    <div className="py-0.5">
+      <span className="text-[10px] text-gray-400 font-medium">{msg.senderName}:</span>
+      <span className="text-xs text-gray-200 ml-1">{msg.content}</span>
+    </div>
+  )
+})
+
 export default function ChatPanel({ messages, onSendMessage, localPlayerName }: ChatPanelProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<'chat' | 'dice'>('chat')
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [])
 
   const handleSend = (): void => {
     const trimmed = input.trim()
@@ -74,10 +119,22 @@ export default function ChatPanel({ messages, onSendMessage, localPlayerName }: 
     setInput('')
   }
 
-  const chatMessages = messages.filter((m) => !m.isDiceRoll)
-  const diceMessages = messages.filter((m) => m.isDiceRoll)
-
+  const chatMessages = useMemo(() => messages.filter((m) => !m.isDiceRoll), [messages])
+  const diceMessages = useMemo(() => messages.filter((m) => m.isDiceRoll), [messages])
   const displayMessages = activeTab === 'chat' ? chatMessages : diceMessages
+
+  const virtualizer = useVirtualizer({
+    count: displayMessages.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 32,
+    overscan: 10
+  })
+
+  useEffect(() => {
+    if (displayMessages.length > 0) {
+      virtualizer.scrollToIndex(displayMessages.length - 1, { align: 'end' })
+    }
+  }, [displayMessages.length, virtualizer])
 
   return (
     <div className="flex flex-col h-full">
@@ -104,76 +161,33 @@ export default function ChatPanel({ messages, onSendMessage, localPlayerName }: 
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 min-h-0" aria-live="polite">
         {displayMessages.length === 0 ? (
           <p className="text-xs text-gray-500 text-center py-4">
             {activeTab === 'chat' ? 'No messages yet' : 'No dice rolls yet'}
           </p>
         ) : (
-          displayMessages.map((msg) => {
-            // Dice roll display
-            if (msg.isDiceRoll && msg.diceResult) {
+          <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const msg = displayMessages[virtualItem.index]
               return (
-                <DiceResult
+                <div
                   key={msg.id}
-                  formula={msg.diceResult.formula}
-                  rolls={msg.diceResult.rolls}
-                  total={msg.diceResult.total}
-                  rollerName={msg.senderName}
-                />
-              )
-            }
-
-            // System message
-            if (msg.isSystem) {
-              return (
-                <div key={msg.id} className="text-[10px] text-gray-500 text-center italic py-0.5">
-                  {msg.content}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`
+                  }}
+                >
+                  <GameChatMessageItem msg={msg} />
                 </div>
               )
-            }
-
-            // Whisper
-            if (msg.isWhisper) {
-              return (
-                <div key={msg.id} className="bg-purple-900/20 border border-purple-700/30 rounded p-1.5">
-                  <span className="text-[10px] text-purple-400 font-medium">
-                    {msg.senderName} whispers to {msg.whisperTarget}:
-                  </span>
-                  <p className="text-xs text-purple-200">{msg.content}</p>
-                </div>
-              )
-            }
-
-            // AI DM message — distinct purple styling
-            if (msg.isAiDm) {
-              const displayName = msg.senderName.includes('(AI)') ? msg.senderName : `${msg.senderName} (AI)`
-              return (
-                <div key={msg.id} className="bg-purple-900/10 border-l-2 border-purple-500 pl-2 py-1">
-                  <span className="text-[10px] text-purple-400 font-semibold">{displayName}</span>
-                  <p className="text-xs text-gray-200">{msg.content}</p>
-                </div>
-              )
-            }
-
-            // Human DM message
-            if (msg.isDM) {
-              return (
-                <div key={msg.id} className="bg-amber-900/10 border-l-2 border-amber-500 pl-2 py-1">
-                  <span className="text-[10px] text-amber-400 font-semibold">{msg.senderName} (DM)</span>
-                  <p className="text-xs text-gray-200">{msg.content}</p>
-                </div>
-              )
-            }
-
-            // Normal message
-            return (
-              <div key={msg.id} className="py-0.5">
-                <span className="text-[10px] text-gray-400 font-medium">{msg.senderName}:</span>
-                <span className="text-xs text-gray-200 ml-1">{msg.content}</span>
-              </div>
-            )
-          })
+            })}
+          </div>
         )}
       </div>
 

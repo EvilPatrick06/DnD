@@ -24,6 +24,7 @@ export default function Button({
     <button
       className={`px-5 py-2.5 rounded-lg font-semibold transition-colors cursor-pointer
         disabled:opacity-50 disabled:cursor-not-allowed
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-900
         ${variantStyles[variant]} ${className}`}
       disabled={disabled}
       {...props}

@@ -33,11 +33,7 @@ export default function AsiModal(): JSX.Element {
 
   const handleConfirm = (): void => {
     if (!activeAsiSlotId || !canConfirm) return
-    if (mode === '+2') {
-      confirmAsi(activeAsiSlotId, [selected[0], selected[0]])
-    } else {
-      confirmAsi(activeAsiSlotId, selected)
-    }
+    confirmAsi(activeAsiSlotId, selected)
     setSelected([])
   }
 
@@ -96,8 +92,8 @@ export default function AsiModal(): JSX.Element {
             const score = abilityScores[ab]
             const mod = abilityModifier(score)
             const isSelected = selected.includes(ab)
-            const atMax = score >= 20
             const boost = isSelected ? (mode === '+2' ? 2 : 1) : 0
+            const atMax = score >= 20 || (mode === '+2' && score >= 19 && !isSelected)
 
             return (
               <button

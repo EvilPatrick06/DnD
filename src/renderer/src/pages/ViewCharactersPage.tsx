@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { CharacterCard } from '../components/character'
+import { ConfirmDialog, Spinner } from '../components/ui'
+import { addToast } from '../hooks/useToast'
 import { exportCharacterToFile, importCharacterFromFile } from '../services/character-io'
 import { useCharacterStore } from '../stores/useCharacterStore'
 import { getCharacterSheetPath } from '../utils/character-routes'
@@ -9,10 +11,12 @@ type StatusFilter = 'active' | 'retired' | 'deceased' | 'all'
 
 export default function ViewCharactersPage(): JSX.Element {
   const navigate = useNavigate()
-  const { characters, loading, loadCharacters, deleteCharacter, saveCharacter } = useCharacterStore()
+  const { characters, loading, loadCharacters, deleteCharacter, deleteAllCharacters, saveCharacter } =
+    useCharacterStore()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active')
-  const [importError, setImportError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     loadCharacters()
@@ -21,6 +25,13 @@ export default function ViewCharactersPage(): JSX.Element {
   const handleDelete = async (id: string): Promise<void> => {
     await deleteCharacter(id)
     setShowDeleteConfirm(null)
+    addToast('Character deleted', 'success')
+  }
+
+  const handleDeleteAll = async (): Promise<void> => {
+    await deleteAllCharacters()
+    setShowDeleteAllConfirm(false)
+    addToast('All characters deleted', 'success')
   }
 
   const handleExport = async (characterId: string): Promise<void> => {
@@ -28,30 +39,38 @@ export default function ViewCharactersPage(): JSX.Element {
     if (!character) return
     try {
       await exportCharacterToFile(character)
+      addToast('Character exported', 'success')
     } catch (err) {
       console.error('Failed to export character:', err)
+      addToast('Failed to export character', 'error')
     }
   }
 
   const handleImport = async (): Promise<void> => {
-    setImportError(null)
     try {
       const character = await importCharacterFromFile()
       if (character) {
         await saveCharacter(character)
         await loadCharacters()
+        addToast('Character imported successfully', 'success')
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to import character'
-      setImportError(message)
-      setTimeout(() => setImportError(null), 5000)
+      addToast(message, 'error')
     }
   }
 
-  // Filter characters by status
-  const filteredCharacters = characters.filter((c) => {
-    return statusFilter === 'all' || c.status === statusFilter
-  })
+  const filteredCharacters = useMemo(() => {
+    let result = characters
+    if (statusFilter !== 'all') {
+      result = result.filter((c) => c.status === statusFilter)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((c) => c.name.toLowerCase().includes(q))
+    }
+    return result
+  }, [characters, statusFilter, searchQuery])
 
   const filterTabs: Array<{ key: StatusFilter; label: string }> = [
     { key: 'active', label: 'Active' },
@@ -72,6 +91,16 @@ export default function ViewCharactersPage(): JSX.Element {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Your Characters</h1>
         <div className="flex items-center gap-2">
+          {characters.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAllConfirm(true)}
+              className="px-4 py-2 border border-gray-600 hover:border-red-600 hover:bg-gray-800
+                         text-gray-400 hover:text-red-400 rounded-lg font-semibold text-sm
+                         transition-colors cursor-pointer"
+            >
+              Delete All
+            </button>
+          )}
           <button
             onClick={handleImport}
             className="px-4 py-2 border border-gray-600 hover:border-amber-600 hover:bg-gray-800
@@ -90,11 +119,17 @@ export default function ViewCharactersPage(): JSX.Element {
         </div>
       </div>
 
-      {importError && (
-        <div className="mb-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
-          {importError}
-        </div>
-      )}
+      {/* Search bar */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search characters by name..."
+          className="w-full max-w-md px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100
+            placeholder-gray-500 focus:border-amber-500 focus:outline-none transition-colors text-sm"
+        />
+      </div>
 
       {/* Status filter tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-800">
@@ -120,7 +155,10 @@ export default function ViewCharactersPage(): JSX.Element {
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-500 py-12">Loading characters...</div>
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <Spinner size="lg" />
+          <span className="text-sm text-gray-500">Loading characters...</span>
+        </div>
       ) : characters.length === 0 ? (
         <div className="border border-dashed border-gray-700 rounded-lg p-12 text-center text-gray-500">
           <div className="text-4xl mb-4">&#9876;</div>
@@ -146,7 +184,9 @@ export default function ViewCharactersPage(): JSX.Element {
         </div>
       ) : filteredCharacters.length === 0 ? (
         <div className="text-center text-gray-500 py-12">
-          <p className="text-lg mb-1">No {statusFilter} characters</p>
+          <p className="text-lg mb-1">
+            {searchQuery ? `No characters matching "${searchQuery}"` : `No ${statusFilter} characters`}
+          </p>
           <p className="text-sm">Try a different filter or create a new character.</p>
         </div>
       ) : (
@@ -163,34 +203,25 @@ export default function ViewCharactersPage(): JSX.Element {
         </div>
       )}
 
-      {/* Delete Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setShowDeleteConfirm(null)} />
-          <div className="relative bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">Delete Character?</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              This action cannot be undone. The character will be permanently deleted.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowDeleteConfirm(null)}
-                className="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800
-                           transition-colors cursor-pointer text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(showDeleteConfirm)}
-                className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded-lg
-                           transition-colors cursor-pointer text-sm font-semibold"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!showDeleteConfirm}
+        title="Delete Character?"
+        message="This action cannot be undone. The character will be permanently deleted."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
+        onCancel={() => setShowDeleteConfirm(null)}
+      />
+
+      <ConfirmDialog
+        open={showDeleteAllConfirm}
+        title="Delete All Characters?"
+        message={`This will permanently delete all ${characters.length} character${characters.length !== 1 ? 's' : ''}. This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={handleDeleteAll}
+        onCancel={() => setShowDeleteAllConfirm(false)}
+      />
     </div>
   )
 }

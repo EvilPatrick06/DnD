@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
+import { LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../config/constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
 import {
   getConnectedPeers,
@@ -95,6 +96,20 @@ export default function LobbyPage(): JSX.Element {
   useEffect(() => {
     loadCampaigns()
   }, [loadCampaigns])
+
+  // Client: update stored session with campaign name once available
+  useEffect(() => {
+    if (role !== 'client' || !campaign?.name || !campaignId) return
+    try {
+      const raw = localStorage.getItem(LAST_SESSION_KEY)
+      if (!raw) return
+      const session = JSON.parse(raw)
+      if (session.campaignId === campaignId && !session.campaignName) {
+        session.campaignName = campaign.name
+        localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
+      }
+    } catch { /* ignore */ }
+  }, [role, campaign?.name, campaignId])
 
   // Set the campaign ID on the host manager so joining clients learn it
   useEffect(() => {
@@ -199,14 +214,19 @@ export default function LobbyPage(): JSX.Element {
   useEffect(() => {
     if (!isHost) return
 
+    const timeouts: ReturnType<typeof setTimeout>[] = []
     const unsubscribe = onPeerJoined((peer) => {
       // Delay to let the peer's voice start (increased from 500ms for reliability)
-      setTimeout(() => {
+      const id = setTimeout(() => {
         callPeer(peer.peerId)
       }, 1500)
+      timeouts.push(id)
     })
 
-    return unsubscribe
+    return () => {
+      timeouts.forEach(clearTimeout)
+      unsubscribe()
+    }
   }, [isHost])
 
   // --- Bridge: sync networkStore.peers → lobbyStore.players ---
@@ -504,15 +524,25 @@ export default function LobbyPage(): JSX.Element {
     }
   }, [role])
 
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    }
+  }, [])
+
   const handleCopyInviteCode = async (): Promise<void> => {
     if (inviteCode) {
-      try {
-        await navigator.clipboard.writeText(inviteCode)
+      const { copyToClipboard } = await import('../utils/clipboard')
+      const ok = await copyToClipboard(inviteCode)
+      if (ok) {
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
         setCodeCopied(true)
-        setTimeout(() => setCodeCopied(false), 2000)
-      } catch {
-        // Fallback: select the text
-        console.warn('Failed to copy to clipboard')
+        copyTimeoutRef.current = setTimeout(() => {
+          copyTimeoutRef.current = null
+          setCodeCopied(false)
+        }, LOBBY_COPY_TIMEOUT_MS)
       }
     }
   }

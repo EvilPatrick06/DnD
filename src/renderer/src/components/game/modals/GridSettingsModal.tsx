@@ -40,7 +40,7 @@ export default function GridSettingsModal({ onClose }: GridSettingsModalProps): 
       <div className="relative bg-gray-900 border border-gray-700 rounded-xl w-[340px] max-h-[85vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
           <h3 className="text-sm font-semibold text-gray-200">Grid Settings — {activeMap.name}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

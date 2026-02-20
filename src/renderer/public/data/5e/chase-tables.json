@@ -2,83 +2,65 @@
   "urban": [
     {
       "roll": 1,
-      "complication": "A large cart blocks your path. Make a DC 10 Dexterity saving throw to dodge around it, or take a 10-foot detour."
+      "complication": "A cart or another large obstacle blocks your way. Make a DC 10 Dexterity saving throw to get past the obstacle. On a failed save, the obstacle counts as 10 feet of Difficult Terrain for you."
     },
     {
       "roll": 2,
-      "complication": "A crowd blocks your way. Make a DC 10 Strength check to push through, or spend an extra 10 feet of movement."
+      "complication": "A crowd blocks your way. Make a DC 10 Strength, Dexterity, or Charisma saving throw (your choice) to navigate through the crowd. On a failed save, the crowd counts as 10 feet of Difficult Terrain for you."
     },
     {
       "roll": 3,
-      "complication": "A door or gate bars your path. Make a DC 10 Strength (Athletics) check to force it open."
+      "complication": "A maze of barrels, crates, or similar obstacles stands in your way. Make a DC 10 Dexterity or Intelligence saving throw (your choice) to navigate the maze. On a failed save, the maze counts as 10 feet of Difficult Terrain for you."
     },
     {
       "roll": 4,
-      "complication": "Loose cobblestones or slippery terrain. Make a DC 10 Dexterity (Acrobatics) check to keep your footing, or fall prone."
+      "complication": "The ground is slippery with rain, spilled oil, or some other liquid. Make a DC 10 Dexterity saving throw. On a failed save, you have the Prone condition."
     },
     {
       "roll": 5,
-      "complication": "A dog chases after you. Make a DC 10 Strength or Dexterity check to avoid it, or lose 10 feet of speed this turn."
+      "complication": "You encounter a brawl in progress. Make a DC 15 Strength, Dexterity, or Charisma saving throw (your choice) to get past the brawlers unimpeded. On a failed save, you take 2d4 Bludgeoning damage, and the brawlers count as 10 feet of Difficult Terrain for you."
     },
     {
       "roll": 6,
-      "complication": "A laundry line hangs across the street. Make a DC 10 Dexterity (Acrobatics) check to dodge under it, or spend 5 extra feet of movement."
+      "complication": "You must make a sharp turn to avoid colliding with something impassable. Make a DC 10 Dexterity saving throw to navigate the turn. On a failed save, you collide with something hard and take 1d4 Bludgeoning damage."
     },
-    {
-      "roll": 7,
-      "complication": "A market stall stands in your way. Make a DC 12 Dexterity check to weave through, or take a 10-foot detour."
-    },
-    {
-      "roll": 8,
-      "complication": "A low bridge or hanging sign. Make a DC 10 Dexterity saving throw to duck, or take 1d4 bludgeoning damage."
-    },
+    { "roll": 7, "complication": "No complication." },
+    { "roll": 8, "complication": "No complication." },
     { "roll": 9, "complication": "No complication." },
     { "roll": 10, "complication": "No complication." },
-    {
-      "roll": 11,
-      "complication": "Street thugs try to trip you up. Make a DC 12 Charisma (Intimidation or Persuasion) check or lose 1d4 rounds dealing with them."
-    },
-    {
-      "roll": 12,
-      "complication": "An open manhole or sewer grate. Make a DC 12 Wisdom (Perception) check to notice it, or fall in."
-    }
+    { "roll": 11, "complication": "No complication." },
+    { "roll": 12, "complication": "No complication." }
   ],
   "wilderness": [
     {
       "roll": 1,
-      "complication": "Dense brush blocks your path. Make a DC 10 Strength (Athletics) check or lose 10 feet of movement."
+      "complication": "You pass through a Swarm of Insects. The swarm uses one of its actions, targeting you."
     },
-    { "roll": 2, "complication": "Uneven ground. Make a DC 10 Dexterity (Acrobatics) check or fall prone." },
+    {
+      "roll": 2,
+      "complication": "A stream or ravine blocks your path. Make a DC 10 Strength or Dexterity saving throw (your choice) to cross the impediment. On a failed save, the impediment counts as 10 feet of Difficult Terrain for you."
+    },
     {
       "roll": 3,
-      "complication": "A stream or creek crosses your path. Make a DC 10 Strength (Athletics) check to cross, or take a 15-foot detour."
+      "complication": "Make a DC 10 Constitution saving throw. On a failed save, blowing sand, dirt, ash, snow, or pollen causes you to have the Blinded condition until the end of your turn. While you are Blinded in this way, your Speed is halved."
     },
     {
       "roll": 4,
-      "complication": "A wild animal is startled by the chase. Make a DC 12 Wisdom (Animal Handling) check or lose 1 round dealing with it."
+      "complication": "A sudden drop catches you by surprise. Make a DC 10 Dexterity saving throw to navigate the impediment. On a failed save, you fall 10 feet."
     },
-    { "roll": 5, "complication": "Heavy undergrowth. Your speed is halved this turn." },
+    {
+      "roll": 5,
+      "complication": "Your path takes you near a patch of razorvine. Make a DC 15 Dexterity saving throw or use 10 feet of movement (your choice) to avoid the razorvine. On a failed save, you take 1d10 Slashing damage."
+    },
     {
       "roll": 6,
-      "complication": "Low-hanging branches. Make a DC 10 Dexterity saving throw or take 1d4 bludgeoning damage."
+      "complication": "A creature native to the area notices you. Make a DC 10 Wisdom or Charisma saving throw (your choice). On a failed save, the creature joins the chase, with you as its quarry."
     },
-    {
-      "roll": 7,
-      "complication": "A hidden burrow hole. Make a DC 12 Wisdom (Perception) check or fall prone and take 1d4 damage."
-    },
-    {
-      "roll": 8,
-      "complication": "A thorny hedge. Make a DC 10 Dexterity saving throw to avoid it, or take 1d4 piercing damage."
-    },
+    { "roll": 7, "complication": "No complication." },
+    { "roll": 8, "complication": "No complication." },
     { "roll": 9, "complication": "No complication." },
     { "roll": 10, "complication": "No complication." },
-    {
-      "roll": 11,
-      "complication": "A cliff or ledge. Make a DC 12 Strength (Athletics) check to climb it, or take 1d6 fall damage."
-    },
-    {
-      "roll": 12,
-      "complication": "A swarm of insects. Make a DC 12 Constitution saving throw or have disadvantage on ability checks this turn."
-    }
+    { "roll": 11, "complication": "No complication." },
+    { "roll": 12, "complication": "No complication." }
   ]
 }

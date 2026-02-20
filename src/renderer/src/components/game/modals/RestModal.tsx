@@ -59,7 +59,7 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
       states[pc.id] = {
         selected: true,
         preview,
-        diceCount: Math.min(1, pc.hitDiceRemaining),
+        diceCount: Math.min(1, pc.hitDice.reduce((s, h) => s + h.current, 0)),
         selectedDieSize: dieSizes[0] ?? 8,
         rolls: [],
         rolled: false,
@@ -215,7 +215,7 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
           <h3 className="text-sm font-semibold text-amber-400">
             {mode === 'shortRest' ? 'Short Rest (1 Hour)' : 'Long Rest (8 Hours)'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>
@@ -280,16 +280,16 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
                           <div className="text-xs text-gray-400">
                             Hit Dice:{' '}
                             <span className="text-amber-400 font-semibold">
-                              {pc.hitDiceRemaining}/{pc.level}
+                              {pc.hitDice.reduce((s, h) => s + h.current, 0)}/{pc.hitDice.reduce((s, h) => s + h.maximum, 0)}
                             </span>
                             {isMulticlass && (
                               <span className="text-gray-500 ml-1">
-                                ({pc.classes.map((c) => `${c.level}d${c.hitDie}`).join(' + ')})
+                                ({pc.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})
                               </span>
                             )}
                           </div>
 
-                          {pc.hitDiceRemaining === 0 ? (
+                          {pc.hitDice.reduce((s, h) => s + h.current, 0) === 0 ? (
                             <div className="text-xs text-red-400">No Hit Dice remaining.</div>
                           ) : !state.rolled ? (
                             <div className="flex items-center gap-2 flex-wrap">
@@ -318,13 +318,13 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
                                 <input
                                   type="number"
                                   min={0}
-                                  max={pc.hitDiceRemaining}
+                                  max={pc.hitDice.reduce((s, h) => s + h.current, 0)}
                                   value={state.diceCount}
                                   onChange={(e) =>
                                     updateShortRestState(pc.id, {
                                       diceCount: Math.max(
                                         0,
-                                        Math.min(pc.hitDiceRemaining, parseInt(e.target.value, 10) || 0)
+                                        Math.min(pc.hitDice.reduce((s, h) => s + h.current, 0), parseInt(e.target.value, 10) || 0)
                                       )
                                     })
                                   }

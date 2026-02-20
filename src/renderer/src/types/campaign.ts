@@ -56,6 +56,8 @@ export interface Campaign {
   npcs: NPC[]
   lore?: LoreEntry[]
   encounters?: Encounter[]
+  adventures?: AdventureEntry[]
+  sessionZero?: SessionZeroConfig
   players: CampaignPlayer[]
   customRules: CustomRule[]
   settings: CampaignSettings
@@ -134,6 +136,31 @@ export interface NPC {
     personality?: boolean
     motivation?: boolean
   }
+}
+
+export interface SessionZeroConfig {
+  contentLimits: string[]
+  tone: string
+  pvpAllowed: boolean
+  characterDeathExpectation: string
+  homebrewNotes: string
+  playSchedule: string
+  additionalNotes: string
+}
+
+export interface AdventureEntry {
+  id: string
+  title: string
+  levelTier: string
+  premise: string
+  hook: string
+  villain: string
+  setting: string
+  playerStakes: string
+  encounters: string
+  climax: string
+  resolution: string
+  createdAt: string
 }
 
 export interface SessionJournal {

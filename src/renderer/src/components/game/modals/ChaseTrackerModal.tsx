@@ -11,6 +11,7 @@ interface Participant {
   position: number
   speed: number
   dashesUsed: number
+  conModifier: number
   isQuarry: boolean
 }
 
@@ -57,8 +58,8 @@ const ESCAPE_DISTANCE = 3
 
 export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseTrackerModalProps): JSX.Element {
   const [participants, setParticipants] = useState<Participant[]>([
-    { id: crypto.randomUUID(), name: 'Quarry', position: 3, speed: 30, dashesUsed: 0, isQuarry: true },
-    { id: crypto.randomUUID(), name: 'Pursuer 1', position: 0, speed: 30, dashesUsed: 0, isQuarry: false }
+    { id: crypto.randomUUID(), name: 'Quarry', position: 3, speed: 30, dashesUsed: 0, conModifier: 1, isQuarry: true },
+    { id: crypto.randomUUID(), name: 'Pursuer 1', position: 0, speed: 30, dashesUsed: 0, conModifier: 1, isQuarry: false }
   ])
   const [currentRound, setCurrentRound] = useState(1)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -90,6 +91,10 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
     return table[roll]
   }
 
+  const [newConMod, setNewConMod] = useState(1)
+
+  const getFreeDashes = (conMod: number): number => Math.max(1, 3 + conMod)
+
   const addParticipant = (): void => {
     if (!newName.trim()) return
     setParticipants((prev) => [
@@ -100,11 +105,13 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
         position: newIsQuarry ? 3 : 0,
         speed: 30,
         dashesUsed: 0,
+        conModifier: newConMod,
         isQuarry: newIsQuarry
       }
     ])
     setNewName('')
     setNewIsQuarry(false)
+    setNewConMod(1)
   }
 
   const removeParticipant = (id: string): void => {
@@ -121,13 +128,20 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
   }
 
   const handleDash = (id: string): void => {
-    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, dashesUsed: p.dashesUsed + 1 } : p)))
     const p = participants.find((p) => p.id === id)
-    if (p) {
-      const dc = 10 + p.dashesUsed
-      onBroadcastResult(`${p.name} attempts to Dash! CON save DC ${dc} required or gain 1 level of exhaustion.`)
+    if (!p) return
+    const freeDashes = getFreeDashes(p.conModifier)
+    const newDashCount = p.dashesUsed + 1
+
+    setParticipants((prev) => prev.map((pp) => (pp.id === id ? { ...pp, dashesUsed: newDashCount } : pp)))
+
+    if (newDashCount > freeDashes) {
+      onBroadcastResult(
+        `${p.name} Dashes (${newDashCount}/${freeDashes} free)! DC 10 CON save required or gain 1 Exhaustion.`
+      )
+    } else {
+      onBroadcastResult(`${p.name} Dashes (${newDashCount}/${freeDashes} free).`)
     }
-    // Move one extra zone for the dash
     moveParticipant(id, 1)
   }
 
@@ -185,6 +199,10 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
     setCurrentComplication(null)
   }
 
+  const updateConModifier = (id: string, conMod: number): void => {
+    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, conModifier: conMod } : p)))
+  }
+
   const updateSpeed = (id: string, speed: number): void => {
     setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, speed: Math.max(0, speed) } : p)))
   }
@@ -218,7 +236,7 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
               Round {currentRound}/{MAX_ROUNDS}
             </span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1">
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Close">
             &times;
           </button>
         </div>
@@ -355,9 +373,25 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
                   />
                 </div>
 
+                {/* CON Mod */}
+                <div className="flex items-center gap-1">
+                  <label className="text-[10px] text-gray-500">CON:</label>
+                  <input
+                    type="number"
+                    value={p.conModifier}
+                    onChange={(e) =>
+                      setParticipants((prev) =>
+                        prev.map((pp) => (pp.id === p.id ? { ...pp, conModifier: Number(e.target.value) } : pp))
+                      )
+                    }
+                    className="w-10 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
+                  />
+                </div>
+
                 {/* Dashes */}
                 <div className="text-[10px] text-gray-500">
-                  Dashes: <span className="text-amber-400">{p.dashesUsed}</span>
+                  Dashes: <span className={p.dashesUsed > getFreeDashes(p.conModifier) ? 'text-red-400' : 'text-amber-400'}>{p.dashesUsed}</span>
+                  <span className="text-gray-600">/{getFreeDashes(p.conModifier)}</span>
                 </div>
 
                 {/* Actions */}
@@ -401,6 +435,15 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
                 if (e.key === 'Enter') addParticipant()
               }}
             />
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] text-gray-500">CON:</label>
+              <input
+                type="number"
+                value={newConMod}
+                onChange={(e) => setNewConMod(Number(e.target.value))}
+                className="w-10 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
+              />
+            </div>
             <label className="flex items-center gap-1 text-xs text-gray-400">
               <input
                 type="checkbox"

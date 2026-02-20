@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { PLAYER_COLORS } from '../../network/types'
 import type { LobbyPlayer } from '../../stores/useLobbyStore'
 
@@ -19,7 +19,7 @@ interface PlayerCardProps {
   onColorChange?: (color: string) => void
 }
 
-export default function PlayerCard({
+export default memo(function PlayerCard({
   player,
   isLocal,
   isLocallyMuted,
@@ -307,4 +307,4 @@ export default function PlayerCard({
       )}
     </div>
   )
-}
+})

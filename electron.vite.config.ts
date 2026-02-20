@@ -1,8 +1,12 @@
+import { createRequire } from 'module'
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import type { Plugin } from 'vite'
+
+const require = createRequire(import.meta.url)
+const pkg = require('./package.json') as { version: string }
 
 function analyzePlugin(): Plugin | null {
   if (process.env.ANALYZE !== '1') return null
@@ -27,6 +31,9 @@ export default defineConfig({
       alias: {
         '@renderer': resolve('src/renderer/src')
       }
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version)
     },
     plugins: [react(), tailwindcss(), analyzePlugin()].filter(Boolean) as Plugin[],
     build: {

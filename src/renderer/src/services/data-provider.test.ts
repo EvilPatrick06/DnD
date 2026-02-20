@@ -14,9 +14,9 @@ describe('loadJson', () => {
   it('fetches and returns parsed JSON', async () => {
     const testData = [{ id: 'test', name: 'Test' }]
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve(testData)
     })
-    // Use a unique path to avoid cache hits from other tests
     const result = await loadJson<typeof testData>('/test/unique-path-1.json')
     expect(result).toEqual(testData)
     expect(mockFetch).toHaveBeenCalledWith('/test/unique-path-1.json')
@@ -25,6 +25,7 @@ describe('loadJson', () => {
   it('caches results for repeated calls', async () => {
     const testData = { cached: true }
     mockFetch.mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve(testData)
     })
     const path = '/test/cache-test.json'

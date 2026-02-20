@@ -107,11 +107,12 @@ function validateChange(char: Record<string, unknown>, change: StatChange): stri
     case 'npc_attitude':
       return null // Informational only — logged in chat, not applied to character
     case 'hit_dice': {
-      const remaining = char.hitDiceRemaining as number
-      const level = char.level as number
+      const hitDice = char.hitDice as Array<{ current: number; maximum: number; dieType: number }> | undefined
+      const remaining = hitDice ? hitDice.reduce((s, h) => s + h.current, 0) : (char.level as number)
+      const max = hitDice ? hitDice.reduce((s, h) => s + h.maximum, 0) : (char.level as number)
       const newVal = remaining + change.value
       if (newVal < 0) return `Not enough hit dice (have ${remaining})`
-      if (newVal > level) return `Hit dice cannot exceed level (${level})`
+      if (newVal > max) return `Hit dice cannot exceed maximum (${max})`
       return null
     }
     case 'creature_damage':
@@ -240,11 +241,26 @@ function applyChange(char: Record<string, unknown>, change: StatChange): void {
       break
     }
     case 'hit_dice': {
-      const level = char.level as number
-      ;(char as Record<string, unknown>).hitDiceRemaining = Math.max(
-        0,
-        Math.min(level, (char.hitDiceRemaining as number) + change.value)
-      )
+      const hitDice = char.hitDice as Array<{ current: number; maximum: number; dieType: number }> | undefined
+      if (hitDice && hitDice.length > 0) {
+        let delta = change.value
+        if (delta > 0) {
+          for (const hd of hitDice) {
+            const add = Math.min(delta, hd.maximum - hd.current)
+            hd.current += add
+            delta -= add
+            if (delta <= 0) break
+          }
+        } else {
+          delta = -delta
+          for (const hd of hitDice) {
+            const take = Math.min(delta, hd.current)
+            hd.current -= take
+            delta -= take
+            if (delta <= 0) break
+          }
+        }
+      }
       break
     }
   }

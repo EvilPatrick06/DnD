@@ -42,7 +42,8 @@ export interface AttackEventResult {
 
 export interface GamblingResult {
   roll: number
-  multiplier: number
+  goldEarned: number
+  diceRolled: number[]
   description: string
 }
 
@@ -52,149 +53,92 @@ export interface TreasureResult {
   category: string
 }
 
-// ---- All Is Well Flavors (d8) ----------------------------------------------
+// ---- All Is Well Flavors (d8) — DMG 2024 p.235 ----------------------------
 
 export const ALL_IS_WELL_FLAVORS: { roll: number; flavor: string }[] = [
-  { roll: 1, flavor: 'A gentle rain waters your gardens and fills the cisterns. The hirelings enjoy a quiet week.' },
-  { roll: 2, flavor: 'A traveling bard spends the evening entertaining your hirelings with songs and stories.' },
-  {
-    roll: 3,
-    flavor:
-      'Local wildlife has been spotted near the bastion, but poses no threat. A family of foxes has made a den nearby.'
-  },
-  { roll: 4, flavor: 'Your hirelings complete minor repairs and maintenance ahead of schedule. Morale is high.' },
-  {
-    roll: 5,
-    flavor: 'A clear night sky provides excellent stargazing. One hireling claims to have seen a shooting star.'
-  },
-  { roll: 6, flavor: 'A merchant caravan passes nearby and waves in friendly greeting, but does not stop.' },
-  {
-    roll: 7,
-    flavor: 'The local village sends a small gift of bread and preserves as thanks for your presence in the region.'
-  },
-  {
-    roll: 8,
-    flavor: 'Your hirelings organize a small festival among themselves to celebrate the season. No incidents reported.'
-  }
+  { roll: 1, flavor: 'Accident reports are way down.' },
+  { roll: 2, flavor: 'The leak in the roof has been fixed.' },
+  { roll: 3, flavor: 'No vermin infestations to report.' },
+  { roll: 4, flavor: 'You-Know-Who lost their spectacles again.' },
+  { roll: 5, flavor: 'One of your hirelings adopted a stray dog.' },
+  { roll: 6, flavor: 'You received a lovely letter from a friend.' },
+  { roll: 7, flavor: 'Some practical joker has been putting rotten eggs in people\'s boots.' },
+  { roll: 8, flavor: 'Someone thought they saw a ghost.' }
 ]
 
-// ---- Guest Table (d4) ------------------------------------------------------
+// ---- Guest Table (d4) — DMG 2024 p.235 ------------------------------------
 
 export const GUEST_TABLE: { roll: number; guestType: string; description: string }[] = [
   {
     roll: 1,
-    guestType: 'Traveling Merchant',
+    guestType: 'Renowned Individual',
     description:
-      'A traveling merchant arrives seeking shelter. They offer to sell rare goods at a 10% discount during their stay.'
+      'The guest is an individual of great renown who stays for 7 days. At the end of their stay, the guest gives you a letter of recommendation.'
   },
   {
     roll: 2,
-    guestType: 'Noble',
+    guestType: 'Sanctuary Seeker',
     description:
-      'A noble and their retinue request lodging. Hosting them well could earn political favor or a future quest hook.'
+      'The guest requests sanctuary while avoiding persecution for their beliefs or crimes. They depart 7 days later, but not before offering you a gift of 1d6 × 100 GP.'
   },
   {
     roll: 3,
-    guestType: 'Pilgrim',
+    guestType: 'Mercenary',
     description:
-      'A pilgrim on a sacred journey stops at your bastion. They offer a blessing on one facility, granting advantage on its next order.'
+      "The guest is a mercenary, giving you one additional Bastion Defender. The guest doesn't require a facility to house them, and they stay until you send them away or they're killed."
   },
   {
     roll: 4,
-    guestType: 'Wandering Adventurer',
+    guestType: 'Friendly Monster',
     description:
-      'A wandering adventurer seeks a place to rest. They share tales of nearby dungeons and may offer to serve as a temporary defender.'
+      'The guest is a Friendly monster, such as a brass dragon or a treant. If your Bastion is attacked while this monster is your guest, it defends your Bastion, and you lose no Bastion Defenders. The monster leaves after it defends your Bastion once or when you send it away.'
   }
 ]
 
-// ---- Treasure Table (d100) -------------------------------------------------
+// ---- Treasure Table (d100) — DMG 2024 p.236 --------------------------------
 
 export const TREASURE_TABLE: { min: number; max: number; category: string; description: string }[] = [
   {
     min: 1,
-    max: 12,
+    max: 40,
     category: 'art-25gp',
-    description: 'Art object worth 25 GP (small statuette, bone carving, or painted portrait)'
+    description: 'Roll on the 25 GP Art Objects table.'
   },
   {
-    min: 13,
-    max: 24,
+    min: 41,
+    max: 63,
     category: 'art-250gp',
-    description: 'Art object worth 250 GP (gold ring with bloodstones, carved ivory statuette, or silver chalice)'
+    description: 'Roll on the 250 GP Art Objects table.'
   },
   {
-    min: 25,
-    max: 36,
+    min: 64,
+    max: 73,
     category: 'art-750gp',
-    description:
-      "Art object worth 750 GP (gold birdcage with electrum filigree, painted gold child's sarcophagus, or silver-plated steel longsword)"
+    description: 'Roll on the 750 GP Art Objects table.'
   },
   {
-    min: 37,
-    max: 44,
+    min: 74,
+    max: 75,
     category: 'art-2500gp',
-    description: 'Art object worth 2,500 GP (jeweled anklet, brass music box, or gold-filigreed decanter)'
+    description: 'Roll on the 2,500 GP Art Objects table.'
   },
   {
-    min: 45,
-    max: 48,
-    category: 'art-7500gp',
-    description:
-      'Art object worth 7,500 GP (bejeweled platinum crown, platinum and ruby ring, or painted gold war mask)'
-  },
-  {
-    min: 49,
-    max: 60,
-    category: 'gems-10gp',
-    description: 'A pouch of gemstones worth 10 GP each (1d6 gems: azurite, banded agate, blue quartz, or moss agate)'
-  },
-  {
-    min: 61,
-    max: 68,
-    category: 'gems-50gp',
-    description: 'A pouch of gemstones worth 50 GP each (1d4 gems: bloodstone, carnelian, jasper, or moonstone)'
-  },
-  {
-    min: 69,
-    max: 76,
-    category: 'gems-100gp',
-    description: 'A pouch of gemstones worth 100 GP each (1d4 gems: amber, amethyst, garnet, or jade)'
-  },
-  {
-    min: 77,
-    max: 80,
-    category: 'gems-500gp',
-    description: 'A pouch of gemstones worth 500 GP each (1d4 gems: alexandrite, aquamarine, black pearl, or topaz)'
-  },
-  {
-    min: 81,
-    max: 84,
-    category: 'gems-1000gp',
-    description: 'A single gemstone worth 1,000 GP (black opal, blue sapphire, emerald, fire opal, or star ruby)'
-  },
-  {
-    min: 85,
-    max: 91,
+    min: 76,
+    max: 90,
     category: 'magic-common',
-    description: 'A common magic item (Potion of Healing, Spell Scroll of a 1st-level spell, or similar)'
+    description: 'Roll on a Common Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
   },
   {
-    min: 92,
-    max: 96,
+    min: 91,
+    max: 98,
     category: 'magic-uncommon',
-    description: 'An uncommon magic item (Bag of Holding, Cloak of Elvenkind, Goggles of Night, or similar)'
+    description: 'Roll on an Uncommon Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
   },
   {
-    min: 97,
-    max: 99,
-    category: 'magic-rare',
-    description: 'A rare magic item (Flame Tongue, Ring of Protection, Wand of Fireballs, or similar)'
-  },
-  {
-    min: 100,
+    min: 99,
     max: 100,
-    category: 'magic-very-rare',
-    description: 'A very rare magic item (Amulet of the Planes, Rod of Absorption, Vorpal Sword, or similar)'
+    category: 'magic-rare',
+    description: 'Roll on a Rare Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
   }
 ]
 
@@ -221,16 +165,13 @@ export const BASTION_EVENTS_TABLE: BastionEventEntry[] = [
   { min: 99, max: 100, eventType: 'treasure', label: 'Treasure' }
 ]
 
-// ---- Gaming Hall Winnings (d100) -------------------------------------------
+// ---- Gaming Hall Winnings (d100) — DMG 2024 p.216 --------------------------
 
-export const GAMING_HALL_WINNINGS: { min: number; max: number; multiplier: number; description: string }[] = [
-  { min: 1, max: 10, multiplier: 0, description: 'Terrible luck! The house loses everything wagered.' },
-  { min: 11, max: 25, multiplier: 0.5, description: 'Poor showing. The hall earns half the wagered amount.' },
-  { min: 26, max: 50, multiplier: 1, description: 'Break even. The hall earns back exactly what was wagered.' },
-  { min: 51, max: 75, multiplier: 1.5, description: 'Good night! The hall earns 1.5 times the wagered amount.' },
-  { min: 76, max: 90, multiplier: 2, description: 'Great night! The hall earns double the wagered amount.' },
-  { min: 91, max: 98, multiplier: 3, description: 'Exceptional night! The hall earns triple the wagered amount.' },
-  { min: 99, max: 100, multiplier: 5, description: 'Jackpot! A legendary streak earns five times the wagered amount.' }
+export const GAMING_HALL_WINNINGS: { min: number; max: number; diceCount: number; description: string }[] = [
+  { min: 1, max: 50, diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' },
+  { min: 51, max: 85, diceCount: 2, description: 'The house takes in 2d6 × 10 GP.' },
+  { min: 86, max: 95, diceCount: 4, description: 'The house takes in 4d6 × 10 GP.' },
+  { min: 96, max: 100, diceCount: 10, description: 'The house takes in 10d6 × 10 GP.' }
 ]
 
 // ---- Menagerie Creatures ---------------------------------------------------
@@ -243,20 +184,32 @@ export interface MenagerieCreatureEntry {
   cr: string
 }
 
+// DMG 2024 p.226 — Menagerie Creatures table
 export const MENAGERIE_CREATURES: MenagerieCreatureEntry[] = [
-  { name: 'Hawk', creatureType: 'Beast', size: 'tiny', cost: 25, cr: '0' },
-  { name: 'Cat', creatureType: 'Beast', size: 'tiny', cost: 10, cr: '0' },
-  { name: 'Mastiff', creatureType: 'Beast', size: 'medium', cost: 50, cr: '1/8' },
-  { name: 'Pony', creatureType: 'Beast', size: 'medium', cost: 30, cr: '1/8' },
-  { name: 'Giant Rat', creatureType: 'Beast', size: 'small', cost: 15, cr: '1/8' },
-  { name: 'Giant Weasel', creatureType: 'Beast', size: 'medium', cost: 50, cr: '1/8' },
-  { name: 'Wolf', creatureType: 'Beast', size: 'medium', cost: 75, cr: '1/4' },
-  { name: 'Boar', creatureType: 'Beast', size: 'medium', cost: 75, cr: '1/4' },
-  { name: 'Giant Goat', creatureType: 'Beast', size: 'large', cost: 100, cr: '1/2' },
-  { name: 'Brown Bear', creatureType: 'Beast', size: 'large', cost: 200, cr: '1' },
-  { name: 'Dire Wolf', creatureType: 'Beast', size: 'large', cost: 200, cr: '1' },
-  { name: 'Giant Eagle', creatureType: 'Beast', size: 'large', cost: 300, cr: '1' },
-  { name: 'Griffon', creatureType: 'Monstrosity', size: 'large', cost: 500, cr: '2' }
+  { name: 'Ape', creatureType: 'Beast', size: 'medium', cost: 500, cr: '1/2' },
+  { name: 'Black Bear', creatureType: 'Beast', size: 'medium', cost: 500, cr: '1/2' },
+  { name: 'Brown Bear', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
+  { name: 'Constrictor Snake', creatureType: 'Beast', size: 'large', cost: 250, cr: '1/4' },
+  { name: 'Crocodile', creatureType: 'Beast', size: 'large', cost: 500, cr: '1/2' },
+  { name: 'Dire Wolf', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
+  { name: 'Giant Vulture', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
+  { name: 'Hyena', creatureType: 'Beast', size: 'medium', cost: 50, cr: '0' },
+  { name: 'Jackal', creatureType: 'Beast', size: 'small', cost: 50, cr: '0' },
+  { name: 'Lion', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
+  { name: 'Owlbear', creatureType: 'Monstrosity', size: 'large', cost: 3500, cr: '3' },
+  { name: 'Panther', creatureType: 'Beast', size: 'medium', cost: 250, cr: '1/4' },
+  { name: 'Tiger', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' }
+]
+
+// DMG 2024 p.226 — Creature Costs by Challenge Rating (for custom creatures)
+export const CREATURE_COSTS_BY_CR: { cr: string; cost: number }[] = [
+  { cr: '0', cost: 50 },
+  { cr: '1/8', cost: 50 },
+  { cr: '1/4', cost: 250 },
+  { cr: '1/2', cost: 500 },
+  { cr: '1', cost: 1000 },
+  { cr: '2', cost: 2000 },
+  { cr: '3', cost: 3500 }
 ]
 
 // ---- Expert Trainers -------------------------------------------------------
@@ -268,43 +221,43 @@ export interface ExpertTrainerEntry {
   description: string
 }
 
+// DMG 2024 p.232 — Expert Trainers table
 export const EXPERT_TRAINERS: ExpertTrainerEntry[] = [
   {
     type: 'battle',
-    name: 'Battle Trainer',
+    name: 'Battle Expert',
     empowerEffect:
-      'One creature that trains here gains Temporary Hit Points equal to your level at the start of your next adventure.',
+      'When you take damage from an attack made with an Unarmed Strike or a weapon, you can take a Reaction to reduce this damage by 1d4.',
     description:
       'A veteran warrior who drills defenders and visitors in combat tactics, formations, and battlefield awareness.'
   },
   {
     type: 'skills',
-    name: 'Skills Trainer',
+    name: 'Skills Expert',
     empowerEffect:
-      'One creature that trains here gains proficiency in one skill of your choice until the end of your next adventure.',
+      'You gain proficiency in one of the following skills of your choice: Acrobatics, Athletics, Performance, Sleight of Hand, or Stealth.',
     description:
-      'A versatile instructor who coaches students in acrobatics, athletics, stealth, persuasion, and other practical skills.'
+      'A versatile instructor who coaches students in acrobatics, athletics, stealth, performance, and sleight of hand.'
   },
   {
     type: 'tools',
-    name: 'Tools Trainer',
-    empowerEffect:
-      "One creature that trains here gains proficiency with one set of Artisan's Tools of your choice until the end of your next adventure.",
+    name: 'Tools Expert',
+    empowerEffect: 'You gain proficiency with one tool of your choice.',
     description:
       'A master artisan who teaches the finer points of craftsmanship, from smithing and carpentry to alchemy and calligraphy.'
   },
   {
     type: 'unarmed-combat',
-    name: 'Unarmed Combat Trainer',
+    name: 'Unarmed Combat Expert',
     empowerEffect:
-      'One creature that trains here deals an extra 1d6 Bludgeoning damage with Unarmed Strikes until the end of your next adventure.',
+      'When you hit with your Unarmed Strike and deal damage, the attack deals an extra 1d4 Bludgeoning damage.',
     description: 'A martial arts master who teaches striking, grappling, and defensive techniques for unarmed fighting.'
   },
   {
     type: 'weapon',
-    name: 'Weapon Trainer',
+    name: 'Weapon Expert',
     empowerEffect:
-      'One creature that trains here gains proficiency with one weapon of your choice until the end of your next adventure.',
+      "Choose a kind of Simple or Martial weapon, such as Spear or Longbow. If you aren't proficient with the weapon, you gain proficiency with it. If you already have proficiency with the weapon, you can use its mastery property.",
     description: 'An arms instructor specializing in swordsmanship, archery, polearms, and other weapon disciplines.'
   }
 ]
@@ -493,9 +446,9 @@ function findTreasureEntry(roll: number): { description: string; category: strin
   return entry ?? { description: 'A curious trinket of unknown value', category: 'art-25gp' }
 }
 
-function findGamblingEntry(roll: number): { multiplier: number; description: string } {
+function findGamblingEntry(roll: number): { diceCount: number; description: string } {
   const entry = GAMING_HALL_WINNINGS.find((e) => roll >= e.min && roll <= e.max)
-  return entry ?? { multiplier: 1, description: 'Break even.' }
+  return entry ?? { diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' }
 }
 
 /**
@@ -673,10 +626,13 @@ export function resolveAttackEvent(defenderCount: number, hasArmory: boolean, ha
 export function rollGamblingWinnings(): GamblingResult {
   const roll = rollD100()
   const entry = findGamblingEntry(roll)
+  const diceRolled = rollND(entry.diceCount, 6)
+  const goldEarned = diceRolled.reduce((a, b) => a + b, 0) * 10
   return {
     roll,
-    multiplier: entry.multiplier,
-    description: entry.description
+    goldEarned,
+    diceRolled,
+    description: `${entry.description} Rolled [${diceRolled.join(', ')}] × 10 = ${goldEarned} GP.`
   }
 }
 

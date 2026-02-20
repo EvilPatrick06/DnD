@@ -82,7 +82,7 @@ export default function AoETemplateModal({
           <h3 className="text-sm font-semibold text-gray-200">
             {step === 'config' ? 'AoE Template' : 'Place Template'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

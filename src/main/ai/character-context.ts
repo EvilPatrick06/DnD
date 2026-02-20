@@ -152,7 +152,15 @@ function formatCharacter5e(c: Record<string, unknown>): string {
     lines.push(`Wild Shape Uses: ${wildShapeUses.current}/${wildShapeUses.max}`)
   }
 
-  lines.push(`Hit Dice Remaining: ${c.hitDiceRemaining}/${c.level}`)
+  const hitDice = c.hitDice as Array<{ current: number; maximum: number; dieType: number }> | undefined
+  if (hitDice && hitDice.length > 0) {
+    const hdRemaining = hitDice.reduce((s, h) => s + h.current, 0)
+    const hdMax = hitDice.reduce((s, h) => s + h.maximum, 0)
+    const hdDetail = hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')
+    lines.push(`Hit Dice Remaining: ${hdRemaining}/${hdMax} (${hdDetail})`)
+  } else {
+    lines.push(`Hit Dice Remaining: ${c.level}/${c.level}`)
+  }
 
   const armor = (c.armor as Array<{ name: string; acBonus: number; equipped: boolean }>) || []
   const equippedArmor = armor.filter((a) => a.equipped)

@@ -30,7 +30,7 @@ export interface Character5e {
 
   abilityScores: AbilityScoreSet
   hitPoints: HitPoints
-  hitDiceRemaining: number
+  hitDice: HitDiceEntry[]
   armorClass: number
   initiative: number
   speed: number
@@ -138,6 +138,42 @@ export interface HitPoints {
   temporary: number
 }
 
+export interface HitDiceEntry {
+  current: number
+  maximum: number
+  dieType: number
+}
+
+export function totalHitDiceRemaining(hitDice: HitDiceEntry[]): number {
+  return hitDice.reduce((sum, hd) => sum + hd.current, 0)
+}
+
+export function totalHitDiceMaximum(hitDice: HitDiceEntry[]): number {
+  return hitDice.reduce((sum, hd) => sum + hd.maximum, 0)
+}
+
+/**
+ * Migrate legacy `hitDiceRemaining: number` to per-class `hitDice` array.
+ * Distributes remaining dice proportionally across classes.
+ */
+export function migrateHitDice(
+  classes: CharacterClass5e[],
+  level: number,
+  hitDiceRemaining?: number,
+  hitDice?: HitDiceEntry[]
+): HitDiceEntry[] {
+  if (hitDice && hitDice.length > 0) return hitDice
+  const remaining = hitDiceRemaining ?? level
+  let distributed = 0
+  return classes.map((cls, i) => {
+    const proportion = cls.level / level
+    const classRemaining =
+      i === classes.length - 1 ? remaining - distributed : Math.round(remaining * proportion)
+    distributed += classRemaining
+    return { current: Math.max(0, Math.min(cls.level, classRemaining)), maximum: cls.level, dieType: cls.hitDie }
+  })
+}
+
 export interface CharacterDetails {
   gender?: string
   deity?: string
@@ -196,6 +232,20 @@ export interface Feature {
   description: string
 }
 
+export type SentientCommunication = 'empathy' | 'speech' | 'telepathy'
+
+export interface SentientItemTraits {
+  intelligence: number
+  wisdom: number
+  charisma: number
+  alignment: string
+  communication: SentientCommunication
+  languages?: string[]
+  senses: string
+  specialPurpose?: string
+  personality?: string
+}
+
 export interface MagicItemEntry5e {
   id: string
   name: string
@@ -213,4 +263,5 @@ export interface MagicItemEntry5e {
     rechargeType: 'dawn' | 'long-rest' | 'none'
     rechargeDice?: string
   }
+  sentient?: SentientItemTraits
 }

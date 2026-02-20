@@ -1,28 +1,79 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { BackButton, Button, Input } from '../components/ui'
+import { BackButton, Button, Input, Spinner } from '../components/ui'
+import { AUTO_REJOIN_KEY, LAST_SESSION_KEY } from '../config/constants'
 import { useNetworkStore } from '../stores/useNetworkStore'
+
+const DISPLAY_NAME_KEY = 'dnd-vtt-display-name'
 
 export default function JoinGamePage(): JSX.Element {
   const navigate = useNavigate()
   const { connectionState, error, joinGame, setError, campaignId } = useNetworkStore()
 
   const [inviteCode, setInviteCode] = useState('')
-  const [displayName, setDisplayName] = useState('')
+  const [displayName, setDisplayName] = useState(() => {
+    try { return localStorage.getItem(DISPLAY_NAME_KEY) || '' } catch (e) { console.warn('[JoinGame] localStorage read failed:', e); return '' }
+  })
   const [waitingForCampaign, setWaitingForCampaign] = useState(false)
   const navigatedRef = useRef(false)
+  const autoRejoinTriggered = useRef(false)
 
   const canConnect = inviteCode.trim().length > 0 && displayName.trim().length > 0
   const isConnecting = connectionState === 'connecting' || waitingForCampaign
+
+  // Auto-rejoin: pre-fill from last session and connect automatically
+  useEffect(() => {
+    if (autoRejoinTriggered.current) return
+    try {
+      const shouldAutoRejoin = localStorage.getItem(AUTO_REJOIN_KEY)
+      if (!shouldAutoRejoin) return
+      localStorage.removeItem(AUTO_REJOIN_KEY)
+
+      const raw = localStorage.getItem(LAST_SESSION_KEY)
+      if (!raw) return
+      const session = JSON.parse(raw) as { inviteCode: string; displayName: string }
+      if (!session.inviteCode || !session.displayName) return
+
+      autoRejoinTriggered.current = true
+      setInviteCode(session.inviteCode)
+      setDisplayName(session.displayName)
+
+      // Defer the connection attempt to next tick so state is applied
+      setTimeout(async () => {
+        try {
+          localStorage.setItem(DISPLAY_NAME_KEY, session.displayName)
+          await joinGame(session.inviteCode, session.displayName)
+          setWaitingForCampaign(true)
+        } catch (err) {
+          console.error('[JoinGame] Auto-rejoin failed:', err)
+        }
+      }, 0)
+    } catch (e) {
+      console.warn('[JoinGame] Auto-rejoin read failed:', e)
+    }
+  }, [joinGame])
 
   // When host sends game:state-full with campaignId, navigate to the real lobby URL
   useEffect(() => {
     if (waitingForCampaign && campaignId && !navigatedRef.current) {
       navigatedRef.current = true
       setWaitingForCampaign(false)
+
+      // Persist session info for future rejoin
+      try {
+        const session = {
+          inviteCode: inviteCode || useNetworkStore.getState().inviteCode || '',
+          displayName: displayName || useNetworkStore.getState().displayName || '',
+          campaignId,
+          campaignName: '',
+          timestamp: Date.now()
+        }
+        localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
+      } catch (e) { console.warn('[JoinGame] Failed to save session:', e) }
+
       navigate(`/lobby/${campaignId}`)
     }
-  }, [waitingForCampaign, campaignId, navigate])
+  }, [waitingForCampaign, campaignId, navigate, inviteCode, displayName])
 
   // Fallback: if connected but no campaignId after 15s, show error instead of navigating to a broken URL
   useEffect(() => {
@@ -45,11 +96,14 @@ export default function JoinGamePage(): JSX.Element {
     navigatedRef.current = false
 
     try {
+      localStorage.setItem(DISPLAY_NAME_KEY, displayName.trim())
+    } catch (e) { console.warn('[JoinGame] localStorage write failed:', e) }
+
+    try {
       await joinGame(inviteCode.trim().toUpperCase(), displayName.trim())
-      // Connection established — wait for host to send campaignId via game:state-full
       setWaitingForCampaign(true)
-    } catch {
-      // Error is already set in the network store
+    } catch (error) {
+      console.error('[JoinGame] Failed to join game:', error)
     }
   }
 
@@ -97,8 +151,10 @@ export default function JoinGamePage(): JSX.Element {
         {/* Connection status indicator */}
         {isConnecting && (
           <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-900/20 border border-amber-700/30">
-            <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-amber-300">Connecting to host...</span>
+            <Spinner size="sm" />
+            <span className="text-sm text-amber-300">
+              {waitingForCampaign ? 'Connected! Waiting for campaign data...' : 'Connecting to host...'}
+            </span>
           </div>
         )}
 

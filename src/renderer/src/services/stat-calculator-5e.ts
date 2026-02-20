@@ -343,7 +343,9 @@ export function calculate5eStats(
   speciesId?: string | null,
   feats?: Array<{ id: string }> | null,
   draconicSorcererLevel?: number,
-  resolvedEffects?: ResolvedEffects
+  resolvedEffects?: ResolvedEffects,
+  armorForAC?: ArmorForAC[],
+  classNamesForAC?: string[]
 ): DerivedStats5e {
   // Apply species bonuses (or flexible species ability bonuses for 2024 species)
   const scores: AbilityScoreSet = { ...baseScores }
@@ -378,13 +380,13 @@ export function calculate5eStats(
   }
 
   const proficiencyBonus = level <= 20 ? Math.ceil(level / 4) + 1 : Math.ceil((level - 1) / 4) + 1
-  const hitDie = cls?.hitDie ?? 8
+  const hitDie = cls?.hitDie || 8
   const conMod = modifiers.constitution
 
-  // HP: max at level 1, average + CON for subsequent levels
-  let maxHP = hitDie + conMod
+  // HP: full hit die at level 1, average + CON for subsequent levels (min 1 per level)
+  let maxHP = Math.max(1, hitDie + conMod)
   for (let i = 2; i <= level; i++) {
-    maxHP += Math.floor(hitDie / 2) + 1 + conMod
+    maxHP += Math.max(1, Math.floor(hitDie / 2) + 1 + conMod)
   }
   // Add HP bonuses from species traits (Dwarven Toughness) and feats (Tough)
   maxHP += calculateHPBonusFromTraits(level, speciesId ?? null, feats ?? null, draconicSorcererLevel)
@@ -392,7 +394,15 @@ export function calculate5eStats(
   if (resolvedEffects) maxHP += resolvedEffects.hpBonus
   maxHP = Math.max(maxHP, 1)
 
-  const armorClass = 10 + modifiers.dexterity
+  const armorClass = calculateArmorClass5e({
+    dexMod: modifiers.dexterity,
+    armor: armorForAC ?? [],
+    classNames: classNamesForAC ?? [],
+    conMod: modifiers.constitution,
+    wisMod: modifiers.wisdom,
+    draconicSorcererLevel: draconicSorcererLevel ?? 0,
+    acBonusFromEffects: resolvedEffects?.acBonus ?? 0
+  })
 
   // Initiative: DEX mod + proficiency bonus if Alert feat
   let initiative = modifiers.dexterity

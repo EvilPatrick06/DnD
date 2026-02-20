@@ -155,7 +155,8 @@ export async function buildArmorFromEquipment5e(
       }
     }
     return { armor: result, matchedNames }
-  } catch {
+  } catch (error) {
+    console.error('[SaveSlice5e] Failed to build armor from equipment:', error)
     return { armor: [], matchedNames: new Set() }
   }
 }
@@ -187,7 +188,8 @@ export async function buildWeaponsFromEquipment5e(
       }
     }
     return { weapons: result, matchedNames }
-  } catch {
+  } catch (error) {
+    console.error('[SaveSlice5e] Failed to build weapons from equipment:', error)
     return { weapons: [], matchedNames: new Set() }
   }
 }
@@ -362,7 +364,10 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
   })
 
   // Re-derive data from SRD
-  Promise.all([load5eSpecies(), load5eClasses(), load5eBackgrounds()]).then(([speciesList, classes, bgs]) => {
+  Promise.all([load5eSpecies(), load5eClasses(), load5eBackgrounds()]).catch((err) => {
+    console.error('Failed to load SRD data for character edit:', err)
+    return [[], [], []] as [Awaited<ReturnType<typeof load5eSpecies>>, Awaited<ReturnType<typeof load5eClasses>>, Awaited<ReturnType<typeof load5eBackgrounds>>]
+  }).then(([speciesList, classes, bgs]) => {
     const speciesData = speciesList.find((r) => r.id === character.buildChoices.speciesId)
     const cls = classes.find((c) => c.id === character.buildChoices.classId)
     const bg = bgs.find((b) => b.id === character.buildChoices.backgroundId)
@@ -488,7 +493,19 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
   const classSlot = buildSlots.find((s) => s.category === 'class')
   const bgSlot = buildSlots.find((s) => s.category === 'background')
 
-  const [speciesList, classes, backgrounds] = await Promise.all([load5eSpecies(), load5eClasses(), load5eBackgrounds()])
+  const [speciesList, classes, backgrounds, featsData, cfData] = await Promise.all([
+    load5eSpecies(),
+    load5eClasses(),
+    load5eBackgrounds(),
+    loadJson<Array<{ id: string; name: string; category: string; description: string }>>(
+      './data/5e/feats.json'
+    ).catch(() => [] as Array<{ id: string; name: string; category: string; description: string }>),
+    loadJson<Record<string, { features: Array<{ level: number; name: string; description: string }> }>>(
+      './data/5e/class-features.json'
+    ).catch(
+      (): Record<string, { features: Array<{ level: number; name: string; description: string }> }> => ({})
+    )
+  ])
 
   const subclassSlot = buildSlots.find((s) => s.id.includes('subclass'))
 
@@ -553,10 +570,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     subclassId
   )
 
-  // Load feats data (used for origin feat + epic boon)
-  const featsData = await loadJson<Array<{ id: string; name: string; category: string; description: string }>>(
-    './data/5e/feats.json'
-  ).catch(() => [] as Array<{ id: string; name: string; category: string; description: string }>)
+  // featsData already loaded in parallel above
 
   // Resolve origin feat from background
   let originFeat: { id: string; name: string; description: string } | null = null
@@ -568,14 +582,9 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     }
   }
 
-  // Load class features up to target level
+  // cfData already loaded in parallel above
   let creationClassFeatures: Array<{ level: number; name: string; source: string; description: string }> = []
   if (classData) {
-    const cfData = await loadJson<
-      Record<string, { features: Array<{ level: number; name: string; description: string }> }>
-    >('./data/5e/class-features.json').catch(
-      (): Record<string, { features: Array<{ level: number; name: string; description: string }> }> => ({})
-    )
     const classId = classSlot?.selectedId ?? ''
     const classCF = cfData[classId]
     if (classCF) {
@@ -704,7 +713,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       maximum: stats.maxHP,
       temporary: tempHP || existingChar5e?.hitPoints?.temporary || 0
     },
-    hitDiceRemaining: existingChar5e?.hitDiceRemaining ?? targetLevel,
+    hitDice: existingChar5e?.hitDice ?? [{ current: targetLevel, maximum: targetLevel, dieType: classData?.hitDie ?? 8 }],
     armorClass: calculateArmorClass5e({
       dexMod: stats.abilityModifiers.dexterity,
       armor: [...armorBuildResult.armor, ...wearableArmor],
@@ -1137,12 +1146,13 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
                 }
               }
             }
-          } catch {
-            /* ignore subclass load failure */
+          } catch (error) {
+            console.error('[SaveSlice5e] Failed to load subclass spells:', error)
           }
         }
         return spells
-      } catch {
+      } catch (error) {
+        console.error('[SaveSlice5e] Failed to resolve spell list:', error)
         return [...racialSpells, ...progressionSpells]
       }
     })(),

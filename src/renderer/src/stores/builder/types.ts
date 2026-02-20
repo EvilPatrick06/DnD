@@ -144,7 +144,6 @@ export interface CharacterDetailsSliceState {
   characterSkin: string
   characterAppearance: string
   characterAlignment: string
-  heroPoints: number
 
   // Derived from selections
   speciesLanguages: string[]

@@ -10,6 +10,14 @@ import {
   type Season,
   type Weather
 } from '../../../services/calendar-service'
+import {
+  generateWeather as generateRandomWeather,
+  weatherToOverride,
+  CLIMATES,
+  SEASONS,
+  type Climate,
+  type Season as WeatherSeason
+} from '../../../data/weather-tables'
 import { useGameStore } from '../../../stores/useGameStore'
 import type { CalendarConfig } from '../../../types/campaign'
 import {
@@ -113,6 +121,8 @@ export default function InGameCalendarModal({ calendar, onClose, isDM }: InGameC
 
   // Weather builder local state
   const [weatherMode, setWeatherMode] = useState<'auto' | 'manual'>(weatherOverride ? 'manual' : 'auto')
+  const [randomClimate, setRandomClimate] = useState<Climate>('temperate')
+  const [randomSeason, setRandomSeason] = useState<WeatherSeason>('summer')
   const [wPreset, setWPreset] = useState(weatherOverride?.preset ?? 'Clear')
   const [wDescription, setWDescription] = useState(weatherOverride?.description ?? '')
   const [wTempUnit, setWTempUnit] = useState<'F' | 'C'>(weatherOverride?.temperatureUnit ?? 'F')
@@ -220,7 +230,7 @@ export default function InGameCalendarModal({ calendar, onClose, isDM }: InGameC
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
           <h3 className="text-sm font-semibold text-gray-200">In-Game Calendar</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>
@@ -462,6 +472,46 @@ export default function InGameCalendarModal({ calendar, onClose, isDM }: InGameC
                           {effect}
                         </label>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Random Weather Generator */}
+                  <div className="border-t border-gray-700 pt-2">
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-wide mb-1">Generate Random Weather</label>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={randomClimate}
+                        onChange={(e) => setRandomClimate(e.target.value as Climate)}
+                        className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200"
+                      >
+                        {CLIMATES.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={randomSeason}
+                        onChange={(e) => setRandomSeason(e.target.value as WeatherSeason)}
+                        className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200"
+                      >
+                        {SEASONS.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          const weather = generateRandomWeather(randomClimate, randomSeason)
+                          const override = weatherToOverride(weather)
+                          setWPreset(override.preset)
+                          setWDescription(override.description)
+                          setWTemp(override.temperature)
+                          setWTempUnit('F')
+                          setWWind(override.windSpeed)
+                          setWEffects(override.mechanicalEffects)
+                        }}
+                        className="px-3 py-1 text-xs bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded text-purple-300 cursor-pointer whitespace-nowrap"
+                      >
+                        Roll
+                      </button>
                     </div>
                   </div>
 

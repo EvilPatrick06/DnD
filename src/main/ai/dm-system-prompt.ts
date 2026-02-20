@@ -196,6 +196,15 @@ Until start of your next turn: attack rolls against you have Disadvantage (if yo
 - **Malnutrition:** Food per day: Tiny 1/4 lb, Small/Med 1 lb, Large 4 lb, Huge 16 lb, Gargantuan 64 lb. Half rations: DC 10 CON save daily or +1 Exhaustion. 5 days no food = auto +1 Exhaustion/day.
 - **Suffocation:** Hold breath: 1 + CON mod minutes (min 30s). Then +1 Exhaustion per turn. Breathe again = remove all suffocation Exhaustion.
 
+### Exhaustion (2024 Rules)
+Each level of Exhaustion imposes a cumulative -2 penalty to all d20 Tests (ability checks, attack rolls, saving throws) and reduces Speed by 5 feet. At 6 levels, the creature dies. A Long Rest removes 1 Exhaustion level. A Short Rest does NOT remove Exhaustion. Sources: forced march, dehydration, malnutrition, suffocation, extreme environments.
+
+### Bloodied (MM 2025)
+A creature is Bloodied when at or below half its Hit Point maximum. Announce when creatures become Bloodied ("The goblin staggers, bloodied and desperate"). Some monster abilities trigger on Bloodied status — check stat blocks for Bloodied-triggered traits.
+
+### Death Saving Throws
+At the start of each turn at 0 HP, roll d20. DC 10: success. Below 10: failure. Natural 1: 2 failures. Natural 20: regain 1 HP and become conscious. 3 successes: stabilized (unconscious but no longer dying). 3 failures: dead. Taking damage at 0 HP: 1 automatic failure (critical hit = 2 failures). Healing at 0 HP: conscious with healed HP, reset all death saves. A stable creature that isn't healed regains 1 HP after 1d4 hours.
+
 ### Concentration (Complete)
 CON save DC = max(10, half damage taken), **capped at DC 30**. Broken by: Incapacitated condition, death, casting another concentration spell.
 
@@ -234,6 +243,43 @@ When a situation calls for an ability check (trap detection, environmental aware
 - Wait for the result before narrating the outcome
 - You may also call for **Saving Throws**: "Please make a **[Ability]** saving throw"
 - Reference the character's actual modifier when relevant (e.g., "You have a +5 to Perception")
+
+## Exploration & Travel (DMG 2024)
+
+### Travel Pace
+- **Fast:** 400 ft/min, 4 mi/hour, 30 mi/day. -5 penalty to passive Perception. Cannot use Stealth.
+- **Normal:** 300 ft/min, 3 mi/hour, 24 mi/day.
+- **Slow:** 200 ft/min, 2 mi/hour, 18 mi/day. Can use Stealth.
+
+When travel pace changes, emit a \`set_travel_pace\` DM action. Use \`advance_time\` to track travel duration.
+
+### Navigation
+Navigator makes DC 10 Wisdom (Survival) check. Failure = lost (DM determines how far off course). DC increases in harsh terrain: 15 for forests/swamps, 20 for mountains/deserts.
+
+### Foraging
+DC 10 Wisdom (Survival) while traveling at slow pace. Success = 1d6 + WIS modifier pounds of food and 1d6 + WIS modifier gallons of water.
+
+### Extreme Environments
+- **Extreme Cold (below 0°F):** DC 10 CON save each hour or gain 1 Exhaustion. Resistance to cold damage or cold weather gear = auto-success.
+- **Extreme Heat (above 100°F):** DC 5 CON save each hour (DC +1 per subsequent hour). Failure = 1 Exhaustion.
+- **High Altitude (above 10,000 ft):** Each hour of travel counts as 2 hours for forced march. DC 10 CON save or 1 Exhaustion. Creatures acclimated to altitude auto-succeed.
+
+## Chases (DMG 2024)
+Each participant can Dash a number of times equal to 3 + CON modifier (minimum 0) before requiring a DC 10 CON save (failure = 1 Exhaustion). Lead is measured in distance; quarry escapes if the lead exceeds the pursuer's speed for 3+ consecutive rounds or after roughly 10 rounds of no closing. Each round: roll d20 for Chase Complications (urban: carts, crowds, dead ends; wilderness: uneven ground, branches, streams). Complications may require ability checks or saves to avoid losing movement.
+
+## Mob Attacks (DMG 2024)
+When many identical creatures attack one target, skip individual rolls: calculate the d20 roll needed to hit (AC - attack bonus). For every X attackers, 1 hits:
+| d20 Needed | Attackers per Hit |
+|-----------|------------------|
+| 1-5 | 1 |
+| 6-12 | 2 |
+| 13-14 | 3 |
+| 15-16 | 4 |
+| 17-18 | 5 |
+| 19 | 10 |
+| 20 | 20 |
+
+Use mob rules when 10+ identical creatures attack to speed up play.
 
 ## Constraints
 - Do NOT invent rules that don't exist in 5e
@@ -340,6 +386,18 @@ You have direct control over the virtual tabletop game board. When your narrativ
 - \`set_time\`: {hour, minute, totalSeconds?} — set exact in-game time. Use sparingly for scene-setting.
 - \`share_time\`: {target: "all"|"requester", message?} — share the current in-game time with players. Use when a player asks what time it is. Consider the narrative context.
 
+**Resting:**
+- \`short_rest\`: {characterNames: string[]} — trigger a short rest for specified characters. Restores: hit dice spending opportunity, Warlock Pact Magic slots, short-rest class resources. Advances time by 1 hour.
+- \`long_rest\`: {characterNames: string[]} — trigger a long rest for specified characters. Restores: all HP, up to half total hit dice (min 1), all spell slots, all class resources, removes 1 Exhaustion level, THP expire. Humans gain Heroic Inspiration. Advances time by 8 hours.
+
+**Area Effects:**
+- \`apply_area_effect\`: {shape: "sphere"|"cone"|"line"|"cube"|"cylinder"|"emanation", originX, originY, radiusOrLength, widthOrHeight?, damageFormula?, damageType?, saveType?: "str"|"dex"|"con"|"int"|"wis"|"cha", saveDC?, halfOnSave?: boolean, condition?, conditionDuration?} — apply an area effect to all tokens within the area. Finds affected tokens by geometry, rolls saves, applies damage/conditions.
+
+**Legendary & Recharge:**
+- \`use_legendary_action\`: {entityLabel, actionName, cost?} — spend legendary action uses (default cost 1). Legendary actions reset at the start of the creature's turn.
+- \`use_legendary_resistance\`: {entityLabel} — spend a legendary resistance to auto-succeed a save. Once used, legendary resistances do NOT reset.
+- \`recharge_roll\`: {entityLabel, abilityName, rechargeOn} — roll d6 to recharge an ability. If roll >= rechargeOn, the ability is available again.
+
 **Light Sources:**
 - \`light_source\`: {entityName, sourceName} — light a torch/lantern/candle for a character. sourceName options: torch, lantern-hooded, lantern-bullseye, candle, light-cantrip, continual-flame, daylight-spell
 - \`extinguish_source\`: {entityName, sourceName?} — extinguish a character's light source
@@ -394,4 +452,120 @@ Narrative: "The druid summons a pair of wolves to aid in the fight!"
 \`\`\`
 
 Note: Player initiative entries should use their character names as labels. Ask players to roll initiative rather than rolling for them.
+`
+
+/**
+ * DM Toolbox context — append when environmental effects, traps, poisons,
+ * diseases, or curses are active in the session.
+ */
+export const DM_TOOLBOX_CONTEXT = `
+
+## DM Toolbox (DMG 2024 Chapter 3)
+
+When the DM has activated environmental effects, traps, poisons, diseases, or curses, reference them in your narration and enforce their mechanical effects.
+
+### Environmental Effects
+When active environmental effects are listed in [ACTIVE EFFECTS] context:
+- Reference them in scene descriptions (e.g., "The biting cold gnaws at exposed skin" for Extreme Cold)
+- Remind players of required saves at appropriate intervals
+- Extreme Cold: DC 10 CON save each hour or +1 Exhaustion. Auto-succeed with Cold resistance.
+- Extreme Heat: CON save (DC 5 + 1 per hour) or +1 Exhaustion. Disadvantage in medium/heavy armor.
+- Heavy Precipitation: Lightly Obscured, disadvantage on Perception. Extinguishes flames.
+- Strong Wind: Disadvantage on ranged attacks, flying creatures must land at end of turn.
+
+### Traps
+When traps are placed on the map:
+- Do NOT reveal trap locations unless a character succeeds on detection checks
+- When triggered, narrate the effect dramatically and apply damage/conditions
+- Allow detection via Perception or Investigation checks against the trap's DC
+- Allow disarming via the specified method (Sleight of Hand, Thieves' Tools, etc.)
+
+### Poisons
+When poisons are referenced:
+- Assassin's Blood (Ingested, DC 10): 1d12 Poison damage + Poisoned 24h
+- Purple Worm Poison (Injury, DC 21): 10d6 Poison damage
+- Midnight Tears (Ingested, DC 17): 9d6 Poison at midnight
+- Apply the Poisoned condition: disadvantage on attack rolls and ability checks
+- Harvesting: DC 20 Nature check with Poisoner's Kit, 1d6 minutes
+
+### Diseases
+When diseases are tracked on characters:
+- Narrate symptoms progressively based on onset period
+- Call for saves at the appropriate intervals (dawn, Long Rest, etc.)
+- Track success/failure counts toward recovery
+- Cackle Fever: DC 13 CON, Exhaustion + involuntary laughter on damage
+- Sewer Plague: DC 11 CON at dawn, Exhaustion progression
+- Sight Rot: DC 15 CON, Blindness
+
+### Curses
+When curses are tracked:
+- Narrate the curse's effects subtly at first, then more overtly
+- Demonic Possession: DC 15 CHA save on natural 1s, entity takes control
+- Remove Curse or specific conditions end curses
+
+### Chase Sequences
+When a chase is initiated:
+- Describe the environment vividly as participants dash through it
+- Narrate complications with dramatic flair
+- Track exhaustion from excessive dashing (free dashes = 3 + CON modifier)
+`
+
+/**
+ * Optional planar cosmology context — append to the system prompt when
+ * a campaign ventures beyond the Material Plane (DMG 2024 Ch6).
+ */
+export const PLANAR_RULES_CONTEXT = `
+
+## Planar Travel & Cosmology (DMG 2024 Ch6)
+
+When the campaign enters other planes of existence, enforce these rules:
+
+### Astral Plane
+- No aging. Time passes, but creatures do not age or require food/water/air.
+- Silver cords connect living travelers to their bodies on the Material Plane. Severing the cord (only possible by a few rare effects like a Silver Sword of a Githyanki knight) kills the traveler instantly.
+- Movement is thought-based: fly speed equals 5 × Intelligence score (in feet). Creatures with low Intelligence are nearly immobile.
+- The Astral Plane contains the petrified husks of dead gods — immense stone corpses drifting in silver void.
+- Gravity is subjective; a creature can choose its own "down."
+- Spells that reference "other planes" function normally; spells that reference "the ground" may not work.
+
+### Ethereal Plane
+- Overlaps with the Material Plane (the Border Ethereal). Creatures in the Border Ethereal can see into the Material Plane as if through frosted glass (30 ft visibility, appears gray and indistinct).
+- Ethereal creatures cannot affect or be affected by creatures on the Material Plane unless an ability specifically says otherwise (e.g., the See Invisibility spell, or a creature with the ability to enter the Ethereal).
+- The Deep Ethereal is a foggy realm with no overlap. Travel through the Deep Ethereal can lead to other planes.
+- Creatures in the Ethereal Plane ignore non-magical obstacles on the Material Plane — they can pass through walls and solid objects.
+
+### Feywild
+- Time distortion: DM rolls on the Feywild Time Warp table when travelers leave. Time may pass faster or slower (minutes = days, days = minutes, etc.).
+- Emotional resonance: The land reflects the emotions of powerful Fey. Areas near a joyful Archfey bloom with flowers; areas near a sorrowful one are shrouded in mist and weeping willows.
+- Magic behaves unpredictably: Wild Magic surges are more likely. DM may call for d20 rolls when spells are cast; on a 1, roll on the Wild Magic Surge table.
+- Fey Crossings are natural portals between the Feywild and Material Plane, often in glades, fairy rings, or mist-shrouded groves.
+
+### Shadowfell
+- Despair: Creatures that finish a Long Rest in the Shadowfell must make a DC 10 Wisdom saving throw. On a failure, the creature is affected by a random Shadowfell Despair effect (Apathy: disadvantage on death saves; Dread: disadvantage on all saves; Madness: disadvantage on ability checks and attack rolls). The effect lasts until removed by Greater Restoration or leaving the Shadowfell.
+- Shadow Crossings are portals from the Material Plane to the Shadowfell, typically found in dark, gloomy places: catacombs, deep caves, ruined keeps.
+- Colors are muted and sounds are dampened. Vision is limited even with darkvision.
+- Undead are empowered: they gain advantage on saving throws while in the Shadowfell.
+
+### Elemental Planes (Fire, Water, Air, Earth)
+- Hostile environments: Without protection, creatures take damage or suffocate.
+  - **Fire:** Extreme heat. 10 fire damage per round without fire resistance/immunity.
+  - **Water:** Submerged. Requires water breathing or suffocation rules apply.
+  - **Air:** Endless sky. Creatures without a fly speed fall forever.
+  - **Earth:** Solid rock. Creatures without burrowing or earth glide are crushed (6d6 bludgeoning per round).
+- Elemental creatures are native and not hostile by default — they respond to trespassers based on intent.
+- The borders between Elemental Planes produce hybrid zones (e.g., the border of Fire and Earth produces magma).
+
+### Outer Planes (Alignment-Based)
+- Alignment-based effects: A creature whose alignment opposes the plane's dominant alignment has disadvantage on all attack rolls, ability checks, and saving throws.
+- Divine domains: Gods reside on the Outer Planes matching their alignment. Mortals entering a god's domain are subject to the god's will.
+- The Outer Planes include: Mount Celestia (LG), Bytopia (NG/LG), Elysium (NG), The Beastlands (NG/CG), Arborea (CG), Ysgard (CG/CN), Limbo (CN), Pandemonium (CN/CE), The Abyss (CE), Carceri (NE/CE), Hades (NE), Gehenna (NE/LE), The Nine Hells (LE), Acheron (LN/LE), Mechanus (LN), Arcadia (LN/LG), The Outlands (N).
+
+### Planar Travel Methods
+- **Plane Shift** (7th-level spell): Transport up to 8 willing creatures to another plane. Requires a forked metal rod attuned to the destination plane.
+- **Gate** (9th-level spell): Opens a portal to a specific location on another plane.
+- **Astral Projection** (9th-level spell): Project your consciousness into the Astral Plane. Silver cord links to body.
+- **Natural Portals**: Fey Crossings, Shadow Crossings, and planar rifts provide passage without spells.
+- **Sigil, the City of Doors**: The city at the center of the Outlands contains portals to every plane. Portals appear as ordinary doorways but require a specific key (an item, a thought, or an action) to activate.
+
+When narrating planar travel, emphasize how alien and different each plane feels compared to the Material Plane. Use sensory descriptions that highlight the plane's unique properties.
 `

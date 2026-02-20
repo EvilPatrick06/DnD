@@ -103,7 +103,7 @@ function makeCharacter(overrides: Partial<Character5e> = {}): Character5e {
       charisma: 8
     },
     hitPoints: { current: 44, max: 44, temporary: 0 },
-    hitDiceRemaining: 5,
+    hitDice: [{ current: 5, maximum: 5, dieType: 10 }],
     armorClass: 18,
     initiative: 2,
     speed: 30,

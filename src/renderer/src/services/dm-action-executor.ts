@@ -97,6 +97,69 @@ function rollDiceFormula(formula: string): { rolls: number[]; total: number } {
   return { rolls, total }
 }
 
+// ── Area Geometry Helpers ──
+
+function findTokensInArea(
+  tokens: MapToken[],
+  originX: number,
+  originY: number,
+  radiusCells: number,
+  shape: string,
+  widthCells?: number
+): MapToken[] {
+  return tokens.filter((t) => {
+    const dx = t.gridX - originX
+    const dy = t.gridY - originY
+    switch (shape) {
+      case 'sphere':
+      case 'emanation':
+      case 'cylinder':
+        return Math.sqrt(dx * dx + dy * dy) <= radiusCells
+      case 'cube':
+      case 'cone': {
+        const half = radiusCells
+        return Math.abs(dx) <= half && Math.abs(dy) <= half
+      }
+      case 'line': {
+        const w = widthCells ?? 1
+        return Math.abs(dy) <= Math.floor(w / 2) && dx >= 0 && dx <= radiusCells
+      }
+      default:
+        return Math.sqrt(dx * dx + dy * dy) <= radiusCells
+    }
+  })
+}
+
+// ── Broadcast Sync Helpers (Task 60) ──
+
+function broadcastInitiativeSync(): void {
+  const gs = useGameStore.getState()
+  if (!gs.initiative) return
+  const sendMsg = useNetworkStore.getState().sendMessage
+  sendMsg('dm:initiative-update', {
+    order: gs.initiative.entries.map((e) => ({ id: e.id, name: e.entityName, initiative: e.total })),
+    currentTurnIndex: gs.initiative.currentIndex
+  })
+}
+
+function broadcastTokenSync(mapId: string): void {
+  const gs = useGameStore.getState()
+  const map = gs.maps.find((m) => m.id === mapId)
+  if (!map) return
+  const sendMsg = useNetworkStore.getState().sendMessage
+  for (const t of map.tokens) {
+    sendMsg('dm:token-move', { tokenId: t.id, gridX: t.gridX, gridY: t.gridY })
+  }
+}
+
+function broadcastConditionSync(): void {
+  const gs = useGameStore.getState()
+  const sendMsg = useNetworkStore.getState().sendMessage
+  for (const c of gs.conditions) {
+    sendMsg('dm:condition-update', { targetId: c.entityId, condition: c.condition, active: true })
+  }
+}
+
 // ── Main Executor ──
 
 /**
@@ -104,12 +167,18 @@ function rollDiceFormula(formula: string): { rolls: number[]; total: number } {
  * actions are queued as pendingActions instead of executing immediately.
  * Pass `bypassApproval: true` to force execution (used when DM approves pending actions).
  */
+let _useAiDmStore: typeof import('../stores/useAiDmStore').useAiDmStore | null = null
+function getAiDmStore(): typeof import('../stores/useAiDmStore').useAiDmStore {
+  if (!_useAiDmStore) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _useAiDmStore = (require('../stores/useAiDmStore') as typeof import('../stores/useAiDmStore')).useAiDmStore
+  }
+  return _useAiDmStore
+}
+
 export function executeDmActions(actions: DmAction[], bypassApproval = false): ExecutionResult {
-  // Check if DM approval is required
   if (!bypassApproval) {
-    // Dynamic import to avoid circular dependency
-    const { useAiDmStore } = require('../stores/useAiDmStore')
-    const aiStore = useAiDmStore.getState()
+    const aiStore = getAiDmStore().getState()
     if (aiStore.dmApprovalRequired && actions.length > 0) {
       aiStore.setPendingActions({
         id: crypto.randomUUID(),
@@ -185,6 +254,7 @@ function executeOne(
       if (gameStore.initiative && token.walkSpeed) {
         gameStore.initTurnState(token.entityId, token.walkSpeed)
       }
+      broadcastTokenSync(activeMap.id)
       return true
     }
 
@@ -196,6 +266,8 @@ function executeOne(
       const gridY = action.gridY as number
       if (typeof gridX !== 'number' || typeof gridY !== 'number') throw new Error('Missing gridX/gridY')
       gameStore.moveToken(activeMap.id, token.id, gridX, gridY)
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:token-move', { tokenId: token.id, gridX, gridY })
       return true
     }
 
@@ -204,6 +276,7 @@ function executeOne(
       const token = resolveTokenByLabel(activeMap.tokens, action.label as string)
       if (!token) throw new Error(`Token not found: ${action.label}`)
       gameStore.removeToken(activeMap.id, token.id)
+      broadcastTokenSync(activeMap.id)
       return true
     }
 
@@ -223,6 +296,7 @@ function executeOne(
       if (action.visibleToPlayers !== undefined) updates.visibleToPlayers = action.visibleToPlayers as boolean
       if (action.label_new) updates.label = action.label_new as string
       gameStore.updateToken(activeMap.id, token.id, updates)
+      broadcastTokenSync(activeMap.id)
       return true
     }
 
@@ -258,6 +332,7 @@ function executeOne(
         const token = activeMap?.tokens.find((t) => t.entityId === entry.entityId)
         gameStore.initTurnState(entry.entityId, token?.walkSpeed ?? 30)
       }
+      broadcastInitiativeSync()
       return true
     }
 
@@ -275,17 +350,61 @@ function executeOne(
       }
       gameStore.addToInitiative(entry)
       gameStore.initTurnState(entry.entityId, token?.walkSpeed ?? 30)
+      broadcastInitiativeSync()
       return true
     }
 
     case 'next_turn': {
       if (!gameStore.initiative) throw new Error('No initiative running')
+
+      // Reset legendary actions for the creature whose turn is starting
+      const currentIdx = gameStore.initiative.currentIndex
+      const nextIdx = (currentIdx + 1) % gameStore.initiative.entries.length
+      const nextEntry = gameStore.initiative.entries[nextIdx]
+      if (nextEntry?.legendaryActions) {
+        gameStore.updateInitiativeEntry(nextEntry.id, {
+          legendaryActions: { maximum: nextEntry.legendaryActions.maximum, used: 0 }
+        })
+      }
+
+      // Auto-roll recharge abilities for the next creature
+      if (nextEntry?.rechargeAbilities && nextEntry.entityType === 'enemy') {
+        const abilities = [...nextEntry.rechargeAbilities]
+        let anyRecharged = false
+        for (const ability of abilities) {
+          if (!ability.available) {
+            const roll = rollDiceFormula('1d6')
+            if (roll.total >= ability.rechargeOn) {
+              ability.available = true
+              anyRecharged = true
+              const addChat = useLobbyStore.getState().addChatMessage
+              const sendMsg = useNetworkStore.getState().sendMessage
+              const msg = `${nextEntry.entityName}'s ${ability.name} has recharged! (rolled ${roll.total})`
+              addChat({
+                id: `ai-recharge-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+                senderId: 'ai-dm',
+                senderName: 'Dungeon Master',
+                content: msg,
+                timestamp: Date.now(),
+                isSystem: true
+              })
+              sendMsg('chat:message', { message: msg, isSystem: true })
+            }
+          }
+        }
+        if (anyRecharged) {
+          gameStore.updateInitiativeEntry(nextEntry.id, { rechargeAbilities: abilities })
+        }
+      }
+
       gameStore.nextTurn()
+      broadcastInitiativeSync()
       return true
     }
 
     case 'end_initiative': {
       gameStore.endInitiative()
+      broadcastInitiativeSync()
       return true
     }
 
@@ -296,6 +415,7 @@ function executeOne(
       )
       if (!entry) throw new Error(`Initiative entry not found: ${action.label}`)
       gameStore.removeFromInitiative(entry.id)
+      broadcastInitiativeSync()
       return true
     }
 
@@ -306,6 +426,8 @@ function executeOne(
       const cells = action.cells as Array<{ x: number; y: number }>
       if (!Array.isArray(cells)) throw new Error('Missing cells array')
       gameStore.revealFog(activeMap.id, cells)
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:fog-reveal', { cells, reveal: true })
       return true
     }
 
@@ -314,6 +436,8 @@ function executeOne(
       const cells = action.cells as Array<{ x: number; y: number }>
       if (!Array.isArray(cells)) throw new Error('Missing cells array')
       gameStore.hideFog(activeMap.id, cells)
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:fog-reveal', { cells, reveal: false })
       return true
     }
 
@@ -406,6 +530,8 @@ function executeOne(
       const map = resolveMapByName(gameStore.maps, action.mapName as string)
       if (!map) throw new Error(`Map not found: ${action.mapName}`)
       gameStore.setActiveMap(map.id)
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:map-change', { mapId: map.id })
       return true
     }
 
@@ -514,6 +640,12 @@ function executeOne(
         source: (action.source as string) || 'AI DM',
         appliedRound: gameStore.round
       })
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:condition-update', {
+        targetId: token.entityId,
+        condition: action.condition as string,
+        active: true
+      })
       return true
     }
 
@@ -526,6 +658,12 @@ function executeOne(
       )
       if (!condition) throw new Error(`Condition "${action.condition}" not found on ${action.entityLabel}`)
       gameStore.removeCondition(condition.id)
+      const sendMsg = useNetworkStore.getState().sendMessage
+      sendMsg('dm:condition-update', {
+        targetId: token.entityId,
+        condition: action.condition as string,
+        active: false
+      })
       return true
     }
 
@@ -561,6 +699,7 @@ function executeOne(
           walkSpeed: action.speed as number | undefined
         }
         gameStore.addToken(activeMap.id, token)
+        broadcastTokenSync(activeMap.id)
         return true
       }
 
@@ -596,6 +735,7 @@ function executeOne(
       if (gameStore.initiative && token.walkSpeed) {
         gameStore.initTurnState(token.entityId, token.walkSpeed)
       }
+      broadcastTokenSync(activeMap.id)
       return true
     }
 
@@ -734,6 +874,259 @@ function executeOne(
       return true
     }
 
+    // ── Resting ──
+
+    case 'short_rest': {
+      const names = action.characterNames as string[]
+      if (!Array.isArray(names) || names.length === 0) throw new Error('No character names for short_rest')
+
+      // Advance time by 1 hour
+      gameStore.advanceTimeSeconds(3600)
+
+      // Track rest timing
+      const totalSec = useGameStore.getState().inGameTime?.totalSeconds ?? 0
+      gameStore.setRestTracking({
+        lastLongRestSeconds: gameStore.restTracking?.lastLongRestSeconds ?? null,
+        lastShortRestSeconds: totalSec
+      })
+
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `Short rest completed for ${names.join(', ')}. Hit dice may be spent to recover HP. Warlock spell slots restored.`
+      addChat({
+        id: `ai-rest-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+
+      const newTime = useGameStore.getState().inGameTime
+      if (newTime) sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
+      return true
+    }
+
+    case 'long_rest': {
+      const names = action.characterNames as string[]
+      if (!Array.isArray(names) || names.length === 0) throw new Error('No character names for long_rest')
+
+      // Advance time by 8 hours
+      gameStore.advanceTimeSeconds(28800)
+
+      // Track rest timing
+      const totalSec = useGameStore.getState().inGameTime?.totalSeconds ?? 0
+      gameStore.setRestTracking({
+        lastLongRestSeconds: totalSec,
+        lastShortRestSeconds: gameStore.restTracking?.lastShortRestSeconds ?? null
+      })
+
+      // Remove all Exhaustion conditions for named characters
+      if (activeMap) {
+        for (const name of names) {
+          const token = resolveTokenByLabel(activeMap.tokens, name)
+          if (token) {
+            const exhaustionConditions = gameStore.conditions.filter(
+              (c) => c.entityId === token.entityId && c.condition.toLowerCase() === 'exhaustion'
+            )
+            for (const ec of exhaustionConditions) {
+              gameStore.removeCondition(ec.id)
+            }
+          }
+        }
+      }
+
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `Long rest completed for ${names.join(', ')}. All HP restored, spell slots recovered, class resources reset, and all Exhaustion removed.`
+      addChat({
+        id: `ai-rest-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+
+      const newTime = useGameStore.getState().inGameTime
+      if (newTime) sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
+
+      // Broadcast condition changes
+      broadcastConditionSync()
+      return true
+    }
+
+    // ── Area Effects ──
+
+    case 'apply_area_effect': {
+      if (!activeMap) throw new Error('No active map')
+      const originX = action.originX as number
+      const originY = action.originY as number
+      const radius = action.radiusOrLength as number
+      const shape = action.shape as string
+      if (typeof originX !== 'number' || typeof originY !== 'number' || typeof radius !== 'number')
+        throw new Error('Missing origin/radius for area effect')
+
+      const radiusCells = Math.ceil(radius / 5)
+      const affectedTokens = findTokensInArea(
+        activeMap.tokens,
+        originX,
+        originY,
+        radiusCells,
+        shape,
+        action.widthOrHeight as number | undefined
+      )
+
+      if (affectedTokens.length === 0) return true
+
+      const saveType = action.saveType as string | undefined
+      const saveDC = action.saveDC as number | undefined
+      const damageFormula = action.damageFormula as string | undefined
+      const halfOnSave = action.halfOnSave as boolean | undefined
+      const condition = action.condition as string | undefined
+      const conditionDuration = action.conditionDuration as number | 'permanent' | undefined
+
+      for (const token of affectedTokens) {
+        let saved = false
+        if (saveType && saveDC) {
+          const saveRoll = rollDiceFormula('1d20')
+          saved = saveRoll.total >= saveDC
+        }
+
+        if (damageFormula) {
+          const dmg = rollDiceFormula(damageFormula)
+          let finalDamage = dmg.total
+          if (saved && halfOnSave) finalDamage = Math.floor(finalDamage / 2)
+          else if (saved && !halfOnSave) finalDamage = 0
+
+          if (finalDamage > 0 && token.currentHP != null) {
+            const newHP = Math.max(0, token.currentHP - finalDamage)
+            gameStore.updateToken(activeMap.id, token.id, { currentHP: newHP })
+          }
+        }
+
+        if (condition && (!saved || !saveType)) {
+          gameStore.addCondition({
+            id: crypto.randomUUID(),
+            entityId: token.entityId,
+            entityName: token.label,
+            condition,
+            duration: conditionDuration ?? 'permanent',
+            source: 'Area Effect',
+            appliedRound: gameStore.round
+          })
+        }
+      }
+
+      broadcastTokenSync(activeMap.id)
+      broadcastConditionSync()
+      return true
+    }
+
+    // ── Legendary Actions & Resistances ──
+
+    case 'use_legendary_action': {
+      if (!gameStore.initiative) throw new Error('No initiative running')
+      const label = action.entityLabel as string
+      const cost = (action.cost as number) || 1
+      const entry = gameStore.initiative.entries.find(
+        (e) => e.entityName.toLowerCase() === label.toLowerCase()
+      )
+      if (!entry) throw new Error(`Initiative entry not found: ${label}`)
+      if (!entry.legendaryActions) throw new Error(`${label} has no legendary actions`)
+      const available = entry.legendaryActions.maximum - entry.legendaryActions.used
+      if (available < cost) throw new Error(`${label} has only ${available} legendary actions remaining (needs ${cost})`)
+
+      gameStore.updateInitiativeEntry(entry.id, {
+        legendaryActions: {
+          maximum: entry.legendaryActions.maximum,
+          used: entry.legendaryActions.used + cost
+        }
+      })
+      broadcastInitiativeSync()
+      return true
+    }
+
+    case 'use_legendary_resistance': {
+      if (!gameStore.initiative) throw new Error('No initiative running')
+      const label = action.entityLabel as string
+      const entry = gameStore.initiative.entries.find(
+        (e) => e.entityName.toLowerCase() === label.toLowerCase()
+      )
+      if (!entry) throw new Error(`Initiative entry not found: ${label}`)
+      if (!entry.legendaryResistances || entry.legendaryResistances.remaining <= 0)
+        throw new Error(`${label} has no legendary resistances remaining`)
+
+      gameStore.updateInitiativeEntry(entry.id, {
+        legendaryResistances: {
+          max: entry.legendaryResistances.max,
+          remaining: entry.legendaryResistances.remaining - 1
+        }
+      })
+
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const remaining = entry.legendaryResistances.remaining - 1
+      const msg = `${label} uses a Legendary Resistance! (${remaining}/${entry.legendaryResistances.max} remaining)`
+      addChat({
+        id: `ai-lr-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      broadcastInitiativeSync()
+      return true
+    }
+
+    // ── Recharge Roll ──
+
+    case 'recharge_roll': {
+      if (!gameStore.initiative) throw new Error('No initiative running')
+      const label = action.entityLabel as string
+      const abilityName = action.abilityName as string
+      const rechargeOn = action.rechargeOn as number
+      if (!abilityName || typeof rechargeOn !== 'number') throw new Error('Missing abilityName or rechargeOn')
+
+      const entry = gameStore.initiative.entries.find(
+        (e) => e.entityName.toLowerCase() === label.toLowerCase()
+      )
+      if (!entry) throw new Error(`Initiative entry not found: ${label}`)
+
+      const roll = rollDiceFormula('1d6')
+      const recharged = roll.total >= rechargeOn
+
+      const abilities = entry.rechargeAbilities ? [...entry.rechargeAbilities] : []
+      const existing = abilities.find((a) => a.name.toLowerCase() === abilityName.toLowerCase())
+      if (existing) {
+        existing.available = recharged
+      } else {
+        abilities.push({ name: abilityName, rechargeOn, available: recharged })
+      }
+      gameStore.updateInitiativeEntry(entry.id, { rechargeAbilities: abilities })
+
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const resultText = recharged
+        ? `${label}'s ${abilityName} has recharged! (rolled ${roll.total}, needed ${rechargeOn}+)`
+        : `${label}'s ${abilityName} did not recharge. (rolled ${roll.total}, needed ${rechargeOn}+)`
+      addChat({
+        id: `ai-recharge-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: resultText,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: resultText, isSystem: true })
+      broadcastInitiativeSync()
+      return true
+    }
+
     default:
       throw new Error(`Unknown DM action: ${action.action}`)
   }
@@ -759,7 +1152,10 @@ export function buildGameStateSnapshot(): string {
       lines.push('Tokens:')
       for (const t of activeMap.tokens) {
         let desc = `- ${t.label} (${t.entityType}) at (${t.gridX}, ${t.gridY}) ${t.sizeX}x${t.sizeY}`
-        if (t.currentHP != null && t.maxHP != null) desc += ` HP:${t.currentHP}/${t.maxHP}`
+        if (t.currentHP != null && t.maxHP != null) {
+          const bloodied = t.currentHP <= Math.floor(t.maxHP / 2) && t.currentHP > 0
+          desc += ` HP:${t.currentHP}/${t.maxHP}${bloodied ? ' [BLOODIED]' : ''}`
+        }
         if (t.ac != null) desc += ` AC:${t.ac}`
         if (t.walkSpeed) desc += ` Speed:${t.walkSpeed}`
         if (t.conditions.length > 0) desc += ` [${t.conditions.join(', ')}]`
@@ -780,7 +1176,21 @@ export function buildGameStateSnapshot(): string {
     for (let i = 0; i < gameStore.initiative.entries.length; i++) {
       const e = gameStore.initiative.entries[i]
       const marker = i === gameStore.initiative.currentIndex ? ' <- CURRENT' : ''
-      lines.push(`  ${i + 1}. ${e.entityName} (${e.total})${marker}`)
+      let extras = ''
+      if (e.legendaryActions) {
+        const avail = e.legendaryActions.maximum - e.legendaryActions.used
+        extras += ` LA:${avail}/${e.legendaryActions.maximum}`
+      }
+      if (e.legendaryResistances) {
+        extras += ` LR:${e.legendaryResistances.remaining}/${e.legendaryResistances.max}`
+      }
+      if (e.rechargeAbilities && e.rechargeAbilities.length > 0) {
+        const abilities = e.rechargeAbilities
+          .map((a) => `${a.name}(${a.available ? 'ready' : `recharge ${a.rechargeOn}+`})`)
+          .join(', ')
+        extras += ` [${abilities}]`
+      }
+      lines.push(`  ${i + 1}. ${e.entityName} (${e.total})${extras}${marker}`)
     }
   }
 
@@ -850,6 +1260,40 @@ export function buildGameStateSnapshot(): string {
   // Shop
   if (gameStore.shopOpen) {
     lines.push(`\nShop Open: "${gameStore.shopName}" (${gameStore.shopInventory.length} items)`)
+  }
+
+  // Active environmental effects
+  if (gameStore.activeEnvironmentalEffects.length > 0) {
+    lines.push('\n[ACTIVE EFFECTS]')
+    for (const e of gameStore.activeEnvironmentalEffects) {
+      lines.push(`- ${e.name}`)
+    }
+    lines.push('[/ACTIVE EFFECTS]')
+  }
+
+  // Active diseases
+  if (gameStore.activeDiseases.length > 0) {
+    lines.push('\nActive Diseases:')
+    for (const d of gameStore.activeDiseases) {
+      lines.push(`- ${d.targetName}: ${d.name} (saves: ${d.successCount} success / ${d.failCount} fail)`)
+    }
+  }
+
+  // Active curses
+  if (gameStore.activeCurses.length > 0) {
+    lines.push('\nActive Curses:')
+    for (const c of gameStore.activeCurses) {
+      lines.push(`- ${c.targetName}: ${c.name}${c.source ? ` (from ${c.source})` : ''}`)
+    }
+  }
+
+  // Placed traps (DM context only — don't reveal to players)
+  const armedTraps = gameStore.placedTraps.filter((t) => t.armed)
+  if (armedTraps.length > 0) {
+    lines.push('\n[DM ONLY] Armed Traps:')
+    for (const t of armedTraps) {
+      lines.push(`- ${t.name} at (${t.gridX}, ${t.gridY})${t.revealed ? ' [REVEALED]' : ' [HIDDEN]'}`)
+    }
   }
 
   lines.push('[/GAME STATE]')
