@@ -20,19 +20,62 @@ import type {
   SubclassData,
   TreasureTablesFile
 } from '../types/data'
-import type { Curse, EnvironmentalEffect, Hazard, Poison, SupernaturalGift, Trap } from '../types/dm-toolbox'
+import type {
+  Curse,
+  Disease,
+  EnvironmentalEffect,
+  Hazard,
+  Poison,
+  SiegeEquipment,
+  SupernaturalGift,
+  Trap
+} from '../types/dm-toolbox'
 import type { GameSystem } from '../types/game-system'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { MonsterStatBlock } from '../types/monster'
 
-const cache = new Map<string, unknown>()
+const MAX_CACHE_ENTRIES = 50
+const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
+interface CacheEntry {
+  data: unknown
+  timestamp: number
+}
+
+const cache = new Map<string, CacheEntry>()
+
+function evictIfNeeded(): void {
+  if (cache.size < MAX_CACHE_ENTRIES) return
+  const oldest = cache.keys().next().value
+  if (oldest !== undefined) cache.delete(oldest)
+}
+
+function isExpired(entry: CacheEntry): boolean {
+  return Date.now() - entry.timestamp > CACHE_TTL_MS
+}
 
 export async function loadJson<T>(path: string): Promise<T> {
-  if (cache.has(path)) return cache.get(path) as T
+  const cached = cache.get(path)
+  if (cached && !isExpired(cached)) return cached.data as T
+
   const res = await fetch(path)
-  const data = await res.json()
-  cache.set(path, data)
-  return data as T
+  if (!res.ok) {
+    throw new Error(`Failed to load ${path}: ${res.status} ${res.statusText}`)
+  }
+  let data: T
+  try {
+    data = (await res.json()) as T
+  } catch (e) {
+    throw new Error(`Failed to parse JSON from ${path}: ${e}`)
+  }
+  evictIfNeeded()
+  cache.set(path, { data, timestamp: Date.now() })
+  return data
+}
+
+/** Invalidate all cached data (force re-fetch on next access). */
+export function clearDataCache(): void {
+  cache.clear()
 }
 
 // === 5e Transformers ===
@@ -215,7 +258,8 @@ export async function getOptionsForSlot(
             ? subclasses.filter((sc) => sc.class === context.selectedClassId)
             : subclasses
           return filtered.map(subclassToOption)
-        } catch {
+        } catch (error) {
+          console.error('[DataProvider] Failed to load subclasses:', error)
           return []
         }
       }
@@ -497,6 +541,17 @@ export async function load5eCurses(): Promise<Curse[]> {
 
 export async function load5eSupernaturalGifts(): Promise<SupernaturalGift[]> {
   return loadJson<SupernaturalGift[]>('./data/5e/supernatural-gifts.json')
+}
+
+export async function load5eSiegeEquipment(): Promise<SiegeEquipment[]> {
+  return loadJson<SiegeEquipment[]>('./data/5e/siege-equipment.json')
+}
+
+export async function load5eSettlements(): Promise<
+  import('../types/dm-toolbox').Settlement[]
+> {
+  const file = await loadJson<{ sizes: import('../types/dm-toolbox').Settlement[] }>('./data/5e/settlements.json')
+  return file.sizes
 }
 
 export async function load5eMounts(): Promise<import('../types/mount').MountStatBlock[]> {

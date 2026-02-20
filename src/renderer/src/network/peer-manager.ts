@@ -1,4 +1,8 @@
 import Peer from 'peerjs'
+import { PEER_CREATION_TIMEOUT_MS } from '../config/constants'
+import { logger } from '../utils/logger'
+
+export { generateInviteCode } from '../utils/invite-code'
 
 // Module-level state (singleton pattern)
 let peer: Peer | null = null
@@ -38,19 +42,6 @@ export function resetIceConfig(): void {
 }
 
 /**
- * Generate a short random invite code (6 chars, uppercase alphanumeric).
- * This code doubles as the PeerJS peer ID for the host.
- */
-export function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Removed ambiguous: I, O, 0, 1
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
-}
-
-/**
  * Create a new PeerJS instance. If a customId is provided, it will be used
  * as the peer ID (used by the host with the invite code). Otherwise PeerJS
  * assigns a random ID.
@@ -72,19 +63,19 @@ export function createPeer(customId?: string): Promise<Peer> {
     const timeout = setTimeout(() => {
       newPeer.destroy()
       reject(new Error('Peer creation timed out after 15 seconds'))
-    }, 15000)
+    }, PEER_CREATION_TIMEOUT_MS)
 
     newPeer.on('open', (id) => {
       clearTimeout(timeout)
       peer = newPeer
       localPeerId = id
-      console.log('[PeerManager] Peer created with ID:', id)
+      logger.debug('[PeerManager] Peer created with ID:', id)
       resolve(newPeer)
     })
 
     newPeer.on('error', (err) => {
       clearTimeout(timeout)
-      console.error('[PeerManager] Peer error:', err)
+      logger.error('[PeerManager] Peer error:', err)
 
       // If the peer ID is already taken, the host should retry with a new code
       if (err.type === 'unavailable-id') {
@@ -109,11 +100,11 @@ export function createPeer(customId?: string): Promise<Peer> {
  */
 export function destroyPeer(): void {
   if (peer) {
-    console.log('[PeerManager] Destroying peer:', localPeerId)
+    logger.debug('[PeerManager] Destroying peer:', localPeerId)
     try {
       peer.destroy()
     } catch (e) {
-      console.warn('[PeerManager] Error during peer destroy:', e)
+      logger.warn('[PeerManager] Error during peer destroy:', e)
     }
     peer = null
     localPeerId = null

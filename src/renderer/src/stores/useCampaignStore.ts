@@ -1,17 +1,9 @@
 import { create } from 'zustand'
 import type { Campaign } from '../types/campaign'
+import { generateInviteCode } from '../utils/invite-code'
 
 function generateId(): string {
   return crypto.randomUUID()
-}
-
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
 }
 
 interface CampaignState {
@@ -21,6 +13,7 @@ interface CampaignState {
   loadCampaigns: () => Promise<void>
   saveCampaign: (campaign: Campaign) => Promise<void>
   deleteCampaign: (id: string) => Promise<void>
+  deleteAllCampaigns: () => Promise<void>
   setActiveCampaign: (id: string | null) => void
   getActiveCampaign: () => Campaign | null
   addCampaignToState: (campaign: Campaign) => void
@@ -38,7 +31,15 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     set({ loading: true })
     try {
       const rawData = await window.api.loadCampaigns()
-      const diskCampaigns = rawData as unknown as Campaign[]
+      if (!Array.isArray(rawData)) {
+        const err = rawData as { success?: boolean; error?: string } | undefined
+        console.error('Failed to load campaigns:', err?.error ?? 'unexpected response')
+        set({ loading: false })
+        return
+      }
+      const diskCampaigns = (rawData
+        .filter((c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string')
+      ) as unknown as Campaign[]
       set((state) => {
         const diskIds = new Set(diskCampaigns.map((c) => c.id))
         const inMemoryOnly = state.campaigns.filter((c) => !diskIds.has(c.id))
@@ -78,6 +79,18 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     } catch (error) {
       console.error('Failed to delete campaign:', error)
     }
+  },
+
+  deleteAllCampaigns: async () => {
+    const { campaigns } = get()
+    for (const c of campaigns) {
+      try {
+        await window.api.deleteCampaign(c.id)
+      } catch (error) {
+        console.error('Failed to delete campaign:', c.id, error)
+      }
+    }
+    set({ campaigns: [], activeCampaignId: null })
   },
 
   setActiveCampaign: (id) => set({ activeCampaignId: id }),

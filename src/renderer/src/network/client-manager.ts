@@ -1,4 +1,6 @@
 import type { DataConnection } from 'peerjs'
+import { BASE_RETRY_MS, CONNECTION_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, MAX_RECONNECT_RETRIES, MAX_RETRY_MS } from '../config/constants'
+import { logger } from '../utils/logger'
 import { createPeer, destroyPeer, getPeerId } from './peer-manager'
 import { validateNetworkMessage } from './schemas'
 import type { NetworkMessage } from './types'
@@ -27,13 +29,17 @@ let connected = false
 let displayName = ''
 let sequenceCounter = 0
 
+// Persisted character info for reconnection
+let lastCharacterId: string | null = null
+let lastCharacterName: string | null = null
+
 // Reconnection state (exponential backoff with jitter)
-const MAX_RETRIES = 5
-const BASE_RETRY_MS = 1000
-const MAX_RETRY_MS = 30_000
 let retryCount = 0
 let retryTimeout: ReturnType<typeof setTimeout> | null = null
 let lastInviteCode: string | null = null
+
+// Heartbeat
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
 // Event callbacks
 type MessageCallback = (message: NetworkMessage) => void
@@ -62,6 +68,10 @@ export async function connectToHost(
   retryCount = 0
   sequenceCounter = 0
 
+  // Persist character info for reconnection
+  if (characterId !== null) lastCharacterId = characterId
+  if (characterName !== null) lastCharacterName = characterName
+
   await attemptConnection(lastInviteCode, characterId, characterName)
 }
 
@@ -69,7 +79,7 @@ export async function connectToHost(
  * Disconnect from the host and clean up.
  */
 export function disconnect(): void {
-  console.log('[ClientManager] Disconnecting...')
+  logger.debug('[ClientManager] Disconnecting...')
 
   // Cancel any pending retry
   if (retryTimeout) {
@@ -95,11 +105,13 @@ export function disconnect(): void {
 
   connected = false
   lastInviteCode = null
+  lastCharacterId = null
+  lastCharacterName = null
   retryCount = 0
 
+  stopHeartbeat()
   destroyPeer()
 
-  // Clear callbacks
   messageCallbacks.clear()
   disconnectedCallbacks.clear()
 }
@@ -110,7 +122,7 @@ export function disconnect(): void {
  */
 export function sendMessage(msg: Omit<NetworkMessage, 'senderId' | 'senderName' | 'timestamp' | 'sequence'>): void {
   if (!connection || !connection.open) {
-    console.warn('[ClientManager] Cannot send message — not connected')
+    logger.warn('[ClientManager] Cannot send message — not connected')
     return
   }
 
@@ -125,7 +137,7 @@ export function sendMessage(msg: Omit<NetworkMessage, 'senderId' | 'senderName' 
   try {
     connection.send(JSON.stringify(fullMessage))
   } catch (e) {
-    console.error('[ClientManager] Failed to send message:', e)
+    logger.error('[ClientManager] Failed to send message:', e)
   }
 }
 
@@ -158,6 +170,37 @@ export function isConnected(): boolean {
   return connected
 }
 
+/**
+ * Update the stored character info so reconnection preserves the selection.
+ * Call this whenever the player changes their character in the lobby.
+ */
+export function setCharacterInfo(characterId: string | null, characterName: string | null): void {
+  lastCharacterId = characterId
+  lastCharacterName = characterName
+}
+
+// --- Heartbeat ---
+
+function startHeartbeat(): void {
+  stopHeartbeat()
+  heartbeatInterval = setInterval(() => {
+    if (connected) {
+      try {
+        sendMessage({ type: 'ping', payload: {} })
+      } catch {
+        // Ignore send errors for heartbeat
+      }
+    }
+  }, HEARTBEAT_INTERVAL_MS)
+}
+
+function stopHeartbeat(): void {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
+}
+
 // --- Internal helpers ---
 
 async function attemptConnection(
@@ -168,7 +211,7 @@ async function attemptConnection(
   return new Promise<void>((resolve, reject) => {
     createPeer()
       .then((peer) => {
-        console.log('[ClientManager] Connecting to host:', inviteCode)
+        logger.debug('[ClientManager] Connecting to host:', inviteCode)
 
         const conn = peer.connect(inviteCode, {
           reliable: true,
@@ -179,7 +222,7 @@ async function attemptConnection(
         const timeout = setTimeout(() => {
           conn.close()
           reject(new Error('Connection to host timed out'))
-        }, 15000)
+        }, CONNECTION_TIMEOUT_MS)
 
         conn.on('open', () => {
           clearTimeout(timeout)
@@ -187,9 +230,8 @@ async function attemptConnection(
           connected = true
           retryCount = 0
 
-          console.log('[ClientManager] Connected to host')
+          logger.debug('[ClientManager] Connected to host')
 
-          // Send join message immediately
           sendMessage({
             type: 'player:join',
             payload: {
@@ -199,6 +241,7 @@ async function attemptConnection(
             }
           })
 
+          startHeartbeat()
           resolve()
         })
 
@@ -207,45 +250,57 @@ async function attemptConnection(
           try {
             message = typeof raw === 'string' ? JSON.parse(raw) : (raw as NetworkMessage)
           } catch (e) {
-            console.warn('[ClientManager] Invalid message from host:', e)
+            logger.warn('[ClientManager] Invalid message from host:', e)
             return
           }
 
           // Zod schema validation
           const zodResult = validateNetworkMessage(message)
           if (!zodResult.success) {
-            console.warn('[ClientManager] Schema validation failed:', zodResult.error)
+            logger.warn('[ClientManager] Schema validation failed:', zodResult.error)
             return
           }
 
           if (!validateIncomingMessage(message)) {
-            console.warn('[ClientManager] Message failed validation:', (message as Record<string, unknown>)?.type)
+            logger.warn('[ClientManager] Message failed validation:', (message as Record<string, unknown>)?.type)
             return
           }
 
           // Handle kick — do NOT retry reconnection
           if (message.type === 'dm:kick-player') {
-            console.log('[ClientManager] Kicked from game')
+            logger.debug('[ClientManager] Kicked from game')
             handleForcedDisconnection('You were kicked from the game')
             return
           }
 
           // Handle ban — do NOT retry reconnection
           if (message.type === 'dm:ban-player') {
-            console.log('[ClientManager] Banned from game')
+            logger.debug('[ClientManager] Banned from game')
             handleForcedDisconnection('You were banned from the game')
             return
           }
 
           // Handle game end — do NOT retry reconnection
           if (message.type === 'dm:game-end') {
-            console.log('[ClientManager] Game ended by host')
+            logger.debug('[ClientManager] Game ended by host')
             handleForcedDisconnection('The game session has ended')
             return
           }
 
-          // Handle pong (keep-alive response)
+          // Handle ping — respond with pong immediately
+          if (message.type === 'ping') {
+            const pongPayload = (message.payload as { timestamp?: number })?.timestamp
+              ? { timestamp: (message.payload as { timestamp: number }).timestamp }
+              : {}
+            sendMessage({ type: 'pong', payload: pongPayload })
+            return
+          }
+
+          // Handle pong (keep-alive response) — forward to callbacks for latency tracking
           if (message.type === 'pong') {
+            for (const cb of messageCallbacks) {
+              try { cb(message) } catch (_e) { /* ignore */ }
+            }
             return
           }
 
@@ -254,7 +309,7 @@ async function attemptConnection(
             try {
               cb(message)
             } catch (e) {
-              console.error('[ClientManager] Error in message callback:', e)
+              logger.error('[ClientManager] Error in message callback:', e)
             }
           }
         })
@@ -268,7 +323,7 @@ async function attemptConnection(
 
         conn.on('error', (err) => {
           clearTimeout(timeout)
-          console.error('[ClientManager] Connection error:', err)
+          logger.error('[ClientManager] Connection error:', err)
           if (!connected) {
             reject(new Error(`Failed to connect to host: ${err.message}`))
           } else {
@@ -295,35 +350,26 @@ function handleDisconnection(reason: string): void {
   connected = false
   connection = null
 
-  if (wasConnected && retryCount < MAX_RETRIES && lastInviteCode) {
+  if (wasConnected && retryCount < MAX_RECONNECT_RETRIES && lastInviteCode) {
     retryCount++
     // Exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s (capped at 30s)
     const delay = Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS)
     const jitter = Math.floor(Math.random() * 500)
     const totalDelay = delay + jitter
-    console.log(`[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RETRIES}) in ${totalDelay}ms...`)
+    logger.debug(`[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RECONNECT_RETRIES}) in ${totalDelay}ms...`)
 
     // Destroy the old peer before retrying
     destroyPeer()
 
     retryTimeout = setTimeout(async () => {
       try {
-        await attemptConnection(lastInviteCode!)
-        console.log('[ClientManager] Reconnected successfully')
-        retryCount = 0 // Reset on success
-        // Re-send join message on reconnect
-        sendMessage({
-          type: 'player:join',
-          payload: {
-            displayName,
-            characterId: null,
-            characterName: null
-          }
-        })
+        await attemptConnection(lastInviteCode!, lastCharacterId, lastCharacterName)
+        logger.debug('[ClientManager] Reconnected successfully')
+        retryCount = 0
       } catch (e) {
-        console.error('[ClientManager] Reconnection attempt failed:', e)
-        if (retryCount >= MAX_RETRIES) {
-          notifyDisconnected(`Failed to reconnect after ${MAX_RETRIES} attempts`)
+        logger.error('[ClientManager] Reconnection attempt failed:', e)
+        if (retryCount >= MAX_RECONNECT_RETRIES) {
+          notifyDisconnected(`Failed to reconnect after ${MAX_RECONNECT_RETRIES} attempts`)
         } else {
           handleDisconnection(reason)
         }
@@ -339,7 +385,7 @@ function handleForcedDisconnection(reason: string): void {
   connected = false
   connection = null
   lastInviteCode = null
-  retryCount = MAX_RETRIES // Prevent retries
+  retryCount = MAX_RECONNECT_RETRIES // Prevent retries
   if (retryTimeout) {
     clearTimeout(retryTimeout)
     retryTimeout = null
@@ -355,7 +401,7 @@ function notifyDisconnected(reason: string): void {
     try {
       cb(reason)
     } catch (e) {
-      console.error('[ClientManager] Error in disconnected callback:', e)
+      logger.error('[ClientManager] Error in disconnected callback:', e)
     }
   }
 }

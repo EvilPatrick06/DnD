@@ -45,10 +45,11 @@ export default function ChatInput(): JSX.Element {
           cooldownTimerRef.current = null
         }
       }, 200)
-      return () => {
-        if (cooldownTimerRef.current) {
-          clearInterval(cooldownTimerRef.current)
-        }
+    }
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current)
+        cooldownTimerRef.current = null
       }
     }
   }, [cooldownRemaining, slowModeSeconds])
@@ -99,7 +100,7 @@ export default function ChatInput(): JSX.Element {
     if (trimmed.startsWith('/roll ')) {
       // After local processing, send dice result over network
       const messages = useLobbyStore.getState().chatMessages
-      const lastMsg = messages[messages.length - 1]
+      const lastMsg = messages.length > 0 ? messages[messages.length - 1] : undefined
       if (lastMsg?.isDiceRoll && lastMsg.diceResult) {
         sendMessage('chat:message', {
           message: lastMsg.content,
@@ -280,6 +281,7 @@ export default function ChatInput(): JSX.Element {
 
         <input
           type="text"
+          data-chat-input
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}

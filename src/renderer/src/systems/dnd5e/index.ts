@@ -1,18 +1,8 @@
+import { loadJson } from '../../services/data-provider'
 import { WARLOCK_PACT_SLOTS } from '../../services/spell-data'
 import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../../types/character-common'
 import type { BackgroundData, EquipmentFile, SpellData } from '../../types/data'
 import type { GameSystemPlugin, SheetConfig } from '../types'
-
-// --- Data cache ---
-const dataCache = new Map<string, unknown>()
-
-async function loadJson<T>(path: string): Promise<T> {
-  if (dataCache.has(path)) return dataCache.get(path) as T
-  const res = await fetch(path)
-  const data = await res.json()
-  dataCache.set(path, data)
-  return data as T
-}
 
 // --- Spell slot progression tables ---
 
@@ -170,7 +160,8 @@ export const dnd5ePlugin: GameSystemPlugin = {
           ritual: s.ritual ?? false,
           classes: s.classes
         }))
-    } catch {
+    } catch (error) {
+      console.error('[dnd5e] Failed to load spell list:', error)
       return []
     }
   },
@@ -185,7 +176,8 @@ export const dnd5ePlugin: GameSystemPlugin = {
       const bg = backgrounds.find((b) => b.id === backgroundId)
       const gold = bg?.startingGold ?? 10
       return { cp: 0, sp: 0, gp: gold, pp: 0, ep: 0 }
-    } catch {
+    } catch (error) {
+      console.error('[dnd5e] Failed to load starting gold:', error)
       return { cp: 0, sp: 0, gp: 10, pp: 0, ep: 0 }
     }
   },
@@ -204,22 +196,25 @@ export const dnd5ePlugin: GameSystemPlugin = {
           source: classId,
           description: f.description ?? ''
         }))
-    } catch {
+    } catch (error) {
+      console.error('[dnd5e] Failed to load class features:', error)
       return []
     }
   },
 
   async loadEquipment(): Promise<{ weapons: unknown[]; armor: unknown[]; shields: unknown[]; gear: unknown[] }> {
     try {
-      const data = await loadJson<EquipmentFile>('./data/5e/equipment.json')
-      const dataAny = data as unknown as Record<string, unknown>
+      const data = await loadJson<EquipmentFile & { shields?: unknown[]; adventuringGear?: unknown[] }>(
+        './data/5e/equipment.json'
+      )
       return {
         weapons: data.weapons ?? [],
         armor: data.armor ?? [],
-        shields: (dataAny.shields as unknown[]) ?? [],
-        gear: data.gear ?? (dataAny.adventuringGear as unknown[]) ?? []
+        shields: data.shields ?? [],
+        gear: data.gear ?? data.adventuringGear ?? []
       }
-    } catch {
+    } catch (error) {
+      console.error('[dnd5e] Failed to load equipment:', error)
       return { weapons: [], armor: [], shields: [], gear: [] }
     }
   },

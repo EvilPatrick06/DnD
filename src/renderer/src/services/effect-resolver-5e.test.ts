@@ -21,7 +21,7 @@ function makeCharacter(overrides: Partial<Character5e> = {}): Character5e {
       charisma: 8
     },
     hitPoints: { current: 44, maximum: 44, temporary: 0 },
-    hitDiceRemaining: 5,
+    hitDice: [{ current: 5, maximum: 5, dieType: 10 }],
     deathSaves: { successes: 0, failures: 0 },
     spellSlotLevels: {},
     pactMagicSlotLevels: {},

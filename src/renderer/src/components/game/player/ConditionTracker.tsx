@@ -52,7 +52,7 @@ export default function ConditionTracker({
               </div>
               <p className="text-[10px] text-gray-500 truncate">{durationText}</p>
             </div>
-            {(isHost || true) && (
+            {isHost && (
               <button
                 onClick={() => onRemoveCondition(cond.id)}
                 className="text-gray-500 hover:text-red-400 cursor-pointer text-xs flex-shrink-0"

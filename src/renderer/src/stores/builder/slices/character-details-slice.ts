@@ -26,7 +26,6 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
   characterSkin: '',
   characterAppearance: '',
   characterAlignment: '',
-  heroPoints: 0,
 
   // Derived from selections
   speciesLanguages: [],

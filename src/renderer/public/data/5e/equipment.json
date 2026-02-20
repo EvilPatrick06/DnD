@@ -429,6 +429,8 @@
       "weight": 8,
       "stealthDisadvantage": true,
       "cost": "5 gp",
+      "donTime": "1 minute",
+      "doffTime": "1 minute",
       "description": "Quilted layers of cloth. Light armor with stealth disadvantage."
     },
     {
@@ -440,6 +442,8 @@
       "weight": 10,
       "stealthDisadvantage": false,
       "cost": "10 gp",
+      "donTime": "1 minute",
+      "doffTime": "1 minute",
       "description": "Breastplate and shoulder protectors made of stiffened leather. No stealth penalty."
     },
     {
@@ -451,6 +455,8 @@
       "weight": 13,
       "stealthDisadvantage": false,
       "cost": "45 gp",
+      "donTime": "1 minute",
+      "doffTime": "1 minute",
       "description": "Leather reinforced with rivets. The best light armor for AC."
     },
     {
@@ -462,6 +468,8 @@
       "weight": 12,
       "stealthDisadvantage": false,
       "cost": "10 gp",
+      "donTime": "5 minutes",
+      "doffTime": "1 minute",
       "description": "Crude armor of thick furs and pelts. No stealth penalty."
     },
     {
@@ -473,6 +481,8 @@
       "weight": 20,
       "stealthDisadvantage": false,
       "cost": "50 gp",
+      "donTime": "5 minutes",
+      "doffTime": "1 minute",
       "description": "Interlocking metal rings worn under clothing. Good AC without stealth penalty."
     },
     {
@@ -484,6 +494,8 @@
       "weight": 45,
       "stealthDisadvantage": true,
       "cost": "50 gp",
+      "donTime": "5 minutes",
+      "doffTime": "1 minute",
       "description": "Overlapping metal scales on leather. Stealth disadvantage."
     },
     {
@@ -495,6 +507,8 @@
       "weight": 20,
       "stealthDisadvantage": false,
       "cost": "400 gp",
+      "donTime": "5 minutes",
+      "doffTime": "1 minute",
       "description": "A fitted metal chest piece. Same AC as scale mail without stealth penalty."
     },
     {
@@ -506,6 +520,8 @@
       "weight": 40,
       "stealthDisadvantage": true,
       "cost": "750 gp",
+      "donTime": "5 minutes",
+      "doffTime": "1 minute",
       "description": "Metal plates covering most of the body. Best medium armor AC. Stealth disadvantage."
     },
     {
@@ -515,8 +531,10 @@
       "dexBonus": false,
       "dexBonusMax": 0,
       "weight": 40,
-      "stealthDisadvantage": true,
+      "stealthDisadvantage": false,
       "cost": "30 gp",
+      "donTime": "10 minutes",
+      "doffTime": "5 minutes",
       "description": "Leather with heavy metal rings sewn in. Entry-level heavy armor."
     },
     {
@@ -529,6 +547,8 @@
       "stealthDisadvantage": true,
       "cost": "75 gp",
       "strengthRequirement": 13,
+      "donTime": "10 minutes",
+      "doffTime": "5 minutes",
       "description": "Interlocking metal rings. Requires Str 13 or speed is reduced by 10 ft."
     },
     {
@@ -541,6 +561,8 @@
       "stealthDisadvantage": true,
       "cost": "200 gp",
       "strengthRequirement": 15,
+      "donTime": "10 minutes",
+      "doffTime": "5 minutes",
       "description": "Vertical metal strips riveted to backing. Requires Str 15 or speed is reduced by 10 ft."
     },
     {
@@ -553,6 +575,8 @@
       "stealthDisadvantage": true,
       "cost": "1500 gp",
       "strengthRequirement": 15,
+      "donTime": "10 minutes",
+      "doffTime": "5 minutes",
       "description": "Full plate armor offering the highest AC. Requires Str 15 or speed is reduced by 10 ft."
     },
     {
@@ -1190,7 +1214,9 @@
       "weight": 8,
       "cost": "50 gp",
       "description": "Artisan's tools for creating alchemical substances such as acid, alchemist's fire, antitoxin, oil, perfume, and soap.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Identify a substance (DC 15), or start a fire (DC 15)",
+      "craft": ["Acid", "Alchemist's Fire", "Component Pouch", "Oil", "Paper", "Perfume"]
     },
     {
       "name": "Brewer's Supplies",
@@ -1198,7 +1224,9 @@
       "weight": 9,
       "cost": "20 gp",
       "description": "Artisan's tools for brewing ales, ciders, meads, and other beverages.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Detect poisoned drink (DC 15), or identify alcohol (DC 10)",
+      "craft": ["Antitoxin"]
     },
     {
       "name": "Calligrapher's Supplies",
@@ -1206,7 +1234,9 @@
       "weight": 5,
       "cost": "10 gp",
       "description": "Artisan's tools for fine lettering, document creation, and forgery detection.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Write text with impressive flourishes that guard against forgery (DC 15)",
+      "craft": ["Ink", "Spell Scroll"]
     },
     {
       "name": "Carpenter's Tools",
@@ -1214,7 +1244,9 @@
       "weight": 6,
       "cost": "8 gp",
       "description": "Artisan's tools for constructing and repairing wooden structures and objects.",
-      "ability": "Strength"
+      "ability": "Strength",
+      "utilize": "Seal or pry open a door or container (DC 20)",
+      "craft": ["Club", "Greatclub", "Quarterstaff", "Barrel", "Chest", "Ladder", "Pole", "Portable Ram", "Torch"]
     },
     {
       "name": "Cartographer's Tools",
@@ -1222,7 +1254,9 @@
       "weight": 6,
       "cost": "15 gp",
       "description": "Artisan's tools for creating and interpreting maps. Includes quills, ink, parchment, compasses, calipers, and a ruler.",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Draft a map of a small area (DC 15)",
+      "craft": ["Map"]
     },
     {
       "name": "Cobbler's Tools",
@@ -1230,7 +1264,9 @@
       "weight": 5,
       "cost": "5 gp",
       "description": "Artisan's tools for making and repairing shoes and boots.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Modify footwear to give Advantage on the wearer's next Dexterity (Acrobatics) check (DC 10)",
+      "craft": ["Climber's Kit"]
     },
     {
       "name": "Cook's Utensils",
@@ -1238,7 +1274,9 @@
       "weight": 8,
       "cost": "1 gp",
       "description": "Artisan's tools for preparing food, including pots, knives, forks, a cutting board, and a stirring spoon.",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Improve food's flavor (DC 10), or detect spoiled or poisoned food (DC 15)",
+      "craft": ["Rations"]
     },
     {
       "name": "Glassblower's Tools",
@@ -1246,7 +1284,9 @@
       "weight": 5,
       "cost": "30 gp",
       "description": "Artisan's tools for shaping molten glass into bottles, vials, magnifying glasses, and other glass items.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Discern what a glass object held in the past 24 hours (DC 15)",
+      "craft": ["Glass Bottle", "Magnifying Glass", "Spyglass", "Vial"]
     },
     {
       "name": "Jeweler's Tools",
@@ -1254,7 +1294,9 @@
       "weight": 2,
       "cost": "25 gp",
       "description": "Artisan's tools for cutting gems, setting stones, and crafting jewelry and holy symbols.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Discern a gem's value (DC 15)",
+      "craft": ["Arcane Focus", "Holy Symbol"]
     },
     {
       "name": "Leatherworker's Tools",
@@ -1262,7 +1304,9 @@
       "weight": 5,
       "cost": "5 gp",
       "description": "Artisan's tools for working with leather to create armor, pouches, waterskins, and other leather goods.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Add a design to a leather item (DC 10)",
+      "craft": ["Sling", "Whip", "Hide Armor", "Leather Armor", "Studded Leather Armor", "Backpack", "Crossbow Bolt Case", "Map or Scroll Case", "Parchment", "Pouch", "Quiver", "Waterskin"]
     },
     {
       "name": "Mason's Tools",
@@ -1270,7 +1314,9 @@
       "weight": 8,
       "cost": "10 gp",
       "description": "Artisan's tools for cutting and shaping stone for construction and masonry work.",
-      "ability": "Strength"
+      "ability": "Strength",
+      "utilize": "Chisel a symbol or hole in stone (DC 10)",
+      "craft": ["Block and Tackle"]
     },
     {
       "name": "Painter's Supplies",
@@ -1278,7 +1324,9 @@
       "weight": 5,
       "cost": "10 gp",
       "description": "Artisan's tools for painting portraits, landscapes, and decorative art.",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Paint a recognizable image of something you've seen (DC 10)",
+      "craft": ["Druidic Focus", "Holy Symbol"]
     },
     {
       "name": "Potter's Tools",
@@ -1286,7 +1334,9 @@
       "weight": 3,
       "cost": "10 gp",
       "description": "Artisan's tools for shaping clay into pots, jugs, lamps, and other ceramic items.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Discern what a ceramic object held in the past 24 hours (DC 15)",
+      "craft": ["Jug", "Lamp"]
     },
     {
       "name": "Smith's Tools",
@@ -1294,7 +1344,9 @@
       "weight": 8,
       "cost": "20 gp",
       "description": "Artisan's tools for working metal to create weapons, armor, chains, and other metal goods.",
-      "ability": "Strength"
+      "ability": "Strength",
+      "utilize": "Pry open a door or container (DC 20)",
+      "craft": ["Any Melee weapon (except Club, Greatclub, Quarterstaff, and Whip)", "Medium armor (except Hide)", "Heavy armor", "Ball Bearings", "Bucket", "Caltrops", "Chain", "Crowbar", "Firearm Bullets", "Grappling Hook", "Iron Pot", "Iron Spikes", "Sling Bullets"]
     },
     {
       "name": "Tinker's Tools",
@@ -1302,7 +1354,9 @@
       "weight": 10,
       "cost": "50 gp",
       "description": "Artisan's tools for repairing everyday objects and creating small mechanical devices, locks, and traps.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Assemble a Tiny item composed of scrap, which falls apart in 1 minute (DC 20)",
+      "craft": ["Musket", "Pistol", "Bell", "Bullseye Lantern", "Flask", "Hooded Lantern", "Hunting Trap", "Lock", "Manacles", "Mirror", "Shovel", "Signal Whistle", "Tinderbox"]
     },
     {
       "name": "Weaver's Tools",
@@ -1310,7 +1364,9 @@
       "weight": 5,
       "cost": "1 gp",
       "description": "Artisan's tools for weaving cloth, rope, nets, and other textile goods.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Mend a tear in clothing (DC 10), or sew a Tiny design (DC 10)",
+      "craft": ["Padded Armor", "Basket", "Bedroll", "Blanket", "Fine Clothes", "Net", "Robe", "Rope", "Sack", "String", "Tent", "Traveler's Clothes"]
     },
     {
       "name": "Woodcarver's Tools",
@@ -1318,7 +1374,9 @@
       "weight": 5,
       "cost": "1 gp",
       "description": "Artisan's tools for carving wood into weapons, arcane focuses, arrows, and other wooden items.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Carve a pattern in wood (DC 10)",
+      "craft": ["Club", "Greatclub", "Quarterstaff", "Ranged weapons (except Pistol, Musket, and Sling)", "Arcane Focus", "Arrows", "Bolts", "Druidic Focus", "Ink Pen", "Needles"]
     },
     {
       "name": "Disguise Kit",
@@ -1326,7 +1384,9 @@
       "weight": 3,
       "cost": "25 gp",
       "description": "A pouch of cosmetics, hair dye, small props, and a few pieces of clothing. Proficiency lets you add your proficiency bonus to any ability check you make to create a visual disguise.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Apply makeup (DC 10)",
+      "craft": ["Costume"]
     },
     {
       "name": "Forgery Kit",
@@ -1334,7 +1394,8 @@
       "weight": 5,
       "cost": "15 gp",
       "description": "A kit for forging documents. Includes papers, inks, quills, seals, and wax. Proficiency lets you add your proficiency bonus to any ability check you make to create a forged document.",
-      "ability": "Dexterity"
+      "ability": "Dexterity",
+      "utilize": "Mimic 10 or fewer words of someone else's handwriting (DC 15), or duplicate a wax seal (DC 20)"
     },
     {
       "name": "Gaming Set",
@@ -1342,7 +1403,8 @@
       "weight": 0,
       "cost": "1 gp",
       "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Discern whether someone is cheating (DC 10), or win the game (DC 20)"
     },
     {
       "name": "Gaming Set (one of your choice)",
@@ -1350,7 +1412,8 @@
       "weight": 0,
       "cost": "1 gp",
       "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Discern whether someone is cheating (DC 10), or win the game (DC 20)"
     },
     {
       "name": "Gaming Set (any)",
@@ -1358,7 +1421,8 @@
       "weight": 0,
       "cost": "1 gp",
       "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Discern whether someone is cheating (DC 10), or win the game (DC 20)"
     },
     {
       "name": "Gaming Set (Dice)",
@@ -1398,7 +1462,9 @@
       "weight": 3,
       "cost": "5 gp",
       "description": "Contains clippers, mortar and pestle, pouches, and vials for creating herbal remedies. Proficiency lets you add your proficiency bonus to any ability check you make to identify or apply herbs.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Identify a plant (DC 10)",
+      "craft": ["Antitoxin", "Candle", "Healer's Kit", "Potion of Healing"]
     },
     {
       "name": "Navigator's Tools",
@@ -1406,7 +1472,8 @@
       "weight": 2,
       "cost": "25 gp",
       "description": "Used for navigation at sea. Includes a sextant, compass, calipers, ruler, parchment, ink, and a quill.",
-      "ability": "Wisdom"
+      "ability": "Wisdom",
+      "utilize": "Plot a course (DC 10), or determine position by stargazing (DC 15)"
     },
     {
       "name": "Poisoner's Kit",
@@ -1414,7 +1481,9 @@
       "weight": 2,
       "cost": "50 gp",
       "description": "Includes glass vials, a mortar and pestle, chemicals, and a glass stirring rod. Proficiency lets you add your proficiency bonus to any ability check you make to craft or use poisons.",
-      "ability": "Intelligence"
+      "ability": "Intelligence",
+      "utilize": "Detect a poisoned object (DC 10)",
+      "craft": ["Basic Poison"]
     },
     {
       "name": "Thieves' Tools",
@@ -1423,6 +1492,7 @@
       "cost": "25 gp",
       "description": "Includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency lets you add your proficiency bonus to Dexterity checks made to disable traps or open locks.",
       "ability": "Dexterity",
+      "utilize": "Pick a lock (DC 15), or disarm a trap (DC 15)",
       "contents": [
         { "name": "Lock Picks", "quantity": 1 },
         { "name": "Small File", "quantity": 1 },
@@ -1437,7 +1507,8 @@
       "weight": 6,
       "cost": "30 gp",
       "description": "A musical instrument consisting of a bag and pipes. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Drum",
@@ -1445,7 +1516,8 @@
       "weight": 3,
       "cost": "6 gp",
       "description": "A percussion instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Dulcimer",
@@ -1453,7 +1525,8 @@
       "weight": 10,
       "cost": "25 gp",
       "description": "A stringed instrument played by striking the strings with small hammers. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Flute",
@@ -1461,7 +1534,8 @@
       "weight": 1,
       "cost": "2 gp",
       "description": "A woodwind instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Horn",
@@ -1469,7 +1543,8 @@
       "weight": 2,
       "cost": "3 gp",
       "description": "A brass instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Lute",
@@ -1477,7 +1552,8 @@
       "weight": 2,
       "cost": "35 gp",
       "description": "A stringed instrument popular with bards. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Lyre",
@@ -1485,7 +1561,8 @@
       "weight": 2,
       "cost": "30 gp",
       "description": "A stringed instrument played by plucking. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Pan Flute",
@@ -1493,7 +1570,8 @@
       "weight": 2,
       "cost": "12 gp",
       "description": "A set of tubes of varying lengths bound together. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Shawm",
@@ -1501,7 +1579,8 @@
       "weight": 1,
       "cost": "2 gp",
       "description": "A double-reed woodwind instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Viol",
@@ -1509,7 +1588,8 @@
       "weight": 1,
       "cost": "30 gp",
       "description": "A bowed stringed instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
-      "ability": "Charisma"
+      "ability": "Charisma",
+      "utilize": "Play a known tune (DC 10), or improvise a song (DC 15)"
     },
     {
       "name": "Component Pouch",

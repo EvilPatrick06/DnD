@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
+import { LOADING_GRACE_PERIOD_MS } from '../config/constants'
+import { Spinner } from '../components/ui'
+import { useAutoSaveGame } from '../hooks/useAutoSave'
 import { useBastionStore } from '../stores/useBastionStore'
 import { useCampaignStore } from '../stores/useCampaignStore'
 import { useCharacterStore } from '../stores/useCharacterStore'
@@ -17,42 +20,71 @@ export default function InGamePage(): JSX.Element {
   const characters = useCharacterStore((s) => s.characters)
   const loadCharacters = useCharacterStore((s) => s.loadCharacters)
   const networkRole = useNetworkStore((s) => s.role)
+  const connectionState = useNetworkStore((s) => s.connectionState)
   const displayName = useNetworkStore((s) => s.displayName)
   const gameCampaignId = useGameStore((s) => s.campaignId)
   const loadGameState = useGameStore((s) => s.loadGameState)
   const initiative = useGameStore((s) => s.initiative)
   const nextTurn = useGameStore((s) => s.nextTurn)
   const [loading, setLoading] = useState(true)
+  const [reconnectAttempt, setReconnectAttempt] = useState(0)
+  const [showReconnect, setShowReconnect] = useState(false)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const exitTargetRef = useRef<string | null>(null)
 
-  // Load data on mount
   useEffect(() => {
     loadCampaigns()
     loadCharacters()
   }, [loadCampaigns, loadCharacters])
 
-  // Grace period before showing "No Campaign Found" — allows campaign data to arrive via network
+  // Warn before closing/refreshing the window during an active game
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 4000)
+    const handler = (e: BeforeUnloadEvent): void => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setLoading(false), LOADING_GRACE_PERIOD_MS)
     return () => clearTimeout(timeout)
   }, [])
 
   const campaign = campaigns.find((c) => c.id === campaignId) ?? null
-
-  // Determine if the user is the DM
-  // DM is whoever is hosting the network session, or the campaign owner if offline
   const isDM = networkRole === 'host' || (networkRole === 'none' && campaign?.dmId === 'local')
-
-  // For offline/solo mode, default to DM
   const effectiveDM = isDM || networkRole === 'none'
-
-  // Find the player's character for this campaign
   const playerCharacter = characters.find((c) => c.campaignId === campaignId) ?? characters[0] ?? null
 
-  // Initialize game state from campaign
+  // Auto-save game state for DM
+  useAutoSaveGame(campaign, effectiveDM)
+
+  // Reconnect UI: detect connection drop for clients
+  useEffect(() => {
+    if (networkRole !== 'client') return
+    if (connectionState === 'disconnected' || connectionState === 'error') {
+      setShowReconnect(true)
+      setReconnectAttempt(0)
+    } else {
+      setShowReconnect(false)
+    }
+  }, [connectionState, networkRole])
+
+  const handleReconnect = async (): Promise<void> => {
+    const { inviteCode } = useNetworkStore.getState()
+    if (!inviteCode || !displayName) return
+
+    setReconnectAttempt((a) => a + 1)
+    try {
+      await useNetworkStore.getState().joinGame(inviteCode, displayName)
+      setShowReconnect(false)
+    } catch {
+      // Error already set in store
+    }
+  }
+
   useEffect(() => {
     if (!campaign) return
-
-    // Only initialize if not already set or different campaign
     if (gameCampaignId !== campaign.id) {
       const saved = campaign.savedGameState
       loadGameState({
@@ -88,7 +120,6 @@ export default function InGamePage(): JSX.Element {
     }
   }, [campaign, gameCampaignId, loadGameState])
 
-  // Auto-link bastions to campaign (Phase 6)
   useEffect(() => {
     if (!campaign) return
     const bastionStore = useBastionStore.getState()
@@ -100,26 +131,30 @@ export default function InGamePage(): JSX.Element {
     }
   }, [campaign, characters])
 
-  // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Only handle if not focused on an input
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
         return
       }
 
-      // Escape - toggle settings (handled in GameLayout)
-      // No longer navigates away immediately
-
-      // DM shortcuts
       if (effectiveDM) {
-        // N - next turn
         if (e.key === 'n' || e.key === 'N') {
           if (initiative) {
             nextTurn()
           }
         }
+      }
+
+      if (e.key === ' ' && initiative && effectiveDM) {
+        e.preventDefault()
+        nextTurn()
+      }
+
+      if (e.key === '/') {
+        e.preventDefault()
+        const chatInput = document.querySelector<HTMLInputElement>('[data-chat-input]')
+        chatInput?.focus()
       }
     },
     [effectiveDM, initiative, nextTurn]
@@ -130,17 +165,15 @@ export default function InGamePage(): JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  // Skip "no campaign" check while loading (grace period for network data)
   if (!campaign && loading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gray-950 text-gray-100">
-        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-400">Loading campaign...</p>
+        <Spinner size="lg" />
+        <p className="text-gray-400 mt-4">Loading campaign...</p>
       </div>
     )
   }
 
-  // No campaign found
   if (!campaign) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gray-950 text-gray-100">
@@ -164,5 +197,46 @@ export default function InGamePage(): JSX.Element {
 
   const playerName = displayName || 'Player'
 
-  return <GameLayout campaign={campaign} isDM={effectiveDM} character={playerCharacter} playerName={playerName} />
+  return (
+    <>
+      <GameLayout campaign={campaign} isDM={effectiveDM} character={playerCharacter} playerName={playerName} />
+
+      {/* Reconnect overlay for clients */}
+      {showReconnect && networkRole === 'client' && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-red-500/50 rounded-xl p-6 max-w-sm w-full mx-4 text-center">
+            <div className="w-8 h-8 border-2 border-red-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <h2 className="text-lg font-bold text-red-400 mb-2">Connection Lost</h2>
+            <p className="text-sm text-gray-400 mb-1">
+              {reconnectAttempt > 0
+                ? `Reconnecting... (attempt ${reconnectAttempt}/3)`
+                : 'Attempting to reconnect...'}
+            </p>
+            {reconnectAttempt >= 3 && (
+              <p className="text-xs text-red-400/70 mb-3">
+                Multiple reconnection attempts failed. The host may have ended the session.
+              </p>
+            )}
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                onClick={handleReconnect}
+                disabled={reconnectAttempt >= 3}
+                className="px-4 py-2 text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white
+                  rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reconnect
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="px-4 py-2 text-sm font-semibold border border-gray-600 hover:bg-gray-800
+                  text-gray-300 rounded-lg transition-colors cursor-pointer"
+              >
+                Leave Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }

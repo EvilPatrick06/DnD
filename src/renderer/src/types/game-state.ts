@@ -31,6 +31,8 @@ export interface GameState {
   travelPace: 'fast' | 'normal' | 'slow' | null
   /** Marching order (entity IDs from front to rear) */
   marchingOrder: string[]
+  /** HP bar visibility on map tokens: 'all' = everyone, 'dm-only' = host only, 'none' = hidden */
+  hpBarsVisibility: 'all' | 'dm-only' | 'none'
 }
 
 export interface TurnState {
@@ -70,9 +72,17 @@ export interface InitiativeEntry {
   portraitUrl?: string
   isActive: boolean
   legendaryResistances?: { max: number; remaining: number }
+  legendaryActions?: { used: number; maximum: number }
+  rechargeAbilities?: RechargeAbility[]
   inLair?: boolean
   delayedUntil?: number
   surprised?: boolean
+}
+
+export interface RechargeAbility {
+  name: string
+  rechargeOn: number
+  available: boolean
 }
 
 export interface CombatLogEntry {
@@ -224,4 +234,16 @@ export interface HiddenDiceResult {
   rolls: number[]
   total: number
   timestamp: number
+}
+
+export interface DiceRollRecord {
+  id: string
+  timestamp: number
+  rollerName: string
+  formula: string
+  rolls: number[]
+  total: number
+  reason?: string
+  isCritical: boolean
+  isFumble: boolean
 }

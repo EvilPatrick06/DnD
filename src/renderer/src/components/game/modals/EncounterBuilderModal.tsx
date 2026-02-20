@@ -83,8 +83,8 @@ const DEFAULT_BUDGETS: BudgetEntry[] = [
   { level: 16, low: 3800, moderate: 6100, high: 9800 },
   { level: 17, low: 4500, moderate: 7200, high: 11700 },
   { level: 18, low: 5000, moderate: 8700, high: 14200 },
-  { level: 19, low: 5500, moderate: 10700, high: 16400 },
-  { level: 20, low: 6400, moderate: 13500, high: 20100 }
+  { level: 19, low: 5500, moderate: 10700, high: 17200 },
+  { level: 20, low: 6400, moderate: 13200, high: 22000 }
 ]
 
 export default function EncounterBuilderModal({ onClose, onBroadcastResult }: EncounterBuilderModalProps): JSX.Element {
@@ -173,17 +173,17 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
   const totalXp = selectedMonsters.reduce((sum, m) => sum + m.xp * m.count, 0)
   const totalMonsterCount = selectedMonsters.reduce((sum, m) => sum + m.count, 0)
 
-  const budget = budgetData.find((b) => b.level === partyLevel) ?? budgetData[0]
-  const partyLow = budget.low * partySize
-  const partyModerate = budget.moderate * partySize
-  const partyHigh = budget.high * partySize
+  const budget = budgetData.find((b) => b.level === partyLevel) ?? (budgetData.length > 0 ? budgetData[0] : undefined)
+  const partyLow = (budget?.low ?? 0) * partySize
+  const partyModerate = (budget?.moderate ?? 0) * partySize
+  const partyHigh = (budget?.high ?? 0) * partySize
 
   const getDifficultyRating = (): { label: string; color: string } => {
     if (totalXp === 0) return { label: 'None', color: 'text-gray-500' }
     if (totalXp <= partyLow) return { label: 'Low', color: 'text-green-400' }
     if (totalXp <= partyModerate) return { label: 'Moderate', color: 'text-amber-400' }
     if (totalXp <= partyHigh) return { label: 'High', color: 'text-orange-400' }
-    return { label: 'Deadly', color: 'text-red-400' }
+    return { label: 'Over Budget', color: 'text-red-400' }
   }
 
   const difficulty = getDifficultyRating()
@@ -228,7 +228,7 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
           <h2 className="text-lg font-bold text-amber-400">Encounter Builder</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1">
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Close">
             &times;
           </button>
         </div>

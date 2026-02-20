@@ -50,6 +50,10 @@ export default function CharacterSheet5ePage(): JSX.Element {
   const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
   const [showLevelUpBanner, setShowLevelUpBanner] = useState(false)
   const [showCantripSwap, setShowCantripSwap] = useState(false)
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [versions, setVersions] = useState<Array<{ fileName: string; timestamp: string; sizeBytes: number }>>([])
+  const [loadingVersions, setLoadingVersions] = useState(false)
+  const [restoringVersion, setRestoringVersion] = useState<string | null>(null)
 
   if (!character) {
     return (
@@ -126,10 +130,12 @@ export default function CharacterSheet5ePage(): JSX.Element {
   }
 
   // 5e hit dice info for short rest button tooltip
+  const hdRemaining = character.hitDice.reduce((s, h) => s + h.current, 0)
+  const hdTotal = character.hitDice.reduce((s, h) => s + h.maximum, 0)
   const hitDiceInfo =
-    character.classes.length > 1
-      ? `${character.hitDiceRemaining}/${character.level} (${character.classes.map((c) => `${c.level}d${c.hitDie}`).join(' + ')}) remaining`
-      : `${character.hitDiceRemaining}d${character.classes[0]?.hitDie ?? 8} remaining`
+    character.hitDice.length > 1
+      ? `${hdRemaining}/${hdTotal} (${character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')}) remaining`
+      : `${hdRemaining}d${character.hitDice[0]?.dieType ?? 8} remaining`
 
   const isMaxLevel = character.level >= 20
 
@@ -203,6 +209,20 @@ export default function CharacterSheet5ePage(): JSX.Element {
               className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded font-semibold transition-colors"
             >
               Level Up
+            </button>
+            <button
+              onClick={async () => {
+                setShowVersionHistory(true)
+                setLoadingVersions(true)
+                try {
+                  const result = await window.api.listCharacterVersions(character.id)
+                  if (result.success && result.data) setVersions(result.data)
+                } catch { /* non-fatal */ }
+                setLoadingVersions(false)
+              }}
+              className="px-3 py-1.5 text-sm border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-gray-200 rounded transition-colors"
+            >
+              History
             </button>
           </div>
         )}
@@ -281,11 +301,11 @@ export default function CharacterSheet5ePage(): JSX.Element {
             </ul>
           </p>
           <div className="text-xs text-gray-500">
-            Hit Point Dice: {character.hitDiceRemaining}/{character.level}
-            {character.classes.length > 1 && (
-              <span> ({character.classes.map((c) => `${c.level}d${c.hitDie}`).join(' + ')})</span>
+            Hit Point Dice: {character.hitDice.reduce((s, h) => s + h.current, 0)}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)}
+            {character.hitDice.length > 1 && (
+              <span> ({character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})</span>
             )}{' '}
-            &rarr; {character.level}/{character.level}
+            &rarr; {character.hitDice.reduce((s, h) => s + h.maximum, 0)}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)}
           </div>
           <div className="flex gap-2 justify-end">
             <button
@@ -310,6 +330,68 @@ export default function CharacterSheet5ePage(): JSX.Element {
         open={showCantripSwap}
         onClose={() => setShowCantripSwap(false)}
       />
+
+      {/* Version History Modal */}
+      {showVersionHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowVersionHistory(false)} />
+          <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-5 w-full max-w-lg max-h-[70vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-amber-400">Version History</h3>
+              <button
+                onClick={() => setShowVersionHistory(false)}
+                className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {loadingVersions ? (
+                <p className="text-xs text-gray-500 text-center py-4">Loading versions...</p>
+              ) : versions.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-4">No previous versions saved yet.</p>
+              ) : (
+                versions.map((v) => (
+                  <div
+                    key={v.fileName}
+                    className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/30"
+                  >
+                    <div>
+                      <div className="text-xs text-gray-200">
+                        {new Date(v.timestamp).toLocaleString(undefined, {
+                          month: 'short', day: 'numeric', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        {(v.sizeBytes / 1024).toFixed(1)} KB
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Restore this version? Your current save will be backed up first.')) return
+                        setRestoringVersion(v.fileName)
+                        try {
+                          const result = await window.api.restoreCharacterVersion(character.id, v.fileName)
+                          if (result.success && result.data) {
+                            await useCharacterStore.getState().loadCharacters()
+                            setShowVersionHistory(false)
+                          }
+                        } catch { /* non-fatal */ }
+                        setRestoringVersion(null)
+                      }}
+                      disabled={restoringVersion !== null}
+                      className="px-3 py-1 text-xs bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded cursor-pointer transition-colors"
+                    >
+                      {restoringVersion === v.fileName ? 'Restoring...' : 'Restore'}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

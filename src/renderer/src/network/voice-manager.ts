@@ -1,6 +1,9 @@
 import type Peer from 'peerjs'
 import type { MediaConnection } from 'peerjs'
 
+import { VAD_CHECK_INTERVAL_MS, VAD_THRESHOLD, VOICE_RETRY_COUNT, VOICE_RETRY_INTERVAL_MS } from '../config/constants'
+import { logger } from '../utils/logger'
+
 // Module-level state
 let localStream: MediaStream | null = null
 let silentStream: MediaStream | null = null
@@ -30,10 +33,6 @@ const remoteAudioElements = new Map<string, HTMLAudioElement>()
 // Speaking change callbacks
 type SpeakingCallback = (peerId: string, isSpeaking: boolean) => void
 const speakingCallbacks = new Set<SpeakingCallback>()
-
-// VAD (Voice Activity Detection) config
-const VAD_THRESHOLD = 30 // Minimum dB level to count as speaking
-const VAD_CHECK_INTERVAL_MS = 100
 
 /**
  * Start voice — request microphone access, set up audio context and analyser
@@ -77,11 +76,11 @@ export async function startVoice(peer: Peer): Promise<void> {
     startVAD()
 
     listenOnly = false
-    console.log('[VoiceManager] Voice started')
+    logger.debug('[VoiceManager] Voice started')
   } catch (_err) {
     // No microphone available — fall back to listen-only mode
     listenOnly = true
-    console.warn('[VoiceManager] No microphone - listen-only mode')
+    logger.warn('[VoiceManager] No microphone - listen-only mode')
 
     // Create a silent audio stream so we can still establish WebRTC connections.
     // Without a valid MediaStream, PeerJS calls won't complete and we can't
@@ -95,16 +94,16 @@ export async function startVoice(peer: Peer): Promise<void> {
       // Keep the AudioContext reference so we can close it on cleanup
       // (reuse audioContext slot since we didn't set it for listen-only)
       audioContext = silentCtx
-      console.log('[VoiceManager] Created silent stream for listen-only WebRTC connections')
+      logger.debug('[VoiceManager] Created silent stream for listen-only WebRTC connections')
     } catch (silentErr) {
-      console.error('[VoiceManager] Failed to create silent stream:', silentErr)
+      logger.error('[VoiceManager] Failed to create silent stream:', silentErr)
     }
   }
 
   // Process any calls that arrived before we were ready
   while (pendingCalls.length > 0) {
     const pending = pendingCalls.shift()!
-    console.log('[VoiceManager] Processing pending call from:', pending.peer)
+    logger.debug('[VoiceManager] Processing pending call from:', pending.peer)
     answerCall(pending)
   }
 }
@@ -113,7 +112,7 @@ export async function startVoice(peer: Peer): Promise<void> {
  * Stop voice — clean up all audio resources.
  */
 export function stopVoice(): void {
-  console.log('[VoiceManager] Stopping voice...')
+  logger.debug('[VoiceManager] Stopping voice...')
 
   // Stop VAD
   if (vadInterval) {
@@ -126,7 +125,7 @@ export function stopVoice(): void {
     try {
       call.close()
     } catch (e) {
-      console.warn('[VoiceManager] Error closing call with', peerId, e)
+      logger.warn('[VoiceManager] Error closing call with', peerId, e)
     }
   }
   activeCalls.clear()
@@ -137,7 +136,7 @@ export function stopVoice(): void {
       audio.srcObject = null
       audio.remove()
     } catch (e) {
-      console.warn('[VoiceManager] Error removing audio element for', peerId, e)
+      logger.warn('[VoiceManager] Error removing audio element for', peerId, e)
     }
   }
   remoteAudioElements.clear()
@@ -183,23 +182,23 @@ export function stopVoice(): void {
  */
 export function callPeer(peerId: string): void {
   if (!localPeer) {
-    console.warn('[VoiceManager] Cannot call peer — voice not started')
+    logger.warn('[VoiceManager] Cannot call peer — voice not started')
     return
   }
 
   // Use the real local stream, or the silent stream for listen-only mode
   const streamToSend = localStream || silentStream
   if (!streamToSend) {
-    console.warn('[VoiceManager] No stream available — cannot call peer', peerId)
+    logger.warn('[VoiceManager] No stream available — cannot call peer', peerId)
     return
   }
 
   if (activeCalls.has(peerId)) {
-    console.warn('[VoiceManager] Already in a call with', peerId)
+    logger.warn('[VoiceManager] Already in a call with', peerId)
     return
   }
 
-  console.log('[VoiceManager] Calling peer:', peerId, listenOnly ? '(listen-only, sending silence)' : '')
+  logger.debug('[VoiceManager] Calling peer:', peerId, listenOnly ? '(listen-only, sending silence)' : '')
   const call = localPeer.call(peerId, streamToSend)
   setupCall(peerId, call)
 }
@@ -210,13 +209,13 @@ export function callPeer(peerId: string): void {
 export function answerCall(call: MediaConnection): void {
   // If we're not yet in listen-only mode and have no stream (and no silent stream), queue the call
   if (!localStream && !silentStream && !listenOnly) {
-    console.warn('[VoiceManager] Cannot answer call yet — queuing pending call from:', call.peer)
+    logger.warn('[VoiceManager] Cannot answer call yet — queuing pending call from:', call.peer)
     pendingCalls.push(call)
     return
   }
 
   const peerId = call.peer
-  console.log('[VoiceManager] Answering call from:', peerId, listenOnly ? '(listen-only)' : '')
+  logger.debug('[VoiceManager] Answering call from:', peerId, listenOnly ? '(listen-only)' : '')
 
   // Use the real local stream, or the silent stream for listen-only mode.
   // Answering with a valid MediaStream (even silent) ensures the full WebRTC
@@ -334,13 +333,9 @@ export function setForceDeafened(isForceDeafened: boolean): void {
   forceDeafened = isForceDeafened
   if (forceDeafened) {
     setDeafened(true)
-    // Force-deafen implies force-mute
     forceMuted = true
-  } else {
-    // Removing force-deafen also removes force-mute
-    forceMuted = false
   }
-  // Player stays deafened/muted — they must manually toggle
+  // When un-deafening, preserve existing isForceMuted — DM must un-mute separately
 }
 
 /**
@@ -383,13 +378,13 @@ export function resumeAllAudio(): void {
   for (const [peerId, audio] of remoteAudioElements) {
     audio.volume = 1.0
     audio.play().catch((e) => {
-      console.warn('[VoiceManager] Failed to resume audio for', peerId, e)
+      logger.warn('[VoiceManager] Failed to resume audio for', peerId, e)
     })
   }
   // Also resume the AudioContext if it was suspended
   if (audioContext && audioContext.state === 'suspended') {
     audioContext.resume().catch((e) => {
-      console.warn('[VoiceManager] Failed to resume AudioContext:', e)
+      logger.warn('[VoiceManager] Failed to resume AudioContext:', e)
     })
   }
 }
@@ -423,7 +418,7 @@ function setupCall(peerId: string, call: MediaConnection): void {
 
   call.on('stream', (remoteStream: MediaStream) => {
     const tracks = remoteStream.getAudioTracks()
-    console.log(
+    logger.debug(
       '[VoiceManager] Received stream from:',
       peerId,
       'audioTracks:',
@@ -438,18 +433,18 @@ function setupCall(peerId: string, call: MediaConnection): void {
     // Monitor track ending
     for (const track of tracks) {
       track.onended = () => {
-        console.warn('[VoiceManager] Audio track ended for peer:', peerId)
+        logger.warn('[VoiceManager] Audio track ended for peer:', peerId)
       }
     }
   })
 
   call.on('close', () => {
-    console.log('[VoiceManager] Call closed with:', peerId)
+    logger.debug('[VoiceManager] Call closed with:', peerId)
     removePeer(peerId)
   })
 
   call.on('error', (err) => {
-    console.error(
+    logger.error(
       '[VoiceManager] Call error with',
       peerId,
       '- type:',
@@ -470,7 +465,7 @@ function playRemoteStream(peerId: string, stream: MediaStream): void {
   }
 
   const audioTracks = stream.getAudioTracks()
-  console.log(
+  logger.debug(
     '[VoiceManager] Playing remote stream from:',
     peerId,
     'tracks:',
@@ -499,7 +494,7 @@ function playRemoteStream(peerId: string, stream: MediaStream): void {
   // Resume AudioContext if suspended (needed for Chromium autoplay policy)
   if (audioContext && audioContext.state === 'suspended') {
     audioContext.resume().catch((e) => {
-      console.warn('[VoiceManager] Failed to resume AudioContext on new stream:', e)
+      logger.warn('[VoiceManager] Failed to resume AudioContext on new stream:', e)
     })
   }
 
@@ -508,32 +503,32 @@ function playRemoteStream(peerId: string, stream: MediaStream): void {
   if (playPromise) {
     playPromise
       .then(() => {
-        console.log('[VoiceManager] Audio playing for', peerId)
+        logger.debug('[VoiceManager] Audio playing for', peerId)
       })
       .catch((e) => {
-        console.warn('[VoiceManager] Audio autoplay blocked for', peerId, e)
+        logger.warn('[VoiceManager] Audio autoplay blocked for', peerId, e)
         // Retry periodically (every 1s for 10 attempts)
         let retryCount = 0
         const retryInterval = setInterval(() => {
           retryCount++
-          if (retryCount >= 10 || !remoteAudioElements.has(peerId)) {
+          if (retryCount >= VOICE_RETRY_COUNT || !remoteAudioElements.has(peerId)) {
             clearInterval(retryInterval)
             return
           }
           audio
             .play()
             .then(() => {
-              console.log('[VoiceManager] Audio retry succeeded for', peerId)
+              logger.debug('[VoiceManager] Audio retry succeeded for', peerId)
               clearInterval(retryInterval)
             })
             .catch(() => {})
-        }, 1000)
+        }, VOICE_RETRY_INTERVAL_MS)
         // Also retry on next user interaction
         const retryPlay = (): void => {
           audio
             .play()
             .then(() => {
-              console.log('[VoiceManager] Audio play resumed via user gesture for', peerId)
+              logger.debug('[VoiceManager] Audio play resumed via user gesture for', peerId)
             })
             .catch(() => {})
           clearInterval(retryInterval)
@@ -585,7 +580,7 @@ function notifySpeakingChange(peerId: string, isSpeaking: boolean): void {
     try {
       cb(peerId, isSpeaking)
     } catch (e) {
-      console.error('[VoiceManager] Error in speaking callback:', e)
+      logger.error('[VoiceManager] Error in speaking callback:', e)
     }
   }
 }

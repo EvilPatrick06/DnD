@@ -38,22 +38,27 @@
       {
         "name": "Animal Speaker",
         "level": 3,
-        "description": "You can cast Beast Sense and Speak with Animals as Rituals. When you rage, you choose one of these effects: Bear (Resistance to all damage except Force, Necrotic, Psychic, and Radiant), Eagle (Disengage and Dash as part of the Bonus Action to enter Rage, and as Bonus Action while raging), Lion (creatures of your choice within 5 feet have Disadvantage on attack rolls against targets other than you when you enter Rage, until your Rage ends), Wolf (allies have Advantage on melee attack rolls against hostile creatures within 5 feet of you)."
+        "description": "You can cast Beast Sense and Speak with Animals as Rituals, using Wisdom as your spellcasting ability for them."
+      },
+      {
+        "name": "Rage of the Wilds",
+        "level": 3,
+        "description": "When you activate your Rage, you choose one of these effects: Bear (you gain Resistance to every damage type except Force, Necrotic, Psychic, and Radiant), Eagle (you can Disengage and Dash as part of the Bonus Action to enter your Rage, and as a Bonus Action on subsequent turns while raging), or Wolf (your allies have Advantage on melee attack rolls against any creature within 5 feet of you)."
       },
       {
         "name": "Aspect of the Wilds",
         "level": 6,
-        "description": "You gain a magical aspect of a wild animal of your choice: Owl (Darkvision 60 feet and Advantage on Wisdom (Perception) checks), Panther (climbing speed equal to walking speed), or Salmon (swimming speed equal to walking speed). You can change your choice when you finish a Long Rest."
+        "description": "You gain a magical aspect of a wild animal of your choice: Owl (Darkvision 60 feet), Panther (climbing speed equal to walking speed), or Salmon (swimming speed equal to walking speed). You can change your choice when you finish a Long Rest."
       },
       {
         "name": "Nature Speaker",
         "level": 10,
-        "description": "You can cast Commune with Nature as a Ritual. Once you do, you can't do so again until you finish a Long Rest."
+        "description": "You can cast Commune with Nature, only as a Ritual."
       },
       {
         "name": "Power of the Wilds",
         "level": 14,
-        "description": "When you Rage, you choose one of these effects: Falcon (Fly Speed equal to your Walking Speed, but you fall at end of turn if airborne), Lion (Bonus Action to force a creature within 5 feet to make a Strength save or be pushed 15 feet and knocked Prone), Ram (when you hit a creature with a melee attack while raging, can push it up to 15 feet away from you and you can move up to half your speed toward it as part of same attack)."
+        "description": "Whenever you activate your Rage, you gain one of the following options of your choice: Falcon (while your Rage is active, you have a Fly Speed equal to your Speed if you aren't wearing any armor), Lion (while your Rage is active, any of your enemies within 5 feet of you have Disadvantage on attack rolls against targets other than you or another Barbarian who has this option active), or Ram (while your Rage is active, you can cause a Large or smaller creature to have the Prone condition when you hit it with a melee attack)."
       }
     ]
   },
@@ -101,7 +106,7 @@
       {
         "name": "Warrior of the Gods",
         "level": 3,
-        "description": "You have a pool of d12s for self-healing, starting with 4 dice. As a Bonus Action while raging, you can expend dice from this pool, rolling them and regaining HP equal to the total. Your pool increases: 6 dice at 6th level, 8 at 12th, 10 at 17th. You regain all dice on a Long Rest."
+        "description": "You have a pool of d12s for self-healing, starting with 4 dice. As a Bonus Action while raging, you can expend dice from this pool, rolling them and regaining HP equal to the total. Your pool increases: 5 dice at 6th level, 6 at 12th, 7 at 17th. You regain all dice on a Long Rest."
       },
       {
         "name": "Fanatical Focus",
@@ -116,7 +121,7 @@
       {
         "name": "Rage of the Gods",
         "level": 14,
-        "description": "While raging, you gain a Fly Speed of 60 feet, Resistance to Necrotic, Psychic, and Radiant damage, and when an ally you can see within 30 feet is reduced to 0 HP, you can use your Reaction to let them drop to 1 HP instead. You can use this Reaction a number of times equal to your proficiency bonus per Long Rest."
+        "description": "While raging, you gain a Fly Speed equal to your Speed, Resistance to Necrotic, Psychic, and Radiant damage, and when an ally you can see within 30 feet is reduced to 0 HP, you can use your Reaction to let them drop to a number of Hit Points equal to your Barbarian level instead. You can use this Reaction once per Rage."
       }
     ]
   },
@@ -130,7 +135,7 @@
       {
         "name": "Dazzling Footwork",
         "level": 3,
-        "description": "You gain proficiency in Performance if you don't already have it and have Advantage on any Performance check involving dancing. While not wearing armor or wielding a Shield, your AC equals 10 + DEX + CHA. You can use Dexterity for Unarmed Strikes, dealing Bludgeoning damage equal to your Bardic Inspiration die + DEX. When you take the Attack action and hit with an Unarmed Strike, your walking speed increases by 10 feet until end of turn and the target can't make Opportunity Attacks against you for rest of turn."
+        "description": "You gain proficiency in Performance if you don't already have it and have Advantage on any Performance check involving dancing. While not wearing armor or wielding a Shield, your AC equals 10 + DEX + CHA. You can use Dexterity for Unarmed Strikes, dealing Bludgeoning damage equal to your Bardic Inspiration die + DEX. When you take the Attack action and hit with an Unarmed Strike, your walking speed increases by 10 feet until end of turn and the target can't make Opportunity Attacks against you for rest of turn.\n\nAgile Strikes. When you expend a use of your Bardic Inspiration as part of an action, a Bonus Action, or a Reaction, you can make one Unarmed Strike as part of that action, Bonus Action, or Reaction."
       },
       {
         "name": "Inspiring Movement",
@@ -145,7 +150,7 @@
       {
         "name": "Leading Evasion",
         "level": 14,
-        "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed, and only half damage if you fail."
+        "description": "When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed, and only half damage if you fail. Creatures within 5 feet of you making the same Dexterity saving throw also benefit from this feature."
       }
     ]
   },
@@ -164,17 +169,17 @@
       {
         "name": "Beguiling Magic",
         "level": 3,
-        "description": "You always have Charm Person and Mirror Image prepared and they don't count against spells known. When you cast an Enchantment or Illusion spell using a spell slot, you can cause one target of the spell to make a Wisdom saving throw. On failure, the target has the Charmed or Frightened condition (your choice) for 1 minute. The target can repeat the save at end of each of its turns."
+        "description": "You always have Charm Person and Mirror Image prepared and they don't count against spells known. When you cast an Enchantment or Illusion spell using a spell slot, you can cause one target of the spell to make a Wisdom saving throw. On failure, the target has the Charmed or Frightened condition (your choice) for 1 minute. The target can repeat the save at end of each of its turns. You can also restore this use by expending one use of your Bardic Inspiration (no action required)."
       },
       {
         "name": "Mantle of Majesty",
         "level": 6,
-        "description": "As a Bonus Action, you take on an appearance of unearthly beauty for 1 minute. For the duration, you can cast Command as a Bonus Action on each of your turns without expending a spell slot. A creature Charmed by you automatically fails its saving throw against the Command. Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore this feature by expending a spell slot of 3rd level or higher."
+        "description": "As a Bonus Action, you take on an appearance of unearthly beauty for 1 minute. For the duration, you can cast Command as a Bonus Action on each of your turns without expending a spell slot. A creature Charmed by you automatically fails its saving throw against the Command. Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore this use by expending a spell slot of 3rd level or higher (no action required)."
       },
       {
         "name": "Unbreakable Majesty",
         "level": 14,
-        "description": "As a Bonus Action, you assume a magically majestic presence for 1 minute. For the duration, whenever any creature tries to attack you for the first time on a turn, the attacker must make a Charisma saving throw. On a failure, it can't attack you on this turn and must choose a new target or waste the attack. On a success, it can attack you normally. Once you use this feature, you can't use it again until you finish a Short or Long Rest."
+        "description": "As a Bonus Action, you assume a magically majestic presence for 1 minute. For the duration, whenever any creature tries to attack you for the first time on a turn, the attacker must make a Charisma saving throw. On a failure, the attack misses you. On a success, it can attack you normally. Once you use this feature, you can't use it again until you finish a Short or Long Rest."
       }
     ]
   },
@@ -280,7 +285,7 @@
       {
         "name": "Light Domain Spells",
         "level": 3,
-        "description": "You always have certain spells prepared: 3rd level -- Burning Hands, Faerie Fire; 5th level -- Flaming Sphere, Scorching Ray; 7th level -- Daylight, Fireball; 9th level -- Arcane Eye, Wall of Fire."
+        "description": "Your connection to this divine domain ensures you always have certain spells ready. When you reach a Cleric level specified in the Light Domain Spells table, you thereafter always have the listed spells prepared: 3rd level -- Burning Hands, Faerie Fire, Scorching Ray, See Invisibility; 5th level -- Daylight, Fireball; 7th level -- Arcane Eye, Wall of Fire; 9th level -- Flame Strike, Scrying."
       },
       {
         "name": "Warding Flare",
@@ -295,7 +300,7 @@
       {
         "name": "Improved Warding Flare",
         "level": 6,
-        "description": "You can use your Warding Flare feature when a creature you can see within 30 feet of you attacks a creature other than you."
+        "description": "You regain all expended uses of your Warding Flare when you finish a Short or Long Rest. In addition, whenever you use Warding Flare, you can give the target of the triggering attack a number of Temporary Hit Points equal to 2d6 plus your Wisdom modifier."
       },
       {
         "name": "Corona of Light",
@@ -414,19 +419,19 @@
     "description": "Druids of the Circle of the Moon are fierce guardians of the wilds. Their order gathers under the full moon to share news and trade warnings. They haunt the deepest parts of the wilderness, where they might go for weeks on end before crossing paths with another humanoid creature.",
     "features": [
       {
-        "name": "Combat Wild Shape",
-        "level": 3,
-        "description": "You can use Wild Shape as a Bonus Action. While in a Wild Shape form, you can use a Bonus Action to expend one spell slot to regain Hit Points equal to 1d8 per level of the spell slot expended."
-      },
-      {
         "name": "Circle Forms",
         "level": 3,
-        "description": "When you use Wild Shape, you can take a more powerful form. Your beast form's CR can be as high as your Druid level divided by 3 (round down, min 1). Your AC in beast form equals 13 + your Wisdom modifier (if higher than the beast's AC). You gain Temporary HP equal to 3 times your Druid level when you transform."
+        "description": "You can channel lunar magic when you assume a Wild Shape form. The maximum CR for the form equals your Druid level divided by 3 (round down). Your AC equals 13 plus your Wisdom modifier if that total is higher than the beast's AC. You gain Temporary Hit Points equal to three times your Druid level."
       },
       {
-        "name": "Lunar Radiance",
+        "name": "Circle of the Moon Spells",
+        "level": 3,
+        "description": "You always have certain spells prepared and can cast them while in Wild Shape form. 3rd level -- Cure Wounds, Moonbeam, Starry Wisp; 5th level -- Conjure Animals; 7th level -- Fount of Moonlight; 9th level -- Mass Cure Wounds."
+      },
+      {
+        "name": "Improved Circle Forms",
         "level": 6,
-        "description": "While in Wild Shape, you can deal Radiant damage instead of the normal damage type when you hit with an attack. When you deal Radiant damage this way, the target sheds dim light in a 5-foot radius until the start of your next turn, and you can see Invisible creatures in that light."
+        "description": "While in a Wild Shape form, each of your attacks can deal its normal damage type or Radiant damage (your choice each time you hit). You can also add your Wisdom modifier to your Constitution saving throws."
       },
       {
         "name": "Moonlight Step",
@@ -450,7 +455,7 @@
       {
         "name": "Wrath of the Sea",
         "level": 3,
-        "description": "As a Bonus Action, you can expend a use of Wild Shape to create a 5-foot Emanation around you that lasts 10 minutes. Each hostile creature that enters or starts its turn in the Emanation takes Cold or Lightning damage equal to 1d6 (your choice each time)."
+        "description": "As a Bonus Action, you conjure oceanic energy around you in a 10-foot Emanation that lasts until the start of your next turn. When you create the Emanation or as a Bonus Action on subsequent turns, choose another creature you can see in the Emanation. The target must succeed on a Constitution saving throw against your spell save DC or take Cold or Lightning damage (your choice) equal to 1d6 rolled a number of times equal to your Wisdom modifier (minimum once). On a success, the target takes half damage. You can also push the target up to 15 feet away from you on a failed save."
       },
       {
         "name": "Circle of the Sea Spells",
@@ -460,7 +465,7 @@
       {
         "name": "Aquatic Affinity",
         "level": 6,
-        "description": "You gain a Swimming Speed equal to your Walking Speed. You can also breathe underwater. The Cold damage from Wrath of the Sea increases to 2d6 + your Wisdom modifier."
+        "description": "The size of the Emanation created by your Wrath of the Sea increases to 15 feet. You also gain a Swim Speed equal to your Speed."
       },
       {
         "name": "Stormborn",
@@ -518,32 +523,32 @@
       {
         "name": "Combat Superiority",
         "level": 3,
-        "description": "You learn three maneuvers of your choice from the list of Battle Master maneuvers. You gain four Superiority Dice, which are d8s. A Superiority Die is expended when you use it. You regain all Superiority Dice when you finish a Short or Long Rest. You learn two additional maneuvers at 7th, 10th, 15th, and 18th level. Maneuver totals by level: 3 (3rd), 5 (7th), 7 (10th), 9 (15th), 11 (18th). Your Superiority Dice become d10s at 10th level and d12s at 18th level."
+        "description": "You learn three maneuvers of your choice from the list of Battle Master maneuvers. Many maneuvers enhance an attack in some way. You can use only one maneuver per attack. You learn two additional maneuvers at 7th, 10th, and 15th level. Each time you learn new maneuvers, you can also replace one maneuver you know with a different one. You gain four Superiority Dice, which are d8s. A Superiority Die is expended when you use it. You regain all expended Superiority Dice when you finish a Short or Long Rest. You gain an additional Superiority Die when you reach Fighter levels 7 (five dice total) and 15 (six dice total). If a maneuver requires a saving throw, the DC equals 8 plus your Strength or Dexterity modifier (your choice) and Proficiency Bonus."
       },
       {
         "name": "Student of War",
         "level": 3,
-        "description": "You gain proficiency with one type of Artisan's Tools of your choice."
+        "description": "You gain proficiency with one type of Artisan's Tools of your choice, and you gain proficiency in one skill of your choice from the skills available to Fighters at level 1."
       },
       {
         "name": "Know Your Enemy",
         "level": 7,
-        "description": "As a Bonus Action, you can study a creature within 30 feet. You learn its damage Immunities, Resistances, and Vulnerabilities."
+        "description": "As a Bonus Action, you can discern certain strengths and weaknesses of a creature you can see within 30 feet of yourself; you know whether that creature has any Immunities, Resistances, or Vulnerabilities, and if the creature has any, you know what they are. Once you use this feature, you can't do so again until you finish a Long Rest. You can also restore a use of the feature by expending one Superiority Die (no action required)."
       },
       {
         "name": "Improved Combat Superiority",
         "level": 10,
-        "description": "Your Superiority Dice become d10s. You also learn two additional maneuvers of your choice."
+        "description": "Your Superiority Die becomes a d10."
       },
       {
         "name": "Relentless",
         "level": 15,
-        "description": "Once per turn, when you use a maneuver and have no Superiority Dice remaining, you can roll a d8 and use it for the maneuver instead of expending a Superiority Die. You also learn two additional maneuvers of your choice."
+        "description": "Once per turn, when you use a maneuver, you can roll 1d8 and use the number rolled instead of expending a Superiority Die."
       },
       {
         "name": "Ultimate Combat Superiority",
         "level": 18,
-        "description": "Your Superiority Dice become d12s. You also learn two additional maneuvers of your choice."
+        "description": "Your Superiority Die becomes a d12."
       }
     ]
   },
@@ -596,7 +601,7 @@
       {
         "name": "Spellcasting",
         "level": 3,
-        "description": "You augment your martial prowess with the ability to cast Wizard spells. You learn three cantrips and learn spells from the Wizard spell list. Intelligence is your spellcasting ability."
+        "description": "You augment your martial prowess with the ability to cast Wizard spells. You know two cantrips of your choice from the Wizard spell list. Whenever you gain a Fighter level, you can replace one of these cantrips with another Wizard cantrip. Intelligence is your spellcasting ability."
       },
       {
         "name": "War Bond",
@@ -635,12 +640,12 @@
       {
         "name": "Psionic Power",
         "level": 3,
-        "description": "You harbor a wellspring of psionic energy. You have a number of Psionic Energy dice equal to twice your Proficiency Bonus, which are d6s. You can use them for: Protective Field (reduce damage to you or a creature within 30 feet by the die roll as a Reaction), Psionic Strike (add the die roll as Force damage to a weapon hit), or Telekinetic Movement (move a Large or smaller object or willing creature up to 30 feet as a Magic action)."
+        "description": "You harbor a wellspring of psionic energy. Your Psionic Energy dice progress as follows: L3: 4×d6, L5: 6×d8, L9: 8×d8, L11: 8×d10, L13: 10×d10, L17: 12×d12. You can use them for: Protective Field (reduce damage to you or a creature within 30 feet by the die roll as a Reaction), Psionic Strike (add the die roll as Force damage to a weapon hit), or Telekinetic Movement (move a Large or smaller object or willing creature up to 30 feet as a Magic action)."
       },
       {
         "name": "Telekinetic Adept",
         "level": 7,
-        "description": "You can cast Telekinesis without components, using Intelligence as your spellcasting ability. You can also push a creature up to 10 feet when you deal Psionic Strike damage. Your Psi die becomes a d8."
+        "description": "You reach new heights with your psionic abilities. Psi-Powered Leap: As a Bonus Action, you gain a Fly Speed equal to twice your Speed until the end of the current turn. Telekinetic Thrust: When you deal damage with your Psionic Strike, you can force the target to make a Strength saving throw (DC = 8 + Prof + Int mod). On a failure, you can push the target up to 10 feet or knock it Prone."
       },
       {
         "name": "Guarded Mind",
@@ -655,7 +660,7 @@
       {
         "name": "Telekinetic Master",
         "level": 18,
-        "description": "Your Psionic Energy dice become d12s. You can also cast Telekinesis without expending a Psionic Energy die a number of times equal to your Intelligence modifier (minimum of once), regaining all uses on a Long Rest."
+        "description": "You always have the Telekinesis spell prepared. You can cast it without a spell slot or components, and you can make one weapon attack as a Bonus Action while concentrating on it. When you cast it this way, you can't do so again until you finish a Long Rest, unless you expend a Psionic Energy die to use it again."
       }
     ]
   },
@@ -1067,12 +1072,12 @@
       {
         "name": "Hunter's Prey",
         "level": 3,
-        "description": "You gain one of the following features of your choice. Colossus Slayer: Once per turn, when you hit a creature that is missing any of its Hit Points, your attack deals an extra 1d8 damage of the weapon's type. Horde Breaker: Once per turn, when you make an attack roll against a creature, you can make another attack roll against a different creature within 5 feet of the first target that is also within your weapon's range. Whenever you finish a Short or Long Rest, you can replace the feature you chose with the other one."
+        "description": "You gain one of the following features of your choice. Colossus Slayer: Your tenacity can wear down even the most resilient foes. When you hit a creature with a weapon, the weapon deals an extra 1d8 damage to the target if it's missing any of its Hit Points. You can deal this extra damage only once per turn. Horde Breaker: Once on each of your turns when you make an attack with a weapon, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target, that is within the weapon's range, and that you haven't attacked this turn. Whenever you finish a Short or Long Rest, you can replace the feature you chose with the other one."
       },
       {
         "name": "Defensive Tactics",
         "level": 7,
-        "description": "You gain one of the following features of your choice. Escape the Horde: Opportunity Attacks against you are made with Disadvantage. Multiattack Defense: When a creature hits you with an attack, you gain a +4 bonus to AC against all subsequent attacks made by that creature for the rest of the turn. Whenever you finish a Short or Long Rest, you can replace the feature you chose with the other one."
+        "description": "You gain one of the following features of your choice. Escape the Horde: Opportunity Attacks have Disadvantage against you. Multiattack Defense: When a creature hits you with an attack roll, that creature has Disadvantage on all other attack rolls against you this turn. Whenever you finish a Short or Long Rest, you can replace the feature you chose with the other one."
       },
       {
         "name": "Superior Hunter's Prey",

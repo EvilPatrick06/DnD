@@ -7,6 +7,9 @@ const api = {
   loadCharacters: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CHARACTERS),
   loadCharacter: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CHARACTER, id),
   deleteCharacter: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_CHARACTER, id),
+  listCharacterVersions: (id: string) => ipcRenderer.invoke('storage:character-versions', id),
+  restoreCharacterVersion: (id: string, fileName: string) =>
+    ipcRenderer.invoke('storage:character-restore-version', id, fileName),
 
   // Campaign storage
   saveCampaign: (campaign: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_CAMPAIGN, campaign),
@@ -25,6 +28,12 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SAVE, options),
   showOpenDialog: (options: { title: string; filters: Array<{ name: string; extensions: string[] }> }) =>
     ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN, options),
+
+  // Game state storage
+  saveGameState: (campaignId: string, state: Record<string, unknown>) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SAVE_GAME_STATE, campaignId, state),
+  loadGameState: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_GAME_STATE, campaignId),
+  deleteGameState: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_GAME_STATE, campaignId),
 
   // Ban storage
   loadBans: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_BANS, campaignId),

@@ -552,7 +552,7 @@ export default function InitiativeTracker({
 
   // Initiative is active -- show tracker
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-live="polite">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Initiative</h3>
         <span className="text-xs text-amber-400 font-semibold">Round {initiative.round}</span>

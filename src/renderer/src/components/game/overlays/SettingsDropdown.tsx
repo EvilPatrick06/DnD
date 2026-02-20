@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PRESET_LABELS } from '../../../data/calendar-presets'
+import { addToast } from '../../../hooks/useToast'
 import { useAiDmStore } from '../../../stores/useAiDmStore'
 import { useGameStore } from '../../../stores/useGameStore'
 import type { Campaign } from '../../../types/campaign'
@@ -14,20 +15,20 @@ interface SettingsDropdownProps {
   isFullscreen: boolean
   onLeaveGame: (destination: string) => void
   onSaveCampaign?: () => Promise<void>
+  onEndSession?: () => void
 }
 
 function SaveCampaignButton({ onSave }: { onSave: () => Promise<void> }): JSX.Element {
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   const handleSave = async (): Promise<void> => {
     setSaving(true)
     try {
       await onSave()
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      addToast('Campaign saved', 'success')
     } catch (err) {
       console.error('[SettingsDropdown] Save failed:', err)
+      addToast('Failed to save campaign', 'error')
     } finally {
       setSaving(false)
     }
@@ -42,7 +43,7 @@ function SaveCampaignButton({ onSave }: { onSave: () => Promise<void> }): JSX.El
           disabled={saving}
           className="px-2 py-0.5 text-xs rounded transition-colors cursor-pointer bg-amber-600/30 text-amber-400 hover:bg-amber-600/50 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>
@@ -108,7 +109,8 @@ export default function SettingsDropdown({
   onToggleFullscreen,
   isFullscreen,
   onLeaveGame,
-  onSaveCampaign
+  onSaveCampaign,
+  onEndSession
 }: SettingsDropdownProps): JSX.Element {
   const turnMode = useGameStore((s) => s.turnMode)
   const isPaused = useGameStore((s) => s.isPaused)
@@ -130,7 +132,7 @@ export default function SettingsDropdown({
   }, [isOpen, onToggle])
 
   return (
-    <div className="absolute top-3 right-3 z-20" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={onToggle}
         className="w-9 h-9 bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl
@@ -223,12 +225,21 @@ export default function SettingsDropdown({
             >
               Return to Lobby
             </button>
-            <button
-              onClick={() => onLeaveGame('/')}
-              className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
-            >
-              Exit to Menu
-            </button>
+            {isDM && onEndSession ? (
+              <button
+                onClick={onEndSession}
+                className="w-full px-4 py-2 text-left text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors cursor-pointer font-semibold"
+              >
+                End Session
+              </button>
+            ) : (
+              <button
+                onClick={() => onLeaveGame('/')}
+                className="w-full px-4 py-2 text-left text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors cursor-pointer"
+              >
+                Leave Game
+              </button>
+            )}
           </div>
         </div>
       )}

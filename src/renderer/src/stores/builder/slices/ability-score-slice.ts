@@ -93,10 +93,10 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
 
   confirmAsi: (slotId, abilities) => {
     const { buildSlots, abilityScores, asiSelections } = get()
-    // Apply the boosts: +2 to one or +1 to two
     const newScores = { ...abilityScores }
+    const boost = abilities.length === 1 ? 2 : 1
     for (const ab of abilities) {
-      newScores[ab] = Math.min(20, newScores[ab] + 1)
+      newScores[ab] = Math.min(20, newScores[ab] + boost)
     }
 
     const label =
@@ -123,10 +123,10 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
     const prevAbilities = asiSelections[slotId]
     if (!prevAbilities) return
 
-    // Reverse the boosts
     const newScores = { ...abilityScores }
+    const boost = prevAbilities.length === 1 ? 2 : 1
     for (const ab of prevAbilities) {
-      newScores[ab] = Math.max(1, newScores[ab] - 1)
+      newScores[ab] = Math.max(1, newScores[ab] - boost)
     }
 
     const updatedSlots = buildSlots.map((slot) =>

@@ -1,20 +1,36 @@
 import { create } from 'zustand'
+import { LAST_SESSION_KEY } from '../config/constants'
 import * as clientManager from '../network/client-manager'
 import * as hostManager from '../network/host-manager'
+import { broadcastExcluding, setGameStateProvider, sendToPeer } from '../network/host-manager'
+import { buildFullGameStatePayload } from '../services/game-sync'
 import { getPeerId } from '../network/peer-manager'
 import type {
+  ConditionUpdatePayload,
   ConnectionState,
+  FogRevealPayload,
   ForceDeafenPayload,
   ForceMutePayload,
   GameStateFullPayload,
+  MapChangePayload,
   MessageType,
+  NetworkGameState,
   NetworkMessage,
   PeerInfo,
-  ShopItem
+  ShopItem,
+  SlowModePayload,
+  FileSharingPayload,
+  TokenMovePayload
 } from '../network/types'
 import { setForceDeafened, setForceMuted } from '../network/voice-manager'
 import { useGameStore } from './useGameStore'
 import { useLobbyStore } from './useLobbyStore'
+
+const listenerCleanups: Array<() => void> = []
+function clearListenerCleanups(): void {
+  for (const fn of listenerCleanups) fn()
+  listenerCleanups.length = 0
+}
 
 interface NetworkState {
   role: 'none' | 'host' | 'client'
@@ -26,6 +42,7 @@ interface NetworkState {
   peers: PeerInfo[]
   error: string | null
   disconnectReason: 'kicked' | 'banned' | null
+  latencyMs: number | null
 
   // Host actions
   hostGame: (displayName: string, existingInviteCode?: string) => Promise<string>
@@ -59,6 +76,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   peers: [],
   error: null,
   disconnectReason: null,
+  latencyMs: null,
 
   // --- Host actions ---
 
@@ -73,18 +91,36 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     try {
       const inviteCode = await hostManager.startHosting(displayName, existingInviteCode)
 
-      // Register host-side event listeners
-      hostManager.onPeerJoined((peer: PeerInfo) => {
-        get().addPeer(peer)
-      })
+      clearListenerCleanups()
+      listenerCleanups.push(
+        hostManager.onPeerJoined((peer: PeerInfo) => {
+          get().addPeer(peer)
+          // Async: send map images to newly joined peer after the initial handshake
+          buildFullGameStatePayload().then((fullState) => {
+            const maps = fullState.maps as Array<Record<string, unknown>>
+            if (maps?.length) {
+              const msg = {
+                type: 'game:state-update' as const,
+                payload: { mapsWithImages: maps },
+                senderId: getPeerId() || '',
+                senderName: get().displayName,
+                timestamp: Date.now(),
+                sequence: 0
+              }
+              sendToPeer(peer.peerId, msg)
+            }
+          })
+        }),
+        hostManager.onPeerLeft((peer: PeerInfo) => {
+          get().removePeer(peer.peerId)
+        }),
+        hostManager.onMessage((message: NetworkMessage, fromPeerId: string) => {
+          handleHostMessage(message, fromPeerId, get, set)
+        })
+      )
 
-      hostManager.onPeerLeft((peer: PeerInfo) => {
-        get().removePeer(peer.peerId)
-      })
-
-      hostManager.onMessage((message: NetworkMessage, fromPeerId: string) => {
-        handleHostMessage(message, fromPeerId, get, set)
-      })
+      // Provide game state for full syncs when new players connect
+      setGameStateProvider(() => buildNetworkGameState())
 
       set({
         connectionState: 'connected',
@@ -105,6 +141,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   },
 
   stopHosting: () => {
+    setGameStateProvider(null)
+    clearListenerCleanups()
     hostManager.stopHosting()
     set({
       role: 'none',
@@ -114,7 +152,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       localPeerId: null,
       peers: [],
       error: null,
-      disconnectReason: null
+      disconnectReason: null,
+      latencyMs: null
     })
   },
 
@@ -139,9 +178,12 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   },
 
   forceDeafenPlayer: (peerId: string, isForceDeafened: boolean) => {
-    const { displayName } = get()
-    // Force-deafen implies force-mute
-    const isForceMuted = !!isForceDeafened
+    const { displayName, peers } = get()
+    const peerUpdates: Partial<PeerInfo> = { isForceDeafened }
+    if (isForceDeafened) {
+      peerUpdates.isForceMuted = true
+    }
+    // When un-deafening, preserve existing isForceMuted state
     const message: NetworkMessage<ForceDeafenPayload> = {
       type: 'dm:force-deafen',
       payload: { peerId, isForceDeafened },
@@ -151,8 +193,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       sequence: 0
     }
     hostManager.broadcastMessage(message)
-    get().updatePeer(peerId, { isForceDeafened, isForceMuted })
-    useLobbyStore.getState().updatePlayer(peerId, { isForceDeafened, isForceMuted })
+    get().updatePeer(peerId, peerUpdates)
+    useLobbyStore.getState().updatePlayer(peerId, peerUpdates)
   },
 
   // --- Client actions ---
@@ -166,18 +208,23 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     })
 
     try {
-      // Register message handler before connecting
-      clientManager.onMessage((message: NetworkMessage) => {
-        handleClientMessage(message, get, set)
-      })
-
-      clientManager.onDisconnected((reason: string) => {
+      clearListenerCleanups()
+      listenerCleanups.push(
+        clientManager.onMessage((message: NetworkMessage) => {
+          handleClientMessage(message, get, set)
+        }),
+        clientManager.onDisconnected((reason: string) => {
         // Determine if this was a kick or ban based on the reason string
         let disconnectReason: 'kicked' | 'banned' | null = null
         if (reason.toLowerCase().includes('kicked')) {
           disconnectReason = 'kicked'
         } else if (reason.toLowerCase().includes('banned')) {
           disconnectReason = 'banned'
+        }
+
+        // Clear saved session so kicked/banned players don't see "Rejoin"
+        if (disconnectReason) {
+          try { localStorage.removeItem(LAST_SESSION_KEY) } catch { /* ignore */ }
         }
 
         set({
@@ -191,6 +238,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
           disconnectReason
         })
       })
+      )
 
       await clientManager.connectToHost(inviteCode, displayName)
 
@@ -211,6 +259,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   },
 
   disconnect: () => {
+    clearListenerCleanups()
     const { role } = get()
     if (role === 'host') {
       get().stopHosting()
@@ -305,8 +354,7 @@ function handleHostMessage(
     case 'player:ready': {
       const readyPayload = message.payload as { isReady?: boolean }
       get().updatePeer(fromPeerId, { isReady: readyPayload.isReady ?? true })
-      // Rebroadcast to all clients so they see the updated peer list
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
@@ -316,16 +364,14 @@ function handleHostMessage(
         characterId: payload.characterId,
         characterName: payload.characterName
       })
-      // Rebroadcast
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'voice:mute-toggle': {
       const payload = message.payload as { peerId: string; isMuted: boolean }
       get().updatePeer(fromPeerId, { isMuted: payload.isMuted })
-      // Rebroadcast
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
@@ -333,20 +379,17 @@ function handleHostMessage(
       const payload = message.payload as { peerId: string; isDeafened: boolean }
       get().updatePeer(fromPeerId, { isDeafened: payload.isDeafened })
       useLobbyStore.getState().updatePlayer(fromPeerId, { isDeafened: payload.isDeafened })
-      // Rebroadcast so all clients see the updated deafen state
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'chat:message': {
-      // Rebroadcast chat to all clients
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'chat:file': {
-      // Rebroadcast file messages to all clients
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
@@ -354,41 +397,54 @@ function handleHostMessage(
       const colorPayload = message.payload as { color: string }
       get().updatePeer(fromPeerId, { color: colorPayload.color })
       useLobbyStore.getState().updatePlayer(fromPeerId, { color: colorPayload.color })
-      // Update the host's authoritative peerInfoMap so color persists across re-syncs
       hostManager.updatePeerInfo(fromPeerId, { color: colorPayload.color })
-      // Rebroadcast
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'chat:whisper': {
-      // Forward whisper only to the target, after validating they exist
-      const payload = message.payload as { targetPeerId: string; targetName?: string }
-      const targetInfo = hostManager.getPeerInfo(payload.targetPeerId)
-      if (targetInfo) {
-        // Overwrite targetName with actual peer display name to prevent spoofing
-        ;(message.payload as Record<string, unknown>).targetName = targetInfo.displayName
-        hostManager.sendToPeer(payload.targetPeerId, message)
+      const payload = message.payload as { message: string; targetPeerId: string; targetName?: string }
+      const localId = getPeerId()
+
+      // If targeted at the host, display it locally
+      if (payload.targetPeerId === localId) {
+        useLobbyStore.getState().addChatMessage({
+          id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+          senderId: message.senderId,
+          senderName: `${message.senderName} (Whisper)`,
+          content: payload.message,
+          timestamp: Date.now(),
+          isSystem: false
+        })
+      } else {
+        // Forward whisper only to the target, after validating they exist
+        const targetInfo = hostManager.getPeerInfo(payload.targetPeerId)
+        if (targetInfo) {
+          ;(message.payload as Record<string, unknown>).targetName = targetInfo.displayName
+          hostManager.sendToPeer(payload.targetPeerId, message)
+        }
       }
       break
     }
 
     case 'game:dice-roll': {
-      // Rebroadcast dice rolls to all
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'player:buy-item': {
-      // Decrement shop inventory quantity and broadcast updated shop
       const buyPayload = message.payload as { itemId: string; itemName: string }
       {
         const gameStore = useGameStore.getState()
-        const updatedInventory = gameStore.shopInventory.map((item: ShopItem) =>
-          item.id === buyPayload.itemId && item.quantity > 0 ? { ...item, quantity: item.quantity - 1 } : item
-        )
+        const updatedInventory = gameStore.shopInventory.map((item: ShopItem) => {
+          if (item.id !== buyPayload.itemId) return item
+          const updates: Partial<ShopItem> = {}
+          if (item.quantity > 0) updates.quantity = item.quantity - 1
+          if (item.stockRemaining != null && item.stockRemaining > 0)
+            updates.stockRemaining = item.stockRemaining - 1
+          return { ...item, ...updates }
+        })
         gameStore.setShopInventory(updatedInventory)
-        // Broadcast updated shop to all peers
         hostManager.broadcastMessage({
           type: 'dm:shop-update' as MessageType,
           payload: { shopInventory: updatedInventory, shopName: gameStore.shopName },
@@ -398,12 +454,53 @@ function handleHostMessage(
           sequence: 0
         })
       }
-      // Rebroadcast the buy message so other clients see it
-      hostManager.broadcastMessage(message)
+      broadcastExcluding(message, fromPeerId)
       break
     }
     case 'player:sell-item': {
-      // Forward shop transactions to host for processing
+      const sellPayload = message.payload as {
+        itemName: string
+        price: { cp?: number; sp?: number; gp?: number; pp?: number }
+      }
+      {
+        const gameStore = useGameStore.getState()
+        const existing = gameStore.shopInventory.find(
+          (item: ShopItem) => item.name.toLowerCase() === sellPayload.itemName.toLowerCase()
+        )
+        let updatedInventory: ShopItem[]
+        if (existing) {
+          updatedInventory = gameStore.shopInventory.map((item: ShopItem) =>
+            item.id === existing.id
+              ? {
+                  ...item,
+                  quantity: item.quantity + 1,
+                  stockRemaining:
+                    item.stockRemaining != null ? item.stockRemaining + 1 : undefined
+                }
+              : item
+          )
+        } else {
+          const newItem: ShopItem = {
+            id: crypto.randomUUID(),
+            name: sellPayload.itemName,
+            category: 'other',
+            price: sellPayload.price,
+            quantity: 1,
+            shopCategory: 'other'
+          }
+          updatedInventory = [...gameStore.shopInventory, newItem]
+        }
+        gameStore.setShopInventory(updatedInventory)
+        hostManager.broadcastMessage({
+          type: 'dm:shop-update' as MessageType,
+          payload: { shopInventory: updatedInventory, shopName: gameStore.shopName },
+          senderId: getPeerId() || '',
+          senderName: get().displayName,
+          timestamp: Date.now(),
+          sequence: 0
+        })
+      }
+      broadcastExcluding(message, fromPeerId)
       break
     }
 
@@ -424,13 +521,28 @@ function handleClientMessage(
 ): void {
   switch (message.type) {
     case 'game:state-full': {
-      // Full state sync from host — replace peer list and learn campaignId
       const payload = message.payload as GameStateFullPayload
       const updates: Partial<NetworkState> = { peers: payload.peers }
       if (payload.campaignId) {
         updates.campaignId = payload.campaignId
       }
       set(updates)
+      if (payload.gameState) {
+        // Convert maps with imageData: use imageData as imagePath for client rendering
+        const gs = payload.gameState as NetworkGameState
+        if (gs.maps) {
+          gs.maps = gs.maps.map((m) => ({
+            ...m,
+            imagePath: m.imageData || m.imagePath
+          }))
+        }
+        applyGameState(gs as unknown as Record<string, unknown>)
+        // Apply shop state if present
+        if (gs.shopOpen) {
+          useGameStore.getState().openShop(gs.shopName)
+          if (gs.shopInventory) useGameStore.getState().setShopInventory(gs.shopInventory)
+        }
+      }
       break
     }
 
@@ -571,10 +683,218 @@ function handleClientMessage(
       break
     }
 
+    // --- Game state sync messages (host → client) ---
+
+    case 'dm:token-move': {
+      const payload = message.payload as TokenMovePayload
+      useGameStore.getState().moveToken(payload.mapId, payload.tokenId, payload.gridX, payload.gridY)
+      break
+    }
+
+    case 'dm:fog-reveal': {
+      const payload = message.payload as FogRevealPayload & { fogOfWar?: { revealedCells: Array<{ x: number; y: number }>; enabled?: boolean } }
+      if (payload.fogOfWar) {
+        const gs = useGameStore.getState()
+        const maps = gs.maps.map((m) =>
+          m.id === payload.mapId
+            ? { ...m, fogOfWar: { enabled: m.fogOfWar.enabled, ...payload.fogOfWar! } }
+            : m
+        )
+        useGameStore.setState({ maps })
+      } else if (payload.reveal) {
+        useGameStore.getState().revealFog(payload.mapId, payload.cells)
+      } else {
+        useGameStore.getState().hideFog(payload.mapId, payload.cells)
+      }
+      break
+    }
+
+    case 'dm:map-change': {
+      const payload = message.payload as MapChangePayload
+      if (payload.mapData) {
+        const gs = useGameStore.getState()
+        const existing = gs.maps.find((m) => m.id === payload.mapId)
+        if (existing) {
+          const maps = gs.maps.map((m) =>
+            m.id === payload.mapId
+              ? { ...m, ...(payload.mapData as unknown as Record<string, unknown>), imagePath: payload.mapData!.imageData || m.imagePath }
+              : m
+          ) as import('../types/map').GameMap[]
+          useGameStore.setState({ maps })
+        } else {
+          const newMap = {
+            ...payload.mapData,
+            imagePath: payload.mapData.imageData || payload.mapData.imagePath
+          } as unknown as import('../types/map').GameMap
+          gs.addMap(newMap)
+        }
+      }
+      useGameStore.getState().setActiveMap(payload.mapId)
+      break
+    }
+
+    case 'dm:initiative-update': {
+      const payload = message.payload as {
+        initiative: unknown
+        round: number
+        turnMode?: 'initiative' | 'free'
+      }
+      applyGameState({
+        initiative: payload.initiative,
+        round: payload.round,
+        ...(payload.turnMode ? { turnMode: payload.turnMode } : {})
+      } as Record<string, unknown>)
+      break
+    }
+
+    case 'dm:condition-update': {
+      const payload = message.payload as ConditionUpdatePayload & { conditions?: unknown[] }
+      if (payload.conditions) {
+        applyGameState({ conditions: payload.conditions } as Record<string, unknown>)
+      }
+      break
+    }
+
+    case 'game:state-update': {
+      const payload = message.payload as Record<string, unknown>
+      handleGameStateUpdate(payload)
+      break
+    }
+
+    case 'game:turn-advance': {
+      useGameStore.getState().nextTurn()
+      break
+    }
+
+    case 'dm:slow-mode': {
+      const payload = message.payload as SlowModePayload
+      useLobbyStore.getState().setSlowMode(payload.seconds)
+      break
+    }
+
+    case 'dm:file-sharing': {
+      const payload = message.payload as FileSharingPayload
+      useLobbyStore.getState().setFileSharingEnabled(payload.enabled)
+      break
+    }
+
+    case 'chat:whisper': {
+      const payload = message.payload as { message: string; targetPeerId: string; targetName: string }
+      useLobbyStore.getState().addChatMessage({
+        id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: message.senderId,
+        senderName: `${message.senderName} (Whisper)`,
+        content: payload.message,
+        timestamp: Date.now(),
+        isSystem: false
+      })
+      break
+    }
+
+    case 'pong': {
+      const payload = message.payload as { timestamp?: number }
+      if (payload.timestamp) {
+        const rtt = Date.now() - payload.timestamp
+        set({ latencyMs: rtt })
+      }
+      break
+    }
+
     default: {
-      // Other messages (chat, dice, game state) are handled by
-      // consumers that subscribe to onMessage directly
       break
     }
   }
+}
+
+// --- Game state helpers ---
+
+function buildNetworkGameState(): NetworkGameState {
+  const gs = useGameStore.getState()
+  return {
+    activeMapId: gs.activeMapId,
+    maps: gs.maps.map((m) => ({
+      id: m.id,
+      name: m.name,
+      campaignId: m.campaignId,
+      imagePath: m.imagePath,
+      width: m.width,
+      height: m.height,
+      grid: m.grid,
+      tokens: m.tokens,
+      fogOfWar: m.fogOfWar,
+      wallSegments: m.wallSegments,
+      terrain: m.terrain,
+      createdAt: m.createdAt
+    })),
+    turnMode: gs.turnMode,
+    initiative: gs.initiative,
+    round: gs.round,
+    conditions: gs.conditions,
+    isPaused: gs.isPaused,
+    turnStates: gs.turnStates,
+    underwaterCombat: gs.underwaterCombat,
+    flankingEnabled: gs.flankingEnabled,
+    groupInitiativeEnabled: gs.groupInitiativeEnabled,
+    ambientLight: gs.ambientLight,
+    diagonalRule: gs.diagonalRule,
+    travelPace: gs.travelPace,
+    marchingOrder: gs.marchingOrder,
+    inGameTime: gs.inGameTime,
+    allies: gs.allies,
+    enemies: gs.enemies,
+    places: gs.places,
+    handouts: gs.handouts,
+    shopOpen: gs.shopOpen,
+    shopName: gs.shopName,
+    shopInventory: gs.shopInventory
+  }
+}
+
+function applyGameState(data: Record<string, unknown>): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useGameStore.getState().loadGameState(data as any)
+}
+
+function handleGameStateUpdate(payload: Record<string, unknown>): void {
+  const gs = useGameStore.getState()
+
+  if (payload.addToken) {
+    const { mapId, token } = payload.addToken as { mapId: string; token: import('../types/map').MapToken }
+    gs.addToken(mapId, token)
+    return
+  }
+
+  if (payload.removeToken) {
+    const { mapId, tokenId } = payload.removeToken as { mapId: string; tokenId: string }
+    gs.removeToken(mapId, tokenId)
+    return
+  }
+
+  if (payload.updateToken) {
+    const { mapId, tokenId, updates } = payload.updateToken as {
+      mapId: string
+      tokenId: string
+      updates: Partial<import('../types/map').MapToken>
+    }
+    gs.updateToken(mapId, tokenId, updates)
+    return
+  }
+
+  if (payload.addMap) {
+    gs.addMap(payload.addMap as import('../types/map').GameMap)
+    return
+  }
+
+  if (payload.wallSegments) {
+    const { mapId, segments } = payload.wallSegments as {
+      mapId: string
+      segments: import('../types/map').WallSegment[]
+    }
+    const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, wallSegments: segments } : m))
+    useGameStore.setState({ maps })
+    return
+  }
+
+  // Generic partial state update
+  applyGameState(payload)
 }

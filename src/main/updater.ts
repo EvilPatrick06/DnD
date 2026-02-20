@@ -6,9 +6,6 @@
  * - Downloads updates in the background
  * - Prompts user to restart — never forces mid-session
  * - DM is notified of available updates; players are not interrupted
- *
- * When electron-updater is not configured (no publish config / no GH releases),
- * all operations gracefully return "no-update" status.
  */
 
 import { BrowserWindow, ipcMain } from 'electron'
@@ -31,23 +28,26 @@ function sendStatus(win: BrowserWindow | null): void {
   }
 }
 
+function getAutoUpdater() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require('electron-updater')
+  return mod.autoUpdater ?? mod.default?.autoUpdater ?? mod.default ?? mod
+}
+
 /**
  * Register update-related IPC handlers.
  * Call once during app initialization.
  */
 export function registerUpdateHandlers(): void {
-  // Return app version
   ipcMain.handle(IPC_CHANNELS.APP_VERSION, () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pkg = require('../../package.json') as { version: string }
     return pkg.version
   })
 
-  // Check for updates
   ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async () => {
     try {
-      // Dynamically import electron-updater (may not be installed in dev)
-      const { autoUpdater } = await import('electron-updater')
+      const autoUpdater = getAutoUpdater()
       autoUpdater.autoDownload = false
       autoUpdater.autoInstallOnAppQuit = false
 
@@ -64,9 +64,15 @@ export function registerUpdateHandlers(): void {
       sendStatus(win)
       return currentStatus
     } catch (err) {
-      // electron-updater not configured or network error
       const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('Cannot find module') || msg.includes('ERR_UPDATER_')) {
+      const isNoRelease =
+        msg.includes('Cannot find module') ||
+        msg.includes('ERR_UPDATER_') ||
+        msg.includes('404') ||
+        msg.includes('No published versions') ||
+        msg.includes('net::') ||
+        msg.includes('ENOTFOUND')
+      if (isNoRelease) {
         currentStatus = { state: 'not-available' }
       } else {
         currentStatus = { state: 'error', message: msg }
@@ -77,13 +83,10 @@ export function registerUpdateHandlers(): void {
     }
   })
 
-  // Download available update
   ipcMain.handle(IPC_CHANNELS.UPDATE_DOWNLOAD, async () => {
     try {
-      const { autoUpdater } = await import('electron-updater')
+      const autoUpdater = getAutoUpdater()
       const win = BrowserWindow.getFocusedWindow()
-
-      // Capture the pending version before downloading (currentStatus.version has the update version)
       const pendingVersion = currentStatus.state === 'available' ? currentStatus.version : ''
 
       autoUpdater.on('download-progress', (progress) => {
@@ -103,10 +106,9 @@ export function registerUpdateHandlers(): void {
     }
   })
 
-  // Install update and restart
   ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, async () => {
     try {
-      const { autoUpdater } = await import('electron-updater')
+      const autoUpdater = getAutoUpdater()
       autoUpdater.quitAndInstall(false, true)
     } catch {
       // Fallback: just quit

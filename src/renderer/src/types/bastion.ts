@@ -231,7 +231,7 @@ export interface SpecialFacilityDef {
   description: string
   level: number
   setting: 'core' | 'fr' | 'eberron'
-  prerequisite: FacilityPrerequisite
+  prerequisite: FacilityPrerequisite | null
   defaultSpace: FacilitySpace
   enlargeable: boolean
   hirelingCount: number

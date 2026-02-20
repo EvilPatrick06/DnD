@@ -14,11 +14,12 @@ import DetailsStep from './DetailsStep'
 import MapConfigStep from './MapConfigStep'
 import ReviewStep from './ReviewStep'
 import RulesStep from './RulesStep'
+import SessionZeroStep, { DEFAULT_SESSION_ZERO, type SessionZeroData } from './SessionZeroStep'
 import StartStep from './StartStep'
 import SystemStep from './SystemStep'
 import VoiceChatStep from './VoiceChatStep'
 
-const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Rules', 'Calendar', 'Maps', 'Voice', 'Audio', 'Review']
+const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Rules', 'Session Zero', 'Calendar', 'Maps', 'Voice', 'Audio', 'Review']
 
 export default function CampaignWizard(): JSX.Element {
   const navigate = useNavigate()
@@ -44,6 +45,7 @@ export default function CampaignWizard(): JSX.Element {
   const [calendar, setCalendar] = useState<CalendarConfig | null>(null)
   const [maps, setMaps] = useState<GameMap[]>([])
   const [customAudio, setCustomAudio] = useState<CustomAudioEntry[]>([])
+  const [sessionZero, setSessionZero] = useState<SessionZeroData>({ ...DEFAULT_SESSION_ZERO })
 
   // Voice chat config
   const [voiceConfig, setVoiceConfig] = useState<{
@@ -84,14 +86,16 @@ export default function CampaignWizard(): JSX.Element {
       case 4:
         return true // Rules are optional
       case 5:
-        return true // Calendar is optional
+        return true // Session Zero is optional
       case 6:
-        return true // Maps are optional
+        return true // Calendar is optional
       case 7:
-        return true // Voice is optional
+        return true // Maps are optional
       case 8:
-        return true // Audio is optional
+        return true // Voice is optional
       case 9:
+        return true // Audio is optional
+      case 10:
         return true // Review
       default:
         return false
@@ -208,6 +212,15 @@ export default function CampaignWizard(): JSX.Element {
                 category: a.category
               }))
             : undefined,
+        sessionZero: sessionZero.contentLimits.length > 0 ||
+          sessionZero.tone !== 'heroic' ||
+          sessionZero.homebrewNotes.trim() ||
+          sessionZero.playSchedule.trim() ||
+          sessionZero.additionalNotes.trim() ||
+          sessionZero.pvpAllowed ||
+          sessionZero.characterDeathExpectation !== 'possible'
+            ? sessionZero
+            : undefined,
         aiDm: aiEnabled
           ? {
               enabled: true,
@@ -310,13 +323,15 @@ export default function CampaignWizard(): JSX.Element {
 
       {step === 4 && <RulesStep rules={customRules} onChange={setCustomRules} />}
 
-      {step === 5 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
+      {step === 5 && <SessionZeroStep data={sessionZero} onChange={setSessionZero} />}
 
-      {step === 6 && <MapConfigStep maps={maps} campaignId={tempCampaignId} onChange={setMaps} />}
+      {step === 6 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
 
-      {step === 7 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
+      {step === 7 && <MapConfigStep maps={maps} campaignId={tempCampaignId} onChange={setMaps} />}
 
-      {step === 8 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
+      {step === 8 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
+
+      {step === 9 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
 
       {step === reviewStepIndex && system && (
         <ReviewStep

@@ -12,7 +12,12 @@ export function serializeCharacter(character: Character): string {
  * Validates that required fields exist: id, gameSystem, name.
  */
 export function deserializeCharacter(json: string): Character {
-  const parsed = JSON.parse(json)
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    throw new Error('Invalid character file: malformed JSON')
+  }
 
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid character file: not a valid JSON object')
@@ -30,7 +35,7 @@ export function deserializeCharacter(json: string): Character {
     throw new Error('Invalid character file: missing or invalid "name" field')
   }
 
-  return parsed as Character
+  return parsed as unknown as Character
 }
 
 /**

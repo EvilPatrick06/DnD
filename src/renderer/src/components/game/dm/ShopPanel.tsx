@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { load5ePoisons } from '../../../services/data-provider'
 import type { ShopItem } from '../../../network/types'
+import type { Poison } from '../../../types/dm-toolbox'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'
 
@@ -80,6 +82,26 @@ export default function ShopPanel(): JSX.Element {
   const { shopOpen, shopName, shopInventory, openShop, closeShop, addShopItem, removeShopItem } = useGameStore()
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const [shopNameInput, setShopNameInput] = useState(shopName)
+  const [showPoisons, setShowPoisons] = useState(false)
+  const [poisonPresets, setPoisonPresets] = useState<ShopItem[]>([])
+
+  useEffect(() => {
+    if (!showPoisons || poisonPresets.length > 0) return
+    load5ePoisons()
+      .then((poisons: Poison[]) => {
+        setPoisonPresets(
+          poisons.map((p) => ({
+            id: `poison-${p.id}`,
+            name: p.name,
+            category: 'Poison' as const,
+            price: { gp: parseInt(p.cost) || 100 },
+            quantity: 3,
+            description: `${p.type} — ${p.effect}`
+          }))
+        )
+      })
+      .catch(() => setPoisonPresets([]))
+  }, [showPoisons, poisonPresets.length])
 
   const handleOpenShop = (): void => {
     openShop(shopNameInput || 'General Store')
@@ -169,6 +191,32 @@ export default function ShopPanel(): JSX.Element {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Poisons */}
+          <div className="border-t border-gray-700 pt-2">
+            <button
+              onClick={() => setShowPoisons(!showPoisons)}
+              className="text-xs text-purple-400 hover:text-purple-300 cursor-pointer"
+            >
+              {showPoisons ? 'Hide' : 'Show'} Poisons ({poisonPresets.length || '...'})
+            </button>
+            {showPoisons && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {poisonPresets
+                  .filter((p) => !shopInventory.some((i) => i.id === p.id))
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleAddPreset(item)}
+                      className="text-[10px] px-1.5 py-0.5 bg-purple-900/30 border border-purple-700/50 rounded text-purple-400 hover:text-purple-300 hover:border-purple-500 cursor-pointer"
+                      title={item.description}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
 
           <button

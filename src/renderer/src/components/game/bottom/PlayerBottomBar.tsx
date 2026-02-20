@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { parseDiceFormula, rollDice } from '../../../services/dice-engine'
+import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
+import { useGameStore } from '../../../stores/useGameStore'
+import { useNetworkStore } from '../../../stores/useNetworkStore'
 import type { Campaign } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
 import { getCharacterSheetPath } from '../../../utils/character-routes'
+import { trigger3dDice } from '../dice3d'
+import MacroBar from '../player/MacroBar'
 import ChatPanel from './ChatPanel'
 
 interface PlayerBottomBarProps {
@@ -20,6 +26,10 @@ interface PlayerBottomBarProps {
   onTravelPace?: () => void
   onQuickCondition?: () => void
   onCheckTime?: () => void
+  onLightSource?: () => void
+  onDowntime?: () => void
+  onSpellRef?: () => void
+  onShortcutRef?: () => void
   playerName: string
   campaign: Campaign
   collapsed?: boolean
@@ -40,6 +50,10 @@ export default function PlayerBottomBar({
   onTravelPace,
   onQuickCondition,
   onCheckTime,
+  onLightSource,
+  onDowntime,
+  onSpellRef,
+  onShortcutRef,
   playerName,
   campaign,
   collapsed,
@@ -47,6 +61,7 @@ export default function PlayerBottomBar({
   onOpenModal
 }: PlayerBottomBarProps): JSX.Element {
   const navigate = useNavigate()
+  const sendMessage = useNetworkStore((s) => s.sendMessage)
   const [toolsOpen, setToolsOpen] = useState(false)
   const toolsRef = useRef<HTMLDivElement>(null)
 
@@ -69,6 +84,47 @@ export default function PlayerBottomBar({
   const freshCharacter = useCharacterStore((s) =>
     character ? (s.characters.find((c) => c.id === character.id) ?? character) : character
   )
+
+  const addChatMessage = useLobbyStore((s) => s.addChatMessage)
+  const localPeerId = useNetworkStore((s) => s.localPeerId)
+
+  const handleMacroRoll = (formula: string, label: string): void => {
+    const parsed = parseDiceFormula(formula)
+    if (!parsed) return
+    const rolls = rollDice(parsed.count, parsed.sides)
+    const total = rolls.reduce((s, r) => s + r, 0) + parsed.modifier
+    const msg = {
+      id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+      senderId: localPeerId || 'local',
+      senderName: playerName,
+      content: `${label}: rolled ${formula}`,
+      timestamp: Date.now(),
+      isSystem: false,
+      isDiceRoll: true,
+      diceResult: { formula, rolls, total }
+    }
+    addChatMessage(msg)
+    sendMessage('game:dice-result', {
+      formula,
+      rolls,
+      total,
+      isCritical: false,
+      isFumble: false,
+      rollerName: playerName
+    })
+    trigger3dDice({ formula, rolls, total, rollerName: playerName })
+    useGameStore.getState().addDiceRoll({
+      id: crypto.randomUUID(),
+      formula,
+      rolls,
+      total,
+      rollerName: playerName,
+      reason: label,
+      timestamp: Date.now(),
+      isCritical: false,
+      isFumble: false
+    })
+  }
 
   // Determine which companion options to show based on character class
   const is5e = freshCharacter && is5eCharacter(freshCharacter)
@@ -144,6 +200,10 @@ export default function PlayerBottomBar({
 
               {toolsOpen && (
                 <div className="absolute bottom-full left-0 mb-1 w-48 max-h-[60vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl z-20">
+                  {/* Combat & Movement */}
+                  <div className="px-2 pt-2 pb-1">
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Combat & Movement</span>
+                  </div>
                   <button
                     onClick={() => {
                       setToolsOpen(false)
@@ -171,6 +231,65 @@ export default function PlayerBottomBar({
                   >
                     Travel Pace Reference
                   </button>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
+                      onQuickCondition?.()
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Conditions Viewer
+                  </button>
+                  {onLightSource && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onLightSource()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                    >
+                      Light Sources
+                    </button>
+                  )}
+
+                  {/* Reference */}
+                  <div className="border-t border-gray-700/40 mx-2 mt-1" />
+                  <div className="px-2 pt-2 pb-1">
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Reference</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
+                      onSpellRef?.()
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Quick Reference
+                  </button>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
+                      onOpenModal?.('commandRef')
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Command Reference
+                  </button>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
+                      onShortcutRef?.()
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Shortcut Reference
+                  </button>
+
+                  {/* Session */}
+                  <div className="border-t border-gray-700/40 mx-2 mt-1" />
+                  <div className="px-2 pt-2 pb-1">
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Session</span>
+                  </div>
                   {onCheckTime && (
                     <button
                       onClick={() => {
@@ -185,12 +304,32 @@ export default function PlayerBottomBar({
                   <button
                     onClick={() => {
                       setToolsOpen(false)
-                      onQuickCondition?.()
+                      sendMessage('player:rest-request', { playerName, restType: 'short' })
                     }}
                     className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
                   >
-                    Conditions Viewer
+                    Request Short Rest
                   </button>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
+                      sendMessage('player:rest-request', { playerName, restType: 'long' })
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Request Long Rest
+                  </button>
+                  {onDowntime && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onDowntime()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                    >
+                      Downtime Activity
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -228,14 +367,22 @@ export default function PlayerBottomBar({
             )}
           </div>
 
-          {/* Right: chat panel */}
-          <ChatPanel
-            isDM={false}
-            playerName={playerName}
-            campaign={campaign}
-            character={character}
-            onOpenModal={onOpenModal}
-          />
+          {/* Center: macro bar + chat */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+            {/* Macro bar */}
+            <div className="shrink-0 border-b border-gray-700/30">
+              <MacroBar character={freshCharacter} onRoll={handleMacroRoll} />
+            </div>
+
+            {/* Chat panel */}
+            <ChatPanel
+              isDM={false}
+              playerName={playerName}
+              campaign={campaign}
+              character={character}
+              onOpenModal={onOpenModal}
+            />
+          </div>
         </>
       )}
     </div>

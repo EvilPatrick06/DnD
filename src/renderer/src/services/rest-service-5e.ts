@@ -1,4 +1,5 @@
-import type { Character5e, HitPoints } from '../types/character-5e'
+import type { Character5e, HitDiceEntry, HitPoints } from '../types/character-5e'
+import { totalHitDiceRemaining, totalHitDiceMaximum } from '../types/character-5e'
 import type { ActiveCondition, ClassResource, SpellEntry } from '../types/character-common'
 import { abilityModifier } from '../types/character-common'
 
@@ -81,27 +82,12 @@ export interface LongRestResult {
 export function getShortRestPreview(character: Character5e): ShortRestPreview {
   const conMod = abilityModifier(character.abilityScores.constitution)
 
-  // Hit Die pools per class (for multiclass)
-  const hitDiePools: HitDiePool[] = character.classes.map((cls) => {
-    // For single class, all remaining HD use that die size
-    // For multiclass, approximate remaining per class proportionally
-    if (character.classes.length === 1) {
-      return {
-        dieSize: cls.hitDie,
-        className: cls.name,
-        remaining: character.hitDiceRemaining,
-        total: cls.level
-      }
-    }
-    // Multiclass: proportional split of remaining HD
-    const proportion = cls.level / character.level
-    return {
-      dieSize: cls.hitDie,
-      className: cls.name,
-      remaining: Math.round(character.hitDiceRemaining * proportion),
-      total: cls.level
-    }
-  })
+  const hitDiePools: HitDiePool[] = character.hitDice.map((hd, i) => ({
+    dieSize: hd.dieType,
+    className: character.classes[i]?.name ?? 'Unknown',
+    remaining: hd.current,
+    total: hd.maximum
+  }))
 
   // Class resources that restore on short rest
   const restorableClassResources: RestorableResource[] = (character.classResources ?? [])
@@ -198,8 +184,22 @@ export function applyShortRest(
     current: Math.min(character.hitPoints.maximum, character.hitPoints.current + totalHealing)
   }
 
-  // HD decrement
-  const newHDRemaining = character.hitDiceRemaining - totalHDSpent
+  // HD decrement — distribute spent dice across per-class pools
+  const newHitDice: HitDiceEntry[] = character.hitDice.map((hd) => ({ ...hd }))
+  let remaining = totalHDSpent
+  for (const roll of diceRolls) {
+    const pool = newHitDice.find((hd) => hd.dieType === roll.dieSize && hd.current > 0)
+    if (pool) pool.current--
+    remaining--
+  }
+  if (remaining > 0) {
+    for (const hd of newHitDice) {
+      const take = Math.min(remaining, hd.current)
+      hd.current -= take
+      remaining -= take
+      if (remaining <= 0) break
+    }
+  }
 
   // Class resources with short rest restore
   const resourcesRestored: string[] = []
@@ -269,7 +269,7 @@ export function applyShortRest(
   const updated: Character5e = {
     ...character,
     hitPoints: newHP,
-    hitDiceRemaining: newHDRemaining,
+    hitDice: newHitDice,
     classResources: newClassResources,
     speciesResources: newSpeciesResources,
     ...(Object.keys(newPactSlots).length > 0 ? { pactMagicSlotLevels: newPactSlots } : {}),
@@ -319,8 +319,8 @@ export function getLongRestPreview(character: Character5e): LongRestPreview {
   return {
     currentHP: character.hitPoints.current,
     maxHP: character.hitPoints.maximum,
-    currentHD: character.hitDiceRemaining,
-    maxHD: character.level,
+    currentHD: totalHitDiceRemaining(character.hitDice),
+    maxHD: totalHitDiceMaximum(character.hitDice),
     spellSlotsToRestore,
     pactSlotsToRestore,
     classResourcesToRestore,
@@ -336,17 +336,25 @@ export function getLongRestPreview(character: Character5e): LongRestPreview {
 
 export function applyLongRest(character: Character5e): LongRestResult {
   const hpRestored = character.hitPoints.maximum - character.hitPoints.current
-  const hdRestored = character.level - character.hitDiceRemaining
 
-  // Full HP — PHB 2024: temp HP persists through rests (they don't expire on rest)
+  // Full HP — PHB 2024: THP expire after a Long Rest
   const newHP: HitPoints = {
     current: character.hitPoints.maximum,
     maximum: character.hitPoints.maximum,
-    temporary: character.hitPoints.temporary ?? 0
+    temporary: 0
   }
 
-  // All HD (2024 PHB)
-  const newHDRemaining = character.level
+  // PHB 2024: restore up to half your total Hit Dice (minimum of one die)
+  const totalMax = totalHitDiceMaximum(character.hitDice)
+  const hdToRestore = Math.max(1, Math.floor(totalMax / 2))
+  let hdBudget = hdToRestore
+  const newHitDice: HitDiceEntry[] = character.hitDice.map((hd) => {
+    const spent = hd.maximum - hd.current
+    const restore = Math.min(spent, hdBudget)
+    hdBudget -= restore
+    return { ...hd, current: hd.current + restore }
+  })
+  const hdRestored = hdToRestore - hdBudget
 
   // All spell slots
   const restoredSpellSlots: Record<number, { current: number; max: number }> = {}
@@ -429,7 +437,7 @@ export function applyLongRest(character: Character5e): LongRestResult {
   const updated: Character5e = {
     ...character,
     hitPoints: newHP,
-    hitDiceRemaining: newHDRemaining,
+    hitDice: newHitDice,
     spellSlotLevels: restoredSpellSlots,
     ...(Object.keys(restoredPactSlots).length > 0 ? { pactMagicSlotLevels: restoredPactSlots } : {}),
     deathSaves: newDeathSaves,

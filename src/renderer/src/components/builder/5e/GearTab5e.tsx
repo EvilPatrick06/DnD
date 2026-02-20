@@ -1,3 +1,4 @@
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getHigherLevelEquipment, rollStartingGold } from '../../../data/starting-equipment-table'
 import { load5eMagicItems } from '../../../services/data-provider'
@@ -149,7 +150,7 @@ function useEquipmentDatabase(): EquipmentDatabase | null {
     fetch('./data/5e/equipment.json')
       .then((r) => r.json())
       .then((data) => setDb(data))
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load equipment data:', err))
   }, [])
   return db
 }
@@ -303,8 +304,12 @@ function InventoryItem({
   return (
     <div className="border-b border-gray-800/50 last:border-b-0">
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
         className="flex items-center justify-between py-1.5 px-2 rounded text-sm text-gray-300 hover:bg-gray-800/60 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded) } }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className={`text-[10px] transition-transform ${expanded ? 'rotate-90' : ''}`}>&#9654;</span>
@@ -318,6 +323,7 @@ function InventoryItem({
           }}
           className="text-gray-600 hover:text-red-400 transition-colors ml-2 shrink-0 text-xs px-1"
           title="Remove item"
+          aria-label="Remove item"
         >
           ✕
         </button>
@@ -385,14 +391,25 @@ function EquipmentShop({
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'weapon' | 'armor' | 'gear'>('all')
 
-  const shopItems = buildShopItems(equipDb)
-  const filtered = shopItems.filter((item) => {
-    if (typeFilter !== 'all' && item.type !== typeFilter) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
-    }
-    return true
+  const shopItems = useMemo(() => buildShopItems(equipDb), [equipDb])
+  const filtered = useMemo(
+    () =>
+      shopItems.filter((item) => {
+        if (typeFilter !== 'all' && item.type !== typeFilter) return false
+        if (search) {
+          const q = search.toLowerCase()
+          return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+        }
+        return true
+      }),
+    [shopItems, typeFilter, search]
+  )
+  const shopParentRef = useRef<HTMLDivElement>(null)
+  const shopVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => shopParentRef.current,
+    estimateSize: () => 40,
+    overscan: 10
   })
 
   return (
@@ -432,30 +449,45 @@ function EquipmentShop({
         </div>
       </div>
 
-      <div className="max-h-64 overflow-y-auto">
+      <div ref={shopParentRef} className="max-h-64 overflow-y-auto">
         {filtered.length === 0 ? (
           <p className="text-sm text-gray-500 italic px-3 py-4 text-center">No items match your search.</p>
         ) : (
-          filtered.map((item, idx) => (
-            <div
-              key={`${item.type}-${item.name}-${idx}`}
-              className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800/50 last:border-b-0 hover:bg-gray-800/40"
-            >
-              <div className="min-w-0 flex-1 mr-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-200 truncate">{item.name}</span>
-                  <span className="text-[10px] text-gray-500 shrink-0">{item.cost}</span>
+          <div style={{ height: `${shopVirtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}>
+            {shopVirtualizer.getVirtualItems().map((virtualItem) => {
+              const item = filtered[virtualItem.index]
+              return (
+                <div
+                  key={`${item.type}-${item.name}-${virtualItem.index}`}
+                  data-index={virtualItem.index}
+                  ref={shopVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`
+                  }}
+                >
+                  <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800/50 hover:bg-gray-800/40">
+                    <div className="min-w-0 flex-1 mr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-200 truncate">{item.name}</span>
+                        <span className="text-[10px] text-gray-500 shrink-0">{item.cost}</span>
+                      </div>
+                      <div className="text-[10px] text-gray-500 truncate">{item.detail}</div>
+                    </div>
+                    <button
+                      onClick={() => onAdd(item.name, item.cost)}
+                      className="text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded px-2 py-0.5 shrink-0 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
-                <div className="text-[10px] text-gray-500 truncate">{item.detail}</div>
-              </div>
-              <button
-                onClick={() => onAdd(item.name, item.cost)}
-                className="text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded px-2 py-0.5 shrink-0 transition-colors"
-              >
-                Add
-              </button>
-            </div>
-          ))
+              )
+            })}
+          </div>
         )}
       </div>
     </div>

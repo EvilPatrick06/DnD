@@ -59,7 +59,7 @@ export default function DmAlertTray(): JSX.Element {
   }
 
   return (
-    <div className="absolute top-3 right-14 z-20">
+    <div className="relative">
       {/* Badge button */}
       <button
         onClick={() => setExpanded(!expanded)}

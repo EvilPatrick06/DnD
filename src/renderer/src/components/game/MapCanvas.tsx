@@ -66,6 +66,9 @@ export default function MapCanvas({
   const bgSpriteRef = useRef<Sprite | null>(null)
   const weatherOverlayRef = useRef<WeatherOverlayLayer | null>(null)
 
+  // Token sprite cache for diff-based rendering
+  const tokenSpriteMapRef = useRef(new Map<string, { sprite: Container; key: string }>())
+
   // Pan and zoom state
   const zoomRef = useRef(1)
   const panRef = useRef({ x: 0, y: 0 })
@@ -297,7 +300,7 @@ export default function MapCanvas({
       // Remove old background
       if (bgSpriteRef.current) {
         worldRef.current?.removeChild(bgSpriteRef.current)
-        bgSpriteRef.current.destroy()
+        bgSpriteRef.current.destroy({ children: true, texture: true })
         bgSpriteRef.current = null
       }
 
@@ -365,6 +368,14 @@ export default function MapCanvas({
       }
     }
   }, [initialized, map?.grid, map?.width, map?.height, map?.imagePath, applyTransform, map])
+
+  // Clear stale drag/measurement state when tool changes
+  useEffect(() => {
+    dragRef.current = null
+    measureStartRef.current = null
+    isFogPaintingRef.current = false
+    lastFogCellRef.current = null
+  }, [activeTool])
 
   // Initialize fog animation ticker (once when app is ready)
   useEffect(() => {
@@ -519,35 +530,48 @@ export default function MapCanvas({
     weatherOverlayRef.current.setWeather(weatherType)
   }, [initialized, weatherOverride?.preset, showWeatherOverlay])
 
-  // Render tokens
+  // Render tokens (diff-based: only add/remove/update sprites that changed)
+  const hpBarsVisibility = useGameStore((s) => s.hpBarsVisibility)
+
   const renderTokens = useCallback(() => {
     if (!tokenContainerRef.current || !map) return
 
-    // Clear existing tokens
-    tokenContainerRef.current.removeChildren()
+    const container = tokenContainerRef.current
+    const cache = tokenSpriteMapRef.current
+    const showHpBar = hpBarsVisibility === 'all' || (hpBarsVisibility === 'dm-only' && isHost)
+    const visibleTokenIds = new Set<string>()
 
-    map.tokens.forEach((token) => {
-      // Players can only see visible tokens
-      if (!isHost && !token.visibleToPlayers) return
+    for (const token of map.tokens) {
+      if (!isHost && !token.visibleToPlayers) continue
+      visibleTokenIds.add(token.id)
+
+      const isSelected = token.id === selectedTokenId
+      const isActive = !!activeEntityId && token.entityId === activeEntityId
+      const key = `${token.gridX},${token.gridY},${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')}`
+
+      const cached = cache.get(token.id)
+      if (cached && cached.key === key) continue
+
+      if (cached) {
+        container.removeChild(cached.sprite)
+        cached.sprite.destroy({ children: true })
+      }
 
       const sprite = createTokenSprite(
         token,
         map.grid.cellSize,
-        token.id === selectedTokenId,
-        !!activeEntityId && token.entityId === activeEntityId
+        isSelected,
+        isActive,
+        showHpBar
       )
       sprite.label = `token-${token.id}`
 
-      // Click handler for selection
       sprite.on('pointerdown', (e) => {
         if (activeTool !== 'select') return
-        // Ignore right-click for drag/select — handled by rightclick event
         if (e.button === 2) return
         e.stopPropagation()
-
         onTokenSelect(token.id)
-
-        // Start drag
+        if (!isHost && token.entityType !== 'player') return
         const worldPos = worldRef.current?.toLocal(e.global)
         if (!worldPos) return
         dragRef.current = {
@@ -559,11 +583,9 @@ export default function MapCanvas({
         }
       })
 
-      // Right-click handler for context menu
       sprite.on('rightclick', (e) => {
         e.stopPropagation()
         if (!onTokenContextMenu || !map) return
-        // Convert PixiJS global coords to screen coords
         const canvas = containerRef.current?.querySelector('canvas')
         if (!canvas) return
         const rect = canvas.getBoundingClientRect()
@@ -572,9 +594,19 @@ export default function MapCanvas({
         onTokenContextMenu(screenX, screenY, token, map.id)
       })
 
-      tokenContainerRef.current?.addChild(sprite)
-    })
-  }, [map, selectedTokenId, isHost, activeTool, onTokenSelect, activeEntityId, onTokenContextMenu])
+      container.addChild(sprite)
+      cache.set(token.id, { sprite, key })
+    }
+
+    // Remove sprites for tokens no longer present
+    for (const [tokenId, entry] of cache) {
+      if (!visibleTokenIds.has(tokenId)) {
+        container.removeChild(entry.sprite)
+        entry.sprite.destroy({ children: true })
+        cache.delete(tokenId)
+      }
+    }
+  }, [map, selectedTokenId, isHost, activeTool, onTokenSelect, activeEntityId, onTokenContextMenu, hpBarsVisibility])
 
   useEffect(() => {
     if (!initialized) return
@@ -978,9 +1010,37 @@ export default function MapCanvas({
 
   const pendingPlacement = useGameStore((s) => s.pendingPlacement)
 
+  const handleResetView = useCallback((): void => {
+    zoomRef.current = 1
+    panRef.current = { x: 0, y: 0 }
+    applyTransform()
+  }, [applyTransform])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if (e.key === 'Home') {
+        e.preventDefault()
+        handleResetView()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleResetView])
+
   return (
     <div className={`relative w-full h-full overflow-hidden bg-gray-900 ${pendingPlacement ? 'cursor-crosshair' : ''}`} onContextMenu={(e) => e.preventDefault()}>
       <div ref={containerRef} className="w-full h-full" />
+      {map && (
+        <button
+          onClick={handleResetView}
+          title="Reset View (Home)"
+          className="absolute bottom-3 right-3 z-20 px-3 py-1.5 text-xs font-medium
+            bg-gray-800/90 border border-gray-700 rounded-lg text-gray-400 hover:text-gray-200
+            hover:bg-gray-700 transition-colors cursor-pointer backdrop-blur-sm"
+        >
+          Reset View
+        </button>
+      )}
       {pendingPlacement && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-gray-900/90 border border-cyan-500/60 rounded-lg px-4 py-2 text-xs text-cyan-300 pointer-events-none">
           Click to place <span className="font-semibold">{pendingPlacement.tokenData.label ?? 'token'}</span>. Press <kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-200">Esc</kbd> to cancel.

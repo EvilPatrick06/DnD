@@ -30,7 +30,7 @@ function makeCharacter(overrides: Partial<Character5e> = {}): Character5e {
     },
     feats: [],
     hp: { current: 44, max: 44, temp: 0 },
-    hitDice: { d10: { current: 5, max: 5 } },
+    hitDice: [{ current: 5, maximum: 5, dieType: 10 }],
     spellSlots: {},
     spells: [],
     equipment: [],

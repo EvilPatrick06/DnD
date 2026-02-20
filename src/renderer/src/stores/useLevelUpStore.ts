@@ -1277,7 +1277,21 @@ async function apply5eLevelUp(
       maximum: newMaxHP,
       temporary: character.hitPoints.temporary
     },
-    hitDiceRemaining: character.hitDiceRemaining + (targetLevel - currentLevel),
+    hitDice: (() => {
+      const levelsGained = targetLevel - currentLevel
+      const classIdx = character.hitDice.findIndex(
+        (hd) => hd.dieType === (updatedClasses.find((c) => c.name.toLowerCase() === primaryClassId)?.hitDie ?? 8)
+      )
+      if (classIdx >= 0) {
+        return character.hitDice.map((hd, i) =>
+          i === classIdx
+            ? { ...hd, current: hd.current + levelsGained, maximum: hd.maximum + levelsGained }
+            : hd
+        )
+      }
+      const newDie = updatedClasses.find((c) => c.name.toLowerCase() === primaryClassId)?.hitDie ?? 8
+      return [...character.hitDice, { current: levelsGained, maximum: levelsGained, dieType: newDie }]
+    })(),
     proficiencies: updatedProficiencies,
     spellcasting: spellcastingInfo,
     knownSpells: updatedKnownSpells,

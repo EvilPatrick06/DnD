@@ -26,7 +26,7 @@ function makeCharacter(overrides: Partial<Character5e> = {}): Character5e {
       charisma: 8
     },
     hitPoints: { current: 20, maximum: 44, temporary: 0 },
-    hitDiceRemaining: 3,
+    hitDice: [{ current: 3, maximum: 5, dieType: 10 }],
     deathSaves: { successes: 0, failures: 0 },
     spellSlotLevels: {},
     pactMagicSlotLevels: {},
@@ -142,13 +142,13 @@ describe('applyShortRest', () => {
   })
 
   it('decrements hit dice remaining', () => {
-    const char = makeCharacter({ hitDiceRemaining: 3 })
+    const char = makeCharacter({ hitDice: [{ current: 3, maximum: 5, dieType: 10 }] })
     const diceRolls = [
       { dieSize: 10, rawRoll: 5, conMod: 2, healing: 7 },
       { dieSize: 10, rawRoll: 6, conMod: 2, healing: 8 }
     ]
     const result = applyShortRest(char, diceRolls)
-    expect(result.character.hitDiceRemaining).toBe(1) // 3 - 2
+    expect(result.character.hitDice[0].current).toBe(1) // 3 - 2
   })
 
   it('restores Warlock pact slots to max', () => {
@@ -174,7 +174,7 @@ describe('getLongRestPreview', () => {
   it('reports HP and HD status', () => {
     const char = makeCharacter({
       hitPoints: { current: 20, maximum: 44, temporary: 0 },
-      hitDiceRemaining: 3
+      hitDice: [{ current: 3, maximum: 5, dieType: 10 }]
     })
     const preview = getLongRestPreview(char)
     expect(preview.currentHP).toBe(20)
@@ -220,11 +220,12 @@ describe('applyLongRest', () => {
     expect(result.hpRestored).toBe(34)
   })
 
-  it('restores all hit dice (2024 PHB rule)', () => {
-    const char = makeCharacter({ hitDiceRemaining: 2 })
+  it('restores up to half total hit dice (2024 PHB rule)', () => {
+    const char = makeCharacter({ hitDice: [{ current: 2, maximum: 5, dieType: 10 }] })
     const result = applyLongRest(char)
-    expect(result.character.hitDiceRemaining).toBe(5) // full level
-    expect(result.hdRestored).toBe(3) // 5 - 2
+    // floor(5/2) = 2 HD budget; 3 spent, so restores 2
+    expect(result.character.hitDice[0].current).toBe(4)
+    expect(result.hdRestored).toBe(2)
   })
 
   it('restores all spell slots to max', () => {
@@ -283,12 +284,12 @@ describe('applyLongRest', () => {
     expect(result.character.heroicInspiration).toBe(true)
   })
 
-  it('preserves temporary HP through long rest (PHB 2024)', () => {
+  it('clears temporary HP on long rest (PHB 2024)', () => {
     const char = makeCharacter({
       hitPoints: { current: 30, maximum: 44, temporary: 10 }
     })
     const result = applyLongRest(char)
-    expect(result.character.hitPoints.temporary).toBe(10)
+    expect(result.character.hitPoints.temporary).toBe(0)
   })
 
   it('restores innate spell uses', () => {

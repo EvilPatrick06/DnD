@@ -6,9 +6,14 @@ const NetworkSettingsModal = lazy(() => import('../components/game/modals/Networ
 
 const menuItems = [
   {
-    label: 'View Characters',
+    label: 'Your Characters',
     path: '/characters',
     description: 'Browse your heroes from past and present campaigns'
+  },
+  {
+    label: 'My Campaigns',
+    path: '/make',
+    description: 'View, create, and manage your campaigns'
   },
   {
     label: 'Join Game',
@@ -16,19 +21,14 @@ const menuItems = [
     description: 'Connect to a game hosted by your Dungeon Master'
   },
   {
-    label: 'Make Game',
-    path: '/make',
-    description: 'Create and host a new campaign as the Dungeon Master'
-  },
-  {
     label: 'Bastions',
     path: '/bastions',
     description: 'Manage your strongholds, rooms, and hirelings'
   },
   {
-    label: 'About',
+    label: 'About & Data',
     path: '/about',
-    description: 'About D&D Virtual Tabletop'
+    description: 'App info, updates, and backup/restore your data'
   }
 ]
 
@@ -96,7 +96,7 @@ export default function MainMenuPage(): JSX.Element {
         Network Settings
       </button>
 
-      <p className="text-gray-600 text-sm mt-4">Version 1</p>
+      <p className="text-gray-600 text-sm mt-4">Version {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}</p>
 
       {showNetworkSettings && (
         <Suspense fallback={null}>

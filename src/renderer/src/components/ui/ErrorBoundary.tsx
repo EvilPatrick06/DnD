@@ -45,7 +45,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       `Time: ${new Date().toISOString()}`,
       `Platform: ${navigator.userAgent}`
     ].join('\n\n')
-    navigator.clipboard.writeText(report).catch(() => {})
+    navigator.clipboard.writeText(report).catch(() => {
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = report
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      } catch { /* exhausted fallbacks */ }
+    })
   }
 
   handleSaveBugReport = async (): Promise<void> => {

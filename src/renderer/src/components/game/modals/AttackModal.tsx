@@ -380,7 +380,7 @@ export default function AttackModal({
     setAttackRoll({ d20: d20_2 !== undefined ? d20_1 : d20, d20_2, modifier: mod, total, isCrit, isFumble })
 
     // Trigger 3D dice animation for attack roll
-    const rollerName = (() => { const pid = useNetworkStore.getState().localPeerId; const p = pid ? useLobbyStore.getState().players.find((pl) => pl.peerId === pid) : useLobbyStore.getState().players[0]; return p?.displayName || character.name; })()
+    const rollerName = (() => { const pid = useNetworkStore.getState().localPeerId; const players = useLobbyStore.getState().players; const p = pid ? players.find((pl) => pl.peerId === pid) : (players.length > 0 ? players[0] : undefined); return p?.displayName || character.name; })()
     const attackRolls = d20_2 !== undefined ? [d20_1, d20_2] : [d20_1]
     trigger3dDice({
       formula: d20_2 !== undefined ? '2d20' : '1d20',
@@ -448,7 +448,7 @@ export default function AttackModal({
     const total = Math.max(0, rolls.reduce((s, r) => s + r, 0) + damageMod + extraDamage)
 
     // Trigger 3D dice animation for damage roll
-    const damageRollerName = (() => { const pid = useNetworkStore.getState().localPeerId; const p = pid ? useLobbyStore.getState().players.find((pl) => pl.peerId === pid) : useLobbyStore.getState().players[0]; return p?.displayName || character.name; })()
+    const damageRollerName = (() => { const pid = useNetworkStore.getState().localPeerId; const players = useLobbyStore.getState().players; const p = pid ? players.find((pl) => pl.peerId === pid) : (players.length > 0 ? players[0] : undefined); return p?.displayName || character.name; })()
     trigger3dDice({
       formula: `${diceCount}d${parsed.sides}`,
       rolls,
@@ -569,7 +569,7 @@ export default function AttackModal({
             {step === 'damage' && 'Attack Result'}
             {step === 'result' && 'Damage Applied'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
           </button>
         </div>

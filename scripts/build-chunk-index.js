@@ -2,11 +2,12 @@
  * Pre-build chunk index from rulebook markdown files.
  * Run: node scripts/build-chunk-index.js
  *
- * Reads markdown files from "5.5e References/DM/" and writes
- * resources/chunk-index.json for bundling with the installer.
+ * Reads markdown files from PHB2024, DMG2024, and MM2025 directories
+ * under "5.5e References/" and writes resources/chunk-index.json
+ * for bundling with the installer.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -18,10 +19,28 @@ const MAX_CHUNK_TOKENS = 4000
 const CHARS_PER_TOKEN = 4
 
 const SOURCES = [
-  { file: "Player's Handbook (2024).md", book: 'PHB' },
-  { file: "Dungeon Master's Guide (2024).md", book: 'DMG' },
-  { file: 'Monster Manual (2025).md', book: 'MM' }
+  { dir: 'PHB2024/markdown', book: 'PHB' },
+  { dir: 'DMG2024/markdown', book: 'DMG' },
+  { dir: 'MM2025/Markdown', book: 'MM' }
 ]
+
+function collectMarkdownFiles(dir) {
+  const files = []
+
+  function walk(current) {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = join(current, entry.name)
+      if (entry.isDirectory()) {
+        walk(fullPath)
+      } else if (entry.name.endsWith('.md')) {
+        files.push(fullPath)
+      }
+    }
+  }
+
+  walk(dir)
+  return files.sort()
+}
 
 function stripHtmlStubs(text) {
   return text.replace(/<table class="rd__b-special[\s\S]*?<\/table>/g, '')
@@ -203,26 +222,32 @@ function flattenToChunks(nodes, source, idPrefix) {
 
 // ── Main ──
 
-const sourceDir = join(ROOT, '5.5e References', 'DM')
+const refsBase = join(ROOT, '5.5e References')
 const allChunks = []
 const sourceStats = []
 
 for (const source of SOURCES) {
-  const filePath = join(sourceDir, source.file)
+  const sourceDir = join(refsBase, source.dir)
 
-  if (!existsSync(filePath)) {
-    console.warn(`Warning: ${source.file} not found at ${filePath}, skipping`)
+  if (!existsSync(sourceDir)) {
+    console.warn(`Warning: ${source.book} directory not found at ${sourceDir}, skipping`)
     continue
   }
 
-  console.log(`Processing ${source.book}...`)
-  const markdown = readFileSync(filePath, 'utf-8')
+  const mdFiles = collectMarkdownFiles(sourceDir)
+  if (mdFiles.length === 0) {
+    console.warn(`Warning: no markdown files found in ${sourceDir}, skipping`)
+    continue
+  }
+
+  console.log(`Processing ${source.book} (${mdFiles.length} files)...`)
+  const markdown = mdFiles.map(f => readFileSync(f, 'utf-8')).join('\n\n').replace(/\r\n?/g, '\n')
   const tree = parseMarkdownStructure(markdown)
   const chunks = flattenToChunks(tree, source.book, source.book.toLowerCase())
 
   allChunks.push(...chunks)
   sourceStats.push({
-    file: source.file,
+    file: source.dir,
     book: source.book,
     totalChunks: chunks.length
   })

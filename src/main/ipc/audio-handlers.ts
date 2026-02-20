@@ -2,6 +2,23 @@ import { app, dialog, ipcMain } from 'electron'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const SAFE_FILENAME_RE = /^[a-zA-Z0-9._-]+$/
+
+function isValidUUID(str: string): boolean {
+  return UUID_RE.test(str)
+}
+
+function isSafeFileName(str: string): boolean {
+  return SAFE_FILENAME_RE.test(str) && !str.includes('..') && str.length <= 255
+}
+
+function isWithinDirectory(filePath: string, directory: string): boolean {
+  const resolved = path.resolve(filePath)
+  const rel = path.relative(directory, resolved)
+  return !!rel && !rel.startsWith('..') && !path.isAbsolute(rel)
+}
+
 export function registerAudioHandlers(): void {
   // Upload custom audio file for a campaign
   ipcMain.handle(
@@ -14,6 +31,9 @@ export function registerAudioHandlers(): void {
       displayName: string,
       category: string
     ) => {
+      if (!isValidUUID(campaignId)) {
+        return { success: false, error: 'Invalid campaign ID' }
+      }
       try {
         const campaignDir = path.join(
           app.getPath('userData'),
@@ -23,7 +43,13 @@ export function registerAudioHandlers(): void {
         )
         await fs.mkdir(campaignDir, { recursive: true })
         const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
+        if (!sanitizedFileName || sanitizedFileName.startsWith('.')) {
+          return { success: false, error: 'Invalid file name' }
+        }
         const filePath = path.join(campaignDir, sanitizedFileName)
+        if (!isWithinDirectory(filePath, campaignDir)) {
+          return { success: false, error: 'Invalid file path' }
+        }
         await fs.writeFile(filePath, Buffer.from(buffer))
         return { success: true, data: { fileName: sanitizedFileName, displayName, category } }
       } catch (err) {
@@ -34,6 +60,9 @@ export function registerAudioHandlers(): void {
 
   // List custom audio files for a campaign
   ipcMain.handle('audio:list-custom', async (_event, campaignId: string) => {
+    if (!isValidUUID(campaignId)) {
+      return { success: false, error: 'Invalid campaign ID' }
+    }
     try {
       const campaignDir = path.join(
         app.getPath('userData'),
@@ -54,6 +83,12 @@ export function registerAudioHandlers(): void {
 
   // Delete a custom audio file
   ipcMain.handle('audio:delete-custom', async (_event, campaignId: string, fileName: string) => {
+    if (!isValidUUID(campaignId)) {
+      return { success: false, error: 'Invalid campaign ID' }
+    }
+    if (!isSafeFileName(fileName)) {
+      return { success: false, error: 'Invalid file name' }
+    }
     try {
       const campaignDir = path.join(
         app.getPath('userData'),
@@ -61,7 +96,11 @@ export function registerAudioHandlers(): void {
         campaignId,
         'custom-audio'
       )
-      await fs.unlink(path.join(campaignDir, fileName))
+      const filePath = path.join(campaignDir, fileName)
+      if (!isWithinDirectory(filePath, campaignDir)) {
+        return { success: false, error: 'Invalid file path' }
+      }
+      await fs.unlink(filePath)
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
@@ -72,14 +111,23 @@ export function registerAudioHandlers(): void {
   ipcMain.handle(
     'audio:get-custom-path',
     async (_event, campaignId: string, fileName: string) => {
+      if (!isValidUUID(campaignId)) {
+        return { success: false, error: 'Invalid campaign ID' }
+      }
+      if (!isSafeFileName(fileName)) {
+        return { success: false, error: 'Invalid file name' }
+      }
       try {
-        const filePath = path.join(
+        const campaignDir = path.join(
           app.getPath('userData'),
           'campaigns',
           campaignId,
-          'custom-audio',
-          fileName
+          'custom-audio'
         )
+        const filePath = path.join(campaignDir, fileName)
+        if (!isWithinDirectory(filePath, campaignDir)) {
+          return { success: false, error: 'Invalid file path' }
+        }
         await fs.access(filePath)
         return { success: true, data: filePath }
       } catch (err) {

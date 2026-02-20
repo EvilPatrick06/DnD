@@ -65,7 +65,6 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
       characterSkin: '',
       characterAppearance: '',
       characterAlignment: '',
-      heroPoints: 0,
       speciesLanguages: [],
       speciesExtraLangCount: 0,
       bgLanguageCount: 0,

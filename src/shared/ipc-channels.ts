@@ -28,6 +28,11 @@ export const IPC_CHANNELS = {
   LOAD_BANS: 'storage:load-bans',
   SAVE_BANS: 'storage:save-bans',
 
+  // === Storage: Game State ===
+  SAVE_GAME_STATE: 'storage:save-game-state',
+  LOAD_GAME_STATE: 'storage:load-game-state',
+  DELETE_GAME_STATE: 'storage:delete-game-state',
+
   // === File Dialogs ===
   DIALOG_SAVE: 'dialog:show-save',
   DIALOG_OPEN: 'dialog:show-open',

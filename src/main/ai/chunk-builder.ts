@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
 import type { BookSource, Chunk, ChunkIndex } from './types'
@@ -6,22 +6,46 @@ import type { BookSource, Chunk, ChunkIndex } from './types'
 const MAX_CHUNK_TOKENS = 4000
 const CHARS_PER_TOKEN = 4
 
-interface SourceFile {
-  file: string
+interface SourceDir {
+  devDir: string
+  packagedDir: string
   book: BookSource
 }
 
-const SOURCES: SourceFile[] = [
-  { file: "Player's Handbook (2024).md", book: 'PHB' },
-  { file: "Dungeon Master's Guide (2024).md", book: 'DMG' },
-  { file: 'Monster Manual (2025).md', book: 'MM' }
+const SOURCES: SourceDir[] = [
+  { devDir: 'PHB2024/markdown', packagedDir: 'PHB', book: 'PHB' },
+  { devDir: 'DMG2024/markdown', packagedDir: 'DMG', book: 'DMG' },
+  { devDir: 'MM2025/Markdown', packagedDir: 'MM', book: 'MM' }
 ]
 
-function getRulebookDir(): string {
+function getReferencesBase(): string {
   if (app.isPackaged) {
     return join(process.resourcesPath, 'rulebooks')
   }
-  return join(app.getAppPath(), '5.5e References', 'DM')
+  return join(app.getAppPath(), '5.5e References')
+}
+
+function getSourcePath(source: SourceDir): string {
+  const base = getReferencesBase()
+  return app.isPackaged ? join(base, source.packagedDir) : join(base, source.devDir)
+}
+
+function collectMarkdownFiles(dir: string): string[] {
+  const files: string[] = []
+
+  function walk(current: string): void {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = join(current, entry.name)
+      if (entry.isDirectory()) {
+        walk(fullPath)
+      } else if (entry.name.endsWith('.md')) {
+        files.push(fullPath)
+      }
+    }
+  }
+
+  walk(dir)
+  return files.sort()
 }
 
 function getIndexPath(): string {
@@ -197,7 +221,6 @@ function flattenToChunks(nodes: HeadingNode[], source: BookSource, idPrefix: str
  * Returns the index and saves it to userData.
  */
 export function buildChunkIndex(onProgress?: (percent: number, stage: string) => void): ChunkIndex {
-  const sourceDir = getRulebookDir()
   onProgress?.(0, 'Scanning rulebook files...')
 
   const allChunks: Chunk[] = []
@@ -205,23 +228,29 @@ export function buildChunkIndex(onProgress?: (percent: number, stage: string) =>
 
   for (let i = 0; i < SOURCES.length; i++) {
     const source = SOURCES[i]
-    const filePath = join(sourceDir, source.file)
+    const sourceDir = getSourcePath(source)
 
-    if (!existsSync(filePath)) {
-      console.warn(`Warning: ${source.file} not found at ${filePath}, skipping`)
+    if (!existsSync(sourceDir)) {
+      console.warn(`Warning: ${source.book} directory not found at ${sourceDir}, skipping`)
       continue
     }
 
     const pct = Math.round((i / SOURCES.length) * 80)
     onProgress?.(pct, `Processing ${source.book}...`)
 
-    const markdown = readFileSync(filePath, 'utf-8')
+    const mdFiles = collectMarkdownFiles(sourceDir)
+    if (mdFiles.length === 0) {
+      console.warn(`Warning: no markdown files found in ${sourceDir}, skipping`)
+      continue
+    }
+
+    const markdown = mdFiles.map((f) => readFileSync(f, 'utf-8')).join('\n\n').replace(/\r\n?/g, '\n')
     const tree = parseMarkdownStructure(markdown)
     const chunks = flattenToChunks(tree, source.book, source.book.toLowerCase())
 
     allChunks.push(...chunks)
     sourceStats.push({
-      file: source.file,
+      file: source.devDir,
       book: source.book,
       totalChunks: chunks.length
     })

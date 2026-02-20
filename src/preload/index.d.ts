@@ -1,10 +1,18 @@
 export {}
 
+interface CharacterVersion {
+  fileName: string
+  timestamp: string
+  sizeBytes: number
+}
+
 interface CharacterAPI {
   saveCharacter: (character: Record<string, unknown>) => Promise<{ success: boolean }>
   loadCharacters: () => Promise<Record<string, unknown>[]>
   loadCharacter: (id: string) => Promise<Record<string, unknown> | null>
   deleteCharacter: (id: string) => Promise<boolean>
+  listCharacterVersions: (id: string) => Promise<{ success: boolean; data?: CharacterVersion[] }>
+  restoreCharacterVersion: (id: string, fileName: string) => Promise<{ success: boolean; data?: Record<string, unknown> }>
 }
 
 interface CampaignAPI {
@@ -29,6 +37,12 @@ interface FileDialogOptions {
 interface DialogAPI {
   showSaveDialog: (options: FileDialogOptions) => Promise<string | null>
   showOpenDialog: (options: FileDialogOptions) => Promise<string | null>
+}
+
+interface GameStateStorageAPI {
+  saveGameState: (campaignId: string, state: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  loadGameState: (campaignId: string) => Promise<Record<string, unknown> | null>
+  deleteGameState: (campaignId: string) => Promise<boolean>
 }
 
 interface BanData {
@@ -294,6 +308,7 @@ declare global {
     api: CharacterAPI &
       CampaignAPI &
       BastionAPI &
+      GameStateStorageAPI &
       DialogAPI &
       BanAPI &
       FileAPI &

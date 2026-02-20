@@ -6,7 +6,7 @@ interface ViewModeToggleProps {
 
 export default function ViewModeToggle({ viewMode, onToggle, characterName }: ViewModeToggleProps): JSX.Element {
   return (
-    <div className="absolute top-3 right-48 z-40">
+    <div>
       <button
         onClick={onToggle}
         title={viewMode === 'dm' ? 'Switch to Player View' : 'Switch to DM View'}

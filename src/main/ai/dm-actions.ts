@@ -116,6 +116,39 @@ export type DmAction =
     }
   | { action: 'remove_entity_condition'; entityLabel: string; condition: string }
 
+  // Resting
+  | { action: 'short_rest'; characterNames: string[] }
+  | { action: 'long_rest'; characterNames: string[] }
+
+  // Area effects
+  | {
+      action: 'apply_area_effect'
+      shape: 'sphere' | 'cone' | 'line' | 'cube' | 'cylinder' | 'emanation'
+      originX: number
+      originY: number
+      radiusOrLength: number
+      widthOrHeight?: number
+      damageFormula?: string
+      damageType?: string
+      saveType?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+      saveDC?: number
+      halfOnSave?: boolean
+      condition?: string
+      conditionDuration?: number | 'permanent'
+    }
+
+  // Legendary actions & resistances
+  | { action: 'use_legendary_action'; entityLabel: string; actionName: string; cost?: number }
+  | { action: 'use_legendary_resistance'; entityLabel: string }
+
+  // Recharge abilities
+  | { action: 'recharge_roll'; entityLabel: string; abilityName: string; rechargeOn: number }
+
+  // Time management
+  | { action: 'advance_time'; seconds?: number; minutes?: number; hours?: number; days?: number }
+  | { action: 'set_time'; hour?: number; minute?: number; totalSeconds?: number }
+  | { action: 'share_time'; target?: 'all' | 'requester'; message?: string }
+
 /** Extract DM actions JSON from AI response text. */
 export function parseDmActions(response: string): DmAction[] {
   const match = response.match(DM_ACTIONS_RE)

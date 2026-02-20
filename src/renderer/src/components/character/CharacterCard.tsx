@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Character } from '../../types/character'
 import { computeDynamicAC } from '../../utils/ac-calculator'
 import { CharacterIcon, getCharacterIconProps } from '../builder/shared/IconPicker'
@@ -9,7 +10,7 @@ interface CharacterCardProps {
   onExport?: () => void
 }
 
-export default function CharacterCard({ character, onClick, onDelete, onExport }: CharacterCardProps): JSX.Element {
+export default memo(function CharacterCard({ character, onClick, onDelete, onExport }: CharacterCardProps): JSX.Element {
   const className = character.classes.map((c) => c.name).join(' / ') || 'Unknown Class'
   const speciesName = character.species
   const subclass = character.classes[0]?.subclass
@@ -90,4 +91,4 @@ export default function CharacterCard({ character, onClick, onDelete, onExport }
       </div>
     </div>
   )
-}
+})

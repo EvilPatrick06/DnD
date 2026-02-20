@@ -77,6 +77,7 @@ const CustomEffectModal = lazy(() => import('./modals/CustomEffectModal'))
 const EncounterBuilderModal = lazy(() => import('./modals/EncounterBuilderModal'))
 const TreasureGeneratorModal = lazy(() => import('./modals/TreasureGeneratorModal'))
 const ChaseTrackerModal = lazy(() => import('./modals/ChaseTrackerModal'))
+const NPCGeneratorModal = lazy(() => import('./modals/NPCGeneratorModal'))
 const MobCalculatorModal = lazy(() => import('./modals/MobCalculatorModal'))
 const GroupRollModal = lazy(() => import('./modals/GroupRollModal'))
 const StudyActionModal = lazy(() => import('./modals/StudyActionModal'))
@@ -95,7 +96,9 @@ const NarrationOverlay = lazy(() => import('./overlays/NarrationOverlay'))
 
 import { createCompanionToken } from '../../services/companion-service'
 import { load5eMonsterById } from '../../services/data-provider'
+import { flushAutoSave, loadPersistedGameState, startAutoSave, stopAutoSave } from '../../services/game-auto-save'
 import { saveGameState } from '../../services/game-state-saver'
+import { startGameSync, stopGameSync } from '../../services/game-sync'
 import { useCharacterStore } from '../../stores/useCharacterStore'
 import { is5eCharacter } from '../../types/character'
 import type { Companion5e } from '../../types/companion'
@@ -159,6 +162,7 @@ type ActiveModal =
   | 'tokenEditor'
   | 'handout'
   | 'handoutViewer'
+  | 'npcGenerator'
   | null
 
 export default function GameLayout({ campaign, isDM, character, playerName }: GameLayoutProps): JSX.Element {
@@ -284,6 +288,21 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     initSounds()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addChatMessage, campaign.name])
+
+  // Host: broadcast game state changes to connected clients
+  useEffect(() => {
+    if (!isDM) return
+    startGameSync(sendMessage)
+    return () => stopGameSync()
+  }, [isDM, sendMessage])
+
+  // DM: auto-save game state with debouncing + load persisted state on mount
+  useEffect(() => {
+    if (!isDM) return
+    loadPersistedGameState(campaign.id)
+    startAutoSave(campaign.id)
+    return () => stopAutoSave()
+  }, [isDM, campaign.id])
 
   // AI DM initialization (host only)
   useEffect(() => {
@@ -482,21 +501,22 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     if (networkRole === 'none') return
 
     const handler = (msg: { type: string; payload?: unknown; senderId?: string; senderName?: string }): void => {
+      const gs = useGameStore.getState()
       if (msg.type === 'dm:shop-update') {
         const payload = msg.payload as ShopUpdatePayload
         if (payload.shopInventory.length > 0) {
-          gameStore.openShop(payload.shopName || 'Shop')
-          gameStore.setShopInventory(payload.shopInventory)
+          gs.openShop(payload.shopName || 'Shop')
+          gs.setShopInventory(payload.shopInventory)
         } else {
-          gameStore.closeShop()
+          gs.closeShop()
         }
       }
       if (msg.type === 'dm:timer-start') {
         const payload = msg.payload as TimerStartPayload
-        gameStore.startTimer(payload.seconds, payload.targetName)
+        gs.startTimer(payload.seconds, payload.targetName)
       }
       if (msg.type === 'dm:timer-stop') {
-        gameStore.stopTimer()
+        gs.stopTimer()
       }
       if (msg.type === 'dm:play-sound') {
         const payload = msg.payload as PlaySoundPayload
@@ -616,7 +636,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       }
       if (msg.type === 'dm:time-sync') {
         const payload = msg.payload as TimeSyncPayload
-        gameStore.setInGameTime({ totalSeconds: payload.totalSeconds })
+        useGameStore.getState().setInGameTime({ totalSeconds: payload.totalSeconds })
       }
       if (msg.type === 'dm:narration') {
         const payload = msg.payload as NarrationPayload
@@ -643,7 +663,6 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     }
   }, [
     networkRole,
-    gameStore,
     addChatMessage,
     aiDmStore.paused,
     aiDmStore.sendMessage,
@@ -716,12 +735,12 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
   const handleLeaveGame = async (destination: string): Promise<void> => {
     setLeaving(true)
-    // Auto-save game state for DM before leaving
     if (isDM) {
       try {
         await saveGameState(campaign)
+        await flushAutoSave(campaign.id)
       } catch (err) {
-        console.error('[GameLayout] Auto-save failed:', err)
+        console.error('[GameLayout] Save on leave failed:', err)
       }
     }
     useAiDmStore.getState().reset()
@@ -741,6 +760,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
   const handleSaveCampaign = async (): Promise<void> => {
     await saveGameState(campaign)
+  }
+
+  const handleEndSession = (): void => {
+    sendMessage('dm:game-end', {})
+    handleLeaveGame('/')
   }
 
   // --- Rest handlers ---
@@ -796,6 +820,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     }
 
     const msg = `The party takes a ${label}. ${restoredIds.length} character(s) restored.`
+    gameStore.addLogEntry(msg)
     addChatMessage({
       id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
       senderId: 'system',
@@ -1379,6 +1404,10 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
                   }
                 : undefined
             }
+            onLightSource={() => setActiveModal('lightSource')}
+            onDowntime={() => setActiveModal('downtime')}
+            onSpellRef={() => setActiveModal('spellRef')}
+            onShortcutRef={() => setActiveModal('shortcutRef')}
             playerName={playerName}
             campaign={campaign}
             collapsed={bottomCollapsed}
@@ -1389,19 +1418,67 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       </div>
 
       {/* Floating overlays (inside map area, above sidebar/bottom) */}
-      <SettingsDropdown
-        campaign={campaign}
-        isDM={effectiveIsDM}
-        isOpen={settingsOpen}
-        onToggle={() => setSettingsOpen(!settingsOpen)}
-        onToggleFullscreen={handleToggleFullscreen}
-        isFullscreen={isFullscreen}
-        onLeaveGame={handleLeaveGame}
-        onSaveCampaign={effectiveIsDM ? handleSaveCampaign : undefined}
-      />
+      <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
+        {isDM && <ViewModeToggle viewMode={viewMode} onToggle={handleViewModeToggle} characterName={character?.name} />}
+        {campaign.calendar && (
+          <ClockOverlay
+            calendar={campaign.calendar}
+            isDM={effectiveIsDM}
+            onEditTime={() => setActiveModal('timeEdit')}
+            onShortRest={handleShortRest}
+            onLongRest={handleLongRest}
+            onLightSource={() => setActiveModal('lightSource')}
+            onPhaseChange={(phase, suggestedLight) => {
+              if (effectiveIsDM) {
+                setPhaseChangeToast({ phase, suggestedLight })
+                if (phase === 'dawn') {
+                  const charStore = useCharacterStore.getState()
+                  const campaignChars = charStore.characters.filter(
+                    (c) => c.campaignId === campaign.id && c.gameSystem === 'dnd5e'
+                  )
+                  for (const ch of campaignChars) {
+                    const items5e = (ch as import('../../types/character-5e').Character5e).equipment ?? []
+                    let changed = false
+                    for (const item of items5e) {
+                      if (item.magicItemId && item.maxCharges && item.rechargeType === 'dawn') {
+                        const formula = item.rechargeFormula ?? `1d${item.maxCharges}`
+                        const match = formula.match(/^(\d+)?d(\d+)([+-]\d+)?$/)
+                        let rechargeAmount: number
+                        if (match) {
+                          const count = parseInt(match[1] || '1', 10)
+                          const sides = parseInt(match[2], 10)
+                          const mod = parseInt(match[3] || '0', 10)
+                          rechargeAmount = 0
+                          for (let i = 0; i < count; i++) rechargeAmount += Math.floor(Math.random() * sides) + 1
+                          rechargeAmount += mod
+                        } else {
+                          rechargeAmount = parseInt(formula, 10) || 1
+                        }
+                        item.currentCharges = Math.min((item.currentCharges ?? 0) + rechargeAmount, item.maxCharges)
+                        changed = true
+                      }
+                    }
+                    if (changed) charStore.updateCharacter(ch.id, { equipment: items5e } as Partial<import('../../types/character-5e').Character5e>)
+                  }
+                }
+              }
+            }}
+          />
+        )}
+        {effectiveIsDM && <DmAlertTray />}
+        <SettingsDropdown
+          campaign={campaign}
+          isDM={effectiveIsDM}
+          isOpen={settingsOpen}
+          onToggle={() => setSettingsOpen(!settingsOpen)}
+          onToggleFullscreen={handleToggleFullscreen}
+          isFullscreen={isFullscreen}
+          onLeaveGame={handleLeaveGame}
+          onSaveCampaign={effectiveIsDM ? handleSaveCampaign : undefined}
+          onEndSession={effectiveIsDM ? handleEndSession : undefined}
+        />
+      </div>
       {gameStore.initiative && <InitiativeOverlay isDM={effectiveIsDM} />}
-      {isDM && <ViewModeToggle viewMode={viewMode} onToggle={handleViewModeToggle} characterName={character?.name} />}
-      {effectiveIsDM && <DmAlertTray />}
       {/* Token right-click context menu */}
       {contextMenu && (
         <TokenContextMenu
@@ -1410,6 +1487,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           token={contextMenu.token}
           mapId={contextMenu.mapId}
           isDM={effectiveIsDM}
+          characterId={character?.id}
           onClose={() => setContextMenu(null)}
           onEditToken={(token) => {
             setEditingToken({ token, mapId: contextMenu.mapId })
@@ -1443,68 +1521,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           />
         </Suspense>
       )}
-      {campaign.calendar && (
-        <ClockOverlay
-          calendar={campaign.calendar}
-          isDM={effectiveIsDM}
-          onEditTime={() => setActiveModal('timeEdit')}
-          onShortRest={handleShortRest}
-          onLongRest={handleLongRest}
-          onLightSource={() => setActiveModal('lightSource')}
-          onPhaseChange={(phase, suggestedLight) => {
-            if (effectiveIsDM) {
-              setPhaseChangeToast({ phase, suggestedLight })
-
-              // Dawn auto-restore: recharge magic item charges with 'dawn' rechargeType
-              if (phase === 'dawn') {
-                const charStore = useCharacterStore.getState()
-                const campaignChars = charStore.characters.filter(
-                  (c) => c.campaignId === campaign.id && c.gameSystem === 'dnd5e'
-                )
-                const restoredItems: string[] = []
-                for (const char of campaignChars) {
-                  const char5e = char as import('../../types/character-5e').Character5e
-                  const magicItems = char5e.magicItems ?? []
-                  const dawnItems = magicItems.filter(
-                    (mi) => mi.charges && mi.charges.rechargeType === 'dawn' && mi.charges.current < mi.charges.max
-                  )
-                  if (dawnItems.length === 0) continue
-                  const updatedItems = magicItems.map((mi) => {
-                    if (!mi.charges || mi.charges.rechargeType !== 'dawn' || mi.charges.current >= mi.charges.max)
-                      return mi
-                    // If rechargeDice specified (e.g., "1d6+1"), roll it
-                    let restored = mi.charges.max
-                    if (mi.charges.rechargeDice) {
-                      const match = mi.charges.rechargeDice.match(/^(\d*)d(\d+)\s*([+-]\s*\d+)?$/)
-                      if (match) {
-                        const count = match[1] ? parseInt(match[1], 10) : 1
-                        const sides = parseInt(match[2], 10)
-                        const mod = match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0
-                        let roll = mod
-                        for (let r = 0; r < count; r++) roll += Math.floor(Math.random() * sides) + 1
-                        restored = Math.min(mi.charges.max, mi.charges.current + Math.max(0, roll))
-                      }
-                    }
-                    restoredItems.push(`${char5e.name}: ${mi.name} (${restored}/${mi.charges.max})`)
-                    return { ...mi, charges: { ...mi.charges, current: restored } }
-                  })
-                  charStore.saveCharacter({ ...char5e, magicItems: updatedItems, updatedAt: new Date().toISOString() })
-                }
-                if (restoredItems.length > 0) {
-                  useLobbyStore.getState().addChatMessage({
-                    id: `system-dawn-${Date.now()}`,
-                    senderId: 'system',
-                    senderName: 'System',
-                    content: `Dawn breaks! Charges restored: ${restoredItems.join(', ')}`,
-                    timestamp: Date.now(),
-                    isSystem: true
-                  })
-                }
-              }
-            }
-          }}
-        />
-      )}
+      
 
       {/* Fog toolbar (DM only, shows when fog tool active) */}
       {effectiveIsDM && (activeTool === 'fog-reveal' || activeTool === 'fog-hide') && (
@@ -1662,14 +1679,14 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {activeModal === 'hiddenDice' && <HiddenDiceModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'dmRoller' && <DmRollerModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'shop' && <DMShopModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'whisper' && <WhisperModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'hiddenDice' && effectiveIsDM && <HiddenDiceModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'dmRoller' && effectiveIsDM && <DmRollerModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'shop' && effectiveIsDM && <DMShopModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'whisper' && effectiveIsDM && <WhisperModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'quickCondition' && <QuickConditionModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'timer' && <TimerModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'initiative' && <InitiativeModal onClose={() => setActiveModal(null)} />}
-        {activeModal === 'notes' && <DMNotesModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'timer' && effectiveIsDM && <TimerModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'initiative' && effectiveIsDM && <InitiativeModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'notes' && effectiveIsDM && <DMNotesModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'attack' && (
           <AttackModal
             character={character}
@@ -2016,8 +2033,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           />
         )}
 
-        {/* Time Edit Modal */}
-        {activeModal === 'timeEdit' && campaign.calendar && (
+        {/* Time Edit Modal (DM only) */}
+        {activeModal === 'timeEdit' && effectiveIsDM && campaign.calendar && (
           <TimeEditModal
             calendar={campaign.calendar}
             campaignId={campaign.id}
@@ -2045,8 +2062,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         {/* Light Source Modal */}
         {activeModal === 'lightSource' && <LightSourceModal onClose={() => setActiveModal(null)} />}
 
-        {/* Rest Modals */}
-        {(activeModal === 'shortRest' || activeModal === 'longRest') && (
+        {/* Rest Modals (DM only — players request rests via network) */}
+        {(activeModal === 'shortRest' || activeModal === 'longRest') && effectiveIsDM && (
           <RestModal
             mode={activeModal}
             campaignCharacterIds={getCampaignCharacterIds()}
@@ -2107,7 +2124,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         )}
 
         {/* Custom Effect Modal (DM only) */}
-        {activeModal === 'customEffect' && activeMap && (
+        {activeModal === 'customEffect' && effectiveIsDM && activeMap && (
           <CustomEffectModal
             tokens={activeMap.tokens}
             onClose={() => setActiveModal(null)}
@@ -2130,8 +2147,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           <CommandReferenceModal isDM={effectiveIsDM} onClose={() => setActiveModal(null)} />
         )}
 
-        {/* New Phase 3 Modals */}
-        {activeModal === 'encounterBuilder' && (
+        {/* New Phase 3 Modals (DM only) */}
+        {activeModal === 'encounterBuilder' && effectiveIsDM && (
           <EncounterBuilderModal
             onClose={() => setActiveModal(null)}
             onBroadcastResult={(msg) => {
@@ -2147,7 +2164,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {activeModal === 'treasureGenerator' && (
+        {activeModal === 'treasureGenerator' && effectiveIsDM && (
           <TreasureGeneratorModal
             onClose={() => setActiveModal(null)}
             onBroadcastResult={(msg) => {
@@ -2163,7 +2180,23 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {activeModal === 'chaseTracker' && (
+        {activeModal === 'npcGenerator' && effectiveIsDM && (
+          <NPCGeneratorModal
+            onClose={() => setActiveModal(null)}
+            onBroadcastResult={(msg) => {
+              addChatMessage({
+                id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+                senderId: 'system',
+                senderName: 'System',
+                content: msg,
+                timestamp: Date.now(),
+                isSystem: true
+              })
+              sendMessage('chat:message', { message: msg, isSystem: true, senderName: 'System' })
+            }}
+          />
+        )}
+        {activeModal === 'chaseTracker' && effectiveIsDM && (
           <ChaseTrackerModal
             onClose={() => setActiveModal(null)}
             onBroadcastResult={(msg) => {
@@ -2179,7 +2212,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {activeModal === 'mobCalculator' && (
+        {activeModal === 'mobCalculator' && effectiveIsDM && (
           <MobCalculatorModal
             onClose={() => setActiveModal(null)}
             onBroadcastResult={(msg) => {
@@ -2297,10 +2330,10 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             isDM={effectiveIsDM}
           />
         )}
-        {activeModal === 'gridSettings' && (
+        {activeModal === 'gridSettings' && effectiveIsDM && (
           <GridSettingsModal onClose={() => setActiveModal(null)} />
         )}
-        {activeModal === 'tokenEditor' && editingToken && (
+        {activeModal === 'tokenEditor' && effectiveIsDM && editingToken && (
           <TokenEditorModal
             token={editingToken.token}
             mapId={editingToken.mapId}
@@ -2310,7 +2343,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {activeModal === 'handout' && (
+        {activeModal === 'handout' && effectiveIsDM && (
           <HandoutModal
             onClose={() => setActiveModal(null)}
             onShareHandout={(handout) => {
@@ -2641,8 +2674,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         </div>
       )}
 
-      {/* DM Map Editor fullscreen */}
-      {editMapMode && (
+      {/* DM Map Editor fullscreen (DM only) */}
+      {editMapMode && effectiveIsDM && (
         <Suspense fallback={null}>
           <DMMapEditor
             campaign={campaign}

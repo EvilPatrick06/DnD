@@ -11,6 +11,7 @@ export {
 } from './client-manager'
 // Host manager
 export {
+  broadcastExcluding,
   broadcastMessage,
   getConnectedPeers,
   getInviteCode,

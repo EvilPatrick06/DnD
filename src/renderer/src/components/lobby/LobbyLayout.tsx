@@ -1,3 +1,4 @@
+import { setCharacterInfo } from '../../network/client-manager'
 import { useCharacterStore } from '../../stores/useCharacterStore'
 import { useLobbyStore } from '../../stores/useLobbyStore'
 import { useNetworkStore } from '../../stores/useNetworkStore'
@@ -17,6 +18,7 @@ export default function LobbyLayout(): JSX.Element {
   const handleCharacterSelect = (characterId: string, characterName: string): void => {
     if (localPeerId) {
       updatePlayer(localPeerId, { characterId, characterName })
+      setCharacterInfo(characterId || null, characterName || null)
       const characterData = characterId ? (characters.find((c) => c.id === characterId) ?? null) : null
       sendMessage('player:character-select', {
         characterId: characterId || null,

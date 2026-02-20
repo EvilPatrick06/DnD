@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { load5eClasses, load5eSpecies } from '../../../services/data-provider'
+import type { ArmorForAC } from '../../../services/stat-calculator-5e'
 import { calculate5eStats } from '../../../services/stat-calculator-5e'
+import { buildArmorFromEquipment5e } from '../../../stores/builder/slices/save-slice-5e'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
 import { CharacterIcon } from '../shared/IconPicker'
@@ -125,14 +127,18 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const speciesSlot = buildSlots.find((s) => s.category === 'ancestry')
   const classSlot = buildSlots.find((s) => s.category === 'class')
 
+  const classEquipment = useBuilderStore((s) => s.classEquipment)
+
   // Load SRD class/species data for accurate stat calculation
   const [classHitDie, setClassHitDie] = useState<number | null>(null)
   const [classSaves, setClassSaves] = useState<string[]>([])
+  const [className, setClassName] = useState<string | null>(null)
   const [speciesData, setSpeciesData] = useState<{
     abilityBonuses: Record<string, number>
     speed: number
     size: string
   } | null>(null)
+  const [armorEntries, setArmorEntries] = useState<ArmorForAC[]>([])
 
   useEffect(() => {
     const classId = classSlot?.selectedId
@@ -143,11 +149,13 @@ export default function CharacterSummaryBar5e(): JSX.Element {
         if (cls) {
           setClassHitDie(cls.hitDie)
           setClassSaves(cls.savingThrows)
+          setClassName(cls.name)
         }
       })
     } else {
       setClassHitDie(null)
       setClassSaves([])
+      setClassName(null)
     }
     if (speciesId) {
       load5eSpecies().then((speciesList) => {
@@ -165,6 +173,24 @@ export default function CharacterSummaryBar5e(): JSX.Element {
     }
   }, [classSlot?.selectedId, speciesSlot?.selectedId])
 
+  useEffect(() => {
+    if (classEquipment.length > 0) {
+      buildArmorFromEquipment5e(classEquipment).then(({ armor }) => {
+        setArmorEntries(
+          armor.map((a) => ({
+            acBonus: a.acBonus,
+            equipped: a.equipped,
+            type: a.type === 'shield' ? 'shield' : 'armor',
+            category: a.category,
+            dexCap: a.dexCap
+          }))
+        )
+      })
+    } else {
+      setArmorEntries([])
+    }
+  }, [classEquipment])
+
   const speciesSlotId = speciesSlot?.selectedId ?? null
 
   const stats5e = useMemo(() => {
@@ -173,8 +199,30 @@ export default function CharacterSummaryBar5e(): JSX.Element {
       backgroundAbilityBonuses && Object.keys(backgroundAbilityBonuses).length > 0
         ? (backgroundAbilityBonuses as Partial<Record<string, number>>)
         : undefined
-    return calculate5eStats(abilityScores, speciesData, cls, targetLevel, speciesBonuses, speciesSlotId)
-  }, [abilityScores, targetLevel, classHitDie, classSaves, speciesData, backgroundAbilityBonuses, speciesSlotId])
+    return calculate5eStats(
+      abilityScores,
+      speciesData,
+      cls,
+      targetLevel,
+      speciesBonuses,
+      speciesSlotId,
+      undefined,
+      undefined,
+      undefined,
+      armorEntries,
+      className ? [className] : []
+    )
+  }, [
+    abilityScores,
+    targetLevel,
+    classHitDie,
+    classSaves,
+    speciesData,
+    backgroundAbilityBonuses,
+    speciesSlotId,
+    armorEntries,
+    className
+  ])
 
   const maxHP = stats5e?.maxHP ?? 0
   const ac = stats5e?.armorClass ?? '--'

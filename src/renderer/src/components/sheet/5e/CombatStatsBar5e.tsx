@@ -266,23 +266,23 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
                 )}
               {/* Hit Point Dice */}
               {(() => {
-                const remaining = effectiveCharacter.hitDiceRemaining
-                const isMulticlass = effectiveCharacter.classes.length > 1
-                const spent = effectiveCharacter.level - remaining
+                const remaining = effectiveCharacter.hitDice.reduce((s, h) => s + h.current, 0)
+                const total = effectiveCharacter.hitDice.reduce((s, h) => s + h.maximum, 0)
+                const isMulticlass = effectiveCharacter.hitDice.length > 1
+                const spent = total - remaining
                 if (isMulticlass) {
-                  // Show per-class die breakdown
-                  const diceDisplay = effectiveCharacter.classes.map((c) => `${c.level}d${c.hitDie}`).join(' + ')
+                  const diceDisplay = effectiveCharacter.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')
                   return (
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {remaining}/{effectiveCharacter.level} ({diceDisplay})
+                      {remaining}/{total} ({diceDisplay})
                       {spent > 0 && <span className="text-red-400 ml-1">({spent} spent)</span>}
                     </div>
                   )
                 }
-                const hitDie = effectiveCharacter.classes[0]?.hitDie ?? 8
+                const hitDie = effectiveCharacter.hitDice[0]?.dieType ?? 8
                 return (
                   <div className="text-xs text-gray-500 mt-0.5">
-                    {remaining}/{effectiveCharacter.level} d{hitDie}
+                    {remaining}/{total} d{hitDie}
                     {spent > 0 && <span className="text-red-400 ml-1">({spent} spent)</span>}
                   </div>
                 )
@@ -421,21 +421,15 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
               effectiveCharacter.buildChoices.subclassId
             )
             if (!scInfo) return null
-            // 2024 PHB: Exhaustion reduces spell save DC by 2 per level
-            const conditions = effectiveCharacter.conditions ?? []
-            const exhCond = conditions.find((c) => c.name?.toLowerCase() === 'exhaustion')
-            const exhLevel = exhCond?.value ?? 0
-            const exhPenalty = exhLevel * 2
-            const effectiveDC = scInfo.spellSaveDC + resolved.spellDCBonus - exhPenalty
+            const effectiveDC = scInfo.spellSaveDC + resolved.spellDCBonus
             const effectiveAttack = scInfo.spellAttackBonus + resolved.spellAttackBonus
             const dcTooltipParts = [`Base ${scInfo.spellSaveDC}`]
             if (resolved.spellDCBonus > 0) dcTooltipParts.push(`+${resolved.spellDCBonus} (items)`)
-            if (exhPenalty > 0) dcTooltipParts.push(`-${exhPenalty} (Exhaustion ${exhLevel})`)
             return (
               <>
                 <span title={dcTooltipParts.length > 1 ? dcTooltipParts.join(' ') : undefined}>
                   Save DC:{' '}
-                  <span className={`font-semibold ${exhPenalty > 0 ? 'text-red-400' : 'text-amber-400'}`}>
+                  <span className="font-semibold text-amber-400">
                     {effectiveDC}
                   </span>
                 </span>

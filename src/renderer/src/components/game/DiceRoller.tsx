@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { parseDiceFormula, rollDice } from '../../services/dice-engine'
 import { play, playDiceSound } from '../../services/sound-manager'
 import type { GameSystem } from '../../types/game-system'
 import DiceResult from './DiceResult'
@@ -31,30 +32,6 @@ const DICE = [
   { sides: 100, label: 'd100' }
 ]
 
-function parseDiceFormula(formula: string): { count: number; sides: number; modifier: number } | null {
-  const match = formula.trim().match(/^(\d*)d(\d+)([+-]\d+)?$/)
-  if (!match) return null
-  return {
-    count: match[1] ? parseInt(match[1], 10) : 1,
-    sides: parseInt(match[2], 10),
-    modifier: match[3] ? parseInt(match[3], 10) : 0
-  }
-}
-
-function rollDice(count: number, sides: number): number[] {
-  const results: number[] = []
-  for (let i = 0; i < count; i++) {
-    if (sides === 3) {
-      // d3: roll d6, divide by 2, round up (PHB)
-      const d6 = Math.floor(Math.random() * 6) + 1
-      results.push(Math.ceil(d6 / 2))
-    } else {
-      results.push(Math.floor(Math.random() * sides) + 1)
-    }
-  }
-  return results
-}
-
 export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerProps): JSX.Element {
   const [modifier, setModifier] = useState(0)
   const [customFormula, setCustomFormula] = useState('')
@@ -62,6 +39,13 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
   const [results, setResults] = useState<RollResult[]>([])
   const [animatingId, setAnimatingId] = useState<string | null>(null)
   const [lastRollWasCrit, setLastRollWasCrit] = useState(false)
+  const animatingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (animatingTimeoutRef.current) clearTimeout(animatingTimeoutRef.current)
+    }
+  }, [])
 
   const addResult = (formula: string, rolls: number[], total: number, sides: number, isCritDamage = false): void => {
     const id = `roll-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`
@@ -77,7 +61,11 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
     }
     setResults((prev) => [result, ...prev].slice(0, 20))
     setAnimatingId(id)
-    setTimeout(() => setAnimatingId(null), 500)
+    if (animatingTimeoutRef.current) clearTimeout(animatingTimeoutRef.current)
+    animatingTimeoutRef.current = setTimeout(() => {
+      animatingTimeoutRef.current = null
+      setAnimatingId(null)
+    }, 500)
     onRoll?.({ formula, total, rolls })
 
     // Sound effects
@@ -154,6 +142,7 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
             className="px-3 py-1.5 text-xs rounded-lg bg-gray-800 border border-gray-700
               text-gray-300 hover:bg-amber-600 hover:text-white hover:border-amber-500
               transition-colors cursor-pointer font-mono font-semibold"
+            aria-label={`Roll ${die.label}`}
           >
             {die.label}
           </button>
@@ -177,6 +166,7 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
             <button
               onClick={() => setModifier((m) => m + 1)}
               className="px-2 py-1 text-gray-400 hover:text-gray-200 cursor-pointer text-sm"
+              aria-label="Increase modifier"
             >
               +
             </button>
@@ -245,7 +235,7 @@ export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerPro
 
       {/* Results */}
       {results.length > 0 && (
-        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+        <div className="space-y-1.5 max-h-48 overflow-y-auto" aria-live="polite" aria-label="Dice roll results">
           {results.map((result) => (
             <div
               key={result.id}

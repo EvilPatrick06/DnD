@@ -1,4 +1,4 @@
-import { DM_SYSTEM_PROMPT } from './dm-system-prompt'
+import { DM_SYSTEM_PROMPT, DM_TOOLBOX_CONTEXT, PLANAR_RULES_CONTEXT } from './dm-system-prompt'
 import { estimateTokens, TOKEN_BUDGETS } from './token-budget'
 import type { ChatMessage, ConversationData, ConversationMessage, ConversationSummary } from './types'
 
@@ -69,7 +69,17 @@ export class ConversationManager {
   }> {
     await this.maybeSummarize()
 
-    const systemPrompt = DM_SYSTEM_PROMPT + (contextBlock ? `\n\n${contextBlock}` : '')
+    const includesPlanarContent = contextBlock?.includes('planar') || contextBlock?.includes('Astral') ||
+      contextBlock?.includes('Ethereal') || contextBlock?.includes('Feywild') || contextBlock?.includes('Shadowfell') ||
+      contextBlock?.includes('Elemental Plane') || contextBlock?.includes('Outer Plane') || contextBlock?.includes('Abyss') ||
+      contextBlock?.includes('Nine Hells')
+    const includesToolboxContent = contextBlock?.includes('ACTIVE EFFECTS') ||
+      contextBlock?.includes('active_disease') || contextBlock?.includes('active_curse') ||
+      contextBlock?.includes('placed_trap') || contextBlock?.includes('chase')
+    const systemPrompt = DM_SYSTEM_PROMPT +
+      (includesPlanarContent ? PLANAR_RULES_CONTEXT : '') +
+      (includesToolboxContent ? DM_TOOLBOX_CONTEXT : '') +
+      (contextBlock ? `\n\n${contextBlock}` : '')
     const apiMessages: ChatMessage[] = []
 
     const latestSummary = this.summaries.length > 0 ? this.summaries[this.summaries.length - 1] : null

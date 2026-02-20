@@ -1,6 +1,6 @@
 {
   "name": "dnd-vtt",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
   "main": "./out/main/index.js",
   "scripts": {
@@ -10,6 +10,8 @@
     "start": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
     "build:win": "npm run build && electron-builder --win",
+    "prerelease": "node -e \"const fs=require('fs'),p=require('path'),d=p.join(__dirname,'dist');if(fs.existsSync(d)){fs.readdirSync(d).filter(f=>/\\.(exe|blockmap|yml)$/.test(f)).forEach(f=>fs.unlinkSync(p.join(d,f)))}\"",
+    "release": "npm run build && electron-builder --win --publish always",
     "prebuild:index": "node scripts/build-chunk-index.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -55,6 +57,7 @@
     "@anthropic-ai/sdk": "^0.77.0",
     "@livekit/components-react": "^2.9.19",
     "@pixi/react": "^8.0.5",
+    "@tanstack/react-virtual": "^3.13.18",
     "@tiptap/extension-image": "^3.20.0",
     "@tiptap/extension-link": "^3.20.0",
     "@tiptap/extension-placeholder": "^3.20.0",
@@ -62,6 +65,7 @@
     "@tiptap/react": "^3.20.0",
     "@tiptap/starter-kit": "^3.20.0",
     "cannon-es": "^0.20.0",
+    "electron-updater": "^6.8.3",
     "livekit-client": "^2.17.1",
     "peerjs": "^1.5.5",
     "pixi.js": "^8.16.0",

@@ -5,16 +5,14 @@ import { MESSAGE_TYPES } from './types'
 
 const MessageTypeSchema = z.enum(MESSAGE_TYPES)
 
-const NetworkMessageEnvelopeSchema = z
-  .object({
-    type: MessageTypeSchema,
-    payload: z.unknown(),
-    senderId: z.string().max(100),
-    senderName: z.string().max(100),
-    timestamp: z.number(),
-    sequence: z.number()
-  })
-  .passthrough()
+const NetworkMessageEnvelopeSchema = z.object({
+  type: MessageTypeSchema,
+  payload: z.unknown(),
+  senderId: z.string().max(100),
+  senderName: z.string().max(100),
+  timestamp: z.number(),
+  sequence: z.number()
+})
 
 // ── Payload Schemas ──
 
@@ -25,7 +23,6 @@ const JoinPayloadSchema = z
     characterName: z.string().nullable(),
     color: z.string().optional()
   })
-  .passthrough()
 
 const ChatPayloadSchema = z
   .object({
@@ -40,7 +37,6 @@ const ChatPayloadSchema = z
       })
       .optional()
   })
-  .passthrough()
 
 const WhisperPayloadSchema = z
   .object({
@@ -48,14 +44,12 @@ const WhisperPayloadSchema = z
     targetPeerId: z.string(),
     targetName: z.string()
   })
-  .passthrough()
 
 const DiceRollPayloadSchema = z
   .object({
     formula: z.string(),
     reason: z.string().optional()
   })
-  .passthrough()
 
 const DiceResultPayloadSchema = z
   .object({
@@ -67,14 +61,12 @@ const DiceResultPayloadSchema = z
     reason: z.string().optional(),
     rollerName: z.string()
   })
-  .passthrough()
 
 const StateUpdatePayloadSchema = z
   .object({
     path: z.string(),
     value: z.unknown()
   })
-  .passthrough()
 
 const TokenMovePayloadSchema = z
   .object({
@@ -82,20 +74,17 @@ const TokenMovePayloadSchema = z
     gridX: z.number(),
     gridY: z.number()
   })
-  .passthrough()
 
 const FogRevealPayloadSchema = z
   .object({
     cells: z.array(z.object({ x: z.number(), y: z.number() })),
     reveal: z.boolean()
   })
-  .passthrough()
 
 const MapChangePayloadSchema = z
   .object({
     mapId: z.string()
   })
-  .passthrough()
 
 const CharacterSelectPayloadSchema = z
   .object({
@@ -103,7 +92,6 @@ const CharacterSelectPayloadSchema = z
     characterName: z.string().nullable(),
     characterData: z.unknown().optional()
   })
-  .passthrough()
 
 const InitiativeUpdatePayloadSchema = z
   .object({
@@ -116,7 +104,6 @@ const InitiativeUpdatePayloadSchema = z
     ),
     currentTurnIndex: z.number()
   })
-  .passthrough()
 
 const ConditionUpdatePayloadSchema = z
   .object({
@@ -124,49 +111,42 @@ const ConditionUpdatePayloadSchema = z
     condition: z.string(),
     active: z.boolean()
   })
-  .passthrough()
 
 const KickPayloadSchema = z
   .object({
     peerId: z.string(),
     reason: z.string().optional()
   })
-  .passthrough()
 
 const BanPayloadSchema = z
   .object({
     peerId: z.string(),
     reason: z.string().optional()
   })
-  .passthrough()
 
 const MuteTogglePayloadSchema = z
   .object({
     peerId: z.string(),
     isMuted: z.boolean()
   })
-  .passthrough()
 
 const DeafenTogglePayloadSchema = z
   .object({
     peerId: z.string(),
     isDeafened: z.boolean()
   })
-  .passthrough()
 
 const ForceMutePayloadSchema = z
   .object({
     peerId: z.string(),
     isForceMuted: z.boolean()
   })
-  .passthrough()
 
 const ForceDeafenPayloadSchema = z
   .object({
     peerId: z.string(),
     isForceDeafened: z.boolean()
   })
-  .passthrough()
 
 const CharacterUpdatePayloadSchema = z
   .object({
@@ -174,7 +154,6 @@ const CharacterUpdatePayloadSchema = z
     characterData: z.unknown(),
     targetPeerId: z.string().optional()
   })
-  .passthrough()
 
 const PriceSchema = z
   .object({
@@ -183,7 +162,6 @@ const PriceSchema = z
     gp: z.number().optional(),
     pp: z.number().optional()
   })
-  .passthrough()
 
 const ShopItemSchema = z
   .object({
@@ -205,14 +183,12 @@ const ShopItemSchema = z
     hiddenFromPlayerIds: z.array(z.string()).optional(),
     isHidden: z.boolean().optional()
   })
-  .passthrough()
 
 const ShopUpdatePayloadSchema = z
   .object({
     shopInventory: z.array(ShopItemSchema),
     shopName: z.string().optional()
   })
-  .passthrough()
 
 const BuyItemPayloadSchema = z
   .object({
@@ -220,14 +196,12 @@ const BuyItemPayloadSchema = z
     itemName: z.string(),
     price: PriceSchema
   })
-  .passthrough()
 
 const SellItemPayloadSchema = z
   .object({
     itemName: z.string(),
     price: PriceSchema
   })
-  .passthrough()
 
 const GameStateFullPayloadSchema = z
   .object({
@@ -248,31 +222,26 @@ const GameStateFullPayloadSchema = z
           color: z.string().optional(),
           isCoDM: z.boolean().optional()
         })
-        .passthrough()
     ),
     campaignId: z.string().optional()
   })
-  .passthrough()
 
 const ChatTimeoutPayloadSchema = z
   .object({
     peerId: z.string(),
     duration: z.number()
   })
-  .passthrough()
 
 const CoDMPayloadSchema = z
   .object({
     peerId: z.string(),
     isCoDM: z.boolean()
   })
-  .passthrough()
 
 const ColorChangePayloadSchema = z
   .object({
     color: z.string()
   })
-  .passthrough()
 
 const ChatFilePayloadSchema = z
   .object({
@@ -283,26 +252,22 @@ const ChatFilePayloadSchema = z
     senderId: z.string(),
     senderName: z.string()
   })
-  .passthrough()
 
 const SlowModePayloadSchema = z
   .object({
     seconds: z.number()
   })
-  .passthrough()
 
 const FileSharingPayloadSchema = z
   .object({
     enabled: z.boolean()
   })
-  .passthrough()
 
 const TimerStartPayloadSchema = z
   .object({
     seconds: z.number(),
     targetName: z.string()
   })
-  .passthrough()
 
 const WhisperPlayerPayloadSchema = z
   .object({
@@ -310,14 +275,12 @@ const WhisperPlayerPayloadSchema = z
     targetName: z.string(),
     message: z.string()
   })
-  .passthrough()
 
 const TimeRequestPayloadSchema = z
   .object({
     requesterId: z.string(),
     requesterName: z.string()
   })
-  .passthrough()
 
 const TimeSharePayloadSchema = z
   .object({
@@ -325,13 +288,11 @@ const TimeSharePayloadSchema = z
     targetPeerId: z.string().optional(),
     targetName: z.string().optional()
   })
-  .passthrough()
 
 const TimeSyncPayloadSchema = z
   .object({
     totalSeconds: z.number()
   })
-  .passthrough()
 
 const RollRequestPayloadSchema = z
   .object({
@@ -344,7 +305,6 @@ const RollRequestPayloadSchema = z
     requesterId: z.string(),
     requesterName: z.string()
   })
-  .passthrough()
 
 const RollResultPayloadSchema = z
   .object({
@@ -356,7 +316,6 @@ const RollResultPayloadSchema = z
     total: z.number(),
     success: z.boolean()
   })
-  .passthrough()
 
 const LootAwardPayloadSchema = z
   .object({
@@ -364,7 +323,6 @@ const LootAwardPayloadSchema = z
     items: z.array(z.object({ name: z.string(), quantity: z.number() })),
     currency: PriceSchema.optional()
   })
-  .passthrough()
 
 const XpAwardPayloadSchema = z
   .object({
@@ -372,7 +330,6 @@ const XpAwardPayloadSchema = z
     xp: z.number(),
     reason: z.string().optional()
   })
-  .passthrough()
 
 const HandoutPayloadSchema = z
   .object({
@@ -382,14 +339,12 @@ const HandoutPayloadSchema = z
     imagePath: z.string().optional(),
     targetPeerIds: z.array(z.string()).optional()
   })
-  .passthrough()
 
 const AnnouncementPayloadSchema = z
   .object({
     message: z.string(),
     style: z.enum(['info', 'warning', 'success', 'dramatic']).optional()
   })
-  .passthrough()
 
 const MapPingPayloadSchema = z
   .object({
@@ -398,7 +353,6 @@ const MapPingPayloadSchema = z
     color: z.string().optional(),
     label: z.string().optional()
   })
-  .passthrough()
 
 const DiceRoll3dPayloadSchema = z
   .object({
@@ -415,13 +369,11 @@ const DiceRoll3dPayloadSchema = z
     rollerName: z.string(),
     isSecret: z.boolean().optional()
   })
-  .passthrough()
 
 const TurnEndPayloadSchema = z
   .object({
     entityId: z.string()
   })
-  .passthrough()
 
 const MoveDeclarePayloadSchema = z
   .object({
@@ -432,35 +384,30 @@ const MoveDeclarePayloadSchema = z
     toY: z.number(),
     path: z.array(z.object({ x: z.number(), y: z.number() })).optional()
   })
-  .passthrough()
 
 const TypingPayloadSchema = z
   .object({
     isTyping: z.boolean()
   })
-  .passthrough()
 
 const NarrationPayloadSchema = z
   .object({
     text: z.string(),
     style: z.enum(['chat', 'dramatic'])
   })
-  .passthrough()
 
 const PlaySoundPayloadSchema = z
   .object({
     event: z.string()
   })
-  .passthrough()
 
 const PlayAmbientPayloadSchema = z
   .object({
     ambient: z.string(),
     volume: z.number().optional()
   })
-  .passthrough()
 
-const StopAmbientPayloadSchema = z.object({}).passthrough()
+const StopAmbientPayloadSchema = z.object({})
 
 // Generic passthrough for messages with no specific payload structure
 const AnyPayloadSchema = z.unknown()

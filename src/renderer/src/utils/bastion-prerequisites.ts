@@ -66,7 +66,8 @@ export function analyzeCapabilities(character: Character5e): CharacterCapabiliti
  * 'faction-renown' always returns false here -- it requires a manual
  * override in the UI because renown tracking is campaign-specific.
  */
-export function meetsFacilityPrerequisite(capabilities: CharacterCapabilities, prereq: FacilityPrerequisite): boolean {
+export function meetsFacilityPrerequisite(capabilities: CharacterCapabilities, prereq: FacilityPrerequisite | null): boolean {
+  if (!prereq || prereq.type === 'none') return true
   switch (prereq.type) {
     case 'none':
       return true
@@ -132,7 +133,7 @@ export function getFacilityEligibility(
   if (!meetsFacilityPrerequisite(capabilities, facility.prerequisite)) {
     return {
       eligible: false,
-      reason: facility.prerequisite.description
+      reason: facility.prerequisite?.description ?? 'Prerequisite not met'
     }
   }
 

@@ -11,7 +11,7 @@ import type { Campaign, NPC } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import type { InitiativeEntry, SidebarEntry, SidebarPanel as SidebarPanelType } from '../../../types/game-state'
 import { getSizeTokenDimensions } from '../../../types/monster'
-import { getBuilderEditPath, getCharacterSheetPath } from '../../../utils/character-routes'
+import { getCharacterSheetPath } from '../../../utils/character-routes'
 import { NPCManager } from '../dm'
 import VoiceAvatar from '../overlays/VoiceAvatar'
 import SidebarEntryList from './SidebarEntryList'
@@ -112,7 +112,8 @@ export default function LeftSidebar({
   // Create an initiative entry from an NPC
   const handleNpcToInitiative = (npc: NPC): void => {
     const roll = rollSingle(20)
-    const modifier = 0
+    const dexScore = npc.customStats?.abilityScores?.dex
+    const modifier = dexScore != null ? Math.floor((dexScore - 10) / 2) : 0
     const entry: InitiativeEntry = {
       id: crypto.randomUUID(),
       entityId: npc.id,
@@ -200,7 +201,7 @@ export default function LeftSidebar({
                       <span className="text-sm text-gray-200 truncate">{char.name}</span>
                       <button
                         onClick={() => {
-                          const path = canEdit ? getBuilderEditPath(char) : getCharacterSheetPath(char)
+                          const path = getCharacterSheetPath(char)
                           navigate(path, { state: { returnTo } })
                         }}
                         className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700 text-gray-300 hover:bg-amber-600 hover:text-white transition-colors cursor-pointer shrink-0 ml-1"

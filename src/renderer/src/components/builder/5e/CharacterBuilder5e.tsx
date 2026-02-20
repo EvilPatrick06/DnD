@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
 import { getCantripsKnown, getPreparedSpellMax, hasAnySpellcasting } from '../../../services/spell-data'
@@ -59,6 +59,7 @@ export default function CharacterBuilder5e(): JSX.Element {
   const druidicWarriorCantrips = useBuilderStore((s) => s.druidicWarriorCantrips)
   const saveCharacter = useCharacterStore((s) => s.saveCharacter)
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
 
   // Load spell level map for spell validation
@@ -71,7 +72,7 @@ export default function CharacterBuilder5e(): JSX.Element {
         for (const s of spells) map.set(s.id, s.level)
         setSpellLevelMap(map)
       })
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load spell data:', err))
   }, [])
 
   // Validation
@@ -280,7 +281,8 @@ export default function CharacterBuilder5e(): JSX.Element {
   ])
 
   const doSave = async (): Promise<void> => {
-    if (saving) return
+    if (savingRef.current) return
+    savingRef.current = true
     setSaving(true)
     try {
       const character = await buildCharacter5e()
@@ -302,12 +304,13 @@ export default function CharacterBuilder5e(): JSX.Element {
     } catch (err) {
       console.error('Failed to save character:', err)
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }
 
   const handleSave = async (): Promise<void> => {
-    if (saving || !canSave) return
+    if (savingRef.current || !canSave) return
     // Check for blank backstory fields
     if (blankDetailFields.length > 0) {
       setShowConfirmDialog(true)

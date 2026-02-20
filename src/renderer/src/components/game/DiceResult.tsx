@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 interface DiceResultProps {
   formula: string
   rolls: number[]
@@ -7,7 +9,7 @@ interface DiceResultProps {
   isCritDamage?: boolean
 }
 
-export default function DiceResult({
+export default memo(function DiceResult({
   formula,
   rolls,
   total,
@@ -73,4 +75,4 @@ export default function DiceResult({
       {isCritDamage && <p className="text-[10px] text-green-400 font-semibold mt-1">CRITICAL DAMAGE - Dice doubled!</p>}
     </div>
   )
-}
+})

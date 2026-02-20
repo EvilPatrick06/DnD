@@ -98,6 +98,12 @@ export const CONDITIONS_5E: ConditionDef[] = [
     maxValue: 6
   },
   {
+    name: 'Bloodied',
+    description:
+      'A creature is Bloodied while it has half its Hit Points or fewer remaining. This condition has no effects on its own but other effects may reference it.',
+    system: 'dnd5e'
+  },
+  {
     name: 'Burning',
     description:
       '1d4 Fire damage at the start of each of your turns. Use an action to extinguish (go Prone and roll on the ground). Also extinguished by dousing or submerging in water.',

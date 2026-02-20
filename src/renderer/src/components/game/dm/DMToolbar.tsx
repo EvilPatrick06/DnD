@@ -44,6 +44,7 @@ export default function DMToolbar({
           key={tool.id}
           onClick={() => onToolChange(tool.id)}
           title={`${tool.label} (${tool.shortcut})`}
+          aria-label={tool.label}
           className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-colors cursor-pointer
             ${
               activeTool === tool.id ? 'bg-amber-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
@@ -61,6 +62,7 @@ export default function DMToolbar({
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
+            aria-label="Undo"
             className="w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-gray-400 hover:bg-gray-800 hover:text-gray-200"
           >
             &#8630;
@@ -69,6 +71,7 @@ export default function DMToolbar({
             onClick={onRedo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
+            aria-label="Redo"
             className="w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-gray-400 hover:bg-gray-800 hover:text-gray-200"
           >
             &#8631;
