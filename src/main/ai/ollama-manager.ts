@@ -23,10 +23,32 @@ export interface CuratedModel {
   desc: string
 }
 
+export interface InstalledModelInfo {
+  name: string
+  size: number
+  modifiedAt: string
+  digest: string
+  parameterSize?: string
+  quantization?: string
+  family?: string
+}
+
+export interface OllamaVersionInfo {
+  installed: string
+  latest?: string
+  updateAvailable: boolean
+}
+
 export const CURATED_MODELS: CuratedModel[] = [
+  { id: 'llama3.2:3b', name: 'Llama 3.2 3B', vramMB: 2500, desc: 'Lightweight, great for weaker GPUs' },
   { id: 'llama3.1:8b', name: 'Llama 3.1 8B', vramMB: 5000, desc: 'Good quality, runs on most GPUs' },
   { id: 'mistral:7b', name: 'Mistral 7B', vramMB: 4500, desc: 'Fast and capable' },
   { id: 'gemma2:9b', name: 'Gemma 2 9B', vramMB: 6000, desc: 'High quality from Google' },
+  { id: 'phi3:14b', name: 'Phi-3 14B', vramMB: 8000, desc: 'Strong reasoning from Microsoft' },
+  { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B', vramMB: 5000, desc: 'Versatile and capable' },
+  { id: 'deepseek-r1:8b', name: 'DeepSeek R1 8B', vramMB: 5000, desc: 'Excellent reasoning skills' },
+  { id: 'mixtral:8x7b', name: 'Mixtral 8x7B', vramMB: 26000, desc: 'Mixture of experts, great quality' },
+  { id: 'command-r:35b', name: 'Command R 35B', vramMB: 20000, desc: 'RAG-optimized, great for DM context' },
   { id: 'llama3.1:70b', name: 'Llama 3.1 70B', vramMB: 40000, desc: 'Best quality, needs powerful GPU' }
 ]
 
@@ -306,4 +328,123 @@ export async function pullModel(model: string, onProgress?: (percent: number) =>
  */
 export async function listInstalledModels(): Promise<string[]> {
   return listOllamaModels()
+}
+
+/**
+ * List installed models with full detail (size, digest, family, etc.).
+ */
+export async function listInstalledModelsDetailed(): Promise<InstalledModelInfo[]> {
+  try {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+      signal: AbortSignal.timeout(5000)
+    })
+    if (!res.ok) return []
+    const data = (await res.json()) as {
+      models?: Array<{
+        name: string
+        size: number
+        modified_at: string
+        digest: string
+        details?: {
+          parameter_size?: string
+          quantization_level?: string
+          family?: string
+        }
+      }>
+    }
+    return (data.models ?? []).map((m) => ({
+      name: m.name,
+      size: m.size,
+      modifiedAt: m.modified_at,
+      digest: m.digest,
+      parameterSize: m.details?.parameter_size,
+      quantization: m.details?.quantization_level,
+      family: m.details?.family
+    }))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Get the installed Ollama version from the local API.
+ */
+export async function getOllamaVersion(): Promise<string | null> {
+  try {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/version`, {
+      signal: AbortSignal.timeout(3000)
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { version?: string }
+    return data.version ?? null
+  } catch {
+    return null
+  }
+}
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] ?? 0
+    const nb = pb[i] ?? 0
+    if (na > nb) return 1
+    if (na < nb) return -1
+  }
+  return 0
+}
+
+/**
+ * Check whether a newer Ollama release is available on GitHub.
+ */
+export async function checkOllamaUpdate(): Promise<OllamaVersionInfo> {
+  const installed = await getOllamaVersion()
+  if (!installed) {
+    return { installed: 'unknown', updateAvailable: false }
+  }
+
+  try {
+    const res = await fetch('https://api.github.com/repos/ollama/ollama/releases/latest', {
+      signal: AbortSignal.timeout(10000),
+      headers: { Accept: 'application/vnd.github.v3+json' }
+    })
+    if (!res.ok) {
+      return { installed, updateAvailable: false }
+    }
+    const data = (await res.json()) as { tag_name?: string }
+    const latest = data.tag_name?.replace(/^v/, '') ?? null
+    if (!latest) {
+      return { installed, updateAvailable: false }
+    }
+    return {
+      installed,
+      latest,
+      updateAvailable: compareVersions(latest, installed) > 0
+    }
+  } catch {
+    return { installed, updateAvailable: false }
+  }
+}
+
+/**
+ * Download and install the latest Ollama release.
+ */
+export async function updateOllama(onProgress?: (percent: number) => void): Promise<void> {
+  const installerPath = await downloadOllama(onProgress)
+  await installOllama(installerPath)
+}
+
+/**
+ * Delete a model via the Ollama API.
+ */
+export async function deleteModel(model: string): Promise<void> {
+  const res = await fetch(`${OLLAMA_BASE_URL}/api/delete`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: model })
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Failed to delete model ${model}: HTTP ${res.status} ${body}`)
+  }
 }

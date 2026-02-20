@@ -79,6 +79,10 @@ export const IPC_CHANNELS = {
   AI_PULL_MODEL: 'ai:pull-model',
   AI_GET_CURATED_MODELS: 'ai:get-curated-models',
   AI_LIST_INSTALLED_MODELS: 'ai:list-installed-models',
+  AI_LIST_INSTALLED_MODELS_DETAILED: 'ai:list-installed-models-detailed',
+  AI_OLLAMA_CHECK_UPDATE: 'ai:ollama-check-update',
+  AI_OLLAMA_UPDATE: 'ai:ollama-update',
+  AI_DELETE_MODEL: 'ai:delete-model',
 
   // === AI DM: Memory Files ===
   AI_LIST_MEMORY_FILES: 'ai:list-memory-files',
@@ -106,6 +110,12 @@ export const IPC_CHANNELS = {
   UPDATE_DOWNLOAD: 'update:download',
   UPDATE_INSTALL: 'update:install',
   UPDATE_STATUS: 'update:status',
+
+  // === Storage: Custom Creatures ===
+  SAVE_CUSTOM_CREATURE: 'storage:save-custom-creature',
+  LOAD_CUSTOM_CREATURE: 'storage:load-custom-creature',
+  LOAD_CUSTOM_CREATURES: 'storage:load-custom-creatures',
+  DELETE_CUSTOM_CREATURE: 'storage:delete-custom-creature',
 
   // === Storage: Homebrew ===
   SAVE_HOMEBREW: 'storage:save-homebrew',

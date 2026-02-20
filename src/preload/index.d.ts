@@ -36,6 +36,13 @@ interface HomebrewAPI {
   deleteHomebrew: (category: string, id: string) => Promise<boolean>
 }
 
+interface CustomCreatureAPI {
+  saveCustomCreature: (creature: Record<string, unknown>) => Promise<{ success: boolean }>
+  loadCustomCreatures: () => Promise<Record<string, unknown>[]>
+  loadCustomCreature: (id: string) => Promise<Record<string, unknown> | null>
+  deleteCustomCreature: (id: string) => Promise<boolean>
+}
+
 interface FileDialogOptions {
   title: string
   filters: Array<{ name: string; extensions: string[] }>
@@ -141,6 +148,22 @@ interface OllamaProgressData {
   percent: number
 }
 
+interface InstalledModelInfo {
+  name: string
+  size: number
+  modifiedAt: string
+  digest: string
+  parameterSize?: string
+  quantization?: string
+  family?: string
+}
+
+interface OllamaVersionInfo {
+  installed: string
+  latest?: string
+  updateAvailable: boolean
+}
+
 interface AiAPI {
   configure: (config: AiConfigData) => Promise<{ success: boolean }>
   getConfig: () => Promise<AiConfigData>
@@ -181,6 +204,10 @@ interface AiAPI {
   pullModel: (model: string) => Promise<{ success: boolean; error?: string }>
   getCuratedModels: () => Promise<CuratedModel[]>
   listInstalledModels: () => Promise<string[]>
+  listInstalledModelsDetailed: () => Promise<InstalledModelInfo[]>
+  checkOllamaUpdate: () => Promise<{ success: boolean; data?: OllamaVersionInfo; error?: string }>
+  updateOllama: () => Promise<{ success: boolean; error?: string }>
+  deleteModel: (model: string) => Promise<{ success: boolean; error?: string }>
   getTokenBudget: () => Promise<{
     rulebookChunks: number
     srdData: number
@@ -315,6 +342,7 @@ declare global {
     api: CharacterAPI &
       CampaignAPI &
       BastionAPI &
+      CustomCreatureAPI &
       HomebrewAPI &
       GameStateStorageAPI &
       DialogAPI &

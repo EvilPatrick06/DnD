@@ -23,6 +23,13 @@ const api = {
   loadBastion: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_BASTION, id),
   deleteBastion: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_BASTION, id),
 
+  // Custom creature storage
+  saveCustomCreature: (creature: Record<string, unknown>) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SAVE_CUSTOM_CREATURE, creature),
+  loadCustomCreatures: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CUSTOM_CREATURES),
+  loadCustomCreature: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CUSTOM_CREATURE, id),
+  deleteCustomCreature: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_CUSTOM_CREATURE, id),
+
   // Homebrew storage
   saveHomebrew: (entry: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_HOMEBREW, entry),
   loadHomebrewByCategory: (category: string) =>
@@ -84,6 +91,10 @@ const api = {
     pullModel: (model: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_PULL_MODEL, model),
     getCuratedModels: () => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_CURATED_MODELS),
     listInstalledModels: () => ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_INSTALLED_MODELS),
+    listInstalledModelsDetailed: () => ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_INSTALLED_MODELS_DETAILED),
+    checkOllamaUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.AI_OLLAMA_CHECK_UPDATE),
+    updateOllama: () => ipcRenderer.invoke(IPC_CHANNELS.AI_OLLAMA_UPDATE),
+    deleteModel: (model: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_DELETE_MODEL, model),
     getTokenBudget: () => ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET),
     previewTokenBudget: (campaignId: string, characterIds: string[]) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW, campaignId, characterIds),

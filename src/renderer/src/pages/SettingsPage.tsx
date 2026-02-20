@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import OllamaManagement from '../components/settings/OllamaManagement'
+import { addToast } from '../hooks/useToast'
+import { exportEntities, importEntities } from '../services/entity-io'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 
 const THEME_LABELS: Record<ThemeName, string> = {
@@ -243,6 +246,62 @@ export default function SettingsPage(): JSX.Element {
               ))}
             </div>
           </div>
+        </Section>
+
+        {/* Import/Export Settings */}
+        <Section title="Settings Import / Export">
+          <p className="text-xs text-gray-400 mb-3">
+            Export your app preferences to a file, or import settings from another device.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  const settings = await window.api.loadSettings()
+                  const prefs: Record<string, string> = {}
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i)
+                    if (key?.startsWith('dnd-vtt-')) prefs[key] = localStorage.getItem(key) ?? ''
+                  }
+                  const ok = await exportEntities('settings', [{ settings, preferences: prefs }])
+                  if (ok) addToast('Settings exported', 'success')
+                } catch { addToast('Settings export failed', 'error') }
+              }}
+              className="px-4 py-1.5 text-sm rounded-lg border bg-gray-800 border-gray-700 text-gray-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              Export Settings
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const result = await importEntities<{ settings?: Record<string, unknown>; preferences?: Record<string, string> }>('settings')
+                  if (!result) return
+                  const item = result.items[0]
+                  if (item.settings) {
+                    await window.api.saveSettings(item.settings as Parameters<typeof window.api.saveSettings>[0])
+                  }
+                  if (item.preferences) {
+                    for (const [key, value] of Object.entries(item.preferences)) {
+                      if (key.startsWith('dnd-vtt-') && typeof value === 'string') {
+                        localStorage.setItem(key, value)
+                      }
+                    }
+                  }
+                  addToast('Settings imported. Reload to apply all changes.', 'success')
+                } catch (err) {
+                  addToast(err instanceof Error ? err.message : 'Settings import failed', 'error')
+                }
+              }}
+              className="px-4 py-1.5 text-sm rounded-lg border bg-gray-800 border-gray-700 text-gray-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              Import Settings
+            </button>
+          </div>
+        </Section>
+
+        {/* Ollama AI */}
+        <Section title="Ollama AI">
+          <OllamaManagement />
         </Section>
 
         {/* Keybindings (read-only) */}

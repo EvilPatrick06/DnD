@@ -4,6 +4,7 @@ import { ConfirmDialog } from '../components/ui'
 import Modal from '../components/ui/Modal'
 import { addToast } from '../hooks/useToast'
 import { load5eBastionFacilities } from '../services/data-provider'
+import { exportEntities, importEntities, reIdItems } from '../services/entity-io'
 import { useBastionStore } from '../stores/useBastionStore'
 import { useCharacterStore } from '../stores/useCharacterStore'
 import type {
@@ -340,14 +341,49 @@ export default function BastionPage(): JSX.Element {
           <span className="text-xs text-gray-500">Bastions (2024 DMG)</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const result = await importEntities<Bastion>('bastion')
+                if (!result) return
+                const items = reIdItems(result.items)
+                for (const b of items) {
+                  await saveBastion(b)
+                }
+                addToast(`Imported ${items.length} bastion(s)`, 'success')
+                await loadBastions()
+              } catch (err) {
+                addToast(err instanceof Error ? err.message : 'Import failed', 'error')
+              }
+            }}
+            className="px-3 py-1.5 text-sm border border-gray-600 hover:border-amber-600 hover:bg-gray-800
+              text-gray-400 hover:text-amber-400 rounded font-semibold transition-colors cursor-pointer"
+          >
+            Import
+          </button>
           {bastions.length > 0 && (
-            <button
-              onClick={() => setShowDeleteAllConfirm(true)}
-              className="px-3 py-1.5 text-sm border border-gray-600 hover:border-red-600 hover:bg-gray-800
-                text-gray-400 hover:text-red-400 rounded font-semibold transition-colors cursor-pointer"
-            >
-              Delete All
-            </button>
+            <>
+              <button
+                onClick={async () => {
+                  const items = selectedBastionId ? bastions.filter((b) => b.id === selectedBastionId) : bastions
+                  try {
+                    const ok = await exportEntities('bastion', items)
+                    if (ok) addToast(`Exported ${items.length} bastion(s)`, 'success')
+                  } catch { addToast('Export failed', 'error') }
+                }}
+                className="px-3 py-1.5 text-sm border border-gray-600 hover:border-amber-600 hover:bg-gray-800
+                  text-gray-400 hover:text-amber-400 rounded font-semibold transition-colors cursor-pointer"
+              >
+                {selectedBastionId ? 'Export Selected' : 'Export All'}
+              </button>
+              <button
+                onClick={() => setShowDeleteAllConfirm(true)}
+                className="px-3 py-1.5 text-sm border border-gray-600 hover:border-red-600 hover:bg-gray-800
+                  text-gray-400 hover:text-red-400 rounded font-semibold transition-colors cursor-pointer"
+              >
+                Delete All
+              </button>
+            </>
           )}
           <button
             onClick={() => setShowCreateModal(true)}

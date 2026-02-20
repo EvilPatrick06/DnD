@@ -17,9 +17,9 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const BastionPage = lazy(() => import('./pages/BastionPage'))
 const CharacterSheet5ePage = lazy(() => import('./pages/CharacterSheet5ePage'))
 const LevelUp5ePage = lazy(() => import('./pages/LevelUp5ePage'))
+const LibraryPage = lazy(() => import('./pages/LibraryPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
-const LibraryPage = lazy(() => import('./pages/LibraryPage'))
 
 function App(): JSX.Element {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -88,9 +88,9 @@ function App(): JSX.Element {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/lobby/:campaignId" element={<ErrorBoundary><LobbyPage /></ErrorBoundary>} />
             <Route path="/game/:campaignId" element={<ErrorBoundary><InGamePage /></ErrorBoundary>} />
+            <Route path="/library" element={<LibraryPage />} />
             <Route path="/bastions" element={<BastionPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/library" element={<LibraryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
