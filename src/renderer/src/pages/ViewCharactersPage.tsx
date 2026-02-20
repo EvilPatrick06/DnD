@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useCharacterStore } from '../stores/useCharacterStore'
-import { useBuilderStore } from '../stores/useBuilderStore'
 import { CharacterCard } from '../components/character'
-import { is5eCharacter, isPf2eCharacter } from '../types/character'
 import { exportCharacterToFile, importCharacterFromFile } from '../services/character-io'
+import { useCharacterStore } from '../stores/useCharacterStore'
+import { getCharacterSheetPath } from '../utils/character-routes'
 
 type StatusFilter = 'active' | 'retired' | 'deceased' | 'all'
 
 export default function ViewCharactersPage(): JSX.Element {
   const navigate = useNavigate()
   const { characters, loading, loadCharacters, deleteCharacter, saveCharacter } = useCharacterStore()
-  const loadCharacterForEdit = useBuilderStore((s) => s.loadCharacterForEdit)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active')
   const [importError, setImportError] = useState<string | null>(null)
@@ -50,13 +48,10 @@ export default function ViewCharactersPage(): JSX.Element {
     }
   }
 
-  // Filter characters by status (backward compat: treat undefined status as 'active')
-  const filteredCharacters = statusFilter === 'all'
-    ? characters
-    : characters.filter((c) => {
-        const status = (c as unknown as Record<string, unknown>).status as string | undefined
-        return (status ?? 'active') === statusFilter
-      })
+  // Filter characters by status
+  const filteredCharacters = characters.filter((c) => {
+    return statusFilter === 'all' || c.status === statusFilter
+  })
 
   const filterTabs: Array<{ key: StatusFilter; label: string }> = [
     { key: 'active', label: 'Active' },
@@ -101,7 +96,7 @@ export default function ViewCharactersPage(): JSX.Element {
         </div>
       )}
 
-      {/* Filter tabs */}
+      {/* Status filter tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-800">
         {filterTabs.map((tab) => (
           <button
@@ -116,15 +111,10 @@ export default function ViewCharactersPage(): JSX.Element {
             {tab.label}
             {tab.key !== 'all' && (
               <span className="ml-1.5 text-xs text-gray-600">
-                {characters.filter((c) => {
-                  const s = (c as unknown as Record<string, unknown>).status as string | undefined
-                  return (s ?? 'active') === tab.key
-                }).length}
+                {characters.filter((c) => c.status === tab.key).length}
               </span>
             )}
-            {tab.key === 'all' && (
-              <span className="ml-1.5 text-xs text-gray-600">{characters.length}</span>
-            )}
+            {tab.key === 'all' && <span className="ml-1.5 text-xs text-gray-600">{characters.length}</span>}
           </button>
         ))}
       </div>
@@ -165,10 +155,7 @@ export default function ViewCharactersPage(): JSX.Element {
             <CharacterCard
               key={char.id}
               character={char}
-              onClick={() => {
-                loadCharacterForEdit(char)
-                navigate('/characters/create')
-              }}
+              onClick={() => navigate(getCharacterSheetPath(char))}
               onDelete={() => setShowDeleteConfirm(char.id)}
               onExport={() => handleExport(char.id)}
             />
@@ -179,10 +166,7 @@ export default function ViewCharactersPage(): JSX.Element {
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/70"
-            onClick={() => setShowDeleteConfirm(null)}
-          />
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowDeleteConfirm(null)} />
           <div className="relative bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-sm w-full mx-4">
             <h3 className="text-lg font-semibold mb-2">Delete Character?</h3>
             <p className="text-gray-400 text-sm mb-4">

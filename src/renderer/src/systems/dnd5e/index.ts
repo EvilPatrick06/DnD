@@ -1,5 +1,7 @@
+import { WARLOCK_PACT_SLOTS } from '../../services/spell-data'
+import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../../types/character-common'
+import type { BackgroundData, EquipmentFile, SpellData } from '../../types/data'
 import type { GameSystemPlugin, SheetConfig } from '../types'
-import type { SpellEntry, ClassFeatureEntry, Currency, AbilityName } from '../../types/character-common'
 
 // --- Data cache ---
 const dataCache = new Map<string, unknown>()
@@ -16,15 +18,15 @@ async function loadJson<T>(path: string): Promise<T> {
 
 // Full casters: Bard, Cleric, Druid, Sorcerer, Wizard
 const FULL_CASTER_SLOTS: Record<number, Record<number, number>> = {
-  1:  { 1: 2 },
-  2:  { 1: 3 },
-  3:  { 1: 4, 2: 2 },
-  4:  { 1: 4, 2: 3 },
-  5:  { 1: 4, 2: 3, 3: 2 },
-  6:  { 1: 4, 2: 3, 3: 3 },
-  7:  { 1: 4, 2: 3, 3: 3, 4: 1 },
-  8:  { 1: 4, 2: 3, 3: 3, 4: 2 },
-  9:  { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
+  1: { 1: 2 },
+  2: { 1: 3 },
+  3: { 1: 4, 2: 2 },
+  4: { 1: 4, 2: 3 },
+  5: { 1: 4, 2: 3, 3: 2 },
+  6: { 1: 4, 2: 3, 3: 3 },
+  7: { 1: 4, 2: 3, 3: 3, 4: 1 },
+  8: { 1: 4, 2: 3, 3: 3, 4: 2 },
+  9: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
   10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
   11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
   12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
@@ -40,15 +42,15 @@ const FULL_CASTER_SLOTS: Record<number, Record<number, number>> = {
 
 // Half casters: Paladin, Ranger
 const HALF_CASTER_SLOTS: Record<number, Record<number, number>> = {
-  1:  {},
-  2:  { 1: 2 },
-  3:  { 1: 3 },
-  4:  { 1: 3 },
-  5:  { 1: 4, 2: 2 },
-  6:  { 1: 4, 2: 2 },
-  7:  { 1: 4, 2: 3 },
-  8:  { 1: 4, 2: 3 },
-  9:  { 1: 4, 2: 3, 3: 2 },
+  1: { 1: 2 },
+  2: { 1: 2 },
+  3: { 1: 3 },
+  4: { 1: 3 },
+  5: { 1: 4, 2: 2 },
+  6: { 1: 4, 2: 2 },
+  7: { 1: 4, 2: 3 },
+  8: { 1: 4, 2: 3 },
+  9: { 1: 4, 2: 3, 3: 2 },
   10: { 1: 4, 2: 3, 3: 2 },
   11: { 1: 4, 2: 3, 3: 3 },
   12: { 1: 4, 2: 3, 3: 3 },
@@ -64,15 +66,15 @@ const HALF_CASTER_SLOTS: Record<number, Record<number, number>> = {
 
 // Third casters: Eldritch Knight (Fighter), Arcane Trickster (Rogue)
 const THIRD_CASTER_SLOTS: Record<number, Record<number, number>> = {
-  1:  {},
-  2:  {},
-  3:  { 1: 2 },
-  4:  { 1: 3 },
-  5:  { 1: 3 },
-  6:  { 1: 3 },
-  7:  { 1: 4, 2: 2 },
-  8:  { 1: 4, 2: 2 },
-  9:  { 1: 4, 2: 2 },
+  1: {},
+  2: {},
+  3: { 1: 2 },
+  4: { 1: 3 },
+  5: { 1: 3 },
+  6: { 1: 3 },
+  7: { 1: 4, 2: 2 },
+  8: { 1: 4, 2: 2 },
+  9: { 1: 4, 2: 2 },
   10: { 1: 4, 2: 3 },
   11: { 1: 4, 2: 3 },
   12: { 1: 4, 2: 3 },
@@ -86,29 +88,8 @@ const THIRD_CASTER_SLOTS: Record<number, Record<number, number>> = {
   20: { 1: 4, 2: 3, 3: 3, 4: 1 }
 }
 
-// Warlock Pact Magic
-const WARLOCK_SLOTS: Record<number, Record<number, number>> = {
-  1:  { 1: 1 },
-  2:  { 1: 2 },
-  3:  { 2: 2 },
-  4:  { 2: 2 },
-  5:  { 3: 2 },
-  6:  { 3: 2 },
-  7:  { 4: 2 },
-  8:  { 4: 2 },
-  9:  { 5: 2 },
-  10: { 5: 2 },
-  11: { 5: 3 },
-  12: { 5: 3 },
-  13: { 5: 3 },
-  14: { 5: 3 },
-  15: { 5: 3 },
-  16: { 5: 3 },
-  17: { 5: 4 },
-  18: { 5: 4 },
-  19: { 5: 4 },
-  20: { 5: 4 }
-}
+// Warlock Pact Magic - reuse from spell-data.ts
+const WARLOCK_SLOTS = WARLOCK_PACT_SLOTS
 
 const FULL_CASTERS = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard']
 const HALF_CASTERS = ['paladin', 'ranger']
@@ -152,7 +133,7 @@ const SHEET_CONFIG: SheetConfig = {
 
 export const dnd5ePlugin: GameSystemPlugin = {
   id: 'dnd5e',
-  name: "D&D 5th Edition",
+  name: 'D&D 5th Edition',
 
   getSpellSlotProgression(className: string, level: number): Record<number, number> {
     const clampedLevel = Math.max(1, Math.min(20, level))
@@ -168,19 +149,19 @@ export const dnd5ePlugin: GameSystemPlugin = {
 
   async getSpellList(className: string): Promise<SpellEntry[]> {
     try {
-      const spells = await loadJson<any[]>('./data/5e/spells.json')
+      const spells = await loadJson<SpellData[]>('./data/5e/spells.json')
       const cls = className.toLowerCase()
       return spells
-        .filter((s: any) => {
+        .filter((s) => {
           if (!s.classes) return false
-          return (s.classes as string[]).some((c) => c.toLowerCase() === cls)
+          return s.classes.some((c) => c.toLowerCase() === cls)
         })
-        .map((s: any) => ({
+        .map((s) => ({
           id: s.id ?? s.name.toLowerCase().replace(/\s+/g, '-'),
           name: s.name,
           level: s.level ?? 0,
           description: s.description ?? '',
-          castingTime: s.castingTime ?? s.casting_time ?? '',
+          castingTime: s.castingTime ?? ((s as unknown as Record<string, unknown>).casting_time as string) ?? '',
           range: s.range ?? '',
           duration: s.duration ?? '',
           components: s.components ?? '',
@@ -198,10 +179,10 @@ export const dnd5ePlugin: GameSystemPlugin = {
     return SPELLCASTERS.includes(className.toLowerCase())
   },
 
-  async getStartingGold(classId: string, backgroundId: string): Promise<Currency> {
+  async getStartingGold(_classId: string, backgroundId: string): Promise<Currency> {
     try {
-      const backgrounds = await loadJson<any[]>('./data/5e/backgrounds.json')
-      const bg = backgrounds.find((b: any) => b.id === backgroundId)
+      const backgrounds = await loadJson<BackgroundData[]>('./data/5e/backgrounds.json')
+      const bg = backgrounds.find((b) => b.id === backgroundId)
       const gold = bg?.startingGold ?? 10
       return { cp: 0, sp: 0, gp: gold, pp: 0, ep: 0 }
     } catch {
@@ -211,11 +192,13 @@ export const dnd5ePlugin: GameSystemPlugin = {
 
   async getClassFeatures(classId: string, level: number): Promise<ClassFeatureEntry[]> {
     try {
-      const data = await loadJson<Record<string, any[]>>('./data/5e/class-features.json')
+      const data = await loadJson<Record<string, Array<{ level: number; name: string; description?: string }>>>(
+        './data/5e/class-features.json'
+      )
       const features = data[classId] ?? []
       return features
-        .filter((f: any) => f.level <= level)
-        .map((f: any) => ({
+        .filter((f) => f.level <= level)
+        .map((f) => ({
           level: f.level,
           name: f.name,
           source: classId,
@@ -226,14 +209,15 @@ export const dnd5ePlugin: GameSystemPlugin = {
     }
   },
 
-  async loadEquipment(): Promise<{ weapons: any[]; armor: any[]; shields: any[]; gear: any[] }> {
+  async loadEquipment(): Promise<{ weapons: unknown[]; armor: unknown[]; shields: unknown[]; gear: unknown[] }> {
     try {
-      const data = await loadJson<any>('./data/5e/equipment.json')
+      const data = await loadJson<EquipmentFile>('./data/5e/equipment.json')
+      const dataAny = data as unknown as Record<string, unknown>
       return {
         weapons: data.weapons ?? [],
         armor: data.armor ?? [],
-        shields: data.shields ?? [],
-        gear: data.gear ?? data.adventuringGear ?? []
+        shields: (dataAny.shields as unknown[]) ?? [],
+        gear: data.gear ?? (dataAny.adventuringGear as unknown[]) ?? []
       }
     } catch {
       return { weapons: [], armor: [], shields: [], gear: [] }

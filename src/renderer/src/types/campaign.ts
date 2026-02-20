@@ -1,8 +1,29 @@
+import type { Encounter } from './encounter'
+import type { EntityCondition, Handout, InGameTimeState, InitiativeState, SidebarEntry, TurnState } from './game-state'
 import type { GameSystem } from './game-system'
 import type { GameMap } from './map'
+import type { MonsterStatBlock } from './monster'
 
 export type CampaignType = 'preset' | 'custom'
 export type TurnMode = 'initiative' | 'free'
+
+export type CalendarPresetId = 'gregorian' | 'harptos' | 'simple-day-counter' | 'custom'
+
+export interface CalendarMonth {
+  name: string
+  days: number
+}
+
+export interface CalendarConfig {
+  preset: CalendarPresetId
+  months: CalendarMonth[]
+  daysPerYear: number
+  yearLabel: string
+  startingYear: number
+  hoursPerDay: number
+  /** DM preference for when AI/system shares exact numeric time */
+  exactTimeDefault: 'always' | 'contextual' | 'never'
+}
 
 export interface LoreEntry {
   id: string
@@ -11,6 +32,13 @@ export interface LoreEntry {
   category: 'world' | 'faction' | 'location' | 'item' | 'other'
   isVisibleToPlayers: boolean
   createdAt: string
+}
+
+export interface AiDmConfig {
+  enabled: boolean
+  provider: 'claude' | 'ollama'
+  model: 'opus' | 'sonnet' | 'haiku'
+  ollamaModel?: string
 }
 
 export interface Campaign {
@@ -27,12 +55,38 @@ export interface Campaign {
   activeMapId?: string
   npcs: NPC[]
   lore?: LoreEntry[]
+  encounters?: Encounter[]
   players: CampaignPlayer[]
   customRules: CustomRule[]
   settings: CampaignSettings
   journal: SessionJournal
+  calendar?: CalendarConfig
+  customAudio?: Array<{
+    id: string
+    fileName: string
+    displayName: string
+    category: 'ambient' | 'effect' | 'music'
+  }>
+  voiceChat?: {
+    mode: 'local' | 'cloud'
+    apiKey?: string
+    apiSecret?: string
+    serverUrl?: string
+  }
+  aiDm?: AiDmConfig
+  savedGameState?: SavedGameState
   createdAt: string
   updatedAt: string
+}
+
+export interface OptionalRules {
+  flanking: boolean
+  groupInitiative: boolean
+}
+
+export const DEFAULT_OPTIONAL_RULES: OptionalRules = {
+  flanking: false,
+  groupInitiative: false
 }
 
 export interface CampaignSettings {
@@ -41,6 +95,7 @@ export interface CampaignSettings {
   lobbyMessage: string
   levelRange: { min: number; max: number }
   allowCharCreationInLobby: boolean
+  optionalRules?: OptionalRules
 }
 
 export interface CampaignPlayer {
@@ -67,7 +122,18 @@ export interface NPC {
   location?: string
   isVisible: boolean
   stats?: Record<string, unknown>
+  statBlockId?: string
+  customStats?: Partial<MonsterStatBlock>
+  role?: 'ally' | 'enemy' | 'neutral' | 'patron' | 'shopkeeper'
+  personality?: string
+  motivation?: string
   notes: string
+  revealedFields?: {
+    description?: boolean
+    role?: boolean
+    personality?: boolean
+    motivation?: boolean
+  }
 }
 
 export interface SessionJournal {
@@ -83,6 +149,45 @@ export interface JournalEntry {
   isPrivate: boolean
   authorId: string
   createdAt: string
+}
+
+export interface CombatTimerConfig {
+  enabled: boolean
+  seconds: number
+  action: 'auto-skip' | 'warning'
+}
+
+export interface SavedGameState {
+  initiative: InitiativeState | null
+  round: number
+  conditions: EntityCondition[]
+  turnStates: Record<string, TurnState>
+  isPaused: boolean
+  underwaterCombat: boolean
+  ambientLight: 'bright' | 'dim' | 'darkness'
+  travelPace: 'fast' | 'normal' | 'slow' | null
+  marchingOrder: string[]
+  allies: SidebarEntry[]
+  enemies: SidebarEntry[]
+  places: SidebarEntry[]
+  inGameTime: InGameTimeState | null
+  restTracking: {
+    lastLongRestSeconds: number | null
+    lastShortRestSeconds: number | null
+  } | null
+  activeLightSources: ActiveLightSource[]
+  dmNotes: string
+  handouts: Handout[]
+  combatTimer?: CombatTimerConfig
+}
+
+export interface ActiveLightSource {
+  id: string
+  entityId: string
+  entityName: string
+  sourceName: string
+  durationSeconds: number
+  startedAtSeconds: number
 }
 
 export type { GameMap } from './map'

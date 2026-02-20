@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import type { Character } from '../types/character'
 import type { ActiveCondition } from '../types/character-common'
 
-
 interface CharacterState {
   characters: Character[]
   selectedCharacterId: string | null
@@ -14,6 +13,7 @@ interface CharacterState {
   toggleArmorEquipped: (characterId: string, armorId: string) => Promise<void>
   addCondition: (characterId: string, condition: ActiveCondition) => Promise<void>
   removeCondition: (characterId: string, conditionName: string) => Promise<void>
+  updateConditionValue: (characterId: string, conditionName: string, newValue: number) => Promise<void>
 }
 
 export const useCharacterStore = create<CharacterState>((set, get) => ({
@@ -102,5 +102,22 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     const conditions = (char.conditions ?? []).filter((c) => c.name !== conditionName)
     const updated = { ...char, conditions, updatedAt: new Date().toISOString() } as Character
     await get().saveCharacter(updated)
+  },
+
+  updateConditionValue: async (characterId: string, conditionName: string, newValue: number) => {
+    const { characters } = get()
+    const char = characters.find((c) => c.id === characterId)
+    if (!char) return
+
+    if (newValue <= 0) {
+      // Remove the condition when value drops to 0
+      const conditions = (char.conditions ?? []).filter((c) => c.name !== conditionName)
+      const updated = { ...char, conditions, updatedAt: new Date().toISOString() } as Character
+      await get().saveCharacter(updated)
+    } else {
+      const conditions = (char.conditions ?? []).map((c) => (c.name === conditionName ? { ...c, value: newValue } : c))
+      const updated = { ...char, conditions, updatedAt: new Date().toISOString() } as Character
+      await get().saveCharacter(updated)
+    }
   }
 }))

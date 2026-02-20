@@ -1,40 +1,84 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { LobbyLayout } from '../components/lobby'
+import { Button, Modal } from '../components/ui'
+import { onMessage as onClientMessage } from '../network/client-manager'
+import {
+  getConnectedPeers,
+  onMessage as onHostMessage,
+  onPeerJoined,
+  setCampaignId as setHostCampaignId
+} from '../network/host-manager'
+import { getPeer } from '../network/peer-manager'
+import type {
+  CharacterSelectPayload,
+  CharacterUpdatePayload,
+  ChatPayload,
+  ChatTimeoutPayload,
+  FileSharingPayload,
+  ForceDeafenPayload,
+  ForceMutePayload,
+  SlowModePayload
+} from '../network/types'
+import {
+  callPeer,
+  isListenOnly,
+  onSpeakingChange,
+  resumeAllAudio,
+  startVoice,
+  stopVoice
+} from '../network/voice-manager'
+import { useAiDmStore } from '../stores/useAiDmStore'
+import { useCampaignStore } from '../stores/useCampaignStore'
+import { useCharacterStore } from '../stores/useCharacterStore'
 import { useLobbyStore } from '../stores/useLobbyStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
-import { useCampaignStore } from '../stores/useCampaignStore'
-import { LobbyLayout } from '../components/lobby'
-import { Modal, Button } from '../components/ui'
-import { getPeer } from '../network/peer-manager'
-import { startVoice, stopVoice, onSpeakingChange, callPeer, resumeAllAudio, isListenOnly } from '../network/voice-manager'
-import { onPeerJoined, getConnectedPeers, onMessage as onHostMessage, setCampaignId as setHostCampaignId } from '../network/host-manager'
-import { onMessage as onClientMessage } from '../network/client-manager'
-import type { ChatPayload, CharacterSelectPayload, CharacterUpdatePayload, ForceMutePayload, ForceDeafenPayload, SlowModePayload, FileSharingPayload } from '../network/types'
-import type { Character } from '../types/character'
 import type { Campaign } from '../types/campaign'
-import { useCharacterStore } from '../stores/useCharacterStore'
+import type { Character } from '../types/character'
 
 export default function LobbyPage(): JSX.Element {
   const navigate = useNavigate()
   const { campaignId } = useParams<{ campaignId: string }>()
 
   const { setCampaignId, setIsHost, addPlayer, updatePlayer, reset: resetLobby } = useLobbyStore()
-  const {
-    connectionState,
-    inviteCode,
-    localPeerId,
-    displayName,
-    role,
-    disconnect
-  } = useNetworkStore()
+  const { connectionState, inviteCode, localPeerId, displayName, role, disconnect } = useNetworkStore()
   const { campaigns, loadCampaigns } = useCampaignStore()
 
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
+  const hasInitialized = useRef(false)
 
   const campaign = campaigns.find((c) => c.id === campaignId)
   const isHost = role === 'host'
+  const sceneStatus = useAiDmStore((s) => s.sceneStatus)
+
+  // AI DM: Pre-generate scene while players are in lobby (host only)
+  useEffect(() => {
+    if (!isHost || !campaign?.aiDm?.enabled) return
+
+    const aiDmStore = useAiDmStore.getState()
+
+    // Initialize store from campaign config
+    aiDmStore.initFromCampaign(campaign)
+
+    // Collect any available character IDs
+    const players = useLobbyStore.getState().players
+    const characterIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
+
+    // Trigger scene preparation immediately
+    aiDmStore.prepareScene(campaign.id, characterIds)
+
+    // Poll for completion every 3 seconds (update status indicator)
+    const interval = setInterval(async () => {
+      await aiDmStore.checkSceneStatus(campaign.id)
+      if (useAiDmStore.getState().sceneStatus === 'ready') {
+        clearInterval(interval)
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [isHost, campaign?.id, campaign?.aiDm?.enabled, campaign])
 
   // Navigate away when kicked, banned, or disconnected with error
   const error = useNetworkStore((s) => s.error)
@@ -65,8 +109,9 @@ export default function LobbyPage(): JSX.Element {
     }
     setIsHost(isHost)
 
-    // Add local player to the lobby
-    if (localPeerId && displayName) {
+    // Add local player to the lobby (guard against duplicate adds in StrictMode)
+    if (localPeerId && displayName && !hasInitialized.current) {
+      hasInitialized.current = true
       addPlayer({
         peerId: localPeerId,
         displayName,
@@ -231,9 +276,9 @@ export default function LobbyPage(): JSX.Element {
           // Add the DM's campaign data to local store (in-memory only)
           useCampaignStore.getState().addCampaignToState(payload.campaign)
           // Navigate using the real campaign UUID from the payload
-          navigate('/game/' + payload.campaign.id)
+          navigate(`/game/${payload.campaign.id}`)
         } else {
-          navigate('/game/' + campaignId)
+          navigate(`/game/${campaignId}`)
         }
       }
     })
@@ -249,10 +294,7 @@ export default function LobbyPage(): JSX.Element {
 
       const payload = msg.payload as CharacterSelectPayload
       if (payload.characterId && payload.characterData) {
-        useLobbyStore.getState().setRemoteCharacter(
-          payload.characterId,
-          payload.characterData as Character
-        )
+        useLobbyStore.getState().setRemoteCharacter(payload.characterId, payload.characterData as Character)
       }
     }
 
@@ -287,7 +329,13 @@ export default function LobbyPage(): JSX.Element {
       })
     }
 
-    const handleFile = (msg: { type: string; senderId: string; senderName: string; timestamp: number; payload: unknown }): void => {
+    const handleFile = (msg: {
+      type: string
+      senderId: string
+      senderName: string
+      timestamp: number
+      payload: unknown
+    }): void => {
       if (msg.type !== 'chat:file') return
       if (msg.senderId === localPeerId) return
       const payload = msg.payload as { fileName: string; fileType: string; fileData: string; mimeType: string }
@@ -329,7 +377,7 @@ export default function LobbyPage(): JSX.Element {
       })
       return unsub
     }
-  }, [role, localPeerId])
+  }, [role, localPeerId, generateMsgId])
 
   // --- Bridge: DM character updates → client saves locally ---
   useEffect(() => {
@@ -341,25 +389,34 @@ export default function LobbyPage(): JSX.Element {
         if (payload.characterId && payload.characterData) {
           const character = payload.characterData as Character
 
-          // Update remote characters in lobby immediately so UI updates
+          // Always update the remote character view (in-memory only, safe for all clients)
           useLobbyStore.getState().setRemoteCharacter(payload.characterId, character)
 
-          // Save the updated character to local disk
-          useCharacterStore.getState().saveCharacter(character)
-            .then(() => {
-              console.log('[LobbyPage] DM character update saved:', payload.characterId)
-              // Reload characters to ensure store is in sync
-              useCharacterStore.getState().loadCharacters()
-            })
-            .catch((err) => {
-              console.error('[LobbyPage] Failed to save DM character update:', err)
-            })
+          // Only persist to disk if this update targets the local player (via targetPeerId)
+          const isTargetedAtMe = payload.targetPeerId === localPeerId
+          if (isTargetedAtMe) {
+            const localCharacters = useCharacterStore.getState().characters
+            const existsLocally = localCharacters.some((c) => c.id === payload.characterId)
+            if (existsLocally) {
+              useCharacterStore
+                .getState()
+                .saveCharacter(character)
+                .then(() => {
+                  console.log('[LobbyPage] DM character update saved:', payload.characterId)
+                  // Reload characters to ensure store is in sync
+                  useCharacterStore.getState().loadCharacters()
+                })
+                .catch((err) => {
+                  console.error('[LobbyPage] Failed to save DM character update:', err)
+                })
+            }
+          }
         }
       }
     })
 
     return unsub
-  }, [role])
+  }, [role, localPeerId])
 
   // --- Bridge: force-mute/deafen → explicitly update lobby store players ---
   useEffect(() => {
@@ -371,7 +428,7 @@ export default function LobbyPage(): JSX.Element {
         useLobbyStore.getState().updatePlayer(payload.peerId, { isForceMuted: payload.isForceMuted })
       } else if (msg.type === 'dm:force-deafen') {
         const payload = msg.payload as ForceDeafenPayload
-        const isForceMuted = payload.isForceDeafened ? true : false
+        const isForceMuted = !!payload.isForceDeafened
         useLobbyStore.getState().updatePlayer(payload.peerId, {
           isForceDeafened: payload.isForceDeafened,
           isForceMuted
@@ -391,7 +448,7 @@ export default function LobbyPage(): JSX.Element {
         const payload = msg.payload as SlowModePayload
         useLobbyStore.getState().setSlowMode(payload.seconds)
         useLobbyStore.getState().addChatMessage({
-          id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
           senderId: 'system',
           senderName: 'System',
           content: payload.seconds === 0 ? 'Slow mode disabled.' : `Slow mode enabled: ${payload.seconds} seconds.`,
@@ -402,7 +459,7 @@ export default function LobbyPage(): JSX.Element {
         const payload = msg.payload as FileSharingPayload
         useLobbyStore.getState().setFileSharingEnabled(payload.enabled)
         useLobbyStore.getState().addChatMessage({
-          id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
           senderId: 'system',
           senderName: 'System',
           content: payload.enabled ? 'File sharing enabled.' : 'File sharing disabled.',
@@ -413,6 +470,38 @@ export default function LobbyPage(): JSX.Element {
     })
 
     return unsub
+  }, [role])
+
+  // --- Bridge: dm:chat-timeout → set muted state for local player ---
+  useEffect(() => {
+    const handleTimeout = (msg: { type: string; payload: unknown }): void => {
+      if (msg.type !== 'dm:chat-timeout') return
+      const payload = msg.payload as ChatTimeoutPayload
+      const myPeerId = useNetworkStore.getState().localPeerId
+      if (payload.peerId === myPeerId) {
+        const mutedUntil = Date.now() + payload.duration * 1000
+        useLobbyStore.getState().setChatMutedUntil(mutedUntil)
+      }
+      // Add a system message so all players see the timeout
+      const targetPlayer = useLobbyStore.getState().players.find((p) => p.peerId === payload.peerId)
+      const targetName = targetPlayer?.displayName || 'A player'
+      useLobbyStore.getState().addChatMessage({
+        id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'system',
+        senderName: 'System',
+        content: `${targetName} has been muted for ${payload.duration} seconds.`,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+    }
+
+    if (role === 'host') {
+      const unsub = onHostMessage(handleTimeout)
+      return unsub
+    } else if (role === 'client') {
+      const unsub = onClientMessage(handleTimeout)
+      return unsub
+    }
   }, [role])
 
   const handleCopyInviteCode = async (): Promise<void> => {
@@ -459,18 +548,13 @@ export default function LobbyPage(): JSX.Element {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleLeave}
-            className="text-amber-400 hover:text-amber-300 hover:underline cursor-pointer"
-          >
+          <button onClick={handleLeave} className="text-amber-400 hover:text-amber-300 hover:underline cursor-pointer">
             &larr; Leave Lobby
           </button>
 
           <div className="h-6 w-px bg-gray-700" />
 
-          <h1 className="text-2xl font-bold text-gray-100">
-            {campaign?.name || 'Game Lobby'}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-100">{campaign?.name || 'Game Lobby'}</h1>
 
           {/* Connection status */}
           <div className="flex items-center gap-1.5">
@@ -485,6 +569,30 @@ export default function LobbyPage(): JSX.Element {
             />
             <span className="text-xs text-gray-500 capitalize">{connectionState}</span>
           </div>
+
+          {/* AI DM scene preparation status */}
+          {isHost && campaign?.aiDm?.enabled && sceneStatus !== 'idle' && (
+            <div className="flex items-center gap-1.5">
+              {sceneStatus === 'preparing' && (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-xs text-amber-400">AI DM preparing scene...</span>
+                </>
+              )}
+              {sceneStatus === 'ready' && (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="text-xs text-green-400">Scene ready</span>
+                </>
+              )}
+              {sceneStatus === 'error' && (
+                <>
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="text-xs text-red-400">Scene prep failed</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Invite code */}
@@ -497,9 +605,7 @@ export default function LobbyPage(): JSX.Element {
                          hover:border-amber-600/50 transition-colors cursor-pointer group"
               title="Click to copy"
             >
-              <span className="font-mono text-lg font-bold text-amber-400 tracking-widest">
-                {inviteCode}
-              </span>
+              <span className="font-mono text-lg font-bold text-amber-400 tracking-widest">{inviteCode}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -510,9 +616,7 @@ export default function LobbyPage(): JSX.Element {
                 <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
               </svg>
             </button>
-            {codeCopied && (
-              <span className="text-xs text-green-400 animate-pulse">Copied!</span>
-            )}
+            {codeCopied && <span className="text-xs text-green-400 animate-pulse">Copied!</span>}
           </div>
         )}
       </div>
@@ -523,11 +627,7 @@ export default function LobbyPage(): JSX.Element {
       </div>
 
       {/* Leave confirmation modal */}
-      <Modal
-        open={showLeaveModal}
-        onClose={() => setShowLeaveModal(false)}
-        title="Leave Lobby?"
-      >
+      <Modal open={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Leave Lobby?">
         <p className="text-gray-400 mb-6">
           Are you sure you want to disconnect and return to the main menu?
           {isHost && (

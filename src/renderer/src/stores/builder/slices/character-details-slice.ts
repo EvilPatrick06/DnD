@@ -1,7 +1,11 @@
 import type { StateCreator } from 'zustand'
+import { load5eClasses } from '../../../services/data-provider'
 import type { BuilderState, CharacterDetailsSliceState } from '../types'
 
-export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], CharacterDetailsSliceState> = (set, get) => ({
+export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], CharacterDetailsSliceState> = (
+  set,
+  get
+) => ({
   characterName: '',
   iconType: 'letter',
   iconPreset: '',
@@ -10,20 +14,39 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
   characterDeity: '',
   characterAge: '',
   characterNotes: '',
+  characterPersonality: '',
+  characterIdeals: '',
+  characterBonds: '',
+  characterFlaws: '',
+  characterBackstory: '',
+  characterHeight: '',
+  characterWeight: '',
+  characterEyes: '',
+  characterHair: '',
+  characterSkin: '',
+  characterAppearance: '',
+  characterAlignment: '',
   heroPoints: 0,
 
   // Derived from selections
-  raceLanguages: [],
-  raceExtraLangCount: 0,
+  speciesLanguages: [],
+  speciesExtraLangCount: 0,
+  speciesExtraSkillCount: 0,
+  versatileFeatId: null,
+  heritageId: null,
+  derivedSpeciesTraits: [],
   bgLanguageCount: 0,
+  classExtraLangCount: 0,
   chosenLanguages: [],
-  raceSize: 'Medium',
-  raceSpeed: 30,
-  raceTraits: [],
-  raceProficiencies: [],
+  speciesSize: 'Medium',
+  speciesSpeed: 30,
+  speciesTraits: [],
+  speciesProficiencies: [],
   classEquipment: [],
   bgEquipment: [],
   currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
+  higherLevelGoldBonus: 0,
+  selectedMagicItems: [],
   pets: [],
   currentHP: null,
   tempHP: 0,
@@ -33,17 +56,14 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
   selectedSkills: [],
   maxSkills: 2,
   customModal: null,
-  pf2eAdditionalLanguages: [],
-  pf2eSpecialAbilities: [],
-  pf2eAncestryHP: 0,
-  pf2eClassHP: 0,
-  pf2ePerceptionRank: 'trained',
-  pf2eSaveRanks: { fortitude: 'trained', reflex: 'trained', will: 'trained' },
-  pf2eKeyAbility: null,
-  pf2eUnarmoredRank: 'trained',
-  pf2eClassFeatures: [],
-  speciesAbilityBonuses: {},
+  backgroundAbilityBonuses: {},
+  backgroundEquipmentChoice: null,
+  classEquipmentChoice: null,
   selectedSpellIds: [],
+  speciesSpellcastingAbility: null,
+  keenSensesSkill: null,
+  blessedWarriorCantrips: [],
+  druidicWarriorCantrips: [],
 
   setCharacterName: (name) => set({ characterName: name }),
   setSelectedSkills: (skills) => set({ selectedSkills: skills }),
@@ -54,7 +74,7 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
 
   setChosenLanguages: (languages) => set({ chosenLanguages: languages }),
   setCurrency: (currency) => set({ currency }),
-  addPet: (name) => set({ pets: [...get().pets, { name }] }),
+  addPet: (name, type) => set({ pets: [...get().pets, { name, type }] }),
   removePet: (index) => set({ pets: get().pets.filter((_, i) => i !== index) }),
   setCurrentHP: (hp) => set({ currentHP: hp }),
   setTempHP: (hp) => set({ tempHP: hp }),
@@ -76,8 +96,39 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
     curr[key] = Math.max(0, curr[key] - amount)
     set({ currency: curr })
   },
-  setSpeciesAbilityBonuses: (bonuses) => set({ speciesAbilityBonuses: bonuses }),
+  setBackgroundAbilityBonuses: (bonuses) => set({ backgroundAbilityBonuses: bonuses }),
+  setBackgroundEquipmentChoice: (choice) => set({ backgroundEquipmentChoice: choice }),
+  setClassEquipmentChoice: (choice) => {
+    set({ classEquipmentChoice: choice })
+    // Update class equipment based on the selected option
+    const { buildSlots, gameSystem } = get()
+    if (gameSystem !== 'dnd5e') return
+    const classSlot = buildSlots.find((s) => s.category === 'class')
+    if (!classSlot?.selectedId) return
+    load5eClasses().then((classes) => {
+      const cls = classes.find((c) => c.id === classSlot.selectedId)
+      if (!cls) return
+      const options = cls.startingEquipmentOptions
+      if (options?.[choice]) {
+        const shopItems = get().classEquipment.filter((e) => e.source === 'shop')
+        set({
+          classEquipment: [
+            ...options[choice].equipment.map((e: { name: string; quantity: number }) => ({ ...e, source: cls.name })),
+            ...shopItems
+          ]
+        })
+      }
+    })
+  },
+  setSpeciesSize: (size) => set({ speciesSize: size }),
   setSelectedSpellIds: (ids) => set({ selectedSpellIds: ids }),
+  setHigherLevelGoldBonus: (amount) => set({ higherLevelGoldBonus: amount }),
+  setSelectedMagicItems: (items) => set({ selectedMagicItems: items }),
+  setSpeciesSpellcastingAbility: (ability) => set({ speciesSpellcastingAbility: ability }),
+  setKeenSensesSkill: (skill) => set({ keenSensesSkill: skill }),
+  setBlessedWarriorCantrips: (ids) => set({ blessedWarriorCantrips: ids }),
+  setDruidicWarriorCantrips: (ids) => set({ druidicWarriorCantrips: ids }),
+  setVersatileFeat: (featId) => set({ versatileFeatId: featId }),
   openCustomModal: (modal) => set({ customModal: modal }),
   closeCustomModal: () => set({ customModal: null, activeAsiSlotId: null })
 })

@@ -6,18 +6,8 @@ interface SystemStepProps {
   onSelect: (system: GameSystem) => void
 }
 
-const SYSTEM_DESCRIPTIONS: Record<GameSystem, string> = {
-  dnd5e: 'The world\'s most popular tabletop RPG. Streamlined rules, heroic fantasy, and endless adventure.',
-  pf2e: 'A deep, tactical RPG with rich character customization and a three-action economy.'
-}
-
-const SYSTEM_ICONS: Record<GameSystem, string> = {
-  dnd5e: '\u2694',
-  pf2e: '\uD83D\uDEE1'
-}
-
 export default function SystemStep({ selected, onSelect }: SystemStepProps): JSX.Element {
-  const systems = Object.values(GAME_SYSTEMS)
+  const sys = GAME_SYSTEMS.dnd5e
 
   return (
     <div>
@@ -26,23 +16,22 @@ export default function SystemStep({ selected, onSelect }: SystemStepProps): JSX
         Select the rule system for your campaign. This determines available adventures, rules, and character options.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        {systems.map((sys) => (
-          <button
-            key={sys.id}
-            onClick={() => onSelect(sys.id)}
-            className={`p-6 rounded-lg border text-left transition-all cursor-pointer
-              ${
-                selected === sys.id
-                  ? 'border-amber-500 bg-amber-900/20'
-                  : 'border-gray-800 bg-gray-900/50 hover:border-gray-600'
-              }`}
-          >
-            <div className="text-3xl mb-3">{SYSTEM_ICONS[sys.id]}</div>
-            <div className="font-semibold text-lg mb-1">{sys.name}</div>
-            <div className="text-sm text-gray-400">{SYSTEM_DESCRIPTIONS[sys.id]}</div>
-          </button>
-        ))}
+      <div className="max-w-sm">
+        <button
+          onClick={() => onSelect('dnd5e')}
+          className={`w-full p-6 rounded-lg border text-left transition-all cursor-pointer
+            ${
+              selected === 'dnd5e'
+                ? 'border-amber-500 bg-amber-900/20'
+                : 'border-gray-800 bg-gray-900/50 hover:border-gray-600'
+            }`}
+        >
+          <div className="text-3xl mb-3">{'\u2694'}</div>
+          <div className="font-semibold text-lg mb-1">{sys.name}</div>
+          <div className="text-sm text-gray-400">
+            The world's most popular tabletop RPG. Streamlined rules, heroic fantasy, and endless adventure.
+          </div>
+        </button>
       </div>
     </div>
   )

@@ -1,0 +1,4498 @@
+{
+  "summary": {
+    "mm2025Total": 502,
+    "currentTotal": 469,
+    "monstersCount": 332,
+    "creaturesCount": 94,
+    "npcsCount": 43,
+    "exactMatches": 452,
+    "nameMismatches": 50,
+    "missingEntirely": 0,
+    "legacyEntries": 17,
+    "duplicateIds": 0,
+    "crMismatches": 0,
+    "fileMismatches": 14,
+    "coverage": "100.0%"
+  },
+  "missingEntirely": [],
+  "nameMismatches": [
+    {
+      "mm2025Name": "Lacedon Ghoul",
+      "mm2025CR": "1",
+      "currentName": "Ghoul",
+      "currentCR": "1",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Myconid Spore Servant",
+      "mm2025CR": "1",
+      "currentName": "Oni",
+      "currentCR": "7",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Ogrillon Ogre",
+      "mm2025CR": "1",
+      "currentName": "Ogre",
+      "currentCR": "2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Psychic Gray Ooze",
+      "mm2025CR": "1",
+      "currentName": "Gray Ooze",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Bulette Pup",
+      "mm2025CR": "2",
+      "currentName": "Bulette",
+      "currentCR": "5",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Swarm of Stirges",
+      "mm2025CR": "2",
+      "currentName": "Stirge",
+      "currentCR": "0",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Flaming Skeleton",
+      "mm2025CR": "3",
+      "currentName": "Skeleton",
+      "currentCR": "1/4",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Kuo-toa Monitor",
+      "mm2025CR": "3",
+      "currentName": "Kuo-toa",
+      "currentCR": "1/4",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Minotaur of Baphomet",
+      "mm2025CR": "3",
+      "currentName": "Minotaur",
+      "currentCR": "2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Quaggoth Thonot",
+      "mm2025CR": "3",
+      "currentName": "Quaggoth",
+      "currentCR": "2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Scout Captain",
+      "mm2025CR": "3",
+      "currentName": "Scout",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Swarm of Crawling Claws",
+      "mm2025CR": "3",
+      "currentName": "Crawling Claw",
+      "currentCR": "0",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Swarm of Lemures",
+      "mm2025CR": "3",
+      "currentName": "Lemure",
+      "currentCR": "0",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Vampire Familiar",
+      "mm2025CR": "3",
+      "currentName": "Vampire",
+      "currentCR": "13",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Juvenile Shadow Dragon",
+      "mm2025CR": "4",
+      "currentName": "Shadow",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Swarm of Dretches",
+      "mm2025CR": "4",
+      "currentName": "Dretch",
+      "currentCR": "1/4",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Tough Boss",
+      "mm2025CR": "4",
+      "currentName": "Tough",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Ghast Gravecaller",
+      "mm2025CR": "6",
+      "currentName": "Ghast",
+      "currentCR": "2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Performer Maestro",
+      "mm2025CR": "6",
+      "currentName": "Performer",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Bandit Deceiver",
+      "mm2025CR": "7",
+      "currentName": "Bandit",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Graveyard Revenant",
+      "mm2025CR": "7",
+      "currentName": "Revenant",
+      "currentCR": "5",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Primeval Owlbear",
+      "mm2025CR": "7",
+      "currentName": "Owlbear",
+      "currentCR": "3",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Violet Fungus Necrohulk",
+      "mm2025CR": "7",
+      "currentName": "Violet Fungus",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Aberrant Cultist",
+      "mm2025CR": "8",
+      "currentName": "Cultist",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Berserker Commander",
+      "mm2025CR": "8",
+      "currentName": "Berserker",
+      "currentCR": "2",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Cockatrice Regent",
+      "mm2025CR": "8",
+      "currentName": "Cockatrice",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Death Cultist",
+      "mm2025CR": "8",
+      "currentName": "Cultist",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Elemental Cultist",
+      "mm2025CR": "8",
+      "currentName": "Cultist",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Fiend Cultist",
+      "mm2025CR": "8",
+      "currentName": "Cultist",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Gnoll Demoniac",
+      "mm2025CR": "8",
+      "currentName": "Oni",
+      "currentCR": "7",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Vampire Nightbringer",
+      "mm2025CR": "8",
+      "currentName": "Vampire",
+      "currentCR": "13",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Brazen Gorgon",
+      "mm2025CR": "9",
+      "currentName": "Gorgon",
+      "currentCR": "5",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Cultist Hierophant",
+      "mm2025CR": "10",
+      "currentName": "Cultist",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Dire Worg",
+      "mm2025CR": "10",
+      "currentName": "Worg",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Haunting Revenant",
+      "mm2025CR": "10",
+      "currentName": "Revenant",
+      "currentCR": "5",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Noble Prodigy",
+      "mm2025CR": "10",
+      "currentName": "Noble",
+      "currentCR": "0",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Performer Legend",
+      "mm2025CR": "10",
+      "currentName": "Performer",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Bandit Crime Lord",
+      "mm2025CR": "11",
+      "currentName": "Bandit",
+      "currentCR": "1/8",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Death Knight Aspirant",
+      "mm2025CR": "11",
+      "currentName": "Death Knight",
+      "currentCR": 17,
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Mind Flayer Arcanist",
+      "mm2025CR": "11",
+      "currentName": "Mind Flayer",
+      "currentCR": "7",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Archmage",
+      "mm2025CR": "12",
+      "currentName": "Mage",
+      "currentCR": "6",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Archpriest",
+      "mm2025CR": "12",
+      "currentName": "Kuo-toa Archpriest",
+      "currentCR": "6",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Pirate Admiral",
+      "mm2025CR": "12",
+      "currentName": "Rat",
+      "currentCR": "0",
+      "matchType": "substring",
+      "file": "creatures.json"
+    },
+    {
+      "mm2025Name": "Questing Knight",
+      "mm2025CR": "12",
+      "currentName": "Knight",
+      "currentCR": "3",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Shadow Dragon",
+      "mm2025CR": "13",
+      "currentName": "Shadow",
+      "currentCR": "1/2",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Vampire Umbral Lord",
+      "mm2025CR": "15",
+      "currentName": "Vampire",
+      "currentCR": "13",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Colossus",
+      "mm2025CR": "25",
+      "currentName": "Clay Colossus",
+      "currentCR": "10",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Priest Acolyte",
+      "mm2025CR": "1/4",
+      "currentName": "Acolyte",
+      "currentCR": "1",
+      "matchType": "substring",
+      "file": "npcs.json"
+    },
+    {
+      "mm2025Name": "Troll Limb",
+      "mm2025CR": "1/2",
+      "currentName": "Troll",
+      "currentCR": "5",
+      "matchType": "substring",
+      "file": "monsters.json"
+    },
+    {
+      "mm2025Name": "Warhorse Skeleton",
+      "mm2025CR": "1/2",
+      "currentName": "Skeleton",
+      "currentCR": "1/4",
+      "matchType": "substring",
+      "file": "monsters.json"
+    }
+  ],
+  "exactMatches": [
+    {
+      "name": "Awakened Shrub",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Baboon",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Badger",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Bat",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Cat",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Commoner",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Crab",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Crawling Claw",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Deer",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Eagle",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Frog",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Fire Beetle",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Goat",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Hawk",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Homunculus",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hyena",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Jackal",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Larva",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lemure",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lizard",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Myconid Sprout",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Octopus",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Owl",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Piranha",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Rat",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Raven",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Scorpion",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Seahorse",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Shrieker Fungus",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spider",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Vulture",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Weasel",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Mastiff",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Merfolk Skirmisher",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Modron Monodrone",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mule",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Noble",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Pony",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Slaad Tadpole",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Stirge",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Twig Blight",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Venomous Snake",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Warrior Infantry",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Wolf",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Zombie",
+      "cr": "0",
+      "currentCR": "0",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Acolyte",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Animated Armor",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Brass Dragon Wyrmling",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Brown Bear",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Bugbear Warrior",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Copper Dragon Wyrmling",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Death Dog",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Dire Wolf",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Dryad",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Empyrean Iota",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Faerie Dragon Youth",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ghoul",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Eagle",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Hyena",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Octopus",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Spider",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Toad",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Vulture",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Goblin Boss",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Harpy",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hippogriff",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Imp",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Kuo-toa Whip",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lion",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Manes Vaporspawn",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Modron Quadrone",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pirate",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Quasit",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Salamander Fire Snake",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Scarecrow",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Specter",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sphinx of Wonder",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spy",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Swarm of Larvae",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Swarm of Piranhas",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Thri-kreen Marauder",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Tiger",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Yuan-ti Infiltrator",
+      "cr": "1",
+      "currentCR": "1",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Allosaurus",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Animated Rug of Smothering",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ankheg",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Awakened Tree",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Azer Sentinel",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bandit Captain",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Berserker",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Black Dragon Wyrmling",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bronze Dragon Wyrmling",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Carrion Crawler",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Centaur Trooper",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cultist Fanatic",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Druid",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Ettercap",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Faerie Dragon Adult",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gargoyle",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gelatinous Cube",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ghast",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Boar",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Constrictor Snake",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Elk",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Gibbering Mouther",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Githzerai Monk",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gnoll Pack Lord",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Green Dragon Wyrmling",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Grick",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Griffon",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hunter Shark",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Intellect Devourer",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lizardfolk Geomancer",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mage Apprentice",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Merrow",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mimic",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Minotaur",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Modron Pentadrone",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Myconid Sovereign",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Nothic",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ochre Jelly",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ogre",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ogre Zombie",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pegasus",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Peryton",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Plesiosaurus",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Polar Bear",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Poltergeist",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Priest",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Quaggoth",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Rhinoceros",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Saber-Toothed Tiger",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Sahuagin Priest",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sea Hag",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Silver Dragon Wyrmling",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spined Devil",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Swarm of Venomous Snakes",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Wererat",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "White Dragon Wyrmling",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Will-o'-Wisp",
+      "cr": "2",
+      "currentCR": "2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ankylosaurus",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Basilisk",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bearded Devil",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Blue Dragon Wyrmling",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bugbear Stalker",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Displacer Beast",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Doppelganger",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Scorpion",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Githyanki Warrior",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Goblin Hexer",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gold Dragon Wyrmling",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Green Hag",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Grell",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hell Hound",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hobgoblin Captain",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hook Horror",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Killer Whale",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Knight",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Manticore",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mummy",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Nightmare",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Owlbear",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Phase Spider",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spectator",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Warrior Veteran",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Water Weird",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Werewolf",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Wight",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Winter Wolf",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Yeti",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Yuan-ti Malison",
+      "cr": "3",
+      "currentCR": "3",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Aarakocra Aeromancer",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Archelon",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Banshee",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Black Pudding",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bone Naga",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bullywug Bog Sage",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Chuul",
+      "cr": "4",
+      "currentCR": 4,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Couatl",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Elephant",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Ettin",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Flameskull",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ghost",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gnoll Fang of Yeenoghu",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Guard Captain",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Helmed Horror",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hippopotamus",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Incubus",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lamia",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lizardfolk Sovereign",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Red Dragon Wyrmling",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Shadow Demon",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Succubus",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Wereboar",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Weretiger",
+      "cr": "4",
+      "currentCR": "4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Air Elemental",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Barbed Devil",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Barlgura",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Beholder Zombie",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bulette",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cambion",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Earth Elemental",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Fire Elemental",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Flesh Golem",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Axe Beak",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Crocodile",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Shark",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Gladiator",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Gorgon",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Half-Dragon",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hill Giant",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mezzoloth",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Night Hag",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Otyugh",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pixie Wonderbringer",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Red Slaad",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Revenant",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Roper",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sahuagin Baron",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Salamander",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Shambling Mound",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Triceratops",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Troll",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Umber Hulk",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Unicorn",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Vampire Spawn",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Water Elemental",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Werebear",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Wraith",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Xorn",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Remorhaz",
+      "cr": "5",
+      "currentCR": "5",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Azer Pyromancer",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Chasme",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Chimera",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cyclops Sentry",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Drider",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Galeb Duhr",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Squid",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Githzerai Zerth",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hobgoblin Warlord",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Invisible Stalker",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Kuo-toa Archpriest",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mage",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Mammoth",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Medusa",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Merfolk Wavebender",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pirate Captain",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Satyr Revelmaster",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Vrock",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Wyvern",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Brass Dragon",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young White Dragon",
+      "cr": "6",
+      "currentCR": "6",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Blue Slaad",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Centaur Warden",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Ape",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Grick Ancient",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mind Flayer",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Oni",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Shield Guardian",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Stone Giant",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Tree Blight",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Black Dragon",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Copper Dragon",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Yuan-ti Abomination",
+      "cr": "7",
+      "currentCR": "7",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Assassin",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Chain Devil",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cloaker",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Fomorian",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Frost Giant",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Githyanki Knight",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Green Slaad",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hezrou",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hydra",
+      "cr": "8",
+      "currentCR": 8,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sphinx of Secrets",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spirit Naga",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Thri-kreen Psion",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Tyrannosaurus Rex",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Young Bronze Dragon",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Green Dragon",
+      "cr": "8",
+      "currentCR": "8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Abominable Yeti",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bone Devil",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Clay Golem",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cloud Giant",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Fire Giant",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Glabrezu",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gray Slaad",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Nycaloth",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Treant",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Blue Dragon",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Silver Dragon",
+      "cr": "9",
+      "currentCR": "9",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Aboleth",
+      "cr": "10",
+      "currentCR": 10,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Cyclops Oracle",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Death Slaad",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Deva",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Guardian Naga",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Spy Master",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Stone Golem",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Warrior Commander",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Yochlol",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Gold Dragon",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Young Red Dragon",
+      "cr": "10",
+      "currentCR": "10",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Behir",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Dao",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Djinni",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Efreeti",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Horned Devil",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Marid",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Remorhaz",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Roc",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sphinx of Lore",
+      "cr": "11",
+      "currentCR": "11",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Arcanaloth",
+      "cr": "12",
+      "currentCR": "12",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Erinyes",
+      "cr": "12",
+      "currentCR": "12",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Githzerai Psion",
+      "cr": "12",
+      "currentCR": "12",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Brass Dragon",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult White Dragon",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Beholder",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Nalfeshnee",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Rakshasa",
+      "cr": "13",
+      "currentCR": 13,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Storm Giant",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ultroloth",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Vampire",
+      "cr": "13",
+      "currentCR": "13",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Black Dragon",
+      "cr": "14",
+      "currentCR": "14",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Copper Dragon",
+      "cr": "14",
+      "currentCR": "14",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Death Tyrant",
+      "cr": "14",
+      "currentCR": "14",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ice Devil",
+      "cr": "14",
+      "currentCR": "14",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Bronze Dragon",
+      "cr": "15",
+      "currentCR": "15",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Green Dragon",
+      "cr": "15",
+      "currentCR": "15",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mummy Lord",
+      "cr": "15",
+      "currentCR": "15",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Purple Worm",
+      "cr": "15",
+      "currentCR": "15",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Salamander Inferno Master",
+      "cr": "15",
+      "currentCR": "15",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Blue Dragon",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Silver Dragon",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Githyanki Dracomancer",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gulthias Blight",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Iron Golem",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Marilith",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Planetar",
+      "cr": "16",
+      "currentCR": "16",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Gold Dragon",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Adult Red Dragon",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Death Knight",
+      "cr": "17",
+      "currentCR": 17,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Dracolich",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Dragon Turtle",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Goristro",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sphinx of Valor",
+      "cr": "17",
+      "currentCR": "17",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Demilich",
+      "cr": "18",
+      "currentCR": "18",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Balor",
+      "cr": "19",
+      "currentCR": "19",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Brass Dragon",
+      "cr": "20",
+      "currentCR": "20",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient White Dragon",
+      "cr": "20",
+      "currentCR": "20",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Animal Lord",
+      "cr": "20",
+      "currentCR": "20",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pit Fiend",
+      "cr": "20",
+      "currentCR": "20",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Black Dragon",
+      "cr": "21",
+      "currentCR": "21",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Copper Dragon",
+      "cr": "21",
+      "currentCR": "21",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Arch-Hag",
+      "cr": "21",
+      "currentCR": "21",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lich",
+      "cr": "21",
+      "currentCR": "21",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Solar",
+      "cr": "21",
+      "currentCR": 21,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Bronze Dragon",
+      "cr": "22",
+      "currentCR": "22",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Green Dragon",
+      "cr": "22",
+      "currentCR": "22",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Elemental Cataclysm",
+      "cr": "22",
+      "currentCR": "22",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Blue Dragon",
+      "cr": "23",
+      "currentCR": "23",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Silver Dragon",
+      "cr": "23",
+      "currentCR": "23",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Blob of Annihilation",
+      "cr": "23",
+      "currentCR": "23",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Empyrean",
+      "cr": "23",
+      "currentCR": "23",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Kraken",
+      "cr": "23",
+      "currentCR": 23,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Gold Dragon",
+      "cr": "24",
+      "currentCR": "24",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ancient Red Dragon",
+      "cr": "24",
+      "currentCR": 24,
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Tarrasque",
+      "cr": "30",
+      "currentCR": "30",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Bandit",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Blood Hawk",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Camel",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Cultist",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Flumph",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Flying Snake",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Crab",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Rat",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Weasel",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Goblin Minion",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Guard",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Kobold Warrior",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Manes",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Steam Mephit",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Swarm of Bats",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Swarm of Rats",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Swarm of Ravens",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Troglodyte",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Violet Fungus",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Winged Kobold",
+      "cr": "1/8",
+      "currentCR": "1/8",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Aarakocra Skirmisher",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Animated Broom",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Animated Flying Sword",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Axe Beak",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Blink Dog",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Boar",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Bullywug Warrior",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Constrictor Snake",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Draft Horse",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Dretch",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Elk",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Badger",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Bat",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Centipede",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Frog",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Lizard",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Owl",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Venomous Snake",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Wolf Spider",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Goblin Warrior",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Grimlock",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Kenku",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Kuo-toa",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Modron Duodrone",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Mud Mephit",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Needle Blight",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Panther",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Pixie",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pseudodragon",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Pteranodon",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Riding Horse",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Skeleton",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Smoke Mephit",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sprite",
+      "cr": "1/4",
+      "currentCR": "1/4",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ape",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Black Bear",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Cockatrice",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Crocodile",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Darkmantle",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Dust Mephit",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gas Spore Fungus",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Goat",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Seahorse",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Wasp",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Gnoll Warrior",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gray Ooze",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Hobgoblin Warrior",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Ice Mephit",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Jackalwere",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Magma Mephit",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Magmin",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Modron Tridrone",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Myconid Adult",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Performer",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Piercer",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Reef Shark",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Rust Monster",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sahuagin Warrior",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Satyr",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Scout",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Shadow",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Swarm of Insects",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Tough",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "npcs.json",
+      "expectedFile": "npcs.json"
+    },
+    {
+      "name": "Vine Blight",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Warhorse",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "creatures.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Worg",
+      "cr": "1/2",
+      "currentCR": "1/2",
+      "file": "monsters.json",
+      "expectedFile": "monsters.json"
+    }
+  ],
+  "crMismatches": [],
+  "fileMismatches": [
+    {
+      "name": "Giant Fire Beetle",
+      "actualFile": "creatures.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Merfolk Skirmisher",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Venomous Snake",
+      "actualFile": "creatures.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Giant Eagle",
+      "actualFile": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Giant Vulture",
+      "actualFile": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Thri-kreen Marauder",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Yuan-ti Infiltrator",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lizardfolk Geomancer",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sahuagin Priest",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Lizardfolk Sovereign",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Flying Snake",
+      "actualFile": "monsters.json",
+      "expectedFile": "creatures.json"
+    },
+    {
+      "name": "Bullywug Warrior",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Gnoll Warrior",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    },
+    {
+      "name": "Sahuagin Warrior",
+      "actualFile": "npcs.json",
+      "expectedFile": "monsters.json"
+    }
+  ],
+  "duplicateIds": [],
+  "legacyEntries": [
+    {
+      "name": "Kobold Dragonshield",
+      "id": "kobold-dragonshield",
+      "cr": "1",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Kobold Scale Sorcerer",
+      "id": "kobold-scale-sorcerer",
+      "cr": "1",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Skeleton Warrior",
+      "id": "skeleton-warrior",
+      "cr": "1",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Bugbear Chief",
+      "id": "bugbear-chief",
+      "cr": "3",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Clay Colossus",
+      "id": "clay-colossus",
+      "cr": "10",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Gynosphinx",
+      "id": "gynosphinx",
+      "cr": "11",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Flesh Colossus",
+      "id": "flesh-colossus",
+      "cr": "14",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Stone Colossus",
+      "id": "stone-colossus",
+      "cr": "14",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Androsphinx",
+      "id": "androsphinx",
+      "cr": "17",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Iron Colossus",
+      "id": "iron-colossus",
+      "cr": "18",
+      "file": "monsters.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Drow",
+      "id": "drow",
+      "cr": "1/4",
+      "file": "npcs.json",
+      "isKnownRename": true,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Orc",
+      "id": "orc",
+      "cr": "1/2",
+      "file": "npcs.json",
+      "isKnownRename": true,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Thug",
+      "id": "thug",
+      "cr": "1/2",
+      "file": "npcs.json",
+      "isKnownRename": false,
+      "isKnownLegacy": false
+    },
+    {
+      "name": "Lizardfolk Shaman",
+      "id": "lizardfolk-shaman",
+      "cr": "2",
+      "file": "npcs.json",
+      "isKnownRename": false,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Orc Eye of Gruumsh",
+      "id": "orc-eye-of-gruumsh",
+      "cr": "2",
+      "file": "npcs.json",
+      "isKnownRename": true,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Orc War Chief",
+      "id": "orc-war-chief",
+      "cr": "4",
+      "file": "npcs.json",
+      "isKnownRename": true,
+      "isKnownLegacy": true
+    },
+    {
+      "name": "Drow Elite Warrior",
+      "id": "drow-elite-warrior",
+      "cr": "5",
+      "file": "npcs.json",
+      "isKnownRename": true,
+      "isKnownLegacy": true
+    }
+  ],
+  "byCR": {
+    "0": {
+      "total": 45,
+      "matched": 45,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "1": {
+      "total": 42,
+      "matched": 38,
+      "fuzzyMatched": 4,
+      "missing": 0,
+      "missingNames": []
+    },
+    "2": {
+      "total": 59,
+      "matched": 57,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": []
+    },
+    "3": {
+      "total": 39,
+      "matched": 31,
+      "fuzzyMatched": 8,
+      "missing": 0,
+      "missingNames": []
+    },
+    "4": {
+      "total": 27,
+      "matched": 24,
+      "fuzzyMatched": 3,
+      "missing": 0,
+      "missingNames": []
+    },
+    "5": {
+      "total": 36,
+      "matched": 36,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "6": {
+      "total": 23,
+      "matched": 21,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": []
+    },
+    "7": {
+      "total": 16,
+      "matched": 12,
+      "fuzzyMatched": 4,
+      "missing": 0,
+      "missingNames": []
+    },
+    "8": {
+      "total": 23,
+      "matched": 15,
+      "fuzzyMatched": 8,
+      "missing": 0,
+      "missingNames": []
+    },
+    "9": {
+      "total": 12,
+      "matched": 11,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": []
+    },
+    "10": {
+      "total": 16,
+      "matched": 11,
+      "fuzzyMatched": 5,
+      "missing": 0,
+      "missingNames": []
+    },
+    "11": {
+      "total": 12,
+      "matched": 9,
+      "fuzzyMatched": 3,
+      "missing": 0,
+      "missingNames": []
+    },
+    "12": {
+      "total": 7,
+      "matched": 3,
+      "fuzzyMatched": 4,
+      "missing": 0,
+      "missingNames": []
+    },
+    "13": {
+      "total": 9,
+      "matched": 8,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": []
+    },
+    "14": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "15": {
+      "total": 6,
+      "matched": 5,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": []
+    },
+    "16": {
+      "total": 7,
+      "matched": 7,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "17": {
+      "total": 7,
+      "matched": 7,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "18": {
+      "total": 1,
+      "matched": 1,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "19": {
+      "total": 1,
+      "matched": 1,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "20": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "21": {
+      "total": 5,
+      "matched": 5,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "22": {
+      "total": 3,
+      "matched": 3,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "23": {
+      "total": 5,
+      "matched": 5,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "24": {
+      "total": 2,
+      "matched": 2,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "25": {
+      "total": 1,
+      "matched": 0,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": []
+    },
+    "30": {
+      "total": 1,
+      "matched": 1,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "1/8": {
+      "total": 20,
+      "matched": 20,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": []
+    },
+    "1/4": {
+      "total": 35,
+      "matched": 34,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": []
+    },
+    "1/2": {
+      "total": 34,
+      "matched": 32,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": []
+    }
+  },
+  "byFamily": {
+    "Aberrations": {
+      "total": 8,
+      "matched": 8,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Beholders": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Celestials": {
+      "total": 9,
+      "matched": 9,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Constructs": {
+      "total": 14,
+      "matched": 13,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Colossus",
+          "current": "Clay Colossus",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Demons": {
+      "total": 16,
+      "matched": 15,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Swarm of Dretches",
+          "current": "Dretch",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Devils": {
+      "total": 12,
+      "matched": 11,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Swarm of Lemures",
+          "current": "Lemure",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Dragons - Chromatic": {
+      "total": 20,
+      "matched": 20,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Dragons - Metallic": {
+      "total": 20,
+      "matched": 20,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Dragons - Other": {
+      "total": 8,
+      "matched": 6,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Shadow Dragon",
+          "current": "Shadow",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Juvenile Shadow Dragon",
+          "current": "Shadow",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Elementals": {
+      "total": 18,
+      "matched": 18,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Fey": {
+      "total": 9,
+      "matched": 9,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Fiends": {
+      "total": 9,
+      "matched": 9,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Genies": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Giants": {
+      "total": 16,
+      "matched": 14,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Ogrillon Ogre",
+          "current": "Ogre",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Troll Limb",
+          "current": "Troll",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Gith": {
+      "total": 6,
+      "matched": 6,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Golems": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Hags": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Humanoids": {
+      "total": 38,
+      "matched": 35,
+      "fuzzyMatched": 3,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Gnoll Demoniac",
+          "current": "Oni",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Kuo-toa Monitor",
+          "current": "Kuo-toa",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Quaggoth Thonot",
+          "current": "Quaggoth",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Lycanthropes": {
+      "total": 5,
+      "matched": 5,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Mephits": {
+      "total": 6,
+      "matched": 6,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Mind Flayers": {
+      "total": 3,
+      "matched": 2,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Mind Flayer Arcanist",
+          "current": "Mind Flayer",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Monstrosities": {
+      "total": 57,
+      "matched": 50,
+      "fuzzyMatched": 7,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Bulette Pup",
+          "current": "Bulette",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Cockatrice Regent",
+          "current": "Cockatrice",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Brazen Gorgon",
+          "current": "Gorgon",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Minotaur of Baphomet",
+          "current": "Minotaur",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Primeval Owlbear",
+          "current": "Owlbear",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Swarm of Stirges",
+          "current": "Stirge",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Dire Worg",
+          "current": "Worg",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "NPCs": {
+      "total": 45,
+      "matched": 27,
+      "fuzzyMatched": 18,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Bandit Deceiver",
+          "current": "Bandit",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Bandit Crime Lord",
+          "current": "Bandit",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Berserker Commander",
+          "current": "Berserker",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Aberrant Cultist",
+          "current": "Cultist",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Death Cultist",
+          "current": "Cultist",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Elemental Cultist",
+          "current": "Cultist",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Fiend Cultist",
+          "current": "Cultist",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Cultist Hierophant",
+          "current": "Cultist",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Questing Knight",
+          "current": "Knight",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Archmage",
+          "current": "Mage",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Noble Prodigy",
+          "current": "Noble",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Performer Maestro",
+          "current": "Performer",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Performer Legend",
+          "current": "Performer",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Pirate Admiral",
+          "current": "Rat",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Priest Acolyte",
+          "current": "Acolyte",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Archpriest",
+          "current": "Kuo-toa Archpriest",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Scout Captain",
+          "current": "Scout",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Tough Boss",
+          "current": "Tough",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Oozes": {
+      "total": 6,
+      "matched": 5,
+      "fuzzyMatched": 1,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Psychic Gray Ooze",
+          "current": "Gray Ooze",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Plants": {
+      "total": 17,
+      "matched": 15,
+      "fuzzyMatched": 2,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Violet Fungus Necrohulk",
+          "current": "Violet Fungus",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Myconid Spore Servant",
+          "current": "Oni",
+          "matchType": "substring"
+        }
+      ]
+    },
+    "Slaadi": {
+      "total": 6,
+      "matched": 6,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Sphinxes": {
+      "total": 4,
+      "matched": 4,
+      "fuzzyMatched": 0,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": []
+    },
+    "Undead": {
+      "total": 34,
+      "matched": 23,
+      "fuzzyMatched": 11,
+      "missing": 0,
+      "missingNames": [],
+      "fuzzyMatchedNames": [
+        {
+          "mm2025": "Swarm of Crawling Claws",
+          "current": "Crawling Claw",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Death Knight Aspirant",
+          "current": "Death Knight",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Flaming Skeleton",
+          "current": "Skeleton",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Ghast Gravecaller",
+          "current": "Ghast",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Lacedon Ghoul",
+          "current": "Ghoul",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Graveyard Revenant",
+          "current": "Revenant",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Haunting Revenant",
+          "current": "Revenant",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Warhorse Skeleton",
+          "current": "Skeleton",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Vampire Familiar",
+          "current": "Vampire",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Vampire Nightbringer",
+          "current": "Vampire",
+          "matchType": "substring"
+        },
+        {
+          "mm2025": "Vampire Umbral Lord",
+          "current": "Vampire",
+          "matchType": "substring"
+        }
+      ]
+    }
+  }
+}

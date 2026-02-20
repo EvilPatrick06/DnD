@@ -1,0 +1,159 @@
+// ── AI DM Types (Main Process) ──
+
+export type ModelChoice = 'opus' | 'sonnet' | 'haiku'
+export type ProviderChoice = 'claude' | 'ollama'
+
+export interface AiConfig {
+  provider: ProviderChoice
+  model: ModelChoice
+  apiKey?: string // Only used transiently — stored encrypted via safeStorage
+  ollamaModel?: string
+}
+
+export interface ActiveCreatureInfo {
+  label: string
+  currentHP: number
+  maxHP: number
+  ac: number
+  conditions: string[]
+  monsterStatBlockId?: string
+}
+
+export interface AiChatRequest {
+  campaignId: string
+  message: string
+  characterIds: string[]
+  senderName?: string
+  activeCreatures?: ActiveCreatureInfo[]
+  gameState?: string
+}
+
+export interface AiStreamChunk {
+  streamId: string
+  text: string
+}
+
+export interface AiStreamDone {
+  streamId: string
+  fullText: string
+  statChanges: StatChange[]
+  dmActions: DmActionData[]
+}
+
+/** Serializable DM action data passed through IPC (mirrors DmAction from dm-actions.ts) */
+export interface DmActionData {
+  action: string
+  [key: string]: unknown
+}
+
+export interface AiStreamError {
+  streamId: string
+  error: string
+}
+
+export interface AiIndexProgress {
+  percent: number
+  stage: string
+}
+
+export interface ProviderStatus {
+  claude: boolean
+  ollama: boolean
+  ollamaModels: string[]
+}
+
+export interface MutationResult {
+  applied: StatChange[]
+  rejected: Array<{ change: StatChange; reason: string }>
+}
+
+// ── Chunk index types ──
+
+export interface ChunkIndex {
+  version: number
+  createdAt: string
+  sources: ChunkSource[]
+  chunks: Chunk[]
+}
+
+export interface ChunkSource {
+  file: string
+  book: BookSource
+  totalChunks: number
+}
+
+export type BookSource = 'PHB' | 'DMG' | 'MM'
+
+export interface Chunk {
+  id: string
+  source: BookSource
+  headingPath: string[]
+  heading: string
+  content: string
+  tokenEstimate: number
+  keywords: string[]
+}
+
+export interface ScoredChunk extends Chunk {
+  score: number
+}
+
+// ── Conversation types ──
+
+export interface ConversationMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  contextChunkIds?: string[]
+}
+
+export interface ConversationSummary {
+  content: string
+  coversUpTo: number
+}
+
+export interface ConversationData {
+  messages: ConversationMessage[]
+  summaries: ConversationSummary[]
+  activeCharacterIds: string[]
+}
+
+// ── Chat message types ──
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface StreamCallbacks {
+  onText: (text: string) => void
+  onDone: (fullText: string) => void
+  onError: (error: Error) => void
+}
+
+// ── Stat Change types ──
+
+export type StatChange =
+  | { type: 'damage'; value: number; damageType?: string; reason: string }
+  | { type: 'heal'; value: number; reason: string }
+  | { type: 'temp_hp'; value: number; reason: string }
+  | { type: 'add_condition'; name: string; reason: string }
+  | { type: 'remove_condition'; name: string; reason: string }
+  | { type: 'death_save'; success: boolean; reason: string }
+  | { type: 'reset_death_saves'; reason: string }
+  | { type: 'expend_spell_slot'; level: number; reason: string }
+  | { type: 'restore_spell_slot'; level: number; count?: number; reason: string }
+  | { type: 'add_item'; name: string; quantity?: number; description?: string; reason: string }
+  | { type: 'remove_item'; name: string; quantity?: number; reason: string }
+  | { type: 'gold'; value: number; denomination?: 'cp' | 'sp' | 'gp' | 'pp' | 'ep'; reason: string }
+  | { type: 'xp'; value: number; reason: string }
+  | { type: 'use_class_resource'; name: string; amount?: number; reason: string }
+  | { type: 'restore_class_resource'; name: string; amount?: number; reason: string }
+  | { type: 'heroic_inspiration'; grant: boolean; reason: string }
+  | { type: 'hit_dice'; value: number; reason: string }
+  | { type: 'npc_attitude'; name: string; attitude: 'friendly' | 'indifferent' | 'hostile'; reason: string }
+  | { type: 'creature_damage'; targetLabel: string; value: number; damageType?: string; reason: string }
+  | { type: 'creature_heal'; targetLabel: string; value: number; reason: string }
+  | { type: 'creature_add_condition'; targetLabel: string; name: string; reason: string }
+  | { type: 'creature_remove_condition'; targetLabel: string; name: string; reason: string }
+  | { type: 'creature_kill'; targetLabel: string; reason: string }

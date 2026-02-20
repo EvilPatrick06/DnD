@@ -1,26 +1,26 @@
-import type { GameSystem } from '../../types/game-system'
-import type { BuildSlot, Rarity, AbilityScoreSet, AbilityName } from '../../types/character-common'
-import { ABILITY_NAMES } from '../../types/character-common'
 import type { BuilderPhase, ContentTab, SelectionModalState } from '../../types/builder'
-import type { Character5e } from '../../types/character-5e'
-import type { CharacterPf2e } from '../../types/character-pf2e'
 import type { Character } from '../../types/character'
+import type { Character5e } from '../../types/character-5e'
+import type { AbilityName, AbilityScoreSet, BuildSlot, Rarity } from '../../types/character-common'
+import { ABILITY_NAMES } from '../../types/character-common'
+import type { GameSystem } from '../../types/game-system'
 
 // --- Constants ---
 
-export const FOUNDATION_SLOT_ORDER = [
-  'ancestry',
-  'heritage',
-  'background',
-  'class',
-  'ability-scores',
-  'skill-choices'
-]
+/** IDs that identify foundation-level (level 0) build slots, used to separate them from level-based slots */
+export const FOUNDATION_SLOT_IDS = ['ancestry', 'heritage', 'background', 'class', 'ability-scores', 'skill-choices']
 
 export type AbilityScoreMethod = 'standard' | 'pointBuy' | 'roll' | 'custom'
 
 export const POINT_BUY_COSTS: Record<number, number> = {
-  8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9
+  8: 0,
+  9: 1,
+  10: 2,
+  11: 3,
+  12: 4,
+  13: 5,
+  14: 7,
+  15: 9
 }
 export const POINT_BUY_BUDGET = 27
 
@@ -132,21 +132,42 @@ export interface CharacterDetailsSliceState {
   characterDeity: string
   characterAge: string
   characterNotes: string
+  characterPersonality: string
+  characterIdeals: string
+  characterBonds: string
+  characterFlaws: string
+  characterBackstory: string
+  characterHeight: string
+  characterWeight: string
+  characterEyes: string
+  characterHair: string
+  characterSkin: string
+  characterAppearance: string
+  characterAlignment: string
   heroPoints: number
 
   // Derived from selections
-  raceLanguages: string[]
-  raceExtraLangCount: number
+  speciesLanguages: string[]
+  speciesExtraLangCount: number
+  speciesExtraSkillCount: number
+  versatileFeatId: string | null
+  heritageId: string | null
+  derivedSpeciesTraits: Array<{
+    name: string
+    description: string
+    spellGranted?: string | { list: string; count: number }
+  }>
   bgLanguageCount: number
+  classExtraLangCount: number
   chosenLanguages: string[]
-  raceSize: string
-  raceSpeed: number
-  raceTraits: Array<{ name: string; description: string }>
-  raceProficiencies: string[]
+  speciesSize: string
+  speciesSpeed: number
+  speciesTraits: Array<{ name: string; description: string }>
+  speciesProficiencies: string[]
   classEquipment: Array<{ name: string; quantity: number; source: string }>
   bgEquipment: Array<{ name: string; quantity: number; source: string }>
   currency: { pp: number; gp: number; sp: number; cp: number }
-  pets: Array<{ name: string }>
+  pets: Array<{ name: string; type: string }>
   currentHP: number | null
   tempHP: number
   conditions: Array<{ name: string; type: 'condition' | 'buff'; isCustom: boolean }>
@@ -155,17 +176,12 @@ export interface CharacterDetailsSliceState {
   selectedSkills: string[]
   maxSkills: number
   customModal: 'ability-scores' | 'skills' | 'asi' | null
-  pf2eAdditionalLanguages: string[]
-  pf2eSpecialAbilities: Array<{ name: string; description: string }>
-  pf2eAncestryHP: number
-  pf2eClassHP: number
-  pf2ePerceptionRank: string
-  pf2eSaveRanks: { fortitude: string; reflex: string; will: string }
-  pf2eKeyAbility: string | null
-  pf2eUnarmoredRank: string
-  pf2eClassFeatures: string[]
-  speciesAbilityBonuses: Record<string, number>
+  backgroundAbilityBonuses: Record<string, number>
+  backgroundEquipmentChoice: 'equipment' | 'gold' | null
+  classEquipmentChoice: string | null
   selectedSpellIds: string[]
+  higherLevelGoldBonus: number
+  selectedMagicItems: Array<{ slotRarity: string; itemId: string; itemName: string }>
 
   setCharacterName: (name: string) => void
   setSelectedSkills: (skills: string[]) => void
@@ -174,7 +190,7 @@ export interface CharacterDetailsSliceState {
   setIconCustom: (dataUrl: string) => void
   setChosenLanguages: (languages: string[]) => void
   setCurrency: (currency: { pp: number; gp: number; sp: number; cp: number }) => void
-  addPet: (name: string) => void
+  addPet: (name: string, type: string) => void
   removePet: (index: number) => void
   setCurrentHP: (hp: number | null) => void
   setTempHP: (hp: number) => void
@@ -183,8 +199,22 @@ export interface CharacterDetailsSliceState {
   removeEquipmentItem: (source: 'class' | 'bg', index: number) => void
   addEquipmentItem: (item: { name: string; quantity: number; source: string }) => void
   deductCurrency: (key: 'pp' | 'gp' | 'sp' | 'cp', amount: number) => void
-  setSpeciesAbilityBonuses: (bonuses: Record<string, number>) => void
+  setBackgroundAbilityBonuses: (bonuses: Record<string, number>) => void
+  setBackgroundEquipmentChoice: (choice: 'equipment' | 'gold') => void
+  setClassEquipmentChoice: (choice: string) => void
+  setSpeciesSize: (size: string) => void
   setSelectedSpellIds: (ids: string[]) => void
+  setHigherLevelGoldBonus: (amount: number) => void
+  setSelectedMagicItems: (items: Array<{ slotRarity: string; itemId: string; itemName: string }>) => void
+  speciesSpellcastingAbility: 'intelligence' | 'wisdom' | 'charisma' | null
+  keenSensesSkill: string | null
+  blessedWarriorCantrips: string[]
+  druidicWarriorCantrips: string[]
+  setSpeciesSpellcastingAbility: (ability: 'intelligence' | 'wisdom' | 'charisma' | null) => void
+  setKeenSensesSkill: (skill: string | null) => void
+  setBlessedWarriorCantrips: (ids: string[]) => void
+  setDruidicWarriorCantrips: (ids: string[]) => void
+  setVersatileFeat: (featId: string | null) => void
   openCustomModal: (modal: 'ability-scores' | 'skills' | 'asi') => void
   closeCustomModal: () => void
 }
@@ -198,7 +228,6 @@ export interface BuildActionsSliceState {
 export interface SaveSliceState {
   loadCharacterForEdit: (character: Character) => void
   buildCharacter5e: () => Promise<Character5e>
-  buildCharacterPf2e: () => Promise<CharacterPf2e>
 }
 
 export type BuilderState = CoreSliceState &

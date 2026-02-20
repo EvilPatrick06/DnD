@@ -52,10 +52,7 @@ export function createMessageRouter(): MessageRouter {
           try {
             handler(message)
           } catch (err) {
-            console.error(
-              `[MessageRouter] Error in handler for "${message.type}":`,
-              err
-            )
+            console.error(`[MessageRouter] Error in handler for "${message.type}":`, err)
           }
         }
       } else {

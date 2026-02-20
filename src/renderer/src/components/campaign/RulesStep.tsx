@@ -70,15 +70,11 @@ export default function RulesStep({ rules, onChange }: RulesStepProps): JSX.Elem
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold">{rule.name}</span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${CATEGORY_COLORS[rule.category]}`}
-                    >
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${CATEGORY_COLORS[rule.category]}`}>
                       {rule.category}
                     </span>
                   </div>
-                  {rule.description && (
-                    <p className="text-sm text-gray-400">{rule.description}</p>
-                  )}
+                  {rule.description && <p className="text-sm text-gray-400">{rule.description}</p>}
                 </div>
                 <button
                   onClick={() => handleRemove(rule.id)}
@@ -145,9 +141,7 @@ export default function RulesStep({ rules, onChange }: RulesStepProps): JSX.Elem
         )}
 
         {rules.length === 0 && !showForm && (
-          <p className="text-gray-500 text-sm mt-4">
-            No house rules added. You can skip this step or add rules later.
-          </p>
+          <p className="text-gray-500 text-sm mt-4">No house rules added. You can skip this step or add rules later.</p>
         )}
       </div>
     </div>

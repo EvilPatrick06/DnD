@@ -1,4 +1,16 @@
-import type { AbilityScoreSet, AbilityName, CampaignHistoryEntry, SpellEntry, ClassFeatureEntry, ArmorEntry, WeaponEntry, Currency, ActiveCondition } from './character-common'
+import type {
+  AbilityName,
+  AbilityScoreSet,
+  ActiveCondition,
+  ArmorEntry,
+  CampaignHistoryEntry,
+  ClassFeatureEntry,
+  Currency,
+  MagicItemRarity5e,
+  SpellEntry,
+  WeaponEntry
+} from './character-common'
+import type { Companion5e } from './companion'
 
 export interface Character5e {
   id: string
@@ -7,19 +19,28 @@ export interface Character5e {
   playerId: string
 
   name: string
-  race: string
-  subrace?: string
+  species: string
+  subspecies?: string
   classes: CharacterClass5e[]
   level: number
   background: string
   alignment: string
   xp: number
+  levelingMode: 'xp' | 'milestone'
 
   abilityScores: AbilityScoreSet
   hitPoints: HitPoints
+  hitDiceRemaining: number
   armorClass: number
   initiative: number
   speed: number
+  speeds: { swim: number; fly: number; climb: number; burrow: number }
+  size?: string
+  creatureType?: string
+  senses: string[]
+  resistances: string[]
+  immunities: string[]
+  vulnerabilities: string[]
 
   details: CharacterDetails
   proficiencies: Proficiencies5e
@@ -34,10 +55,11 @@ export interface Character5e {
   knownSpells: SpellEntry[]
   preparedSpellIds: string[]
   spellSlotLevels: Record<number, { current: number; max: number }>
+  pactMagicSlotLevels?: Record<number, { current: number; max: number }>
   classFeatures: ClassFeatureEntry[]
   weapons: WeaponEntry[]
   armor: ArmorEntry[]
-  feats: Array<{ id: string; name: string; description: string }>
+  feats: Array<{ id: string; name: string; description: string; choices?: Record<string, string | string[]> }>
 
   buildChoices: BuildChoices5e
 
@@ -46,8 +68,21 @@ export interface Character5e {
 
   backstory: string
   notes: string
-  heroPoints: number
-  pets: Array<{ name: string }>
+  pets: Array<{ name: string; type: string }>
+  companions?: Companion5e[]
+  activeWildShapeFormId?: string
+  deathSaves: { successes: number; failures: number }
+  heroicInspiration?: boolean
+  wildShapeUses?: { current: number; max: number }
+  invocationsKnown?: string[]
+  metamagicKnown?: string[]
+  weaponMasteryChoices?: string[]
+  attunement: Array<{ name: string; description: string }>
+  magicItems?: MagicItemEntry5e[]
+  bonusFeats?: Array<{ id: string; name: string; description: string }>
+  classResources?: import('./character-common').ClassResource[]
+  speciesResources?: import('./character-common').ClassResource[]
+  languageDescriptions: Record<string, string>
   conditions: ActiveCondition[]
   iconPreset?: string
   portraitPath?: string
@@ -56,8 +91,8 @@ export interface Character5e {
 }
 
 export interface BuildChoices5e {
-  raceId: string
-  subraceId?: string
+  speciesId: string
+  subspeciesId?: string
   classId: string
   subclassId?: string
   backgroundId: string
@@ -66,7 +101,28 @@ export interface BuildChoices5e {
   abilityScoreAssignments: Record<string, number>
   asiChoices?: Record<string, string[]>
   chosenLanguages?: string[]
-  speciesAbilityBonuses?: Record<string, number>
+  backgroundAbilityBonuses?: Record<string, number>
+  versatileFeatId?: string
+  epicBoonId?: string
+  generalFeatChoices?: Record<string, string>
+  fightingStyleId?: string
+  backgroundEquipmentChoice?: 'equipment' | 'gold'
+  classEquipmentChoice?: string
+  multiclassEntries?: MulticlassEntry[]
+  speciesSpellcastingAbility?: 'intelligence' | 'wisdom' | 'charisma'
+  keenSensesSkill?: string
+  primalOrderChoice?: 'magician' | 'warden'
+  divineOrderChoice?: 'protector' | 'thaumaturge'
+  elementalFuryChoice?: 'potent-spellcasting' | 'primal-strike'
+  blessedWarriorCantrips?: string[]
+  druidicWarriorCantrips?: string[]
+  expertiseChoices?: Record<string, string[]>
+}
+
+export interface MulticlassEntry {
+  classId: string
+  subclassId?: string
+  levelTaken: number
 }
 
 export interface CharacterClass5e {
@@ -91,6 +147,7 @@ export interface CharacterDetails {
   eyes?: string
   hair?: string
   skin?: string
+  appearance?: string
   personality?: string
   ideals?: string
   bonds?: string
@@ -124,10 +181,36 @@ export interface EquipmentItem {
   weight?: number
   description?: string
   source?: string
+  cost?: string
+  equipped?: boolean
+  type?: string
+  ac?: number
+  armorClass?: number
+  armorType?: string
+  category?: string
 }
 
 export interface Feature {
   name: string
   source: string
   description: string
+}
+
+export interface MagicItemEntry5e {
+  id: string
+  name: string
+  rarity: MagicItemRarity5e
+  type: string
+  attunement: boolean
+  attuned?: boolean
+  description: string
+  weight?: number
+  linkedWeaponId?: string
+  linkedArmorId?: string
+  charges?: {
+    current: number
+    max: number
+    rechargeType: 'dawn' | 'long-rest' | 'none'
+    rechargeDice?: string
+  }
 }

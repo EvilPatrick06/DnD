@@ -1,30 +1,21 @@
 import type { DataConnection } from 'peerjs'
 import { createPeer, destroyPeer, getPeerId } from './peer-manager'
+import { validateNetworkMessage } from './schemas'
 import type { NetworkMessage } from './types'
+import { KNOWN_MESSAGE_TYPES } from './types'
 
-const KNOWN_MESSAGE_TYPES: Set<string> = new Set<string>([
-  'player:join', 'player:ready', 'player:leave', 'player:character-select',
-  'player:buy-item', 'player:sell-item', 'game:state-update', 'game:state-full',
-  'game:dice-roll', 'game:dice-result', 'game:turn-advance', 'dm:map-change',
-  'dm:fog-reveal', 'dm:token-move', 'dm:initiative-update', 'dm:condition-update',
-  'dm:kick-player', 'dm:ban-player', 'dm:unban-player', 'dm:force-mute',
-  'dm:force-deafen', 'dm:chat-timeout', 'dm:promote-codm', 'dm:demote-codm',
-  'dm:game-start', 'dm:game-end', 'dm:character-update', 'dm:shop-update',
-  'dm:slow-mode', 'dm:file-sharing', 'chat:message', 'chat:file', 'chat:whisper',
-  'player:color-change', 'voice:mute-toggle', 'ping', 'pong'
-])
-
-function validateIncomingMessage(msg: any): msg is NetworkMessage {
+function validateIncomingMessage(msg: unknown): msg is NetworkMessage {
   if (!msg || typeof msg !== 'object' || Array.isArray(msg)) return false
-  if (typeof msg.type !== 'string' || !KNOWN_MESSAGE_TYPES.has(msg.type)) return false
-  if (msg.payload !== undefined && msg.payload !== null && typeof msg.payload !== 'object') return false
-  if (typeof msg.senderId === 'string' && msg.senderId.length > 100) return false
-  if (typeof msg.senderName === 'string' && msg.senderName.length > 100) return false
+  const m = msg as Record<string, unknown>
+  if (typeof m.type !== 'string' || !KNOWN_MESSAGE_TYPES.has(m.type)) return false
+  if (m.payload !== undefined && m.payload !== null && typeof m.payload !== 'object') return false
+  if (typeof m.senderId === 'string' && (m.senderId as string).length > 100) return false
+  if (typeof m.senderName === 'string' && (m.senderName as string).length > 100) return false
 
-  const payload = msg.payload
+  const payload = m.payload as Record<string, unknown> | null | undefined
   if (payload && typeof payload === 'object') {
-    if (typeof payload.displayName === 'string' && payload.displayName.length > 100) return false
-    if (typeof payload.message === 'string' && payload.message.length > 5000) return false
+    if (typeof payload.displayName === 'string' && (payload.displayName as string).length > 100) return false
+    if (typeof payload.message === 'string' && (payload.message as string).length > 5000) return false
   }
 
   return true
@@ -36,9 +27,10 @@ let connected = false
 let displayName = ''
 let sequenceCounter = 0
 
-// Reconnection state
-const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 2000
+// Reconnection state (exponential backoff with jitter)
+const MAX_RETRIES = 5
+const BASE_RETRY_MS = 1000
+const MAX_RETRY_MS = 30_000
 let retryCount = 0
 let retryTimeout: ReturnType<typeof setTimeout> | null = null
 let lastInviteCode: string | null = null
@@ -116,9 +108,7 @@ export function disconnect(): void {
  * Send a message to the host. Automatically fills in senderId,
  * senderName, timestamp, and sequence number.
  */
-export function sendMessage(
-  msg: Omit<NetworkMessage, 'senderId' | 'senderName' | 'timestamp' | 'sequence'>
-): void {
+export function sendMessage(msg: Omit<NetworkMessage, 'senderId' | 'senderName' | 'timestamp' | 'sequence'>): void {
   if (!connection || !connection.open) {
     console.warn('[ClientManager] Cannot send message — not connected')
     return
@@ -221,8 +211,15 @@ async function attemptConnection(
             return
           }
 
+          // Zod schema validation
+          const zodResult = validateNetworkMessage(message)
+          if (!zodResult.success) {
+            console.warn('[ClientManager] Schema validation failed:', zodResult.error)
+            return
+          }
+
           if (!validateIncomingMessage(message)) {
-            console.warn('[ClientManager] Message failed validation:', (message as any)?.type)
+            console.warn('[ClientManager] Message failed validation:', (message as Record<string, unknown>)?.type)
             return
           }
 
@@ -273,9 +270,9 @@ async function attemptConnection(
           clearTimeout(timeout)
           console.error('[ClientManager] Connection error:', err)
           if (!connected) {
-            reject(new Error('Failed to connect to host: ' + err.message))
+            reject(new Error(`Failed to connect to host: ${err.message}`))
           } else {
-            handleDisconnection('Connection error: ' + err.message)
+            handleDisconnection(`Connection error: ${err.message}`)
           }
         })
 
@@ -285,7 +282,7 @@ async function attemptConnection(
           if (err.type === 'peer-unavailable') {
             reject(new Error('Invalid invite code. No game found with that code.'))
           } else if (!connected) {
-            reject(new Error('Connection failed: ' + err.message))
+            reject(new Error(`Connection failed: ${err.message}`))
           }
         })
       })
@@ -300,9 +297,11 @@ function handleDisconnection(reason: string): void {
 
   if (wasConnected && retryCount < MAX_RETRIES && lastInviteCode) {
     retryCount++
-    console.log(
-      `[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RETRIES}) in ${RETRY_DELAY_MS}ms...`
-    )
+    // Exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s (capped at 30s)
+    const delay = Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS)
+    const jitter = Math.floor(Math.random() * 500)
+    const totalDelay = delay + jitter
+    console.log(`[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RETRIES}) in ${totalDelay}ms...`)
 
     // Destroy the old peer before retrying
     destroyPeer()
@@ -311,6 +310,7 @@ function handleDisconnection(reason: string): void {
       try {
         await attemptConnection(lastInviteCode!)
         console.log('[ClientManager] Reconnected successfully')
+        retryCount = 0 // Reset on success
         // Re-send join message on reconnect
         sendMessage({
           type: 'player:join',
@@ -323,12 +323,12 @@ function handleDisconnection(reason: string): void {
       } catch (e) {
         console.error('[ClientManager] Reconnection attempt failed:', e)
         if (retryCount >= MAX_RETRIES) {
-          notifyDisconnected('Failed to reconnect after ' + MAX_RETRIES + ' attempts')
+          notifyDisconnected(`Failed to reconnect after ${MAX_RETRIES} attempts`)
         } else {
           handleDisconnection(reason)
         }
       }
-    }, RETRY_DELAY_MS)
+    }, totalDelay)
   } else {
     destroyPeer()
     notifyDisconnected(reason)

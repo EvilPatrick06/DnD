@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-02-19T22:36:25.380Z",
+  "staticAnalysis": {
+    "srcFiles": 365,
+    "jsonDataFiles": 34,
+    "jsonDataTotalBytes": 2189353,
+    "buildOutputBytes": 94138627
+  },
+  "benchmarks": {
+    "dataLoad": {
+      "totalMs": 15.900999999999954,
+      "fileCount": 34,
+      "totalBytes": 2189353,
+      "avgPerFileMs": 0.4676764705882339,
+      "slowestFiles": [
+        {
+          "name": "monsters.json",
+          "ms": 5.556600000000003,
+          "bytes": 816740
+        },
+        {
+          "name": "spells.json",
+          "ms": 1.1593000000000302,
+          "bytes": 330970
+        },
+        {
+          "name": "npcs.json",
+          "ms": 0.8809999999999718,
+          "bytes": 129596
+        },
+        {
+          "name": "magic-items.json",
+          "ms": 0.8653999999999655,
+          "bytes": 253768
+        },
+        {
+          "name": "species.json",
+          "ms": 0.6239999999999668,
+          "bytes": 33835
+        }
+      ]
+    },
+    "characterSaveRoundTrip": {
+      "writeMs": 0.40809999999999036,
+      "readMs": 0.11129999999997153,
+      "roundTripMs": 0.5193999999999619,
+      "characterSizeBytes": 4126
+    },
+    "statCalculator": {
+      "singleRunMs": 0.19479999999998654,
+      "avg100Ms": 0.0031909999999999174,
+      "avg1000Ms": 0.0017887000000000057
+    }
+  },
+  "results": [
+    {
+      "metric": "Data load (all JSON)",
+      "value": "15.90ms",
+      "target": "< 500ms",
+      "status": "PASS"
+    },
+    {
+      "metric": "Character save write",
+      "value": "408us",
+      "target": "< 10ms",
+      "status": "PASS"
+    },
+    {
+      "metric": "Character save read",
+      "value": "111us",
+      "target": "< 10ms",
+      "status": "PASS"
+    },
+    {
+      "metric": "Save round-trip",
+      "value": "519us",
+      "target": "< 20ms",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stat calc (single)",
+      "value": "195us",
+      "target": "< 1ms",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stat calc (avg/1000)",
+      "value": "2us",
+      "target": "< 0.1ms",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { LobbyPlayer } from '../../stores/useLobbyStore'
 import { PLAYER_COLORS } from '../../network/types'
+import type { LobbyPlayer } from '../../stores/useLobbyStore'
 
 interface PlayerCardProps {
   player: LobbyPlayer
@@ -41,9 +41,7 @@ export default function PlayerCard({
   return (
     <div
       className={`flex flex-col gap-1 p-3 rounded-lg border transition-colors ${
-        isLocal
-          ? 'border-amber-700/50 bg-amber-900/10'
-          : 'border-gray-800 bg-gray-900/30'
+        isLocal ? 'border-amber-700/50 bg-amber-900/10' : 'border-gray-800 bg-gray-900/30'
       }`}
     >
       {/* Main row: avatar, info, status */}
@@ -67,14 +65,10 @@ export default function PlayerCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className={`text-sm truncate ${
-                player.isHost ? 'font-bold text-amber-400' : 'font-medium text-gray-200'
-              }`}
+              className={`text-sm truncate ${player.isHost ? 'font-bold text-amber-400' : 'font-medium text-gray-200'}`}
             >
               {player.displayName}
-              {isLocal && (
-                <span className="text-gray-500 font-normal"> (you)</span>
-              )}
+              {isLocal && <span className="text-gray-500 font-normal"> (you)</span>}
             </span>
             {player.isHost && (
               <span className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-400 uppercase tracking-wide">
@@ -95,9 +89,7 @@ export default function PlayerCard({
               {player.characterName}
             </button>
           ) : (
-            <p className="text-xs text-gray-500 truncate">
-              {player.characterName || 'No character selected'}
-            </p>
+            <p className="text-xs text-gray-500 truncate">{player.characterName || 'No character selected'}</p>
           )}
         </div>
 
@@ -137,12 +129,7 @@ export default function PlayerCard({
           {/* Self-muted indicator (only if not force-muted and not deafened — force/deafen indicators take priority) */}
           {player.isMuted && !player.isForceMuted && !player.isDeafened && !player.isForceDeafened && (
             <div className="text-red-400" title="Muted">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-4 h-4"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                 <path d="M7.707 3.293A1 1 0 0 0 6 4v6.586l-2.293-2.293a1 1 0 0 0-1.414 1.414l4 4a1 1 0 0 0 1.414 0L10 11.414V4a1 1 0 0 0-1.707-.707Z" />
                 <path d="m2.343 2.343 14.314 14.314-1.414 1.414L.929 3.757l1.414-1.414Z" />
               </svg>
@@ -155,9 +142,7 @@ export default function PlayerCard({
               onClick={onToggleLocalMute}
               title={isLocallyMuted ? 'Unmute player (local)' : 'Mute player (local)'}
               className={`p-1 rounded transition-colors cursor-pointer ${
-                isLocallyMuted
-                  ? 'text-amber-400 hover:text-amber-300'
-                  : 'text-gray-600 hover:text-gray-400'
+                isLocallyMuted ? 'text-amber-400 hover:text-amber-300' : 'text-gray-600 hover:text-gray-400'
               }`}
             >
               {isLocallyMuted ? (
@@ -177,12 +162,7 @@ export default function PlayerCard({
           {/* Ready indicator */}
           {player.isReady ? (
             <div className="text-green-400" title="Ready">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-5 h-5"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
@@ -192,17 +172,8 @@ export default function PlayerCard({
             </div>
           ) : (
             <div className="text-gray-600" title="Not ready">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"
-                  clipRule="evenodd"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" clipRule="evenodd" />
               </svg>
             </div>
           )}
@@ -273,39 +244,41 @@ export default function PlayerCard({
               className="p-1.5 rounded transition-colors cursor-pointer text-gray-600 hover:text-amber-400 hover:bg-gray-800"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           )}
 
           {/* Co-DM toggle */}
-          {player.isCoDM ? (
-            onDemoteCoDM && (
-              <button
-                onClick={onDemoteCoDM}
-                title="Demote from Co-DM"
-                className="p-1.5 rounded transition-colors cursor-pointer bg-purple-900/40 text-purple-400 hover:bg-purple-900/60"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 1ZM5.05 3.05a.75.75 0 0 1 1.06 0l1.062 1.06A.75.75 0 1 1 6.11 5.173L5.05 4.11a.75.75 0 0 1 0-1.06ZM14.95 3.05a.75.75 0 0 1 0 1.06l-1.06 1.062a.75.75 0 0 1-1.062-1.061l1.061-1.06a.75.75 0 0 1 1.06 0ZM3 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 3 8ZM14 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 14 8ZM7.172 12.828a.75.75 0 0 1 0 1.061l-1.06 1.06a.75.75 0 0 1-1.061-1.06l1.06-1.06a.75.75 0 0 1 1.06 0ZM13.889 12.828a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06ZM10 14a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 14Z" />
-                  <path fillRule="evenodd" d="M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-                </svg>
-              </button>
-            )
-          ) : (
-            onPromoteCoDM && (
-              <button
-                onClick={onPromoteCoDM}
-                title="Promote to Co-DM"
-                className="p-1.5 rounded transition-colors cursor-pointer text-gray-600 hover:text-purple-400 hover:bg-gray-800"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 1ZM5.05 3.05a.75.75 0 0 1 1.06 0l1.062 1.06A.75.75 0 1 1 6.11 5.173L5.05 4.11a.75.75 0 0 1 0-1.06ZM14.95 3.05a.75.75 0 0 1 0 1.06l-1.06 1.062a.75.75 0 0 1-1.062-1.061l1.061-1.06a.75.75 0 0 1 1.06 0ZM3 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 3 8ZM14 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 14 8ZM7.172 12.828a.75.75 0 0 1 0 1.061l-1.06 1.06a.75.75 0 0 1-1.061-1.06l1.06-1.06a.75.75 0 0 1 1.06 0ZM13.889 12.828a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06ZM10 14a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 14Z" />
-                  <path fillRule="evenodd" d="M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-                </svg>
-              </button>
-            )
-          )}
+          {player.isCoDM
+            ? onDemoteCoDM && (
+                <button
+                  onClick={onDemoteCoDM}
+                  title="Demote from Co-DM"
+                  className="p-1.5 rounded transition-colors cursor-pointer bg-purple-900/40 text-purple-400 hover:bg-purple-900/60"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M10 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 1ZM5.05 3.05a.75.75 0 0 1 1.06 0l1.062 1.06A.75.75 0 1 1 6.11 5.173L5.05 4.11a.75.75 0 0 1 0-1.06ZM14.95 3.05a.75.75 0 0 1 0 1.06l-1.06 1.062a.75.75 0 0 1-1.062-1.061l1.061-1.06a.75.75 0 0 1 1.06 0ZM3 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 3 8ZM14 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 14 8ZM7.172 12.828a.75.75 0 0 1 0 1.061l-1.06 1.06a.75.75 0 0 1-1.061-1.06l1.06-1.06a.75.75 0 0 1 1.06 0ZM13.889 12.828a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06ZM10 14a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 14Z" />
+                    <path fillRule="evenodd" d="M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )
+            : onPromoteCoDM && (
+                <button
+                  onClick={onPromoteCoDM}
+                  title="Promote to Co-DM"
+                  className="p-1.5 rounded transition-colors cursor-pointer text-gray-600 hover:text-purple-400 hover:bg-gray-800"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M10 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 1ZM5.05 3.05a.75.75 0 0 1 1.06 0l1.062 1.06A.75.75 0 1 1 6.11 5.173L5.05 4.11a.75.75 0 0 1 0-1.06ZM14.95 3.05a.75.75 0 0 1 0 1.06l-1.06 1.062a.75.75 0 0 1-1.062-1.061l1.061-1.06a.75.75 0 0 1 1.06 0ZM3 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 3 8ZM14 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 14 8ZM7.172 12.828a.75.75 0 0 1 0 1.061l-1.06 1.06a.75.75 0 0 1-1.061-1.06l1.06-1.06a.75.75 0 0 1 1.06 0ZM13.889 12.828a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.061l-1.06-1.06a.75.75 0 0 1 0-1.06ZM10 14a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 14Z" />
+                    <path fillRule="evenodd" d="M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
 
           <div className="w-px h-5 bg-gray-700 mx-0.5" />
 

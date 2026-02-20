@@ -4,6 +4,39 @@ import Peer from 'peerjs'
 let peer: Peer | null = null
 let localPeerId: string | null = null
 
+// Default ICE servers — Google STUN + Metered.ca TURN
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'turn:standard.relay.metered.ca:80', username: 'open', credential: 'open' },
+  { urls: 'turn:standard.relay.metered.ca:443', username: 'open', credential: 'open' },
+  { urls: 'turns:standard.relay.metered.ca:443', username: 'open', credential: 'open' }
+]
+
+let iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
+
+/**
+ * Override ICE server configuration (e.g. with user-configured TURN servers).
+ * Call before createPeer() to take effect.
+ */
+export function setIceConfig(servers: RTCIceServer[]): void {
+  iceServers = servers.length > 0 ? servers : DEFAULT_ICE_SERVERS
+}
+
+/**
+ * Get the current ICE server configuration.
+ */
+export function getIceConfig(): RTCIceServer[] {
+  return iceServers
+}
+
+/**
+ * Reset ICE servers to defaults.
+ */
+export function resetIceConfig(): void {
+  iceServers = DEFAULT_ICE_SERVERS
+}
+
 /**
  * Generate a short random invite code (6 chars, uppercase alphanumeric).
  * This code doubles as the PeerJS peer ID for the host.
@@ -30,7 +63,8 @@ export function createPeer(customId?: string): Promise<Peer> {
     }
 
     const options = {
-      debug: import.meta.env.DEV ? 2 : 0
+      debug: import.meta.env.DEV ? 2 : 0,
+      config: { iceServers }
     }
 
     const newPeer = customId ? new Peer(customId, options) : new Peer(options)

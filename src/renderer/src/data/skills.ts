@@ -6,47 +6,131 @@ export interface SkillDescription {
 }
 
 export const SKILLS_5E: SkillDescription[] = [
-  { name: 'Acrobatics', ability: 'DEX', description: 'Balance, tumble, and aerial maneuvers. Used to stay on your feet in tricky situations or perform acrobatic stunts.', uses: 'Balance on ice or tightrope (DC 10-15), stay upright on a rocking ship (DC 12), tumble through enemy space (contested), land safely from a fall (DC 15), perform acrobatic stunts (DC varies)' },
-  { name: 'Animal Handling', ability: 'WIS', description: 'Calm, control, or intuit an animal\'s intentions. Covers domesticated and wild animals when diplomacy or training is needed.', uses: 'Calm a spooked mount (DC 10), sense an animal\'s intentions (DC 15), control your mount during a risky maneuver (DC 15), train a wild animal (DC 20+, extended), keep a pack animal steady in danger (DC 12)' },
-  { name: 'Arcana', ability: 'INT', description: 'Recall lore about spells, magic items, eldritch symbols, magical traditions, planes of existence, and the inhabitants of those planes.', uses: 'Identify a spell being cast (DC 15 + spell level), recall info about a magic item (DC varies), know about outer planes (DC 15-20), recognize arcane symbols (DC 10-15), identify magical effects or residue (DC 12-18)' },
-  { name: 'Athletics', ability: 'STR', description: 'Climb, jump, swim, and other feats of raw physical power. Covers grappling and shoving in combat.', uses: 'Climb a cliff with handholds (DC 10), climb slippery surface (DC 15), jump across a chasm (high/long jump rules), swim against a strong current (DC 15), grapple a creature (contested), shove a creature (contested), break free from restraints (DC 20)' },
-  { name: 'Deception', ability: 'CHA', description: 'Lie convincingly, disguise your intentions, or mislead others through ambiguity. Opposed by Insight.', uses: 'Fast-talk a guard (contested vs Insight), con a merchant on price (DC 15), maintain a disguise with conversation (contested), feint in combat (contested), forge a document with false information (DC 15-20), create a convincing alias (DC varies)' },
-  { name: 'History', ability: 'INT', description: 'Recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.', uses: 'Know about a recent war (DC 10), identify a noble\'s heraldry (DC 12), recall ancient kingdom lore (DC 15-20), recognize historical significance of a ruin (DC 15), know about a famous historical figure (DC 10-15), date an artifact (DC 15)' },
-  { name: 'Insight', ability: 'WIS', description: 'Determine the true intentions of a creature, read body language, detect lies, or predict someone\'s next move. The counter to Deception.', uses: 'Sense if someone is lying (contested vs Deception), read body language for nervousness (DC 12), predict someone\'s likely next action (DC 15), detect hidden motives in a conversation (DC 15), sense an ambush by reading tension (DC varies)' },
-  { name: 'Intimidation', ability: 'CHA', description: 'Influence someone through overt threats, hostile actions, or physical menace. Can use STR in some situations (DM discretion).', uses: 'Pry information from a prisoner (contested), convince thugs to back down (DC 15), use menacing presence to get through a door (DC varies), demoralize an enemy before combat (contested), threaten someone into compliance (DC 15-20)' },
-  { name: 'Investigation', ability: 'INT', description: 'Search for clues, make deductions from evidence, and piece together information. More active and analytical than Perception.', uses: 'Find a hidden compartment in a desk (DC 15), deduce a creature\'s weakness from clues (DC 15), determine cause of death (DC 12), locate a secret door by searching the area (DC 15-20), piece together a mystery from scattered evidence (DC varies)' },
-  { name: 'Medicine', ability: 'WIS', description: 'Diagnose illness, stabilize the dying, and provide medical care. Essential when healing magic isn\'t available.', uses: 'Stabilize a dying creature (DC 10), diagnose a disease (DC 12-15), determine cause of death (DC 10), treat a wound to prevent infection (DC 12), identify a poison (DC 15), provide long-term care during rest (DC 15, doubles hit dice healing)' },
-  { name: 'Nature', ability: 'INT', description: 'Recall lore about terrain, plants, animals, weather patterns, and natural cycles. Complements Survival for wilderness knowledge.', uses: 'Identify a plant or animal (DC 10), recall info about terrain type (DC 12), predict weather patterns (DC 15), know if local water is safe to drink (DC 10), identify natural hazards (DC 12-15), recognize unnatural phenomena in nature (DC 15)' },
-  { name: 'Perception', ability: 'WIS', description: 'Spot, hear, or otherwise detect the presence of something. General awareness of your surroundings. Often used passively (10 + modifier).', uses: 'Hear a conversation through a door (DC 15), spot a hidden creature (contested vs Stealth), notice a trap trigger (DC varies), detect an illusion (DC varies), find a hidden object in a room (DC 15), notice someone following you (contested)' },
-  { name: 'Performance', ability: 'CHA', description: 'Delight an audience with music, dance, acting, storytelling, or some other form of entertainment.', uses: 'Play an instrument at a tavern (DC 10-15), tell a compelling story to distract (DC 12), act convincingly in a play (DC 15), earn income as a performer (DC varies), captivate a noble audience (DC 18), create a diversion with a performance (DC 15)' },
-  { name: 'Persuasion', ability: 'CHA', description: 'Influence others with tact, social graces, and good nature. For making friends and requests, not threats (that\'s Intimidation) or lies (that\'s Deception).', uses: 'Negotiate peace between factions (DC 15-20), convince a noble to grant an audience (DC 15), inspire a crowd with a speech (DC 12), haggle for a better price (DC 15), request a favor from an NPC (DC varies), defuse a tense social situation (DC 15)' },
-  { name: 'Religion', ability: 'INT', description: 'Recall lore about deities, rites, prayers, religious hierarchies, holy symbols, and the practices of secret cults.', uses: 'Identify a religious symbol (DC 10), recall a prayer or religious rite (DC 12), know about a specific deity (DC 10-15), identify undead or fiend weaknesses (DC 15), recognize signs of cult activity (DC 15), know the significance of a holy site (DC 12)' },
-  { name: 'Sleight of Hand', ability: 'DEX', description: 'Manual trickery: pickpocketing, concealing objects on your person, or performing legerdemain. Opposed by Perception.', uses: 'Plant something on someone (contested vs Perception), pick a pocket (contested), conceal a weapon (DC 12-15), perform a card trick (DC 10-15), swap one small item for another unnoticed (DC 15), palm a key off a table (DC 12)' },
-  { name: 'Stealth', ability: 'DEX', description: 'Conceal yourself from enemies, slink past guards, slip away without being noticed, and sneak up on someone. Opposed by Perception.', uses: 'Sneak past guards (contested vs Perception), hide in shadows (DC varies by light), set up an ambush (contested), move silently across a creaky floor (DC 15), follow someone without being noticed (contested), blend into a crowd (DC 12-15)' },
-  { name: 'Survival', ability: 'WIS', description: 'Follow tracks, hunt wild game, navigate wilderness, identify signs of nearby creatures, predict weather, and avoid natural hazards.', uses: 'Follow tracks on soft ground (DC 10), follow tracks on hard ground (DC 15-20), hunt game for food (DC 12), navigate without a map (DC 15), predict weather (DC 12), find shelter in the wild (DC 10), avoid quicksand or similar hazards (DC 15)' }
+  {
+    name: 'Acrobatics',
+    ability: 'DEX',
+    description:
+      'Balance, tumble, and aerial maneuvers. Used to stay on your feet in tricky situations or perform acrobatic stunts.',
+    uses: 'Balance on ice or tightrope (DC 10-15), stay upright on a rocking ship (DC 12), tumble through enemy space (contested), land safely from a fall (DC 15), perform acrobatic stunts (DC varies)'
+  },
+  {
+    name: 'Animal Handling',
+    ability: 'WIS',
+    description:
+      "Calm, control, or intuit an animal's intentions. Covers domesticated and wild animals when diplomacy or training is needed.",
+    uses: "Calm a spooked mount (DC 10), sense an animal's intentions (DC 15), control your mount during a risky maneuver (DC 15), train a wild animal (DC 20+, extended), keep a pack animal steady in danger (DC 12)"
+  },
+  {
+    name: 'Arcana',
+    ability: 'INT',
+    description:
+      'Recall lore about spells, magic items, eldritch symbols, magical traditions, planes of existence, and the inhabitants of those planes.',
+    uses: 'Identify a spell being cast (DC 15 + spell level), recall info about a magic item (DC varies), know about outer planes (DC 15-20), recognize arcane symbols (DC 10-15), identify magical effects or residue (DC 12-18)'
+  },
+  {
+    name: 'Athletics',
+    ability: 'STR',
+    description: 'Climb, jump, swim, and other feats of raw physical power. Covers grappling and shoving in combat.',
+    uses: 'Climb a cliff with handholds (DC 10), climb slippery surface (DC 15), jump across a chasm (high/long jump rules), swim against a strong current (DC 15), grapple a creature (contested), shove a creature (contested), break free from restraints (DC 20)'
+  },
+  {
+    name: 'Deception',
+    ability: 'CHA',
+    description: 'Lie convincingly, disguise your intentions, or mislead others through ambiguity. Opposed by Insight.',
+    uses: 'Fast-talk a guard (contested vs Insight), con a merchant on price (DC 15), maintain a disguise with conversation (contested), feint in combat (contested), forge a document with false information (DC 15-20), create a convincing alias (DC varies)'
+  },
+  {
+    name: 'History',
+    ability: 'INT',
+    description:
+      'Recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.',
+    uses: "Know about a recent war (DC 10), identify a noble's heraldry (DC 12), recall ancient kingdom lore (DC 15-20), recognize historical significance of a ruin (DC 15), know about a famous historical figure (DC 10-15), date an artifact (DC 15)"
+  },
+  {
+    name: 'Insight',
+    ability: 'WIS',
+    description:
+      "Determine the true intentions of a creature, read body language, detect lies, or predict someone's next move. The counter to Deception.",
+    uses: "Sense if someone is lying (contested vs Deception), read body language for nervousness (DC 12), predict someone's likely next action (DC 15), detect hidden motives in a conversation (DC 15), sense an ambush by reading tension (DC varies)"
+  },
+  {
+    name: 'Intimidation',
+    ability: 'CHA',
+    description:
+      'Influence someone through overt threats, hostile actions, or physical menace. Can use STR in some situations (DM discretion).',
+    uses: 'Pry information from a prisoner (contested), convince thugs to back down (DC 15), use menacing presence to get through a door (DC varies), demoralize an enemy before combat (contested), threaten someone into compliance (DC 15-20)'
+  },
+  {
+    name: 'Investigation',
+    ability: 'INT',
+    description:
+      'Search for clues, make deductions from evidence, and piece together information. More active and analytical than Perception.',
+    uses: "Find a hidden compartment in a desk (DC 15), deduce a creature's weakness from clues (DC 15), determine cause of death (DC 12), locate a secret door by searching the area (DC 15-20), piece together a mystery from scattered evidence (DC varies)"
+  },
+  {
+    name: 'Medicine',
+    ability: 'WIS',
+    description:
+      "Diagnose illness, stabilize the dying, and provide medical care. Essential when healing magic isn't available.",
+    uses: 'Stabilize a dying creature (DC 10), diagnose a disease (DC 12-15), determine cause of death (DC 10), treat a wound to prevent infection (DC 12), identify a poison (DC 15), provide long-term care during rest (DC 15, doubles Hit Point Dice healing)'
+  },
+  {
+    name: 'Nature',
+    ability: 'INT',
+    description:
+      'Recall lore about terrain, plants, animals, weather patterns, and natural cycles. Complements Survival for wilderness knowledge.',
+    uses: 'Identify a plant or animal (DC 10), recall info about terrain type (DC 12), predict weather patterns (DC 15), know if local water is safe to drink (DC 10), identify natural hazards (DC 12-15), recognize unnatural phenomena in nature (DC 15)'
+  },
+  {
+    name: 'Perception',
+    ability: 'WIS',
+    description:
+      'Spot, hear, or otherwise detect the presence of something. General awareness of your surroundings. Often used passively (10 + modifier).',
+    uses: 'Hear a conversation through a door (DC 15), spot a hidden creature (contested vs Stealth), notice a trap trigger (DC varies), detect an illusion (DC varies), find a hidden object in a room (DC 15), notice someone following you (contested)'
+  },
+  {
+    name: 'Performance',
+    ability: 'CHA',
+    description: 'Delight an audience with music, dance, acting, storytelling, or some other form of entertainment.',
+    uses: 'Play an instrument at a tavern (DC 10-15), tell a compelling story to distract (DC 12), act convincingly in a play (DC 15), earn income as a performer (DC varies), captivate a noble audience (DC 18), create a diversion with a performance (DC 15)'
+  },
+  {
+    name: 'Persuasion',
+    ability: 'CHA',
+    description:
+      "Influence others with tact, social graces, and good nature. For making friends and requests, not threats (that's Intimidation) or lies (that's Deception).",
+    uses: 'Negotiate peace between factions (DC 15-20), convince a noble to grant an audience (DC 15), inspire a crowd with a speech (DC 12), haggle for a better price (DC 15), request a favor from an NPC (DC varies), defuse a tense social situation (DC 15)'
+  },
+  {
+    name: 'Religion',
+    ability: 'INT',
+    description:
+      'Recall lore about deities, rites, prayers, religious hierarchies, holy symbols, and the practices of secret cults.',
+    uses: 'Identify a religious symbol (DC 10), recall a prayer or religious rite (DC 12), know about a specific deity (DC 10-15), identify undead or fiend weaknesses (DC 15), recognize signs of cult activity (DC 15), know the significance of a holy site (DC 12)'
+  },
+  {
+    name: 'Sleight of Hand',
+    ability: 'DEX',
+    description:
+      'Manual trickery: pickpocketing, concealing objects on your person, or performing legerdemain. Opposed by Perception.',
+    uses: 'Plant something on someone (contested vs Perception), pick a pocket (contested), conceal a weapon (DC 12-15), perform a card trick (DC 10-15), swap one small item for another unnoticed (DC 15), palm a key off a table (DC 12)'
+  },
+  {
+    name: 'Stealth',
+    ability: 'DEX',
+    description:
+      'Conceal yourself from enemies, slink past guards, slip away without being noticed, and sneak up on someone. Opposed by Perception.',
+    uses: 'Sneak past guards (contested vs Perception), hide in shadows (DC varies by light), set up an ambush (contested), move silently across a creaky floor (DC 15), follow someone without being noticed (contested), blend into a crowd (DC 12-15)'
+  },
+  {
+    name: 'Survival',
+    ability: 'WIS',
+    description:
+      'Follow tracks, hunt wild game, navigate wilderness, identify signs of nearby creatures, predict weather, and avoid natural hazards.',
+    uses: 'Follow tracks on soft ground (DC 10), follow tracks on hard ground (DC 15-20), hunt game for food (DC 12), navigate without a map (DC 15), predict weather (DC 12), find shelter in the wild (DC 10), avoid quicksand or similar hazards (DC 15)'
+  }
 ]
 
-export const SKILLS_PF2E: SkillDescription[] = [
-  { name: 'Acrobatics', ability: 'DEX', description: 'Perform feats of agility, balance, and coordination. Key actions: Balance, Tumble Through, Maneuver in Flight, Squeeze.', uses: 'Balance on narrow surfaces (varies by width), Tumble Through enemy space (opposed vs Reflex DC), Squeeze through tight spaces (DC 15+), Maneuver in Flight (DC varies), reduce falling damage (DC 15)' },
-  { name: 'Arcana', ability: 'INT', description: 'Theoretical knowledge of arcane magic, arcane traditions, and arcane creatures. Key for identifying arcane spells and learning new ones.', uses: 'Recall Knowledge about arcane magic/creatures (DC varies), Identify Magic on arcane items/effects (DC varies), Learn an Arcane Spell (DC varies by level), Decipher Writing on arcane texts (DC varies), Borrow an Arcane Spell (DC varies)' },
-  { name: 'Athletics', ability: 'STR', description: 'Physical feats of prowess. Key actions: Climb, Force Open, Grapple, High Jump, Long Jump, Shove, Swim, Trip, Disarm.', uses: 'Climb a surface (DC varies), Force Open a door/container (DC varies), Grapple (vs Fortitude DC), High Jump (DC 30 for 5ft+), Long Jump (DC = distance in ft), Shove (vs Fortitude DC), Swim (DC varies), Trip (vs Reflex DC), Disarm (vs Reflex DC)' },
-  { name: 'Crafting', ability: 'INT', description: 'Create, repair, and understand physical items. Key for downtime crafting, repairing gear, and identifying alchemical items.', uses: 'Craft an item (DC by level + rarity), Earn Income by crafting (DC by level), Identify Alchemy (DC varies), Repair an item (DC 15+), determine an item\'s quality (DC varies)' },
-  { name: 'Deception', ability: 'CHA', description: 'Trick and mislead others through lies and disguises. Key actions: Create a Diversion, Impersonate, Lie, Feint.', uses: 'Create a Diversion to become hidden (vs Perception DC), Impersonate someone (vs Perception DC), Lie convincingly (vs Perception DC), Feint in combat to make target flat-footed (vs Perception DC)' },
-  { name: 'Diplomacy', ability: 'CHA', description: 'Influence others through honest negotiation, flattery, and good will. Key actions: Gather Information, Make an Impression, Request.', uses: 'Gather Information about a topic in a settlement (DC varies), Make an Impression to change attitude (DC by attitude), Request a favor (DC by attitude + request severity), negotiate terms (DC varies)' },
-  { name: 'Intimidation', ability: 'CHA', description: 'Bend others to your will through threats and force of personality. Key actions: Coerce, Demoralize.', uses: 'Coerce someone into doing something (vs Will DC, takes 1 min), Demoralize in combat to inflict frightened (vs Will DC, 1 action), use intimidating presence in social situations (DC varies)' },
-  { name: 'Lore', ability: 'INT', description: 'Specialized knowledge in a specific subcategory (e.g., Warfare Lore, Herbalism Lore, Underworld Lore). Narrower but easier than general skills.', uses: 'Recall Knowledge in your specialty (DC usually 2 lower than broader skill), Earn Income using your specialized knowledge (DC by level), provide expertise in relevant situations (DC varies)' },
-  { name: 'Medicine', ability: 'WIS', description: 'Patch up wounds, cure diseases, counteract poisons, and provide medical care. Essential for out-of-combat healing.', uses: 'Administer First Aid to stabilize dying (DC 15), Treat Disease during downtime (DC varies), Treat Poison (DC = poison DC), Treat Wounds to restore HP (DC 15/20/30/40 by proficiency), Determine cause of death (DC varies)' },
-  { name: 'Nature', ability: 'WIS', description: 'Knowledge of the natural world, primal magic, and natural creatures. Key for identifying primal spells and commanding animals.', uses: 'Command an Animal (DC varies by animal), Identify Magic on primal effects (DC varies), Learn a Primal Spell (DC varies), Recall Knowledge about natural world/creatures (DC varies), identify plants and natural hazards (DC varies)' },
-  { name: 'Occultism', ability: 'INT', description: 'Knowledge of occult magic, strange philosophies, esoteric lore, and otherworldly creatures. Covers mental and spiritual phenomena.', uses: 'Decipher Writing on occult texts (DC varies), Identify Magic on occult effects (DC varies), Learn an Occult Spell (DC varies), Recall Knowledge about aberrations, spirits, occult lore (DC varies)' },
-  { name: 'Performance', ability: 'CHA', description: 'Entertain an audience with music, oratory, dance, acting, comedy, or other artistic expression. Key for bards.', uses: 'Perform to entertain (DC varies by audience), Earn Income as a performer (DC by level), create a distraction through performance (DC 15+), inspire allies with a rousing speech (DC varies)' },
-  { name: 'Religion', ability: 'WIS', description: 'Knowledge of faiths, divine magic, religious creatures, and the planes connected to divinity. Key for identifying divine spells.', uses: 'Decipher Writing on religious texts (DC varies), Identify Magic on divine effects (DC varies), Learn a Divine Spell (DC varies), Recall Knowledge about deities, undead, fiends, celestials (DC varies)' },
-  { name: 'Society', ability: 'INT', description: 'Knowledge of civilization, culture, governments, and law. Key for navigating bureaucracy and creating forgeries.', uses: 'Create Forgery (vs Perception DC), Decipher Writing on codes/ciphers (DC varies), Recall Knowledge about history, law, government, culture (DC varies), Subsist in a settlement (DC varies), navigate legal systems (DC varies)' },
-  { name: 'Stealth', ability: 'DEX', description: 'Avoid notice by being quiet and staying out of sight. Key actions: Conceal an Object, Hide, Sneak.', uses: 'Conceal an Object on your person (vs Perception DC), Hide to become hidden (vs Perception DC), Sneak to move while hidden (vs Perception DC), avoid triggering traps or alerting guards (DC varies)' },
-  { name: 'Survival', ability: 'WIS', description: 'Live off the land, track creatures, and navigate the wilderness. Key for exploration and travel.', uses: 'Sense Direction to avoid getting lost (DC varies by terrain), Subsist in the wild (DC varies), Track a creature (vs Stealth DC or DC by terrain), Cover Tracks (DC varies), find water and shelter (DC varies)' },
-  { name: 'Thievery', ability: 'DEX', description: 'Steal objects, pick locks, and disable traps and mechanical devices. The rogue\'s bread and butter.', uses: 'Disable a Device/trap (DC varies by device), Palm an Object without being noticed (vs Perception DC), Pick a Lock (DC varies by lock quality), Steal from a creature (vs Perception DC)' }
-]
-
-export function getSkillDescription(skillName: string, system: 'dnd5e' | 'pf2e'): SkillDescription | undefined {
-  const list = system === 'dnd5e' ? SKILLS_5E : SKILLS_PF2E
-  return list.find((s) => s.name === skillName)
+export function getSkillDescription(skillName: string): SkillDescription | undefined {
+  return SKILLS_5E.find((s) => s.name === skillName)
 }

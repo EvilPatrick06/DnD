@@ -1,4 +1,4 @@
-import { Graphics, Text, TextStyle } from 'pixi.js'
+import { type Graphics, Text, TextStyle } from 'pixi.js'
 
 /**
  * Draws a measurement line between two points with distance annotation.

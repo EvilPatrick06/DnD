@@ -7,12 +7,7 @@ interface MapSelectorProps {
   onAddMap: () => void
 }
 
-export default function MapSelector({
-  maps,
-  activeMapId,
-  onSelectMap,
-  onAddMap
-}: MapSelectorProps): JSX.Element {
+export default function MapSelector({ maps, activeMapId, onSelectMap, onAddMap }: MapSelectorProps): JSX.Element {
   return (
     <div className="relative">
       <div className="flex items-center gap-2">
@@ -43,9 +38,7 @@ export default function MapSelector({
         </button>
       </div>
 
-      {maps.length === 0 && (
-        <p className="text-xs text-gray-500 mt-1">No maps added yet</p>
-      )}
+      {maps.length === 0 && <p className="text-xs text-gray-500 mt-1">No maps added yet</p>}
     </div>
   )
 }

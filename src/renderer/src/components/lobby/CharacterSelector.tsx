@@ -4,26 +4,17 @@ import { useCharacterStore } from '../../stores/useCharacterStore'
 import { useLobbyStore } from '../../stores/useLobbyStore'
 import { useNetworkStore } from '../../stores/useNetworkStore'
 import type { Character } from '../../types/character'
-import { is5eCharacter } from '../../types/character'
 
 interface CharacterSelectorProps {
   onSelect: (characterId: string, characterName: string) => void
 }
 
 function getCharacterSummary(character: Character): { name: string; level: number; className: string } {
-  if (is5eCharacter(character)) {
-    const primaryClass = character.classes[0]
-    return {
-      name: character.name,
-      level: character.level,
-      className: primaryClass ? primaryClass.name : 'Unknown'
-    }
-  }
-  // PF2e
+  const primaryClass = character.classes[0]
   return {
     name: character.name,
     level: character.level,
-    className: character.className
+    className: primaryClass ? primaryClass.name : 'Unknown'
   }
 }
 
@@ -32,10 +23,8 @@ export default function CharacterSelector({ onSelect }: CharacterSelectorProps):
   const { campaignId } = useParams<{ campaignId: string }>()
   const { characters, loading, loadCharacters } = useCharacterStore()
   const isHost = useLobbyStore((s) => s.isHost)
-  const localPlayer = useLobbyStore((s) => {
-    const networkPeerId = useNetworkStore.getState().localPeerId
-    return s.players.find((p) => p.peerId === networkPeerId)
-  })
+  const localPeerId = useNetworkStore((s) => s.localPeerId)
+  const localPlayer = useLobbyStore((s) => s.players.find((p) => p.peerId === localPeerId))
   const isCoDM = localPlayer?.isCoDM ?? false
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
@@ -63,9 +52,7 @@ export default function CharacterSelector({ onSelect }: CharacterSelectorProps):
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide px-1">
-        Your Character
-      </h3>
+      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide px-1">Your Character</h3>
 
       {/* Current selection */}
       <button
@@ -116,10 +103,7 @@ export default function CharacterSelector({ onSelect }: CharacterSelectorProps):
               onClick={handleSelectNone}
               className={`w-full text-left px-3 py-2.5 transition-colors cursor-pointer
                 border-b border-gray-700/50
-                ${isNoneSelected
-                  ? 'bg-amber-900/20 text-amber-300'
-                  : 'hover:bg-gray-700/50 text-gray-200'
-                }`}
+                ${isNoneSelected ? 'bg-amber-900/20 text-amber-300' : 'hover:bg-gray-700/50 text-gray-200'}`}
             >
               <p className="text-sm font-medium">No Character</p>
               <p className="text-xs text-gray-500">Run the game without a player character</p>
@@ -128,9 +112,7 @@ export default function CharacterSelector({ onSelect }: CharacterSelectorProps):
           {loading ? (
             <p className="p-3 text-sm text-gray-500 text-center">Loading...</p>
           ) : characters.length === 0 && !isHost && !isCoDM ? (
-            <p className="p-3 text-sm text-gray-500 text-center">
-              No characters found
-            </p>
+            <p className="p-3 text-sm text-gray-500 text-center">No characters found</p>
           ) : (
             characters.map((character) => {
               const summary = getCharacterSummary(character)
@@ -141,10 +123,7 @@ export default function CharacterSelector({ onSelect }: CharacterSelectorProps):
                   onClick={() => handleSelect(character)}
                   className={`w-full text-left px-3 py-2.5 transition-colors cursor-pointer
                     border-b border-gray-700/50 last:border-b-0
-                    ${isSelected
-                      ? 'bg-amber-900/20 text-amber-300'
-                      : 'hover:bg-gray-700/50 text-gray-200'
-                    }`}
+                    ${isSelected ? 'bg-amber-900/20 text-amber-300' : 'hover:bg-gray-700/50 text-gray-200'}`}
                 >
                   <p className="text-sm font-medium">{summary.name}</p>
                   <p className="text-xs text-gray-500">

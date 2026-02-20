@@ -8,21 +8,36 @@ extraResources:
     to: icon.ico
   - from: resources/icon.png
     to: icon.png
+  - from: "5.5e References/DM/Player's Handbook (2024).md"
+    to: "rulebooks/Player's Handbook (2024).md"
+  - from: "5.5e References/DM/Dungeon Master's Guide (2024).md"
+    to: "rulebooks/Dungeon Master's Guide (2024).md"
+  - from: "5.5e References/DM/Monster Manual (2025).md"
+    to: "rulebooks/Monster Manual (2025).md"
+  - from: resources/chunk-index.json
+    to: chunk-index.json
 files:
   - '!**/.vscode/*'
   - '!src/*'
+  - '!5.5e References/**/*'
+  - '!.claude/**/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - '!**/*.ps1'
   - '!CLAUDE.md'
 publish: null
+fileAssociations:
+  - ext: dndvtt
+    name: D&D VTT Export
+    description: D&D Virtual Tabletop character/campaign export
+    role: Editor
 win:
   executableName: dnd-vtt
   icon: resources/icon.ico
   legalTrademarks: "D&D Virtual Tabletop"
   requestedExecutionLevel: asInvoker
-  signAndEditExecutable: false
+  signAndEditExecutable: true
   target:
     - nsis
 nsis:
@@ -35,8 +50,11 @@ nsis:
   allowToChangeInstallationDirectory: true
   perMachine: false
   deleteAppDataOnUninstall: false
+  allowElevation: true
+  include: resources/installer.nsh
 
-# --- Code Signing (uncomment when certificate is purchased) ---
-# Set env vars: WIN_CSC_LINK=path/to/certificate.pfx  WIN_CSC_KEY_PASSWORD=yourpassword
-# Then under win: change signAndEditExecutable to true
-# electron-builder reads WIN_CSC_LINK and WIN_CSC_KEY_PASSWORD automatically from env
+# --- Code Signing ---
+# signAndEditExecutable is true so rcedit embeds the icon and version metadata into the .exe.
+# Without a certificate, electron-builder runs rcedit but gracefully skips signing (no build failure).
+# When a certificate is purchased: set env vars WIN_CSC_LINK=path/to/certificate.pfx
+# and WIN_CSC_KEY_PASSWORD=yourpassword — electron-builder reads them automatically.

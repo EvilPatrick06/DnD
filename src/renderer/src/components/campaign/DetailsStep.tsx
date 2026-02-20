@@ -22,9 +22,7 @@ export default function DetailsStep({ data, onChange }: DetailsStepProps): JSX.E
   return (
     <div>
       <h2 className="text-xl font-semibold mb-2">Campaign Details</h2>
-      <p className="text-gray-400 text-sm mb-6">
-        Give your campaign a name and configure basic settings.
-      </p>
+      <p className="text-gray-400 text-sm mb-6">Give your campaign a name and configure basic settings.</p>
 
       <div className="max-w-lg space-y-5">
         <Input
@@ -57,7 +55,7 @@ export default function DetailsStep({ data, onChange }: DetailsStepProps): JSX.E
               focus:outline-none focus:border-amber-500 transition-colors"
             value={data.maxPlayers}
             onChange={(e) => {
-              const val = Math.max(2, Math.min(8, parseInt(e.target.value) || 2))
+              const val = Math.max(2, Math.min(8, parseInt(e.target.value, 10) || 2))
               update('maxPlayers', val)
             }}
           />

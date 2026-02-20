@@ -1,0 +1,160 @@
+[
+  {
+    "id": "merfolk-wavebender",
+    "name": "Merfolk Wavebender",
+    "size": "Medium",
+    "type": "Elemental",
+    "alignment": "Neutral",
+    "ac": 14,
+    "hp": 97,
+    "hitDice": "15d8+30",
+    "speed": {
+      "walk": 10,
+      "swim": 40
+    },
+    "abilityScores": {
+      "str": 10,
+      "dex": 18,
+      "con": 14,
+      "int": 13,
+      "wis": 19,
+      "cha": 15
+    },
+    "savingThrows": {
+      "str": 0,
+      "dex": 7,
+      "con": 5,
+      "int": 7,
+      "wis": 7,
+      "cha": 5
+    },
+    "skills": {
+      "perception": 7
+    },
+    "resistances": [
+      "Cold"
+    ],
+    "senses": {
+      "passivePerception": 17
+    },
+    "languages": [
+      "Common",
+      "Primordial (Aquan)"
+    ],
+    "cr": "6",
+    "xp": 2300,
+    "proficiencyBonus": 3,
+    "initiative": {
+      "modifier": 4,
+      "score": 14
+    },
+    "traits": [
+      {
+        "name": "Amphibious",
+        "description": "The merfolk can breathe air and water."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The merfolk makes two Aquatic Burst attacks."
+      },
+      {
+        "name": "Aquatic Burst",
+        "description": "Melee or Ranged Attack Roll: +7, reach 5 ft. or range 60 ft. Hit: 20 (3d10+4) Cold damage. If the target is a Large or smaller creature, it has the Prone condition."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The merfolk casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 15):\n\nAt Will: Elementalism, Light\n1/Day Each: Control Water, Create or Destroy Water"
+      }
+    ],
+    "bonusActions": [],
+    "reactions": [
+      {
+        "name": "Watery Rebuke",
+        "description": "Trigger: An enemy the merfolk can see enters a space within 5 feet of the merfolk. Response—Strength Saving Throw: DC 15, the triggering enemy. Failure: 14 (4d6) Cold damage. If the target is Large or smaller, it is pushed up to 30 feet straight away from the merfolk by conjured water."
+      }
+    ],
+    "source": "mm2025",
+    "group": "Merfolk",
+    "tokenSize": {
+      "x": 1,
+      "y": 1
+    }
+  },
+  {
+    "id": "thri-kreen-psion",
+    "name": "Thri-kreen Psion",
+    "size": "Medium",
+    "type": "Monstrosity",
+    "alignment": "Neutral",
+    "ac": 16,
+    "hp": 149,
+    "hitDice": "23d8+46",
+    "speed": {
+      "walk": 40,
+      "fly": 20
+    },
+    "abilityScores": {
+      "str": 18,
+      "dex": 15,
+      "con": 14,
+      "int": 19,
+      "wis": 12,
+      "cha": 11
+    },
+    "savingThrows": {
+      "str": 7,
+      "dex": 5,
+      "con": 5,
+      "int": 7,
+      "wis": 1,
+      "cha": 0
+    },
+    "skills": {
+      "perception": 4,
+      "stealth": 8
+    },
+    "resistances": [
+      "Psychic"
+    ],
+    "senses": {
+      "darkvision": 60,
+      "passivePerception": 14
+    },
+    "languages": [
+      "Thri-kreen",
+      "telepathy 120 ft."
+    ],
+    "cr": "8",
+    "xp": 3900,
+    "proficiencyBonus": 3,
+    "initiative": {
+      "modifier": 6,
+      "score": 16
+    },
+    "traits": [],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The thri-kreen makes three Psionic Lance attacks."
+      },
+      {
+        "name": "Psionic Lance",
+        "description": "Melee or Ranged Attack Roll: +7, reach 10 ft. or range 120 ft. Hit: 18 (4d6+4) Psychic damage."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The thri-kreen casts one of the following spells, requiring no spell components and using Intelligence as the spellcasting ability (spell save DC 15):\n\nAt Will: Mage Hand (the hand is Invisible)\n1/Day Each: Detect Thoughts, Sending, Synaptic Static"
+      }
+    ],
+    "bonusActions": [],
+    "reactions": [],
+    "source": "mm2025",
+    "group": "Thri-kreen",
+    "tokenSize": {
+      "x": 1,
+      "y": 1
+    }
+  }
+]

@@ -1,0 +1,299 @@
+[
+  {
+    "id": "aboleth",
+    "name": "Aboleth",
+    "group": "Aboleth",
+    "size": "Large",
+    "type": "Aberration",
+    "alignment": "Lawful Evil",
+    "ac": 17,
+    "hp": 150,
+    "hitDice": "20d10+40",
+    "speed": { "walk": 10, "swim": 40 },
+    "abilityScores": { "str": 21, "dex": 9, "con": 15, "int": 18, "wis": 15, "cha": 18 },
+    "savingThrows": { "dex": 3, "con": 6, "int": 8, "wis": 6 },
+    "skills": { "History": 12, "Perception": 10 },
+    "senses": { "darkvision": 120, "passivePerception": 20 },
+    "languages": ["Deep Speech"],
+    "telepathy": 120,
+    "cr": "10",
+    "xp": 5900,
+    "proficiencyBonus": 4,
+    "initiative": { "modifier": 7, "score": 17 },
+    "habitat": ["Underdark", "Underwater"],
+    "traits": [
+      { "name": "Amphibious", "description": "The aboleth can breathe air and water." },
+      { "name": "Eldritch Restoration", "description": "If destroyed, the aboleth gains a new body in 5d10 days, reviving with all its Hit Points in the Far Realm or another location chosen by the DM." },
+      { "name": "Legendary Resistance (3/Day, or 4/Day in Lair)", "description": "If the aboleth fails a saving throw, it can choose to succeed instead." },
+      { "name": "Mucus Cloud", "description": "While underwater, the aboleth is surrounded by mucus. Constitution Saving Throw: DC 14, each creature in a 5-foot Emanation originating from the aboleth at the end of the aboleth's turn. Failure: The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater." },
+      { "name": "Probing Telepathy", "description": "If a creature the aboleth can see communicates telepathically with the aboleth, the aboleth learns the creature's greatest desires." }
+    ],
+    "actions": [
+      { "name": "Multiattack", "description": "The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available.", "multiattackActions": ["Tentacle", "Tentacle"] },
+      { "name": "Tentacle", "description": "Melee Attack Roll: +9, reach 15 ft. Hit: 12 (2d6 + 5) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14).", "attackType": "melee", "toHit": 9, "reach": 15, "damageDice": "2d6+5", "damageType": "Bludgeoning" },
+      { "name": "Consume Memories", "description": "Intelligence Saving Throw: DC 16, one creature within 30 feet that is Charmed or Grappled by the aboleth. Failure: 10 (3d6) Psychic damage. Success: Half damage.", "saveDC": 16, "saveAbility": "INT", "damageDice": "3d6", "damageType": "Psychic" },
+      { "name": "Dominate Mind (2/Day)", "description": "Wisdom Saving Throw: DC 16, one creature the aboleth can see within 30 feet. Failure: The target has the Charmed condition until the aboleth dies or is on a different plane of existence from the target.", "saveDC": 16, "saveAbility": "WIS" }
+    ],
+    "legendaryActions": {
+      "uses": 3,
+      "actions": [
+        { "name": "Lash", "description": "The aboleth makes one Tentacle attack." },
+        { "name": "Psychic Drain", "description": "If the aboleth has at least one creature Charmed or Grappled, it uses Consume Memories and regains 5 (1d10) Hit Points." }
+      ]
+    },
+    "lairActions": {
+      "initiativeCount": 20,
+      "actions": [
+        { "name": "Foul Water", "description": "Water sources within 1 mile of the lair are supernaturally fouled. Creatures that drink such water must succeed on a DC 15 Constitution saving throw or have the Poisoned condition for 1 hour." },
+        { "name": "Psionic Projection", "description": "The aboleth can cast Project Image, requiring no components, using Intelligence (spell save DC 16). Range is 1 mile." }
+      ]
+    },
+    "source": "mm2025",
+    "description": "In aquatic abysses, aboleths dream of dead empires and orchestrate plots that unfold across ages.",
+    "tags": ["Aberration", "Legendary", "Lair", "Aquatic", "Underdark", "Psionic"],
+    "tokenSize": { "x": 2, "y": 2 }
+  },
+  {
+    "id": "chuul",
+    "name": "Chuul",
+    "group": "Chuul",
+    "size": "Large",
+    "type": "Aberration",
+    "alignment": "Chaotic Evil",
+    "ac": 16,
+    "hp": 76,
+    "hitDice": "9d10+27",
+    "speed": { "walk": 30, "swim": 30 },
+    "abilityScores": { "str": 19, "dex": 10, "con": 16, "int": 5, "wis": 11, "cha": 5 },
+    "skills": { "Perception": 4 },
+    "damageImmunities": ["Poison"],
+    "conditionImmunities": ["Poisoned"],
+    "senses": { "darkvision": 60, "passivePerception": 14 },
+    "languages": ["Understands Deep Speech but can't speak"],
+    "cr": "4",
+    "xp": 1100,
+    "proficiencyBonus": 2,
+    "initiative": { "modifier": 0, "score": 10 },
+    "habitat": ["Coastal", "Swamp", "Underdark"],
+    "traits": [
+      { "name": "Amphibious", "description": "The chuul can breathe air and water." },
+      { "name": "Sense Magic", "description": "The chuul senses magic within 120 feet of itself. This trait otherwise works like the Detect Magic spell but isn't itself magical." }
+    ],
+    "actions": [
+      { "name": "Multiattack", "description": "The chuul makes two Pincer attacks and uses Paralyzing Tentacles.", "multiattackActions": ["Pincer", "Pincer", "Paralyzing Tentacles"] },
+      { "name": "Pincer", "description": "Melee Attack Roll: +6, reach 10 ft. Hit: 9 (1d10 + 4) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14).", "attackType": "melee", "toHit": 6, "reach": 10, "damageDice": "1d10+4", "damageType": "Bludgeoning" },
+      { "name": "Paralyzing Tentacles", "description": "Constitution Saving Throw: DC 13, one creature Grappled by the chuul. Failure: The target has the Poisoned condition (also Paralyzed while Poisoned). Repeats save at end of each turn.", "saveDC": 13, "saveAbility": "CON" }
+    ],
+    "source": "mm2025",
+    "description": "Chuuls originated in forgotten ages when aboleths ruled alien empires beneath the waves. These chitinous servants snare creatures in their massive pincers.",
+    "tags": ["Aberration", "Aquatic", "Coastal", "Swamp", "Underdark"],
+    "tokenSize": { "x": 2, "y": 2 }
+  },
+  {
+    "id": "cloaker",
+    "name": "Cloaker",
+    "group": "Cloaker",
+    "size": "Large",
+    "type": "Aberration",
+    "alignment": "Chaotic Neutral",
+    "ac": 14,
+    "hp": 91,
+    "hitDice": "14d10+14",
+    "speed": { "walk": 10, "fly": 40 },
+    "abilityScores": { "str": 17, "dex": 15, "con": 12, "int": 13, "wis": 14, "cha": 7 },
+    "skills": { "Stealth": 5 },
+    "conditionImmunities": ["Frightened"],
+    "senses": { "darkvision": 120, "passivePerception": 12 },
+    "languages": ["Deep Speech", "Undercommon"],
+    "cr": "8",
+    "xp": 3900,
+    "proficiencyBonus": 3,
+    "initiative": { "modifier": 5, "score": 15 },
+    "habitat": ["Underdark"],
+    "traits": [
+      { "name": "Light Sensitivity", "description": "While in Bright Light, the cloaker has Disadvantage on attack rolls." }
+    ],
+    "actions": [
+      { "name": "Multiattack", "description": "The cloaker makes one Attach attack and two Tail attacks.", "multiattackActions": ["Attach", "Tail", "Tail"] },
+      { "name": "Attach", "description": "Melee Attack Roll: +6, reach 5 ft. Hit: 13 (3d6 + 3) Piercing damage. If the target is Large or smaller, the cloaker attaches. While attached, the target is Blinded, and the cloaker halves damage it takes (target takes same amount).", "attackType": "melee", "toHit": 6, "reach": 5, "damageDice": "3d6+3", "damageType": "Piercing" },
+      { "name": "Tail", "description": "Melee Attack Roll: +6, reach 10 ft. Hit: 8 (1d10 + 3) Slashing damage.", "attackType": "melee", "toHit": 6, "reach": 10, "damageDice": "1d10+3", "damageType": "Slashing" }
+    ],
+    "bonusActions": [
+      { "name": "Phantasms", "description": "The cloaker casts Mirror Image, requiring no components, using Wisdom. Ends early in Bright Light." },
+      { "name": "Moan", "description": "Wisdom Saving Throw: DC 13, each creature in a 60-foot Emanation. Failure: Frightened until end of cloaker's next turn. Success: Immune for 24 hours.", "saveDC": 13, "saveAbility": "WIS" }
+    ],
+    "source": "mm2025",
+    "description": "Cloakers are mysterious Underdark predators that resemble hanging cloaks and unfurl to smother unsuspecting prey.",
+    "tags": ["Aberration", "Underdark", "Ambush"],
+    "tokenSize": { "x": 2, "y": 2 }
+  },
+  {
+    "id": "flumph",
+    "name": "Flumph",
+    "group": "Flumph",
+    "size": "Small",
+    "type": "Aberration",
+    "alignment": "Lawful Good",
+    "ac": 12,
+    "hp": 7,
+    "hitDice": "2d6",
+    "speed": { "walk": 5, "fly": 30, "hover": true },
+    "abilityScores": { "str": 6, "dex": 15, "con": 10, "int": 14, "wis": 14, "cha": 11 },
+    "skills": { "Arcana": 4, "History": 4, "Religion": 4 },
+    "vulnerabilities": ["Psychic"],
+    "senses": { "darkvision": 60, "passivePerception": 12 },
+    "languages": ["Understands Undercommon but can't speak"],
+    "telepathy": 60,
+    "cr": "1/8",
+    "xp": 25,
+    "proficiencyBonus": 2,
+    "initiative": { "modifier": 2, "score": 12 },
+    "habitat": ["Underdark"],
+    "traits": [
+      { "name": "Advanced Telepathy", "description": "The flumph perceives the content of any telepathic communication within 60 feet of it." },
+      { "name": "Prone Deficiency", "description": "If the flumph receives the Prone condition, roll a die. On an odd number, it has the Incapacitated condition. At the end of each of its turns, the flumph makes a DC 10 Dexterity saving throw, ending the Incapacitated condition on a success." },
+      { "name": "Telepathic Shroud", "description": "The flumph's thoughts can't be read by any means, and magic can't detect its location or observe it remotely." }
+    ],
+    "actions": [
+      { "name": "Tentacle", "description": "Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4 + 2) Acid damage.", "attackType": "melee", "toHit": 4, "reach": 5, "damageDice": "1d4+2", "damageType": "Acid" },
+      { "name": "Stench Spray (1/Day)", "description": "Dexterity Saving Throw: DC 10, one creature within 15 feet. Failure: Coated in foul-smelling liquid for 1d4 hours, target has Poisoned condition while stench lasts.", "saveDC": 10, "saveAbility": "DEX" }
+    ],
+    "source": "mm2025",
+    "description": "Flumphs are among the few helpful creatures in the Underdark, communicating telepathically and by changing color to reflect their moods.",
+    "tags": ["Aberration", "Underdark", "Friendly", "Psionic"],
+    "tokenSize": { "x": 1, "y": 1 }
+  },
+  {
+    "id": "gibbering-mouther",
+    "name": "Gibbering Mouther",
+    "group": "Gibbering Mouther",
+    "size": "Medium",
+    "type": "Aberration",
+    "alignment": "Chaotic Neutral",
+    "ac": 9,
+    "hp": 52,
+    "hitDice": "7d8+21",
+    "speed": { "walk": 20, "swim": 20 },
+    "abilityScores": { "str": 10, "dex": 8, "con": 16, "int": 3, "wis": 10, "cha": 6 },
+    "conditionImmunities": ["Prone"],
+    "senses": { "darkvision": 60, "passivePerception": 10 },
+    "languages": [],
+    "cr": "2",
+    "xp": 450,
+    "proficiencyBonus": 2,
+    "initiative": { "modifier": -1, "score": 9 },
+    "habitat": ["Underdark"],
+    "traits": [
+      { "name": "Aberrant Ground", "description": "The ground in a 10-foot Emanation originating from the mouther is Difficult Terrain." },
+      { "name": "Gibbering", "description": "The mouther babbles incoherently. Wisdom Saving Throw: DC 10, any creature that starts its turn within 20 feet. Failure: Roll 1d8 (1-4: does nothing; 5-6: moves randomly; 7-8: melee attacks random creature)." }
+    ],
+    "actions": [
+      { "name": "Bite", "description": "Melee Attack Roll: +2, reach 5 ft. Hit: 7 (2d6) Piercing damage. Medium or smaller target has Prone condition. Target dies if reduced to 0 HP and is absorbed.", "attackType": "melee", "toHit": 2, "reach": 5, "damageDice": "2d6", "damageType": "Piercing" },
+      { "name": "Blinding Spittle", "description": "Dexterity Saving Throw: DC 10, each creature in a 10-foot-radius Sphere within 30 feet. Failure: 7 (2d6) Radiant damage, Blinded until end of mouther's next turn.", "recharge": "5-6", "saveDC": 10, "saveAbility": "DEX", "damageDice": "2d6", "damageType": "Radiant", "areaOfEffect": { "type": "sphere", "size": 10 } }
+    ],
+    "source": "mm2025",
+    "description": "Gibbering mouthers are amorphous heaps roiling with eyes, teeth, and strange organs that exist only to feed and unleash disdain for reality.",
+    "tags": ["Aberration", "Underdark", "Amorphous"],
+    "tokenSize": { "x": 1, "y": 1 }
+  },
+  {
+    "id": "grell",
+    "name": "Grell",
+    "group": "Grell",
+    "size": "Medium",
+    "type": "Aberration",
+    "alignment": "Neutral Evil",
+    "ac": 12,
+    "hp": 55,
+    "hitDice": "10d8+10",
+    "speed": { "walk": 10, "fly": 30, "hover": true },
+    "abilityScores": { "str": 15, "dex": 14, "con": 13, "int": 12, "wis": 11, "cha": 9 },
+    "skills": { "Perception": 4, "Stealth": 6 },
+    "damageImmunities": ["Lightning"],
+    "conditionImmunities": ["Blinded", "Prone"],
+    "senses": { "blindsight": 60, "passivePerception": 14 },
+    "languages": ["Deep Speech"],
+    "cr": "3",
+    "xp": 700,
+    "proficiencyBonus": 2,
+    "initiative": { "modifier": 6, "score": 16 },
+    "habitat": ["Underdark"],
+    "traits": [
+      { "name": "Abduct", "description": "The grell needn't spend extra movement to move a creature it is grappling." }
+    ],
+    "actions": [
+      { "name": "Multiattack", "description": "The grell makes one Beak attack and one Paralyzing Tentacles attack.", "multiattackActions": ["Beak", "Paralyzing Tentacles"] },
+      { "name": "Beak", "description": "Melee Attack Roll: +4, reach 5 ft. Hit: 11 (2d8 + 2) Piercing damage.", "attackType": "melee", "toHit": 4, "reach": 5, "damageDice": "2d8+2", "damageType": "Piercing" },
+      { "name": "Paralyzing Tentacles", "description": "Melee Attack Roll: +4, reach 10 ft. Hit: 7 (1d10 + 2) Piercing damage. Medium or smaller target is Grappled (escape DC 12). Constitution Saving Throw: DC 11. Failure: Poisoned (also Paralyzed while Poisoned).", "attackType": "melee", "toHit": 4, "reach": 10, "damageDice": "1d10+2", "damageType": "Piercing", "saveDC": 11, "saveAbility": "CON" }
+    ],
+    "source": "mm2025",
+    "description": "With barbed tentacles sprouting from their brain-shaped bodies, grells hunt the lightless depths as silent predators.",
+    "tags": ["Aberration", "Underdark", "Ambush", "Flying"],
+    "tokenSize": { "x": 1, "y": 1 }
+  },
+  {
+    "id": "nothic",
+    "name": "Nothic",
+    "group": "Nothic",
+    "size": "Medium",
+    "type": "Aberration",
+    "alignment": "Neutral Evil",
+    "ac": 15,
+    "hp": 45,
+    "hitDice": "6d8+18",
+    "speed": { "walk": 30 },
+    "abilityScores": { "str": 14, "dex": 16, "con": 16, "int": 13, "wis": 10, "cha": 8 },
+    "skills": { "Arcana": 3, "Insight": 4, "Perception": 4, "Stealth": 5 },
+    "senses": { "truesight": 120, "passivePerception": 14 },
+    "languages": ["Undercommon"],
+    "cr": "2",
+    "xp": 450,
+    "proficiencyBonus": 2,
+    "initiative": { "modifier": 3, "score": 13 },
+    "habitat": ["Underdark"],
+    "actions": [
+      { "name": "Multiattack", "description": "The nothic makes two Claw attacks.", "multiattackActions": ["Claw", "Claw"] },
+      { "name": "Claw", "description": "Melee Attack Roll: +5, reach 5 ft. Hit: 8 (1d10 + 3) Slashing damage.", "attackType": "melee", "toHit": 5, "reach": 5, "damageDice": "1d10+3", "damageType": "Slashing" },
+      { "name": "Rotting Gaze", "description": "Constitution Saving Throw: DC 13, one creature within 120 feet. Failure: 17 (5d6) Necrotic damage. Success: Half damage.", "saveDC": 13, "saveAbility": "CON", "damageDice": "5d6", "damageType": "Necrotic" }
+    ],
+    "bonusActions": [
+      { "name": "Weird Insight", "description": "Wisdom Saving Throw: DC 14, one creature within 120 feet. Failure: The nothic magically learns one fact or secret about the target.", "recharge": "6", "saveDC": 14, "saveAbility": "WIS" }
+    ],
+    "source": "mm2025",
+    "description": "Nothics are cursed lore seekers transformed by forbidden knowledge, their bodies warped with a head dominated by a gigantic, unblinking eye.",
+    "tags": ["Aberration", "Underdark", "Cursed"],
+    "tokenSize": { "x": 1, "y": 1 }
+  },
+  {
+    "id": "otyugh",
+    "name": "Otyugh",
+    "group": "Otyugh",
+    "size": "Large",
+    "type": "Aberration",
+    "alignment": "Neutral",
+    "ac": 14,
+    "hp": 104,
+    "hitDice": "11d10+44",
+    "speed": { "walk": 30 },
+    "abilityScores": { "str": 16, "dex": 11, "con": 19, "int": 6, "wis": 13, "cha": 6 },
+    "savingThrows": { "con": 7 },
+    "senses": { "darkvision": 120, "passivePerception": 11 },
+    "languages": ["Otyugh"],
+    "telepathy": 120,
+    "cr": "5",
+    "xp": 1800,
+    "proficiencyBonus": 3,
+    "initiative": { "modifier": 0, "score": 10 },
+    "habitat": ["Underdark"],
+    "actions": [
+      { "name": "Multiattack", "description": "The otyugh makes one Bite attack and two Tentacle attacks.", "multiattackActions": ["Bite", "Tentacle", "Tentacle"] },
+      { "name": "Bite", "description": "Melee Attack Roll: +6, reach 5 ft. Hit: 12 (2d8 + 3) Piercing damage, and the target has the Poisoned condition. Whenever Poisoned target finishes a Long Rest: Constitution Saving Throw DC 15. Failure: HP maximum decreases by 5 (1d10). Success: Poisoned condition ends.", "attackType": "melee", "toHit": 6, "reach": 5, "damageDice": "2d8+3", "damageType": "Piercing", "saveDC": 15, "saveAbility": "CON" },
+      { "name": "Tentacle", "description": "Melee Attack Roll: +6, reach 10 ft. Hit: 12 (2d8 + 3) Piercing damage. Medium or smaller target is Grappled (escape DC 13).", "attackType": "melee", "toHit": 6, "reach": 10, "damageDice": "2d8+3", "damageType": "Piercing" },
+      { "name": "Tentacle Slam", "description": "Constitution Saving Throw: DC 14, each creature Grappled by the otyugh. Failure: 16 (3d8 + 3) Bludgeoning damage, Stunned until start of otyugh's next turn. Success: Half damage only.", "saveDC": 14, "saveAbility": "CON", "damageDice": "3d8+3", "damageType": "Bludgeoning" }
+    ],
+    "source": "mm2025",
+    "description": "Otyughs live to eat — the more disgusting the meal, the better. They devour garbage, carcasses, and anything else their tentacles can reach.",
+    "tags": ["Aberration", "Underdark", "Sewer"],
+    "tokenSize": { "x": 2, "y": 2 }
+  }
+]

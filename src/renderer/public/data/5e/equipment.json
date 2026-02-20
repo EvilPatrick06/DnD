@@ -8,6 +8,7 @@
       "weight": 2,
       "properties": ["Light"],
       "cost": "1 sp",
+      "mastery": "Slow",
       "description": "A simple bludgeon, light enough to wield in the off hand."
     },
     {
@@ -18,6 +19,7 @@
       "weight": 1,
       "properties": ["Finesse", "Light", "Thrown (20/60)"],
       "cost": "2 gp",
+      "mastery": "Nick",
       "description": "A versatile short blade usable with Strength or Dexterity, throwable at range."
     },
     {
@@ -26,8 +28,9 @@
       "damage": "1d8",
       "damageType": "bludgeoning",
       "weight": 10,
-      "properties": ["Two-handed"],
+      "properties": ["Two-Handed"],
       "cost": "2 sp",
+      "mastery": "Push",
       "description": "A heavy two-handed wooden club dealing significant bludgeoning damage."
     },
     {
@@ -38,6 +41,7 @@
       "weight": 2,
       "properties": ["Light", "Thrown (20/60)"],
       "cost": "5 gp",
+      "mastery": "Vex",
       "description": "A light axe suitable for melee or throwing, usable in the off hand."
     },
     {
@@ -48,6 +52,7 @@
       "weight": 2,
       "properties": ["Thrown (30/120)"],
       "cost": "5 sp",
+      "mastery": "Slow",
       "description": "A light throwing spear with good range."
     },
     {
@@ -58,6 +63,7 @@
       "weight": 2,
       "properties": ["Light", "Thrown (20/60)"],
       "cost": "2 gp",
+      "mastery": "Nick",
       "description": "A small hammer usable in melee or thrown, suitable for off-hand use."
     },
     {
@@ -68,6 +74,7 @@
       "weight": 4,
       "properties": [],
       "cost": "5 gp",
+      "mastery": "Sap",
       "description": "A standard one-handed bludgeon favored by clerics."
     },
     {
@@ -78,6 +85,7 @@
       "weight": 4,
       "properties": ["Versatile (1d8)"],
       "cost": "2 sp",
+      "mastery": "Topple",
       "description": "A versatile wooden staff; deals 1d8 when wielded two-handed."
     },
     {
@@ -88,6 +96,7 @@
       "weight": 2,
       "properties": ["Light"],
       "cost": "1 gp",
+      "mastery": "Nick",
       "description": "A curved blade for harvesting, light enough for off-hand use."
     },
     {
@@ -98,6 +107,7 @@
       "weight": 3,
       "properties": ["Thrown (20/60)", "Versatile (1d8)"],
       "cost": "1 gp",
+      "mastery": "Sap",
       "description": "A throwable polearm; deals 1d8 when wielded two-handed."
     },
     {
@@ -106,8 +116,9 @@
       "damage": "1d8",
       "damageType": "piercing",
       "weight": 5,
-      "properties": ["Ammunition (80/320)", "Loading", "Two-handed"],
+      "properties": ["Ammunition (80/320; Bolt)", "Loading", "Two-Handed"],
       "cost": "25 gp",
+      "mastery": "Slow",
       "description": "A two-handed crossbow requiring an action to reload. Good range and damage."
     },
     {
@@ -118,6 +129,7 @@
       "weight": 0.25,
       "properties": ["Finesse", "Thrown (20/60)"],
       "cost": "5 cp",
+      "mastery": "Vex",
       "description": "A small thrown projectile usable with Strength or Dexterity."
     },
     {
@@ -126,8 +138,9 @@
       "damage": "1d6",
       "damageType": "piercing",
       "weight": 2,
-      "properties": ["Ammunition (80/320)", "Two-handed"],
+      "properties": ["Ammunition (80/320; Arrow)", "Two-Handed"],
       "cost": "25 gp",
+      "mastery": "Vex",
       "description": "A two-handed bow with moderate range, no loading required."
     },
     {
@@ -136,8 +149,9 @@
       "damage": "1d4",
       "damageType": "bludgeoning",
       "weight": 0,
-      "properties": ["Ammunition (30/120)"],
+      "properties": ["Ammunition (30/120; Bullet)"],
       "cost": "1 sp",
+      "mastery": "Slow",
       "description": "A simple ranged weapon using stones or sling bullets as ammunition."
     },
     {
@@ -148,6 +162,7 @@
       "weight": 4,
       "properties": ["Versatile (1d10)"],
       "cost": "10 gp",
+      "mastery": "Topple",
       "description": "A sturdy axe; deals 1d10 when wielded two-handed."
     },
     {
@@ -158,6 +173,7 @@
       "weight": 2,
       "properties": [],
       "cost": "10 gp",
+      "mastery": "Sap",
       "description": "A spiked ball on a chain, effective against shields."
     },
     {
@@ -166,9 +182,10 @@
       "damage": "1d10",
       "damageType": "slashing",
       "weight": 6,
-      "properties": ["Heavy", "Reach", "Two-handed"],
+      "properties": ["Heavy", "Reach", "Two-Handed"],
       "cost": "20 gp",
-      "description": "A heavy polearm with 10-foot reach. Small creatures have disadvantage."
+      "mastery": "Graze",
+      "description": "A heavy polearm with 10-foot reach. Requires Strength 13 or attacks have Disadvantage."
     },
     {
       "name": "Greataxe",
@@ -176,8 +193,9 @@
       "damage": "1d12",
       "damageType": "slashing",
       "weight": 7,
-      "properties": ["Heavy", "Two-handed"],
+      "properties": ["Heavy", "Two-Handed"],
       "cost": "30 gp",
+      "mastery": "Cleave",
       "description": "A massive two-handed axe dealing the highest single-die damage."
     },
     {
@@ -186,8 +204,9 @@
       "damage": "2d6",
       "damageType": "slashing",
       "weight": 6,
-      "properties": ["Heavy", "Two-handed"],
+      "properties": ["Heavy", "Two-Handed"],
       "cost": "50 gp",
+      "mastery": "Graze",
       "description": "A large two-handed sword with the highest average damage among martial weapons."
     },
     {
@@ -196,19 +215,21 @@
       "damage": "1d10",
       "damageType": "slashing",
       "weight": 6,
-      "properties": ["Heavy", "Reach", "Two-handed"],
+      "properties": ["Heavy", "Reach", "Two-Handed"],
       "cost": "20 gp",
+      "mastery": "Cleave",
       "description": "An axe-bladed polearm with 10-foot reach."
     },
     {
       "name": "Lance",
       "category": "Martial Melee",
-      "damage": "1d12",
+      "damage": "1d10",
       "damageType": "piercing",
       "weight": 6,
-      "properties": ["Reach", "Special"],
+      "properties": ["Heavy", "Reach", "Two-Handed (unless mounted)"],
       "cost": "10 gp",
-      "description": "A mounted weapon with 10-foot reach. Disadvantage against adjacent targets. One-handed while mounted."
+      "mastery": "Topple",
+      "description": "A long weapon with 10-foot reach. Requires two hands unless you are mounted."
     },
     {
       "name": "Longsword",
@@ -218,6 +239,7 @@
       "weight": 3,
       "properties": ["Versatile (1d10)"],
       "cost": "15 gp",
+      "mastery": "Sap",
       "description": "A standard martial sword; deals 1d10 when wielded two-handed."
     },
     {
@@ -226,8 +248,9 @@
       "damage": "2d6",
       "damageType": "bludgeoning",
       "weight": 10,
-      "properties": ["Heavy", "Two-handed"],
+      "properties": ["Heavy", "Two-Handed"],
       "cost": "10 gp",
+      "mastery": "Topple",
       "description": "A massive two-handed hammer with high average bludgeoning damage."
     },
     {
@@ -238,6 +261,7 @@
       "weight": 4,
       "properties": [],
       "cost": "15 gp",
+      "mastery": "Sap",
       "description": "A spiked mace dealing piercing damage, no special properties."
     },
     {
@@ -246,8 +270,9 @@
       "damage": "1d10",
       "damageType": "piercing",
       "weight": 18,
-      "properties": ["Heavy", "Reach", "Two-handed"],
+      "properties": ["Heavy", "Reach", "Two-Handed"],
       "cost": "5 gp",
+      "mastery": "Push",
       "description": "A long, heavy spear with 10-foot reach."
     },
     {
@@ -258,6 +283,7 @@
       "weight": 2,
       "properties": ["Finesse"],
       "cost": "25 gp",
+      "mastery": "Vex",
       "description": "The best one-handed finesse weapon, usable with Strength or Dexterity."
     },
     {
@@ -268,6 +294,7 @@
       "weight": 3,
       "properties": ["Finesse", "Light"],
       "cost": "25 gp",
+      "mastery": "Nick",
       "description": "A curved finesse blade, light enough for dual wielding."
     },
     {
@@ -278,17 +305,19 @@
       "weight": 2,
       "properties": ["Finesse", "Light"],
       "cost": "10 gp",
+      "mastery": "Vex",
       "description": "A light finesse blade ideal for dual wielding with piercing damage."
     },
     {
       "name": "Trident",
       "category": "Martial Melee",
-      "damage": "1d6",
+      "damage": "1d8",
       "damageType": "piercing",
       "weight": 4,
-      "properties": ["Thrown (20/60)", "Versatile (1d8)"],
+      "properties": ["Thrown (20/60)", "Versatile (1d10)"],
       "cost": "5 gp",
-      "description": "A three-pronged spear that can be thrown; deals 1d8 two-handed."
+      "mastery": "Topple",
+      "description": "A three-pronged spear that can be thrown; deals 1d10 two-handed."
     },
     {
       "name": "War pick",
@@ -296,18 +325,20 @@
       "damage": "1d8",
       "damageType": "piercing",
       "weight": 2,
-      "properties": [],
+      "properties": ["Versatile (1d10)"],
       "cost": "5 gp",
-      "description": "A military pick for piercing armor, no special properties."
+      "mastery": "Sap",
+      "description": "A military pick for piercing armor; deals 1d10 when wielded two-handed."
     },
     {
       "name": "Warhammer",
       "category": "Martial Melee",
       "damage": "1d8",
       "damageType": "bludgeoning",
-      "weight": 2,
+      "weight": 5,
       "properties": ["Versatile (1d10)"],
       "cost": "15 gp",
+      "mastery": "Push",
       "description": "A martial hammer; deals 1d10 when wielded two-handed."
     },
     {
@@ -318,6 +349,7 @@
       "weight": 3,
       "properties": ["Finesse", "Reach"],
       "cost": "2 gp",
+      "mastery": "Slow",
       "description": "A finesse weapon with 10-foot reach but low damage."
     },
     {
@@ -326,8 +358,9 @@
       "damage": "1",
       "damageType": "piercing",
       "weight": 1,
-      "properties": ["Ammunition (25/100)", "Loading"],
+      "properties": ["Ammunition (25/100; Needle)", "Loading"],
       "cost": "10 gp",
+      "mastery": "Vex",
       "description": "A tube for shooting needles, often used with poison. Minimal damage."
     },
     {
@@ -336,8 +369,9 @@
       "damage": "1d6",
       "damageType": "piercing",
       "weight": 3,
-      "properties": ["Ammunition (30/120)", "Light", "Loading"],
+      "properties": ["Ammunition (30/120; Bolt)", "Light", "Loading"],
       "cost": "75 gp",
+      "mastery": "Vex",
       "description": "A one-handed crossbow, light enough for dual wielding. Requires loading."
     },
     {
@@ -346,8 +380,9 @@
       "damage": "1d10",
       "damageType": "piercing",
       "weight": 18,
-      "properties": ["Ammunition (100/400)", "Heavy", "Loading", "Two-handed"],
+      "properties": ["Ammunition (100/400; Bolt)", "Heavy", "Loading", "Two-Handed"],
       "cost": "50 gp",
+      "mastery": "Push",
       "description": "A powerful two-handed crossbow with excellent range and high damage. Requires loading."
     },
     {
@@ -356,19 +391,32 @@
       "damage": "1d8",
       "damageType": "piercing",
       "weight": 2,
-      "properties": ["Ammunition (150/600)", "Heavy", "Two-handed"],
+      "properties": ["Ammunition (150/600; Arrow)", "Heavy", "Two-Handed"],
       "cost": "50 gp",
-      "description": "A large two-handed bow with the longest range of any weapon. Small creatures have disadvantage."
+      "mastery": "Slow",
+      "description": "A large two-handed bow with the longest range of any weapon. Requires Strength 13 or attacks have Disadvantage."
     },
     {
-      "name": "Net",
+      "name": "Musket",
       "category": "Martial Ranged",
-      "damage": "0",
-      "damageType": "none",
+      "damage": "1d12",
+      "damageType": "piercing",
+      "weight": 10,
+      "properties": ["Ammunition (40/120; Bullet)", "Loading", "Two-Handed"],
+      "cost": "500 gp",
+      "mastery": "Slow",
+      "description": "A long-barreled firearm with devastating stopping power at medium range. Requires loading after each shot."
+    },
+    {
+      "name": "Pistol",
+      "category": "Martial Ranged",
+      "damage": "1d10",
+      "damageType": "piercing",
       "weight": 3,
-      "properties": ["Special", "Thrown (5/15)"],
-      "cost": "1 gp",
-      "description": "Restrains a Large or smaller creature on hit. Deals no damage. Target can escape with DC 10 Strength check or by dealing 5 slashing damage to the net (AC 10)."
+      "properties": ["Ammunition (30/90; Bullet)", "Loading"],
+      "cost": "250 gp",
+      "mastery": "Vex",
+      "description": "A one-handed firearm with solid damage at short range. Requires loading after each shot."
     }
   ],
   "armor": [
@@ -521,11 +569,25 @@
   ],
   "gear": [
     {
-      "name": "Abacus",
+      "name": "Acid",
       "category": "Adventuring Gear",
-      "weight": 2,
-      "cost": "2 gp",
-      "description": "A standard calculating tool."
+      "weight": 1,
+      "cost": "25 gp",
+      "description": "As a Bonus Action, you can splash the contents onto a creature within 5 feet or throw the vial up to 20 feet, shattering on impact. Make a ranged attack against a creature or object, treating the acid as a Simple weapon. On a hit, the target takes 2d6 Acid damage."
+    },
+    {
+      "name": "Alchemist's Fire",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "50 gp",
+      "description": "As a Bonus Action, you can throw this flask up to 20 feet, shattering on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as a Simple weapon. On a hit, the target takes 1d4 Fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames."
+    },
+    {
+      "name": "Antitoxin",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "50 gp",
+      "description": "As a Bonus Action, you can drink this or administer it to a creature within 5 feet. The drinker has Advantage on saving throws against being Poisoned for 1 hour."
     },
     {
       "name": "Backpack",
@@ -533,6 +595,27 @@
       "weight": 5,
       "cost": "2 gp",
       "description": "Holds up to 30 pounds of gear, not exceeding 1 cubic foot."
+    },
+    {
+      "name": "Ball Bearings",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "1 gp",
+      "description": "As a Utilize action, you can spill ball bearings from their pouch to cover a level, 5-foot-square area. A creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or have the Prone condition. Moving at half speed avoids the save."
+    },
+    {
+      "name": "Barrel",
+      "category": "Adventuring Gear",
+      "weight": 70,
+      "cost": "2 gp",
+      "description": "A cylindrical container that holds up to 40 gallons of liquid or 4 cubic feet of dry goods."
+    },
+    {
+      "name": "Basket",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "4 sp",
+      "description": "A wicker container that holds up to 40 pounds or 2 cubic feet of goods."
     },
     {
       "name": "Bedroll",
@@ -556,32 +639,74 @@
       "description": "A heavy woolen blanket."
     },
     {
-      "name": "Caltrops (bag of 20)",
+      "name": "Block and Tackle",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "1 gp",
+      "description": "A set of pulleys with a cable threaded through them. You can use it to hoist up to four times the weight you can normally lift."
+    },
+    {
+      "name": "Book",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "25 gp",
+      "description": "A book might contain poetry, historical accounts, information pertaining to a particular field of lore, diagrams and notes on gnomish contraptions, or just about anything else."
+    },
+    {
+      "name": "Bottle, Glass",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "2 gp",
+      "description": "A glass bottle that holds up to 1.5 pints of liquid."
+    },
+    {
+      "name": "Bucket",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "5 cp",
+      "description": "A cylindrical container that holds up to 3 gallons of liquid or half a cubic foot of dry goods."
+    },
+    {
+      "name": "Caltrops",
       "category": "Adventuring Gear",
       "weight": 2,
       "cost": "1 gp",
-      "description": "Scattered on ground to slow pursuers. Creatures entering the area must succeed on DC 15 Dexterity save or take 1 piercing damage and stop moving."
+      "description": "As a Utilize action, you can spread caltrops to cover a 5-foot-square area. Any creature that enters the area must succeed on a DC 15 Dexterity saving throw or take 1 Piercing damage and have its Speed reduced to 0 until the start of its next turn."
     },
     {
       "name": "Candle",
       "category": "Adventuring Gear",
       "weight": 0,
       "cost": "1 cp",
-      "description": "Sheds bright light in a 5-foot radius and dim light for an additional 5 feet for 1 hour."
+      "description": "Sheds Bright Light in a 5-foot radius and Dim Light for an additional 5 feet for 1 hour."
+    },
+    {
+      "name": "Case, Crossbow Bolt",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 gp",
+      "description": "This wooden case holds up to 20 crossbow bolts."
+    },
+    {
+      "name": "Case, Map or Scroll",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "1 gp",
+      "description": "This cylindrical leather case holds up to 10 rolled-up sheets of paper or 5 rolled-up sheets of parchment."
     },
     {
       "name": "Chain (10 feet)",
       "category": "Adventuring Gear",
       "weight": 10,
       "cost": "5 gp",
-      "description": "Has 10 hit points. Can be burst with a DC 20 Strength check."
+      "description": "Has 10 Hit Points. Can be burst with a DC 20 Strength (Athletics) check."
     },
     {
-      "name": "Chalk (1 piece)",
+      "name": "Chest",
       "category": "Adventuring Gear",
-      "weight": 0,
-      "cost": "1 cp",
-      "description": "A stick of chalk for marking surfaces."
+      "weight": 25,
+      "cost": "5 gp",
+      "description": "Holds up to 12 cubic feet or 300 pounds of gear."
     },
     {
       "name": "Climber's kit",
@@ -591,6 +716,20 @@
       "description": "Includes pitons, boot tips, gloves, and a harness. Lets you anchor yourself when climbing."
     },
     {
+      "name": "Clothes, Fine",
+      "category": "Adventuring Gear",
+      "weight": 6,
+      "cost": "15 gp",
+      "description": "A set of fine clothes suitable for high society."
+    },
+    {
+      "name": "Clothes, Traveler's",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "2 gp",
+      "description": "Sturdy clothing suitable for long journeys."
+    },
+    {
       "name": "Component pouch",
       "category": "Adventuring Gear",
       "weight": 2,
@@ -598,11 +737,18 @@
       "description": "A small leather belt pouch with compartments for material components and other special items for spellcasting."
     },
     {
+      "name": "Costume",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "5 gp",
+      "description": "A set of clothes and accessories for use in disguise or performance."
+    },
+    {
       "name": "Crowbar",
       "category": "Adventuring Gear",
       "weight": 5,
       "cost": "2 gp",
-      "description": "Grants advantage on Strength checks where leverage can be applied."
+      "description": "Grants Advantage on Strength checks where leverage can be applied."
     },
     {
       "name": "Flask",
@@ -619,32 +765,46 @@
       "description": "An iron hook used with rope for climbing."
     },
     {
-      "name": "Hammer",
-      "category": "Adventuring Gear",
-      "weight": 3,
-      "cost": "1 gp",
-      "description": "A standard hammer, useful for driving pitons."
-    },
-    {
       "name": "Healer's kit",
       "category": "Adventuring Gear",
       "weight": 3,
       "cost": "5 gp",
-      "description": "10 uses. Stabilize a dying creature without a Wisdom (Medicine) check."
+      "description": "10 uses. As a Utilize action, you can expend one use to stabilize a creature that has 0 Hit Points without needing to make a Wisdom (Medicine) check."
     },
     {
-      "name": "Holy symbol",
+      "name": "Holy symbol (amulet)",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "5 gp",
+      "description": "A holy amulet worn around the neck, used as a spellcasting focus for divine casters."
+    },
+    {
+      "name": "Holy symbol (emblem)",
       "category": "Adventuring Gear",
       "weight": 0,
       "cost": "5 gp",
-      "description": "A representation of a god or pantheon, used as a spellcasting focus for divine casters."
+      "description": "A holy emblem depicted on a shield or tabard, used as a spellcasting focus for divine casters."
     },
     {
-      "name": "Hourglass",
+      "name": "Holy symbol (reliquary)",
+      "category": "Adventuring Gear",
+      "weight": 2,
+      "cost": "5 gp",
+      "description": "A small box containing a sacred relic, used as a spellcasting focus for divine casters."
+    },
+    {
+      "name": "Holy Water",
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "25 gp",
-      "description": "Measures the passage of time in increments."
+      "description": "As a Bonus Action, you can splash the contents onto a creature within 5 feet or throw the flask up to 20 feet, shattering on impact. Make a ranged attack treating it as a Simple weapon. On a hit, an Undead or Fiend takes 2d8 Radiant damage."
+    },
+    {
+      "name": "Hunting Trap",
+      "category": "Adventuring Gear",
+      "weight": 25,
+      "cost": "5 gp",
+      "description": "As a Utilize action, you can set this trap, which is affixed by a heavy chain to an immobile object. A creature that steps on the trap must succeed on a DC 13 Dexterity saving throw or take 1d4 Piercing damage and have its Speed reduced to 0 until the creature breaks free. A creature can break free with a DC 13 Strength (Athletics) check."
     },
     {
       "name": "Ink (1 ounce bottle)",
@@ -661,18 +821,39 @@
       "description": "A pen for writing with ink."
     },
     {
+      "name": "Jug",
+      "category": "Adventuring Gear",
+      "weight": 4,
+      "cost": "2 cp",
+      "description": "A ceramic or metal jug that holds up to 1 gallon of liquid."
+    },
+    {
+      "name": "Ladder",
+      "category": "Adventuring Gear",
+      "weight": 25,
+      "cost": "1 sp",
+      "description": "A 10-foot wooden ladder."
+    },
+    {
+      "name": "Lamp",
+      "category": "Adventuring Gear",
+      "weight": 1,
+      "cost": "5 sp",
+      "description": "Casts Bright Light in a 15-foot radius and Dim Light for an additional 30 feet. Burns for 6 hours on a flask of oil."
+    },
+    {
       "name": "Lantern, bullseye",
       "category": "Adventuring Gear",
       "weight": 2,
       "cost": "10 gp",
-      "description": "Casts bright light in a 60-foot cone and dim light for an additional 60 feet. Burns for 6 hours on a flask of oil."
+      "description": "Casts Bright Light in a 60-foot cone and Dim Light for an additional 60 feet. Burns for 6 hours on a flask of oil."
     },
     {
       "name": "Lantern, hooded",
       "category": "Adventuring Gear",
       "weight": 2,
       "cost": "5 gp",
-      "description": "Casts bright light in a 30-foot radius and dim light for an additional 30 feet. Burns for 6 hours on a flask of oil."
+      "description": "Casts Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Burns for 6 hours on a flask of oil."
     },
     {
       "name": "Lock",
@@ -682,18 +863,25 @@
       "description": "A basic lock with a key. DC 15 Dexterity check with thieves' tools to pick."
     },
     {
+      "name": "Magnifying Glass",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "100 gp",
+      "description": "Grants Advantage on any ability check made to appraise or inspect a highly detailed item. Can also be used to start fires by focusing sunlight."
+    },
+    {
       "name": "Manacles",
       "category": "Adventuring Gear",
       "weight": 6,
       "cost": "2 gp",
-      "description": "Bind a creature. DC 20 Strength check or DC 15 Dexterity check with thieves' tools to escape."
+      "description": "Bind a creature. DC 20 Strength (Athletics) check or DC 15 Dexterity check with thieves' tools to escape."
     },
     {
-      "name": "Mess kit",
+      "name": "Map",
       "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "2 sp",
-      "description": "A tin box containing a cup and simple cutlery. The box clamps together and can be used as a cooking pan."
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A map of a region, city, or dungeon. Useful for navigation and exploration."
     },
     {
       "name": "Mirror, steel",
@@ -703,11 +891,18 @@
       "description": "A small steel mirror for personal use or looking around corners."
     },
     {
+      "name": "Net",
+      "category": "Adventuring Gear",
+      "weight": 3,
+      "cost": "1 gp",
+      "description": "As a Utilize action, you can throw this at a Large or smaller creature within 15 feet. Make a ranged attack treating the net as a Simple weapon. On a hit, the target has the Restrained condition until it escapes. A creature can use its action to make a DC 10 Strength (Athletics) check, freeing itself or another creature within its reach on a success. Dealing 5 Slashing damage to the net (AC 10) also frees the creature without harming it."
+    },
+    {
       "name": "Oil (flask)",
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "1 sp",
-      "description": "Burns for 2 rounds if lit and thrown (5-foot splash, 5 fire damage). Fuels lanterns for 6 hours."
+      "description": "You can douse a creature, object, or a 5-foot-square area with the oil. If lit, the oil burns for 2 rounds and deals 5 Fire damage to any creature that enters the area or ends its turn there. You can also pour oil on the ground to cover a 5-foot-square area, provided the surface is level. Oil can be used as fuel for a Lamp or Lantern, burning for 6 hours."
     },
     {
       "name": "Paper (one sheet)",
@@ -717,18 +912,46 @@
       "description": "A single sheet of paper."
     },
     {
-      "name": "Piton",
+      "name": "Parchment",
       "category": "Adventuring Gear",
-      "weight": 0.25,
+      "weight": 0,
+      "cost": "1 sp",
+      "description": "A sheet of parchment made from animal hide, suitable for writing."
+    },
+    {
+      "name": "Perfume",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "5 gp",
+      "description": "A vial of fine perfume."
+    },
+    {
+      "name": "Poison, Basic",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "100 gp",
+      "description": "As a Bonus Action, you can apply this poison to a weapon or piece of ammunition. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 Poison damage. Once applied, the poison retains potency for 1 minute or until the weapon hits."
+    },
+    {
+      "name": "Pole",
+      "category": "Adventuring Gear",
+      "weight": 7,
       "cost": "5 cp",
-      "description": "An iron spike for anchoring rope when climbing."
+      "description": "A 10-foot wooden pole useful for probing, vaulting, or triggering traps from a distance."
+    },
+    {
+      "name": "Pot, Iron",
+      "category": "Adventuring Gear",
+      "weight": 10,
+      "cost": "2 gp",
+      "description": "An iron cooking pot that holds up to 1 gallon of liquid."
     },
     {
       "name": "Potion of healing",
       "category": "Adventuring Gear",
       "weight": 0.5,
       "cost": "50 gp",
-      "description": "Regain 2d4 + 2 hit points when you drink this potion."
+      "description": "As a Bonus Action, you can drink this potion or administer it to a creature within 5 feet. The drinker regains 2d4 + 2 Hit Points."
     },
     {
       "name": "Pouch",
@@ -745,6 +968,13 @@
       "description": "Holds up to 20 arrows."
     },
     {
+      "name": "Ram, Portable",
+      "category": "Adventuring Gear",
+      "weight": 35,
+      "cost": "4 gp",
+      "description": "Grants a +4 bonus to Strength checks made to break down doors. One other character can help, giving Advantage on the check."
+    },
+    {
       "name": "Rations (1 day)",
       "category": "Adventuring Gear",
       "weight": 2,
@@ -752,18 +982,18 @@
       "description": "Dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
     },
     {
-      "name": "Rope, hempen (50 feet)",
+      "name": "Robe",
       "category": "Adventuring Gear",
-      "weight": 10,
+      "weight": 4,
       "cost": "1 gp",
-      "description": "Has 2 hit points. Can be burst with a DC 17 Strength check."
+      "description": "A loose-fitting garment often worn by spellcasters."
     },
     {
-      "name": "Rope, silk (50 feet)",
+      "name": "Rope",
       "category": "Adventuring Gear",
       "weight": 5,
-      "cost": "10 gp",
-      "description": "Has 2 hit points. Can be burst with a DC 17 Strength check. Lighter and finer than hempen rope."
+      "cost": "1 gp",
+      "description": "50 feet of rope. Has 2 Hit Points. Can be burst with a DC 17 Strength (Athletics) check."
     },
     {
       "name": "Sack",
@@ -771,13 +1001,6 @@
       "weight": 0.5,
       "cost": "1 cp",
       "description": "A cloth sack holding up to 30 pounds or 1 cubic foot."
-    },
-    {
-      "name": "Sealing wax",
-      "category": "Adventuring Gear",
-      "weight": 0,
-      "cost": "5 sp",
-      "description": "Wax used to seal letters and documents."
     },
     {
       "name": "Shovel",
@@ -794,11 +1017,25 @@
       "description": "A small whistle for signaling."
     },
     {
-      "name": "Spellbook",
+      "name": "Spell Scroll (Cantrip)",
       "category": "Adventuring Gear",
-      "weight": 3,
+      "weight": 0,
+      "cost": "30 gp",
+      "description": "A spell scroll bearing a cantrip. Any creature that can read the language of the scroll can use an action to read the scroll and cast the spell. The scroll is then consumed."
+    },
+    {
+      "name": "Spell Scroll (Level 1)",
+      "category": "Adventuring Gear",
+      "weight": 0,
       "cost": "50 gp",
-      "description": "Essential for wizards. 100 blank vellum pages suitable for recording spells."
+      "description": "A spell scroll bearing a 1st-level spell. If the spell is on your spell list, you can use an action to read the scroll and cast the spell. If not, the scroll is unintelligible. The scroll is consumed after use."
+    },
+    {
+      "name": "Spikes, Iron",
+      "category": "Adventuring Gear",
+      "weight": 5,
+      "cost": "1 gp",
+      "description": "A set of 10 iron spikes. Can be used to wedge doors, anchor ropes, or as climbing aids."
     },
     {
       "name": "Spyglass",
@@ -806,6 +1043,13 @@
       "weight": 1,
       "cost": "1000 gp",
       "description": "Objects viewed through the spyglass are magnified to twice their size."
+    },
+    {
+      "name": "String",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "1 sp",
+      "description": "10 feet of string. Useful for tying things together or setting tripwires."
     },
     {
       "name": "Tent, two-person",
@@ -819,14 +1063,14 @@
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "5 sp",
-      "description": "Lights a torch or anything else with exposed fuel as an action. Lighting any other fire takes 1 minute."
+      "description": "Lighting a Candle, Lamp, Lantern, or Torch takes a Bonus Action. Lighting any other fire takes 1 minute."
     },
     {
       "name": "Torch",
       "category": "Adventuring Gear",
       "weight": 1,
       "cost": "1 cp",
-      "description": "Burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. Deals 1 fire damage if used as an improvised weapon."
+      "description": "Burns for 1 hour. Bright Light 20-foot radius, Dim Light additional 20 feet. On a hit as a Simple Melee weapon, deals 1 Fire damage."
     },
     {
       "name": "Vial",
@@ -843,11 +1087,11 @@
       "description": "Holds up to 4 pints of liquid. Full weight listed; empty weighs 0 pounds."
     },
     {
-      "name": "Whetstone",
+      "name": "Arcane focus",
       "category": "Adventuring Gear",
       "weight": 1,
-      "cost": "1 cp",
-      "description": "A small stone used for sharpening blades."
+      "cost": "10 gp",
+      "description": "An arcane focus is a special item — an orb, a crystal, a rod, a specially constructed staff, or a wand — designed to channel the power of arcane spells. A spellcaster can use it as a spellcasting focus, as described in the Spellcasting section of their class description. Variants: Crystal (10 gp, 1 lb), Orb (20 gp, 3 lb), Rod (10 gp, 2 lb), Staff (5 gp, 4 lb), Wand (10 gp, 1 lb)."
     },
     {
       "name": "Arcane focus (crystal)",
@@ -892,13 +1136,6 @@
       "description": "A sprig of mistletoe used as a spellcasting focus for druids."
     },
     {
-      "name": "Druidic focus (totem)",
-      "category": "Adventuring Gear",
-      "weight": 0,
-      "cost": "1 gp",
-      "description": "A carved totem used as a spellcasting focus for druids."
-    },
-    {
       "name": "Druidic focus (wooden staff)",
       "category": "Adventuring Gear",
       "weight": 4,
@@ -939,6 +1176,764 @@
       "weight": 1,
       "cost": "1 gp",
       "description": "Thin needles for a blowgun."
+    },
+    {
+      "name": "Firearm Bullets (10)",
+      "category": "Ammunition",
+      "weight": 2,
+      "cost": "3 gp",
+      "description": "Lead bullets for a musket or pistol."
+    },
+    {
+      "name": "Alchemist's Supplies",
+      "category": "Tool",
+      "weight": 8,
+      "cost": "50 gp",
+      "description": "Artisan's tools for creating alchemical substances such as acid, alchemist's fire, antitoxin, oil, perfume, and soap.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Brewer's Supplies",
+      "category": "Tool",
+      "weight": 9,
+      "cost": "20 gp",
+      "description": "Artisan's tools for brewing ales, ciders, meads, and other beverages.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Calligrapher's Supplies",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "10 gp",
+      "description": "Artisan's tools for fine lettering, document creation, and forgery detection.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Carpenter's Tools",
+      "category": "Tool",
+      "weight": 6,
+      "cost": "8 gp",
+      "description": "Artisan's tools for constructing and repairing wooden structures and objects.",
+      "ability": "Strength"
+    },
+    {
+      "name": "Cartographer's Tools",
+      "category": "Tool",
+      "weight": 6,
+      "cost": "15 gp",
+      "description": "Artisan's tools for creating and interpreting maps. Includes quills, ink, parchment, compasses, calipers, and a ruler.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Cobbler's Tools",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "5 gp",
+      "description": "Artisan's tools for making and repairing shoes and boots.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Cook's Utensils",
+      "category": "Tool",
+      "weight": 8,
+      "cost": "1 gp",
+      "description": "Artisan's tools for preparing food, including pots, knives, forks, a cutting board, and a stirring spoon.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Glassblower's Tools",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "30 gp",
+      "description": "Artisan's tools for shaping molten glass into bottles, vials, magnifying glasses, and other glass items.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Jeweler's Tools",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "25 gp",
+      "description": "Artisan's tools for cutting gems, setting stones, and crafting jewelry and holy symbols.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Leatherworker's Tools",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "5 gp",
+      "description": "Artisan's tools for working with leather to create armor, pouches, waterskins, and other leather goods.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Mason's Tools",
+      "category": "Tool",
+      "weight": 8,
+      "cost": "10 gp",
+      "description": "Artisan's tools for cutting and shaping stone for construction and masonry work.",
+      "ability": "Strength"
+    },
+    {
+      "name": "Painter's Supplies",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "10 gp",
+      "description": "Artisan's tools for painting portraits, landscapes, and decorative art.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Potter's Tools",
+      "category": "Tool",
+      "weight": 3,
+      "cost": "10 gp",
+      "description": "Artisan's tools for shaping clay into pots, jugs, lamps, and other ceramic items.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Smith's Tools",
+      "category": "Tool",
+      "weight": 8,
+      "cost": "20 gp",
+      "description": "Artisan's tools for working metal to create weapons, armor, chains, and other metal goods.",
+      "ability": "Strength"
+    },
+    {
+      "name": "Tinker's Tools",
+      "category": "Tool",
+      "weight": 10,
+      "cost": "50 gp",
+      "description": "Artisan's tools for repairing everyday objects and creating small mechanical devices, locks, and traps.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Weaver's Tools",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "1 gp",
+      "description": "Artisan's tools for weaving cloth, rope, nets, and other textile goods.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Woodcarver's Tools",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "1 gp",
+      "description": "Artisan's tools for carving wood into weapons, arcane focuses, arrows, and other wooden items.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Disguise Kit",
+      "category": "Tool",
+      "weight": 3,
+      "cost": "25 gp",
+      "description": "A pouch of cosmetics, hair dye, small props, and a few pieces of clothing. Proficiency lets you add your proficiency bonus to any ability check you make to create a visual disguise.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Forgery Kit",
+      "category": "Tool",
+      "weight": 5,
+      "cost": "15 gp",
+      "description": "A kit for forging documents. Includes papers, inks, quills, seals, and wax. Proficiency lets you add your proficiency bonus to any ability check you make to create a forged document.",
+      "ability": "Dexterity"
+    },
+    {
+      "name": "Gaming Set",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (one of your choice)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (any)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (Dice)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 sp",
+      "description": "A set of dice for gambling games.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (Dragonchess)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A dragonchess set, a complex strategy game popular across the realms.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (Playing Cards)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "5 sp",
+      "description": "A deck of playing cards for various card games.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Gaming Set (Three-Dragon Ante)",
+      "category": "Tool",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A deck of illustrated cards for the game of Three-Dragon Ante.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Herbalism Kit",
+      "category": "Tool",
+      "weight": 3,
+      "cost": "5 gp",
+      "description": "Contains clippers, mortar and pestle, pouches, and vials for creating herbal remedies. Proficiency lets you add your proficiency bonus to any ability check you make to identify or apply herbs.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Navigator's Tools",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "25 gp",
+      "description": "Used for navigation at sea. Includes a sextant, compass, calipers, ruler, parchment, ink, and a quill.",
+      "ability": "Wisdom"
+    },
+    {
+      "name": "Poisoner's Kit",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "50 gp",
+      "description": "Includes glass vials, a mortar and pestle, chemicals, and a glass stirring rod. Proficiency lets you add your proficiency bonus to any ability check you make to craft or use poisons.",
+      "ability": "Intelligence"
+    },
+    {
+      "name": "Thieves' Tools",
+      "category": "Tool",
+      "weight": 1,
+      "cost": "25 gp",
+      "description": "Includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency lets you add your proficiency bonus to Dexterity checks made to disable traps or open locks.",
+      "ability": "Dexterity",
+      "contents": [
+        { "name": "Lock Picks", "quantity": 1 },
+        { "name": "Small File", "quantity": 1 },
+        { "name": "Small Mirror", "quantity": 1 },
+        { "name": "Narrow-Bladed Scissors", "quantity": 1 },
+        { "name": "Pliers", "quantity": 1 }
+      ]
+    },
+    {
+      "name": "Bagpipes",
+      "category": "Tool",
+      "weight": 6,
+      "cost": "30 gp",
+      "description": "A musical instrument consisting of a bag and pipes. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Drum",
+      "category": "Tool",
+      "weight": 3,
+      "cost": "6 gp",
+      "description": "A percussion instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Dulcimer",
+      "category": "Tool",
+      "weight": 10,
+      "cost": "25 gp",
+      "description": "A stringed instrument played by striking the strings with small hammers. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Flute",
+      "category": "Tool",
+      "weight": 1,
+      "cost": "2 gp",
+      "description": "A woodwind instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Horn",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "3 gp",
+      "description": "A brass instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Lute",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "35 gp",
+      "description": "A stringed instrument popular with bards. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Lyre",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "30 gp",
+      "description": "A stringed instrument played by plucking. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Pan Flute",
+      "category": "Tool",
+      "weight": 2,
+      "cost": "12 gp",
+      "description": "A set of tubes of varying lengths bound together. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Shawm",
+      "category": "Tool",
+      "weight": 1,
+      "cost": "2 gp",
+      "description": "A double-reed woodwind instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Viol",
+      "category": "Tool",
+      "weight": 1,
+      "cost": "30 gp",
+      "description": "A bowed stringed instrument. Proficiency lets you add your proficiency bonus to performance checks with this instrument.",
+      "ability": "Charisma"
+    },
+    {
+      "name": "Component Pouch",
+      "category": "Spellcasting Focus",
+      "weight": 2,
+      "cost": "25 gp",
+      "description": "A small, watertight leather belt pouch that has compartments to hold all the Material components and other special items you need to cast your spells, except for those components that have a specific cost."
+    },
+    {
+      "name": "Arcane Focus (Crystal)",
+      "category": "Spellcasting Focus",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A crystal used as a spellcasting focus for arcane spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Arcane Focus (Orb)",
+      "category": "Spellcasting Focus",
+      "weight": 3,
+      "cost": "20 gp",
+      "description": "An orb used as a spellcasting focus for arcane spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Arcane Focus (Rod)",
+      "category": "Spellcasting Focus",
+      "weight": 2,
+      "cost": "10 gp",
+      "description": "A rod used as a spellcasting focus for arcane spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Arcane Focus (Staff)",
+      "category": "Spellcasting Focus",
+      "weight": 4,
+      "cost": "5 gp",
+      "description": "A staff used as a spellcasting focus for arcane spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Arcane Focus (Wand)",
+      "category": "Spellcasting Focus",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A wand used as a spellcasting focus for arcane spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Druidic Focus (Sprig of Mistletoe)",
+      "category": "Spellcasting Focus",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A sprig of mistletoe used as a druidic focus for druid spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Druidic Focus (Totem)",
+      "category": "Spellcasting Focus",
+      "weight": 0,
+      "cost": "1 gp",
+      "description": "A totem carved with spiritual symbols, used as a druidic focus for druid spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Druidic Focus (Wooden Staff)",
+      "category": "Spellcasting Focus",
+      "weight": 4,
+      "cost": "5 gp",
+      "description": "A wooden staff used as a druidic focus for druid spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Druidic Focus (Yew Wand)",
+      "category": "Spellcasting Focus",
+      "weight": 1,
+      "cost": "10 gp",
+      "description": "A yew wand used as a druidic focus for druid spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Holy Symbol (Amulet)",
+      "category": "Spellcasting Focus",
+      "weight": 1,
+      "cost": "5 gp",
+      "description": "A holy amulet bearing the symbol of a deity, used as a spellcasting focus for divine spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Holy Symbol (Emblem)",
+      "category": "Spellcasting Focus",
+      "weight": 0,
+      "cost": "5 gp",
+      "description": "A holy emblem engraved or painted on a shield or worn as a brooch, used as a spellcasting focus for divine spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Holy Symbol (Reliquary)",
+      "category": "Spellcasting Focus",
+      "weight": 2,
+      "cost": "5 gp",
+      "description": "A tiny box containing a sacred relic, used as a spellcasting focus for divine spells. Can be used in place of any Material component that doesn't have a specific cost."
+    },
+    {
+      "name": "Lock Picks",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "—",
+      "description": "A set of slender metal tools used to open locks without a key. Typically included in Thieves' Tools."
+    },
+    {
+      "name": "Manacles Key",
+      "category": "Adventuring Gear",
+      "weight": 0,
+      "cost": "—",
+      "description": "A small metal key designed to unlock a specific set of Manacles."
+    },
+    {
+      "name": "Burglar's Pack",
+      "category": "Equipment Pack",
+      "weight": 42,
+      "cost": "16 gp",
+      "description": "Includes a Backpack, Ball Bearings, a Bell, 10 Candles, a Crowbar, a Hooded Lantern, 7 flasks of Oil, 5 Rations, Rope, a Tinderbox, and a Waterskin.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Ball Bearings",
+          "quantity": 1
+        },
+        {
+          "name": "Bell",
+          "quantity": 1
+        },
+        {
+          "name": "Candle",
+          "quantity": 10
+        },
+        {
+          "name": "Crowbar",
+          "quantity": 1
+        },
+        {
+          "name": "Lantern, hooded",
+          "quantity": 1
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 7
+        },
+        {
+          "name": "Rations (1 day)",
+          "quantity": 5
+        },
+        {
+          "name": "Rope",
+          "quantity": 1
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        },
+        {
+          "name": "Waterskin",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Diplomat's Pack",
+      "category": "Equipment Pack",
+      "weight": 39,
+      "cost": "39 gp",
+      "description": "Includes a Chest, Fine Clothes, an Ink bottle, 5 Ink Pens, a Lamp, 2 Cases (Map or Scroll), 4 flasks of Oil, 5 sheets of Paper, 5 sheets of Parchment, a vial of Perfume, and a Tinderbox.",
+      "contents": [
+        {
+          "name": "Chest",
+          "quantity": 1
+        },
+        {
+          "name": "Clothes, Fine",
+          "quantity": 1
+        },
+        {
+          "name": "Ink (1 ounce bottle)",
+          "quantity": 1
+        },
+        {
+          "name": "Ink pen",
+          "quantity": 5
+        },
+        {
+          "name": "Lamp",
+          "quantity": 1
+        },
+        {
+          "name": "Case, Map or Scroll",
+          "quantity": 2
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 4
+        },
+        {
+          "name": "Paper (one sheet)",
+          "quantity": 5
+        },
+        {
+          "name": "Parchment",
+          "quantity": 5
+        },
+        {
+          "name": "Perfume",
+          "quantity": 1
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Dungeoneer's Pack",
+      "category": "Equipment Pack",
+      "weight": 55,
+      "cost": "12 gp",
+      "description": "Includes a Backpack, Caltrops, a Crowbar, 2 flasks of Oil, 10 Rations, Rope, a Tinderbox, 10 Torches, and a Waterskin.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Caltrops",
+          "quantity": 1
+        },
+        {
+          "name": "Crowbar",
+          "quantity": 1
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 2
+        },
+        {
+          "name": "Rations (1 day)",
+          "quantity": 10
+        },
+        {
+          "name": "Rope",
+          "quantity": 1
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        },
+        {
+          "name": "Torch",
+          "quantity": 10
+        },
+        {
+          "name": "Waterskin",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Entertainer's Pack",
+      "category": "Equipment Pack",
+      "weight": 58.5,
+      "cost": "40 gp",
+      "description": "Includes a Backpack, a Bedroll, a Bell, a Bullseye Lantern, 3 Costumes, a Mirror, 8 flasks of Oil, 9 Rations, a Tinderbox, and a Waterskin.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Bedroll",
+          "quantity": 1
+        },
+        {
+          "name": "Bell",
+          "quantity": 1
+        },
+        {
+          "name": "Lantern, bullseye",
+          "quantity": 1
+        },
+        {
+          "name": "Costume",
+          "quantity": 3
+        },
+        {
+          "name": "Mirror, steel",
+          "quantity": 1
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 8
+        },
+        {
+          "name": "Rations (1 day)",
+          "quantity": 9
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        },
+        {
+          "name": "Waterskin",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Explorer's Pack",
+      "category": "Equipment Pack",
+      "weight": 55,
+      "cost": "10 gp",
+      "description": "Includes a Backpack, a Bedroll, 2 flasks of Oil, 10 Rations, Rope, a Tinderbox, 10 Torches, and a Waterskin.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Bedroll",
+          "quantity": 1
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 2
+        },
+        {
+          "name": "Rations (1 day)",
+          "quantity": 10
+        },
+        {
+          "name": "Rope",
+          "quantity": 1
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        },
+        {
+          "name": "Torch",
+          "quantity": 10
+        },
+        {
+          "name": "Waterskin",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Priest's Pack",
+      "category": "Equipment Pack",
+      "weight": 29,
+      "cost": "33 gp",
+      "description": "Includes a Backpack, a Blanket, Holy Water, a Lamp, 7 Rations, a Robe, and a Tinderbox.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Blanket",
+          "quantity": 1
+        },
+        {
+          "name": "Holy Water",
+          "quantity": 1
+        },
+        {
+          "name": "Lamp",
+          "quantity": 1
+        },
+        {
+          "name": "Rations (1 day)",
+          "quantity": 7
+        },
+        {
+          "name": "Robe",
+          "quantity": 1
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "name": "Scholar's Pack",
+      "category": "Equipment Pack",
+      "weight": 22,
+      "cost": "40 gp",
+      "description": "Includes a Backpack, a Book, Ink, an Ink Pen, a Lamp, 10 flasks of Oil, 10 sheets of Parchment, and a Tinderbox.",
+      "contents": [
+        {
+          "name": "Backpack",
+          "quantity": 1
+        },
+        {
+          "name": "Book",
+          "quantity": 1
+        },
+        {
+          "name": "Ink (1 ounce bottle)",
+          "quantity": 1
+        },
+        {
+          "name": "Ink pen",
+          "quantity": 1
+        },
+        {
+          "name": "Lamp",
+          "quantity": 1
+        },
+        {
+          "name": "Oil (flask)",
+          "quantity": 10
+        },
+        {
+          "name": "Parchment",
+          "quantity": 10
+        },
+        {
+          "name": "Tinderbox",
+          "quantity": 1
+        }
+      ]
     }
   ]
 }

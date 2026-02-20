@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useNetworkStore } from '../stores/useNetworkStore'
 import { BackButton, Button, Input } from '../components/ui'
+import { useNetworkStore } from '../stores/useNetworkStore'
 
 export default function JoinGamePage(): JSX.Element {
   const navigate = useNavigate()
@@ -36,7 +36,7 @@ export default function JoinGamePage(): JSX.Element {
       }
     }, 15000)
     return () => clearTimeout(timeout)
-  }, [waitingForCampaign, navigate])
+  }, [waitingForCampaign])
 
   const handleConnect = async (): Promise<void> => {
     if (!canConnect || isConnecting) return
@@ -64,9 +64,7 @@ export default function JoinGamePage(): JSX.Element {
       <BackButton />
 
       <h1 className="text-3xl font-bold mb-2">Join Game</h1>
-      <p className="text-gray-500 mb-8">
-        Enter the invite code from your Dungeon Master to join their game.
-      </p>
+      <p className="text-gray-500 mb-8">Enter the invite code from your Dungeon Master to join their game.</p>
 
       <div className="max-w-md space-y-6">
         {/* Display name */}
@@ -127,19 +125,15 @@ export default function JoinGamePage(): JSX.Element {
         )}
 
         {/* Connect button */}
-        <Button
-          onClick={handleConnect}
-          disabled={!canConnect || isConnecting}
-          className="w-full py-3 text-lg"
-        >
+        <Button onClick={handleConnect} disabled={!canConnect || isConnecting} className="w-full py-3 text-lg">
           {isConnecting ? 'Connecting...' : 'Connect'}
         </Button>
 
         {/* Help text */}
         <div className="border border-dashed border-gray-700 rounded-lg p-5 text-center">
           <p className="text-sm text-gray-500">
-            Ask your Dungeon Master for an invite code to join their game.
-            The code is displayed in the lobby when they create a session.
+            Ask your Dungeon Master for an invite code to join their game. The code is displayed in the lobby when they
+            create a session.
           </p>
         </div>
       </div>

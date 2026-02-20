@@ -1,73 +1,70 @@
 // Types
-export type {
-  ConnectionState,
-  MessageType,
-  NetworkMessage,
-  PeerInfo,
-  JoinPayload,
-  ChatPayload,
-  WhisperPayload,
-  DiceRollPayload,
-  DiceResultPayload,
-  StateUpdatePayload,
-  TokenMovePayload,
-  FogRevealPayload,
-  MapChangePayload,
-  CharacterSelectPayload,
-  InitiativeUpdatePayload,
-  ConditionUpdatePayload,
-  KickPayload,
-  MuteTogglePayload
-} from './types'
-
-// Peer manager
-export {
-  createPeer,
-  destroyPeer,
-  generateInviteCode,
-  getPeerId,
-  getPeer
-} from './peer-manager'
-
-// Host manager
-export {
-  startHosting,
-  stopHosting,
-  broadcastMessage,
-  sendToPeer,
-  kickPeer,
-  getConnectedPeers,
-  onPeerJoined,
-  onPeerLeft,
-  onMessage as onHostMessage,
-  isHosting,
-  getInviteCode
-} from './host-manager'
 
 // Client manager
 export {
   connectToHost,
   disconnect,
-  sendMessage as sendClientMessage,
-  onMessage as onClientMessage,
+  isConnected,
   onDisconnected,
-  isConnected
+  onMessage as onClientMessage,
+  sendMessage as sendClientMessage
 } from './client-manager'
-
+// Host manager
+export {
+  broadcastMessage,
+  getConnectedPeers,
+  getInviteCode,
+  isHosting,
+  kickPeer,
+  onMessage as onHostMessage,
+  onPeerJoined,
+  onPeerLeft,
+  sendToPeer,
+  startHosting,
+  stopHosting
+} from './host-manager'
 // Message handler
 export { createMessageRouter } from './message-handler'
+// Peer manager
+export {
+  createPeer,
+  destroyPeer,
+  generateInviteCode,
+  getPeer,
+  getPeerId
+} from './peer-manager'
+export type {
+  CharacterSelectPayload,
+  ChatPayload,
+  ConditionUpdatePayload,
+  ConnectionState,
+  DiceResultPayload,
+  DiceRollPayload,
+  FogRevealPayload,
+  InitiativeUpdatePayload,
+  JoinPayload,
+  KickPayload,
+  MapChangePayload,
+  MessageType,
+  MuteTogglePayload,
+  NetworkMessage,
+  PeerInfo,
+  StateUpdatePayload,
+  TokenMovePayload,
+  WhisperPayload
+} from './types'
 
 // Voice manager
 export {
-  startVoice,
-  stopVoice,
-  callPeer,
   answerCall,
-  setMuted,
-  setDeafened,
-  isSpeaking,
-  isMuted,
+  callPeer,
   isDeafened,
+  isMuted,
+  isSpeaking,
   onSpeakingChange,
-  removePeer as removeVoicePeer
+  removePeer as removeVoicePeer,
+  setDeafened,
+  setMuted,
+  startVoice,
+  stopVoice
 } from './voice-manager'

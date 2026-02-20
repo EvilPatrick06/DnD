@@ -22,8 +22,8 @@ export function deserializeCharacter(json: string): Character {
     throw new Error('Invalid character file: missing or invalid "id" field')
   }
 
-  if (!parsed.gameSystem || (parsed.gameSystem !== 'dnd5e' && parsed.gameSystem !== 'pf2e')) {
-    throw new Error('Invalid character file: missing or invalid "gameSystem" field (must be "dnd5e" or "pf2e")')
+  if (!parsed.gameSystem || parsed.gameSystem !== 'dnd5e') {
+    throw new Error('Invalid character file: missing or invalid "gameSystem" field (must be "dnd5e")')
   }
 
   if (!parsed.name || typeof parsed.name !== 'string') {

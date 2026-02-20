@@ -1,21 +1,70 @@
 import { useState } from 'react'
+import type { ShopItem } from '../../../network/types'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'
-import type { ShopItem } from '../../../network/types'
 
 const PRESET_ITEMS: ShopItem[] = [
-  { id: 'healing-potion', name: 'Healing Potion', category: 'Potion', price: { gp: 50 }, quantity: 10, description: 'Heals 2d4+2 HP' },
-  { id: 'greater-healing', name: 'Potion of Greater Healing', category: 'Potion', price: { gp: 150 }, quantity: 5, description: 'Heals 4d4+4 HP' },
-  { id: 'antitoxin', name: 'Antitoxin', category: 'Potion', price: { gp: 50 }, quantity: 5, description: 'Advantage on saving throws against poison for 1 hour' },
+  {
+    id: 'healing-potion',
+    name: 'Healing Potion',
+    category: 'Potion',
+    price: { gp: 50 },
+    quantity: 10,
+    description: 'Heals 2d4+2 HP'
+  },
+  {
+    id: 'greater-healing',
+    name: 'Potion of Greater Healing',
+    category: 'Potion',
+    price: { gp: 150 },
+    quantity: 5,
+    description: 'Heals 4d4+4 HP'
+  },
+  {
+    id: 'antitoxin',
+    name: 'Antitoxin',
+    category: 'Potion',
+    price: { gp: 50 },
+    quantity: 5,
+    description: 'Advantage on saving throws against poison for 1 hour'
+  },
   { id: 'rope', name: 'Rope, Hempen (50 ft)', category: 'Gear', price: { gp: 1 }, quantity: 10 },
-  { id: 'torch', name: 'Torch', category: 'Gear', price: { cp: 1 }, quantity: 20, description: 'Bright light 20 ft, dim 20 ft' },
+  {
+    id: 'torch',
+    name: 'Torch',
+    category: 'Gear',
+    price: { cp: 1 },
+    quantity: 20,
+    description: 'Bright light 20 ft, dim 20 ft'
+  },
   { id: 'rations', name: 'Rations (1 day)', category: 'Gear', price: { sp: 5 }, quantity: 50 },
   { id: 'arrow-20', name: 'Arrows (20)', category: 'Ammunition', price: { gp: 1 }, quantity: 20 },
   { id: 'bolt-20', name: 'Crossbow Bolts (20)', category: 'Ammunition', price: { gp: 1 }, quantity: 20 },
-  { id: 'longsword', name: 'Longsword', category: 'Weapon', price: { gp: 15 }, quantity: 3, description: '1d8 slashing, versatile (1d10)' },
+  {
+    id: 'longsword',
+    name: 'Longsword',
+    category: 'Weapon',
+    price: { gp: 15 },
+    quantity: 3,
+    description: '1d8 slashing, versatile (1d10)'
+  },
   { id: 'shield', name: 'Shield', category: 'Armor', price: { gp: 10 }, quantity: 5, description: '+2 AC' },
-  { id: 'chain-mail', name: 'Chain Mail', category: 'Armor', price: { gp: 75 }, quantity: 2, description: 'AC 16, Str 13, stealth disadvantage' },
-  { id: 'studded-leather', name: 'Studded Leather', category: 'Armor', price: { gp: 45 }, quantity: 3, description: 'AC 12 + Dex' }
+  {
+    id: 'chain-mail',
+    name: 'Chain Mail',
+    category: 'Armor',
+    price: { gp: 75 },
+    quantity: 2,
+    description: 'AC 16, Str 13, stealth disadvantage'
+  },
+  {
+    id: 'studded-leather',
+    name: 'Studded Leather',
+    category: 'Armor',
+    price: { gp: 45 },
+    quantity: 3,
+    description: 'AC 12 + Dex'
+  }
 ]
 
 function formatPrice(price: ShopItem['price']): string {
@@ -28,7 +77,7 @@ function formatPrice(price: ShopItem['price']): string {
 }
 
 export default function ShopPanel(): JSX.Element {
-  const { shopOpen, shopName, shopInventory, openShop, closeShop, setShopInventory, addShopItem, removeShopItem } = useGameStore()
+  const { shopOpen, shopName, shopInventory, openShop, closeShop, addShopItem, removeShopItem } = useGameStore()
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const [shopNameInput, setShopNameInput] = useState(shopName)
 
@@ -77,10 +126,7 @@ export default function ShopPanel(): JSX.Element {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-amber-400 font-medium">{shopName}</span>
-            <button
-              onClick={handleCloseShop}
-              className="text-xs text-red-400 hover:text-red-300 cursor-pointer"
-            >
+            <button onClick={handleCloseShop} className="text-xs text-red-400 hover:text-red-300 cursor-pointer">
               Close Shop
             </button>
           </div>

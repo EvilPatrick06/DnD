@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
+import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
+import { isModerationEnabled, setModerationEnabled } from '../../network/host-manager'
 import { useLobbyStore } from '../../stores/useLobbyStore'
 import { useNetworkStore } from '../../stores/useNetworkStore'
 
@@ -7,15 +8,17 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_FILES = '.png,.jpg,.jpeg,.gif,.webp,.dndchar,.dndcamp'
 
 function generateFileMessageId(): string {
-  return `file-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  return `file-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 }
 
 export default function ChatInput(): JSX.Element {
   const [value, setValue] = useState('')
   const [cooldownRemaining, setCooldownRemaining] = useState(0)
+  const [muteRemaining, setMuteRemaining] = useState(0)
   const lastMessageTimeRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const muteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const sendChat = useLobbyStore((s) => s.sendChat)
   const slowModeSeconds = useLobbyStore((s) => s.slowModeSeconds)
@@ -23,6 +26,9 @@ export default function ChatInput(): JSX.Element {
   const setSlowMode = useLobbyStore((s) => s.setSlowMode)
   const fileSharingEnabled = useLobbyStore((s) => s.fileSharingEnabled)
   const setFileSharingEnabled = useLobbyStore((s) => s.setFileSharingEnabled)
+  const chatMutedUntil = useLobbyStore((s) => s.chatMutedUntil)
+  const setChatMutedUntil = useLobbyStore((s) => s.setChatMutedUntil)
+  const [moderationOn, setModerationOn] = useState(() => isModerationEnabled())
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const displayName = useNetworkStore((s) => s.displayName)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
@@ -47,11 +53,45 @@ export default function ChatInput(): JSX.Element {
     }
   }, [cooldownRemaining, slowModeSeconds])
 
-  const isOnCooldown = slowModeSeconds > 0 && cooldownRemaining > 0
+  // Chat mute countdown timer
+  useEffect(() => {
+    if (!chatMutedUntil) {
+      setMuteRemaining(0)
+      return
+    }
+
+    const updateRemaining = (): void => {
+      const remaining = Math.max(0, chatMutedUntil - Date.now())
+      const seconds = Math.ceil(remaining / 1000)
+      setMuteRemaining(seconds)
+      if (remaining <= 0) {
+        setChatMutedUntil(null)
+        if (muteTimerRef.current) {
+          clearInterval(muteTimerRef.current)
+          muteTimerRef.current = null
+        }
+      }
+    }
+
+    updateRemaining()
+    muteTimerRef.current = setInterval(updateRemaining, 500)
+
+    return () => {
+      if (muteTimerRef.current) {
+        clearInterval(muteTimerRef.current)
+        muteTimerRef.current = null
+      }
+    }
+  }, [chatMutedUntil, setChatMutedUntil])
+
+  // DM/host is exempt from slow mode cooldown
+  const isOnCooldown = !isHost && slowModeSeconds > 0 && cooldownRemaining > 0
+  const isChatMuted = muteRemaining > 0
+  const isInputDisabled = isOnCooldown || isChatMuted
 
   const handleSend = (): void => {
     if (!value.trim()) return
-    if (isOnCooldown) return
+    if (isInputDisabled) return
 
     const trimmed = value.trim()
     sendChat(value)
@@ -72,8 +112,8 @@ export default function ChatInput(): JSX.Element {
     }
     setValue('')
 
-    // Start slow mode cooldown
-    if (slowModeSeconds > 0) {
+    // Start slow mode cooldown (DM is exempt)
+    if (slowModeSeconds > 0 && !isHost) {
       lastMessageTimeRef.current = Date.now()
       setCooldownRemaining(slowModeSeconds)
     }
@@ -111,7 +151,7 @@ export default function ChatInput(): JSX.Element {
       const base64 = (reader.result as string).split(',')[1]
       const mimeType = isImage ? file.type : 'application/octet-stream'
       const ext = file.name.split('.').pop()?.toLowerCase() || ''
-      const fileType = isImage ? 'image' : (ext === 'dndchar' ? 'character' : ext === 'dndcamp' ? 'campaign' : 'file')
+      const fileType = isImage ? 'image' : ext === 'dndchar' ? 'character' : ext === 'dndcamp' ? 'campaign' : 'file'
 
       // Add to local chat
       const localPlayer = useLobbyStore.getState().players.find((p) => p.peerId === localPeerId)
@@ -157,7 +197,7 @@ export default function ChatInput(): JSX.Element {
                 setSlowMode(sec)
                 sendMessage('dm:slow-mode', { seconds: sec })
                 useLobbyStore.getState().addChatMessage({
-                  id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                  id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
                   senderId: 'system',
                   senderName: 'System',
                   content: sec === 0 ? 'Slow mode disabled.' : `Slow mode enabled: ${sec} seconds.`,
@@ -166,9 +206,7 @@ export default function ChatInput(): JSX.Element {
                 })
               }}
               className={`text-xs px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-                slowModeSeconds === sec
-                  ? 'bg-amber-600/30 text-amber-400'
-                  : 'text-gray-500 hover:text-gray-300'
+                slowModeSeconds === sec ? 'bg-amber-600/30 text-amber-400' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               {sec === 0 ? 'Off' : `${sec}s`}
@@ -182,7 +220,7 @@ export default function ChatInput(): JSX.Element {
               setFileSharingEnabled(newVal)
               sendMessage('dm:file-sharing', { enabled: newVal })
               useLobbyStore.getState().addChatMessage({
-                id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
                 senderId: 'system',
                 senderName: 'System',
                 content: newVal ? 'File sharing enabled.' : 'File sharing disabled.',
@@ -191,12 +229,32 @@ export default function ChatInput(): JSX.Element {
               })
             }}
             className={`text-xs px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
-              fileSharingEnabled
-                ? 'bg-amber-600/30 text-amber-400'
-                : 'text-gray-500 hover:text-gray-300'
+              fileSharingEnabled ? 'bg-amber-600/30 text-amber-400' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
             {fileSharingEnabled ? 'On' : 'Off'}
+          </button>
+          <div className="w-px h-4 bg-gray-700 mx-1" />
+          <span className="text-xs text-gray-500">Auto-mod:</span>
+          <button
+            onClick={() => {
+              const newVal = !moderationOn
+              setModerationEnabled(newVal)
+              setModerationOn(newVal)
+              useLobbyStore.getState().addChatMessage({
+                id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+                senderId: 'system',
+                senderName: 'System',
+                content: newVal ? 'Auto-moderation enabled.' : 'Auto-moderation disabled.',
+                timestamp: Date.now(),
+                isSystem: true
+              })
+            }}
+            className={`text-xs px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+              moderationOn ? 'bg-amber-600/30 text-amber-400' : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {moderationOn ? 'On' : 'Off'}
           </button>
         </div>
       )}
@@ -210,36 +268,42 @@ export default function ChatInput(): JSX.Element {
             className="p-2 rounded-lg text-gray-500 hover:text-amber-400 hover:bg-gray-800 transition-colors cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-              <path fillRule="evenodd" d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a3 3 0 0 0 4.241 4.243h.001l.497-.5a.75.75 0 0 1 1.064 1.057l-.498.501a4.5 4.5 0 0 1-6.364-6.364l7-7a4.5 4.5 0 0 1 6.368 6.36l-3.455 3.553A2.625 2.625 0 1 1 9.52 9.52l3.45-3.451a.75.75 0 1 1 1.061 1.06l-3.45 3.451a1.125 1.125 0 0 0 1.587 1.595l3.454-3.553a3 3 0 0 0 0-4.242Z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M15.621 4.379a3 3 0 0 0-4.242 0l-7 7a3 3 0 0 0 4.241 4.243h.001l.497-.5a.75.75 0 0 1 1.064 1.057l-.498.501a4.5 4.5 0 0 1-6.364-6.364l7-7a4.5 4.5 0 0 1 6.368 6.36l-3.455 3.553A2.625 2.625 0 1 1 9.52 9.52l3.45-3.451a.75.75 0 1 1 1.061 1.06l-3.45 3.451a1.125 1.125 0 0 0 1.587 1.595l3.454-3.553a3 3 0 0 0 0-4.242Z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_FILES}
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" accept={ACCEPTED_FILES} onChange={handleFileSelect} className="hidden" />
 
         <input
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isOnCooldown ? `Slow mode (${cooldownRemaining}s)...` : 'Type a message or /roll 1d20...'}
-          disabled={isOnCooldown}
-          className="flex-1 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100
+          placeholder={
+            isChatMuted
+              ? `Muted for ${muteRemaining}s...`
+              : isOnCooldown
+                ? `Slow mode (${cooldownRemaining}s)...`
+                : 'Type a message or /roll 1d20...'
+          }
+          disabled={isInputDisabled}
+          className={`flex-1 px-3 py-2 rounded-lg bg-gray-800 border text-gray-100
                      placeholder-gray-600 focus:border-amber-500 focus:outline-none
-                     transition-colors text-sm disabled:opacity-50"
+                     transition-colors text-sm disabled:opacity-50 ${
+                       isChatMuted ? 'border-red-700/50' : 'border-gray-700'
+                     }`}
         />
         <button
           onClick={handleSend}
-          disabled={!value.trim() || isOnCooldown}
+          disabled={!value.trim() || isInputDisabled}
           className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium
                      text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isOnCooldown ? `${cooldownRemaining}s` : 'Send'}
+          {isChatMuted ? `${muteRemaining}s` : isOnCooldown ? `${cooldownRemaining}s` : 'Send'}
         </button>
       </div>
     </div>

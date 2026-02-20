@@ -1,0 +1,49 @@
+import { useBuilderStore } from '../../../stores/useBuilderStore'
+import AbilityScoreModal from '../shared/AbilityScoreModal'
+import AsiModal from '../shared/AsiModal'
+import SelectionModal from '../shared/SelectionModal'
+import SkillsModal from '../shared/SkillsModal'
+import ContentTabs5e from './ContentTabs5e'
+import DetailsTab5e from './DetailsTab5e'
+import LanguagesTab5e from './LanguagesTab5e'
+import SpecialAbilitiesTab5e from './SpecialAbilitiesTab5e'
+import SpellsTab5e from './SpellsTab5e'
+
+function ActiveTabContent(): JSX.Element {
+  const activeTab = useBuilderStore((s) => s.activeTab)
+
+  switch (activeTab) {
+    case 'details':
+      return <DetailsTab5e />
+    case 'special-abilities':
+      return <SpecialAbilitiesTab5e />
+    case 'languages':
+      return <LanguagesTab5e />
+    case 'spells':
+      return <SpellsTab5e />
+    default:
+      return <DetailsTab5e />
+  }
+}
+
+export default function MainContentArea5e(): JSX.Element {
+  const selectionModal = useBuilderStore((s) => s.selectionModal)
+  const customModal = useBuilderStore((s) => s.customModal)
+
+  return (
+    <div className="flex-1 flex flex-col relative min-w-0">
+      <ContentTabs5e />
+      <div className="flex-1 overflow-y-auto">
+        <ActiveTabContent />
+      </div>
+
+      {/* Selection modal overlays the content area */}
+      {selectionModal && <SelectionModal />}
+
+      {/* Custom modals for ability scores, skills, ASI */}
+      {customModal === 'ability-scores' && <AbilityScoreModal />}
+      {customModal === 'skills' && <SkillsModal />}
+      {customModal === 'asi' && <AsiModal />}
+    </div>
+  )
+}

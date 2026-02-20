@@ -3,6 +3,7 @@ import type { MediaConnection } from 'peerjs'
 
 // Module-level state
 let localStream: MediaStream | null = null
+let silentStream: MediaStream | null = null
 let audioContext: AudioContext | null = null
 let analyser: AnalyserNode | null = null
 let localPeer: Peer | null = null
@@ -77,10 +78,27 @@ export async function startVoice(peer: Peer): Promise<void> {
 
     listenOnly = false
     console.log('[VoiceManager] Voice started')
-  } catch (err) {
+  } catch (_err) {
     // No microphone available — fall back to listen-only mode
     listenOnly = true
     console.warn('[VoiceManager] No microphone - listen-only mode')
+
+    // Create a silent audio stream so we can still establish WebRTC connections.
+    // Without a valid MediaStream, PeerJS calls won't complete and we can't
+    // receive remote audio either. This silent stream sends silence but allows
+    // the full bidirectional WebRTC connection to establish.
+    try {
+      const silentCtx = new AudioContext()
+      await silentCtx.resume()
+      const dest = silentCtx.createMediaStreamDestination()
+      silentStream = dest.stream
+      // Keep the AudioContext reference so we can close it on cleanup
+      // (reuse audioContext slot since we didn't set it for listen-only)
+      audioContext = silentCtx
+      console.log('[VoiceManager] Created silent stream for listen-only WebRTC connections')
+    } catch (silentErr) {
+      console.error('[VoiceManager] Failed to create silent stream:', silentErr)
+    }
   }
 
   // Process any calls that arrived before we were ready
@@ -141,6 +159,12 @@ export function stopVoice(): void {
     localStream = null
   }
 
+  // Stop silent stream tracks (used in listen-only mode)
+  if (silentStream) {
+    silentStream.getTracks().forEach((track) => track.stop())
+    silentStream = null
+  }
+
   localPeer = null
   muted = false
   deafened = false
@@ -163,8 +187,10 @@ export function callPeer(peerId: string): void {
     return
   }
 
-  if (listenOnly || !localStream) {
-    console.warn('[VoiceManager] Listen-only mode — skipping outgoing call to', peerId)
+  // Use the real local stream, or the silent stream for listen-only mode
+  const streamToSend = localStream || silentStream
+  if (!streamToSend) {
+    console.warn('[VoiceManager] No stream available — cannot call peer', peerId)
     return
   }
 
@@ -173,8 +199,8 @@ export function callPeer(peerId: string): void {
     return
   }
 
-  console.log('[VoiceManager] Calling peer:', peerId)
-  const call = localPeer.call(peerId, localStream)
+  console.log('[VoiceManager] Calling peer:', peerId, listenOnly ? '(listen-only, sending silence)' : '')
+  const call = localPeer.call(peerId, streamToSend)
   setupCall(peerId, call)
 }
 
@@ -182,21 +208,25 @@ export function callPeer(peerId: string): void {
  * Answer an incoming media call.
  */
 export function answerCall(call: MediaConnection): void {
-  // If we're not yet in listen-only mode and have no stream, queue the call
-  if (!localStream && !listenOnly) {
+  // If we're not yet in listen-only mode and have no stream (and no silent stream), queue the call
+  if (!localStream && !silentStream && !listenOnly) {
     console.warn('[VoiceManager] Cannot answer call yet — queuing pending call from:', call.peer)
     pendingCalls.push(call)
     return
   }
 
   const peerId = call.peer
-  console.log('[VoiceManager] Answering call from:', peerId)
+  console.log('[VoiceManager] Answering call from:', peerId, listenOnly ? '(listen-only)' : '')
 
-  if (listenOnly) {
-    // Answer with no stream — receive-only (PeerJS allows this)
-    call.answer()
+  // Use the real local stream, or the silent stream for listen-only mode.
+  // Answering with a valid MediaStream (even silent) ensures the full WebRTC
+  // connection completes so we can receive the remote peer's audio.
+  const streamToAnswer = localStream || silentStream
+  if (streamToAnswer) {
+    call.answer(streamToAnswer)
   } else {
-    call.answer(localStream!)
+    // Last resort: answer with no stream (may not receive audio on some browsers)
+    call.answer()
   }
   setupCall(peerId, call)
 }
@@ -338,9 +368,7 @@ export function isListenOnly(): boolean {
  * Register a callback for speaking state changes.
  * Returns an unsubscribe function.
  */
-export function onSpeakingChange(
-  callback: (peerId: string, isSpeaking: boolean) => void
-): () => void {
+export function onSpeakingChange(callback: (peerId: string, isSpeaking: boolean) => void): () => void {
   speakingCallbacks.add(callback)
   return () => {
     speakingCallbacks.delete(callback)
@@ -396,10 +424,14 @@ function setupCall(peerId: string, call: MediaConnection): void {
   call.on('stream', (remoteStream: MediaStream) => {
     const tracks = remoteStream.getAudioTracks()
     console.log(
-      '[VoiceManager] Received stream from:', peerId,
-      'audioTracks:', tracks.length,
-      'enabled:', tracks.map(t => t.enabled),
-      'readyState:', tracks.map(t => t.readyState)
+      '[VoiceManager] Received stream from:',
+      peerId,
+      'audioTracks:',
+      tracks.length,
+      'enabled:',
+      tracks.map((t) => t.enabled),
+      'readyState:',
+      tracks.map((t) => t.readyState)
     )
     playRemoteStream(peerId, remoteStream)
 
@@ -417,7 +449,14 @@ function setupCall(peerId: string, call: MediaConnection): void {
   })
 
   call.on('error', (err) => {
-    console.error('[VoiceManager] Call error with', peerId, '- type:', (err as any).type, '- message:', err.message || err)
+    console.error(
+      '[VoiceManager] Call error with',
+      peerId,
+      '- type:',
+      (err as Error & { type?: string }).type,
+      '- message:',
+      err.message || err
+    )
     removePeer(peerId)
   })
 }
@@ -432,10 +471,14 @@ function playRemoteStream(peerId: string, stream: MediaStream): void {
 
   const audioTracks = stream.getAudioTracks()
   console.log(
-    '[VoiceManager] Playing remote stream from:', peerId,
-    'tracks:', audioTracks.length,
-    'enabled:', audioTracks.map(t => t.enabled),
-    'readyState:', audioTracks.map(t => t.readyState)
+    '[VoiceManager] Playing remote stream from:',
+    peerId,
+    'tracks:',
+    audioTracks.length,
+    'enabled:',
+    audioTracks.map((t) => t.enabled),
+    'readyState:',
+    audioTracks.map((t) => t.readyState)
   )
 
   // Create an audio element to play the remote stream
@@ -477,16 +520,22 @@ function playRemoteStream(peerId: string, stream: MediaStream): void {
             clearInterval(retryInterval)
             return
           }
-          audio.play().then(() => {
-            console.log('[VoiceManager] Audio retry succeeded for', peerId)
-            clearInterval(retryInterval)
-          }).catch(() => {})
+          audio
+            .play()
+            .then(() => {
+              console.log('[VoiceManager] Audio retry succeeded for', peerId)
+              clearInterval(retryInterval)
+            })
+            .catch(() => {})
         }, 1000)
         // Also retry on next user interaction
         const retryPlay = (): void => {
-          audio.play().then(() => {
-            console.log('[VoiceManager] Audio play resumed via user gesture for', peerId)
-          }).catch(() => {})
+          audio
+            .play()
+            .then(() => {
+              console.log('[VoiceManager] Audio play resumed via user gesture for', peerId)
+            })
+            .catch(() => {})
           clearInterval(retryInterval)
           document.removeEventListener('click', retryPlay)
           document.removeEventListener('keydown', retryPlay)
@@ -502,7 +551,7 @@ function startVAD(): void {
     clearInterval(vadInterval)
   }
 
-  const dataArray = new Uint8Array(analyser!.frequencyBinCount)
+  const dataArray = new Uint8Array(analyser?.frequencyBinCount ?? 0)
 
   vadInterval = setInterval(() => {
     if (!analyser || muted) {

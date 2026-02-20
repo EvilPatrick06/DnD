@@ -1,7 +1,6 @@
 import type { Character } from '../../../types/character'
-import { is5eCharacter } from '../../../types/character'
-import type { EntityCondition } from '../../../types/game-state'
 import { abilityModifier, formatMod } from '../../../types/character-common'
+import type { EntityCondition } from '../../../types/game-state'
 
 interface PlayerHUDProps {
   character: Character | null
@@ -19,11 +18,10 @@ export default function PlayerHUD({ character, conditions }: PlayerHUDProps): JS
 
   const hp = character.hitPoints
   const hpPercent = hp.maximum > 0 ? Math.max(0, (hp.current / hp.maximum) * 100) : 0
-  const hpColor =
-    hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'
+  const hpColor = hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'
 
-  const ac = is5eCharacter(character) ? character.armorClass : character.armorClass
-  const speed = is5eCharacter(character) ? character.speed : character.speed
+  const ac = character.armorClass
+  const speed = character.speed
   const dexMod = abilityModifier(character.abilityScores.dexterity)
 
   return (
@@ -47,9 +45,7 @@ export default function PlayerHUD({ character, conditions }: PlayerHUDProps): JS
             </div>
             <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white drop-shadow">
               {hp.current} / {hp.maximum}
-              {hp.temporary > 0 && (
-                <span className="text-blue-300 ml-1">(+{hp.temporary})</span>
-              )}
+              {hp.temporary > 0 && <span className="text-blue-300 ml-1">(+{hp.temporary})</span>}
             </span>
           </div>
         </div>
@@ -57,27 +53,21 @@ export default function PlayerHUD({ character, conditions }: PlayerHUDProps): JS
         {/* AC */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <span className="text-xs text-gray-500">AC</span>
-          <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">
-            {ac}
-          </span>
+          <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">{ac}</span>
         </div>
 
-        {/* Initiative (5e) */}
-        {is5eCharacter(character) && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-xs text-gray-500">Init</span>
-            <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">
-              {formatMod(dexMod)}
-            </span>
-          </div>
-        )}
+        {/* Initiative */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className="text-xs text-gray-500">Init</span>
+          <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">
+            {formatMod(dexMod)}
+          </span>
+        </div>
 
         {/* Speed */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <span className="text-xs text-gray-500">Speed</span>
-          <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">
-            {speed} ft
-          </span>
+          <span className="text-sm font-semibold text-gray-100 bg-gray-800 rounded px-2 py-0.5">{speed} ft</span>
         </div>
 
         {/* Conditions */}

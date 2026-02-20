@@ -1,11 +1,11 @@
+import { useCharacterStore } from '../../stores/useCharacterStore'
 import { useLobbyStore } from '../../stores/useLobbyStore'
 import { useNetworkStore } from '../../stores/useNetworkStore'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import PlayerList from './PlayerList'
-import ChatPanel from './ChatPanel'
 import CharacterSelector from './CharacterSelector'
-import VoiceControls from './VoiceControls'
+import ChatPanel from './ChatPanel'
+import PlayerList from './PlayerList'
 import ReadyButton from './ReadyButton'
+import VoiceControls from './VoiceControls'
 
 export default function LobbyLayout(): JSX.Element {
   const updatePlayer = useLobbyStore((s) => s.updatePlayer)
@@ -17,7 +17,7 @@ export default function LobbyLayout(): JSX.Element {
   const handleCharacterSelect = (characterId: string, characterName: string): void => {
     if (localPeerId) {
       updatePlayer(localPeerId, { characterId, characterName })
-      const characterData = characterId ? characters.find((c) => c.id === characterId) ?? null : null
+      const characterData = characterId ? (characters.find((c) => c.id === characterId) ?? null) : null
       sendMessage('player:character-select', {
         characterId: characterId || null,
         characterName: characterName || null,

@@ -5,10 +5,7 @@ interface BackButtonProps {
   label?: string
 }
 
-export default function BackButton({
-  to = '/',
-  label = 'Back to Menu'
-}: BackButtonProps): JSX.Element {
+export default function BackButton({ to = '/', label = 'Back to Menu' }: BackButtonProps): JSX.Element {
   const navigate = useNavigate()
 
   return (

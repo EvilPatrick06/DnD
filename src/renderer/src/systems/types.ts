@@ -1,5 +1,5 @@
+import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../types/character-common'
 import type { GameSystem } from '../types/game-system'
-import type { SpellEntry, ClassFeatureEntry, Currency, AbilityName } from '../types/character-common'
 
 export interface SheetConfig {
   showInitiative: boolean
@@ -20,7 +20,7 @@ export interface GameSystemPlugin {
   isSpellcaster(className: string): boolean
   getStartingGold(classId: string, backgroundId: string): Promise<Currency>
   getClassFeatures(classId: string, level: number): Promise<ClassFeatureEntry[]>
-  loadEquipment(): Promise<{ weapons: any[]; armor: any[]; shields: any[]; gear: any[] }>
+  loadEquipment(): Promise<{ weapons: unknown[]; armor: unknown[]; shields: unknown[]; gear: unknown[] }>
 
   getSkillDefinitions(): Array<{ name: string; ability: AbilityName }>
 

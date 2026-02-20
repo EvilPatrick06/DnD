@@ -1,11 +1,11 @@
 import { create } from 'zustand'
-import type { BuilderState } from './types'
-import { createCoreSlice } from './slices/core-slice'
 import { createAbilityScoreSlice } from './slices/ability-score-slice'
-import { createSelectionSlice } from './slices/selection-slice'
-import { createCharacterDetailsSlice } from './slices/character-details-slice'
 import { createBuildActionsSlice } from './slices/build-actions-slice'
+import { createCharacterDetailsSlice } from './slices/character-details-slice'
+import { createCoreSlice } from './slices/core-slice'
 import { createSaveSlice } from './slices/save-slice'
+import { createSelectionSlice } from './slices/selection-slice'
+import type { BuilderState } from './types'
 
 export const useBuilderStore = create<BuilderState>()((...a) => ({
   ...createCoreSlice(...a),
@@ -17,16 +17,15 @@ export const useBuilderStore = create<BuilderState>()((...a) => ({
 }))
 
 // Re-export types and constants so existing imports work
-export type { BuilderState } from './types'
-export type { AbilityScoreMethod } from './types'
+export type { AbilityScoreMethod, BuilderState } from './types'
 export {
-  POINT_BUY_COSTS,
-  POINT_BUY_BUDGET,
-  STANDARD_ARRAY,
-  PRESET_ICONS,
-  FOUNDATION_SLOT_ORDER,
   DEFAULT_SCORES,
+  FOUNDATION_SLOT_IDS,
+  POINT_BUY_BUDGET,
+  POINT_BUY_COSTS,
   POINT_BUY_START,
+  PRESET_ICONS,
+  pointBuyTotal,
   roll4d6DropLowest,
-  pointBuyTotal
+  STANDARD_ARRAY
 } from './types'

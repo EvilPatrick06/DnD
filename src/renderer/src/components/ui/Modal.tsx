@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface ModalProps {
   open: boolean
@@ -7,12 +7,7 @@ interface ModalProps {
   children: ReactNode
 }
 
-export default function Modal({
-  open,
-  onClose,
-  title,
-  children
-}: ModalProps): JSX.Element | null {
+export default function Modal({ open, onClose, title, children }: ModalProps): JSX.Element | null {
   if (!open) return null
 
   return (
@@ -21,10 +16,7 @@ export default function Modal({
       <div className="relative bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           {title && <h2 className="text-xl font-bold">{title}</h2>}
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-300 text-2xl leading-none cursor-pointer"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-2xl leading-none cursor-pointer">
             &times;
           </button>
         </div>

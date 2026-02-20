@@ -1,5 +1,7 @@
+import type { DmToolId } from './DMToolbar'
+
 interface FogBrushProps {
-  activeTool: 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure'
+  activeTool: DmToolId
   brushSize: number
   onToolChange: (tool: 'fog-reveal' | 'fog-hide') => void
   onBrushSizeChange: (size: number) => void
@@ -20,30 +22,20 @@ export default function FogBrush({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
-        Fog of War
-      </h3>
+      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Fog of War</h3>
 
       <div className="flex gap-1">
         <button
           onClick={() => onToolChange('fog-reveal')}
           className={`flex-1 py-2 text-sm rounded-lg transition-colors cursor-pointer
-            ${
-              activeTool === 'fog-reveal'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
+            ${activeTool === 'fog-reveal' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
           Reveal
         </button>
         <button
           onClick={() => onToolChange('fog-hide')}
           className={`flex-1 py-2 text-sm rounded-lg transition-colors cursor-pointer
-            ${
-              activeTool === 'fog-hide'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
+            ${activeTool === 'fog-hide' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
           Hide
         </button>
@@ -57,11 +49,7 @@ export default function FogBrush({
               key={size}
               onClick={() => onBrushSizeChange(size)}
               className={`flex-1 py-1.5 text-sm rounded-lg transition-colors cursor-pointer
-                ${
-                  brushSize === size
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
+                ${brushSize === size ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
             >
               {size}x{size}
             </button>

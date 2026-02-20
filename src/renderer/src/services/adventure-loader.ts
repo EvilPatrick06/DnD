@@ -1,10 +1,15 @@
+import type { Encounter } from '../types/encounter'
 import type { GameSystem } from '../types/game-system'
 
 export interface AdventureChapter {
   title: string
   description: string
+  readAloudText?: string
   maps: string[]
   encounters: string[]
+  locations?: string[]
+  levelRange?: { min: number; max: number }
+  keyEvents?: string[]
 }
 
 export interface AdventureNPC {
@@ -12,7 +17,23 @@ export interface AdventureNPC {
   name: string
   description: string
   location: string
-  role: 'ally' | 'enemy' | 'neutral'
+  role: 'ally' | 'enemy' | 'neutral' | 'patron' | 'shopkeeper'
+  statBlockId?: string
+  personality?: string
+  motivation?: string
+}
+
+export interface AdventureLore {
+  id: string
+  title: string
+  content: string
+  category: 'location' | 'faction' | 'item' | 'world' | 'other'
+}
+
+export interface AdventureMapAssignment {
+  chapterIndex: number
+  mapId: string
+  builtInMapId: string
 }
 
 export interface Adventure {
@@ -21,8 +42,12 @@ export interface Adventure {
   system: GameSystem
   description: string
   icon: string
+  levelRange?: { min: number; max: number }
   chapters: AdventureChapter[]
   npcs?: AdventureNPC[]
+  encounters?: Encounter[]
+  lore?: AdventureLore[]
+  mapAssignments?: AdventureMapAssignment[]
 }
 
 let cachedAdventures: Adventure[] | null = null
