@@ -1,6 +1,6 @@
 {
   "name": "dnd-vtt",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
   "main": "./out/main/index.js",
   "scripts": {

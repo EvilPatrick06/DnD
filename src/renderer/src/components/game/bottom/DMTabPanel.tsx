@@ -495,6 +495,9 @@ export default function DMTabPanel({
             <button className={btnClass} onClick={() => onOpenModal('chaseTracker')}>
               Chase Tracker
             </button>
+            <button className={btnClass} onClick={() => onOpenModal('magic-item-tracker')}>
+              Magic Items
+            </button>
           </div>
         )
 

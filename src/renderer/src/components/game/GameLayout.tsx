@@ -92,6 +92,7 @@ const TokenEditorModal = lazy(() => import('./modals/TokenEditorModal'))
 const GridSettingsModal = lazy(() => import('./modals/GridSettingsModal'))
 const HandoutModal = lazy(() => import('./modals/HandoutModal'))
 const HandoutViewerModal = lazy(() => import('./modals/HandoutViewerModal'))
+const MagicItemTrackerModal = lazy(() => import('./modals/MagicItemTrackerModal'))
 const NarrationOverlay = lazy(() => import('./overlays/NarrationOverlay'))
 
 import { createCompanionToken } from '../../services/companion-service'
@@ -163,6 +164,7 @@ type ActiveModal =
   | 'handout'
   | 'handoutViewer'
   | 'npcGenerator'
+  | 'magic-item-tracker'
   | null
 
 export default function GameLayout({ campaign, isDM, character, playerName }: GameLayoutProps): JSX.Element {
@@ -2343,6 +2345,9 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         )}
         {activeModal === 'gridSettings' && effectiveIsDM && (
           <GridSettingsModal onClose={() => setActiveModal(null)} />
+        )}
+        {activeModal === 'magic-item-tracker' && effectiveIsDM && (
+          <MagicItemTrackerModal campaign={campaign} onClose={() => setActiveModal(null)} />
         )}
         {activeModal === 'tokenEditor' && effectiveIsDM && editingToken && (
           <TokenEditorModal

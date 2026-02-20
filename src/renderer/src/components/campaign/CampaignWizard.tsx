@@ -45,6 +45,12 @@ export default function CampaignWizard(): JSX.Element {
   const [customAudio, setCustomAudio] = useState<CustomAudioEntry[]>([])
   const [sessionZero, setSessionZero] = useState<SessionZeroData>({ ...DEFAULT_SESSION_ZERO })
 
+  // Adventure exclusion state
+  const [excludedNpcIds, setExcludedNpcIds] = useState<string[]>([])
+  const [excludedLoreIds, setExcludedLoreIds] = useState<string[]>([])
+  const [excludedEncounterIds, setExcludedEncounterIds] = useState<string[]>([])
+  const [excludedMapIds, setExcludedMapIds] = useState<string[]>([])
+
   // Voice chat config
   const [voiceConfig, setVoiceConfig] = useState<{
     mode: 'local' | 'cloud'
@@ -68,6 +74,14 @@ export default function CampaignWizard(): JSX.Element {
   }, [])
 
   const selectedAdventure = adventures.find((a) => a.id === selectedAdventureId) ?? null
+
+  const handleSelectAdventure = (id: string | null): void => {
+    setSelectedAdventureId(id)
+    setExcludedNpcIds([])
+    setExcludedLoreIds([])
+    setExcludedEncounterIds([])
+    setExcludedMapIds([])
+  }
 
   const canAdvance = (): boolean => {
     switch (step) {
@@ -113,11 +127,11 @@ export default function CampaignWizard(): JSX.Element {
 
     setSubmitting(true)
     try {
-      // Build maps list: merge adventure map assignments with user-selected maps
+      // Build maps list: merge adventure map assignments (minus excluded) with user-selected maps
       const campaignMaps = [...maps]
       if (selectedAdventure?.mapAssignments) {
         for (const assignment of selectedAdventure.mapAssignments) {
-          // Only add built-in maps not already in the list
+          if (excludedMapIds.includes(assignment.builtInMapId)) continue
           if (!campaignMaps.some((m) => m.id === assignment.builtInMapId)) {
             const chapter = selectedAdventure.chapters[assignment.chapterIndex]
             campaignMaps.push({
@@ -156,28 +170,34 @@ export default function CampaignWizard(): JSX.Element {
         maps: campaignMaps,
         activeMapId: campaignMaps.length > 0 ? campaignMaps[0].id : undefined,
         npcs:
-          selectedAdventure?.npcs?.map((npc) => ({
-            id: npc.id,
-            name: npc.name,
-            description: npc.description ?? '',
-            location: npc.location,
-            isVisible: npc.role !== 'enemy',
-            statBlockId: npc.statBlockId,
-            role: npc.role,
-            personality: npc.personality,
-            motivation: npc.motivation,
-            notes: `Role: ${npc.role}`
-          })) ?? [],
-        encounters: selectedAdventure?.encounters ?? undefined,
+          selectedAdventure?.npcs
+            ?.filter((npc) => !excludedNpcIds.includes(npc.id))
+            .map((npc) => ({
+              id: npc.id,
+              name: npc.name,
+              description: npc.description ?? '',
+              location: npc.location,
+              isVisible: npc.role !== 'enemy',
+              statBlockId: npc.statBlockId,
+              role: npc.role,
+              personality: npc.personality,
+              motivation: npc.motivation,
+              notes: `Role: ${npc.role}`
+            })) ?? [],
+        encounters:
+          selectedAdventure?.encounters?.filter((e) => !excludedEncounterIds.includes(e.id || '')) ??
+          undefined,
         lore:
-          selectedAdventure?.lore?.map((l) => ({
-            id: l.id,
-            title: l.title,
-            content: l.content,
-            category: l.category,
-            isVisibleToPlayers: l.category !== 'faction',
-            createdAt: new Date().toISOString()
-          })) ?? undefined,
+          selectedAdventure?.lore
+            ?.filter((l) => !excludedLoreIds.includes(l.id))
+            .map((l) => ({
+              id: l.id,
+              title: l.title,
+              content: l.content,
+              category: l.category,
+              isVisibleToPlayers: l.category !== 'faction',
+              createdAt: new Date().toISOString()
+            })) ?? undefined,
         customRules,
         settings: {
           maxPlayers,
@@ -308,7 +328,15 @@ export default function CampaignWizard(): JSX.Element {
           campaignType={campaignType}
           selectedAdventureId={selectedAdventureId}
           onSelectType={setCampaignType}
-          onSelectAdventure={setSelectedAdventureId}
+          onSelectAdventure={handleSelectAdventure}
+          excludedNpcIds={excludedNpcIds}
+          onExcludedNpcsChange={setExcludedNpcIds}
+          excludedLoreIds={excludedLoreIds}
+          onExcludedLoreChange={setExcludedLoreIds}
+          excludedEncounterIds={excludedEncounterIds}
+          onExcludedEncounterChange={setExcludedEncounterIds}
+          excludedMapIds={excludedMapIds}
+          onExcludedMapsChange={setExcludedMapIds}
         />
       )}
 
@@ -323,7 +351,21 @@ export default function CampaignWizard(): JSX.Element {
 
       {step === 5 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
 
-      {step === 6 && <MapConfigStep maps={maps} campaignId={tempCampaignId} onChange={setMaps} />}
+      {step === 6 && (
+        <MapConfigStep
+          maps={maps}
+          campaignId={tempCampaignId}
+          onChange={setMaps}
+          adventureMaps={
+            selectedAdventure?.mapAssignments
+              ?.filter((a) => !excludedMapIds.includes(a.builtInMapId))
+              .map((a) => ({
+                id: a.builtInMapId,
+                name: selectedAdventure.chapters[a.chapterIndex]?.title ?? a.builtInMapId
+              })) ?? undefined
+          }
+        />
+      )}
 
       {step === 7 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
 
