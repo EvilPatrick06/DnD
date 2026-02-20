@@ -6,6 +6,12 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { isValidUUID } from '../../shared/utils/uuid'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastionStorage'
 import {
+  deleteCustomCreature,
+  loadCustomCreature,
+  loadCustomCreatures,
+  saveCustomCreature
+} from '../storage/customCreatureStorage'
+import {
   deleteHomebrewEntry,
   loadAllHomebrew,
   loadHomebrewEntries,
@@ -171,6 +177,37 @@ export function registerIpcHandlers(): void {
       return result.data
     }
     return { success: false, error: result.error ?? 'Failed to delete bastion' }
+  })
+
+  // --- Custom creature storage ---
+
+  ipcMain.handle(IPC_CHANNELS.SAVE_CUSTOM_CREATURE, async (_event, creature) => {
+    const result = await saveCustomCreature(creature)
+    return { success: result.success, error: result.error }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOAD_CUSTOM_CREATURES, async () => {
+    const result = await loadCustomCreatures()
+    if (result.success) {
+      return result.data
+    }
+    return { success: false, error: result.error ?? 'Failed to load custom creatures' }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOAD_CUSTOM_CREATURE, async (_event, id: string) => {
+    const result = await loadCustomCreature(id)
+    if (result.success) {
+      return result.data
+    }
+    return { success: false, error: result.error ?? 'Failed to load custom creature' }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_CUSTOM_CREATURE, async (_event, id: string) => {
+    const result = await deleteCustomCreature(id)
+    if (result.success) {
+      return result.data
+    }
+    return { success: false, error: result.error ?? 'Failed to delete custom creature' }
   })
 
   // --- Game state storage ---

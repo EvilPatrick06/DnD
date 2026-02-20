@@ -6,14 +6,18 @@ import { AiChatRequestSchema, AiConfigSchema } from '../../shared/ipc-schemas'
 import * as aiService from '../ai/ai-service'
 import { buildContext, getLastTokenBreakdown } from '../ai/context-builder'
 import {
+  checkOllamaUpdate,
   CURATED_MODELS,
+  deleteModel,
   detectOllama,
   downloadOllama,
   getSystemVram,
   installOllama,
   listInstalledModels,
+  listInstalledModelsDetailed,
   pullModel,
-  startOllama
+  startOllama,
+  updateOllama
 } from '../ai/ollama-manager'
 import type { AiChatRequest, AiConfig, StatChange } from '../ai/types'
 import { deleteConversation, loadConversation, saveConversation } from '../storage/aiConversationStorage'
@@ -271,5 +275,41 @@ export function registerAiHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.AI_LIST_INSTALLED_MODELS, async () => {
     return await listInstalledModels()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_LIST_INSTALLED_MODELS_DETAILED, async () => {
+    return await listInstalledModelsDetailed()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_OLLAMA_CHECK_UPDATE, async () => {
+    try {
+      return { success: true, data: await checkOllamaUpdate() }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_OLLAMA_UPDATE, async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    try {
+      await updateOllama((percent) => {
+        win?.webContents.send(IPC_CHANNELS.AI_OLLAMA_PROGRESS, {
+          type: 'ollama-update',
+          percent
+        })
+      })
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_DELETE_MODEL, async (_event, model: string) => {
+    try {
+      await deleteModel(model)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
   })
 }

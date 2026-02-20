@@ -15,6 +15,7 @@ import { BackButton, Button, Card, ConfirmDialog, Modal } from '../components/ui
 import { addToast } from '../hooks/useToast'
 import { exportCampaignToFile } from '../services/campaign-io'
 import { load5eMonsterById, loadAllStatBlocks, searchMonsters } from '../services/data-provider'
+import { exportEntities, importEntities, reIdItems } from '../services/entity-io'
 import { useCampaignStore } from '../stores/useCampaignStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
 import type { AdventureEntry, CalendarConfig, Campaign, CustomRule, LoreEntry, NPC, TurnMode } from '../types/campaign'
@@ -345,6 +346,94 @@ export default function CampaignDetailPage(): JSX.Element {
       npcs: campaign.npcs.filter((n) => n.id !== npcId),
       updatedAt: new Date().toISOString()
     })
+  }
+
+  // --- NPC import/export ---
+  const handleExportNpcs = async (npcsToExport: NPC[]): Promise<void> => {
+    if (!npcsToExport.length) return
+    try {
+      const ok = await exportEntities('npc', npcsToExport)
+      if (ok) addToast(`Exported ${npcsToExport.length} NPC(s)`, 'success')
+    } catch { addToast('NPC export failed', 'error') }
+  }
+  const handleImportNpcs = async (): Promise<void> => {
+    if (!campaign) return
+    try {
+      const result = await importEntities<NPC>('npc')
+      if (!result) return
+      const items = reIdItems(result.items)
+      const npcs = [...campaign.npcs, ...items]
+      await saveCampaign({ ...campaign, npcs, updatedAt: new Date().toISOString() })
+      addToast(`Imported ${items.length} NPC(s)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'NPC import failed', 'error')
+    }
+  }
+
+  // --- Map import/export ---
+  const handleExportMaps = async (mapsToExport: GameMap[]): Promise<void> => {
+    if (!mapsToExport.length) return
+    try {
+      const ok = await exportEntities('map', mapsToExport)
+      if (ok) addToast(`Exported ${mapsToExport.length} map(s)`, 'success')
+    } catch { addToast('Map export failed', 'error') }
+  }
+  const handleImportMaps = async (): Promise<void> => {
+    if (!campaign) return
+    try {
+      const result = await importEntities<GameMap>('map')
+      if (!result) return
+      const items = reIdItems(result.items).map((m) => ({ ...m, campaignId: campaign.id }))
+      const maps = [...campaign.maps, ...items]
+      await saveCampaign({ ...campaign, maps, updatedAt: new Date().toISOString() })
+      addToast(`Imported ${items.length} map(s)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Map import failed', 'error')
+    }
+  }
+
+  // --- Lore import/export ---
+  const handleExportLore = async (loreToExport: LoreEntry[]): Promise<void> => {
+    if (!loreToExport.length) return
+    try {
+      const ok = await exportEntities('lore', loreToExport)
+      if (ok) addToast(`Exported ${loreToExport.length} lore entry(ies)`, 'success')
+    } catch { addToast('Lore export failed', 'error') }
+  }
+  const handleImportLore = async (): Promise<void> => {
+    if (!campaign) return
+    try {
+      const result = await importEntities<LoreEntry>('lore')
+      if (!result) return
+      const items = reIdItems(result.items)
+      const newLore = [...(campaign.lore ?? []), ...items]
+      await saveCampaign({ ...campaign, lore: newLore, updatedAt: new Date().toISOString() })
+      addToast(`Imported ${items.length} lore entry(ies)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Lore import failed', 'error')
+    }
+  }
+
+  // --- Journal import/export ---
+  const handleExportJournal = async (entries: import('../types/campaign').JournalEntry[]): Promise<void> => {
+    if (!entries.length) return
+    try {
+      const ok = await exportEntities('journal', entries)
+      if (ok) addToast(`Exported ${entries.length} journal entry(ies)`, 'success')
+    } catch { addToast('Journal export failed', 'error') }
+  }
+  const handleImportJournal = async (): Promise<void> => {
+    if (!campaign) return
+    try {
+      const result = await importEntities<import('../types/campaign').JournalEntry>('journal')
+      if (!result) return
+      const items = reIdItems(result.items)
+      const entries = [...campaign.journal.entries, ...items]
+      await saveCampaign({ ...campaign, journal: { entries }, updatedAt: new Date().toISOString() })
+      addToast(`Imported ${items.length} journal entry(ies)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Journal import failed', 'error')
+    }
   }
 
   // --- Rule handlers ---
@@ -768,7 +857,16 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Maps */}
-        <Card title={`Maps (${campaign.maps.length})`}>
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Maps ({campaign.maps.length})</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={handleImportMaps} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              {campaign.maps.length > 0 && (
+                <button onClick={() => handleExportMaps(campaign.maps)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+              )}
+            </div>
+          </div>
           {campaign.maps.length === 0 ? (
             <p className="text-gray-500 text-sm">No maps configured yet.</p>
           ) : (
@@ -831,7 +929,16 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* NPCs */}
-        <Card title={`NPCs (${campaign.npcs.length})`}>
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">NPCs ({campaign.npcs.length})</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={handleImportNpcs} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              {campaign.npcs.length > 0 && (
+                <button onClick={() => handleExportNpcs(campaign.npcs)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+              )}
+            </div>
+          </div>
           {campaign.npcs.length === 0 ? (
             <p className="text-gray-500 text-sm">No NPCs added yet.</p>
           ) : (
@@ -947,7 +1054,16 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Lore */}
-        <Card title={`Lore (${lore.length})`}>
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Lore ({lore.length})</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={handleImportLore} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              {lore.length > 0 && (
+                <button onClick={() => handleExportLore(lore)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+              )}
+            </div>
+          </div>
           {lore.length === 0 ? (
             <p className="text-gray-500 text-sm">No lore entries yet. Add world details, factions, and locations.</p>
           ) : (
@@ -1307,7 +1423,16 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Journal */}
-        <Card title={`Session Journal (${campaign.journal.entries.length})`}>
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Session Journal ({campaign.journal.entries.length})</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={handleImportJournal} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              {campaign.journal.entries.length > 0 && (
+                <button onClick={() => handleExportJournal(campaign.journal.entries)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+              )}
+            </div>
+          </div>
           {campaign.journal.entries.length === 0 ? (
             <p className="text-gray-500 text-sm">No journal entries yet. Entries are created during and after game sessions.</p>
           ) : (

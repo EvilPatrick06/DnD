@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { rollSingle } from '../../../services/dice-service'
 import { load5eMonsterById } from '../../../services/data-provider'
+import { exportEntities, importEntities, reIdItems } from '../../../services/entity-io'
+import { addToast } from '../../../hooks/useToast'
 import { useBastionStore } from '../../../stores/useBastionStore'
+import { useCampaignStore } from '../../../stores/useCampaignStore'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
@@ -148,6 +151,29 @@ export default function LeftSidebar({
   const findCharacterForPlayer = (characterId: string | null): Character | null => {
     if (!characterId) return null
     return characters.find((c) => c.id === characterId) ?? remoteCharacters[characterId] ?? null
+  }
+
+  const { saveCampaign: saveCamp } = useCampaignStore()
+
+  const handleImportNpcs = async (): Promise<void> => {
+    try {
+      const result = await importEntities<NPC>('npc')
+      if (!result) return
+      const items = reIdItems(result.items)
+      const npcs = [...campaign.npcs, ...items]
+      await saveCamp({ ...campaign, npcs, updatedAt: new Date().toISOString() })
+      addToast(`Imported ${items.length} NPC(s)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'NPC import failed', 'error')
+    }
+  }
+
+  const handleExportNpcs = async (): Promise<void> => {
+    if (campaign.npcs.length === 0) return
+    try {
+      const ok = await exportEntities('npc', campaign.npcs)
+      if (ok) addToast(`Exported ${campaign.npcs.length} NPC(s)`, 'success')
+    } catch { addToast('NPC export failed', 'error') }
   }
 
   // Place NPC on map as a token
@@ -394,27 +420,53 @@ export default function LeftSidebar({
       <div className="flex-1 overflow-y-auto min-h-0">
         {SECTIONS.map((section) => (
           <div key={section.id} className="border-b border-gray-800/50">
-            <button
-              onClick={() => toggleSection(section.id)}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-800/50 transition-colors cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className={`w-3 h-3 text-gray-500 transition-transform shrink-0 ${
-                  expandedSection === section.id ? 'rotate-90' : ''
-                }`}
+            <div className="flex items-center">
+              <button
+                onClick={() => toggleSection(section.id)}
+                className="flex-1 flex items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-800/50 transition-colors cursor-pointer"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-sm shrink-0">{section.icon}</span>
-              <span className="text-xs font-semibold text-gray-300 uppercase tracking-wider">{section.label}</span>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className={`w-3 h-3 text-gray-500 transition-transform shrink-0 ${
+                    expandedSection === section.id ? 'rotate-90' : ''
+                  }`}
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="text-sm shrink-0">{section.icon}</span>
+                <span className="text-xs font-semibold text-gray-300 uppercase tracking-wider">{section.label}</span>
+              </button>
+              {isDM && section.id === 'npcs' && expandedSection === 'npcs' && (
+                <div className="flex items-center gap-1 pr-2">
+                  <button
+                    onClick={handleImportNpcs}
+                    title="Import NPCs"
+                    className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-amber-400 cursor-pointer rounded hover:bg-gray-800"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path d="M9.25 13.25a.75.75 0 0 0 1.5 0V4.636l2.955 3.129a.75.75 0 0 0 1.09-1.03l-4.25-4.5a.75.75 0 0 0-1.09 0l-4.25 4.5a.75.75 0 1 0 1.09 1.03L9.25 4.636v8.614Z" />
+                      <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleExportNpcs}
+                    title="Export NPCs"
+                    className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-amber-400 cursor-pointer rounded hover:bg-gray-800"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 0 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                      <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {expandedSection === section.id && <div className="px-3 pb-3">{renderSectionContent(section.id)}</div>}
           </div>

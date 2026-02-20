@@ -18,7 +18,7 @@ const menuItems = [
   {
     label: 'Library',
     path: '/library',
-    description: 'Browse spells, monsters, items, classes, and all your content'
+    description: 'Browse, import, and export monsters, creatures, NPCs, and more'
   },
   {
     label: 'Join Game',
