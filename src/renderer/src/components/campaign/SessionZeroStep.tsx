@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import type { CustomRule } from '../../types/campaign'
 
 export interface SessionZeroData {
   contentLimits: string[]
   tone: string
   pvpAllowed: boolean
   characterDeathExpectation: string
-  homebrewNotes: string
   playSchedule: string
   additionalNotes: string
 }
@@ -15,7 +15,6 @@ export const DEFAULT_SESSION_ZERO: SessionZeroData = {
   tone: 'heroic',
   pvpAllowed: false,
   characterDeathExpectation: 'possible',
-  homebrewNotes: '',
   playSchedule: '',
   additionalNotes: ''
 }
@@ -51,13 +50,37 @@ const COMMON_LIMITS = [
   'Imprisonment/claustrophobia'
 ]
 
+type RuleCategory = CustomRule['category']
+
+const RULE_CATEGORIES: Array<{ value: RuleCategory; label: string }> = [
+  { value: 'combat', label: 'Combat' },
+  { value: 'exploration', label: 'Exploration' },
+  { value: 'social', label: 'Social' },
+  { value: 'rest', label: 'Rest' },
+  { value: 'other', label: 'Other' }
+]
+
+const CATEGORY_COLORS: Record<RuleCategory, string> = {
+  combat: 'bg-red-900/40 text-red-300',
+  exploration: 'bg-green-900/40 text-green-300',
+  social: 'bg-blue-900/40 text-blue-300',
+  rest: 'bg-purple-900/40 text-purple-300',
+  other: 'bg-gray-800 text-gray-300'
+}
+
 interface SessionZeroStepProps {
   data: SessionZeroData
   onChange: (data: SessionZeroData) => void
+  customRules: CustomRule[]
+  onRulesChange: (rules: CustomRule[]) => void
 }
 
-export default function SessionZeroStep({ data, onChange }: SessionZeroStepProps): JSX.Element {
+export default function SessionZeroStep({ data, onChange, customRules, onRulesChange }: SessionZeroStepProps): JSX.Element {
   const [customLimit, setCustomLimit] = useState('')
+  const [showRuleForm, setShowRuleForm] = useState(false)
+  const [newRuleName, setNewRuleName] = useState('')
+  const [newRuleDescription, setNewRuleDescription] = useState('')
+  const [newRuleCategory, setNewRuleCategory] = useState<RuleCategory>('other')
 
   const update = <K extends keyof SessionZeroData>(key: K, value: SessionZeroData[K]): void => {
     onChange({ ...data, [key]: value })
@@ -76,6 +99,25 @@ export default function SessionZeroStep({ data, onChange }: SessionZeroStepProps
       update('contentLimits', [...data.contentLimits, trimmed])
       setCustomLimit('')
     }
+  }
+
+  const handleAddRule = (): void => {
+    if (!newRuleName.trim()) return
+    const rule: CustomRule = {
+      id: crypto.randomUUID(),
+      name: newRuleName.trim(),
+      description: newRuleDescription.trim(),
+      category: newRuleCategory
+    }
+    onRulesChange([...customRules, rule])
+    setNewRuleName('')
+    setNewRuleDescription('')
+    setNewRuleCategory('other')
+    setShowRuleForm(false)
+  }
+
+  const handleRemoveRule = (id: string): void => {
+    onRulesChange(customRules.filter((r) => r.id !== id))
   }
 
   return (
@@ -214,28 +256,112 @@ export default function SessionZeroStep({ data, onChange }: SessionZeroStepProps
         </div>
       </div>
 
-      {/* Homebrew / Schedule */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Homebrew Rules</label>
-          <textarea
-            value={data.homebrewNotes}
-            onChange={(e) => update('homebrewNotes', e.target.value)}
-            placeholder="List any homebrew rules or modifications..."
-            rows={3}
-            className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 resize-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">Play Schedule</label>
-          <textarea
-            value={data.playSchedule}
-            onChange={(e) => update('playSchedule', e.target.value)}
-            placeholder="e.g. Every Saturday 6-10 PM, biweekly..."
-            rows={3}
-            className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 resize-none"
-          />
-        </div>
+      {/* House Rules */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">House Rules</label>
+        <p className="text-xs text-gray-500 mb-2">
+          Add custom house rules for your campaign. You can add more later.
+        </p>
+
+        {customRules.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {customRules.map((rule) => (
+              <div
+                key={rule.id}
+                className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 flex items-start justify-between gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-medium text-gray-200">{rule.name}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${CATEGORY_COLORS[rule.category]}`}>
+                      {rule.category}
+                    </span>
+                  </div>
+                  {rule.description && <p className="text-xs text-gray-400">{rule.description}</p>}
+                </div>
+                <button
+                  onClick={() => handleRemoveRule(rule.id)}
+                  className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer text-lg shrink-0"
+                  title="Remove rule"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showRuleForm ? (
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Rule Name</label>
+              <input
+                value={newRuleName}
+                onChange={(e) => setNewRuleName(e.target.value)}
+                placeholder="e.g. Critical Hit Bonus"
+                className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 focus:outline-none focus:border-amber-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Description</label>
+              <textarea
+                value={newRuleDescription}
+                onChange={(e) => setNewRuleDescription(e.target.value)}
+                placeholder="Describe how this rule works..."
+                rows={2}
+                className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 resize-none focus:outline-none focus:border-amber-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Category</label>
+              <select
+                value={newRuleCategory}
+                onChange={(e) => setNewRuleCategory(e.target.value as RuleCategory)}
+                className="px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
+              >
+                {RULE_CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddRule}
+                disabled={!newRuleName.trim()}
+                className="px-3 py-1.5 text-xs bg-amber-600 hover:bg-amber-500 rounded text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add Rule
+              </button>
+              <button
+                onClick={() => setShowRuleForm(false)}
+                className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowRuleForm(true)}
+            className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300 cursor-pointer"
+          >
+            + Add Rule
+          </button>
+        )}
+      </div>
+
+      {/* Play Schedule */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-1">Play Schedule</label>
+        <textarea
+          value={data.playSchedule}
+          onChange={(e) => update('playSchedule', e.target.value)}
+          placeholder="e.g. Every Saturday 6-10 PM, biweekly..."
+          rows={2}
+          className="w-full px-3 py-2 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200 resize-none"
+        />
       </div>
 
       {/* Additional Notes */}

@@ -187,7 +187,16 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   const prevSidebarWidth = useRef(280)
   const [teleportMove, setTeleportMove] = useState(false)
   const [activeAoE, setActiveAoE] = useState<AoEConfig | null>(null)
-  const [viewMode, setViewMode] = useState<'dm' | 'player'>('dm')
+  const [viewMode, setViewModeRaw] = useState<'dm' | 'player'>(() => {
+    try {
+      const saved = sessionStorage.getItem(`game-viewMode-${campaign.id}`)
+      return saved === 'player' ? 'player' : 'dm'
+    } catch { return 'dm' }
+  })
+  const setViewMode = useCallback((mode: 'dm' | 'player') => {
+    setViewModeRaw(mode)
+    try { sessionStorage.setItem(`game-viewMode-${campaign.id}`, mode) } catch { /* ignore */ }
+  }, [campaign.id])
   const [showCharacterPicker, setShowCharacterPicker] = useState(false)
   const [activeTool, setActiveTool] = useState<'select' | 'fog-reveal' | 'fog-hide' | 'wall'>('select')
   const [fogBrushSize, setFogBrushSize] = useState(1)
@@ -735,6 +744,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
   const handleLeaveGame = async (destination: string): Promise<void> => {
     setLeaving(true)
+    try { sessionStorage.removeItem(`game-viewMode-${campaign.id}`) } catch { /* ignore */ }
     if (isDM) {
       try {
         await saveGameState(campaign)
@@ -1430,7 +1440,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             onLongRest={handleLongRest}
             onLightSource={() => setActiveModal('lightSource')}
             onPhaseChange={(phase, suggestedLight) => {
-              if (effectiveIsDM) {
+              if (isDM) {
                 setPhaseChangeToast({ phase, suggestedLight })
                 if (phase === 'dawn') {
                   const charStore = useCharacterStore.getState()
@@ -1466,7 +1476,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             }}
           />
         )}
-        {effectiveIsDM && <DmAlertTray />}
+        {isDM && <DmAlertTray />}
         <SettingsDropdown
           campaign={campaign}
           isDM={effectiveIsDM}
@@ -2073,8 +2083,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           />
         )}
 
-        {/* Time Request Toast (DM only, human DM) */}
-        {timeRequestToast && effectiveIsDM && (
+        {/* Time Request Toast (DM only, human DM — visible in player view too) */}
+        {timeRequestToast && isDM && (
           <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40">
             <div className="bg-gray-900 border border-amber-500/50 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3">
               <span className="text-xs text-gray-200">{timeRequestToast.requesterName} wants to know the time</span>
@@ -2363,8 +2373,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         )}
       </Suspense>
 
-      {/* Rest Request Toast (DM only) */}
-      {restRequestToast && effectiveIsDM && (
+      {/* Rest Request Toast (DM — visible in player view too) */}
+      {restRequestToast && isDM && (
         <div className="fixed top-28 left-1/2 -translate-x-1/2 z-40">
           <div className="bg-gray-900 border border-green-500/50 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3">
             <span className="text-xs text-gray-200">
@@ -2390,8 +2400,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         </div>
       )}
 
-      {/* Phase Change Toast (DM only) */}
-      {phaseChangeToast && effectiveIsDM && (
+      {/* Phase Change Toast (DM — visible in player view too) */}
+      {phaseChangeToast && isDM && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40">
           <div className="bg-gray-900 border border-purple-500/50 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3">
             <span className="text-xs text-gray-200">

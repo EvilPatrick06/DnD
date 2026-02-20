@@ -9,7 +9,7 @@ import StatBlockEditor from '../components/game/dm/StatBlockEditor'
 import { BackButton, Button, Card, ConfirmDialog, Modal } from '../components/ui'
 import { addToast } from '../hooks/useToast'
 import { exportCampaignToFile } from '../services/campaign-io'
-import { load5eMonsterById, searchMonsters } from '../services/data-provider'
+import { load5eMonsterById, loadAllStatBlocks, searchMonsters } from '../services/data-provider'
 import { useCampaignStore } from '../stores/useCampaignStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
 import type { Campaign, CustomRule, LoreEntry, NPC } from '../types/campaign'
@@ -254,11 +254,9 @@ export default function CampaignDetailPage(): JSX.Element {
       return
     }
     if (allMonsters.length === 0) {
-      import('../services/data-provider').then(({ loadJson }) => {
-        loadJson<MonsterStatBlock[]>('data/5e/monsters.json').then((monsters) => {
-          setAllMonsters(monsters)
-          setMonsterSearchResults(searchMonsters(monsters, query).slice(0, 10))
-        })
+      loadAllStatBlocks().then((all) => {
+        setAllMonsters(all)
+        setMonsterSearchResults(searchMonsters(all, query).slice(0, 10))
       })
     } else {
       setMonsterSearchResults(searchMonsters(allMonsters, query).slice(0, 10))
@@ -703,13 +701,11 @@ export default function CampaignDetailPage(): JSX.Element {
         </Card>
 
         {/* Players */}
-        <Card title={`Players (${campaign.players.length})`}>
-          {campaign.players.length === 0 ? (
-            <p className="text-gray-500 text-sm">
-              No players have joined yet. Share the invite code{' '}
-              <span className="text-amber-400 font-mono">{campaign.inviteCode}</span> to invite players.
-            </p>
-          ) : (
+        <Card title={`Previous Players (${campaign.players.length})`}>
+          <p className="text-gray-500 text-sm mb-3">
+            Players join your campaign through the lobby when you host a game.
+          </p>
+          {campaign.players.length > 0 && (
             <div className="space-y-2">
               {campaign.players.map((player) => (
                 <div key={player.userId} className="flex items-center justify-between bg-gray-800/50 rounded-lg p-3">
@@ -718,12 +714,6 @@ export default function CampaignDetailPage(): JSX.Element {
                     <span className="text-gray-500 text-xs ml-2">
                       Joined {new Date(player.joinedAt).toLocaleDateString()}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {player.isReady && (
-                      <span className="text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">Ready</span>
-                    )}
-                    <span className={`w-2 h-2 rounded-full ${player.isActive ? 'bg-green-400' : 'bg-gray-600'}`} />
                   </div>
                 </div>
               ))}
@@ -765,12 +755,6 @@ export default function CampaignDetailPage(): JSX.Element {
                 <div>
                   <span className="text-gray-500">Schedule:</span>{' '}
                   <span className="text-gray-200">{campaign.sessionZero.playSchedule}</span>
-                </div>
-              )}
-              {campaign.sessionZero.homebrewNotes && (
-                <div>
-                  <span className="text-gray-500">Homebrew:</span>{' '}
-                  <span className="text-gray-200">{campaign.sessionZero.homebrewNotes}</span>
                 </div>
               )}
             </div>
@@ -898,10 +882,89 @@ export default function CampaignDetailPage(): JSX.Element {
           )}
         </Card>
 
+        {/* Calendar */}
+        <Card title="Calendar">
+          {campaign.calendar ? (
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Preset:</span>
+                <span className="text-gray-200 capitalize">{campaign.calendar.preset.replace(/-/g, ' ')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Months:</span>
+                <span className="text-gray-200">{campaign.calendar.months.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Days per Year:</span>
+                <span className="text-gray-200">{campaign.calendar.daysPerYear}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Starting Year:</span>
+                <span className="text-gray-200">{campaign.calendar.startingYear} {campaign.calendar.yearLabel}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Hours per Day:</span>
+                <span className="text-gray-200">{campaign.calendar.hoursPerDay}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Exact Time:</span>
+                <span className="text-gray-200 capitalize">{campaign.calendar.exactTimeDefault}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No calendar configured.</p>
+          )}
+        </Card>
+
+        {/* Voice Chat */}
+        <Card title="Voice Chat">
+          {campaign.voiceChat ? (
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-300">Configured</span>
+                <span className="text-gray-200 capitalize">{campaign.voiceChat.mode}</span>
+              </div>
+              {campaign.voiceChat.serverUrl && (
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">Server:</span>
+                  <span className="text-gray-200 text-xs truncate">{campaign.voiceChat.serverUrl}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">Voice chat not configured.</p>
+          )}
+        </Card>
+
+        {/* Custom Audio */}
+        <Card title={`Custom Audio (${(campaign.customAudio ?? []).length})`}>
+          {(campaign.customAudio ?? []).length === 0 ? (
+            <p className="text-gray-500 text-sm">No custom audio files added.</p>
+          ) : (
+            <div className="space-y-2">
+              {(campaign.customAudio ?? []).map((audio) => (
+                <div key={audio.id} className="flex items-center justify-between bg-gray-800/50 rounded-lg p-3">
+                  <div>
+                    <span className="font-semibold text-sm">{audio.displayName}</span>
+                    <span className="text-gray-500 text-xs ml-2">{audio.fileName}</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    audio.category === 'music' ? 'bg-purple-900/40 text-purple-300' :
+                    audio.category === 'ambient' ? 'bg-blue-900/40 text-blue-300' :
+                    'bg-amber-900/40 text-amber-300'
+                  }`}>
+                    {audio.category}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
         {/* Journal */}
         <Card title={`Session Journal (${campaign.journal.entries.length})`}>
           {campaign.journal.entries.length === 0 ? (
-            <p className="text-gray-500 text-sm">No journal entries yet. Entries are created after game sessions.</p>
+            <p className="text-gray-500 text-sm">No journal entries yet. Entries are created during and after game sessions.</p>
           ) : (
             <div className="space-y-2">
               {campaign.journal.entries
@@ -936,7 +999,57 @@ export default function CampaignDetailPage(): JSX.Element {
 
       {/* NPC Modal */}
       <Modal open={showNPCModal} onClose={() => setShowNPCModal(false)} title={editingNPC ? 'Edit NPC' : 'Add NPC'}>
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+          {/* Quick Add from Bestiary */}
+          <div className="border border-amber-800/30 rounded-lg overflow-hidden">
+            <div className="px-3 py-2 bg-amber-900/20">
+              <label className="block text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                Quick Add from Bestiary
+              </label>
+              <input
+                type="text"
+                value={monsterSearchQuery}
+                onChange={(e) => handleMonsterSearch(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+                placeholder="Search monsters by name, type, or tag..."
+              />
+            </div>
+            {monsterSearchResults.length > 0 && (
+              <div className="max-h-48 overflow-y-auto border-t border-gray-700">
+                {monsterSearchResults.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setNpcForm((f) => ({
+                        ...f,
+                        name: m.name,
+                        role: 'enemy',
+                        description: `${m.size} ${m.type}${m.subtype ? ` (${m.subtype})` : ''}, CR ${m.cr}`,
+                        statBlockId: m.id,
+                        statBlockMode: 'link'
+                      }))
+                      setLinkedMonsterPreview(m)
+                      setMonsterSearchQuery(m.name)
+                      setMonsterSearchResults([])
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-gray-700/50 cursor-pointer flex items-center justify-between border-b border-gray-700/30 last:border-b-0"
+                  >
+                    <span className="text-gray-200 font-medium">{m.name}</span>
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <span className="text-gray-500">{m.size} {m.type}</span>
+                      <span className="text-amber-400 font-mono">CR {m.cr}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {linkedMonsterPreview && npcForm.statBlockMode === 'link' && monsterSearchResults.length === 0 && (
+              <div className="border-t border-gray-700/50 p-2">
+                <MonsterStatBlockView monster={linkedMonsterPreview} compact />
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-gray-400 text-xs mb-1">Name *</label>
@@ -1067,11 +1180,12 @@ export default function CampaignDetailPage(): JSX.Element {
                           setMonsterSearchQuery(m.name)
                           setMonsterSearchResults([])
                         }}
-                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 cursor-pointer ${
+                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 cursor-pointer flex items-center justify-between ${
                           npcForm.statBlockId === m.id ? 'text-amber-400' : 'text-gray-300'
                         }`}
                       >
-                        {m.name} <span className="text-gray-500">CR {m.cr}</span>
+                        <span>{m.name}</span>
+                        <span className="text-gray-500">{m.type} &middot; CR {m.cr}</span>
                       </button>
                     ))}
                   </div>

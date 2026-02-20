@@ -12,14 +12,12 @@ import AudioStep, { type CustomAudioEntry } from './AudioStep'
 import CalendarStep from './CalendarStep'
 import DetailsStep from './DetailsStep'
 import MapConfigStep from './MapConfigStep'
-import ReviewStep from './ReviewStep'
-import RulesStep from './RulesStep'
 import SessionZeroStep, { DEFAULT_SESSION_ZERO, type SessionZeroData } from './SessionZeroStep'
 import StartStep from './StartStep'
 import SystemStep from './SystemStep'
 import VoiceChatStep from './VoiceChatStep'
 
-const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Rules', 'Session Zero', 'Calendar', 'Maps', 'Voice', 'Audio', 'Review']
+const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Session Zero', 'Calendar', 'Maps', 'Voice', 'Audio']
 
 export default function CampaignWizard(): JSX.Element {
   const navigate = useNavigate()
@@ -84,19 +82,15 @@ export default function CampaignWizard(): JSX.Element {
       case 3:
         return campaignType === 'custom' || selectedAdventureId !== null
       case 4:
-        return true // Rules are optional
-      case 5:
         return true // Session Zero is optional
-      case 6:
+      case 5:
         return true // Calendar is optional
-      case 7:
+      case 6:
         return true // Maps are optional
-      case 8:
+      case 7:
         return true // Voice is optional
-      case 9:
+      case 8:
         return true // Audio is optional
-      case 10:
-        return true // Review
       default:
         return false
     }
@@ -214,7 +208,6 @@ export default function CampaignWizard(): JSX.Element {
             : undefined,
         sessionZero: sessionZero.contentLimits.length > 0 ||
           sessionZero.tone !== 'heroic' ||
-          sessionZero.homebrewNotes.trim() ||
           sessionZero.playSchedule.trim() ||
           sessionZero.additionalNotes.trim() ||
           sessionZero.pvpAllowed ||
@@ -251,8 +244,6 @@ export default function CampaignWizard(): JSX.Element {
 
   // Generate a temporary campaign ID for map entries
   const tempCampaignId = 'pending'
-
-  const reviewStepIndex = STEPS.length - 1
 
   if (startMode === 'start') {
     return (
@@ -321,51 +312,40 @@ export default function CampaignWizard(): JSX.Element {
         />
       )}
 
-      {step === 4 && <RulesStep rules={customRules} onChange={setCustomRules} />}
-
-      {step === 5 && <SessionZeroStep data={sessionZero} onChange={setSessionZero} />}
-
-      {step === 6 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
-
-      {step === 7 && <MapConfigStep maps={maps} campaignId={tempCampaignId} onChange={setMaps} />}
-
-      {step === 8 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
-
-      {step === 9 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
-
-      {step === reviewStepIndex && system && (
-        <ReviewStep
-          system={system}
-          name={name}
-          description={description}
-          maxPlayers={maxPlayers}
-          turnMode={turnMode}
-          lobbyMessage={lobbyMessage}
-          campaignType={campaignType}
-          adventureName={selectedAdventure?.name ?? null}
+      {step === 4 && (
+        <SessionZeroStep
+          data={sessionZero}
+          onChange={setSessionZero}
           customRules={customRules}
-          maps={maps}
-          customAudioCount={customAudio.length}
-          calendar={calendar}
-          aiDm={aiEnabled ? { provider: aiProvider, model: aiModel, ollamaModel: aiOllamaModel } : null}
-          onSubmit={handleCreate}
-          submitting={submitting}
+          onRulesChange={setCustomRules}
         />
       )}
 
+      {step === 5 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
+
+      {step === 6 && <MapConfigStep maps={maps} campaignId={tempCampaignId} onChange={setMaps} />}
+
+      {step === 7 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
+
+      {step === 8 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
+
       {/* Navigation buttons */}
-      {step < reviewStepIndex && (
-        <div className="flex gap-4 mt-8 max-w-2xl">
-          {step > 0 && (
-            <Button variant="secondary" onClick={handleBack}>
-              Back
-            </Button>
-          )}
+      <div className="flex gap-4 mt-8 max-w-2xl">
+        {step > 0 && (
+          <Button variant="secondary" onClick={handleBack}>
+            Back
+          </Button>
+        )}
+        {step < STEPS.length - 1 ? (
           <Button onClick={handleNext} disabled={!canAdvance()}>
             Next
           </Button>
-        </div>
-      )}
+        ) : (
+          <Button onClick={handleCreate} disabled={submitting}>
+            {submitting ? 'Creating...' : 'Create Campaign'}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
