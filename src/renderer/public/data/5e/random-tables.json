@@ -291,5 +291,448 @@
       { "roll": 5, "name": "Secure", "description": "Ability checks made to break down doors, open locks, or carry out similar activities have Disadvantage." },
       { "roll": 6, "name": "Thriving", "description": "The dungeon is heavily populated. Any loud noises draw the attention of nearby creatures." }
     ]
-  }
+  },
+  "travelTerrain": [
+    {
+      "terrain": "Arctic",
+      "maxPace": "Fast",
+      "maxPaceNote": "Appropriate equipment (such as skis) is necessary to keep up a Fast pace in Arctic terrain.",
+      "encounterDistance": "6d6 × 10 feet",
+      "foragingDC": 20,
+      "navigationDC": 10,
+      "searchDC": 10
+    },
+    {
+      "terrain": "Coastal",
+      "maxPace": "Normal",
+      "encounterDistance": "2d10 × 10 feet",
+      "foragingDC": 10,
+      "navigationDC": 5,
+      "searchDC": 15
+    },
+    {
+      "terrain": "Desert",
+      "maxPace": "Normal",
+      "encounterDistance": "6d6 × 10 feet",
+      "foragingDC": 20,
+      "navigationDC": 10,
+      "searchDC": 10
+    },
+    {
+      "terrain": "Forest",
+      "maxPace": "Normal",
+      "encounterDistance": "2d8 × 10 feet",
+      "foragingDC": 10,
+      "navigationDC": 15,
+      "searchDC": 15
+    },
+    {
+      "terrain": "Grassland",
+      "maxPace": "Fast",
+      "encounterDistance": "6d6 × 10 feet",
+      "foragingDC": 15,
+      "navigationDC": 5,
+      "searchDC": 15
+    },
+    {
+      "terrain": "Hill",
+      "maxPace": "Normal",
+      "encounterDistance": "2d10 × 10 feet",
+      "foragingDC": 15,
+      "navigationDC": 10,
+      "searchDC": 15
+    },
+    {
+      "terrain": "Mountain",
+      "maxPace": "Slow",
+      "encounterDistance": "4d10 × 10 feet",
+      "foragingDC": 20,
+      "navigationDC": 15,
+      "searchDC": 20
+    },
+    {
+      "terrain": "Swamp",
+      "maxPace": "Slow",
+      "encounterDistance": "2d8 × 10 feet",
+      "foragingDC": 10,
+      "navigationDC": 15,
+      "searchDC": 20
+    },
+    {
+      "terrain": "Underdark",
+      "maxPace": "Normal",
+      "encounterDistance": "2d6 × 10 feet",
+      "foragingDC": 20,
+      "navigationDC": 10,
+      "searchDC": 20
+    },
+    {
+      "terrain": "Urban",
+      "maxPace": "Normal",
+      "encounterDistance": "2d6 × 10 feet",
+      "foragingDC": 20,
+      "navigationDC": 15,
+      "searchDC": 15
+    },
+    {
+      "terrain": "Waterborne",
+      "maxPace": "Special",
+      "maxPaceNote": "Characters' rate of travel while waterborne depends on the vehicle carrying them.",
+      "encounterDistance": "6d6 × 10 feet",
+      "foragingDC": 15,
+      "navigationDC": 10,
+      "searchDC": 15
+    }
+  ],
+  "environmentalEffects": [
+    {
+      "name": "Dead Magic Zone",
+      "description": "An area where the fabric of magic is torn. The effect is the same as the Antimagic Field spell, except that it is permanent and typically covers an area no more than 300 feet in diameter.",
+      "conditions": ["Antimagic"]
+    },
+    {
+      "name": "Deep Water",
+      "description": "Swimming through deep water (more than 100 feet deep) presents additional challenges because of the water's pressure and cold temperature. After each hour of swimming in deep water, a creature that lacks a Swim Speed must succeed on a DC 10 Constitution saving throw or gain 1 Exhaustion level.",
+      "dc": 10,
+      "save": "Constitution",
+      "conditions": ["Exhaustion"]
+    },
+    {
+      "name": "Extreme Cold",
+      "description": "When the temperature is 0 degrees Fahrenheit or lower, a creature exposed to the extreme cold must succeed on a DC 10 Constitution saving throw at the end of each hour or gain 1 Exhaustion level. Creatures that have Resistance or Immunity to Cold damage automatically succeed on the save.",
+      "dc": 10,
+      "save": "Constitution",
+      "conditions": ["Exhaustion"],
+      "immunity": "Resistance or Immunity to Cold damage"
+    },
+    {
+      "name": "Extreme Heat",
+      "description": "When the temperature is 100 degrees Fahrenheit or higher, a creature exposed to the extreme heat and without access to drinkable water must succeed on a Constitution saving throw at the end of each hour or gain 1 Exhaustion level. The DC is 5 for the first hour and increases by 1 for each additional hour. Creatures wearing Medium or Heavy armor have Disadvantage on the save. Creatures that have Resistance or Immunity to Fire damage automatically succeed on the save.",
+      "dc": 5,
+      "dcNote": "Increases by 1 for each additional hour",
+      "save": "Constitution",
+      "conditions": ["Exhaustion"],
+      "immunity": "Resistance or Immunity to Fire damage"
+    },
+    {
+      "name": "Frigid Water",
+      "description": "A creature can be immersed in frigid water for a number of minutes equal to its Constitution score before suffering any ill effects. Each additional minute spent in frigid water requires the creature to succeed on a DC 10 Constitution saving throw or gain 1 Exhaustion level. Creatures with Resistance or Immunity to Cold damage automatically succeed on the save, as do creatures that are naturally adapted to living in ice-cold water.",
+      "dc": 10,
+      "save": "Constitution",
+      "conditions": ["Exhaustion"],
+      "immunity": "Resistance or Immunity to Cold damage"
+    },
+    {
+      "name": "Heavy Precipitation",
+      "description": "Everything within an area of heavy rain or heavy snowfall is Lightly Obscured, and creatures in the area have Disadvantage on all Wisdom (Perception) checks. Heavy rain also extinguishes open flames.",
+      "conditions": ["Lightly Obscured"]
+    },
+    {
+      "name": "High Altitude",
+      "description": "Traveling at altitudes of 10,000 feet or higher above sea level is taxing for most creatures because of the reduced amount of oxygen in the air. Each hour a creature spends traveling at high altitude counts as 2 hours for the purpose of determining how long that creature can travel. Creatures can become acclimated to a high altitude by spending 30 days or more at this elevation. Creatures can't become acclimated to elevations above 20,000 feet unless they are native to such environments.",
+      "conditions": ["Travel time doubled"]
+    },
+    {
+      "name": "Slippery Ice",
+      "description": "Slippery ice is Difficult Terrain. A creature that moves onto slippery ice for the first time on a turn or starts its turn there must succeed on a DC 10 Dexterity saving throw or have the Prone condition.",
+      "dc": 10,
+      "save": "Dexterity",
+      "conditions": ["Prone", "Difficult Terrain"]
+    },
+    {
+      "name": "Strong Wind",
+      "description": "Strong wind imposes Disadvantage on ranged attack rolls with weapons. It also extinguishes open flames and disperses fog. A flying creature in a strong wind must land at the end of its turn or fall. A strong wind in a desert can create a sandstorm that imposes Disadvantage on Wisdom (Perception) checks.",
+      "conditions": ["Disadvantage on ranged attacks"]
+    },
+    {
+      "name": "Thin Ice",
+      "description": "Thin ice has a weight tolerance of 3d10 × 10 pounds per 10-foot-square area. Whenever the total weight on an area of thin ice exceeds its tolerance, the ice in that area breaks. All creatures on broken ice fall through. Below the ice is frigid water.",
+      "conditions": ["Falling", "Frigid Water"]
+    },
+    {
+      "name": "Wild Magic Zone",
+      "description": "A past magical disaster or uncontrolled surge of power in a particular place can cause the fabric of magic to unravel, creating a wild magic zone. In such an area, which is typically no more than 300 feet in diameter, magic behaves unpredictably. Whenever a creature expends a spell slot to cast a spell in a wild magic zone, roll 1d20. If you roll a 20, roll on the Wild Magic Surge table to create a magical effect.",
+      "conditions": ["Wild Magic Surge on roll of 20"]
+    }
+  ],
+  "hazards": [
+    {
+      "name": "Brown Mold",
+      "severity": "Deadly (Levels 5–10) or Nuisance (Levels 11–16)",
+      "description": "Brown mold resembles a furry, light-brown carpet. This fungus feeds on warmth, drawing heat from anything around itself. One patch covers a 10-foot square, and the temperature within 30 feet of it is always frigid.",
+      "trigger": "Entering a space within 5 feet of the mold for the first time on a turn or starting a turn there",
+      "dc": 12,
+      "save": "Constitution",
+      "damage": "22 (4d10) Cold",
+      "detection": "Visible as a furry, light-brown carpet. Temperature within 30 feet is frigid.",
+      "countermeasures": "Immune to Fire damage (fire causes it to expand). Destroyed instantly by any Cold damage."
+    },
+    {
+      "name": "Fireball Fungus",
+      "severity": "Deadly (Levels 5–10)",
+      "description": "A Small, inanimate mushroom that can grow anywhere fungi are found in abundance. Its luminous, orange cap sheds Bright Light in a 15-foot radius and Dim Light for an additional 15 feet.",
+      "trigger": "Dropping to 0 Hit Points (AC 10, HP 6, Immune to Psychic damage)",
+      "dc": 15,
+      "save": "Dexterity",
+      "damage": "8d6 Fire (as Fireball spell)",
+      "detection": "Luminous orange cap sheds Bright Light in a 15-foot radius.",
+      "countermeasures": "Has AC 10 and HP 6. Can be destroyed from a distance. Chain-detonates with other fireball fungi."
+    },
+    {
+      "name": "Green Slime",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "Acidic green slime devours flesh, organic material, and metal on contact. Bright green, wet, and sticky, it clings to walls, floors, and ceilings in patches.",
+      "trigger": "Drops from walls and ceilings when it detects movement below (Blindsight 30 ft.). DC 10 Dexterity save to avoid if aware.",
+      "dc": 10,
+      "save": "Dexterity (to avoid)",
+      "damage": "5 (1d10) Acid per turn on contact. 11 (2d10) Acid per round against wood or metal.",
+      "detection": "Bright green, wet, and sticky. Clings to surfaces. Has Blindsight 30 ft.",
+      "countermeasures": "Scraped off as an action (nonmagical metal/wood tools destroyed). Direct sunlight or any Cold, Fire, or Radiant damage destroys it."
+    },
+    {
+      "name": "Inferno",
+      "severity": "Deadly (Levels 5–10) or Nuisance (Levels 11–16)",
+      "description": "Whenever an uncontrolled fire spreads, it can create an inferno that quickly engulfs creatures, objects, and vegetation.",
+      "trigger": "Entering the inferno for the first time on a turn or starting a turn there",
+      "damage": "22 (4d10) Fire; creature is burning. Also damages objects not worn/carried.",
+      "detection": "Visible fire consisting of at least four contiguous 10-foot Cubes.",
+      "countermeasures": "Each 10-foot Cube can be doused with 10 gallons of water. Burns itself out after 1d10 minutes if deprived of fuel. Strong wind causes growth (1d4 additional Cubes)."
+    },
+    {
+      "name": "Poisonous Gas",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "Poisonous gas is usually encountered in an enclosed space, such as a sewer or sealed tomb. The transparent gas carries a foul odor and fills up to ten 10-foot Cubes.",
+      "trigger": "Entering gas for the first time on a turn or starting a turn there",
+      "dc": 12,
+      "save": "Constitution",
+      "damage": "5 (1d10) Poison",
+      "conditions": ["Disadvantage on Death Saving Throws"],
+      "detection": "Transparent but carries a foul odor.",
+      "countermeasures": "Dispersed by a strong wind for 1 minute. Higher levels: DC 14/2d10 (5–10), DC 16/4d10 (11–16), DC 18/10d10 (17–20)."
+    },
+    {
+      "name": "Quicksand Pit",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "A quicksand pit is 10 feet deep and covers the ground in a 10-foot square.",
+      "trigger": "Entering the area; creature sinks 1d4 + 1 feet and is Restrained",
+      "dc": "10 + feet sunk",
+      "save": "Strength (Athletics) to escape",
+      "conditions": ["Restrained", "Blinded and Total Cover if fully submerged"],
+      "detection": "Appears as normal ground; may require a Perception check.",
+      "countermeasures": "Action to escape (DC 10 + feet sunk). Another creature within reach can pull the victim out (DC 5 + feet sunk). Higher levels: 15 ft. deep/1d6 (5–10), 20 ft./1d8 (11–16), 30 ft./1d10 (17–20)."
+    },
+    {
+      "name": "Razorvine",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "Razorvine is a plant that grows in wild tangles and hedges. It also clings to the sides of buildings and other surfaces as ivy does.",
+      "trigger": "Coming into contact with razorvine for the first time on a turn",
+      "dc": 10,
+      "save": "Dexterity",
+      "damage": "5 (1d10) Slashing",
+      "detection": "Visible as thorny vine tangles. A 10-foot wall/hedge has AC 11, HP 25; Immune to Bludgeoning, Piercing, and Psychic damage.",
+      "countermeasures": "Can be destroyed (AC 11, HP 25). Immune to Bludgeoning, Piercing, and Psychic damage."
+    },
+    {
+      "name": "River Styx",
+      "severity": "Nuisance (Levels 11–16)",
+      "description": "The River Styx courses through the Lower Planes. Tasting or touching its waters can shatter a creature's intellect and personality, as well as strip away its memories.",
+      "trigger": "Drinking from, entering, or starting a turn in the River Styx",
+      "dc": 20,
+      "save": "Intelligence",
+      "damage": "19 (3d12) Psychic",
+      "conditions": ["Can't cast spells or take the Magic action for 30 days"],
+      "detection": "Known planar feature of the Lower Planes.",
+      "countermeasures": "Greater Restoration, Heal, or Wish spell removes the effect. If not removed after 30 days, becomes permanent (only Wish or divine intervention). Water loses potency after 24 hours."
+    },
+    {
+      "name": "Rockslide",
+      "severity": "Deadly (Levels 1–4)",
+      "description": "When a rockslide occurs, every creature in its path is struck by tumbling rocks and debris.",
+      "trigger": "Being in the path of the rockslide",
+      "dc": 15,
+      "save": "Dexterity",
+      "damage": "11 (2d10) Bludgeoning",
+      "conditions": ["Prone", "Restrained and Total Cover if buried"],
+      "detection": "May be preceded by rumbling sounds or loose rocks.",
+      "countermeasures": "Buried creatures can escape with DC 15 Strength (Athletics); failure causes 1 Exhaustion level. Another creature can spend 1 minute freeing a buried creature. Higher levels: 4d10 (5–10), 10d10 (11–16), 18d10 (17–20)."
+    },
+    {
+      "name": "Vicious Vine",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "Vicious vines are animated by magic. They often cling to doorways, archways, walls, and statuary. Until a vicious vine moves, there's nothing to distinguish it from an inanimate vine.",
+      "trigger": "Entering a space within 5 feet or starting a turn there",
+      "dc": 12,
+      "save": "Dexterity",
+      "damage": "5 (1d10) Necrotic per turn while grappled",
+      "conditions": ["Grappled (escape DC 12)"],
+      "detection": "Indistinguishable from an inanimate vine until it moves. AC 11, HP 16; Immune to Bludgeoning, Piercing, and Psychic damage.",
+      "countermeasures": "Speak with Plants + DC 10 Charisma (Persuasion) to release. Can grapple only one creature. Higher levels: DC 14/2d10 (5–10), DC 16/4d10 (11–16), DC 18/10d10 (17–20)."
+    },
+    {
+      "name": "Webs",
+      "severity": "Nuisance (Levels 1–4)",
+      "description": "Giant spiders weave thick, sticky webs across passages and at the bottom of pits to snare prey. These web-filled areas are Difficult Terrain.",
+      "trigger": "Entering a web-filled area for the first time on a turn or starting a turn there",
+      "dc": 12,
+      "save": "Dexterity",
+      "conditions": ["Restrained", "Difficult Terrain"],
+      "detection": "Visible as thick, sticky webbing. Each 10-foot Cube has AC 10, HP 15.",
+      "countermeasures": "Escape as an action with DC 12 Strength (Athletics) or Dexterity (Acrobatics). Webs have Vulnerability to Fire; Immunity to Piercing, Poison, and Psychic damage."
+    },
+    {
+      "name": "Yellow Mold",
+      "severity": "Deadly (Levels 1–4) or Nuisance (Levels 5–10)",
+      "description": "Yellow mold grows in dark places, and one patch covers a 5-foot square. If touched, the mold ejects a cloud of spores that fills a 10-foot Cube.",
+      "trigger": "Touching the mold causes a spore cloud in a 10-foot Cube",
+      "dc": 15,
+      "save": "Constitution",
+      "damage": "11 (2d10) Poison, plus 5 (1d10) Poison at start of each turn while Poisoned",
+      "conditions": ["Poisoned for 1 minute"],
+      "detection": "Visible as yellow growth in dark places, covering a 5-foot square.",
+      "countermeasures": "Direct sunlight or any amount of Fire damage destroys a patch. Poisoned creature repeats save at end of each turn."
+    }
+  ],
+  "poisons": [
+    {
+      "name": "Assassin's Blood",
+      "type": "Ingested",
+      "cost": "150 gp",
+      "dc": 10,
+      "save": "Constitution",
+      "damage": "6 (1d12) Poison",
+      "effects": "On a failed save, the creature takes damage and has the Poisoned condition for 24 hours. On a successful save, the creature takes half as much damage only.",
+      "duration": "24 hours"
+    },
+    {
+      "name": "Burnt Othur Fumes",
+      "type": "Inhaled",
+      "cost": "500 gp",
+      "dc": 13,
+      "save": "Constitution",
+      "damage": "10 (3d6) Poison initial, then 3 (1d6) Poison on each failed repeat save",
+      "effects": "On a failed save, the creature takes 10 (3d6) Poison damage and must repeat the save at the start of each of its turns. On each successive failed save, the creature takes 3 (1d6) Poison damage. After three successful saves, the poison ends.",
+      "duration": "Until 3 successful saves"
+    },
+    {
+      "name": "Carrion Crawler Mucus",
+      "type": "Contact",
+      "cost": "200 gp",
+      "dc": 13,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 1 minute. The creature also has the Paralyzed condition while Poisoned in this way. The creature repeats the save at the end of each of its turns, ending the effect on a success.",
+      "duration": "1 minute",
+      "conditions": ["Poisoned", "Paralyzed"]
+    },
+    {
+      "name": "Lolth's Sting",
+      "type": "Injury",
+      "cost": "200 gp",
+      "dc": 13,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 1 hour. If the creature fails the save by 5 or more, it also has the Unconscious condition while Poisoned. The creature wakes up if it takes damage or if another creature takes an action to shake it awake.",
+      "duration": "1 hour",
+      "conditions": ["Poisoned", "Unconscious (fail by 5+)"]
+    },
+    {
+      "name": "Essence of Ether",
+      "type": "Inhaled",
+      "cost": "300 gp",
+      "dc": 15,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 8 hours. The creature also has the Unconscious condition while Poisoned. The creature wakes up if it takes damage or if another creature takes an action to shake it awake.",
+      "duration": "8 hours",
+      "conditions": ["Poisoned", "Unconscious"]
+    },
+    {
+      "name": "Malice",
+      "type": "Inhaled",
+      "cost": "250 gp",
+      "dc": 15,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 1 hour. The creature also has the Blinded condition while Poisoned in this way.",
+      "duration": "1 hour",
+      "conditions": ["Poisoned", "Blinded"]
+    },
+    {
+      "name": "Midnight Tears",
+      "type": "Ingested",
+      "cost": "1,500 gp",
+      "dc": 17,
+      "save": "Constitution",
+      "damage": "31 (9d6) Poison",
+      "effects": "A creature that ingests Midnight Tears suffers no effect until the stroke of midnight. Any effect that ends the Poisoned condition neutralizes this poison. If the poison hasn't been neutralized before midnight, the creature makes a save, taking damage on a failure or half on a success.",
+      "duration": "Until midnight"
+    },
+    {
+      "name": "Oil of Taggit",
+      "type": "Contact",
+      "cost": "400 gp",
+      "dc": 13,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 24 hours. The creature also has the Unconscious condition while Poisoned. It wakes up if it takes damage.",
+      "duration": "24 hours",
+      "conditions": ["Poisoned", "Unconscious"]
+    },
+    {
+      "name": "Pale Tincture",
+      "type": "Ingested",
+      "cost": "250 gp",
+      "dc": 16,
+      "save": "Constitution",
+      "damage": "3 (1d6) Poison per failed save",
+      "effects": "On a failed save, the creature takes 3 (1d6) Poison damage and has the Poisoned condition. The Poisoned creature repeats the save every 24 hours, taking 3 (1d6) Poison damage on a failed save. The damage can't be healed while the creature remains Poisoned. After seven successful saves, the creature is no longer Poisoned.",
+      "duration": "Until 7 successful saves",
+      "conditions": ["Poisoned"]
+    },
+    {
+      "name": "Purple Worm Poison",
+      "type": "Injury",
+      "cost": "2,000 gp",
+      "dc": 21,
+      "save": "Constitution",
+      "damage": "35 (10d6) Poison",
+      "effects": "The creature makes a save, taking 35 (10d6) Poison damage on a failed save or half as much damage on a successful one.",
+      "duration": "Instantaneous"
+    },
+    {
+      "name": "Serpent Venom",
+      "type": "Injury",
+      "cost": "200 gp",
+      "dc": 11,
+      "save": "Constitution",
+      "damage": "10 (3d6) Poison",
+      "effects": "The creature must succeed on a save, taking 10 (3d6) Poison damage on a failed save or half as much damage on a successful one.",
+      "duration": "Instantaneous"
+    },
+    {
+      "name": "Torpor",
+      "type": "Ingested",
+      "cost": "600 gp",
+      "dc": 15,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 4d6 hours. The creature's Speed is halved while Poisoned in this way.",
+      "duration": "4d6 hours",
+      "conditions": ["Poisoned", "Speed halved"]
+    },
+    {
+      "name": "Truth Serum",
+      "type": "Ingested",
+      "cost": "150 gp",
+      "dc": 11,
+      "save": "Constitution",
+      "effects": "On a failed save, the creature has the Poisoned condition for 1 hour. The Poisoned creature can't knowingly communicate a lie.",
+      "duration": "1 hour",
+      "conditions": ["Poisoned", "Cannot lie"]
+    },
+    {
+      "name": "Wyvern Poison",
+      "type": "Injury",
+      "cost": "1,200 gp",
+      "dc": 14,
+      "save": "Constitution",
+      "damage": "24 (7d6) Poison",
+      "effects": "The creature makes a save, taking 24 (7d6) Poison damage on a failed save or half as much damage on a successful one.",
+      "duration": "Instantaneous"
+    }
+  ]
 }

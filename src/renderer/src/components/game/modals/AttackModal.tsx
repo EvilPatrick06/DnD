@@ -94,6 +94,8 @@ export default function AttackModal({
   const [unarmedMode, setUnarmedMode] = useState<UnarmedMode>('damage')
   const [shoveChoice, setShoveChoice] = useState<'push' | 'prone'>('push')
   const [grappleResult, setGrappleResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [isOffhandAttack, setIsOffhandAttack] = useState(false)
+  const [primaryWeaponIndex, setPrimaryWeaponIndex] = useState<number | null>(null)
 
   const gameConditions = useGameStore((s) => s.conditions)
   const turnStates = useGameStore((s) => s.turnStates)
@@ -252,6 +254,12 @@ export default function AttackModal({
     if (isFinesse) baseMod = Math.max(strMod, dexMod)
     else if (isRanged) baseMod = dexMod
     else baseMod = strMod
+
+    if (isOffhandAttack) {
+      let bonus = baseMod < 0 ? baseMod : 0
+      bonus += resolved.damageBonus(getWeaponContext(selectedWeapon))
+      return bonus
+    }
 
     let bonus = baseMod
 
@@ -513,14 +521,13 @@ export default function AttackModal({
     setStep('result')
   }
 
-  const handleApply = (knockOut = false): void => {
+  const handleApply = (knockOut = false, startOffhand = false): void => {
     if (!selectedTarget || !damageResult || !selectedWeapon || !attackRoll) return
 
     if (onApplyDamage) {
       onApplyDamage(selectedTarget.id, damageResult.total, selectedWeapon.damageType, damageAppResult ?? undefined)
     }
 
-    // Crit at 0 HP = 2 death save failures, normal hit at 0 HP = 1 failure
     if (selectedTarget.currentHP != null && selectedTarget.currentHP <= 0 && damageResult.total > 0) {
       const failures = attackRoll.isCrit ? 2 : 1
       onBroadcastResult?.(
@@ -532,6 +539,7 @@ export default function AttackModal({
       const coverBonus = getCoverACBonus(cover)
       const targetAC = (selectedTarget.ac ?? 10) + coverBonus
       const hitStr = attackRoll.isCrit ? 'CRITICAL HIT' : `Attack: ${attackRoll.total} vs AC ${targetAC} - HIT`
+      const offhandTag = isOffhandAttack ? ' (Off-hand)' : ''
       const finalDmg = `${damageResult.total} ${selectedWeapon.damageType} damage`
       const modNote = damageAppResult?.modifierDescription ? ` [${damageAppResult.modifierDescription}]` : ''
       const critNote = damageResult.isCrit ? ' (Critical!)' : ''
@@ -539,8 +547,25 @@ export default function AttackModal({
       const massiveNote = damageAppResult?.instantDeath ? ' [INSTANT DEATH - Massive Damage!]' : ''
       const masteryNote = masteryEffect ? ` [${masteryEffect.mastery}: ${masteryEffect.description}]` : ''
       onBroadcastResult(
-        `${character.name} attacks ${selectedTarget.label} with ${selectedWeapon.name} - ${hitStr}! ${finalDmg}${modNote}${critNote}${koNote}${massiveNote}${masteryNote}`
+        `${character.name} attacks ${selectedTarget.label} with ${selectedWeapon.name}${offhandTag} - ${hitStr}! ${finalDmg}${modNote}${critNote}${koNote}${massiveNote}${masteryNote}`
       )
+    }
+
+    if (startOffhand) {
+      setPrimaryWeaponIndex(selectedWeaponIndex)
+      setIsOffhandAttack(true)
+      setSelectedWeaponIndex(null)
+      setSelectedTargetId(null)
+      setAttackRoll(null)
+      setDamageResult(null)
+      setDamageAppResult(null)
+      setIsHit(null)
+      setMasteryEffect(null)
+      setKnockOutPrompt(false)
+      setCover('none')
+      setConditionOverrides({})
+      setStep('weapon')
+      return
     }
 
     onClose()
@@ -559,15 +584,17 @@ export default function AttackModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-200">
-            {step === 'weapon' && 'Choose Weapon'}
+            {step === 'weapon' && (isOffhandAttack ? 'Off-hand Attack' : 'Choose Weapon')}
             {step === 'unarmed-mode' && 'Unarmed Strike Mode'}
             {step === 'target' && 'Select Target'}
             {step === 'roll' &&
               (isUnarmed && unarmedMode !== 'damage'
                 ? `Unarmed Strike — ${unarmedMode === 'grapple' ? 'Grapple' : 'Shove'}`
-                : 'Attack Roll')}
-            {step === 'damage' && 'Attack Result'}
-            {step === 'result' && 'Damage Applied'}
+                : isOffhandAttack
+                  ? 'Off-hand Attack Roll'
+                  : 'Attack Roll')}
+            {step === 'damage' && (isOffhandAttack ? 'Off-hand Result' : 'Attack Result')}
+            {step === 'result' && (isOffhandAttack ? 'Off-hand Damage' : 'Damage Applied')}
           </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
             &times;
@@ -577,7 +604,13 @@ export default function AttackModal({
         {/* Step 1: Choose weapon */}
         {step === 'weapon' && (
           <div className="space-y-2">
+            {isOffhandAttack && (
+              <div className="text-xs text-cyan-400 bg-cyan-900/20 border border-cyan-700/40 rounded-lg px-3 py-1.5">
+                Off-hand Attack — choose a different Light weapon (ability modifier not added to damage)
+              </div>
+            )}
             {weapons.map((w, i) => {
+              if (isOffhandAttack && (i === primaryWeaponIndex || !w.properties?.includes('Light'))) return null
               const isUnarmedEntry = w.id === '__unarmed__'
               const isImprovisedEntry = w.id === '__improvised__'
               return (
@@ -1034,6 +1067,7 @@ export default function AttackModal({
                 <div className="text-xs text-gray-400 bg-gray-800 rounded-lg px-3 py-2">
                   <span className="text-amber-400 font-semibold">
                     {isUnarmed ? 'Unarmed Strike' : selectedWeapon.name}
+                    {isOffhandAttack && <span className="text-cyan-400 ml-1">(Off-hand)</span>}
                   </span>
                   <span className="mx-2">vs</span>
                   <span className="text-red-400 font-semibold">{selectedTarget.label}</span>
@@ -1283,7 +1317,9 @@ export default function AttackModal({
                 damageResult.isCrit ? 'border-green-500 bg-green-900/20' : 'border-gray-700 bg-gray-800'
               }`}
             >
-              <div className="text-xs text-gray-400 mb-1">{selectedWeapon.damageType} damage</div>
+              <div className="text-xs text-gray-400 mb-1">
+                {selectedWeapon.damageType} damage{isOffhandAttack && ' (Off-hand)'}
+              </div>
               <div className="text-4xl font-bold font-mono text-red-400 mb-1">{damageResult.total}</div>
               <div className="flex gap-1 justify-center flex-wrap">
                 {damageResult.rolls.map((r, i) => (
@@ -1355,6 +1391,18 @@ export default function AttackModal({
 
             {!knockOutPrompt && (
               <>
+                {selectedWeapon.properties?.includes('Light') &&
+                  !isOffhandAttack &&
+                  realWeapons.some(
+                    (w, i) => i !== selectedWeaponIndex && w.properties?.includes('Light')
+                  ) && (
+                    <button
+                      onClick={() => handleApply(false, true)}
+                      className="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg cursor-pointer text-sm"
+                    >
+                      Apply & Off-hand Attack (Light)
+                    </button>
+                  )}
                 <button
                   onClick={() => handleApply()}
                   className="w-full px-4 py-3 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg cursor-pointer text-sm"

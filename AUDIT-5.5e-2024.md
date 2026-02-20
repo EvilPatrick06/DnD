@@ -1,7 +1,8 @@
 # Comprehensive 5.5e (2024) Compliance Audit
 
 **Date:** February 20, 2026  
-**Scope:** Full audit of app data, mechanics, and features against PHB 2024, DMG 2024, and MM 2025 reference materials.
+**Scope:** Full audit of app data, mechanics, and features against PHB 2024, DMG 2024, and MM 2025 reference materials.  
+**Status:** ALL FIXES APPLIED - See change log below.
 
 ---
 
@@ -357,3 +358,46 @@
 7. Fix feat naming/wording issues
 8. Fix character creation terminology (ancestry → species)
 9. Add trinket table, personality descriptors, fixed HP option
+
+---
+
+## CHANGE LOG (Applied Feb 20, 2026)
+
+All phases completed. Files modified:
+
+### Phase 1: Critical Fixes
+- `spells.json` — Fixed 21 spells: Guidance, Resistance (UA→final PHB), Sleep (complete rewrite), Forcecage (added concentration), Spiritual Weapon (scaling), Enthrall (concentration), Searing Smite (removed concentration), Spare the Dying (casting time), Command (duration), Mind Sliver (duration), Rary's Telepathic Bond (ritual), Divine Favor (range), Giant Insect (range), Witch Bolt (range), Drawmij's Instant Summons (casting time), Guards and Wards (casting time), Transport via Plants (duration), Astral Projection (duration), Storm of Vengeance (range), Tsunami (range), True Strike (cantrip upgrade)
+- `CombatStatsBar5e.tsx` — Removed Exhaustion penalty from Spell Save DC (DC is not a D20 Test)
+- `EncounterBuilderModal.tsx` — Fixed level 19/20 XP budgets, changed "Deadly" to "Over Budget"
+
+### Phase 2: Mechanic Corrections
+- `class-features.json` — Fixed Bard Magical Secrets spell lists, Cleric Improved Potent Spellcasting
+- `subclasses.json` — Fixed 14 subclass features: Zealot dice progression + Rage of the Gods, Wild Heart Owl + Nature Speaker, Bard Dance Agile Strikes + Leading Evasion, Glamour Beguiling Magic + Mantle of Majesty + Unbreakable Majesty, Psi Warrior Psionic Power + Telekinetic Adept + Telekinetic Master, Sea Druid Wrath of the Sea + Aquatic Affinity
+- `feats.json` — Fixed Mounted Combatant Veer, Piercer benefit name
+- `equipment.json` — Updated Acid, Alchemist's Fire, Holy Water, Net (save-based), Basic Poison (auto-damage), Ball Bearings (10ft), Rope (DC 20), Antitoxin wording, marked Druidic Focus Totem as Legacy, removed duplicates
+- `conditions.ts` — Fixed Petrified (poison damage immunity) and Unconscious (can't move/speak)
+- `ActionBar.tsx` — Updated Help action tooltip with 2024 requirements
+- `AttackModal.tsx` — Fixed grapple/shove save to include target's ability modifier, added TWF off-hand attack flow
+- `DiceRoller.tsx` — Added `allowCritDoubling` prop for 2024 player-only crits
+- `rest-service-5e.ts` — Fixed Math.random() to cryptoRandom() for hit die rolls
+
+### Phase 3: Bastion Overhaul
+- `bastion.ts` — Set all SPECIAL_FACILITY_COSTS to 0 (free per DMG)
+- `bastion-facilities.json` — Removed 14 fabricated charms, fixed Barracks cost (free), Workshop Source of Inspiration (Short Rest), Stable capacity (Roomy=3 Large)
+- `bastion-events.ts` — Fixed Armory (d8s), Defensive Walls (reduce by 2), Extraordinary Opportunity, Magical Discovery, Request for Aid resolution
+
+### Phase 4: Magic Items & Treasure
+- `magic-items.json` — Renamed Keoghton's Ointment, removed duplicates, added 39 items (14 Ioun Stones, 9 Figurines, 7 Instruments of the Bards, 4 Manuals of Golems, Dwarven Plate, Belt of Giant Strength Cloud/Storm, Well of Many Worlds, Heward's Handy Haversack)
+- `treasure-tables.json` — Added level-tiered magic item rarity distributions
+
+### Phase 5: Character Creation, Mechanics, & New Data
+- `species.json` — Set Tiefling and Elf base spellGranted to null
+- `builder/types.ts` — Reordered FOUNDATION_SLOT_IDS (class first per 2024 PHB)
+- `backgrounds.json` — Custom background: originFeat="any", added abilityScoresFreeChoice flag
+- `settlements.json` — Fixed to 3 tiers (Village/Town/City), added maxItemValue, added 6 generator tables + tavern name generator
+- `siege-equipment.json` — Removed Cauldron of Boiling Oil, added Mangonel + updated stats
+- `PlayerHUDOverlay.tsx` — Added Death Save d20 automation with nat-1/nat-20 handling, 3-failure death, 3-success stable
+- `PlayerHUDOverlay.tsx` — Updated Heroic Inspiration tooltip
+- `AttackModal.tsx` — Added TWF off-hand attack system for Light weapons
+- `equipment.json` — Added 26 items: 8 Mounts, 12 Tack & Vehicles, 6 Waterborne Vehicles
+- `random-tables.json` — Added travel terrain (11 types), environmental effects (11), hazards (12), poisons (14)

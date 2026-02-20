@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { BackButton, Button, Input, Spinner } from '../components/ui'
-import { AUTO_REJOIN_KEY, LAST_SESSION_KEY } from '../config/constants'
+import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../config/constants'
 import { useNetworkStore } from '../stores/useNetworkStore'
 
 const DISPLAY_NAME_KEY = 'dnd-vtt-display-name'
@@ -69,6 +69,12 @@ export default function JoinGamePage(): JSX.Element {
           timestamp: Date.now()
         }
         localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
+
+        const raw = localStorage.getItem(JOINED_SESSIONS_KEY)
+        const sessions: typeof session[] = raw ? JSON.parse(raw) : []
+        const filtered = sessions.filter((s) => s.campaignId !== campaignId)
+        const updated = [session, ...filtered].slice(0, 10)
+        localStorage.setItem(JOINED_SESSIONS_KEY, JSON.stringify(updated))
       } catch (e) { console.warn('[JoinGame] Failed to save session:', e) }
 
       navigate(`/lobby/${campaignId}`)

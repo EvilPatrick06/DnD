@@ -217,6 +217,43 @@
       { "d100Min": 96, "d100Max": 100, "itemName": "Luck Blade" }
     ]
   },
+  "magicItemRarityByLevel": [
+    {
+      "levelRange": "1-4",
+      "distribution": [
+        { "d100Min": 1, "d100Max": 54, "rarity": "Common" },
+        { "d100Min": 55, "d100Max": 91, "rarity": "Uncommon" },
+        { "d100Min": 92, "d100Max": 100, "rarity": "Rare" }
+      ]
+    },
+    {
+      "levelRange": "5-10",
+      "distribution": [
+        { "d100Min": 1, "d100Max": 30, "rarity": "Common" },
+        { "d100Min": 31, "d100Max": 81, "rarity": "Uncommon" },
+        { "d100Min": 82, "d100Max": 98, "rarity": "Rare" },
+        { "d100Min": 99, "d100Max": 100, "rarity": "Very Rare" }
+      ]
+    },
+    {
+      "levelRange": "11-16",
+      "distribution": [
+        { "d100Min": 1, "d100Max": 11, "rarity": "Common" },
+        { "d100Min": 12, "d100Max": 34, "rarity": "Uncommon" },
+        { "d100Min": 35, "d100Max": 70, "rarity": "Rare" },
+        { "d100Min": 71, "d100Max": 93, "rarity": "Very Rare" },
+        { "d100Min": 94, "d100Max": 100, "rarity": "Legendary" }
+      ]
+    },
+    {
+      "levelRange": "17-20",
+      "distribution": [
+        { "d100Min": 1, "d100Max": 20, "rarity": "Rare" },
+        { "d100Min": 21, "d100Max": 64, "rarity": "Very Rare" },
+        { "d100Min": 65, "d100Max": 100, "rarity": "Legendary" }
+      ]
+    }
+  ],
   "hoardDetails": {
     "0-4": {
       "gemTier": "50gp",

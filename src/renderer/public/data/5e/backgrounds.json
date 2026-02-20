@@ -331,7 +331,8 @@
     },
     "equipment": [],
     "startingGold": 50,
-    "originFeat": "",
-    "abilityScores": ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
+    "originFeat": "any",
+    "abilityScores": ["STR", "DEX", "CON"],
+    "abilityScoresFreeChoice": true
   }
 ]

@@ -32,7 +32,7 @@ export default function MakeGamePage(): JSX.Element {
       <BackButton to="/" />
 
       <div className="flex items-center justify-between mb-6 max-w-2xl">
-        <h1 className="text-3xl font-bold">Create a Campaign</h1>
+        <h1 className="text-3xl font-bold">Choose your Campaign or Create a New One</h1>
         <Button variant="secondary" onClick={handleImport} disabled={importing}>
           {importing ? 'Importing...' : 'Import .dndcamp'}
         </Button>
