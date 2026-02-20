@@ -10,10 +10,17 @@ export interface AbilityScoreSet {
 export type AbilityName = keyof AbilityScoreSet
 
 export const ABILITY_NAMES: AbilityName[] = [
-  'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'
+  'strength',
+  'dexterity',
+  'constitution',
+  'intelligence',
+  'wisdom',
+  'charisma'
 ]
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'unique'
+
+export type MagicItemRarity5e = 'common' | 'uncommon' | 'rare' | 'very-rare' | 'legendary' | 'artifact'
 
 export type BuildSlotCategory =
   | 'ancestry'
@@ -28,6 +35,11 @@ export type BuildSlotCategory =
   | 'class-feature'
   | 'skill-choice'
   | 'ability-scores'
+  | 'epic-boon'
+  | 'fighting-style'
+  | 'primal-order'
+  | 'divine-order'
+  | 'expertise'
 
 export interface BuildSlot {
   id: string
@@ -43,14 +55,33 @@ export interface BuildSlot {
 }
 
 export const STANDARD_LANGUAGES_5E = [
-  'Common', 'Dwarvish', 'Elvish', 'Giant', 'Gnomish', 'Goblin', 'Halfling', 'Orc'
+  'Common',
+  'Common Sign Language',
+  'Draconic',
+  'Dwarvish',
+  'Elvish',
+  'Giant',
+  'Gnomish',
+  'Goblin',
+  'Halfling',
+  'Orc'
 ]
 
-export const EXOTIC_LANGUAGES_5E = [
-  'Abyssal', 'Celestial', 'Draconic', 'Deep Speech', 'Infernal', 'Primordial', 'Sylvan', 'Undercommon'
+export const RARE_LANGUAGES_5E = [
+  'Abyssal',
+  'Celestial',
+  'Deep Speech',
+  'Druidic',
+  'Infernal',
+  'Primordial',
+  'Sylvan',
+  "Thieves' Cant",
+  'Undercommon'
 ]
 
-export const ALL_LANGUAGES_5E = [...STANDARD_LANGUAGES_5E, ...EXOTIC_LANGUAGES_5E]
+export const PRIMORDIAL_DIALECTS = ['Aquan', 'Auran', 'Ignan', 'Terran'] as const
+
+export const ALL_LANGUAGES_5E = [...STANDARD_LANGUAGES_5E, ...RARE_LANGUAGES_5E]
 
 export interface SelectableOption {
   id: string
@@ -85,6 +116,14 @@ export function formatMod(mod: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`
 }
 
+/**
+ * PHB 2024: A creature is Bloodied while it has half its Hit Points or fewer remaining.
+ * Bloodied has no mechanical effect on its own but may trigger other game effects.
+ */
+export function isBloodied(currentHP: number, maxHP: number): boolean {
+  return currentHP > 0 && currentHP <= Math.floor(maxHP / 2)
+}
+
 // === Unified types for new character sheet ===
 
 export interface SpellEntry {
@@ -104,6 +143,8 @@ export interface SpellEntry {
   heightened?: Record<string, string>
   classes?: string[]
   prepared?: boolean
+  source?: 'species' | 'class' | 'feat'
+  innateUses?: { max: number; remaining: number }
 }
 
 export interface WeaponEntry {
@@ -113,11 +154,15 @@ export interface WeaponEntry {
   damageType: string
   attackBonus: number
   properties: string[]
+  description?: string
   hands?: string
   group?: string
   bulk?: string
   range?: string
   proficient?: boolean
+  mastery?: string
+  cost?: string
+  weight?: number
 }
 
 export interface ArmorEntry {
@@ -125,7 +170,8 @@ export interface ArmorEntry {
   name: string
   acBonus: number
   equipped: boolean
-  type: 'armor' | 'shield'
+  type: 'armor' | 'shield' | 'clothing'
+  description?: string
   category?: string
   dexCap?: number | null
   stealthDisadvantage?: boolean
@@ -136,6 +182,9 @@ export interface ArmorEntry {
   hardness?: number
   shieldHP?: number
   shieldBT?: number
+  currentShieldHP?: number
+  cost?: string
+  weight?: number
 }
 
 export interface Currency {
@@ -158,4 +207,12 @@ export interface ActiveCondition {
   type: 'condition' | 'buff'
   isCustom: boolean
   value?: number
+}
+
+export interface ClassResource {
+  id: string
+  name: string
+  current: number
+  max: number
+  shortRestRestore: number | 'all'
 }
