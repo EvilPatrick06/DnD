@@ -6,6 +6,7 @@ interface MapConfigStepProps {
   maps: GameMap[]
   campaignId: string
   onChange: (maps: GameMap[]) => void
+  adventureMaps?: Array<{ id: string; name: string }>
 }
 
 const BUILT_IN_MAPS = [
@@ -101,7 +102,7 @@ const BUILT_IN_MAPS = [
   }
 ]
 
-export default function MapConfigStep({ maps, campaignId, onChange }: MapConfigStepProps): JSX.Element {
+export default function MapConfigStep({ maps, campaignId, onChange, adventureMaps }: MapConfigStepProps): JSX.Element {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newMapName, setNewMapName] = useState('')
   const [newGridSize, setNewGridSize] = useState(40)
@@ -193,6 +194,30 @@ export default function MapConfigStep({ maps, campaignId, onChange }: MapConfigS
       </p>
 
       <div className="max-w-2xl space-y-6">
+        {/* Adventure maps (read-only preview) */}
+        {adventureMaps && adventureMaps.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              From Adventure ({adventureMaps.length})
+            </h3>
+            <div className="space-y-2">
+              {adventureMaps.map((am) => (
+                <div
+                  key={am.id}
+                  className="bg-amber-900/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{'\uD83D\uDDFA'}</span>
+                    <span className="font-semibold text-sm">{am.name}</span>
+                    <span className="text-xs text-gray-500 font-mono">{am.id}</span>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded bg-amber-700/40 text-amber-300">Adventure</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Drop zone for custom maps */}
         <div
           onDrop={handleDrop}
