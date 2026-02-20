@@ -41,6 +41,7 @@ export const INVITE_CODE_LENGTH = 6
 
 // Session persistence (player rejoin)
 export const LAST_SESSION_KEY = 'dnd-vtt-last-session'
+export const JOINED_SESSIONS_KEY = 'dnd-vtt-joined-sessions'
 export const AUTO_REJOIN_KEY = 'dnd-vtt-auto-rejoin'
 
 // Heartbeat

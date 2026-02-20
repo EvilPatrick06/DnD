@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
-import { LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../config/constants'
+import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../config/constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
 import {
   getConnectedPeers,
@@ -107,6 +107,22 @@ export default function LobbyPage(): JSX.Element {
       if (session.campaignId === campaignId && !session.campaignName) {
         session.campaignName = campaign.name
         localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
+      }
+    } catch { /* ignore */ }
+
+    try {
+      const raw = localStorage.getItem(JOINED_SESSIONS_KEY)
+      if (!raw) return
+      const sessions = JSON.parse(raw) as Array<{ campaignId: string; campaignName: string }>
+      let changed = false
+      for (const s of sessions) {
+        if (s.campaignId === campaignId && !s.campaignName) {
+          s.campaignName = campaign.name
+          changed = true
+        }
+      }
+      if (changed) {
+        localStorage.setItem(JOINED_SESSIONS_KEY, JSON.stringify(sessions))
       }
     } catch { /* ignore */ }
   }, [role, campaign?.name, campaignId])

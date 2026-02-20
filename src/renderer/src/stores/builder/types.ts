@@ -8,7 +8,7 @@ import type { GameSystem } from '../../types/game-system'
 // --- Constants ---
 
 /** IDs that identify foundation-level (level 0) build slots, used to separate them from level-based slots */
-export const FOUNDATION_SLOT_IDS = ['ancestry', 'heritage', 'background', 'class', 'ability-scores', 'skill-choices']
+export const FOUNDATION_SLOT_IDS = ['class', 'background', 'ancestry', 'heritage', 'ability-scores', 'skill-choices']
 
 export type AbilityScoreMethod = 'standard' | 'pointBuy' | 'roll' | 'custom'
 

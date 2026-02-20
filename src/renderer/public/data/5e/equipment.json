@@ -754,13 +754,6 @@
       "description": "Sturdy clothing suitable for long journeys."
     },
     {
-      "name": "Component pouch",
-      "category": "Adventuring Gear",
-      "weight": 2,
-      "cost": "25 gp",
-      "description": "A small leather belt pouch with compartments for material components and other special items for spellcasting."
-    },
-    {
       "name": "Costume",
       "category": "Adventuring Gear",
       "weight": 4,
@@ -794,27 +787,6 @@
       "weight": 3,
       "cost": "5 gp",
       "description": "10 uses. As a Utilize action, you can expend one use to stabilize a creature that has 0 Hit Points without needing to make a Wisdom (Medicine) check."
-    },
-    {
-      "name": "Holy symbol (amulet)",
-      "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "5 gp",
-      "description": "A holy amulet worn around the neck, used as a spellcasting focus for divine casters."
-    },
-    {
-      "name": "Holy symbol (emblem)",
-      "category": "Adventuring Gear",
-      "weight": 0,
-      "cost": "5 gp",
-      "description": "A holy emblem depicted on a shield or tabard, used as a spellcasting focus for divine casters."
-    },
-    {
-      "name": "Holy symbol (reliquary)",
-      "category": "Adventuring Gear",
-      "weight": 2,
-      "cost": "5 gp",
-      "description": "A small box containing a sacred relic, used as a spellcasting focus for divine casters."
     },
     {
       "name": "Holy Water",
@@ -1111,69 +1083,6 @@
       "description": "Holds up to 4 pints of liquid. Full weight listed; empty weighs 0 pounds."
     },
     {
-      "name": "Arcane focus",
-      "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "10 gp",
-      "description": "An arcane focus is a special item — an orb, a crystal, a rod, a specially constructed staff, or a wand — designed to channel the power of arcane spells. A spellcaster can use it as a spellcasting focus, as described in the Spellcasting section of their class description. Variants: Crystal (10 gp, 1 lb), Orb (20 gp, 3 lb), Rod (10 gp, 2 lb), Staff (5 gp, 4 lb), Wand (10 gp, 1 lb)."
-    },
-    {
-      "name": "Arcane focus (crystal)",
-      "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "10 gp",
-      "description": "A crystal used as a spellcasting focus for arcane casters."
-    },
-    {
-      "name": "Arcane focus (orb)",
-      "category": "Adventuring Gear",
-      "weight": 3,
-      "cost": "20 gp",
-      "description": "An orb used as a spellcasting focus for arcane casters."
-    },
-    {
-      "name": "Arcane focus (rod)",
-      "category": "Adventuring Gear",
-      "weight": 2,
-      "cost": "10 gp",
-      "description": "A rod used as a spellcasting focus for arcane casters."
-    },
-    {
-      "name": "Arcane focus (staff)",
-      "category": "Adventuring Gear",
-      "weight": 4,
-      "cost": "5 gp",
-      "description": "A staff used as a spellcasting focus for arcane casters."
-    },
-    {
-      "name": "Arcane focus (wand)",
-      "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "10 gp",
-      "description": "A wand used as a spellcasting focus for arcane casters."
-    },
-    {
-      "name": "Druidic focus (sprig of mistletoe)",
-      "category": "Adventuring Gear",
-      "weight": 0,
-      "cost": "1 gp",
-      "description": "A sprig of mistletoe used as a spellcasting focus for druids."
-    },
-    {
-      "name": "Druidic focus (wooden staff)",
-      "category": "Adventuring Gear",
-      "weight": 4,
-      "cost": "5 gp",
-      "description": "A wooden staff used as a spellcasting focus for druids."
-    },
-    {
-      "name": "Druidic focus (yew wand)",
-      "category": "Adventuring Gear",
-      "weight": 1,
-      "cost": "10 gp",
-      "description": "A yew wand used as a spellcasting focus for druids."
-    },
-    {
       "name": "Arrows (20)",
       "category": "Ammunition",
       "weight": 1,
@@ -1399,24 +1308,6 @@
     },
     {
       "name": "Gaming Set",
-      "category": "Tool",
-      "weight": 0,
-      "cost": "1 gp",
-      "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
-      "ability": "Wisdom",
-      "utilize": "Discern whether someone is cheating (DC 10), or win the game (DC 20)"
-    },
-    {
-      "name": "Gaming Set (one of your choice)",
-      "category": "Tool",
-      "weight": 0,
-      "cost": "1 gp",
-      "description": "A gaming set covers a wide range of game pieces, including dice and decks of cards. Proficiency with a gaming set lets you add your proficiency bonus to ability checks you make to play a game with that set. Variants: Dice Set (1 sp), Dragonchess Set (1 gp), Playing Card Set (5 sp), Three-Dragon Ante Set (1 gp).",
-      "ability": "Wisdom",
-      "utilize": "Discern whether someone is cheating (DC 10), or win the game (DC 20)"
-    },
-    {
-      "name": "Gaming Set (any)",
       "category": "Tool",
       "weight": 0,
       "cost": "1 gp",
@@ -2014,6 +1905,246 @@
           "quantity": 1
         }
       ]
+    },
+    {
+      "name": "Camel",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "50 gp",
+      "speed": "50 ft.",
+      "carryingCapacity": 480,
+      "description": "A hardy desert mount with good speed and solid carrying capacity."
+    },
+    {
+      "name": "Draft Horse",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "50 gp",
+      "speed": "40 ft.",
+      "carryingCapacity": 540,
+      "description": "A strong horse bred for pulling heavy loads rather than riding."
+    },
+    {
+      "name": "Elephant",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "200 gp",
+      "speed": "40 ft.",
+      "carryingCapacity": 1320,
+      "description": "A massive beast with enormous carrying capacity. Requires an Exotic Saddle."
+    },
+    {
+      "name": "Mastiff",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "25 gp",
+      "speed": "40 ft.",
+      "carryingCapacity": 195,
+      "description": "A large, fierce dog suitable as a mount for Small creatures or as a guard animal."
+    },
+    {
+      "name": "Mule",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "8 gp",
+      "speed": "40 ft.",
+      "carryingCapacity": 420,
+      "description": "A reliable pack animal well suited to rugged terrain."
+    },
+    {
+      "name": "Pony",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "30 gp",
+      "speed": "40 ft.",
+      "carryingCapacity": 225,
+      "description": "A small horse suitable as a mount for Small creatures."
+    },
+    {
+      "name": "Riding Horse",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "75 gp",
+      "speed": "60 ft.",
+      "carryingCapacity": 480,
+      "description": "A fast horse bred for riding, the most common mount for overland travel."
+    },
+    {
+      "name": "Warhorse",
+      "category": "Mounts",
+      "weight": 0,
+      "cost": "400 gp",
+      "speed": "60 ft.",
+      "carryingCapacity": 540,
+      "description": "A horse trained for combat with high speed and carrying capacity."
+    },
+    {
+      "name": "Barding",
+      "category": "Tack and Vehicles",
+      "weight": 0,
+      "cost": "Varies (x4 armor cost)",
+      "description": "Armor designed for a mount. Costs four times the normal armor cost and weighs twice as much. A mount's Speed is reduced by 10 ft. while wearing barding."
+    },
+    {
+      "name": "Carriage",
+      "category": "Tack and Vehicles",
+      "weight": 600,
+      "cost": "100 gp",
+      "description": "An enclosed wheeled vehicle pulled by draft animals."
+    },
+    {
+      "name": "Cart",
+      "category": "Tack and Vehicles",
+      "weight": 200,
+      "cost": "15 gp",
+      "description": "A simple two-wheeled vehicle pulled by a draft animal."
+    },
+    {
+      "name": "Chariot",
+      "category": "Tack and Vehicles",
+      "weight": 100,
+      "cost": "250 gp",
+      "description": "A light two-wheeled vehicle designed for speed, pulled by horses."
+    },
+    {
+      "name": "Feed (per day)",
+      "category": "Tack and Vehicles",
+      "weight": 10,
+      "cost": "5 cp",
+      "description": "Feed for one mount or draft animal for one day."
+    },
+    {
+      "name": "Saddle (Exotic)",
+      "category": "Tack and Vehicles",
+      "weight": 40,
+      "cost": "60 gp",
+      "description": "Required for riding an aquatic or a flying mount."
+    },
+    {
+      "name": "Saddle (Military)",
+      "category": "Tack and Vehicles",
+      "weight": 30,
+      "cost": "20 gp",
+      "description": "Gives Advantage on any ability check you make to remain mounted. Comes with bit, bridle, and reins."
+    },
+    {
+      "name": "Saddle (Riding)",
+      "category": "Tack and Vehicles",
+      "weight": 25,
+      "cost": "10 gp",
+      "description": "A standard saddle that comes with a bit, a bridle, and reins."
+    },
+    {
+      "name": "Saddlebags",
+      "category": "Tack and Vehicles",
+      "weight": 8,
+      "cost": "4 gp",
+      "description": "Bags that attach to a saddle for carrying gear on a mount."
+    },
+    {
+      "name": "Sled",
+      "category": "Tack and Vehicles",
+      "weight": 300,
+      "cost": "20 gp",
+      "description": "A vehicle designed to travel over snow and ice, pulled by draft animals."
+    },
+    {
+      "name": "Stabling (per day)",
+      "category": "Tack and Vehicles",
+      "weight": 0,
+      "cost": "5 sp",
+      "description": "Stabling service for one mount for one day, including shelter and feed."
+    },
+    {
+      "name": "Wagon",
+      "category": "Tack and Vehicles",
+      "weight": 400,
+      "cost": "35 gp",
+      "description": "A four-wheeled vehicle pulled by one or more draft animals."
+    },
+    {
+      "name": "Galley",
+      "category": "Waterborne Vehicles",
+      "weight": 0,
+      "cost": "30,000 gp",
+      "speed": "4 mph",
+      "crew": 80,
+      "passengers": 0,
+      "cargoTons": 150,
+      "ac": 15,
+      "hp": 500,
+      "damageThreshold": 20,
+      "description": "A large, multi-oared warship designed for ramming and boarding actions."
+    },
+    {
+      "name": "Keelboat",
+      "category": "Waterborne Vehicles",
+      "weight": 0,
+      "cost": "3,000 gp",
+      "speed": "1 mph",
+      "crew": 1,
+      "passengers": 6,
+      "cargoTons": 0.5,
+      "ac": 15,
+      "hp": 100,
+      "damageThreshold": 10,
+      "description": "A small, flat-bottomed boat used on lakes and rivers. Can be crewed by one person."
+    },
+    {
+      "name": "Longship",
+      "category": "Waterborne Vehicles",
+      "weight": 0,
+      "cost": "10,000 gp",
+      "speed": "3 mph",
+      "crew": 40,
+      "passengers": 150,
+      "cargoTons": 10,
+      "ac": 15,
+      "hp": 300,
+      "damageThreshold": 15,
+      "description": "A long, narrow vessel built for speed and versatility, propelled by oars and sail."
+    },
+    {
+      "name": "Rowboat",
+      "category": "Waterborne Vehicles",
+      "weight": 100,
+      "cost": "50 gp",
+      "speed": "1.5 mph",
+      "crew": 1,
+      "passengers": 3,
+      "cargoTons": 0,
+      "ac": 11,
+      "hp": 50,
+      "damageThreshold": 0,
+      "description": "A small boat propelled by oars, used on lakes and rivers. Weighs 100 pounds and can be carried."
+    },
+    {
+      "name": "Sailing Ship",
+      "category": "Waterborne Vehicles",
+      "weight": 0,
+      "cost": "10,000 gp",
+      "speed": "2 mph",
+      "crew": 20,
+      "passengers": 20,
+      "cargoTons": 100,
+      "ac": 15,
+      "hp": 300,
+      "damageThreshold": 15,
+      "description": "A standard oceangoing merchant vessel propelled by sails."
+    },
+    {
+      "name": "Warship",
+      "category": "Waterborne Vehicles",
+      "weight": 0,
+      "cost": "25,000 gp",
+      "speed": "2.5 mph",
+      "crew": 60,
+      "passengers": 60,
+      "cargoTons": 200,
+      "ac": 15,
+      "hp": 500,
+      "damageThreshold": 20,
+      "description": "A heavily armed and armored sailing vessel built for naval combat."
     }
   ]
 }

@@ -4410,5 +4410,395 @@
     "cost": "200 gp",
     "description": "This ring appears to be a Ring of Free Action or similar beneficial ring. When you attune to it, you have Disadvantage on Dexterity checks and Dexterity saving throws. The ring can't be removed until the curse is removed with Remove Curse or similar magic.",
     "treasureTheme": "Relics"
+  },
+  {
+    "id": "ioun-stone-awareness",
+    "name": "Ioun Stone (Awareness)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "While this dark-blue rhomboid orbits your head, you have Advantage on Initiative rolls and Wisdom (Perception) checks.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "ioun-stone-protection",
+    "name": "Ioun Stone (Protection)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "You gain a +1 bonus to Armor Class while this dusty-rose prism orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Armaments"
+  },
+  {
+    "id": "ioun-stone-reserve",
+    "name": "Ioun Stone (Reserve)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "This vibrant purple prism stores spells cast into it, holding them until you use them. The stone can store up to 4 levels of spells at a time. When found, it contains 1d4 levels of stored spells chosen by the DM.\n\nAny creature can cast a spell of level 1 through 4 into the stone by touching it as the spell is cast. The spell has no effect, other than to be stored in the stone. If the stone can't hold the spell, the spell is expended without effect. The level of the slot used to cast the spell determines how much space it uses.\n\nWhile this stone orbits your head, you can cast any spell stored in it. The spell uses the slot level, spell save DC, spell attack bonus, and spellcasting ability of the original caster but is otherwise treated as if you cast the spell. The spell cast from the stone is no longer stored in it, freeing up space.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-sustenance",
+    "name": "Ioun Stone (Sustenance)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "You don't need to eat or drink while this clear spindle orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Relics"
+  },
+  {
+    "id": "ioun-stone-absorption",
+    "name": "Ioun Stone (Absorption)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "While this pale lavender ellipsoid orbits your head, you can take a Reaction to cancel a spell of level 4 or lower cast by a creature you can see. A canceled spell has no effect, and any resources used to cast it are wasted. Once the stone has canceled 20 levels of spells, it burns out, turns dull gray, and loses its magic.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-agility",
+    "name": "Ioun Stone (Agility)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Dexterity increases by 2, to a maximum of 20, while this deep-red sphere orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "ioun-stone-fortitude",
+    "name": "Ioun Stone (Fortitude)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Constitution increases by 2, to a maximum of 20, while this pink rhomboid orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-insight",
+    "name": "Ioun Stone (Insight)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Wisdom increases by 2, to a maximum of 20, while this incandescent blue sphere orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Relics"
+  },
+  {
+    "id": "ioun-stone-intellect",
+    "name": "Ioun Stone (Intellect)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Intelligence increases by 2, to a maximum of 20, while this marbled scarlet and blue sphere orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-leadership",
+    "name": "Ioun Stone (Leadership)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Charisma increases by 2, to a maximum of 20, while this marbled pink and green sphere orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-strength",
+    "name": "Ioun Stone (Strength)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Your Strength increases by 2, to a maximum of 20, while this pale blue rhomboid orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Armaments"
+  },
+  {
+    "id": "ioun-stone-greater-absorption",
+    "name": "Ioun Stone (Greater Absorption)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "While this marbled lavender and green ellipsoid orbits your head, you can take a Reaction to cancel a spell of level 8 or lower cast by a creature you can see. A canceled spell has no effect, and any resources used to cast it are wasted. Once the stone has canceled 20 levels of spells, it burns out, turns dull gray, and loses its magic.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-mastery",
+    "name": "Ioun Stone (Mastery)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "Your Proficiency Bonus increases by 1 while this pale green prism orbits your head.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "ioun-stone-regeneration",
+    "name": "Ioun Stone (Regeneration)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "You regain 15 Hit Points at the end of each hour while this pearly white spindle orbits your head if you have at least 1 Hit Point.\n\nWhen you take a Magic action to toss an Ioun Stone into the air, the stone orbits your head at a distance of 1d3 feet, conferring its benefit to you. You can have up to three Ioun Stones orbiting your head at the same time. As a Utilize action, you can seize and stow any number of Ioun Stones orbiting your head.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-silver-raven",
+    "name": "Figurine of Wondrous Power (Silver Raven)",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "400 gp",
+    "description": "This silver statuette of a raven can become a Raven for up to 12 hours. Once it has been used, it can't be used again until 2 days have passed. While in raven form, the figurine grants you the ability to cast Animal Messenger on it.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-bronze-griffon",
+    "name": "Figurine of Wondrous Power (Bronze Griffon)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This bronze statuette is of a griffon rampant. It can become a Griffon for up to 6 hours. Once it has been used, it can't be used again until 5 days have passed.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-ebony-fly",
+    "name": "Figurine of Wondrous Power (Ebony Fly)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This ebony statuette, carved in the likeness of a horsefly, can become a Giant Fly for up to 12 hours and can be ridden as a mount. Once it has been used, it can't be used again until 2 days have passed. The Giant Fly has AC 11, HP 19, Speed 30 ft./Fly 60 ft.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-golden-lions",
+    "name": "Figurine of Wondrous Power (Golden Lions)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "These gold statuettes of lions are always created in pairs. You can use one figurine or both simultaneously. Each can become a Lion for up to 1 hour. Once a lion has been used, it can't be used again until 7 days have passed.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-ivory-goats",
+    "name": "Figurine of Wondrous Power (Ivory Goats)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "These ivory statuettes of goats are always created in sets of three. Each goat looks unique and functions differently from the others.\n\nGoat of Terror: Can become a Giant Goat for up to 3 hours. The goat can't attack, but you can remove its horns and use them as weapons (one becomes a +1 Lance, the other a +2 Longsword). While you ride the goat, Hostile creatures within a 30-foot Emanation must succeed on a DC 15 Wisdom save or be Frightened for 1 minute. Recharge: 15 days.\n\nGoat of Traveling: Can become a Large goat (Riding Horse statistics). Has 24 charges; each hour costs 1 charge. Recharge: 7 days (regains all charges).\n\nGoat of Travail: Can become a Giant Goat for up to 3 hours. Recharge: 30 days.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-marble-elephant",
+    "name": "Figurine of Wondrous Power (Marble Elephant)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This marble statuette resembles a trumpeting elephant. It can become an Elephant for up to 24 hours. Once it has been used, it can't be used again until 7 days have passed.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-onyx-dog",
+    "name": "Figurine of Wondrous Power (Onyx Dog)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This onyx statuette of a dog can become a Mastiff for up to 6 hours. The mastiff has an Intelligence of 8 and can speak Common. It also has Blindsight with a range of 60 feet. Once it has been used, it can't be used again until 7 days have passed.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-serpentine-owl",
+    "name": "Figurine of Wondrous Power (Serpentine Owl)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This serpentine statuette of an owl can become a Giant Owl for up to 8 hours. The owl can communicate telepathically with you at any range if you and it are on the same plane of existence. Once it has been used, it can't be used again until 2 days have passed.\n\nIf you take a Magic action to throw the figurine to a point on the ground within 60 feet of yourself, it becomes a living creature. The creature is Friendly to you and your allies, understands your languages, and obeys your commands. At the end of the duration, the creature reverts to its figurine form. It reverts early if it drops to 0 Hit Points or if you take a Magic action while touching it.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "figurine-of-wondrous-power-obsidian-steed",
+    "name": "Figurine of Wondrous Power (Obsidian Steed)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "This polished obsidian horse can become a Nightmare for up to 24 hours. The nightmare fights only to defend itself. Once it has been used, it can't be used again until 5 days have passed.\n\nThe figurine has a 10 percent chance each time you use it to ignore your orders, including a command to revert to figurine form. If you mount the nightmare while it is ignoring your orders, you and the nightmare are instantly transported to a random location on the plane of Hades, where the nightmare reverts to figurine form.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "instrument-of-the-bards-doss-lute",
+    "name": "Instrument of the Bards (Doss Lute)",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "400 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nDoss Lute: Animal Friendship, Protection from Energy (Fire damage only), Protection from Poison.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-fochlucan-bandore",
+    "name": "Instrument of the Bards (Fochlucan Bandore)",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "400 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nFochlucan Bandore: Entangle, Faerie Fire, Shillelagh, Speak with Animals.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-mac-fuirmidh-cittern",
+    "name": "Instrument of the Bards (Mac-Fuirmidh Cittern)",
+    "rarity": "uncommon",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "400 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nMac-Fuirmidh Cittern: Barkskin, Cure Wounds, Fog Cloud.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-canaith-mandolin",
+    "name": "Instrument of the Bards (Canaith Mandolin)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nCanaith Mandolin: Cure Wounds (level 3), Dispel Magic, Protection from Energy (Lightning damage only).",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-cli-lyre",
+    "name": "Instrument of the Bards (Cli Lyre)",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "4,000 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nCli Lyre: Stone Shape, Wall of Fire, Wind Wall.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-anstruth-harp",
+    "name": "Instrument of the Bards (Anstruth Harp)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "40,000 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nAnstruth Harp: Cure Wounds (level 5), Ice Storm, Wall of Thorns.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "instrument-of-the-bards-ollamh-harp",
+    "name": "Instrument of the Bards (Ollamh Harp)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "Requires Attunement by a Bard. An Instrument of the Bards is superior to an ordinary instrument in every way. A creature that attempts to play the instrument without being attuned to it must succeed on a DC 15 Wisdom saving throw or take 2d4 Psychic damage.\n\nYou can play the instrument to cast one of its spells. Once the instrument has been used to cast a spell, it can't be used to cast that spell again until the next dawn. The spells use your spellcasting ability and spell save DC.\n\nAll Instruments: Fly, Invisibility, Levitate, Protection from Evil and Good.\nOllamh Harp: Confusion, Control Weather, Fire Storm.",
+    "treasureTheme": "Implements"
+  },
+  {
+    "id": "manual-of-golems-clay",
+    "name": "Manual of Golems (Clay)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "This tome contains information and incantations necessary to make a Clay Golem. To decipher and use the manual, you must be a spellcaster with at least two level 5 spell slots. A creature that can't use a Manual of Golems and attempts to read it takes 6d6 Psychic damage.\n\nTo create the golem, you must spend 30 days working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 65,000 GP to purchase supplies. Once you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. The golem is under your control, and it understands and obeys your commands.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "manual-of-golems-flesh",
+    "name": "Manual of Golems (Flesh)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "This tome contains information and incantations necessary to make a Flesh Golem. To decipher and use the manual, you must be a spellcaster with at least two level 5 spell slots. A creature that can't use a Manual of Golems and attempts to read it takes 6d6 Psychic damage.\n\nTo create the golem, you must spend 60 days working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 50,000 GP to purchase supplies. Once you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. The golem is under your control, and it understands and obeys your commands.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "manual-of-golems-iron",
+    "name": "Manual of Golems (Iron)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "This tome contains information and incantations necessary to make an Iron Golem. To decipher and use the manual, you must be a spellcaster with at least two level 5 spell slots. A creature that can't use a Manual of Golems and attempts to read it takes 6d6 Psychic damage.\n\nTo create the golem, you must spend 120 days working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 100,000 GP to purchase supplies. Once you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. The golem is under your control, and it understands and obeys your commands.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "manual-of-golems-stone",
+    "name": "Manual of Golems (Stone)",
+    "rarity": "very-rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "This tome contains information and incantations necessary to make a Stone Golem. To decipher and use the manual, you must be a spellcaster with at least two level 5 spell slots. A creature that can't use a Manual of Golems and attempts to read it takes 6d6 Psychic damage.\n\nTo create the golem, you must spend 90 days working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 80,000 GP to purchase supplies. Once you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. The golem is under your control, and it understands and obeys your commands.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "dwarven-plate",
+    "name": "Dwarven Plate",
+    "rarity": "very-rare",
+    "type": "armor",
+    "attunement": false,
+    "cost": "40,000 gp",
+    "description": "Armor (Half Plate or Plate Armor). While wearing this armor, you gain a +2 bonus to Armor Class. In addition, if an effect moves you against your will along the ground, you can take a Reaction to reduce the distance you are moved by up to 10 feet.",
+    "treasureTheme": "Armaments"
+  },
+  {
+    "id": "belt-of-giant-strength-cloud",
+    "name": "Belt of Giant Strength (Cloud)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "While wearing this belt, your Strength score changes to 27. It has no effect on you if your Strength is already 27 or higher.",
+    "treasureTheme": "Armaments"
+  },
+  {
+    "id": "belt-of-giant-strength-storm",
+    "name": "Belt of Giant Strength (Storm)",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": true,
+    "cost": "200,000 gp",
+    "description": "While wearing this belt, your Strength score changes to 29. It has no effect on you if your Strength is already 29 or higher.",
+    "treasureTheme": "Armaments"
+  },
+  {
+    "id": "well-of-many-worlds",
+    "name": "Well of Many Worlds",
+    "rarity": "legendary",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "200,000 gp",
+    "description": "This fine black cloth, soft as silk, is folded up to the dimensions of a handkerchief. It unfolds into a circular sheet 6 feet in diameter.\n\nYou can take a Magic action to unfold the Well of Many Worlds and place it on a solid surface, whereupon it forms a two-way, 6-foot-diameter, circular portal to another world or plane of existence. Each time the item opens a portal, the DM decides where it leads. The portal remains open until a creature within 5 feet of it takes a Magic action to close it by taking hold of the edges of the cloth and folding it up.\n\nOnce the Well of Many Worlds has opened a portal, it can't do so again for 1d8 hours.",
+    "treasureTheme": "Arcana"
+  },
+  {
+    "id": "hewards-handy-haversack",
+    "name": "Heward's Handy Haversack",
+    "rarity": "rare",
+    "type": "wondrous",
+    "attunement": false,
+    "cost": "4,000 gp",
+    "description": "This backpack has a central pouch and two side pouches, each of which is an extradimensional space. Each side pouch can hold up to 200 pounds of material, not exceeding a volume of 25 cubic feet. The central pouch can hold up to 500 pounds of material, not exceeding a volume of 64 cubic feet. The haversack always weighs 5 pounds, regardless of its contents.\n\nRetrieving an item from the haversack requires a Utilize action or a Bonus Action (your choice). When you reach into the haversack for a specific item, the item is always magically on top.\n\nIf any of its pouches is overloaded, pierced, or torn, the haversack ruptures and is destroyed. If the haversack is destroyed, its contents are lost forever, although an Artifact always turns up again somewhere. If the haversack is turned inside out, its contents spill forth unharmed, and the haversack must be put right before it can be used again.\n\nPlacing the haversack inside an extradimensional space created by a Bag of Holding, Portable Hole, or similar item instantly destroys both items and opens a gate to the Astral Plane.",
+    "treasureTheme": "Implements"
   }
 ]

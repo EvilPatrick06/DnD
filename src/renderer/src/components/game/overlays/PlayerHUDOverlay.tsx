@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { CONDITIONS_5E } from '../../../data/conditions'
+import { rollSingle } from '../../../services/dice-service'
 import { resolveEffects } from '../../../services/effect-resolver-5e'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'
@@ -276,6 +277,68 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
     [char5e, saveAndBroadcast]
   )
 
+  // Death Save roll (2024 PHB rules)
+  const rollDeathSave = useCallback(() => {
+    if (!char5e) return
+    const latest = useCharacterStore.getState().characters.find((c) => c.id === char5e.id) as Character5e | undefined
+    if (!latest || !is5eCharacter(latest)) return
+
+    const roll = rollSingle(20)
+
+    if (roll === 20) {
+      const updated: Character5e = {
+        ...latest,
+        hitPoints: { ...latest.hitPoints, current: 1 },
+        deathSaves: { successes: 0, failures: 0 },
+        updatedAt: new Date().toISOString()
+      }
+      saveAndBroadcast(updated)
+      setDeathSaveResult({ roll, message: 'Natural 20! Regain 1 HP!' })
+      return
+    }
+
+    let newSuccesses = latest.deathSaves.successes
+    let newFailures = latest.deathSaves.failures
+    let message: string
+
+    if (roll === 1) {
+      newFailures = Math.min(3, newFailures + 2)
+      message = `Natural 1! Two failures (${newFailures}/3)`
+    } else if (roll >= 10) {
+      newSuccesses = Math.min(3, newSuccesses + 1)
+      message = `Rolled ${roll} — Success (${newSuccesses}/3)`
+    } else {
+      newFailures = Math.min(3, newFailures + 1)
+      message = `Rolled ${roll} — Failure (${newFailures}/3)`
+    }
+
+    const updated: Character5e = {
+      ...latest,
+      deathSaves: { successes: newSuccesses, failures: newFailures },
+      updatedAt: new Date().toISOString()
+    }
+
+    if (newSuccesses >= 3) {
+      useGameStore.getState().addCondition({
+        id: `cond-${Date.now()}`,
+        entityId: latest.id,
+        entityName: latest.name,
+        condition: 'Stable',
+        duration: 'permanent',
+        source: 'Death Saves',
+        appliedRound: useGameStore.getState().round
+      })
+      message += ' — Stabilized!'
+    }
+
+    if (newFailures >= 3) {
+      message = `${latest.name} has died! (3 death save failures)`
+    }
+
+    saveAndBroadcast(updated)
+    setDeathSaveResult({ roll, message })
+  }, [char5e, saveAndBroadcast])
+
   // Heroic Inspiration toggle
   const toggleInspiration = useCallback(() => {
     if (!char5e) return
@@ -318,6 +381,7 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
   // Temp HP setter
   const [editingTempHP, setEditingTempHP] = useState(false)
   const [tempHPInput, setTempHPInput] = useState('')
+  const [deathSaveResult, setDeathSaveResult] = useState<{ roll: number; message: string } | null>(null)
 
   const handleTempHPSet = useCallback(() => {
     if (!char5e) return
@@ -693,7 +757,38 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
                   />
                 ))}
               </div>
+              {hp.current <= 0 && char5e.deathSaves.failures < 3 && (
+                <button
+                  onClick={rollDeathSave}
+                  className="text-[9px] px-1.5 py-0.5 bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 rounded cursor-pointer"
+                >
+                  Roll Death Save
+                </button>
+              )}
             </div>
+            {deathSaveResult && (
+              <div
+                className={`text-[10px] px-2 py-1 rounded flex items-center justify-between ${
+                  deathSaveResult.roll === 20
+                    ? 'text-green-300 bg-green-900/30 border border-green-700/50'
+                    : deathSaveResult.roll === 1
+                      ? 'text-red-300 bg-red-900/30 border border-red-700/50'
+                      : deathSaveResult.roll >= 10
+                        ? 'text-green-300 bg-green-900/20'
+                        : 'text-red-300 bg-red-900/20'
+                }`}
+              >
+                <span>
+                  d20: {deathSaveResult.roll} — {deathSaveResult.message}
+                </span>
+                <button
+                  onClick={() => setDeathSaveResult(null)}
+                  className="text-gray-500 hover:text-gray-300 ml-2 cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
 
             {/* Hit Dice & Heroic Inspiration */}
             <div className="flex items-center gap-4">
@@ -713,7 +808,7 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
                     ? 'bg-amber-600/30 text-amber-300 border-amber-500/50'
                     : 'bg-gray-800 text-gray-500 border-gray-700'
                 }`}
-                title="Toggle Heroic Inspiration"
+                title="Heroic Inspiration: Reroll any d20 immediately after rolling. You must use the new roll. (Humans regain on Long Rest)"
               >
                 {char5e.heroicInspiration ? '\u2605 Inspired' : '\u2606 Inspiration'}
               </button>
