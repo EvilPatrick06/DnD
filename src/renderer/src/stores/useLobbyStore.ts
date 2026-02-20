@@ -1,6 +1,8 @@
 import { create } from 'zustand'
-import { setRemotePeerMuted, setMuted, setDeafened } from '../network/voice-manager'
+import type { DiceColors } from '../components/game/dice3d'
+import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
 import { PLAYER_COLORS } from '../network/types'
+import { setDeafened, setMuted, setRemotePeerMuted } from '../network/voice-manager'
 import type { Character } from '../types/character'
 
 export interface LobbyPlayer {
@@ -17,6 +19,7 @@ export interface LobbyPlayer {
   isForceDeafened: boolean
   color?: string
   isCoDM?: boolean
+  diceColors?: DiceColors
 }
 
 export interface ChatMessage {
@@ -47,6 +50,7 @@ interface LobbyState {
   remoteCharacters: Record<string, Character>
   slowModeSeconds: number
   fileSharingEnabled: boolean
+  chatMutedUntil: number | null // timestamp (ms) until which local player is chat-muted
 
   setCampaignId: (id: string | null) => void
   addPlayer: (player: LobbyPlayer) => void
@@ -65,11 +69,14 @@ interface LobbyState {
   setRemoteCharacter: (characterId: string, character: Character) => void
   setSlowMode: (seconds: number) => void
   setFileSharingEnabled: (enabled: boolean) => void
+  setChatMutedUntil: (timestamp: number | null) => void
+  setDiceColors: (peerId: string, colors: DiceColors) => void
+  getLocalDiceColors: () => DiceColors
   reset: () => void
 }
 
 function generateMessageId(): string {
-  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  return `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 }
 
 function parseDiceFormula(formula: string): { count: number; sides: number; modifier: number } | null {
@@ -107,6 +114,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   remoteCharacters: {},
   slowModeSeconds: 0,
   fileSharingEnabled: true,
+  chatMutedUntil: null,
 
   setCampaignId: (id) => set({ campaignId: id }),
 
@@ -115,9 +123,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       const exists = state.players.some((p) => p.peerId === player.peerId)
       if (exists) {
         return {
-          players: state.players.map((p) =>
-            p.peerId === player.peerId ? player : p
-          )
+          players: state.players.map((p) => (p.peerId === player.peerId ? player : p))
         }
       }
       // Assign a color if none set
@@ -162,17 +168,13 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   updatePlayer: (peerId, updates) => {
     set((state) => ({
-      players: state.players.map((p) =>
-        p.peerId === peerId ? { ...p, ...updates } : p
-      )
+      players: state.players.map((p) => (p.peerId === peerId ? { ...p, ...updates } : p))
     }))
   },
 
   setPlayerReady: (peerId, ready) => {
     set((state) => ({
-      players: state.players.map((p) =>
-        p.peerId === peerId ? { ...p, isReady: ready } : p
-      )
+      players: state.players.map((p) => (p.peerId === peerId ? { ...p, isReady: ready } : p))
     }))
   },
 
@@ -290,18 +292,14 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   forceMutePlayer: (peerId: string, force: boolean) => {
     set((state) => ({
-      players: state.players.map((p) =>
-        p.peerId === peerId ? { ...p, isForceMuted: force } : p
-      )
+      players: state.players.map((p) => (p.peerId === peerId ? { ...p, isForceMuted: force } : p))
     }))
   },
 
   forceDeafenPlayer: (peerId: string, force: boolean) => {
     set((state) => ({
       players: state.players.map((p) =>
-        p.peerId === peerId
-          ? { ...p, isForceDeafened: force, isForceMuted: force ? true : p.isForceMuted }
-          : p
+        p.peerId === peerId ? { ...p, isForceDeafened: force, isForceMuted: force ? true : p.isForceMuted } : p
       )
     }))
   },
@@ -316,6 +314,22 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   setFileSharingEnabled: (enabled: boolean) => set({ fileSharingEnabled: enabled }),
 
+  setChatMutedUntil: (timestamp: number | null) => set({ chatMutedUntil: timestamp }),
+
+  setDiceColors: (peerId: string, colors: DiceColors) => {
+    set((state) => ({
+      players: state.players.map((p) =>
+        p.peerId === peerId ? { ...p, diceColors: colors } : p
+      )
+    }))
+  },
+
+  getLocalDiceColors: () => {
+    const { players } = get()
+    const localPlayer = players.find((p) => p.isHost) || players[0]
+    return localPlayer?.diceColors || DEFAULT_DICE_COLORS
+  },
+
   reset: () =>
     set({
       campaignId: null,
@@ -327,6 +341,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       locallyMutedPeers: new Set<string>(),
       remoteCharacters: {},
       slowModeSeconds: 0,
-      fileSharingEnabled: true
+      fileSharingEnabled: true,
+      chatMutedUntil: null
     })
 }))

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { GameSystem } from '../../types/game-system'
+import { type Adventure, loadAdventures } from '../../services/adventure-loader'
 import type { CampaignType } from '../../types/campaign'
-import { loadAdventures, type Adventure } from '../../services/adventure-loader'
+import type { GameSystem } from '../../types/game-system'
 import { Card } from '../ui'
 
 interface AdventureSelectorProps {
@@ -65,9 +65,7 @@ export default function AdventureSelector({
         >
           <div className="text-2xl mb-2">{'\uD83D\uDCD6'}</div>
           <div className="font-semibold">Start from Adventure</div>
-          <div className="text-sm text-gray-400 mt-1">
-            Choose a pre-built adventure module with maps and encounters
-          </div>
+          <div className="text-sm text-gray-400 mt-1">Choose a pre-built adventure module with maps and encounters</div>
         </button>
 
         <button
@@ -84,9 +82,7 @@ export default function AdventureSelector({
         >
           <div className="text-2xl mb-2">{'\u2728'}</div>
           <div className="font-semibold">Custom Campaign</div>
-          <div className="text-sm text-gray-400 mt-1">
-            Build your own world with custom maps, NPCs, and encounters
-          </div>
+          <div className="text-sm text-gray-400 mt-1">Build your own world with custom maps, NPCs, and encounters</div>
         </button>
       </div>
 
@@ -111,19 +107,21 @@ export default function AdventureSelector({
                     className={`transition-all h-full
                       ${
                         selectedAdventureId === adventure.id
-                          ? 'border-amber-500 bg-amber-900/20'
+                          ? 'border-2 border-amber-500 bg-amber-900/20 ring-2 ring-amber-500/30'
                           : 'hover:border-gray-600'
                       }`}
                   >
-                    <div className="text-2xl mb-2">
-                      {ADVENTURE_ICONS[adventure.icon] || '\uD83D\uDCDC'}
-                    </div>
+                    <div className="text-2xl mb-2">{ADVENTURE_ICONS[adventure.icon] || '\uD83D\uDCDC'}</div>
                     <div className="font-semibold mb-1">{adventure.name}</div>
                     <div className="text-sm text-gray-400 mb-3">{adventure.description}</div>
                     <div className="text-xs text-gray-500 flex gap-3">
-                      <span>{adventure.chapters.length} chapter{adventure.chapters.length !== 1 ? 's' : ''}</span>
+                      <span>
+                        {adventure.chapters.length} chapter{adventure.chapters.length !== 1 ? 's' : ''}
+                      </span>
                       {adventure.npcs && adventure.npcs.length > 0 && (
-                        <span>{adventure.npcs.length} NPC{adventure.npcs.length !== 1 ? 's' : ''}</span>
+                        <span>
+                          {adventure.npcs.length} NPC{adventure.npcs.length !== 1 ? 's' : ''}
+                        </span>
                       )}
                     </div>
                   </Card>

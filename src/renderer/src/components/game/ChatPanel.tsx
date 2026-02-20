@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { rollDice } from '../../utils/dice-utils'
 import DiceResult from './DiceResult'
 
 export interface GameChatMessage {
@@ -9,6 +10,7 @@ export interface GameChatMessage {
   timestamp: number
   isSystem: boolean
   isDM: boolean
+  isAiDm?: boolean
   isWhisper: boolean
   whisperTarget?: string
   isDiceRoll?: boolean
@@ -21,34 +23,7 @@ interface ChatPanelProps {
   localPlayerName: string
 }
 
-function parseDiceFormula(
-  formula: string
-): { count: number; sides: number; modifier: number } | null {
-  const match = formula.trim().match(/^(\d*)d(\d+)([+-]\d+)?$/)
-  if (!match) return null
-  return {
-    count: match[1] ? parseInt(match[1], 10) : 1,
-    sides: parseInt(match[2], 10),
-    modifier: match[3] ? parseInt(match[3], 10) : 0
-  }
-}
-
-function rollDice(formula: string): { formula: string; total: number; rolls: number[] } | null {
-  const parsed = parseDiceFormula(formula)
-  if (!parsed) return null
-  const rolls: number[] = []
-  for (let i = 0; i < parsed.count; i++) {
-    rolls.push(Math.floor(Math.random() * parsed.sides) + 1)
-  }
-  const total = rolls.reduce((sum, r) => sum + r, 0) + parsed.modifier
-  return { formula, total, rolls }
-}
-
-export default function ChatPanel({
-  messages,
-  onSendMessage,
-  localPlayerName
-}: ChatPanelProps): JSX.Element {
+export default function ChatPanel({ messages, onSendMessage, localPlayerName }: ChatPanelProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<'chat' | 'dice'>('chat')
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -58,7 +33,7 @@ export default function ChatPanel({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [])
 
   const handleSend = (): void => {
     const trimmed = input.trim()
@@ -112,9 +87,7 @@ export default function ChatPanel({
           onClick={() => setActiveTab('chat')}
           className={`flex-1 py-1.5 text-xs font-semibold transition-colors cursor-pointer
             ${
-              activeTab === 'chat'
-                ? 'text-amber-400 border-b-2 border-amber-400'
-                : 'text-gray-500 hover:text-gray-300'
+              activeTab === 'chat' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-gray-500 hover:text-gray-300'
             }`}
         >
           Chat
@@ -123,9 +96,7 @@ export default function ChatPanel({
           onClick={() => setActiveTab('dice')}
           className={`flex-1 py-1.5 text-xs font-semibold transition-colors cursor-pointer
             ${
-              activeTab === 'dice'
-                ? 'text-amber-400 border-b-2 border-amber-400'
-                : 'text-gray-500 hover:text-gray-300'
+              activeTab === 'dice' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-gray-500 hover:text-gray-300'
             }`}
         >
           Dice
@@ -133,10 +104,7 @@ export default function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
         {displayMessages.length === 0 ? (
           <p className="text-xs text-gray-500 text-center py-4">
             {activeTab === 'chat' ? 'No messages yet' : 'No dice rolls yet'}
@@ -159,10 +127,7 @@ export default function ChatPanel({
             // System message
             if (msg.isSystem) {
               return (
-                <div
-                  key={msg.id}
-                  className="text-[10px] text-gray-500 text-center italic py-0.5"
-                >
+                <div key={msg.id} className="text-[10px] text-gray-500 text-center italic py-0.5">
                   {msg.content}
                 </div>
               )
@@ -171,10 +136,7 @@ export default function ChatPanel({
             // Whisper
             if (msg.isWhisper) {
               return (
-                <div
-                  key={msg.id}
-                  className="bg-purple-900/20 border border-purple-700/30 rounded p-1.5"
-                >
+                <div key={msg.id} className="bg-purple-900/20 border border-purple-700/30 rounded p-1.5">
                   <span className="text-[10px] text-purple-400 font-medium">
                     {msg.senderName} whispers to {msg.whisperTarget}:
                   </span>
@@ -183,16 +145,22 @@ export default function ChatPanel({
               )
             }
 
-            // DM message
+            // AI DM message — distinct purple styling
+            if (msg.isAiDm) {
+              const displayName = msg.senderName.includes('(AI)') ? msg.senderName : `${msg.senderName} (AI)`
+              return (
+                <div key={msg.id} className="bg-purple-900/10 border-l-2 border-purple-500 pl-2 py-1">
+                  <span className="text-[10px] text-purple-400 font-semibold">{displayName}</span>
+                  <p className="text-xs text-gray-200">{msg.content}</p>
+                </div>
+              )
+            }
+
+            // Human DM message
             if (msg.isDM) {
               return (
-                <div
-                  key={msg.id}
-                  className="bg-amber-900/10 border-l-2 border-amber-500 pl-2 py-1"
-                >
-                  <span className="text-[10px] text-amber-400 font-semibold">
-                    {msg.senderName} (DM)
-                  </span>
+                <div key={msg.id} className="bg-amber-900/10 border-l-2 border-amber-500 pl-2 py-1">
+                  <span className="text-[10px] text-amber-400 font-semibold">{msg.senderName} (DM)</span>
                   <p className="text-xs text-gray-200">{msg.content}</p>
                 </div>
               )
@@ -201,9 +169,7 @@ export default function ChatPanel({
             // Normal message
             return (
               <div key={msg.id} className="py-0.5">
-                <span className="text-[10px] text-gray-400 font-medium">
-                  {msg.senderName}:
-                </span>
+                <span className="text-[10px] text-gray-400 font-medium">{msg.senderName}:</span>
                 <span className="text-xs text-gray-200 ml-1">{msg.content}</span>
               </div>
             )
@@ -221,11 +187,7 @@ export default function ChatPanel({
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend()
             }}
-            placeholder={
-              activeTab === 'chat'
-                ? 'Type a message... (/roll 1d20, /w name msg)'
-                : '/roll 2d6+3'
-            }
+            placeholder={activeTab === 'chat' ? 'Type a message... (/roll 1d20, /w name msg)' : '/roll 2d6+3'}
             className="flex-1 px-2 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-100
               placeholder-gray-600 focus:outline-none focus:border-amber-500 text-xs"
           />

@@ -1,13 +1,10 @@
-import type Peer from 'peerjs'
 import type { DataConnection } from 'peerjs'
-import { createPeer, destroyPeer, generateInviteCode, getPeer, getPeerId } from './peer-manager'
+import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
+import { DEFAULT_BLOCKED_WORDS, filterMessage } from '../data/moderation'
 import { createMessageRouter } from './message-handler'
-import { filterMessage, DEFAULT_BLOCKED_WORDS } from '../data/moderation'
-import type {
-  JoinPayload,
-  NetworkMessage,
-  PeerInfo
-} from './types'
+import { createPeer, destroyPeer, generateInviteCode, getPeer, getPeerId } from './peer-manager'
+import { validateNetworkMessage } from './schemas'
+import type { JoinPayload, NetworkMessage, PeerInfo } from './types'
 
 // Module-level state
 let hosting = false
@@ -27,6 +24,7 @@ const peerInfoMap = new Map<string, PeerInfo>()
 
 // Ban system
 const bannedPeers = new Set<string>()
+const bannedNames = new Set<string>()
 
 // Chat mute system (peerId -> unmute timestamp)
 const chatMutedPeers = new Map<string, number>()
@@ -34,6 +32,30 @@ const chatMutedPeers = new Map<string, number>()
 // Auto-moderation
 let moderationEnabled = false
 let customBlockedWords: string[] = []
+
+// Client message type allowlist — only these prefixes are permitted from non-host peers.
+// dm: prefixed messages are host-only and must never be accepted from clients.
+const CLIENT_ALLOWED_PREFIXES = ['player:', 'chat:', 'voice:', 'game:dice-roll', 'game:token-move', 'ping']
+
+function isClientAllowedMessageType(type: string): boolean {
+  return CLIENT_ALLOWED_PREFIXES.some((prefix) => type.startsWith(prefix))
+}
+
+// Blocked executable file extensions for file sharing
+const BLOCKED_EXTENSIONS = [
+  '.exe',
+  '.bat',
+  '.cmd',
+  '.ps1',
+  '.msi',
+  '.scr',
+  '.com',
+  '.pif',
+  '.vbs',
+  '.js',
+  '.wsh',
+  '.wsf'
+]
 
 // Event callbacks
 type PeerCallback = (peer: PeerInfo) => void
@@ -70,11 +92,20 @@ export async function startHosting(hostDisplayName: string, existingInviteCode?:
     if (campaignId) {
       try {
         const bans = await window.api.loadBans(campaignId)
-        for (const peerId of bans) {
+        for (const peerId of bans.peerIds) {
           bannedPeers.add(peerId)
         }
-        if (bans.length > 0) {
-          console.log('[HostManager] Restored', bans.length, 'banned peers from storage')
+        for (const name of bans.names) {
+          bannedNames.add(name.toLowerCase())
+        }
+        if (bans.peerIds.length > 0 || bans.names.length > 0) {
+          console.log(
+            '[HostManager] Restored',
+            bans.peerIds.length,
+            'banned peers and',
+            bans.names.length,
+            'banned names from storage'
+          )
         }
       } catch (e) {
         console.warn('[HostManager] Failed to load persisted bans:', e)
@@ -89,14 +120,32 @@ export async function startHosting(hostDisplayName: string, existingInviteCode?:
     // Handle peer-level errors while hosting
     peer.on('error', (err) => {
       console.error('[HostManager] Peer error while hosting:', err)
+      pushDmAlert('error', `Network error: ${err.type ?? err.message ?? String(err)}`)
     })
 
+    let reconnectAttempts = 0
+    const MAX_RECONNECT_ATTEMPTS = 5
     peer.on('disconnected', () => {
-      console.warn('[HostManager] Disconnected from signaling server, attempting reconnect...')
       const currentPeer = getPeer()
-      if (currentPeer && !currentPeer.destroyed) {
-        currentPeer.reconnect()
+      if (!currentPeer || currentPeer.destroyed) return
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.error('[HostManager] Max reconnect attempts reached, giving up')
+        pushDmAlert('error', 'Host reconnection failed after 5 attempts')
+        return
       }
+      reconnectAttempts++
+      const delay = Math.min(1000 * 2 ** (reconnectAttempts - 1), 30000)
+      console.warn(
+        `[HostManager] Disconnected, reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+      )
+      setTimeout(() => {
+        const p = getPeer()
+        if (p && !p.destroyed) p.reconnect()
+      }, delay)
+    })
+
+    peer.on('open', () => {
+      reconnectAttempts = 0 // Reset on successful connection
     })
 
     console.log('[HostManager] Hosting started with invite code:', inviteCode)
@@ -132,6 +181,7 @@ export function stopHosting(): void {
   peerInfoMap.clear()
   messageRates.clear()
   bannedPeers.clear()
+  bannedNames.clear()
   chatMutedPeers.clear()
   router.clear()
   joinCallbacks.clear()
@@ -213,9 +263,7 @@ export function kickPeer(peerId: string): void {
 
   if (peerInfo) {
     // Notify other peers
-    broadcastMessage(
-      buildMessage('player:leave', { displayName: peerInfo.displayName })
-    )
+    broadcastMessage(buildMessage('player:leave', { displayName: peerInfo.displayName }))
     // Notify host callbacks
     for (const cb of leaveCallbacks) {
       try {
@@ -289,16 +337,29 @@ export function getInviteCode(): string | null {
 export function setCampaignId(id: string): void {
   campaignId = id
   // Load persisted bans for this campaign
-  window.api.loadBans(id).then((bans) => {
-    for (const peerId of bans) {
-      bannedPeers.add(peerId)
-    }
-    if (bans.length > 0) {
-      console.log('[HostManager] Restored', bans.length, 'banned peers for campaign:', id)
-    }
-  }).catch((e) => {
-    console.warn('[HostManager] Failed to load bans for campaign:', e)
-  })
+  window.api
+    .loadBans(id)
+    .then((bans) => {
+      for (const peerId of bans.peerIds) {
+        bannedPeers.add(peerId)
+      }
+      for (const name of bans.names) {
+        bannedNames.add(name.toLowerCase())
+      }
+      if (bans.peerIds.length > 0 || bans.names.length > 0) {
+        console.log(
+          '[HostManager] Restored',
+          bans.peerIds.length,
+          'banned peers and',
+          bans.names.length,
+          'banned names for campaign:',
+          id
+        )
+      }
+    })
+    .catch((e) => {
+      console.warn('[HostManager] Failed to load bans for campaign:', e)
+    })
 }
 
 /**
@@ -316,6 +377,11 @@ export function banPeer(peerId: string): void {
 
   const peerInfo = peerInfoMap.get(peerId)
   const conn = connections.get(peerId)
+
+  // Also ban by display name to prevent bypass via new peer ID
+  if (peerInfo) {
+    bannedNames.add(peerInfo.displayName.toLowerCase())
+  }
 
   if (conn) {
     // Send a ban-specific message before closing
@@ -339,9 +405,7 @@ export function banPeer(peerId: string): void {
   peerInfoMap.delete(peerId)
 
   if (peerInfo) {
-    broadcastMessage(
-      buildMessage('player:leave', { displayName: peerInfo.displayName })
-    )
+    broadcastMessage(buildMessage('player:leave', { displayName: peerInfo.displayName }))
     for (const cb of leaveCallbacks) {
       try {
         cb(peerInfo)
@@ -351,7 +415,7 @@ export function banPeer(peerId: string): void {
     }
   }
 
-  console.log('[HostManager] Banned peer:', peerId)
+  console.log('[HostManager] Banned peer:', peerId, peerInfo ? `(name: ${peerInfo.displayName})` : '')
   persistBans()
 }
 
@@ -365,6 +429,15 @@ export function unbanPeer(peerId: string): void {
 }
 
 /**
+ * Unban a display name — allows users with that name to reconnect.
+ */
+export function unbanName(name: string): void {
+  bannedNames.delete(name.toLowerCase())
+  console.log('[HostManager] Unbanned name:', name)
+  persistBans()
+}
+
+/**
  * Get all currently banned peer IDs.
  */
 export function getBannedPeers(): string[] {
@@ -372,11 +445,23 @@ export function getBannedPeers(): string[] {
 }
 
 /**
+ * Get all currently banned display names.
+ */
+export function getBannedNames(): string[] {
+  return Array.from(bannedNames)
+}
+
+/**
  * Chat-mute a peer for a specified duration.
+ * Broadcasts a dm:chat-timeout message so the muted player (and others) are notified.
  */
 export function chatMutePeer(peerId: string, durationMs: number): void {
   chatMutedPeers.set(peerId, Date.now() + durationMs)
   console.log('[HostManager] Chat-muted peer:', peerId, 'for', durationMs, 'ms')
+
+  // Notify the muted player and all other peers
+  const durationSeconds = Math.round(durationMs / 1000)
+  broadcastMessage(buildMessage('dm:chat-timeout', { peerId, duration: durationSeconds }))
 }
 
 /**
@@ -413,44 +498,86 @@ export function isModerationEnabled(): boolean {
   return moderationEnabled
 }
 
+/**
+ * Look up a connected peer's info by their peer ID.
+ * Returns undefined if the peer is not found.
+ */
+export function getPeerInfo(peerId: string): PeerInfo | undefined {
+  return peerInfoMap.get(peerId)
+}
+
+/**
+ * Update a connected peer's info in the peerInfoMap.
+ * Used to keep the host's authoritative peer state in sync
+ * (e.g., when a player changes their color).
+ */
+export function updatePeerInfo(peerId: string, updates: Partial<PeerInfo>): void {
+  const existing = peerInfoMap.get(peerId)
+  if (existing) {
+    peerInfoMap.set(peerId, { ...existing, ...updates })
+  }
+}
+
 // --- Internal helpers ---
 
 function persistBans(): void {
   if (!campaignId) return
-  window.api.saveBans(campaignId, Array.from(bannedPeers)).catch((e) => {
-    console.warn('[HostManager] Failed to persist bans:', e)
-  })
+  window.api
+    .saveBans(campaignId, {
+      peerIds: Array.from(bannedPeers),
+      names: Array.from(bannedNames)
+    })
+    .catch((e) => {
+      console.warn('[HostManager] Failed to persist bans:', e)
+    })
 }
 
 function isRateLimited(peerId: string): boolean {
   const now = Date.now()
   const timestamps = messageRates.get(peerId) ?? []
-  const recent = timestamps.filter(t => now - t < RATE_WINDOW_MS)
+  const recent = timestamps.filter((t) => now - t < RATE_WINDOW_MS)
   recent.push(now)
   messageRates.set(peerId, recent)
   return recent.length > MAX_MESSAGES_PER_SECOND
 }
 
-function validateMessage(msg: any): boolean {
-  if (!msg || typeof msg.type !== 'string') return false
+function validateMessage(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false
+  const msg = raw as Record<string, unknown>
+  if (typeof msg.type !== 'string') return false
+
+  const p = (msg.payload && typeof msg.payload === 'object' ? msg.payload : {}) as Record<string, unknown>
 
   switch (msg.type) {
     case 'player:join':
-      if (typeof msg.payload?.displayName !== 'string') return false
-      if (msg.payload.displayName.length > 32) return false
+      if (typeof p.displayName !== 'string') return false
+      if (p.displayName.length > 32) return false
       break
     case 'chat:message':
-      if (typeof msg.payload?.message !== 'string') return false
-      if (msg.payload.message.length > 2000) return false
+      if (typeof p.message !== 'string') return false
+      if (p.message.length > 2000) return false
       break
-    case 'chat:file':
-      if (typeof msg.payload?.fileName !== 'string') return false
-      if (typeof msg.payload?.fileData !== 'string') return false
-      if (msg.payload.fileData.length > 8 * 1024 * 1024) return false
-      if (typeof msg.payload?.mimeType !== 'string') return false
+    case 'chat:file': {
+      if (typeof p.fileName !== 'string') return false
+      if (typeof p.fileData !== 'string') return false
+      if (p.fileData.length > 8 * 1024 * 1024) return false
+      if (typeof p.mimeType !== 'string') return false
       // Validate mime type is one of allowed types
       const allowedMimes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/octet-stream']
-      if (!allowedMimes.includes(msg.payload.mimeType)) return false
+      if (!allowedMimes.includes(p.mimeType)) return false
+      // Block dangerous executable file extensions
+      if (p.fileName) {
+        const fileName = p.fileName.toLowerCase()
+        if (BLOCKED_EXTENSIONS.some((ext) => fileName.endsWith(ext))) {
+          return false
+        }
+      }
+      break
+    }
+    case 'chat:whisper':
+      if (typeof p.targetPeerId !== 'string') return false
+      if (typeof p.message !== 'string') return false
+      if (p.message.length > 2000) return false
       break
   }
   return true
@@ -471,7 +598,7 @@ function handleNewConnection(conn: DataConnection): void {
   const peerId = conn.peer
   console.log('[HostManager] New connection from:', peerId)
 
-  // Check if this peer is banned
+  // Check if this peer is banned by peer ID
   if (bannedPeers.has(peerId)) {
     console.log('[HostManager] Rejected banned peer:', peerId)
     try {
@@ -523,9 +650,16 @@ function handleNewConnection(conn: DataConnection): void {
       return
     }
 
-    // 4. Validate message shape
+    // 3a. Zod schema validation
+    const zodResult = validateNetworkMessage(message)
+    if (!zodResult.success) {
+      console.warn('[HostManager] Schema validation failed from', peerId, zodResult.error)
+      return
+    }
+
+    // 4. Validate message shape (legacy checks: length limits, mime types, etc.)
     if (!validateMessage(message)) {
-      console.warn('[HostManager] Invalid message from', peerId, (message as any)?.type)
+      console.warn('[HostManager] Invalid message from', peerId, (message as unknown as Record<string, unknown>)?.type)
       return
     }
 
@@ -536,7 +670,13 @@ function handleNewConnection(conn: DataConnection): void {
       message.senderName = knownPeer.displayName
     }
 
-    // 4b. Chat mute check — drop chat messages from muted peers
+    // 4b. Block dm: prefixed messages from clients — only host can send these
+    if (!isClientAllowedMessageType(message.type)) {
+      console.warn('[HostManager] Blocked disallowed message type from client', peerId, message.type)
+      return
+    }
+
+    // 4c. Chat mute check — drop chat messages from muted peers
     if (message.type === 'chat:message') {
       const muteExpiry = chatMutedPeers.get(peerId)
       if (muteExpiry && Date.now() < muteExpiry) {
@@ -599,15 +739,36 @@ function handleNewConnection(conn: DataConnection): void {
   })
 }
 
-function handleJoin(
-  peerId: string,
-  conn: DataConnection,
-  message: NetworkMessage<JoinPayload>
-): void {
+function handleJoin(peerId: string, conn: DataConnection, message: NetworkMessage<JoinPayload>): void {
   const { characterId, characterName } = message.payload
 
   // Sanitize display name
-  const playerName = String(message.payload.displayName ?? 'Unknown').slice(0, 32).trim() || 'Unknown'
+  const playerName =
+    String(message.payload.displayName ?? 'Unknown')
+      .slice(0, 32)
+      .trim() || 'Unknown'
+
+  // Check if this display name is banned (case-insensitive)
+  if (bannedNames.has(playerName.toLowerCase())) {
+    console.log('[HostManager] Rejected banned name:', playerName, '(peer:', peerId, ')')
+    // Also ban the new peer ID so reconnect with same name is still blocked
+    bannedPeers.add(peerId)
+    persistBans()
+    try {
+      const banMsg = buildMessage('dm:ban-player', { peerId, reason: 'Banned by DM' })
+      conn.send(JSON.stringify(banMsg))
+    } catch (_e) {
+      // Ignore send errors
+    }
+    setTimeout(() => {
+      try {
+        conn.close()
+      } catch (_e) {
+        // Ignore close errors
+      }
+    }, 100)
+    return
+  }
 
   // Store the connection and peer info
   connections.set(peerId, conn)
@@ -643,18 +804,23 @@ function handleJoin(
     isForceMuted: false,
     isForceDeafened: false
   }
-  sendToPeer(peerId, buildMessage('game:state-full', {
-    peers: [hostPeer, ...allPeers],
-    campaignId
-  }))
+  sendToPeer(
+    peerId,
+    buildMessage('game:state-full', {
+      peers: [hostPeer, ...allPeers],
+      campaignId
+    })
+  )
 
   // Broadcast to existing peers that a new player joined
-  broadcastMessage(buildMessage('player:join', {
-    displayName: playerName,
-    characterId,
-    characterName,
-    peerId
-  }))
+  broadcastMessage(
+    buildMessage('player:join', {
+      displayName: playerName,
+      characterId,
+      characterName,
+      peerId
+    })
+  )
 
   // Notify host callbacks
   for (const cb of joinCallbacks) {
@@ -676,9 +842,7 @@ function handleDisconnection(peerId: string): void {
     console.log('[HostManager] Player left:', peerInfo.displayName, '(', peerId, ')')
 
     // Broadcast to remaining peers
-    broadcastMessage(
-      buildMessage('player:leave', { displayName: peerInfo.displayName, peerId })
-    )
+    broadcastMessage(buildMessage('player:leave', { displayName: peerInfo.displayName, peerId }))
 
     // Notify host callbacks
     for (const cb of leaveCallbacks) {

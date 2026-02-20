@@ -1,6 +1,6 @@
 {
   "name": "dnd-vtt",
-  "version": "2.1.0",
+  "version": "1.0.0",
   "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
   "main": "./out/main/index.js",
   "scripts": {
@@ -9,7 +9,14 @@
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
-    "build:win": "npm run build && electron-builder --win"
+    "build:win": "npm run build && electron-builder --win",
+    "prebuild:index": "node scripts/build-chunk-index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/"
   },
   "keywords": [
     "dnd",
@@ -21,29 +28,49 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@biomejs/biome": "^2.4.2",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.183.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
     "electron-vite": "^5.0.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
+    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.77.0",
+    "@livekit/components-react": "^2.9.19",
     "@pixi/react": "^8.0.5",
+    "@tiptap/extension-image": "^3.20.0",
+    "@tiptap/extension-link": "^3.20.0",
+    "@tiptap/extension-placeholder": "^3.20.0",
+    "@tiptap/pm": "^3.20.0",
+    "@tiptap/react": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0",
+    "cannon-es": "^0.20.0",
+    "livekit-client": "^2.17.1",
     "peerjs": "^1.5.5",
     "pixi.js": "^8.16.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "^7.13.0",
+    "three": "^0.183.0",
     "uuid": "^13.0.0",
+    "zod": "^4.3.6",
     "zustand": "^5.0.11"
   }
 }

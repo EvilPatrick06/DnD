@@ -1,7 +1,22 @@
 export const DEFAULT_BLOCKED_WORDS: string[] = [
-  'fuck', 'shit', 'ass', 'bitch', 'damn', 'crap',
-  'dick', 'pussy', 'cock', 'cunt', 'bastard', 'slut',
-  'whore', 'nigger', 'nigga', 'faggot', 'retard', 'retarded'
+  'fuck',
+  'shit',
+  'ass',
+  'bitch',
+  'damn',
+  'crap',
+  'dick',
+  'pussy',
+  'cock',
+  'cunt',
+  'bastard',
+  'slut',
+  'whore',
+  'nigger',
+  'nigga',
+  'faggot',
+  'retard',
+  'retarded'
 ]
 
 export function filterMessage(message: string, blockedWords: string[]): string {

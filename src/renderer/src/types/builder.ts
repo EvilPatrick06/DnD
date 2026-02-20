@@ -1,9 +1,8 @@
-import type { GameSystem } from './game-system'
-import type { BuildSlot, SelectableOption, Rarity } from './character-common'
+import type { Rarity, SelectableOption } from './character-common'
 
 export type BuilderPhase = 'system-select' | 'building' | 'complete'
 
-export type ContentTab = 'skills' | 'feats' | 'gear' | 'spells' | 'details' | 'defense' | 'offense'
+export type ContentTab = 'details' | 'special-abilities' | 'languages' | 'spells'
 
 export interface SelectionModalState {
   slotId: string

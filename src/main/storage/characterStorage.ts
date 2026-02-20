@@ -1,7 +1,7 @@
+import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { app } from 'electron'
-import { join } from 'path'
-import { mkdir, readFile, writeFile, unlink, readdir, access } from 'fs/promises'
-import { StorageResult } from './types'
+import type { StorageResult } from './types'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function isValidUUID(str: string): boolean {
@@ -35,9 +35,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-export async function saveCharacter(
-  character: Record<string, unknown>
-): Promise<StorageResult<void>> {
+export async function saveCharacter(character: Record<string, unknown>): Promise<StorageResult<void>> {
   try {
     const id = character.id as string
     if (!id) {
@@ -78,9 +76,7 @@ export async function loadCharacters(): Promise<StorageResult<Record<string, unk
   }
 }
 
-export async function loadCharacter(
-  id: string
-): Promise<StorageResult<Record<string, unknown> | null>> {
+export async function loadCharacter(id: string): Promise<StorageResult<Record<string, unknown> | null>> {
   if (!isValidUUID(id)) {
     return { success: false, error: 'Invalid character ID' }
   }

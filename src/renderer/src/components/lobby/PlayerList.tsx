@@ -1,13 +1,9 @@
-import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { banPeer, chatMutePeer, kickPeer } from '../../network/host-manager'
+import { useCampaignStore } from '../../stores/useCampaignStore'
 import { useLobbyStore } from '../../stores/useLobbyStore'
 import { useNetworkStore } from '../../stores/useNetworkStore'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useBuilderStore } from '../../stores/useBuilderStore'
-import { kickPeer, banPeer, chatMutePeer } from '../../network/host-manager'
-import type { Character } from '../../types/character'
 import PlayerCard from './PlayerCard'
-import CharacterSheet from '../sheet/CharacterSheet'
 
 export default function PlayerList(): JSX.Element {
   const navigate = useNavigate()
@@ -15,24 +11,23 @@ export default function PlayerList(): JSX.Element {
   const locallyMutedPeers = useLobbyStore((s) => s.locallyMutedPeers)
   const toggleLocalMutePlayer = useLobbyStore((s) => s.toggleLocalMutePlayer)
   const updatePlayer = useLobbyStore((s) => s.updatePlayer)
-  const remoteCharacters = useLobbyStore((s) => s.remoteCharacters)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
   const role = useNetworkStore((s) => s.role)
   const forceMutePlayer = useNetworkStore((s) => s.forceMutePlayer)
   const forceDeafenPlayer = useNetworkStore((s) => s.forceDeafenPlayer)
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const removePeer = useNetworkStore((s) => s.removePeer)
-  const { characters, loadCharacters } = useCharacterStore()
 
   const { campaignId } = useParams<{ campaignId: string }>()
-  const loadCharacterForEdit = useBuilderStore((s) => s.loadCharacterForEdit)
   const isHostView = role === 'host'
-  const [viewingCharacter, setViewingCharacter] = useState<Character | null>(null)
 
-  // Ensure local characters are loaded
-  useEffect(() => {
-    loadCharacters()
-  }, [loadCharacters])
+  // Check if AI DM is enabled for this campaign
+  const campaigns = useCampaignStore((s) => s.campaigns)
+  const campaign = campaigns.find((c) => c.id === campaignId)
+  const aiDmEnabled = campaign?.aiDm?.enabled ?? false
+  const aiDmProvider = campaign?.aiDm?.provider ?? 'claude'
+  const aiDmModel = campaign?.aiDm?.model ?? 'sonnet'
+  const aiDmOllamaModel = campaign?.aiDm?.ollamaModel ?? 'llama3.1'
 
   // Sort: host first, then alphabetical by display name
   const sortedPlayers = [...players].sort((a, b) => {
@@ -43,11 +38,7 @@ export default function PlayerList(): JSX.Element {
 
   const handleViewCharacter = (characterId: string | null): void => {
     if (!characterId) return
-    // Check local characters first, then remote (network-synced) characters
-    const char = characters.find((c) => c.id === characterId) ?? remoteCharacters[characterId] ?? null
-    if (char) {
-      setViewingCharacter(char)
-    }
+    navigate(`/characters/5e/${characterId}`, { state: { returnTo: `/lobby/${campaignId}` } })
   }
 
   const handleKick = (peerId: string): void => {
@@ -84,17 +75,31 @@ export default function PlayerList(): JSX.Element {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
-          Players
-        </h2>
+        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Players</h2>
         <span className="text-xs text-gray-500">{players.length} connected</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {sortedPlayers.length === 0 ? (
-          <p className="text-sm text-gray-600 text-center py-8">
-            Waiting for players...
-          </p>
+        {/* AI DM entry */}
+        {aiDmEnabled && (
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-900/20 border border-purple-700/30">
+            <div className="w-8 h-8 rounded-full bg-purple-800/50 flex items-center justify-center text-purple-300 text-sm font-bold shrink-0">
+              AI
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-purple-200">AI Dungeon Master</div>
+              <div className="text-[10px] text-purple-400">
+                {aiDmProvider === 'claude'
+                  ? `Claude ${aiDmModel.charAt(0).toUpperCase() + aiDmModel.slice(1)}`
+                  : `Ollama (${aiDmOllamaModel})`}
+              </div>
+            </div>
+            <span className="text-[10px] text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">Ready</span>
+          </div>
+        )}
+
+        {sortedPlayers.length === 0 && !aiDmEnabled ? (
+          <p className="text-sm text-gray-600 text-center py-8">Waiting for players...</p>
         ) : (
           sortedPlayers.map((player) => {
             const isLocal = player.peerId === localPeerId
@@ -111,34 +116,21 @@ export default function PlayerList(): JSX.Element {
                 onViewCharacter={player.characterId ? () => handleViewCharacter(player.characterId) : undefined}
                 onKick={isHostView && !isLocal && !player.isHost ? () => handleKick(player.peerId) : undefined}
                 onBan={isHostView && !isLocal && !player.isHost ? () => handleBan(player.peerId) : undefined}
-                onChatTimeout={isHostView && !isLocal && !player.isHost ? () => handleChatTimeout(player.peerId) : undefined}
-                onPromoteCoDM={isHostView && !isLocal && !player.isHost ? () => handlePromoteCoDM(player.peerId) : undefined}
-                onDemoteCoDM={isHostView && !isLocal && !player.isHost ? () => handleDemoteCoDM(player.peerId) : undefined}
+                onChatTimeout={
+                  isHostView && !isLocal && !player.isHost ? () => handleChatTimeout(player.peerId) : undefined
+                }
+                onPromoteCoDM={
+                  isHostView && !isLocal && !player.isHost ? () => handlePromoteCoDM(player.peerId) : undefined
+                }
+                onDemoteCoDM={
+                  isHostView && !isLocal && !player.isHost ? () => handleDemoteCoDM(player.peerId) : undefined
+                }
                 onColorChange={isLocal ? handleColorChange : undefined}
               />
             )
           })
         )}
       </div>
-
-      {viewingCharacter && (
-        <CharacterSheet
-          character={viewingCharacter}
-          onClose={() => setViewingCharacter(null)}
-          readonly={!isHostView}
-          onEdit={isHostView ? () => {
-            const charToEdit = viewingCharacter
-            // Find which player owns this character so we can tag it for network sync
-            const ownerPlayer = players.find((p) => p.characterId === charToEdit.id)
-            const editChar = ownerPlayer && ownerPlayer.peerId !== localPeerId
-              ? { ...charToEdit, playerId: ownerPlayer.peerId }
-              : charToEdit
-            setViewingCharacter(null)
-            loadCharacterForEdit(editChar)
-            navigate('/characters/create', { state: { returnTo: `/lobby/${campaignId}` } })
-          } : undefined}
-        />
-      )}
     </div>
   )
 }

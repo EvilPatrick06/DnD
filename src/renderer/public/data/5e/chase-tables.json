@@ -1,0 +1,84 @@
+{
+  "urban": [
+    {
+      "roll": 1,
+      "complication": "A large cart blocks your path. Make a DC 10 Dexterity saving throw to dodge around it, or take a 10-foot detour."
+    },
+    {
+      "roll": 2,
+      "complication": "A crowd blocks your way. Make a DC 10 Strength check to push through, or spend an extra 10 feet of movement."
+    },
+    {
+      "roll": 3,
+      "complication": "A door or gate bars your path. Make a DC 10 Strength (Athletics) check to force it open."
+    },
+    {
+      "roll": 4,
+      "complication": "Loose cobblestones or slippery terrain. Make a DC 10 Dexterity (Acrobatics) check to keep your footing, or fall prone."
+    },
+    {
+      "roll": 5,
+      "complication": "A dog chases after you. Make a DC 10 Strength or Dexterity check to avoid it, or lose 10 feet of speed this turn."
+    },
+    {
+      "roll": 6,
+      "complication": "A laundry line hangs across the street. Make a DC 10 Dexterity (Acrobatics) check to dodge under it, or spend 5 extra feet of movement."
+    },
+    {
+      "roll": 7,
+      "complication": "A market stall stands in your way. Make a DC 12 Dexterity check to weave through, or take a 10-foot detour."
+    },
+    {
+      "roll": 8,
+      "complication": "A low bridge or hanging sign. Make a DC 10 Dexterity saving throw to duck, or take 1d4 bludgeoning damage."
+    },
+    { "roll": 9, "complication": "No complication." },
+    { "roll": 10, "complication": "No complication." },
+    {
+      "roll": 11,
+      "complication": "Street thugs try to trip you up. Make a DC 12 Charisma (Intimidation or Persuasion) check or lose 1d4 rounds dealing with them."
+    },
+    {
+      "roll": 12,
+      "complication": "An open manhole or sewer grate. Make a DC 12 Wisdom (Perception) check to notice it, or fall in."
+    }
+  ],
+  "wilderness": [
+    {
+      "roll": 1,
+      "complication": "Dense brush blocks your path. Make a DC 10 Strength (Athletics) check or lose 10 feet of movement."
+    },
+    { "roll": 2, "complication": "Uneven ground. Make a DC 10 Dexterity (Acrobatics) check or fall prone." },
+    {
+      "roll": 3,
+      "complication": "A stream or creek crosses your path. Make a DC 10 Strength (Athletics) check to cross, or take a 15-foot detour."
+    },
+    {
+      "roll": 4,
+      "complication": "A wild animal is startled by the chase. Make a DC 12 Wisdom (Animal Handling) check or lose 1 round dealing with it."
+    },
+    { "roll": 5, "complication": "Heavy undergrowth. Your speed is halved this turn." },
+    {
+      "roll": 6,
+      "complication": "Low-hanging branches. Make a DC 10 Dexterity saving throw or take 1d4 bludgeoning damage."
+    },
+    {
+      "roll": 7,
+      "complication": "A hidden burrow hole. Make a DC 12 Wisdom (Perception) check or fall prone and take 1d4 damage."
+    },
+    {
+      "roll": 8,
+      "complication": "A thorny hedge. Make a DC 10 Dexterity saving throw to avoid it, or take 1d4 piercing damage."
+    },
+    { "roll": 9, "complication": "No complication." },
+    { "roll": 10, "complication": "No complication." },
+    {
+      "roll": 11,
+      "complication": "A cliff or ledge. Make a DC 12 Strength (Athletics) check to climb it, or take 1d6 fall damage."
+    },
+    {
+      "roll": 12,
+      "complication": "A swarm of insects. Make a DC 12 Constitution saving throw or have disadvantage on ability checks this turn."
+    }
+  ]
+}

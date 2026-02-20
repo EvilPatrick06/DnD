@@ -1,10 +1,12 @@
-import { useEffect, useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import GameLayout from '../components/game/GameLayout'
+import { useBastionStore } from '../stores/useBastionStore'
 import { useCampaignStore } from '../stores/useCampaignStore'
 import { useCharacterStore } from '../stores/useCharacterStore'
 import { useGameStore } from '../stores/useGameStore'
 import { useNetworkStore } from '../stores/useNetworkStore'
-import GameLayout from '../components/game/GameLayout'
+import { totalSecondsFromDateTime } from '../utils/calendar-utils'
 
 export default function InGamePage(): JSX.Element {
   const navigate = useNavigate()
@@ -16,7 +18,10 @@ export default function InGamePage(): JSX.Element {
   const loadCharacters = useCharacterStore((s) => s.loadCharacters)
   const networkRole = useNetworkStore((s) => s.role)
   const displayName = useNetworkStore((s) => s.displayName)
-  const gameStore = useGameStore()
+  const gameCampaignId = useGameStore((s) => s.campaignId)
+  const loadGameState = useGameStore((s) => s.loadGameState)
+  const initiative = useGameStore((s) => s.initiative)
+  const nextTurn = useGameStore((s) => s.nextTurn)
   const [loading, setLoading] = useState(true)
 
   // Load data on mount
@@ -41,59 +46,83 @@ export default function InGamePage(): JSX.Element {
   const effectiveDM = isDM || networkRole === 'none'
 
   // Find the player's character for this campaign
-  const playerCharacter =
-    characters.find((c) => c.campaignId === campaignId) ?? characters[0] ?? null
+  const playerCharacter = characters.find((c) => c.campaignId === campaignId) ?? characters[0] ?? null
 
   // Initialize game state from campaign
   useEffect(() => {
     if (!campaign) return
 
     // Only initialize if not already set or different campaign
-    if (gameStore.campaignId !== campaign.id) {
-      gameStore.loadGameState({
+    if (gameCampaignId !== campaign.id) {
+      const saved = campaign.savedGameState
+      loadGameState({
         campaignId: campaign.id,
         system: campaign.system,
         activeMapId: campaign.activeMapId ?? null,
         maps: campaign.maps ?? [],
         turnMode: campaign.turnMode ?? 'free',
-        initiative: null,
-        round: 0,
-        conditions: [],
-        isPaused: false
+        initiative: saved?.initiative ?? null,
+        round: saved?.round ?? 0,
+        conditions: saved?.conditions ?? [],
+        turnStates: saved?.turnStates ?? {},
+        isPaused: saved?.isPaused ?? false,
+        underwaterCombat: saved?.underwaterCombat ?? false,
+        ambientLight: saved?.ambientLight ?? 'bright',
+        travelPace: saved?.travelPace ?? null,
+        marchingOrder: saved?.marchingOrder ?? [],
+        allies: saved?.allies ?? [],
+        enemies: saved?.enemies ?? [],
+        places: saved?.places ?? [],
+        inGameTime:
+          saved?.inGameTime ??
+          (campaign.calendar
+            ? {
+                totalSeconds: totalSecondsFromDateTime(campaign.calendar.startingYear, 0, 1, 8, 0, 0, campaign.calendar)
+              }
+            : null),
+        restTracking: saved?.restTracking ?? null,
+        activeLightSources: saved?.activeLightSources ?? [],
+        handouts: saved?.handouts ?? [],
+        combatTimer: saved?.combatTimer ?? null
       })
     }
-  }, [campaign, gameStore])
+  }, [campaign, gameCampaignId, loadGameState])
+
+  // Auto-link bastions to campaign (Phase 6)
+  useEffect(() => {
+    if (!campaign) return
+    const bastionStore = useBastionStore.getState()
+    if (!bastionStore.hasLoaded) return
+    const playerCharIds = characters.map((c) => c.id)
+    const unlinked = bastionStore.bastions.filter((b) => b.campaignId === null && playerCharIds.includes(b.ownerId))
+    for (const bastion of unlinked) {
+      bastionStore.saveBastion({ ...bastion, campaignId: campaign.id })
+    }
+  }, [campaign, characters])
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       // Only handle if not focused on an input
       const target = e.target as HTMLElement
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT'
-      ) {
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
         return
       }
 
-      // Escape - back to menu
-      if (e.key === 'Escape') {
-        navigate('/')
-        return
-      }
+      // Escape - toggle settings (handled in GameLayout)
+      // No longer navigates away immediately
 
       // DM shortcuts
       if (effectiveDM) {
         // N - next turn
         if (e.key === 'n' || e.key === 'N') {
-          if (gameStore.initiative) {
-            gameStore.nextTurn()
+          if (initiative) {
+            nextTurn()
           }
         }
       }
     },
-    [effectiveDM, gameStore, navigate]
+    [effectiveDM, initiative, nextTurn]
   )
 
   useEffect(() => {
@@ -119,9 +148,7 @@ export default function InGamePage(): JSX.Element {
           <div className="text-5xl mb-4">&#9876;</div>
           <h1 className="text-2xl font-bold mb-2">No Campaign Found</h1>
           <p className="text-gray-400 mb-6">
-            {campaignId
-              ? `Campaign "${campaignId}" could not be loaded.`
-              : 'No campaign ID specified.'}
+            {campaignId ? `Campaign "${campaignId}" could not be loaded.` : 'No campaign ID specified.'}
           </p>
           <button
             onClick={() => navigate('/')}
@@ -137,12 +164,5 @@ export default function InGamePage(): JSX.Element {
 
   const playerName = displayName || 'Player'
 
-  return (
-    <GameLayout
-      campaign={campaign}
-      isDM={effectiveDM}
-      character={playerCharacter}
-      playerName={playerName}
-    />
-  )
+  return <GameLayout campaign={campaign} isDM={effectiveDM} character={playerCharacter} playerName={playerName} />
 }

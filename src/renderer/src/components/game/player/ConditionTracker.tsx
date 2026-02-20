@@ -21,25 +21,7 @@ const CONDITION_ICONS: Record<string, string> = {
   restrained: '\u{26D3}',
   stunned: '\u{1F4AB}',
   unconscious: '\u{1F634}',
-  exhaustion: '\u{1F62B}',
-  // PF2e conditions
-  clumsy: '\u{1F9B6}',
-  confused: '\u{2753}',
-  dazzled: '\u{2728}',
-  doomed: '\u{1F480}',
-  drained: '\u{1F4A7}',
-  enfeebled: '\u{1F494}',
-  fascinated: '\u{1F929}',
-  'flat-footed': '\u{1F463}',
-  fleeing: '\u{1F3C3}',
-  hidden: '\u{1F575}',
-  immobilized: '\u{1F512}',
-  persistent: '\u{1F525}',
-  quickened: '\u{23E9}',
-  sickened: '\u{1F922}',
-  slowed: '\u{1F422}',
-  stupefied: '\u{1F635}',
-  wounded: '\u{1FA78}'
+  exhaustion: '\u{1F62B}'
 }
 
 export default function ConditionTracker({
@@ -48,11 +30,7 @@ export default function ConditionTracker({
   onRemoveCondition
 }: ConditionTrackerProps): JSX.Element {
   if (conditions.length === 0) {
-    return (
-      <div className="text-xs text-gray-500 text-center py-2">
-        No active conditions
-      </div>
-    )
+    return <div className="text-xs text-gray-500 text-center py-2">No active conditions</div>
   }
 
   return (
@@ -65,19 +43,12 @@ export default function ConditionTracker({
             : `${cond.duration} round${cond.duration !== 1 ? 's' : ''} remaining`
 
         return (
-          <div
-            key={cond.id}
-            className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-800/50 text-xs"
-          >
+          <div key={cond.id} className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-800/50 text-xs">
             <span className="text-base">{icon}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-gray-200 font-medium capitalize">
-                  {cond.condition}
-                </span>
-                {cond.value !== undefined && (
-                  <span className="text-amber-400 font-semibold">{cond.value}</span>
-                )}
+                <span className="text-gray-200 font-medium capitalize">{cond.condition}</span>
+                {cond.value !== undefined && <span className="text-amber-400 font-semibold">{cond.value}</span>}
               </div>
               <p className="text-[10px] text-gray-500 truncate">{durationText}</p>
             </div>

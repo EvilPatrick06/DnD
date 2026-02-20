@@ -1,10 +1,8 @@
 import type { StateCreator } from 'zustand'
-import type { BuilderState, SelectionSliceState } from '../types'
+import { getOptionsForSlot, load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { filterOptions } from '../../../types/builder'
-import {
-  getOptionsForSlot, load5eRaces, load5eClasses, load5eBackgrounds,
-  loadPf2eAncestries, loadPf2eClasses, loadPf2eBackgrounds
-} from '../../../services/data-provider'
+import type { SelectableOption } from '../../../types/character-common'
+import type { BuilderState, SelectionSliceState } from '../types'
 
 export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionSliceState> = (set, get) => ({
   selectionModal: null,
@@ -17,12 +15,15 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
 
     // Build context for filtering (e.g. selected class for subclass/class-feat filtering)
     const classSlot = buildSlots.find((s) => s.category === 'class')
+    const ancestrySlot = buildSlots.find((s) => s.category === 'ancestry')
     const context = {
       slotId,
-      selectedClassId: classSlot?.selectedId ?? undefined
+      // For heritage slots, pass speciesId via selectedClassId (repurposed)
+      selectedClassId:
+        slot.category === 'heritage' ? (ancestrySlot?.selectedId ?? undefined) : (classSlot?.selectedId ?? undefined)
     }
 
-    let allOptions
+    let allOptions: SelectableOption[]
     try {
       allOptions = await getOptionsForSlot(gameSystem, slot.category, context)
     } catch (err) {
@@ -34,12 +35,13 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
     // Filter out already-selected options from other slots of the same category
     const selectedIds = new Set(
       buildSlots
-        .filter((s) => s.category === slot.category && s.id !== slotId && s.selectedId !== null && s.selectedId !== 'confirmed')
+        .filter(
+          (s) =>
+            s.category === slot.category && s.id !== slotId && s.selectedId !== null && s.selectedId !== 'confirmed'
+        )
         .map((s) => s.selectedId!)
     )
-    const options = selectedIds.size > 0
-      ? allOptions.filter((o) => !selectedIds.has(o.id))
-      : allOptions
+    const options = selectedIds.size > 0 ? allOptions.filter((o) => !selectedIds.has(o.id)) : allOptions
     if (options.length === 0) return
 
     set({
@@ -98,7 +100,13 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
 
     const updatedSlots = buildSlots.map((slot) =>
       slot.id === selectionModal.slotId
-        ? { ...slot, selectedId: optionId, selectedName: option.name, selectedDescription: option.description, selectedDetailFields: option.detailFields }
+        ? {
+            ...slot,
+            selectedId: optionId,
+            selectedName: option.name,
+            selectedDescription: option.description,
+            selectedDetailFields: option.detailFields
+          }
         : slot
     )
 
@@ -109,18 +117,28 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
       if (skillField) {
         const match = skillField.value.match(/Choose (\d+)/)
         if (match) maxSkills = parseInt(match[1], 10)
-        const pf2eMatch = skillField.value.match(/^(\d+)/)
-        if (pf2eMatch && !match) maxSkills = parseInt(pf2eMatch[1], 10)
       }
+      // Account for custom background bonus skills (+2) if background already selected
+      const bgSlot = updatedSlots.find((s) => s.category === 'background')
+      if (bgSlot?.selectedId === 'custom') {
+        maxSkills += 2
+      }
+      // Account for species extra skill (Human Skillful trait)
+      maxSkills += get().speciesExtraSkillCount
     }
 
-    // Set starting gold synchronously from detail fields (works for both 5e and pf2e)
+    // Set starting gold synchronously from detail fields
     if (currentSlot?.category === 'background') {
       const goldField = option.detailFields.find((f) => f.label === 'Starting Gold')
       if (goldField) {
         const goldVal = parseInt(goldField.value, 10)
-        if (!isNaN(goldVal) && goldVal > 0) {
-          set({ buildSlots: updatedSlots, selectionModal: null, maxSkills, currency: { pp: 0, gp: goldVal, sp: 0, cp: 0 } })
+        if (!Number.isNaN(goldVal) && goldVal > 0) {
+          set({
+            buildSlots: updatedSlots,
+            selectionModal: null,
+            maxSkills,
+            currency: { pp: 0, gp: goldVal, sp: 0, cp: 0 }
+          })
         } else {
           set({ buildSlots: updatedSlots, selectionModal: null, maxSkills })
         }
@@ -134,31 +152,119 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
     // Derive data from SRD after selection (async, cached data is instant)
     if (gameSystem === 'dnd5e') {
       if (currentSlot?.category === 'ancestry') {
-        load5eRaces().then((races) => {
-          const race = races.find((r) => r.id === optionId)
-          if (race) {
-            const extraLangCount = race.traits.filter((t) => t.name === 'Extra Language').length
+        load5eSpecies().then((speciesList) => {
+          const speciesData = speciesList.find((r) => r.id === optionId)
+          if (speciesData) {
+            const extraLangCount = speciesData.traits.filter((t) => t.name === 'Extra Language').length
+            const extraSkillCount = speciesData.traits.filter((t) => t.name === 'Skillful').length
+            // Recalculate maxSkills including species extra skills
+            let baseMaxSkills = get().maxSkills - get().speciesExtraSkillCount // remove old species bonus
+            if (baseMaxSkills < 0) baseMaxSkills = get().maxSkills
+
+            // Heritage slot management: remove old, add new if species has subraces
+            let currentBuildSlots = get().buildSlots.filter((s) => s.id !== 'heritage')
+            const hasSubraces = speciesData.subraces && speciesData.subraces.length > 0
+            if (hasSubraces) {
+              const ancestryIdx = currentBuildSlots.findIndex((s) => s.category === 'ancestry')
+              const heritageSlot = {
+                id: 'heritage',
+                label: `${speciesData.name} Lineage`,
+                category: 'heritage' as const,
+                level: 0,
+                required: true,
+                selectedId: null,
+                selectedName: null,
+                selectedDescription: null,
+                selectedDetailFields: []
+              }
+              currentBuildSlots = [
+                ...currentBuildSlots.slice(0, ancestryIdx + 1),
+                heritageSlot,
+                ...currentBuildSlots.slice(ancestryIdx + 1)
+              ]
+            }
+
             set({
-              raceLanguages: race.languages,
-              raceExtraLangCount: extraLangCount,
-              raceSize: race.size,
-              raceSpeed: race.speed,
-              raceTraits: race.traits,
-              raceProficiencies: race.proficiencies ?? [],
-              chosenLanguages: [] // reset when race changes
+              buildSlots: currentBuildSlots,
+              speciesLanguages: speciesData.languages,
+              speciesExtraLangCount: extraLangCount,
+              speciesExtraSkillCount: extraSkillCount,
+              speciesSize: Array.isArray(speciesData.size) ? '' : speciesData.size,
+              speciesSpeed: speciesData.speed,
+              speciesTraits: speciesData.traits,
+              derivedSpeciesTraits: speciesData.traits,
+              speciesProficiencies: speciesData.proficiencies ?? [],
+              chosenLanguages: [], // reset when species changes
+              versatileFeatId: null, // reset Versatile feat when species changes
+              heritageId: null, // reset heritage when species changes
+              speciesSpellcastingAbility: null, // reset species spellcasting ability
+              keenSensesSkill: null, // reset Elf Keen Senses skill
+              maxSkills: baseMaxSkills + extraSkillCount
             })
+
+            // Always advance after species data loads (heritage slot may have been injected)
+            queueMicrotask(() => get().advanceToNextSlot())
           }
+        })
+      }
+      if (currentSlot?.category === 'heritage') {
+        // Heritage selection: apply trait modifications from subrace
+        load5eSpecies().then((speciesList) => {
+          const ancestrySlot = get().buildSlots.find((s) => s.category === 'ancestry')
+          const speciesData = speciesList.find((r) => r.id === ancestrySlot?.selectedId)
+          if (!speciesData?.subraces) return
+          const subrace = speciesData.subraces.find((sr) => sr.id === optionId)
+          if (!subrace) return
+
+          // Compute derived traits: remove old traits, add new ones
+          const removedNames = new Set(subrace.traitModifications.remove)
+          const baseTraits = speciesData.traits.filter((t) => !removedNames.has(t.name))
+          const derived = [...baseTraits, ...subrace.traitModifications.add]
+
+          // Recompute extra lang count from derived traits
+          const extraLangCount = derived.filter((t) => t.name === 'Extra Language').length
+
+          // Apply speed modifier if any
+          const newSpeed = speciesData.speed + (subrace.speedModifier ?? 0)
+
+          set({
+            heritageId: optionId,
+            derivedSpeciesTraits: derived,
+            speciesExtraLangCount: extraLangCount,
+            speciesSpeed: newSpeed,
+            chosenLanguages: [], // reset languages when heritage changes
+            speciesSpellcastingAbility: null // reset species spellcasting ability when heritage changes
+          })
         })
       }
       if (currentSlot?.category === 'background') {
         load5eBackgrounds().then((bgs) => {
           const bg = bgs.find((b) => b.id === optionId)
           if (bg) {
+            // Re-derive base maxSkills from the class slot's detail fields
+            const currentSlots = get().buildSlots
+            const classSlot = currentSlots.find((s) => s.category === 'class')
+            let baseMaxSkills = 2
+            if (classSlot?.selectedDetailFields) {
+              const skillField = classSlot.selectedDetailFields.find((f) => f.label === 'Skills')
+              if (skillField) {
+                const match = skillField.value.match(/Choose (\d+)/)
+                if (match) baseMaxSkills = parseInt(match[1], 10)
+              }
+            }
+            // Custom background: user picks 2 extra skills (since no auto-granted bg skills)
+            // Also add species extra skill count (Human Skillful trait)
+            const effectiveMaxSkills =
+              (optionId === 'custom' ? baseMaxSkills + 2 : baseMaxSkills) + get().speciesExtraSkillCount
+
             set({
               bgLanguageCount: bg.proficiencies.languages,
               bgEquipment: bg.equipment.map((e) => ({ ...e, source: bg.name })),
               chosenLanguages: [], // reset when background changes
-              currency: { pp: 0, gp: bg.startingGold ?? 0, sp: 0, cp: 0 }
+              currency: { pp: 0, gp: bg.startingGold ?? 0, sp: 0, cp: 0 },
+              maxSkills: effectiveMaxSkills,
+              selectedSkills: [], // reset skill picks when background changes
+              backgroundEquipmentChoice: null // reset when background changes — user must choose
             })
           }
         })
@@ -167,67 +273,26 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
         load5eClasses().then((classes) => {
           const cls = classes.find((c) => c.id === optionId)
           if (cls) {
+            // Use equipment option A if available, else fall back to startingEquipment
+            const choice = get().classEquipmentChoice || 'A'
+            const options = cls.startingEquipmentOptions
+            const equipment = options?.[choice] ? options[choice].equipment : cls.startingEquipment
             set({
-              classEquipment: cls.startingEquipment.map((e) => ({ ...e, source: cls.name })),
-              classSkillOptions: cls.proficiencies.skills.options
+              classEquipment: equipment.map((e: { name: string; quantity: number }) => ({ ...e, source: cls.name })),
+              classSkillOptions: cls.proficiencies.skills.options,
+              classEquipmentChoice: null, // reset when class changes — user must choose
+              classExtraLangCount: optionId === 'rogue' ? 1 : optionId === 'ranger' ? 2 : 0,
+              chosenLanguages: [] // reset when class changes (language grants may differ)
             })
           }
         })
       }
     }
 
-    // PF2e derivation
-    if (gameSystem === 'pf2e') {
-      if (currentSlot?.category === 'ancestry') {
-        loadPf2eAncestries().then((ancestries) => {
-          const ancestry = ancestries.find((a) => a.id === optionId)
-          if (ancestry) {
-            set({
-              raceLanguages: ancestry.languages,
-              pf2eAdditionalLanguages: ancestry.additionalLanguages ?? [],
-              raceSize: ancestry.size,
-              raceSpeed: ancestry.speed,
-              raceTraits: ancestry.traits,
-              pf2eSpecialAbilities: ancestry.specialAbilities ?? [],
-              pf2eAncestryHP: ancestry.hp,
-              chosenLanguages: [] // reset when ancestry changes
-            })
-          }
-        })
-      }
-      if (currentSlot?.category === 'background') {
-        loadPf2eBackgrounds().then((bgs) => {
-          const bg = bgs.find((b) => b.id === optionId)
-          if (bg) {
-            set({
-              chosenLanguages: [] // reset when background changes
-            })
-          }
-        })
-      }
-      if (currentSlot?.category === 'class') {
-        loadPf2eClasses().then((classes) => {
-          const cls = classes.find((c) => c.id === optionId)
-          if (cls) {
-            set({
-              classSkillOptions: cls.skills.options,
-              classMandatorySkills: cls.mandatorySkills ?? [],
-              pf2eClassHP: cls.hp,
-              pf2ePerceptionRank: cls.perception,
-              pf2eSaveRanks: cls.savingThrows,
-              pf2eKeyAbility: cls.keyAbility[0] ?? null,
-              pf2eUnarmoredRank: cls.defenses?.unarmored ?? 'trained',
-              pf2eClassFeatures: cls.classFeatures ?? [],
-              classEquipment: cls.startingEquipment?.map((e) => ({ ...e, source: cls.name })) ?? [],
-              // PF2e starting wealth is 15 gp for all classes
-              currency: { pp: 0, gp: 15, sp: 0, cp: 0 }
-            })
-          }
-        })
-      }
+    // Skip advance for 5e ancestry — handled in the .then() callback after species data loads
+    const skipGenericAdvance = gameSystem === 'dnd5e' && currentSlot?.category === 'ancestry'
+    if (!skipGenericAdvance) {
+      queueMicrotask(() => get().advanceToNextSlot())
     }
-
-    // BUG FIX: replaced setTimeout with queueMicrotask to avoid race condition
-    queueMicrotask(() => get().advanceToNextSlot())
   }
 })

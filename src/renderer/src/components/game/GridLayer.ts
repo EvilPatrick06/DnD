@@ -1,16 +1,11 @@
-import { Graphics } from 'pixi.js'
+import type { Graphics } from 'pixi.js'
 import type { GridSettings } from '../../types/map'
 
 /**
  * Draws grid lines onto a PixiJS Graphics object.
  * Supports square grids. Hex grids are stubbed for future implementation.
  */
-export function drawGrid(
-  graphics: Graphics,
-  settings: GridSettings,
-  mapWidth: number,
-  mapHeight: number
-): void {
+export function drawGrid(graphics: Graphics, settings: GridSettings, mapWidth: number, mapHeight: number): void {
   graphics.clear()
 
   if (!settings.enabled) return

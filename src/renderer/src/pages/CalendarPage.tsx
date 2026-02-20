@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 interface AvailabilityResponse {
@@ -57,18 +57,10 @@ export default function CalendarPage(): JSX.Element {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [sessions, setSessions] = useState<SessionSchedule[]>([])
-  const [myAvailability, setMyAvailability] = useState<
-    Record<string, AvailabilityResponse['available']>
-  >({})
+  const [myAvailability, setMyAvailability] = useState<Record<string, AvailabilityResponse['available']>>({})
 
-  const daysInMonth = useMemo(
-    () => getDaysInMonth(currentYear, currentMonth),
-    [currentYear, currentMonth]
-  )
-  const firstDay = useMemo(
-    () => getFirstDayOfMonth(currentYear, currentMonth),
-    [currentYear, currentMonth]
-  )
+  const daysInMonth = useMemo(() => getDaysInMonth(currentYear, currentMonth), [currentYear, currentMonth])
+  const firstDay = useMemo(() => getFirstDayOfMonth(currentYear, currentMonth), [currentYear, currentMonth])
 
   function goToPreviousMonth(): void {
     if (currentMonth === 0) {
@@ -111,10 +103,7 @@ export default function CalendarPage(): JSX.Element {
     setSessions((prev) => [...prev, newSession])
   }
 
-  function markAvailability(
-    dateKey: string,
-    value: AvailabilityResponse['available']
-  ): void {
+  function markAvailability(dateKey: string, value: AvailabilityResponse['available']): void {
     setMyAvailability((prev) => ({ ...prev, [dateKey]: value }))
 
     setSessions((prev) =>
@@ -123,10 +112,7 @@ export default function CalendarPage(): JSX.Element {
         const filtered = s.responses.filter((r) => r.userId !== 'local-user')
         return {
           ...s,
-          responses: [
-            ...filtered,
-            { userId: 'local-user', displayName: 'You', available: value }
-          ]
+          responses: [...filtered, { userId: 'local-user', displayName: 'You', available: value }]
         }
       })
     )
@@ -141,19 +127,12 @@ export default function CalendarPage(): JSX.Element {
     })
   }
 
-  const sessionDates = useMemo(
-    () => new Set(sessions.map((s) => s.proposedDate)),
-    [sessions]
-  )
+  const sessionDates = useMemo(() => new Set(sessions.map((s) => s.proposedDate)), [sessions])
 
   const selectedSession = sessions.find((s) => s.proposedDate === selectedDay)
 
   const isToday = (day: number): boolean => {
-    return (
-      currentYear === today.getFullYear() &&
-      currentMonth === today.getMonth() &&
-      day === today.getDate()
-    )
+    return currentYear === today.getFullYear() && currentMonth === today.getMonth() && day === today.getDate()
   }
 
   return (
@@ -178,9 +157,7 @@ export default function CalendarPage(): JSX.Element {
             >
               &larr;
             </button>
-            <h2 className="text-xl font-semibold text-gray-100">
-              {formatMonthYear(currentYear, currentMonth)}
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-100">{formatMonthYear(currentYear, currentMonth)}</h2>
             <button
               onClick={goToNextMonth}
               className="px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 cursor-pointer transition-colors"
@@ -192,10 +169,7 @@ export default function CalendarPage(): JSX.Element {
           {/* Day-of-week headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAYS_OF_WEEK.map((dow) => (
-              <div
-                key={dow}
-                className="text-center text-xs text-gray-500 font-medium py-1"
-              >
+              <div key={dow} className="text-center text-xs text-gray-500 font-medium py-1">
                 {dow}
               </div>
             ))}
@@ -224,21 +198,20 @@ export default function CalendarPage(): JSX.Element {
                   className={`
                     aspect-square flex flex-col items-center justify-center rounded-lg
                     text-sm font-medium cursor-pointer transition-all border
-                    ${isSelected
-                      ? 'border-amber-500 bg-amber-600/20 text-amber-300'
-                      : hasSession && myStatus
-                        ? `${AVAILABILITY_COLORS[myStatus]} text-gray-200`
-                        : hasSession
-                          ? 'border-amber-500/30 bg-amber-600/10 text-gray-200'
-                          : 'border-gray-800 hover:border-gray-600 hover:bg-gray-800/50 text-gray-300'
+                    ${
+                      isSelected
+                        ? 'border-amber-500 bg-amber-600/20 text-amber-300'
+                        : hasSession && myStatus
+                          ? `${AVAILABILITY_COLORS[myStatus]} text-gray-200`
+                          : hasSession
+                            ? 'border-amber-500/30 bg-amber-600/10 text-gray-200'
+                            : 'border-gray-800 hover:border-gray-600 hover:bg-gray-800/50 text-gray-300'
                     }
                     ${todayHighlight ? 'ring-1 ring-amber-400' : ''}
                   `}
                 >
                   <span>{day}</span>
-                  {hasSession && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5" />
-                  )}
+                  {hasSession && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-0.5" />}
                 </button>
               )
             })}
@@ -262,7 +235,7 @@ export default function CalendarPage(): JSX.Element {
           {selectedDay ? (
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-5">
               <h3 className="text-lg font-semibold mb-3 text-gray-100">
-                {new Date(selectedDay + 'T00:00:00').toLocaleDateString('en-US', {
+                {new Date(`${selectedDay}T00:00:00`).toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
                   day: 'numeric'
@@ -272,28 +245,24 @@ export default function CalendarPage(): JSX.Element {
               {selectedSession ? (
                 <div className="space-y-4">
                   <p className="text-sm text-gray-400">
-                    Proposed by{' '}
-                    <span className="text-amber-400">
-                      {selectedSession.proposedBy}
-                    </span>
+                    Proposed by <span className="text-amber-400">{selectedSession.proposedBy}</span>
                   </p>
 
                   {/* Availability buttons */}
                   <div>
                     <p className="text-sm text-gray-400 mb-2">Your availability:</p>
                     <div className="flex gap-2">
-                      {(
-                        ['yes', 'no', 'maybe'] as AvailabilityResponse['available'][]
-                      ).map((value) => (
+                      {(['yes', 'no', 'maybe'] as AvailabilityResponse['available'][]).map((value) => (
                         <button
                           key={value}
                           onClick={() => markAvailability(selectedDay, value)}
                           className={`
                             flex-1 px-2 py-1.5 rounded text-xs font-medium cursor-pointer
                             transition-colors border
-                            ${myAvailability[selectedDay] === value
-                              ? AVAILABILITY_COLORS[value] + ' text-white'
-                              : 'border-gray-700 text-gray-400 hover:bg-gray-800'
+                            ${
+                              myAvailability[selectedDay] === value
+                                ? `${AVAILABILITY_COLORS[value]} text-white`
+                                : 'border-gray-700 text-gray-400 hover:bg-gray-800'
                             }
                           `}
                         >
@@ -309,10 +278,7 @@ export default function CalendarPage(): JSX.Element {
                       <p className="text-sm text-gray-400 mb-2">Responses:</p>
                       <div className="space-y-1.5">
                         {selectedSession.responses.map((r) => (
-                          <div
-                            key={r.userId}
-                            className="flex items-center justify-between text-sm"
-                          >
+                          <div key={r.userId} className="flex items-center justify-between text-sm">
                             <span className="text-gray-300">{r.displayName}</span>
                             <span
                               className={
@@ -340,9 +306,7 @@ export default function CalendarPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-500">
-                    No session proposed for this date.
-                  </p>
+                  <p className="text-sm text-gray-500">No session proposed for this date.</p>
                   <button
                     onClick={proposeSession}
                     className="w-full px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm cursor-pointer transition-colors"
@@ -354,9 +318,7 @@ export default function CalendarPage(): JSX.Element {
             </div>
           ) : (
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-5">
-              <p className="text-sm text-gray-500">
-                Select a day to propose a session or mark your availability.
-              </p>
+              <p className="text-sm text-gray-500">Select a day to propose a session or mark your availability.</p>
             </div>
           )}
         </div>

@@ -4,279 +4,1060 @@
     "name": "Barbarian",
     "hitDie": 12,
     "primaryAbility": "Strength",
-    "savingThrows": ["Strength", "Constitution"],
+    "savingThrows": [
+      "Strength",
+      "Constitution"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Shields"],
-      "weapons": ["Simple weapons", "Martial weapons"],
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Animal Handling", "Athletics", "Intimidation", "Nature", "Perception", "Survival"]
+        "options": [
+          "Animal Handling",
+          "Athletics",
+          "Intimidation",
+          "Nature",
+          "Perception",
+          "Survival"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Explorer's pack", "quantity": 1 },
-      { "name": "Javelin", "quantity": 4 }
+      {
+        "name": "Explorer's Pack",
+        "quantity": 1
+      },
+      {
+        "name": "Handaxe",
+        "quantity": 4
+      },
+      {
+        "name": "Greataxe",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "2d4x10"
+    "startingGold": 15,
+    "startingGoldAlternative": 75,
+    "subclassLevel": 3,
+    "weaponMastery": {
+      "count": 2,
+      "progression": {
+        "4": 3,
+        "10": 4
+      }
+    },
+    "multiclassPrerequisites": {
+      "strength": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Shields"
+      ],
+      "weapons": [
+        "Martial weapons"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "bard",
     "name": "Bard",
     "hitDie": 8,
     "primaryAbility": "Charisma",
-    "savingThrows": ["Dexterity", "Charisma"],
+    "savingThrows": [
+      "Dexterity",
+      "Charisma"
+    ],
     "proficiencies": {
-      "armor": ["Light armor"],
-      "weapons": ["Simple weapons", "Hand crossbows", "Longswords", "Rapiers", "Shortswords"],
-      "tools": ["Three musical instruments of your choice"],
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [
+        "Simple weapons"
+      ],
+      "tools": [
+        "Three musical instruments of your choice"
+      ],
       "skills": {
         "numToChoose": 3,
-        "options": ["Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception", "History", "Insight", "Intimidation", "Investigation", "Medicine", "Nature", "Perception", "Performance", "Persuasion", "Religion", "Sleight of Hand", "Stealth", "Survival"]
+        "options": [
+          "Acrobatics",
+          "Animal Handling",
+          "Arcana",
+          "Athletics",
+          "Deception",
+          "History",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Medicine",
+          "Nature",
+          "Perception",
+          "Performance",
+          "Persuasion",
+          "Religion",
+          "Sleight of Hand",
+          "Stealth",
+          "Survival"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Leather armor", "quantity": 1 },
-      { "name": "Dagger", "quantity": 1 },
-      { "name": "Entertainer's pack", "quantity": 1 },
-      { "name": "Musical instrument", "quantity": 1 }
+      {
+        "name": "Entertainer's Pack",
+        "quantity": 1
+      },
+      {
+        "name": "Dagger",
+        "quantity": 2
+      },
+      {
+        "name": "Musical Instrument",
+        "quantity": 1,
+        "note": "one of your choice"
+      },
+      {
+        "name": "Leather Armor",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4x10"
+    "startingGold": 19,
+    "startingGoldAlternative": 90,
+    "subclassLevel": 3,
+    "spellList": "arcane",
+    "multiclassPrerequisites": {
+      "charisma": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [],
+      "tools": [
+        "Musical Instrument (one of your choice)"
+      ],
+      "skills": {
+        "numToChoose": 1,
+        "options": [
+          "Acrobatics",
+          "Animal Handling",
+          "Arcana",
+          "Athletics",
+          "Deception",
+          "History",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Medicine",
+          "Nature",
+          "Perception",
+          "Performance",
+          "Persuasion",
+          "Religion",
+          "Sleight of Hand",
+          "Stealth",
+          "Survival"
+        ]
+      }
+    }
   },
   {
     "id": "cleric",
     "name": "Cleric",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
-    "savingThrows": ["Wisdom", "Charisma"],
+    "savingThrows": [
+      "Wisdom",
+      "Charisma"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Shields"],
-      "weapons": ["Simple weapons"],
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["History", "Insight", "Medicine", "Persuasion", "Religion"]
+        "options": [
+          "History",
+          "Insight",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Shield", "quantity": 1 },
-      { "name": "Holy symbol", "quantity": 1 },
-      { "name": "Priest's pack", "quantity": 1 }
+      {
+        "name": "Shield",
+        "quantity": 1
+      },
+      {
+        "name": "Holy Symbol",
+        "quantity": 1
+      },
+      {
+        "name": "Chain Shirt",
+        "quantity": 1
+      },
+      {
+        "name": "Priest's Pack",
+        "quantity": 1
+      },
+      {
+        "name": "Mace",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4x10"
+    "startingGold": 7,
+    "startingGoldAlternative": 110,
+    "subclassLevel": 3,
+    "spellList": "divine",
+    "multiclassPrerequisites": {
+      "wisdom": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [],
+      "tools": []
+    }
   },
   {
     "id": "druid",
     "name": "Druid",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
-    "savingThrows": ["Intelligence", "Wisdom"],
+    "savingThrows": [
+      "Intelligence",
+      "Wisdom"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Shields"],
-      "weapons": ["Clubs", "Daggers", "Darts", "Javelins", "Maces", "Quarterstaffs", "Scimitars", "Sickles", "Slings", "Spears"],
-      "tools": ["Herbalism kit"],
+      "armor": [
+        "Light armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons"
+      ],
+      "tools": [
+        "Herbalism kit"
+      ],
       "skills": {
         "numToChoose": 2,
-        "options": ["Arcana", "Animal Handling", "Insight", "Medicine", "Nature", "Perception", "Religion", "Survival"]
+        "options": [
+          "Arcana",
+          "Animal Handling",
+          "Insight",
+          "Medicine",
+          "Nature",
+          "Perception",
+          "Religion",
+          "Survival"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Leather armor", "quantity": 1 },
-      { "name": "Explorer's pack", "quantity": 1 },
-      { "name": "Druidic focus", "quantity": 1 }
+      {
+        "name": "Explorer's Pack",
+        "quantity": 1
+      },
+      {
+        "name": "Druidic Focus",
+        "quantity": 1,
+        "note": "Quarterstaff"
+      },
+      {
+        "name": "Herbalism Kit",
+        "quantity": 1
+      },
+      {
+        "name": "Leather Armor",
+        "quantity": 1
+      },
+      {
+        "name": "Shield",
+        "quantity": 1
+      },
+      {
+        "name": "Sickle",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "2d4x10"
+    "startingGold": 9,
+    "startingGoldAlternative": 50,
+    "subclassLevel": 3,
+    "spellList": "primal",
+    "multiclassPrerequisites": {
+      "wisdom": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor",
+        "Shields"
+      ],
+      "weapons": [],
+      "tools": []
+    }
   },
   {
     "id": "fighter",
     "name": "Fighter",
     "hitDie": 10,
     "primaryAbility": "Strength or Dexterity",
-    "savingThrows": ["Strength", "Constitution"],
+    "savingThrows": [
+      "Strength",
+      "Constitution"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
-      "weapons": ["Simple weapons", "Martial weapons"],
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Heavy armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Acrobatics", "Animal Handling", "Athletics", "History", "Insight", "Intimidation", "Perception", "Survival"]
+        "options": [
+          "Acrobatics",
+          "Animal Handling",
+          "Athletics",
+          "History",
+          "Insight",
+          "Intimidation",
+          "Perception",
+          "Persuasion",
+          "Survival"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Chain mail", "quantity": 1 },
-      { "name": "Shield", "quantity": 1 },
-      { "name": "Light crossbow", "quantity": 1 },
-      { "name": "Crossbow bolts", "quantity": 20 },
-      { "name": "Dungeoneer's pack", "quantity": 1 }
+      {
+        "name": "Chain Mail",
+        "quantity": 1
+      },
+      {
+        "name": "Greatsword",
+        "quantity": 1
+      },
+      {
+        "name": "Flail",
+        "quantity": 1
+      },
+      {
+        "name": "Javelin",
+        "quantity": 8
+      },
+      {
+        "name": "Dungeoneer's Pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4x10"
+    "startingGold": 4,
+    "startingGoldAlternative": 155,
+    "startingEquipmentOptions": {
+      "A": {
+        "label": "Heavy Armor",
+        "equipment": [
+          {
+            "name": "Chain Mail",
+            "quantity": 1
+          },
+          {
+            "name": "Greatsword",
+            "quantity": 1
+          },
+          {
+            "name": "Flail",
+            "quantity": 1
+          },
+          {
+            "name": "Javelin",
+            "quantity": 8
+          },
+          {
+            "name": "Dungeoneer's Pack",
+            "quantity": 1
+          }
+        ],
+        "gold": 4
+      },
+      "B": {
+        "label": "Light Armor",
+        "equipment": [
+          {
+            "name": "Studded Leather Armor",
+            "quantity": 1
+          },
+          {
+            "name": "Scimitar",
+            "quantity": 1
+          },
+          {
+            "name": "Shortsword",
+            "quantity": 1
+          },
+          {
+            "name": "Longbow",
+            "quantity": 1
+          },
+          {
+            "name": "Arrow",
+            "quantity": 20
+          },
+          {
+            "name": "Quiver",
+            "quantity": 1
+          },
+          {
+            "name": "Dungeoneer's Pack",
+            "quantity": 1
+          }
+        ],
+        "gold": 11
+      },
+      "C": {
+        "label": "Gold Only",
+        "equipment": [],
+        "gold": 155
+      }
+    },
+    "subclassLevel": 3,
+    "weaponMastery": {
+      "count": 3,
+      "progression": {
+        "4": 4,
+        "10": 5,
+        "16": 6
+      }
+    },
+    "multiclassPrerequisites": {
+      "or": [
+        {
+          "strength": 13
+        },
+        {
+          "dexterity": 13
+        }
+      ]
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Martial weapons"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "monk",
     "name": "Monk",
     "hitDie": 8,
     "primaryAbility": "Dexterity & Wisdom",
-    "savingThrows": ["Strength", "Dexterity"],
+    "savingThrows": [
+      "Strength",
+      "Dexterity"
+    ],
     "proficiencies": {
       "armor": [],
-      "weapons": ["Simple weapons", "Shortswords"],
-      "tools": ["One type of artisan's tools or one musical instrument"],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons that have the Light property"
+      ],
+      "tools": [
+        "One type of artisan's tools or one musical instrument"
+      ],
       "skills": {
         "numToChoose": 2,
-        "options": ["Acrobatics", "Athletics", "History", "Insight", "Religion", "Stealth"]
+        "options": [
+          "Acrobatics",
+          "Athletics",
+          "History",
+          "Insight",
+          "Religion",
+          "Stealth"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Dart", "quantity": 10 },
-      { "name": "Explorer's pack", "quantity": 1 }
+      {
+        "name": "Spear",
+        "quantity": 1
+      },
+      {
+        "name": "Dagger",
+        "quantity": 5
+      },
+      {
+        "name": "Explorer's Pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4"
+    "startingGoldAlternative": 50,
+    "subclassLevel": 3,
+    "multiclassPrerequisites": {
+      "dexterity": 13,
+      "wisdom": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons that have the Light property"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "paladin",
     "name": "Paladin",
     "hitDie": 10,
     "primaryAbility": "Strength & Charisma",
-    "savingThrows": ["Wisdom", "Charisma"],
+    "savingThrows": [
+      "Wisdom",
+      "Charisma"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
-      "weapons": ["Simple weapons", "Martial weapons"],
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Heavy armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Athletics", "Insight", "Intimidation", "Medicine", "Persuasion", "Religion"]
+        "options": [
+          "Athletics",
+          "Insight",
+          "Intimidation",
+          "Medicine",
+          "Persuasion",
+          "Religion"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Chain mail", "quantity": 1 },
-      { "name": "Shield", "quantity": 1 },
-      { "name": "Holy symbol", "quantity": 1 },
-      { "name": "Javelin", "quantity": 5 },
-      { "name": "Priest's pack", "quantity": 1 }
+      {
+        "name": "Chain mail",
+        "quantity": 1
+      },
+      {
+        "name": "Shield",
+        "quantity": 1
+      },
+      {
+        "name": "Longsword",
+        "quantity": 1
+      },
+      {
+        "name": "Holy symbol",
+        "quantity": 1
+      },
+      {
+        "name": "Javelin",
+        "quantity": 6
+      },
+      {
+        "name": "Priest's pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4x10"
+    "startingGold": 9,
+    "startingGoldAlternative": 150,
+    "subclassLevel": 3,
+    "weaponMastery": {
+      "count": 2,
+      "progression": {
+        "4": 3,
+        "10": 4
+      }
+    },
+    "spellList": "divine",
+    "multiclassPrerequisites": {
+      "strength": 13,
+      "charisma": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "ranger",
     "name": "Ranger",
     "hitDie": 10,
     "primaryAbility": "Dexterity & Wisdom",
-    "savingThrows": ["Strength", "Dexterity"],
+    "savingThrows": [
+      "Strength",
+      "Dexterity"
+    ],
     "proficiencies": {
-      "armor": ["Light armor", "Medium armor", "Shields"],
-      "weapons": ["Simple weapons", "Martial weapons"],
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 3,
-        "options": ["Animal Handling", "Athletics", "Insight", "Investigation", "Nature", "Perception", "Stealth", "Survival"]
+        "options": [
+          "Animal Handling",
+          "Athletics",
+          "Insight",
+          "Investigation",
+          "Nature",
+          "Perception",
+          "Stealth",
+          "Survival"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Scale mail", "quantity": 1 },
-      { "name": "Shortsword", "quantity": 2 },
-      { "name": "Explorer's pack", "quantity": 1 },
-      { "name": "Longbow", "quantity": 1 },
-      { "name": "Arrows", "quantity": 20 }
+      {
+        "name": "Studded Leather Armor",
+        "quantity": 1
+      },
+      {
+        "name": "Scimitar",
+        "quantity": 1
+      },
+      {
+        "name": "Shortsword",
+        "quantity": 1
+      },
+      {
+        "name": "Longbow",
+        "quantity": 1
+      },
+      {
+        "name": "Arrow",
+        "quantity": 20
+      },
+      {
+        "name": "Quiver",
+        "quantity": 1
+      },
+      {
+        "name": "Druidic Focus (sprig of mistletoe)",
+        "quantity": 1
+      },
+      {
+        "name": "Explorer's Pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "5d4x10"
+    "startingGold": 7,
+    "startingGoldAlternative": 150,
+    "startingEquipmentOptions": {
+      "A": {
+        "label": "Standard",
+        "equipment": [
+          {
+            "name": "Studded Leather Armor",
+            "quantity": 1
+          },
+          {
+            "name": "Scimitar",
+            "quantity": 1
+          },
+          {
+            "name": "Shortsword",
+            "quantity": 1
+          },
+          {
+            "name": "Longbow",
+            "quantity": 1
+          },
+          {
+            "name": "Arrow",
+            "quantity": 20
+          },
+          {
+            "name": "Quiver",
+            "quantity": 1
+          },
+          {
+            "name": "Druidic Focus (sprig of mistletoe)",
+            "quantity": 1
+          },
+          {
+            "name": "Explorer's Pack",
+            "quantity": 1
+          }
+        ],
+        "gold": 7
+      },
+      "B": {
+        "label": "Gold Only",
+        "equipment": [],
+        "gold": 150
+      }
+    },
+    "subclassLevel": 3,
+    "weaponMastery": {
+      "count": 2
+    },
+    "spellList": "primal",
+    "multiclassPrerequisites": {
+      "dexterity": 13,
+      "wisdom": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor",
+        "Medium armor",
+        "Shields"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "rogue",
     "name": "Rogue",
     "hitDie": 8,
     "primaryAbility": "Dexterity",
-    "savingThrows": ["Dexterity", "Intelligence"],
+    "savingThrows": [
+      "Dexterity",
+      "Intelligence"
+    ],
     "proficiencies": {
-      "armor": ["Light armor"],
-      "weapons": ["Simple weapons", "Hand crossbows", "Longswords", "Rapiers", "Shortswords"],
-      "tools": ["Thieves' tools"],
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [
+        "Simple weapons",
+        "Martial weapons that have the Finesse or Light property"
+      ],
+      "tools": [
+        "Thieves' Tools"
+      ],
       "skills": {
         "numToChoose": 4,
-        "options": ["Acrobatics", "Athletics", "Deception", "Insight", "Intimidation", "Investigation", "Perception", "Performance", "Persuasion", "Sleight of Hand", "Stealth"]
+        "options": [
+          "Acrobatics",
+          "Athletics",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Perception",
+          "Performance",
+          "Persuasion",
+          "Sleight of Hand",
+          "Stealth"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Rapier", "quantity": 1 },
-      { "name": "Shortbow", "quantity": 1 },
-      { "name": "Arrows", "quantity": 20 },
-      { "name": "Burglar's pack", "quantity": 1 },
-      { "name": "Leather armor", "quantity": 1 },
-      { "name": "Dagger", "quantity": 2 },
-      { "name": "Thieves' tools", "quantity": 1 }
+      {
+        "name": "Shortsword",
+        "quantity": 1
+      },
+      {
+        "name": "Shortbow",
+        "quantity": 1
+      },
+      {
+        "name": "Arrows",
+        "quantity": 20
+      },
+      {
+        "name": "Quiver",
+        "quantity": 1
+      },
+      {
+        "name": "Burglar's pack",
+        "quantity": 1
+      },
+      {
+        "name": "Leather armor",
+        "quantity": 1
+      },
+      {
+        "name": "Dagger",
+        "quantity": 2
+      },
+      {
+        "name": "Thieves' Tools",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "4d4x10"
+    "startingGold": 8,
+    "startingGoldAlternative": 100,
+    "subclassLevel": 3,
+    "weaponMastery": {
+      "count": 2,
+      "progression": {
+        "4": 3,
+        "10": 4
+      }
+    },
+    "multiclassPrerequisites": {
+      "dexterity": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [],
+      "tools": [
+        "Thieves' Tools"
+      ],
+      "skills": {
+        "numToChoose": 1,
+        "options": [
+          "Acrobatics",
+          "Athletics",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Investigation",
+          "Perception",
+          "Persuasion",
+          "Sleight of Hand",
+          "Stealth"
+        ]
+      }
+    }
   },
   {
     "id": "sorcerer",
     "name": "Sorcerer",
     "hitDie": 6,
     "primaryAbility": "Charisma",
-    "savingThrows": ["Constitution", "Charisma"],
+    "savingThrows": [
+      "Constitution",
+      "Charisma"
+    ],
     "proficiencies": {
       "armor": [],
-      "weapons": ["Daggers", "Darts", "Slings", "Quarterstaffs", "Light crossbows"],
+      "weapons": [
+        "Simple weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Arcana", "Deception", "Insight", "Intimidation", "Persuasion", "Religion"]
+        "options": [
+          "Arcana",
+          "Deception",
+          "Insight",
+          "Intimidation",
+          "Persuasion",
+          "Religion"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Light crossbow", "quantity": 1 },
-      { "name": "Crossbow bolts", "quantity": 20 },
-      { "name": "Arcane focus", "quantity": 1 },
-      { "name": "Dungeoneer's pack", "quantity": 1 },
-      { "name": "Dagger", "quantity": 2 }
+      {
+        "name": "Spear",
+        "quantity": 1
+      },
+      {
+        "name": "Dagger",
+        "quantity": 2
+      },
+      {
+        "name": "Arcane focus",
+        "quantity": 1
+      },
+      {
+        "name": "Dungeoneer's pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "3d4x10"
+    "startingGold": 28,
+    "startingGoldAlternative": 50,
+    "subclassLevel": 3,
+    "spellList": "arcane",
+    "multiclassPrerequisites": {
+      "charisma": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [],
+      "weapons": [],
+      "tools": []
+    }
   },
   {
     "id": "warlock",
     "name": "Warlock",
     "hitDie": 8,
     "primaryAbility": "Charisma",
-    "savingThrows": ["Wisdom", "Charisma"],
+    "savingThrows": [
+      "Wisdom",
+      "Charisma"
+    ],
     "proficiencies": {
-      "armor": ["Light armor"],
-      "weapons": ["Simple weapons"],
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [
+        "Simple weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Arcana", "Deception", "History", "Intimidation", "Investigation", "Nature", "Religion"]
+        "options": [
+          "Arcana",
+          "Deception",
+          "History",
+          "Intimidation",
+          "Investigation",
+          "Nature",
+          "Religion"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Light crossbow", "quantity": 1 },
-      { "name": "Crossbow bolts", "quantity": 20 },
-      { "name": "Arcane focus", "quantity": 1 },
-      { "name": "Scholar's pack", "quantity": 1 },
-      { "name": "Leather armor", "quantity": 1 },
-      { "name": "Simple weapon", "quantity": 1 },
-      { "name": "Dagger", "quantity": 2 }
+      {
+        "name": "Leather armor",
+        "quantity": 1
+      },
+      {
+        "name": "Sickle",
+        "quantity": 1
+      },
+      {
+        "name": "Dagger",
+        "quantity": 2
+      },
+      {
+        "name": "Arcane focus (orb)",
+        "quantity": 1
+      },
+      {
+        "name": "Book (occult lore)",
+        "quantity": 1
+      },
+      {
+        "name": "Scholar's pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "4d4x10"
+    "startingGold": 15,
+    "startingGoldAlternative": 100,
+    "subclassLevel": 3,
+    "spellList": "arcane",
+    "multiclassPrerequisites": {
+      "charisma": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [
+        "Light armor"
+      ],
+      "weapons": [
+        "Simple weapons"
+      ],
+      "tools": []
+    }
   },
   {
     "id": "wizard",
     "name": "Wizard",
     "hitDie": 6,
     "primaryAbility": "Intelligence",
-    "savingThrows": ["Intelligence", "Wisdom"],
+    "savingThrows": [
+      "Intelligence",
+      "Wisdom"
+    ],
     "proficiencies": {
       "armor": [],
-      "weapons": ["Daggers", "Darts", "Slings", "Quarterstaffs", "Light crossbows"],
+      "weapons": [
+        "Simple weapons"
+      ],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": ["Arcana", "History", "Insight", "Investigation", "Medicine", "Religion"]
+        "options": [
+          "Arcana",
+          "History",
+          "Insight",
+          "Investigation",
+          "Medicine",
+          "Nature",
+          "Religion"
+        ]
       }
     },
     "startingEquipment": [
-      { "name": "Quarterstaff", "quantity": 1 },
-      { "name": "Arcane focus", "quantity": 1 },
-      { "name": "Scholar's pack", "quantity": 1 },
-      { "name": "Spellbook", "quantity": 1 }
+      {
+        "name": "Dagger",
+        "quantity": 2
+      },
+      {
+        "name": "Quarterstaff",
+        "quantity": 1
+      },
+      {
+        "name": "Robe",
+        "quantity": 1
+      },
+      {
+        "name": "Spellbook",
+        "quantity": 1
+      },
+      {
+        "name": "Scholar's Pack",
+        "quantity": 1
+      }
     ],
-    "startingGoldAlternative": "4d4x10"
+    "startingGold": 5,
+    "startingGoldAlternative": 55,
+    "subclassLevel": 3,
+    "spellList": "arcane",
+    "multiclassPrerequisites": {
+      "intelligence": 13
+    },
+    "multiclassProficiencies": {
+      "armor": [],
+      "weapons": [],
+      "tools": []
+    }
   }
 ]

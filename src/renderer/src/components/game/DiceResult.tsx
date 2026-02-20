@@ -4,6 +4,7 @@ interface DiceResultProps {
   total: number
   rollerName: string
   dieSides?: number
+  isCritDamage?: boolean
 }
 
 export default function DiceResult({
@@ -11,7 +12,8 @@ export default function DiceResult({
   rolls,
   total,
   rollerName,
-  dieSides
+  dieSides,
+  isCritDamage
 }: DiceResultProps): JSX.Element {
   // Detect critical / fumble for d20 rolls
   const isSingleD20 = formula.match(/^1?d20/)
@@ -22,7 +24,7 @@ export default function DiceResult({
     <div
       className={`bg-gray-800/50 rounded-lg p-2.5 border transition-all
         ${
-          isCritical
+          isCritical || isCritDamage
             ? 'border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
             : isFumble
               ? 'border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
@@ -58,11 +60,7 @@ export default function DiceResult({
         <div className="ml-auto">
           <span
             className={`text-xl font-bold font-mono ${
-              isCritical
-                ? 'text-green-400'
-                : isFumble
-                  ? 'text-red-400'
-                  : 'text-amber-400'
+              isCritical ? 'text-green-400' : isFumble ? 'text-red-400' : 'text-amber-400'
             }`}
           >
             {total}
@@ -70,16 +68,9 @@ export default function DiceResult({
         </div>
       </div>
 
-      {isCritical && (
-        <p className="text-[10px] text-green-400 font-semibold mt-1">
-          NATURAL 20 - CRITICAL!
-        </p>
-      )}
-      {isFumble && (
-        <p className="text-[10px] text-red-400 font-semibold mt-1">
-          NATURAL 1 - FUMBLE!
-        </p>
-      )}
+      {isCritical && <p className="text-[10px] text-green-400 font-semibold mt-1">NATURAL 20 - CRITICAL!</p>}
+      {isFumble && <p className="text-[10px] text-red-400 font-semibold mt-1">NATURAL 1 - FUMBLE!</p>}
+      {isCritDamage && <p className="text-[10px] text-green-400 font-semibold mt-1">CRITICAL DAMAGE - Dice doubled!</p>}
     </div>
   )
 }

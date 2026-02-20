@@ -21,16 +21,7 @@ export function importCampaign(json: string): Campaign {
   const parsed = JSON.parse(json)
 
   // Validate required fields
-  const required: Array<keyof Campaign> = [
-    'id',
-    'name',
-    'system',
-    'type',
-    'dmId',
-    'inviteCode',
-    'turnMode',
-    'settings'
-  ]
+  const required: Array<keyof Campaign> = ['id', 'name', 'system', 'type', 'dmId', 'inviteCode', 'turnMode', 'settings']
   for (const field of required) {
     if (parsed[field] === undefined) {
       throw new Error(`Invalid campaign file: missing required field "${field}"`)

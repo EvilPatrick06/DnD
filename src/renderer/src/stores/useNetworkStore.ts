@@ -1,19 +1,20 @@
 import { create } from 'zustand'
+import * as clientManager from '../network/client-manager'
+import * as hostManager from '../network/host-manager'
+import { getPeerId } from '../network/peer-manager'
 import type {
   ConnectionState,
-  ForceMutePayload,
   ForceDeafenPayload,
+  ForceMutePayload,
+  GameStateFullPayload,
   MessageType,
   NetworkMessage,
   PeerInfo,
   ShopItem
 } from '../network/types'
-import * as hostManager from '../network/host-manager'
-import * as clientManager from '../network/client-manager'
-import { getPeerId } from '../network/peer-manager'
-import { setForceMuted, setForceDeafened } from '../network/voice-manager'
+import { setForceDeafened, setForceMuted } from '../network/voice-manager'
+import { useGameStore } from './useGameStore'
 import { useLobbyStore } from './useLobbyStore'
-import type { GameStateFullPayload } from '../network/types'
 
 interface NetworkState {
   role: 'none' | 'host' | 'client'
@@ -24,6 +25,7 @@ interface NetworkState {
   displayName: string
   peers: PeerInfo[]
   error: string | null
+  disconnectReason: 'kicked' | 'banned' | null
 
   // Host actions
   hostGame: (displayName: string, existingInviteCode?: string) => Promise<string>
@@ -44,6 +46,7 @@ interface NetworkState {
   addPeer: (peer: PeerInfo) => void
   setConnectionState: (state: ConnectionState) => void
   setError: (error: string | null) => void
+  clearDisconnectReason: () => void
 }
 
 export const useNetworkStore = create<NetworkState>((set, get) => ({
@@ -55,6 +58,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   displayName: '',
   peers: [],
   error: null,
+  disconnectReason: null,
 
   // --- Host actions ---
 
@@ -109,7 +113,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       campaignId: null,
       localPeerId: null,
       peers: [],
-      error: null
+      error: null,
+      disconnectReason: null
     })
   },
 
@@ -136,7 +141,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   forceDeafenPlayer: (peerId: string, isForceDeafened: boolean) => {
     const { displayName } = get()
     // Force-deafen implies force-mute
-    const isForceMuted = isForceDeafened ? true : false
+    const isForceMuted = !!isForceDeafened
     const message: NetworkMessage<ForceDeafenPayload> = {
       type: 'dm:force-deafen',
       payload: { peerId, isForceDeafened },
@@ -167,6 +172,14 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       })
 
       clientManager.onDisconnected((reason: string) => {
+        // Determine if this was a kick or ban based on the reason string
+        let disconnectReason: 'kicked' | 'banned' | null = null
+        if (reason.toLowerCase().includes('kicked')) {
+          disconnectReason = 'kicked'
+        } else if (reason.toLowerCase().includes('banned')) {
+          disconnectReason = 'banned'
+        }
+
         set({
           connectionState: 'disconnected',
           role: 'none',
@@ -174,7 +187,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
           campaignId: null,
           localPeerId: null,
           peers: [],
-          error: reason
+          error: reason,
+          disconnectReason
         })
       })
 
@@ -209,7 +223,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
         campaignId: null,
         localPeerId: null,
         peers: [],
-        error: null
+        error: null,
+        disconnectReason: null
       })
     }
   },
@@ -219,7 +234,6 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   sendMessage: (type: MessageType, payload: unknown) => {
     const { role, displayName } = get()
     if (role === 'host') {
-      // Host broadcasts to all clients
       const message: NetworkMessage = {
         type,
         payload,
@@ -228,6 +242,9 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
         timestamp: Date.now(),
         sequence: 0
       }
+      // dm:character-update: broadcast to all peers so everyone has the latest
+      // character data in remoteCharacters, but include targetPeerId in payload
+      // so only the target player persists the update to disk
       hostManager.broadcastMessage(message)
     } else if (role === 'client') {
       clientManager.sendMessage({ type, payload })
@@ -240,9 +257,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   updatePeer: (peerId: string, updates: Partial<PeerInfo>) => {
     set((state) => ({
-      peers: state.peers.map((p) =>
-        p.peerId === peerId ? { ...p, ...updates } : p
-      )
+      peers: state.peers.map((p) => (p.peerId === peerId ? { ...p, ...updates } : p))
     }))
   },
 
@@ -258,9 +273,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       const exists = state.peers.some((p) => p.peerId === peer.peerId)
       if (exists) {
         return {
-          peers: state.peers.map((p) =>
-            p.peerId === peer.peerId ? peer : p
-          )
+          peers: state.peers.map((p) => (p.peerId === peer.peerId ? peer : p))
         }
       }
       return { peers: [...state.peers, peer] }
@@ -273,6 +286,10 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 
   setError: (error: string | null) => {
     set({ error })
+  },
+
+  clearDisconnectReason: () => {
+    set({ disconnectReason: null })
   }
 }))
 
@@ -282,7 +299,7 @@ function handleHostMessage(
   message: NetworkMessage,
   fromPeerId: string,
   get: () => NetworkState,
-  set: (partial: Partial<NetworkState> | ((state: NetworkState) => Partial<NetworkState>)) => void
+  _set: (partial: Partial<NetworkState> | ((state: NetworkState) => Partial<NetworkState>)) => void
 ): void {
   switch (message.type) {
     case 'player:ready': {
@@ -312,6 +329,15 @@ function handleHostMessage(
       break
     }
 
+    case 'voice:deafen-toggle': {
+      const payload = message.payload as { peerId: string; isDeafened: boolean }
+      get().updatePeer(fromPeerId, { isDeafened: payload.isDeafened })
+      useLobbyStore.getState().updatePlayer(fromPeerId, { isDeafened: payload.isDeafened })
+      // Rebroadcast so all clients see the updated deafen state
+      hostManager.broadcastMessage(message)
+      break
+    }
+
     case 'chat:message': {
       // Rebroadcast chat to all clients
       hostManager.broadcastMessage(message)
@@ -328,15 +354,22 @@ function handleHostMessage(
       const colorPayload = message.payload as { color: string }
       get().updatePeer(fromPeerId, { color: colorPayload.color })
       useLobbyStore.getState().updatePlayer(fromPeerId, { color: colorPayload.color })
+      // Update the host's authoritative peerInfoMap so color persists across re-syncs
+      hostManager.updatePeerInfo(fromPeerId, { color: colorPayload.color })
       // Rebroadcast
       hostManager.broadcastMessage(message)
       break
     }
 
     case 'chat:whisper': {
-      // Forward whisper only to the target
-      const payload = message.payload as { targetPeerId: string }
-      hostManager.sendToPeer(payload.targetPeerId, message)
+      // Forward whisper only to the target, after validating they exist
+      const payload = message.payload as { targetPeerId: string; targetName?: string }
+      const targetInfo = hostManager.getPeerInfo(payload.targetPeerId)
+      if (targetInfo) {
+        // Overwrite targetName with actual peer display name to prevent spoofing
+        ;(message.payload as Record<string, unknown>).targetName = targetInfo.displayName
+        hostManager.sendToPeer(payload.targetPeerId, message)
+      }
       break
     }
 
@@ -349,13 +382,10 @@ function handleHostMessage(
     case 'player:buy-item': {
       // Decrement shop inventory quantity and broadcast updated shop
       const buyPayload = message.payload as { itemId: string; itemName: string }
-      // Lazy import to avoid circular dependency
-      import('./useGameStore').then(({ useGameStore }) => {
+      {
         const gameStore = useGameStore.getState()
         const updatedInventory = gameStore.shopInventory.map((item: ShopItem) =>
-          item.id === buyPayload.itemId && item.quantity > 0
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
+          item.id === buyPayload.itemId && item.quantity > 0 ? { ...item, quantity: item.quantity - 1 } : item
         )
         gameStore.setShopInventory(updatedInventory)
         // Broadcast updated shop to all peers
@@ -367,7 +397,7 @@ function handleHostMessage(
           timestamp: Date.now(),
           sequence: 0
         })
-      })
+      }
       // Rebroadcast the buy message so other clients see it
       hostManager.broadcastMessage(message)
       break
@@ -451,6 +481,13 @@ function handleClientMessage(
       break
     }
 
+    case 'voice:deafen-toggle': {
+      const payload = message.payload as { peerId: string; isDeafened: boolean }
+      get().updatePeer(payload.peerId, { isDeafened: payload.isDeafened })
+      useLobbyStore.getState().updatePlayer(payload.peerId, { isDeafened: payload.isDeafened })
+      break
+    }
+
     case 'dm:force-mute': {
       const payload = message.payload as ForceMutePayload
       get().updatePeer(payload.peerId, { isForceMuted: payload.isForceMuted })
@@ -464,7 +501,7 @@ function handleClientMessage(
 
     case 'dm:force-deafen': {
       const payload = message.payload as ForceDeafenPayload
-      const isForceMuted = payload.isForceDeafened ? true : false
+      const isForceMuted = !!payload.isForceDeafened
       get().updatePeer(payload.peerId, {
         isForceDeafened: payload.isForceDeafened,
         isForceMuted
@@ -484,7 +521,8 @@ function handleClientMessage(
         role: 'none',
         campaignId: null,
         peers: [],
-        error: 'You were kicked from the game'
+        error: 'You were kicked from the game',
+        disconnectReason: 'kicked'
       })
       break
     }
@@ -495,7 +533,8 @@ function handleClientMessage(
         role: 'none',
         campaignId: null,
         peers: [],
-        error: 'You were banned from the game'
+        error: 'You were banned from the game',
+        disconnectReason: 'banned'
       })
       break
     }

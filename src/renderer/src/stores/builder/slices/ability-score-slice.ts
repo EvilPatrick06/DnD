@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand'
-import type { AbilityScoreSet, AbilityName } from '../../../types/character-common'
+import type { AbilityScoreSet } from '../../../types/character-common'
 import { ABILITY_NAMES } from '../../../types/character-common'
-import type { BuilderState, AbilityScoreSliceState } from '../types'
+import type { AbilityScoreSliceState, BuilderState } from '../types'
 import { DEFAULT_SCORES, POINT_BUY_START, roll4d6DropLowest } from '../types'
 
 export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], AbilityScoreSliceState> = (set, get) => ({
@@ -28,8 +28,12 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
         abilityScoreMethod: method,
         abilityScores: { ...DEFAULT_SCORES },
         standardArrayAssignments: {
-          strength: null, dexterity: null, constitution: null,
-          intelligence: null, wisdom: null, charisma: null
+          strength: null,
+          dexterity: null,
+          constitution: null,
+          intelligence: null,
+          wisdom: null,
+          charisma: null
         }
       })
     } else if (method === 'roll') {
@@ -47,8 +51,6 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
     }
   },
 
-  // BUG FIX: Standard array used POINT_BUY_START (all 8s) as base for unassigned abilities.
-  // Now uses 10 as the default for unassigned abilities.
   setStandardArrayAssignment: (ability, value) => {
     const assignments = { ...get().standardArrayAssignments }
     // Clear any ability that already has this value
@@ -61,8 +63,12 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
 
     // Build scores from assignments - unassigned abilities default to 10 (not 8)
     const scores: AbilityScoreSet = {
-      strength: 10, dexterity: 10, constitution: 10,
-      intelligence: 10, wisdom: 10, charisma: 10
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10
     }
     for (const ab of ABILITY_NAMES) {
       if (assignments[ab] !== null) scores[ab] = assignments[ab]!
@@ -93,14 +99,13 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
       newScores[ab] = Math.min(20, newScores[ab] + 1)
     }
 
-    const label = abilities.length === 1
-      ? `+2 ${abilities[0].slice(0, 3).toUpperCase()}`
-      : abilities.map((a) => `+1 ${a.slice(0, 3).toUpperCase()}`).join(', ')
+    const label =
+      abilities.length === 1
+        ? `+2 ${abilities[0].slice(0, 3).toUpperCase()}`
+        : abilities.map((a) => `+1 ${a.slice(0, 3).toUpperCase()}`).join(', ')
 
     const updatedSlots = buildSlots.map((slot) =>
-      slot.id === slotId
-        ? { ...slot, selectedId: 'confirmed', selectedName: label }
-        : slot
+      slot.id === slotId ? { ...slot, selectedId: 'confirmed', selectedName: label } : slot
     )
 
     set({
@@ -110,7 +115,6 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
       customModal: null,
       asiSelections: { ...asiSelections, [slotId]: abilities }
     })
-    // BUG FIX: replaced setTimeout with queueMicrotask to avoid race condition
     queueMicrotask(() => get().advanceToNextSlot())
   },
 
@@ -122,13 +126,11 @@ export const createAbilityScoreSlice: StateCreator<BuilderState, [], [], Ability
     // Reverse the boosts
     const newScores = { ...abilityScores }
     for (const ab of prevAbilities) {
-      newScores[ab] = Math.max(3, newScores[ab] - 1)
+      newScores[ab] = Math.max(1, newScores[ab] - 1)
     }
 
     const updatedSlots = buildSlots.map((slot) =>
-      slot.id === slotId
-        ? { ...slot, selectedId: null, selectedName: null }
-        : slot
+      slot.id === slotId ? { ...slot, selectedId: null, selectedName: null } : slot
     )
 
     const newAsi = { ...asiSelections }

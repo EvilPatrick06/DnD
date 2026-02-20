@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import DiceResult from './DiceResult'
+import { play, playDiceSound } from '../../services/sound-manager'
 import type { GameSystem } from '../../types/game-system'
+import DiceResult from './DiceResult'
 
 interface DiceRollerProps {
   system: GameSystem
@@ -16,9 +17,11 @@ interface RollResult {
   rollerName: string
   dieSides: number
   timestamp: number
+  isCritDamage?: boolean
 }
 
 const DICE = [
+  { sides: 3, label: 'd3' },
   { sides: 4, label: 'd4' },
   { sides: 6, label: 'd6' },
   { sides: 8, label: 'd8' },
@@ -28,9 +31,7 @@ const DICE = [
   { sides: 100, label: 'd100' }
 ]
 
-function parseDiceFormula(
-  formula: string
-): { count: number; sides: number; modifier: number } | null {
+function parseDiceFormula(formula: string): { count: number; sides: number; modifier: number } | null {
   const match = formula.trim().match(/^(\d*)d(\d+)([+-]\d+)?$/)
   if (!match) return null
   return {
@@ -43,26 +44,27 @@ function parseDiceFormula(
 function rollDice(count: number, sides: number): number[] {
   const results: number[] = []
   for (let i = 0; i < count; i++) {
-    results.push(Math.floor(Math.random() * sides) + 1)
+    if (sides === 3) {
+      // d3: roll d6, divide by 2, round up (PHB)
+      const d6 = Math.floor(Math.random() * 6) + 1
+      results.push(Math.ceil(d6 / 2))
+    } else {
+      results.push(Math.floor(Math.random() * sides) + 1)
+    }
   }
   return results
 }
 
-export default function DiceRoller({
-  system,
-  rollerName,
-  onRoll
-}: DiceRollerProps): JSX.Element {
+export default function DiceRoller({ system, rollerName, onRoll }: DiceRollerProps): JSX.Element {
   const [modifier, setModifier] = useState(0)
   const [customFormula, setCustomFormula] = useState('')
-  const [advantage, setAdvantage] = useState<'normal' | 'advantage' | 'disadvantage'>(
-    'normal'
-  )
+  const [advantage, setAdvantage] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')
   const [results, setResults] = useState<RollResult[]>([])
   const [animatingId, setAnimatingId] = useState<string | null>(null)
+  const [lastRollWasCrit, setLastRollWasCrit] = useState(false)
 
-  const addResult = (formula: string, rolls: number[], total: number, sides: number): void => {
-    const id = `roll-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  const addResult = (formula: string, rolls: number[], total: number, sides: number, isCritDamage = false): void => {
+    const id = `roll-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`
     const result: RollResult = {
       id,
       formula,
@@ -70,28 +72,43 @@ export default function DiceRoller({
       rolls,
       rollerName,
       dieSides: sides,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      isCritDamage
     }
     setResults((prev) => [result, ...prev].slice(0, 20))
     setAnimatingId(id)
     setTimeout(() => setAnimatingId(null), 500)
     onRoll?.({ formula, total, rolls })
+
+    // Sound effects
+    playDiceSound(sides)
+    if (sides === 20 && rolls.length === 1 && rolls[0] === 20) play('nat-20')
+    else if (sides === 20 && rolls.length === 1 && rolls[0] === 1) play('nat-1')
   }
 
   const handleQuickRoll = (sides: number): void => {
+    // If last roll was a crit and this is a damage die (not d20), double the dice
+    if (lastRollWasCrit && sides !== 20) {
+      const rolls = rollDice(2, sides) // Double dice for crit
+      const total = rolls.reduce((s, r) => s + r, 0) + modifier
+      const modStr = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : ''
+      addResult(`2d${sides}${modStr} (CRIT)`, rolls, total, sides, true)
+      setLastRollWasCrit(false)
+      return
+    }
+
     if (sides === 20 && system === 'dnd5e' && advantage !== 'normal') {
       // Roll with advantage/disadvantage
       const roll1 = rollDice(1, 20)
       const roll2 = rollDice(1, 20)
       const allRolls = [...roll1, ...roll2]
-      const chosen =
-        advantage === 'advantage'
-          ? Math.max(roll1[0], roll2[0])
-          : Math.min(roll1[0], roll2[0])
+      const chosen = advantage === 'advantage' ? Math.max(roll1[0], roll2[0]) : Math.min(roll1[0], roll2[0])
       const total = chosen + modifier
       const modStr = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : ''
       const advLabel = advantage === 'advantage' ? ' (Adv)' : ' (Dis)'
       addResult(`1d20${modStr}${advLabel}`, allRolls, total, sides)
+      // Check for crit on the chosen die
+      setLastRollWasCrit(chosen === 20)
       return
     }
 
@@ -99,17 +116,31 @@ export default function DiceRoller({
     const total = rolls[0] + modifier
     const modStr = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : ''
     addResult(`1d${sides}${modStr}`, rolls, total, sides)
+
+    // Track if this d20 was a natural 20
+    if (sides === 20) {
+      setLastRollWasCrit(rolls[0] === 20)
+    }
   }
 
   const handleCustomRoll = (): void => {
     const parsed = parseDiceFormula(customFormula)
     if (!parsed) return
 
-    const rolls = rollDice(parsed.count, parsed.sides)
+    // Double dice count if last roll was a crit and this isn't a d20 roll
+    const diceCount = lastRollWasCrit && parsed.sides !== 20 ? parsed.count * 2 : parsed.count
+    const isCritDamage = lastRollWasCrit && parsed.sides !== 20
+
+    const rolls = rollDice(diceCount, parsed.sides)
     const total = rolls.reduce((sum, r) => sum + r, 0) + parsed.modifier + modifier
     const modStr = modifier !== 0 ? (modifier > 0 ? `+${modifier}` : `${modifier}`) : ''
-    addResult(`${customFormula}${modStr}`, rolls, total, parsed.sides)
+    const critLabel = isCritDamage ? ' (CRIT)' : ''
+    const formulaDisplay = isCritDamage
+      ? `${diceCount}d${parsed.sides}${parsed.modifier ? (parsed.modifier > 0 ? `+${parsed.modifier}` : parsed.modifier) : ''}${modStr}${critLabel}`
+      : `${customFormula}${modStr}`
+    addResult(formulaDisplay, rolls, total, parsed.sides, isCritDamage)
     setCustomFormula('')
+    if (isCritDamage) setLastRollWasCrit(false)
   }
 
   return (
@@ -176,6 +207,19 @@ export default function DiceRoller({
         )}
       </div>
 
+      {/* Crit damage prompt */}
+      {lastRollWasCrit && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-900/40 border border-green-500/50 rounded-lg">
+          <span className="text-xs text-green-300 font-semibold">CRITICAL HIT! Next damage roll doubles dice.</span>
+          <button
+            onClick={() => setLastRollWasCrit(false)}
+            className="text-[10px] text-green-400 hover:text-green-200 cursor-pointer underline ml-auto"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Custom formula */}
       <div className="flex gap-1">
         <input
@@ -205,11 +249,7 @@ export default function DiceRoller({
           {results.map((result) => (
             <div
               key={result.id}
-              className={`transition-transform ${
-                animatingId === result.id
-                  ? 'animate-[scaleIn_0.3s_ease-out]'
-                  : ''
-              }`}
+              className={`transition-transform ${animatingId === result.id ? 'animate-[scaleIn_0.3s_ease-out]' : ''}`}
             >
               <DiceResult
                 formula={result.formula}
@@ -217,6 +257,7 @@ export default function DiceRoller({
                 total={result.total}
                 rollerName={result.rollerName}
                 dieSides={result.dieSides}
+                isCritDamage={result.isCritDamage}
               />
             </div>
           ))}
