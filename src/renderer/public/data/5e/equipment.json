@@ -1912,7 +1912,7 @@
       "weight": 0,
       "cost": "50 gp",
       "speed": "50 ft.",
-      "carryingCapacity": 480,
+      "carryingCapacity": 450,
       "description": "A hardy desert mount with good speed and solid carrying capacity."
     },
     {

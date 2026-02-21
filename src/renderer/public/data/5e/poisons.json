@@ -61,7 +61,7 @@
     "rarity": "very rare",
     "cost": "1500 gp",
     "saveDC": 17,
-    "effect": "A creature that ingests this poison suffers no effect until the stroke of midnight. At midnight, the creature must succeed on a DC 17 Constitution saving throw or take 9d6 Poison damage. On a success, it takes half damage.",
+    "effect": "A creature that ingests this poison suffers no effect until the stroke of midnight. Any effect that ends the Poisoned condition neutralizes this poison. If the poison hasn't been neutralized before midnight, the creature makes a DC 17 Constitution saving throw, taking 31 (9d6) Poison damage on a failed save or half as much damage on a successful one.",
     "duration": "Delayed until midnight",
     "description": "This tasteless, odorless poison takes effect at midnight, making it the favored tool of patient assassins."
   },
@@ -83,7 +83,7 @@
     "rarity": "rare",
     "cost": "250 gp",
     "saveDC": 16,
-    "effect": "The creature must succeed on a DC 16 Constitution saving throw or take 3 (1d6) Poison damage and become Poisoned. The Poisoned creature can't regain Hit Points while Poisoned in this way. The creature repeats the save every 24 hours, taking 3 (1d6) Poison damage on a failure. After seven successful saves, the poison ends.",
+    "effect": "The creature must succeed on a DC 16 Constitution saving throw or take 3 (1d6) Poison damage and have the Poisoned condition. The Poisoned creature repeats the save every 24 hours, taking 3 (1d6) Poison damage on a failed save. The damage the poison deals can't be healed by any means while the creature remains Poisoned. After seven successful saves against the poison, the creature is no longer Poisoned.",
     "duration": "Until 7 successful saves",
     "description": "A slow-acting poison that gradually weakens the victim over days."
   },
@@ -106,7 +106,7 @@
     "cost": "200 gp",
     "saveDC": 11,
     "duration": "Instantaneous",
-    "effect": "The creature must succeed on a DC 11 Constitution saving throw, taking 3d6 Poison damage on a failure or half on a success.",
+    "effect": "The creature must succeed on a DC 11 Constitution saving throw, taking 10 (3d6) Poison damage on a failed save or half as much damage on a successful one.",
     "description": "Venom harvested from a poisonous serpent, typically applied to weapons."
   },
   {
@@ -148,9 +148,9 @@
     "type": "injury",
     "rarity": "uncommon",
     "cost": "200 gp",
-    "saveDC": 15,
+    "saveDC": 13,
     "duration": "1 hour",
-    "effect": "The creature must succeed on a DC 15 Constitution saving throw or become Poisoned for 1 hour. If the saving throw fails by 5 or more, the creature also has the Unconscious condition while Poisoned in this way. The creature wakes up if it takes damage or if another creature takes an action to shake it awake.",
+    "effect": "The creature must succeed on a DC 13 Constitution saving throw or have the Poisoned condition for 1 hour. If the creature fails the save by 5 or more, the creature also has the Unconscious condition while Poisoned in this way. The creature wakes up if it takes damage or if another creature takes an action to shake it awake.",
     "description": "This poison is typically made only by the drow, and only in a place far from sunlight."
   },
   {

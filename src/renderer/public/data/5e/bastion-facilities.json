@@ -46,44 +46,36 @@
       "enlargeable": false,
       "hirelingCount": 1,
       "orders": [
-        "craft",
-        "research"
+        "craft"
       ],
       "allowMultiple": false,
       "charm": {
         "name": "Arcane Study Charm",
-        "description": "You can cast Identify without expending a spell slot or using Material components. Once you use this charm, it vanishes.",
+        "description": "After spending a Long Rest in your Bastion, you gain a Charm that lasts for 7 days. It allows you to cast Identify without expending a spell slot or using Material components. You can't gain this Charm again while you still have it.",
         "duration": "7 days"
       },
       "orderOptions": [
         {
           "order": "craft",
           "name": "Craft: Arcane Focus",
-          "description": "Craft an Arcane Focus (such as a crystal, orb, rod, staff, or wand).",
+          "description": "Commission the hireling to craft an Arcane Focus. The work takes 7 days and costs no money.",
           "daysRequired": 7,
           "cost": 0
         },
         {
           "order": "craft",
           "name": "Craft: Book",
-          "description": "Craft a blank book suitable for use as a spellbook or journal.",
+          "description": "Commission the hireling to craft a blank book.",
           "daysRequired": 7,
           "cost": 10
         },
         {
           "order": "craft",
           "name": "Craft: Magic Item (Arcana)",
-          "description": "Craft a Common or Uncommon magic item chosen from the Arcana tables. Requires character level 9+.",
+          "description": "Commission the hireling to craft a Common or Uncommon magic item from the Arcana tables in ch. 7. The facility has the required tool and the hireling has proficiency. Requires level 9+. If the item lets its user cast spells, you must craft it yourself with all those spells prepared.",
           "daysRequired": 14,
           "cost": 100,
           "levelRequired": 9
-        },
-        {
-          "order": "research",
-          "name": "Research: Arcane Lore",
-          "description": "Research an arcane topic. The hireling provides an answer to one question about a spell, magic item, or arcane phenomenon.",
-          "daysRequired": 7,
-          "cost": 0
         }
       ]
     },
@@ -101,21 +93,14 @@
         "trade"
       ],
       "allowMultiple": false,
-      "permanentBenefit": "While the Armory is stocked, the bastion's defenders have Advantage on attack rolls during bastion events. Restocking after an attack costs 100 GP.",
+      "permanentBenefit": "While the Armory is stocked, when any event causes you to roll dice to determine if your Bastion loses defenders, roll 1d8 in place of each 1d6 you would normally roll. When the event is over, the Armory is depleted regardless of outcome.",
       "orderOptions": [
         {
           "order": "trade",
-          "name": "Trade: Buy Weapons/Armor",
-          "description": "Purchase weapons or armor at standard prices through the hireling's contacts.",
+          "name": "Trade: Stock Armory",
+          "description": "Commission the hireling to stock the Armory with armor, shields, weapons, and ammunition. Costs 100 GP plus an extra 100 GP for each Bastion Defender. If your Bastion has a Smithy, the total cost is halved.",
           "daysRequired": 7,
-          "cost": 0
-        },
-        {
-          "order": "trade",
-          "name": "Trade: Sell Weapons/Armor",
-          "description": "Sell weapons or armor for half their listed price.",
-          "daysRequired": 7,
-          "cost": 0
+          "cost": 100
         }
       ]
     },
@@ -168,28 +153,28 @@
         {
           "order": "harvest",
           "name": "Harvest: Decorative",
-          "description": "Harvest decorative flowers and plants worth 1d4 x 10 GP.",
+          "description": "Harvest ten exquisite floral bouquets (worth 5 GP each), ten vials of Perfume, or ten Candles.",
           "daysRequired": 7,
           "cost": 0
         },
         {
           "order": "harvest",
           "name": "Harvest: Food",
-          "description": "Harvest food sufficient to feed 20 people for 7 days.",
+          "description": "Harvest 100 days worth of Rations.",
           "daysRequired": 7,
           "cost": 0
         },
         {
           "order": "harvest",
           "name": "Harvest: Herb",
-          "description": "Harvest 1d4 Healer's Kits worth of medicinal herbs (no cost).",
+          "description": "Harvest herbs used to create either ten Healer's Kits or one Potion of Healing.",
           "daysRequired": 7,
           "cost": 0
         },
         {
           "order": "harvest",
           "name": "Harvest: Poison",
-          "description": "Harvest 1d4 doses of Basic Poison (no cost).",
+          "description": "Harvest plants used to create either two vials of Antitoxin or one vial of Basic Poison.",
           "daysRequired": 7,
           "cost": 0
         }
@@ -274,7 +259,7 @@
     {
       "type": "smithy",
       "name": "Smithy",
-      "description": "A forge for crafting weapons, armor, and metal goods. The ring of hammer on anvil fills this hot, smoky facility.",
+      "description": "This Smithy contains a forge, an anvil, and other tools needed to craft weapons, armor, and other equipment.",
       "level": 5,
       "setting": "core",
       "prerequisite": {
@@ -282,35 +267,28 @@
         "description": "None"
       },
       "defaultSpace": "roomy",
-      "enlargeable": true,
+      "enlargeable": false,
       "hirelingCount": 2,
       "orders": [
-        "craft",
-        "trade"
+        "craft"
       ],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
         {
           "order": "craft",
-          "name": "Craft: Weapon",
-          "description": "Craft any nonmagical weapon at half the normal cost.",
+          "name": "Craft: Smith's Tools",
+          "description": "The hirelings craft anything that can be made with Smith's Tools, using the rules in the Player's Handbook.",
           "daysRequired": 7,
           "cost": -1
         },
         {
           "order": "craft",
-          "name": "Craft: Armor/Shield",
-          "description": "Craft any nonmagical armor or shield at half the normal cost.",
+          "name": "Craft: Magic Item (Armament)",
+          "description": "Commission the hirelings to craft a Common or Uncommon magic item from the Armaments tables in ch. 7. The facility has the required tool and hirelings have proficiency. Requires level 9+. If the item lets its user cast spells, you must craft it yourself with all those spells prepared.",
           "daysRequired": 14,
-          "cost": -1
-        },
-        {
-          "order": "trade",
-          "name": "Trade: Repair Equipment",
-          "description": "Repair damaged weapons or armor for free.",
-          "daysRequired": 7,
-          "cost": 0
+          "cost": 100,
+          "levelRequired": 9
         }
       ]
     },
@@ -1249,7 +1227,7 @@
     {
       "type": "war-room",
       "name": "War Room",
-      "description": "A strategic command center with maps, tactical resources, and communication equipment. The war room coordinates bastion defense and military operations.",
+      "description": "The War Room is where you plan military actions in consultation with loyal lieutenants, each one a battle-hardened Veteran Warrior whose alignment matches yours. You start with two lieutenants. Lieutenants are hirelings, not Bastion Defenders; however, if your Bastion is attacked, each lieutenant housed in your Bastion reduces by 1 the number of dice rolled to determine Bastion Defender losses.",
       "level": 17,
       "setting": "core",
       "prerequisite": {
@@ -1266,18 +1244,18 @@
       "charm": null,
       "orderOptions": [
         {
-          "order": "research",
-          "name": "Research: Intelligence Gathering",
-          "description": "Gather intelligence on a region or enemy. Learn detailed information about military forces, defenses, or movements.",
+          "order": "recruit",
+          "name": "Recruit: Lieutenant",
+          "description": "Gain one new lieutenant. You can have up to ten lieutenants at any time.",
           "daysRequired": 7,
-          "cost": 100
+          "cost": 0
         },
         {
-          "order": "empower",
-          "name": "Empower: Tactical Advantage",
-          "description": "Plan a tactical operation. Choose up to 6 allies; for the next 7 days, they cannot be surprised.",
+          "order": "recruit",
+          "name": "Recruit: Soldiers",
+          "description": "Commission one or more lieutenants to assemble a small army. Each lieutenant can muster 100 Guards in 7 days (or 20 mounted on Riding Horses). It costs 1 GP per day to feed each guard and horse. The army must be led by you or a lieutenant, or it disbands. It also disbands if unfed for 1 day.",
           "daysRequired": 7,
-          "cost": 50
+          "cost": -1
         }
       ]
     },

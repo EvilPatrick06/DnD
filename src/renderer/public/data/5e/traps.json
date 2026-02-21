@@ -7,11 +7,9 @@
     "duration": "Instantaneous",
     "detection": "DC 15 Intelligence (Investigation) to spot the pit lid",
     "disarm": "Wedge Iron Spike under lid or use Arcane Lock",
-    "effect": "The creature falls 10 feet into the pit, taking 3 (1d6) Bludgeoning damage and landing Prone.",
+    "effect": "The lid swings open like a trapdoor, causing the creature to fall 10 feet into the pit, taking 3 (1d6) Bludgeoning damage from the fall.",
     "damage": "3 (1d6) Bludgeoning",
-    "saveDC": 15,
-    "saveAbility": "DEX",
-    "description": "A simple concealed pit, 10 feet deep. A creature that succeeds on a DC 15 Dexterity saving throw grabs the edge and avoids falling in.",
+    "description": "A 10-foot-deep pit with a hinged lid constructed from material identical to the surrounding floor. When a creature moves onto the lid, it swings open and the creature falls in.",
     "scaling": {
       "5-10": {
         "depth": 30,
@@ -34,12 +32,10 @@
     "trigger": "A creature steps on a concealed trapdoor covering a spiked pit.",
     "duration": "Instantaneous",
     "detection": "DC 15 Intelligence (Investigation) to spot the trapdoor",
-    "disarm": "DC 10 Dexterity (Thieves' Tools) to jam the trapdoor shut",
-    "effect": "The creature falls 10 feet into a pit lined with iron spikes, taking 11 (2d10) Bludgeoning damage from the fall plus 5 (1d10) Piercing damage from the spikes.",
-    "damage": "11 (2d10) Bludgeoning + 5 (1d10) Piercing",
-    "saveDC": 15,
-    "saveAbility": "DEX",
-    "description": "A concealed pit, 10 feet deep, with iron spikes at the bottom. A DC 15 Dexterity saving throw avoids the fall.",
+    "disarm": "Wedge an Iron Spike or similar object under the lid, or use Arcane Lock to hold it shut",
+    "effect": "The creature falls 10 feet into a pit lined with sharpened wooden or metal spikes, taking 3 (1d6) Bludgeoning damage from the fall plus 9 (2d8) Piercing damage from the spikes.",
+    "damage": "3 (1d6) Bludgeoning + 9 (2d8) Piercing",
+    "description": "A 10-foot-deep pit with a hinged lid and sharpened spikes at the bottom. When a creature moves onto the lid, it swings open and the creature falls in.",
     "scaling": {
       "5-10": {
         "depth": 30,
@@ -61,10 +57,10 @@
     "level": "deadly",
     "trigger": "Stepping on a pressure plate or pulling a tripwire fires darts from hidden launchers.",
     "duration": "Instantaneous",
-    "detection": "DC 15 Wisdom (Perception) to spot the trigger; DC 15 Intelligence (Investigation) to find the dart launcher",
-    "disarm": "DC 15 Dexterity (Thieves' Tools) to disable the trigger or block the launcher",
-    "effect": "Each creature in the trap's area must succeed on a DC 13 Dexterity saving throw or be struck by 1d4 darts, each dealing 3 (1d6) Poison damage.",
-    "damage": "1d4 x 3 (1d6) Poison",
+    "detection": "DC 15 Wisdom (Perception) to spot the dart launcher holes; DC 15 Wisdom (Perception) to detect the pressure plate",
+    "disarm": "Plug all holes with wax, cloth, or detritus to prevent darts from firing; wedge an Iron Spike under the pressure plate to prevent triggering",
+    "effect": "Each creature in the darts' path must succeed on a DC 13 Dexterity saving throw or be struck by 1d3 darts, taking 3 (1d6) Poison damage per dart.",
+    "damage": "1d3 x 3 (1d6) Poison",
     "saveDC": 13,
     "saveAbility": "DEX",
     "description": "Hidden launchers fire poisoned darts when triggered. Creatures must make a DEX save or be struck.",
@@ -86,12 +82,12 @@
     "level": "nuisance",
     "trigger": "A tripwire stretched across a hallway releases a heavy net from above.",
     "duration": "Until the net is destroyed or creatures escape",
-    "detection": "DC 11 Wisdom (Perception) to spot the trip wire",
-    "disarm": "DC 15 Dexterity (Thieves' Tools) to cut the tripwire safely",
-    "effect": "A 10-foot-square net falls on creatures in the area. Each creature is Restrained. A creature can use its action to make a DC 10 Strength check, freeing itself or another creature on a success. The net has AC 10, 20 HP.",
+    "detection": "DC 11 Wisdom (Perception) to spot the trip wire and the suspended net",
+    "disarm": "Once detected, the trip wire can be easily cut or avoided (no ability check required)",
+    "effect": "A 10-foot-square Net falls on creatures in the area. The target must succeed on a DC 10 Dexterity saving throw or have the Restrained condition until it escapes (Huge or larger creatures succeed automatically). A creature can use its action to make a DC 10 Strength (Athletics) check, freeing itself or another creature within reach on a success.",
     "saveDC": 10,
-    "saveAbility": "STR",
-    "description": "A concealed net drops on creatures below when a tripwire is triggered. Creatures in the area are Restrained until they escape.",
+    "saveAbility": "DEX",
+    "description": "A concealed weighted net drops on creatures below when a tripwire is triggered. Creatures in the area must save or be Restrained until they escape.",
     "scaling": {
       "5-10": {
         "escapeDC": 12
@@ -119,17 +115,14 @@
     "description": "A stone statue with a dragon or demonic visage breathes fire when a pressure plate is triggered.",
     "scaling": {
       "5-10": {
-        "saveDC": 17,
         "damage": "22 (4d10) Fire",
         "cone": "30-foot"
       },
       "11-16": {
-        "saveDC": 19,
         "damage": "55 (10d10) Fire",
         "cone": "60-foot"
       },
       "17-20": {
-        "saveDC": 21,
         "damage": "99 (18d10) Fire",
         "cone": "120-foot"
       }
@@ -141,25 +134,25 @@
     "level": "nuisance",
     "trigger": "A creature attempts to pick or open a lock without first disabling the hidden needle.",
     "duration": "Instantaneous",
-    "detection": "DC 15 Wisdom (Perception) to spot the needle mechanism",
-    "disarm": "DC 15 Dexterity (Sleight of Hand) to remove the needle before picking the lock",
-    "effect": "A spring-loaded needle jabs the creature. 1 Piercing damage, and the creature must succeed on a DC 11 Constitution saving throw or take 5 (1d10) Poison damage and have the Poisoned condition for 1 hour.",
-    "damage": "1 Piercing + 5 (1d10) Poison",
+    "detection": "DC 15 Wisdom (Perception) to spot the needle in the lock",
+    "disarm": "DC 15 Dexterity (Sleight of Hand) to disarm the needle once detected; on a failed check, the trap triggers. A Knock spell or similar magic opens the lock without triggering the trap.",
+    "effect": "A spring-loaded needle jabs the creature. The creature must succeed on a DC 11 Constitution saving throw or take 5 (1d10) Poison damage and have the Poisoned condition for 1 hour. On a successful save, the creature takes half as much damage only.",
+    "damage": "5 (1d10) Poison",
     "saveDC": 11,
     "saveAbility": "CON",
     "description": "A poisoned needle hidden inside a lock stabs anyone who tries to pick or open the lock without first disabling it.",
     "scaling": {
       "5-10": {
         "saveDC": 13,
-        "damage": "1 Piercing + 11 (2d10) Poison"
+        "damage": "11 (2d10) Poison"
       },
       "11-16": {
         "saveDC": 15,
-        "damage": "1 Piercing + 22 (4d10) Poison"
+        "damage": "22 (4d10) Poison"
       },
       "17-20": {
         "saveDC": 17,
-        "damage": "1 Piercing + 55 (10d10) Poison"
+        "damage": "55 (10d10) Poison"
       }
     }
   },
@@ -194,16 +187,16 @@
   {
     "id": "rolling-stone",
     "name": "Rolling Stone",
-    "level": "deadly",
-    "trigger": "Opening a door, stepping on a pressure plate, or removing an object releases a massive stone sphere that rolls down a corridor.",
-    "duration": "Until the stone reaches the end of the corridor or is stopped",
-    "detection": "DC 15 Wisdom (Perception) to spot the trigger; DC 20 Intelligence (Investigation) to notice the stone alcove",
-    "disarm": "DC 20 Dexterity (Thieves' Tools) to disable the release mechanism; DC 20 Strength (Athletics) to jam the stone",
-    "effect": "A 5-foot-radius stone sphere rolls on Initiative 10, moving 60 feet per turn. Any creature in the sphere's space must succeed on a DC 15 Dexterity saving throw or take 5 (1d10) Bludgeoning damage. The sphere can move through creatures' spaces and continues until it hits a wall or falls into a pit.",
-    "damage": "5 (1d10) Bludgeoning per round",
+    "level": "deadly (levels 11-16) / nuisance (levels 17-20)",
+    "trigger": "A creature moves onto a hidden pressure plate.",
+    "duration": "Until the stone stops rolling",
+    "detection": "DC 15 Intelligence (Investigation) to deduce the pressure plate's function",
+    "disarm": "Wedge an Iron Spike or similar object under the pressure plate; DC 20 Strength (Athletics) to slow the stone (reduces movement by 15 ft per success)",
+    "effect": "A 5-foot-radius orb of solid stone is released and rolls Initiative with a +8 bonus. On its turn, the stone moves 60 feet in one direction. Whenever the stone enters a creature's space for the first time on a turn or a creature enters the stone's space, that creature must succeed on a DC 15 Dexterity saving throw or take 55 (10d10) Bludgeoning damage and have the Prone condition. The stone has AC 17, HP 100, Damage Threshold 10, and Immunity to Poison and Psychic damage.",
+    "damage": "55 (10d10) Bludgeoning",
     "saveDC": 15,
     "saveAbility": "DEX",
-    "description": "A massive stone sphere rolls down a corridor, crushing anything in its path. The sphere acts on Initiative 10."
+    "description": "A massive stone sphere is released and rolls down a corridor, crushing anything in its path."
   },
   {
     "id": "crossbow-trap",

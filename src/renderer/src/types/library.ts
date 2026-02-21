@@ -15,7 +15,6 @@ export type LibraryCategory =
   | 'backgrounds'
   | 'feats'
   | 'supernatural-gifts'
-  | 'equipment'
   | 'magic-items'
   | 'weapons'
   | 'armor'
@@ -38,6 +37,11 @@ export type LibraryCategory =
   | 'treasure-tables'
   | 'random-tables'
   | 'chase-tables'
+  | 'conditions'
+  | 'weapon-mastery'
+  | 'languages'
+  | 'skills'
+  | 'fighting-styles'
   | 'sounds'
 
 export type LibraryGroup =
@@ -46,6 +50,7 @@ export type LibraryGroup =
   | 'spellbook'
   | 'character-options'
   | 'equipment-items'
+  | 'rules-reference'
   | 'world-building'
   | 'tables-encounters'
   | 'media'
@@ -120,7 +125,9 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
       { id: 'species', label: 'Species', group: 'character-options', source: 'mixed', icon: '🧝' },
       { id: 'backgrounds', label: 'Backgrounds', group: 'character-options', source: 'mixed', icon: '📖' },
       { id: 'feats', label: 'Feats', group: 'character-options', source: 'mixed', icon: '💪' },
-      { id: 'supernatural-gifts', label: 'Supernatural Gifts', group: 'character-options', source: 'mixed', icon: '🌟' }
+      { id: 'supernatural-gifts', label: 'Supernatural Gifts', group: 'character-options', source: 'mixed', icon: '🌟' },
+      { id: 'class-features', label: 'Class Features', group: 'character-options', source: 'static', icon: '📋' },
+      { id: 'fighting-styles', label: 'Fighting Styles', group: 'character-options', source: 'static', icon: '🤺' }
     ]
   },
   {
@@ -136,6 +143,16 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
       { id: 'mounts', label: 'Mounts', group: 'equipment-items', source: 'mixed', icon: '🐴' },
       { id: 'siege-equipment', label: 'Siege Equipment', group: 'equipment-items', source: 'mixed', icon: '💣' },
       { id: 'trinkets', label: 'Trinkets', group: 'equipment-items', source: 'mixed', icon: '📿' }
+    ]
+  },
+  {
+    id: 'rules-reference',
+    label: 'Rules Reference',
+    categories: [
+      { id: 'conditions', label: 'Conditions', group: 'rules-reference', source: 'static', icon: '🩹' },
+      { id: 'weapon-mastery', label: 'Weapon Mastery', group: 'rules-reference', source: 'static', icon: '⚔️' },
+      { id: 'languages', label: 'Languages', group: 'rules-reference', source: 'static', icon: '🗣️' },
+      { id: 'skills', label: 'Skills', group: 'rules-reference', source: 'static', icon: '🎯' }
     ]
   },
   {

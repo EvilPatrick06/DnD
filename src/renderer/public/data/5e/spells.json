@@ -2888,7 +2888,7 @@
     "duration": "Instantaneous",
     "concentration": false,
     "ritual": true,
-    "components": "V, S, M (burning incense worth 10+ GP)",
+    "components": "V, S, M (burning incense worth 10+ GP, which the spell consumes)",
     "description": "You gain the service of a familiar, a spirit that takes an animal form you choose. The familiar acts independently of you, but it always obeys your commands. In combat, it rolls its own initiative and acts on its own turn. A familiar can't attack, but it can take other actions as normal. When the familiar drops to 0 hit points, it disappears.",
     "classes": [
       "wizard"
@@ -6485,7 +6485,7 @@
     "name": "Shield",
     "level": 1,
     "school": "Abjuration",
-    "castingTime": "1 reaction",
+    "castingTime": "1 reaction, which you take when you are hit by an attack roll or targeted by the Magic Missile spell",
     "range": "Self",
     "duration": "1 round",
     "concentration": false,
@@ -7592,7 +7592,7 @@
     "level": 1,
     "school": "Evocation",
     "castingTime": "1 action",
-    "range": "Self (15-foot cube)",
+    "range": "Self",
     "duration": "Instantaneous",
     "concentration": false,
     "ritual": false,
