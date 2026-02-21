@@ -2,13 +2,13 @@
   {
     "id": "brown-mold",
     "name": "Brown Mold",
-    "level": "low",
+    "level": "Deadly (Levels 5-10) / Nuisance (Levels 11-16)",
     "type": "biological",
-    "effect": "Brown mold feeds on warmth, drawing heat from anything around it. A creature that starts its turn within 5 feet of the mold must make a DC 12 Constitution saving throw, taking 4d10 Cold damage on a failure or half on a success.",
-    "damage": "4d10 Cold",
+    "effect": "Brown mold feeds on warmth, drawing heat from anything around it. When a creature enters a space within 5 feet of the mold for the first time on a turn or starts its turn there, the creature makes a DC 12 Constitution saving throw, taking 22 (4d10) Cold damage on a failed save or half as much on a successful one.",
+    "damage": "22 (4d10) Cold",
     "saveDC": 12,
     "saveAbility": "CON",
-    "avoidance": "Fire damage causes the mold to instantly expand, doubling its covered area. Cold damage destroys a 10-foot-square patch of it instantly.",
+    "avoidance": "Brown mold has Immunity to Fire damage. Any source of fire brought within 5 feet causes it to expand, creating a new 10-foot-square patch. A patch exposed to any amount of Cold damage is destroyed instantly.",
     "description": "Brown mold covers a 10-foot-square patch and drains heat from the surrounding area. Fire makes it grow; cold destroys it."
   },
   {
@@ -16,8 +16,8 @@
     "name": "Green Slime",
     "level": "low",
     "type": "biological",
-    "effect": "Green slime clings to ceilings and drops onto creatures below. A creature subjected to the slime takes 1d10 Acid damage at the start of each of its turns until the slime is scraped off (requiring an action) or destroyed. Against wood or metal, green slime deals 2d10 Acid damage each round and can eat through 2 inches of wood or ½ inch of metal in 1 round.",
-    "damage": "1d10 Acid per turn (creature), 2d10 Acid per round (wood/metal)",
+    "effect": "Green slime clings to walls, floors, and ceilings. It has Blindsight 30 ft and drops when it detects movement below. A creature that comes in contact with green slime takes 5 (1d10) Acid damage. The creature takes the damage again at the start of each of its turns until the slime is scraped off (requiring an action) or destroyed. Against wood or metal, green slime deals 11 (2d10) Acid damage each round, and any nonmagical wood or metal item used to scrape off the slime is destroyed.",
+    "damage": "5 (1d10) Acid per turn (creature), 11 (2d10) Acid per round (wood/metal)",
     "avoidance": "A DC 10 Dexterity saving throw avoids the initial drop. Direct sunlight or any amount of Cold, Fire, or Radiant damage destroys a patch of green slime.",
     "saveDC": 10,
     "saveAbility": "DEX",
@@ -52,11 +52,16 @@
     "name": "Quicksand Pit",
     "level": "low",
     "type": "environmental",
-    "effect": "A creature that enters the quicksand sinks 1d4 + 1 feet and is Restrained. At the start of each of its turns, it sinks another 1d4 feet. A creature completely submerged begins suffocating. A creature can escape with a DC 10 Strength (Athletics) check.",
-    "saveDC": 10,
+    "effect": "A creature that enters the area sinks 1d4 + 1 feet into the quicksand and has the Restrained condition. At the start of each of the creature's turns, it sinks another 1d4 feet. As long as the creature isn't completely submerged, it can take an action to try to escape with a Strength (Athletics) check (DC 10 plus the number of feet the creature has sunk). A creature completely submerged has Total Cover, the Blinded condition, and risks suffocation. A creature can pull another creature within reach out by succeeding on a Strength (Athletics) check (DC 5 plus the number of feet the target has sunk).",
+    "saveDC": "10 + feet sunk",
     "saveAbility": "STR",
     "avoidance": "DC 10 Wisdom (Survival) to spot quicksand before entering it.",
-    "description": "An area of loose, wet sand that sucks creatures down. Struggling makes it worse unless the creature moves slowly and deliberately."
+    "scaling": {
+      "5-10": { "depth": 15, "sinkRate": "1d6 feet" },
+      "11-16": { "depth": 20, "sinkRate": "1d8 feet" },
+      "17-20": { "depth": 30, "sinkRate": "1d10 feet" }
+    },
+    "description": "A 10-foot-deep quicksand pit covering a 10-foot square. Escape DC increases the deeper a creature sinks."
   },
   {
     "id": "fireball-fungus",
@@ -85,8 +90,8 @@
     "name": "River Styx",
     "level": "high",
     "type": "magical",
-    "effect": "A creature that drinks from the Styx, enters the river, or starts its turn in the river makes a DC 20 Intelligence saving throw. On a failed save, the creature takes 19 (8d12) Psychic damage and can't cast spells or take the Magic action for 30 days. An affected creature can drink from and swim in the Styx without additional effects. The effect can be ended only by Greater Restoration, Heal, or Wish. If not ended after 30 days, the effect becomes permanent and the creature loses all its memories.",
-    "damage": "19 (8d12) Psychic",
+    "effect": "A creature that drinks from the Styx, enters the river, or starts its turn in the river makes a DC 20 Intelligence saving throw. On a failed save, the creature takes 19 (3d12) Psychic damage and can't cast spells or take the Magic action for 30 days. An affected creature can drink from and swim in the Styx without additional effects. The effect can be ended only by Greater Restoration, Heal, or Wish. If not ended after 30 days, the effect becomes permanent and the creature loses all its memories.",
+    "damage": "19 (3d12) Psychic",
     "saveDC": 20,
     "saveAbility": "INT",
     "avoidance": "Not touching or drinking the water. Certain Fiends are immune. Water taken from the Styx loses potency after 24 hours.",
@@ -158,8 +163,8 @@
     "effect": "A creature that enters the area of webs or starts its turn there is Restrained. A Restrained creature can use its action to make a DC 12 Strength (Athletics) or Dexterity (Acrobatics) check, breaking free on a success.",
     "saveDC": 12,
     "saveAbility": "STR",
-    "avoidance": "Fire destroys a 5-foot cube of webs in 1 round. Webs are Difficult Terrain.",
-    "description": "Giant spider webs fill a passage or chamber, catching creatures that wander in."
+    "avoidance": "Each 10-foot Cube of webs has AC 10, HP 15, Vulnerability to Fire damage, and Immunity to Piercing, Poison, and Psychic damage. Web-filled areas are Difficult Terrain.",
+    "description": "Giant spiders weave thick, sticky webs across passages and at the bottom of pits to snare prey."
   },
   {
     "id": "frigid-water",

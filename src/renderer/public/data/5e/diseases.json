@@ -8,9 +8,9 @@
     "saveAbility": "CON",
     "incubation": "1d4 days",
     "symptoms": "Random fits of uncontrollable laughter that incapacitate the infected creature",
-    "effect": "After the incubation period, the infected creature gains 1 level of Exhaustion. While Exhausted, any event that causes the infected creature great stress—including entering combat, taking damage, experiencing fear, or having a nightmare—forces the creature to make a DC 13 Constitution saving throw. On a failed save, the creature takes 5 (1d10) Psychic damage and is Incapacitated with mad laughter for 1 minute. The creature can repeat the saving throw at the end of each of its turns, ending the mad laughter on a success. Any Humanoid creature that starts its turn within a 10-foot Emanation of an infected creature in the throes of mad laughter must succeed on a DC 10 Constitution saving throw or also become infected with the disease.",
-    "mechanicalEffect": "1 Exhaustion level gained. Stress triggers DC 13 CON save or 1d10 Psychic damage + Incapacitated (mad laughter) for 1 minute. Contagious: DC 10 CON within 10-ft Emanation.",
-    "cure": "The infected creature must succeed on three DC 13 Constitution saving throws, one at the end of each Long Rest, to recover from the disease. Each success reduces Exhaustion by 1; cured when Exhaustion drops below 1. A Greater Restoration spell or similar magic also cures the disease.",
+    "effect": "After the incubation period, the infected creature gains 1 level of Exhaustion, which lasts until the contagion ends. While the creature has the Exhaustion condition, it makes a DC 13 Constitution saving throw each time it takes damage other than Psychic damage. On a failed save, the creature takes 5 (1d10) Psychic damage and has the Incapacitated condition as it laughs uncontrollably. At the end of each of its turns, the creature repeats the save, ending the effect on itself on a success. After 1 minute, it succeeds automatically. Any Humanoid (other than a gnome) that starts its turn within a 10-foot Emanation of an infected creature in the throes of mad laughter must succeed on a DC 10 Constitution saving throw or also become infected. On a successful save, the Humanoid can't catch the contagion from that infected creature for the next 24 hours.",
+    "mechanicalEffect": "1 Exhaustion level gained. Taking damage (other than Psychic) triggers DC 13 CON save or 1d10 Psychic damage + Incapacitated (mad laughter) for up to 1 minute. Contagious: DC 10 CON within 10-ft Emanation.",
+    "cure": "At the end of each Long Rest, the infected creature makes a DC 13 Constitution saving throw. After the creature succeeds on three of these saves, the contagion ends on it, and the creature is immune to Cackle Fever for 1 year.",
     "description": "This disease targets humanoids, although gnomes are strangely immune. While in the grips of this disease, victims frequently succumb to fits of mad laughter, giving the disease its common name and its morbid nickname: 'the shrieks.'"
   },
   {
@@ -22,9 +22,9 @@
     "saveAbility": "CON",
     "incubation": "1d4 days",
     "symptoms": "Fatigue, cramps, and exhaustion; the infected creature recovers poorly from rest",
-    "effect": "After the incubation period, the infected creature gains one level of exhaustion, and it regains only half the normal number of hit points from spending Hit Dice and no hit points from finishing a long rest. At the end of each long rest, an infected creature must make a DC 11 Constitution saving throw. On a failed save, the character gains one level of exhaustion. On a successful save, the character's exhaustion level decreases by one level. If a successful saving throw reduces the infected creature's level of exhaustion below 1, the creature recovers from the disease.",
-    "mechanicalEffect": "Gains 1 exhaustion level. Regains only half HP from Hit Dice, no HP from long rest. Failed saves add exhaustion; 3 successful saves cure.",
-    "cure": "Succeed on three DC 11 Constitution saving throws at the end of long rests (each success reduces exhaustion by 1; cured when exhaustion drops below 1). A lesser restoration spell or similar magic also cures the disease.",
+    "effect": "After the incubation period, the infected creature gains 1 level of Exhaustion. While the creature has any Exhaustion levels, it regains only half the normal number of Hit Points from spending Hit Point Dice. While the creature has any Exhaustion levels, finishing a Long Rest neither restores lost Hit Points nor reduces the creature's Exhaustion level. Daily at dawn, an infected creature makes a DC 11 Constitution saving throw. On a failed save, the creature gains 1 Exhaustion level as its fatigue worsens. On a successful save, the creature's Exhaustion level decreases by 1. If the creature's Exhaustion level is reduced to 0, the contagion ends on the creature.",
+    "mechanicalEffect": "Gains 1 Exhaustion level. Regains only half HP from Hit Dice. Long Rests don't restore HP or reduce Exhaustion. Daily at dawn: DC 11 CON save—fail adds Exhaustion, success reduces by 1. Cured when Exhaustion reaches 0.",
+    "cure": "Daily at dawn, the creature makes a DC 11 Constitution saving throw. Successes reduce Exhaustion by 1; the contagion ends when Exhaustion reaches 0. Failed saves add Exhaustion.",
     "description": "Sewer plague is a generic term for a broad category of illnesses that incubate in sewers, refuse heaps, and stagnant swamps, and which are sometimes transmitted by creatures that dwell in those areas, such as rats and otyughs."
   },
   {
@@ -36,9 +36,9 @@
     "saveAbility": "CON",
     "incubation": "Immediate",
     "symptoms": "Immediate blindness upon infection",
-    "effect": "Any Beast or Humanoid that drinks water tainted by Sight Rot must succeed on a DC 15 Constitution saving throw or have the Blinded condition until the contagion ends. A Lesser Restoration spell or similar magic ends the contagion on the target.",
-    "mechanicalEffect": "DC 15 CON save or Blinded until cured",
-    "cure": "A Lesser Restoration spell or similar magic ends the contagion. Applying an ointment crafted with an Herbalism Kit to the eyes before finishing a Long Rest also ends the contagion (requires 3 separate applications over 3 Long Rests).",
+    "effect": "Any Beast or Humanoid that drinks water tainted by Sight Rot must succeed on a DC 15 Constitution saving throw or have the Blinded condition until the contagion ends. Any Humanoid that makes skin contact with an infected creature must succeed on a DC 15 Constitution saving throw or also become infected. On a successful save, the Humanoid can't catch the contagion from that infected creature for the next 24 hours.",
+    "mechanicalEffect": "DC 15 CON save or Blinded until cured. Contagious via skin contact (DC 15 CON).",
+    "cure": "Magic such as a Heal or Lesser Restoration spell ends the contagion immediately. A character proficient with an Herbalism Kit can create one dose of nonmagical ointment (takes 1 hour). When applied to the eyes, the ointment suppresses the contagion for 24 hours. If suppressed for a total of 72 hours (three doses and applications), the contagion ends.",
     "description": "This painful infection causes bleeding from the eyes and immediately blinds the victim. A Beast or Humanoid that drinks water tainted by Sight Rot must succeed on a DC 15 Constitution saving throw or become infected."
   },
   {

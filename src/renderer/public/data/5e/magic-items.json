@@ -338,7 +338,7 @@
     "type": "wondrous",
     "attunement": false,
     "cost": "400 gp",
-    "description": "This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet.",
+    "description": "This bag has an interior space considerably larger than its outside dimensions — roughly 2 feet square and 4 feet deep on the inside. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 5 pounds, regardless of its contents.",
     "treasureTheme": "Implements"
   },
   {

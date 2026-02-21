@@ -595,7 +595,7 @@
     "prerequisites": [
       "Strength or Dexterity 13 or higher"
     ],
-    "description": "You have trained extensively with pole weapons, gaining the following benefits:\n- Ability Score Increase. Increase your Strength or Dexterity score by 1, to a maximum of 20.\n- Pole Strike. When you take the Attack action and attack with a Quarterstaff, a Spear, or a weapon that has the Heavy and Reach properties, you can use a Bonus Action to make a melee attack with the opposite end of the weapon. This attack uses the same ability modifier as the primary attack. The weapon's damage die for this attack is a d4, and it deals Bludgeoning damage.\n- Reactive Strike. While you are holding a Quarterstaff, a Spear, or a weapon that has the Heavy and Reach properties, you can use your Reaction to make one melee attack against a creature that enters the reach you have with that weapon.",
+    "description": "You have trained extensively with pole weapons, gaining the following benefits:\n- Ability Score Increase. Increase your Dexterity or Strength score by 1, to a maximum of 20.\n- Pole Strike. Immediately after you take the Attack action and attack with a Quarterstaff, a Spear, or a weapon that has the Heavy and Reach properties, you can use a Bonus Action to make a melee attack with the opposite end of the weapon. The weapon deals Bludgeoning damage, and the weapon's damage die for this attack is a d4.\n- Reactive Strike. While you're holding a Quarterstaff, a Spear, or a weapon that has the Heavy and Reach properties, you can take a Reaction to make one melee attack against a creature that enters the reach you have with that weapon.",
     "abilityScoreIncrease": {
       "options": [
         "Strength",
@@ -701,7 +701,7 @@
     "prerequisites": [
       "Dexterity 13 or higher"
     ],
-    "description": "You can make shots that others find impossible, gaining the following benefits:\n- Ability Score Increase. Increase your Dexterity score by 1, to a maximum of 20.\n- Bypass Cover. Your ranged weapon attack rolls ignore Half Cover and Three-Quarters Cover.\n- Firing in Melee. Being within 5 feet of an enemy doesn't impose Disadvantage on your ranged attack rolls.\n- Long-Range Shooting. Attacking at Long Range doesn't impose Disadvantage on your ranged weapon attack rolls.",
+    "description": "You can make shots that others find impossible, gaining the following benefits:\n- Ability Score Increase. Increase your Dexterity score by 1, to a maximum of 20.\n- Bypass Cover. Your ranged attacks with weapons ignore Half Cover and Three-Quarters Cover.\n- Firing in Melee. Being within 5 feet of an enemy doesn't impose Disadvantage on your attack rolls with Ranged weapons.\n- Long Shots. Attacking at long range doesn't impose Disadvantage on your attack rolls with Ranged weapons.",
     "abilityScoreIncrease": {
       "options": [
         "Dexterity"
@@ -1049,6 +1049,28 @@
     "level": 1,
     "prerequisites": ["Fighting Style Feature"],
     "description": "When you hit with your Unarmed Strike and deal damage, you can deal Bludgeoning damage equal to 1d6 + your Strength modifier instead of the normal damage of an Unarmed Strike. If you aren't wielding any weapons or a Shield when you make the attack roll, the d6 becomes a d8. At the start of each of your turns, you can deal 1d4 Bludgeoning damage to one creature Grappled by you.",
+    "abilityScoreIncrease": null,
+    "source": "2024 PHB"
+  },
+  {
+    "id": "fighting-style-blessed-warrior",
+    "name": "Fighting Style: Blessed Warrior",
+    "category": "Fighting Style",
+    "level": 1,
+    "prerequisites": ["Fighting Style Feature"],
+    "classRestriction": ["Paladin"],
+    "description": "You learn two Cleric cantrips of your choice (Light and Sacred Flame are recommended). The chosen cantrips count as Paladin spells for you, and Charisma is your spellcasting ability for them. Whenever you gain a Paladin level, you can replace one of these cantrips with another Cleric cantrip.",
+    "abilityScoreIncrease": null,
+    "source": "2024 PHB"
+  },
+  {
+    "id": "fighting-style-druidic-warrior",
+    "name": "Fighting Style: Druidic Warrior",
+    "category": "Fighting Style",
+    "level": 1,
+    "prerequisites": ["Fighting Style Feature"],
+    "classRestriction": ["Ranger"],
+    "description": "You learn two Druid cantrips of your choice (Guidance and Starry Wisp are recommended). The chosen cantrips count as Ranger spells for you, and Wisdom is your spellcasting ability for them. Whenever you gain a Ranger level, you can replace one of these cantrips with another Druid cantrip.",
     "abilityScoreIncrease": null,
     "source": "2024 PHB"
   },

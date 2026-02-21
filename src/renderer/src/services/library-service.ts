@@ -2,6 +2,7 @@ import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/libra
 import {
   load5eBackgrounds,
   load5eChaseTables,
+  load5eClassFeatures,
   load5eClasses,
   load5eCrafting,
   load5eCreatures,
@@ -56,7 +57,6 @@ function summarizeItem(item: Record<string, unknown>, category: LibraryCategory)
       return `${item.category ?? ''} - AC ${item.ac ?? '?'}`
     case 'magic-items':
       return `${item.rarity ?? ''} ${item.type ?? ''} ${item.attunement ? '(attunement)' : ''}`
-    case 'equipment':
     case 'gear':
       return `${item.cost ?? ''} - ${item.weight ?? '?'} lb.`
     case 'traps':
@@ -89,6 +89,18 @@ function summarizeItem(item: Record<string, unknown>, category: LibraryCategory)
       return `${item.difficulty ?? ''} - ${item.minLevel ?? '?'}-${item.maxLevel ?? '?'}`
     case 'crafting':
       return `${item.toolType ?? ''}`
+    case 'conditions':
+      return `${item.type ?? ''} - ${((item.description as string) ?? '').slice(0, 60)}`
+    case 'weapon-mastery':
+      return ((item.description as string) ?? '').slice(0, 80)
+    case 'languages':
+      return `${item.type ?? ''} - Script: ${item.script ?? 'None'}`
+    case 'skills':
+      return `${item.ability ?? ''} - ${((item.description as string) ?? '').slice(0, 60)}`
+    case 'fighting-styles':
+      return ((item.description as string) ?? '').slice(0, 80)
+    case 'class-features':
+      return `Level ${item.level ?? '?'} - ${((item.description as string) ?? '').slice(0, 60)}`
     default:
       return (item.description as string)?.slice(0, 80) ?? ''
   }
@@ -320,6 +332,36 @@ export async function loadCategoryItems(
       const data = await loadJson<Record<string, unknown>[]>('./data/5e/sounds.json')
       return toLibraryItems(data, category)
     }
+    case 'conditions': {
+      const data = await loadJson<Record<string, unknown>[]>('./data/5e/conditions.json')
+      return [...toLibraryItems(data, category), ...hbItems]
+    }
+    case 'weapon-mastery': {
+      const data = await loadJson<Record<string, unknown>[]>('./data/5e/weapon-mastery.json')
+      return [...toLibraryItems(data, category), ...hbItems]
+    }
+    case 'languages': {
+      const data = await loadJson<Record<string, unknown>[]>('./data/5e/languages.json')
+      return [...toLibraryItems(data, category), ...hbItems]
+    }
+    case 'skills': {
+      const data = await loadJson<Record<string, unknown>[]>('./data/5e/skills.json')
+      return [...toLibraryItems(data, category), ...hbItems]
+    }
+    case 'fighting-styles': {
+      const data = await loadJson<Record<string, unknown>[]>('./data/5e/fighting-styles.json')
+      return [...toLibraryItems(data, category), ...hbItems]
+    }
+    case 'class-features': {
+      const cfData = await load5eClassFeatures()
+      const items: Record<string, unknown>[] = []
+      for (const [className, classData] of Object.entries(cfData)) {
+        for (const feat of (classData as Record<string, unknown>).features as { level: number; name: string; description: string }[]) {
+          items.push({ id: `${className}-${feat.name}-${feat.level}`, name: feat.name, level: feat.level, description: feat.description, class: className })
+        }
+      }
+      return [...toLibraryItems(items, category), ...hbItems]
+    }
     default:
       return hbItems
   }
@@ -335,7 +377,8 @@ export async function searchAllCategories(
   const allCategories: LibraryCategory[] = [
     'monsters', 'creatures', 'npcs', 'spells', 'classes', 'subclasses',
     'species', 'backgrounds', 'feats', 'weapons', 'armor', 'magic-items',
-    'traps', 'poisons', 'diseases', 'curses'
+    'traps', 'poisons', 'diseases', 'curses', 'conditions', 'weapon-mastery',
+    'languages', 'skills', 'fighting-styles', 'class-features'
   ]
 
   const results = await Promise.allSettled(

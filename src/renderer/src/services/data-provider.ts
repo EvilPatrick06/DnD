@@ -33,31 +33,9 @@ import type {
 import type { GameSystem } from '../types/game-system'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { MonsterStatBlock } from '../types/monster'
-
-const MAX_CACHE_ENTRIES = 50
-const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
-
-interface CacheEntry {
-  data: unknown
-  timestamp: number
-}
-
-const cache = new Map<string, CacheEntry>()
-
-function evictIfNeeded(): void {
-  if (cache.size < MAX_CACHE_ENTRIES) return
-  const oldest = cache.keys().next().value
-  if (oldest !== undefined) cache.delete(oldest)
-}
-
-function isExpired(entry: CacheEntry): boolean {
-  return Date.now() - entry.timestamp > CACHE_TTL_MS
-}
+import { useDataStore } from '../stores/useDataStore'
 
 export async function loadJson<T>(path: string): Promise<T> {
-  const cached = cache.get(path)
-  if (cached && !isExpired(cached)) return cached.data as T
-
   const res = await fetch(path)
   if (!res.ok) {
     throw new Error(`Failed to load ${path}: ${res.status} ${res.statusText}`)
@@ -68,14 +46,12 @@ export async function loadJson<T>(path: string): Promise<T> {
   } catch (e) {
     throw new Error(`Failed to parse JSON from ${path}: ${e}`)
   }
-  evictIfNeeded()
-  cache.set(path, { data, timestamp: Date.now() })
   return data
 }
 
 /** Invalidate all cached data (force re-fetch on next access). */
 export function clearDataCache(): void {
-  cache.clear()
+  useDataStore.getState().clearAll()
 }
 
 // === 5e Transformers ===
@@ -358,92 +334,90 @@ export async function getOptionsForSlot(
   return []
 }
 
-// Expose raw data loaders for the stat calculator and save flow
+// All named loaders go through the centralized DataStore for caching + homebrew merge
+const ds = () => useDataStore.getState()
+
 export async function load5eSpecies(): Promise<SpeciesData[]> {
-  return loadJson<SpeciesData[]>('./data/5e/species.json')
+  return ds().get('species', () => loadJson<SpeciesData[]>('./data/5e/species.json'))
 }
 
 export async function load5eClasses(): Promise<ClassData[]> {
-  return loadJson<ClassData[]>('./data/5e/classes.json')
+  return ds().get('classes', () => loadJson<ClassData[]>('./data/5e/classes.json'))
 }
 
 export async function load5eBackgrounds(): Promise<BackgroundData[]> {
-  return loadJson<BackgroundData[]>('./data/5e/backgrounds.json')
+  return ds().get('backgrounds', () => loadJson<BackgroundData[]>('./data/5e/backgrounds.json'))
 }
 
 export async function load5eSubclasses(): Promise<SubclassData[]> {
-  return loadJson<SubclassData[]>('./data/5e/subclasses.json')
+  return ds().get('subclasses', () => loadJson<SubclassData[]>('./data/5e/subclasses.json'))
 }
 
 export async function load5eFeats(category?: string): Promise<FeatData[]> {
-  const feats = await loadJson<FeatData[]>('./data/5e/feats.json')
-  if (category) {
-    return feats.filter((f) => f.category === category)
-  }
+  const feats = await ds().get('feats', () => loadJson<FeatData[]>('./data/5e/feats.json'))
+  if (category) return feats.filter((f) => f.category === category)
   return feats
 }
 
 export async function load5eSpells(): Promise<SpellData[]> {
-  return loadJson<SpellData[]>('./data/5e/spells.json')
+  return ds().get('spells', () => loadJson<SpellData[]>('./data/5e/spells.json'))
 }
 
 export async function load5eClassFeatures(): Promise<ClassFeaturesFile> {
-  return loadJson<ClassFeaturesFile>('./data/5e/class-features.json')
+  return ds().get('classFeatures', () => loadJson<ClassFeaturesFile>('./data/5e/class-features.json'))
 }
 
 export async function load5eEquipment(): Promise<EquipmentFile> {
-  return loadJson<EquipmentFile>('./data/5e/equipment.json')
+  return ds().get('equipment', () => loadJson<EquipmentFile>('./data/5e/equipment.json'))
 }
 
 export async function load5eCrafting(): Promise<CraftingToolEntry[]> {
-  return loadJson<CraftingToolEntry[]>('./data/5e/crafting.json')
+  return ds().get('crafting', () => loadJson<CraftingToolEntry[]>('./data/5e/crafting.json'))
 }
 
 export async function load5eDiseases(): Promise<DiseaseData[]> {
-  return loadJson<DiseaseData[]>('./data/5e/diseases.json')
+  return ds().get('diseases', () => loadJson<DiseaseData[]>('./data/5e/diseases.json'))
 }
 
 export async function load5eEncounterBudgets(): Promise<EncounterBudgetsFile> {
-  return loadJson<EncounterBudgetsFile>('./data/5e/encounter-budgets.json')
+  return ds().get('encounterBudgets', () => loadJson<EncounterBudgetsFile>('./data/5e/encounter-budgets.json'))
 }
 
 export async function load5eTreasureTables(): Promise<TreasureTablesFile> {
-  return loadJson<TreasureTablesFile>('./data/5e/treasure-tables.json')
+  return ds().get('treasureTables', () => loadJson<TreasureTablesFile>('./data/5e/treasure-tables.json'))
 }
 
 export async function load5eRandomTables(): Promise<RandomTablesFile> {
-  return loadJson<RandomTablesFile>('./data/5e/random-tables.json')
+  return ds().get('randomTables', () => loadJson<RandomTablesFile>('./data/5e/random-tables.json'))
 }
 
 export async function load5eChaseTables(): Promise<ChaseTablesFile> {
-  return loadJson<ChaseTablesFile>('./data/5e/chase-tables.json')
+  return ds().get('chaseTables', () => loadJson<ChaseTablesFile>('./data/5e/chase-tables.json'))
 }
 
 export async function load5eEncounterPresets(): Promise<EncounterPreset[]> {
-  return loadJson<EncounterPreset[]>('./data/5e/encounter-presets.json')
+  return ds().get('encounterPresets', () => loadJson<EncounterPreset[]>('./data/5e/encounter-presets.json'))
 }
 
 export async function load5eNpcNames(): Promise<NpcNamesFile> {
-  return loadJson<NpcNamesFile>('./data/5e/npc-names.json')
+  return ds().get('npcNames', () => loadJson<NpcNamesFile>('./data/5e/npc-names.json'))
 }
 
 export async function load5eInvocations(): Promise<InvocationData[]> {
-  return loadJson<InvocationData[]>('./data/5e/invocations.json')
+  return ds().get('invocations', () => loadJson<InvocationData[]>('./data/5e/invocations.json'))
 }
 
 export async function load5eMetamagic(): Promise<MetamagicData[]> {
-  return loadJson<MetamagicData[]>('./data/5e/metamagic.json')
+  return ds().get('metamagic', () => loadJson<MetamagicData[]>('./data/5e/metamagic.json'))
 }
 
 export async function load5eBastionFacilities(): Promise<import('../types/bastion').BastionFacilitiesData> {
-  return loadJson<import('../types/bastion').BastionFacilitiesData>('./data/5e/bastion-facilities.json')
+  return ds().get('bastionFacilities', () => loadJson<import('../types/bastion').BastionFacilitiesData>('./data/5e/bastion-facilities.json'))
 }
 
 export async function load5eMagicItems(rarity?: string): Promise<MagicItemData[]> {
-  const items = await loadJson<MagicItemData[]>('./data/5e/magic-items.json')
-  if (rarity) {
-    return items.filter((item) => item.rarity === rarity)
-  }
+  const items = await ds().get('magicItems', () => loadJson<MagicItemData[]>('./data/5e/magic-items.json'))
+  if (rarity) return items.filter((item) => item.rarity === rarity)
   return items
 }
 
@@ -476,12 +450,12 @@ export async function getHeritageOptions5e(speciesId: string): Promise<Selectabl
 // === Monster Data ===
 
 export async function load5eMonsters(): Promise<MonsterStatBlock[]> {
-  return loadJson<MonsterStatBlock[]>('./data/5e/monsters.json')
+  return ds().get('monsters', () => loadJson<MonsterStatBlock[]>('./data/5e/monsters.json'))
 }
 
 export async function load5eMonsterById(id: string): Promise<MonsterStatBlock | undefined> {
-  const monsters = await load5eMonsters()
-  return monsters.find((m) => m.id === id)
+  const all = await loadAllStatBlocks()
+  return all.find((m) => m.id === id)
 }
 
 export function searchMonsters(monsters: MonsterStatBlock[], query: string): MonsterStatBlock[] {
@@ -500,11 +474,11 @@ export function searchMonsters(monsters: MonsterStatBlock[], query: string): Mon
 // === NPC & Creature Data ===
 
 export async function load5eNpcs(): Promise<MonsterStatBlock[]> {
-  return loadJson<MonsterStatBlock[]>('./data/5e/npcs.json')
+  return ds().get('npcs', () => loadJson<MonsterStatBlock[]>('./data/5e/npcs.json'))
 }
 
 export async function load5eCreatures(): Promise<MonsterStatBlock[]> {
-  return loadJson<MonsterStatBlock[]>('./data/5e/creatures.json')
+  return ds().get('creatures', () => loadJson<MonsterStatBlock[]>('./data/5e/creatures.json'))
 }
 
 export async function loadAllStatBlocks(): Promise<MonsterStatBlock[]> {
@@ -520,46 +494,50 @@ export async function loadStatBlockById(id: string): Promise<MonsterStatBlock | 
 // === DM Toolbox Data ===
 
 export async function load5eTraps(): Promise<Trap[]> {
-  return loadJson<Trap[]>('./data/5e/traps.json')
+  return ds().get('traps', () => loadJson<Trap[]>('./data/5e/traps.json'))
 }
 
 export async function load5eHazards(): Promise<Hazard[]> {
-  return loadJson<Hazard[]>('./data/5e/hazards.json')
+  return ds().get('hazards', () => loadJson<Hazard[]>('./data/5e/hazards.json'))
 }
 
 export async function load5ePoisons(): Promise<Poison[]> {
-  return loadJson<Poison[]>('./data/5e/poisons.json')
+  return ds().get('poisons', () => loadJson<Poison[]>('./data/5e/poisons.json'))
 }
 
 export async function load5eEnvironmentalEffects(): Promise<EnvironmentalEffect[]> {
-  return loadJson<EnvironmentalEffect[]>('./data/5e/environmental-effects.json')
+  return ds().get('environmentalEffects', () => loadJson<EnvironmentalEffect[]>('./data/5e/environmental-effects.json'))
 }
 
 export async function load5eCurses(): Promise<Curse[]> {
-  return loadJson<Curse[]>('./data/5e/curses.json')
+  return ds().get('curses', () => loadJson<Curse[]>('./data/5e/curses.json'))
 }
 
 export async function load5eSupernaturalGifts(): Promise<SupernaturalGift[]> {
-  return loadJson<SupernaturalGift[]>('./data/5e/supernatural-gifts.json')
+  return ds().get('supernaturalGifts', () => loadJson<SupernaturalGift[]>('./data/5e/supernatural-gifts.json'))
 }
 
 export async function load5eSiegeEquipment(): Promise<SiegeEquipment[]> {
-  return loadJson<SiegeEquipment[]>('./data/5e/siege-equipment.json')
+  return ds().get('siegeEquipment', () => loadJson<SiegeEquipment[]>('./data/5e/siege-equipment.json'))
 }
 
-export async function load5eSettlements(): Promise<
-  import('../types/dm-toolbox').Settlement[]
-> {
-  const file = await loadJson<{ sizes: import('../types/dm-toolbox').Settlement[] }>('./data/5e/settlements.json')
-  return file.sizes
+export async function load5eSettlements(): Promise<import('../types/dm-toolbox').Settlement[]> {
+  return ds().get('settlements', async () => {
+    const file = await loadJson<{ sizes: import('../types/dm-toolbox').Settlement[] }>('./data/5e/settlements.json')
+    return file.sizes
+  })
 }
 
 export async function load5eMounts(): Promise<import('../types/mount').MountStatBlock[]> {
-  const file = await loadJson<{ mounts: import('../types/mount').MountStatBlock[] }>('./data/5e/mounts.json')
-  return file.mounts
+  return ds().get('mounts', async () => {
+    const file = await loadJson<{ mounts: import('../types/mount').MountStatBlock[] }>('./data/5e/mounts.json')
+    return file.mounts
+  })
 }
 
 export async function load5eVehicles(): Promise<import('../types/mount').VehicleStatBlock[]> {
-  const file = await loadJson<{ vehicles: import('../types/mount').VehicleStatBlock[] }>('./data/5e/mounts.json')
-  return file.vehicles
+  return ds().get('vehicles', async () => {
+    const file = await loadJson<{ vehicles: import('../types/mount').VehicleStatBlock[] }>('./data/5e/mounts.json')
+    return file.vehicles
+  })
 }
