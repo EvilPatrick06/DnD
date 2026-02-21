@@ -1,43 +1,17 @@
-export const NPC_HEIGHTS = ['Short', 'Average', 'Tall', 'Very Tall'] as const
+import { load5eNpcAppearance } from '../services/data-provider'
 
-export const NPC_BUILDS = ['Thin', 'Average', 'Stocky', 'Muscular', 'Heavyset'] as const
+export const NPC_HEIGHTS: readonly string[] = []
+export const NPC_BUILDS: readonly string[] = []
+export const NPC_HAIR_COLORS: readonly string[] = []
+export const NPC_HAIR_STYLES: readonly string[] = []
+export const NPC_DISTINGUISHING_FEATURES: readonly string[] = []
+export const NPC_CLOTHING_STYLES: readonly string[] = []
 
-export const NPC_HAIR_COLORS = ['Black', 'Brown', 'Blonde', 'Red', 'Gray', 'White', 'Auburn'] as const
-
-export const NPC_HAIR_STYLES = [
-  'Bald',
-  'Short',
-  'Medium',
-  'Long',
-  'Braided',
-  'Mohawk',
-  'Ponytail',
-  'Shaved sides'
-] as const
-
-export const NPC_DISTINGUISHING_FEATURES = [
-  'Scar across face',
-  'Tattoo on arm',
-  'Missing finger',
-  'Eyepatch',
-  'Birthmark on cheek',
-  'Gold tooth',
-  'Unusual eye color',
-  'Crooked nose',
-  'Burns on hands',
-  'Pointed ears (non-elf)',
-  'Extremely pale',
-  'Deeply tanned',
-  'Freckled'
-] as const
-
-export const NPC_CLOTHING_STYLES = [
-  'Ragged',
-  'Plain',
-  'Fine',
-  'Exotic',
-  'Armored',
-  'Robed',
-  'Layered',
-  'Uniform'
-] as const
+load5eNpcAppearance().then((data) => {
+  ;(NPC_HEIGHTS as string[]).push(...(data.heights ?? []))
+  ;(NPC_BUILDS as string[]).push(...(data.builds ?? []))
+  ;(NPC_HAIR_COLORS as string[]).push(...(data.hairColors ?? []))
+  ;(NPC_HAIR_STYLES as string[]).push(...(data.hairStyles ?? []))
+  ;(NPC_DISTINGUISHING_FEATURES as string[]).push(...(data.distinguishingFeatures ?? []))
+  ;(NPC_CLOTHING_STYLES as string[]).push(...(data.clothingStyles ?? []))
+}).catch(() => {})

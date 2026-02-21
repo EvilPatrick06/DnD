@@ -12,7 +12,8 @@ import type { InitiativeEntry } from '../types/game-state'
 import type { MapToken } from '../types/map'
 import type { MonsterStatBlock } from '../types/monster'
 import { getSizeTokenDimensions } from '../types/monster'
-import { play as playSound, type SoundEvent } from './sound-manager'
+import { play as playSound, playAmbient, stopAmbient, type AmbientSound, type SoundEvent } from './sound-manager'
+import type { Bastion } from '../types/bastion'
 
 interface DmAction {
   action: string
@@ -64,6 +65,18 @@ function resolveMapByName(
   const exact = maps.find((m) => m.name.toLowerCase() === name.toLowerCase())
   if (exact) return exact
   return maps.find((m) => m.name.toLowerCase().includes(name.toLowerCase()))
+}
+
+function findBastionByOwnerName(
+  bastions: Bastion[],
+  ownerName: string
+): Bastion | undefined {
+  // Match by bastion name or owner name (bastion name often includes character name)
+  return bastions.find(
+    (b) =>
+      b.name.toLowerCase().includes(ownerName.toLowerCase()) ||
+      b.ownerId.toLowerCase() === ownerName.toLowerCase()
+  )
 }
 
 function resolvePlayerByName(playerName: string): string | undefined {
@@ -871,6 +884,274 @@ function executeOne(
     case 'sound_effect': {
       const sound = action.sound as string
       if (sound) playSound(sound as SoundEvent)
+      return true
+    }
+
+    case 'play_ambient': {
+      const loop = action.loop as string
+      if (loop) playAmbient(loop as AmbientSound)
+      return true
+    }
+
+    case 'stop_ambient': {
+      stopAmbient()
+      return true
+    }
+
+    // ── Journal ──
+
+    case 'add_journal_entry': {
+      const content = action.content as string
+      if (!content) throw new Error('No content for journal entry')
+      const inGameTime = gameStore.inGameTime
+      gameStore.addLogEntry(content, inGameTime ? String(inGameTime.totalSeconds) : undefined)
+      return true
+    }
+
+    // ── Weather & Moon ──
+
+    case 'set_weather': {
+      const description = action.description as string
+      if (!description) throw new Error('Missing weather description')
+      gameStore.setWeatherOverride({
+        description,
+        temperature: action.temperature as number | undefined,
+        temperatureUnit: action.temperatureUnit as 'F' | 'C' | undefined,
+        windSpeed: action.windSpeed as string | undefined,
+        mechanicalEffects: action.mechanicalEffects as string[] | undefined
+      })
+      return true
+    }
+
+    case 'clear_weather': {
+      gameStore.setWeatherOverride(null)
+      return true
+    }
+
+    case 'set_moon': {
+      const phase = action.phase as string
+      if (!phase) throw new Error('Missing moon phase')
+      gameStore.setMoonOverride(phase)
+      return true
+    }
+
+    // ── XP & Level-Up ──
+
+    case 'award_xp': {
+      const characterNames = action.characterNames as string[]
+      const amount = action.amount as number
+      const reason = action.reason as string | undefined
+      if (!Array.isArray(characterNames) || characterNames.length === 0) throw new Error('No character names for award_xp')
+      if (typeof amount !== 'number' || amount <= 0) throw new Error('Invalid XP amount')
+
+      playSound('xp-gain')
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `${characterNames.join(', ')} gained ${amount} XP${reason ? ` (${reason})` : ''}!`
+      addChat({
+        id: `ai-xp-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      return true
+    }
+
+    case 'trigger_level_up': {
+      const characterName = action.characterName as string
+      if (!characterName) throw new Error('Missing character name for trigger_level_up')
+      playSound('level-up')
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `${characterName} has enough XP to level up! Open your character sheet to advance.`
+      addChat({
+        id: `ai-lvl-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      return true
+    }
+
+    // ── Bastion Management ──
+
+    case 'bastion_advance_time': {
+      const days = action.days as number
+      const ownerName = action.bastionOwner as string
+      if (typeof days !== 'number' || days <= 0) throw new Error('Invalid days for bastion_advance_time')
+
+      import('../stores/useBastionStore').then(({ useBastionStore }) => {
+        const bastionStore = useBastionStore.getState()
+        const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
+        if (bastion) bastionStore.advanceTime(bastion.id, days)
+      })
+      return true
+    }
+
+    case 'bastion_issue_order': {
+      const ownerName = action.bastionOwner as string
+      const facilityName = action.facilityName as string
+      const orderType = action.orderType as string
+      if (!ownerName || !facilityName || !orderType) throw new Error('Missing bastion order params')
+
+      import('../stores/useBastionStore').then(({ useBastionStore }) => {
+        const bastionStore = useBastionStore.getState()
+        const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
+        if (!bastion) return
+        const allFacilities = [...bastion.basicFacilities, ...bastion.specialFacilities]
+        const facility = allFacilities.find(
+          (f) => f.name.toLowerCase() === facilityName.toLowerCase()
+        )
+        if (!facility) return
+        bastionStore.issueOrder(
+          bastion.id,
+          bastion.turns.length > 0 ? bastion.turns[bastion.turns.length - 1].turnNumber : 1,
+          facility.id,
+          orderType as import('../types/bastion').BastionOrderType,
+          (action.details as string) || ''
+        )
+      })
+      return true
+    }
+
+    case 'bastion_deposit_gold': {
+      const ownerName = action.bastionOwner as string
+      const amount = action.amount as number
+      if (!ownerName || typeof amount !== 'number') throw new Error('Missing bastion deposit params')
+
+      import('../stores/useBastionStore').then(({ useBastionStore }) => {
+        const bastionStore = useBastionStore.getState()
+        const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
+        if (bastion) bastionStore.depositGold(bastion.id, amount)
+      })
+      return true
+    }
+
+    case 'bastion_withdraw_gold': {
+      const ownerName = action.bastionOwner as string
+      const amount = action.amount as number
+      if (!ownerName || typeof amount !== 'number') throw new Error('Missing bastion withdraw params')
+
+      import('../stores/useBastionStore').then(({ useBastionStore }) => {
+        const bastionStore = useBastionStore.getState()
+        const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
+        if (bastion) bastionStore.withdrawGold(bastion.id, amount)
+      })
+      return true
+    }
+
+    case 'bastion_resolve_event': {
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `Bastion event "${action.eventType}" resolved for ${action.bastionOwner}'s bastion.`
+      addChat({
+        id: `ai-bastion-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      return true
+    }
+
+    case 'bastion_recruit': {
+      const ownerName = action.bastionOwner as string
+      const facilityName = action.facilityName as string
+      const names = action.names as string[]
+      if (!ownerName || !facilityName || !Array.isArray(names)) throw new Error('Missing bastion recruit params')
+
+      import('../stores/useBastionStore').then(({ useBastionStore }) => {
+        const bastionStore = useBastionStore.getState()
+        const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
+        if (!bastion) return
+        const allFacilities = [...bastion.basicFacilities, ...bastion.specialFacilities]
+        const facility = allFacilities.find(
+          (f) => f.name.toLowerCase() === facilityName.toLowerCase()
+        )
+        if (!facility) return
+        bastionStore.recruitDefenders(bastion.id, facility.id, names)
+      })
+      return true
+    }
+
+    case 'bastion_add_creature': {
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `${action.creatureName} added to ${action.bastionOwner}'s ${action.facilityName}.`
+      addChat({
+        id: `ai-bastion-cr-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      return true
+    }
+
+    // ── Encounters ──
+
+    case 'load_encounter': {
+      const encounterName = action.encounterName as string
+      if (!encounterName) throw new Error('Missing encounter name')
+
+      const addChat = useLobbyStore.getState().addChatMessage
+      const sendMsg = useNetworkStore.getState().sendMessage
+      const msg = `Loading encounter: "${encounterName}"...`
+      addChat({
+        id: `ai-enc-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: 'ai-dm',
+        senderName: 'Dungeon Master',
+        content: msg,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      sendMsg('chat:message', { message: msg, isSystem: true })
+      return true
+    }
+
+    // ── NPC Attitude ──
+
+    case 'set_npc_attitude': {
+      const npcName = action.npcName as string
+      const attitude = action.attitude as 'friendly' | 'indifferent' | 'hostile'
+      if (!npcName || !attitude) throw new Error('Missing npcName or attitude')
+      if (!['friendly', 'indifferent', 'hostile'].includes(attitude)) throw new Error(`Invalid attitude: ${attitude}`)
+
+      // Find sidebar entry across all categories and update attitude
+      const categories: Array<'allies' | 'enemies' | 'places'> = ['allies', 'enemies', 'places']
+      let found = false
+      for (const cat of categories) {
+        const entries = gameStore[cat]
+        const entry = entries.find((e) => e.name.toLowerCase() === npcName.toLowerCase())
+        if (entry) {
+          gameStore.updateSidebarEntry(cat, entry.id, { attitude })
+          found = true
+          break
+        }
+      }
+
+      // If not found, add to allies/enemies based on attitude
+      if (!found) {
+        const category = attitude === 'hostile' ? 'enemies' : 'allies'
+        gameStore.addSidebarEntry(category, {
+          id: crypto.randomUUID(),
+          name: npcName,
+          description: action.reason as string | undefined,
+          attitude,
+          visibleToPlayers: true,
+          isAutoPopulated: false
+        })
+      }
       return true
     }
 

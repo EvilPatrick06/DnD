@@ -80,6 +80,41 @@ export type SoundEvent =
   | 'announcement'
   | 'ping'
   | 'condition-apply'
+  // Weapons
+  | 'weapon-sword'
+  | 'weapon-mace'
+  | 'weapon-bow'
+  | 'weapon-dagger'
+  | 'weapon-axe'
+  | 'weapon-staff'
+  | 'weapon-crossbow'
+  | 'weapon-hammer'
+  | 'weapon-spear'
+  | 'weapon-whip'
+  | 'weapon-shield-bash'
+  | 'weapon-flaming'
+  | 'weapon-frost'
+  | 'weapon-lightning'
+  | 'weapon-holy'
+  // Creatures
+  | 'creature-dragon'
+  | 'creature-wolf'
+  | 'creature-goblin'
+  | 'creature-undead'
+  | 'creature-giant'
+  | 'creature-snake'
+  | 'creature-bear'
+  | 'creature-demon'
+  | 'creature-ghost'
+  | 'creature-owl'
+  | 'creature-bat'
+  | 'creature-horse'
+  | 'creature-rat'
+  | 'creature-crow'
+  | 'creature-spider'
+  | 'creature-elemental'
+  | 'creature-troll'
+  | 'creature-ogre'
 
 export type AmbientSound =
   | 'ambient-tavern'
@@ -157,7 +192,42 @@ const SOUND_EVENTS: SoundEvent[] = [
   'death-save',
   'announcement',
   'ping',
-  'condition-apply'
+  'condition-apply',
+  // Weapons
+  'weapon-sword',
+  'weapon-mace',
+  'weapon-bow',
+  'weapon-dagger',
+  'weapon-axe',
+  'weapon-staff',
+  'weapon-crossbow',
+  'weapon-hammer',
+  'weapon-spear',
+  'weapon-whip',
+  'weapon-shield-bash',
+  'weapon-flaming',
+  'weapon-frost',
+  'weapon-lightning',
+  'weapon-holy',
+  // Creatures
+  'creature-dragon',
+  'creature-wolf',
+  'creature-goblin',
+  'creature-undead',
+  'creature-giant',
+  'creature-snake',
+  'creature-bear',
+  'creature-demon',
+  'creature-ghost',
+  'creature-owl',
+  'creature-bat',
+  'creature-horse',
+  'creature-rat',
+  'creature-crow',
+  'creature-spider',
+  'creature-elemental',
+  'creature-troll',
+  'creature-ogre'
 ]
 
 const POOL_SIZE = 3
@@ -173,6 +243,69 @@ const AMBIENT_EVENTS: AmbientSound[] = [
   'ambient-victory',
   'ambient-defeat'
 ]
+
+// --- Sound file path resolution ---
+// Files are organized into category subfolders with stripped prefixes:
+//   sounds/dice/d20.mp3, sounds/combat/attack-hit.mp3, sounds/ui/heal.mp3,
+//   sounds/weapons/melee/sword.mp3, sounds/creatures/beasts/wolf.mp3, etc.
+
+const COMBAT_EVENTS = new Set<string>([
+  'attack-hit', 'attack-miss', 'crit-hit', 'crit-miss', 'melee-attack',
+  'ranged-attack', 'damage', 'death', 'stabilize', 'instant-kill'
+])
+const UI_EVENTS = new Set<string>([
+  'initiative-start', 'turn-notify', 'round-end', 'level-up', 'xp-gain',
+  'short-rest', 'long-rest', 'shop-open', 'loot-found', 'door-open',
+  'trap-triggered', 'bastion-event', 'heal', 'death-save', 'announcement', 'ping'
+])
+
+const WEAPON_RANGED = new Set<string>(['weapon-bow', 'weapon-crossbow'])
+const WEAPON_MAGIC = new Set<string>(['weapon-flaming', 'weapon-frost', 'weapon-lightning', 'weapon-holy'])
+
+const CREATURE_BEASTS = new Set<string>([
+  'creature-wolf', 'creature-bear', 'creature-snake', 'creature-horse',
+  'creature-rat', 'creature-bat', 'creature-owl', 'creature-crow', 'creature-spider'
+])
+
+const STRIP_PREFIXES = ['creature-', 'spell-', 'condition-', 'dice-', 'weapon-', 'ambient-']
+
+function getSoundFolder(event: string): string {
+  if (event.startsWith('nat-')) return 'dice'
+  if (event === 'counterspell') return 'spells'
+  if (event.startsWith('weapon-')) {
+    if (WEAPON_RANGED.has(event)) return 'weapons/ranged'
+    if (WEAPON_MAGIC.has(event)) return 'weapons/magic'
+    return 'weapons/melee'
+  }
+  if (event.startsWith('creature-')) {
+    if (CREATURE_BEASTS.has(event)) return 'creatures/beasts'
+    return 'creatures/monsters'
+  }
+  if (event.startsWith('spell-')) return 'spells'
+  if (event.startsWith('condition-')) return 'conditions'
+  if (event.startsWith('dice-')) return 'dice'
+  if (event.startsWith('ambient-')) return 'ambient'
+  if (COMBAT_EVENTS.has(event)) return 'combat'
+  if (UI_EVENTS.has(event)) return 'ui'
+  return 'ui'
+}
+
+function getSoundFilename(event: string): string {
+  for (const prefix of STRIP_PREFIXES) {
+    if (event.startsWith(prefix)) return event.slice(prefix.length)
+  }
+  return event
+}
+
+/** Resolves the default bundled path for a sound event. */
+function getDefaultPath(event: string): string {
+  return `./sounds/${getSoundFolder(event)}/${getSoundFilename(event)}.mp3`
+}
+
+/** Resolves the variant path for a sound event at a given pool index. */
+function getVariantPath(event: string, index: number): string {
+  return `./sounds/${getSoundFolder(event)}/${getSoundFilename(event)}-${index + 1}.mp3`
+}
 
 // --- Module-level state ---
 
@@ -210,13 +343,20 @@ export function init(): void {
 
   for (const event of SOUND_EVENTS) {
     const customPath = customOverrides.get(event)
-    const path = customPath ?? `./sounds/${event}.mp3`
+    const basePath = customPath ?? getDefaultPath(event)
     const pool: HTMLAudioElement[] = []
 
     for (let i = 0; i < POOL_SIZE; i++) {
-      const audio = new Audio(path)
+      // Try variant file first (e.g. dice/d20-1.mp3), fall back to base file
+      const variantPath = customPath ? basePath : getVariantPath(event, i)
+      const audio = new Audio(variantPath)
       audio.preload = 'auto'
       audio.volume = muted ? 0 : volume
+      // Fallback: if variant doesn't exist, use base path
+      audio.addEventListener('error', () => {
+        audio.src = basePath
+        audio.load()
+      }, { once: true })
       pool.push(audio)
     }
 
@@ -349,7 +489,7 @@ export function playAmbient(ambient: AmbientSound): void {
   stopAmbient()
 
   const customPath = customOverrides.get(ambient)
-  const path = customPath ?? `./sounds/${ambient}.mp3`
+  const path = customPath ?? getDefaultPath(ambient)
   const audio = new Audio(path)
   audio.loop = true
   audio.volume = muted ? 0 : ambientVolume

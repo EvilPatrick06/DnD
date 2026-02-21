@@ -1,3 +1,4 @@
+import { load5eMonsters } from '../../services/data-provider'
 import { useGameStore } from '../../stores/useGameStore'
 import type { MapToken } from '../../types/map'
 import type { ChatCommand } from './types'
@@ -170,8 +171,7 @@ const summonCommand: ChatCommand = {
     const monsterName = nameParts.join(' ').toLowerCase()
 
     try {
-      const response = await fetch('/data/5e/monsters.json')
-      const monsters = await response.json()
+      const monsters = await load5eMonsters()
       const monster =
         monsters.find((m: { name: string }) => m.name.toLowerCase() === monsterName) ||
         monsters.find((m: { name: string }) => m.name.toLowerCase().startsWith(monsterName))

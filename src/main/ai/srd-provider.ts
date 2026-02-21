@@ -124,7 +124,7 @@ export function detectAndLoadSrdData(text: string): string {
   const parts: string[] = []
   const lower = text.toLowerCase()
 
-  const spells = loadJson<Record<string, unknown>>('spells.json')
+  const spells = loadJson<Record<string, unknown>>('spells/spells.json')
   for (const spell of spells) {
     const spellName = ((spell.name as string) || '').toLowerCase()
     if (spellName.length > 3 && lower.includes(spellName)) {
@@ -133,7 +133,7 @@ export function detectAndLoadSrdData(text: string): string {
     }
   }
 
-  const equipment = loadJson<Record<string, unknown>>('equipment.json')
+  const equipment = loadJson<Record<string, unknown>>('equipment/equipment.json')
   for (const item of equipment) {
     const itemName = ((item.name as string) || '').toLowerCase()
     if (itemName.length > 3 && lower.includes(itemName)) {
@@ -143,7 +143,7 @@ export function detectAndLoadSrdData(text: string): string {
   }
 
   // Monster/creature lookup
-  const monsters = loadJson<Record<string, unknown>>('monsters.json')
+  const monsters = loadJson<Record<string, unknown>>('creatures/monsters.json')
   for (const monster of monsters) {
     const monsterName = ((monster.name as string) || '').toLowerCase()
     if (monsterName.length > 3 && lower.includes(monsterName)) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { ConfirmDialog } from '../components/ui'
 import { addToast } from '../hooks/useToast'
 import { exportAllData, importAllData } from '../services/import-export'
+import { logger } from '../utils/logger'
 
 const FEATURES = [
   'Character Builder (D&D 5e 2024 PHB rules)',
@@ -65,7 +66,7 @@ export default function AboutPage(): JSX.Element {
     window.api
       .getVersion()
       .then(setAppVersion)
-      .catch(() => console.warn('[About] Failed to fetch app version'))
+      .catch(() => logger.warn('[About] Failed to fetch app version'))
     window.api.update.onStatus((status) => {
       if (status.state === 'not-available') setUpdateStatus('up-to-date')
       else if (status.state === 'available') {

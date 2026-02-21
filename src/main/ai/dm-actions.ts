@@ -149,6 +149,45 @@ export type DmAction =
   | { action: 'set_time'; hour?: number; minute?: number; totalSeconds?: number }
   | { action: 'share_time'; target?: 'all' | 'requester'; message?: string }
 
+  // Sound & Ambient
+  | { action: 'sound_effect'; sound: string }
+  | { action: 'play_ambient'; loop: string }
+  | { action: 'stop_ambient' }
+
+  // Journal
+  | { action: 'add_journal_entry'; content: string; label?: string }
+
+  // Weather & Moon
+  | {
+      action: 'set_weather'
+      description: string
+      temperature?: number
+      temperatureUnit?: 'F' | 'C'
+      windSpeed?: string
+      mechanicalEffects?: string[]
+    }
+  | { action: 'clear_weather' }
+  | { action: 'set_moon'; phase: string }
+
+  // XP & Leveling
+  | { action: 'award_xp'; characterNames: string[]; amount: number; reason?: string }
+  | { action: 'trigger_level_up'; characterName: string }
+
+  // Bastion Management
+  | { action: 'bastion_advance_time'; bastionOwner: string; days: number }
+  | { action: 'bastion_issue_order'; bastionOwner: string; facilityName: string; orderType: string; details?: string }
+  | { action: 'bastion_deposit_gold'; bastionOwner: string; amount: number }
+  | { action: 'bastion_withdraw_gold'; bastionOwner: string; amount: number }
+  | { action: 'bastion_resolve_event'; bastionOwner: string; eventType: string }
+  | { action: 'bastion_recruit'; bastionOwner: string; facilityName: string; names: string[] }
+  | { action: 'bastion_add_creature'; bastionOwner: string; facilityName: string; creatureName: string }
+
+  // Encounters
+  | { action: 'load_encounter'; encounterName: string }
+
+  // NPC Attitude
+  | { action: 'set_npc_attitude'; npcName: string; attitude: 'friendly' | 'indifferent' | 'hostile'; reason?: string }
+
 /** Extract DM actions JSON from AI response text. */
 export function parseDmActions(response: string): DmAction[] {
   const match = response.match(DM_ACTIONS_RE)

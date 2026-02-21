@@ -1,7 +1,10 @@
 import type { SpellcastingInfo5e } from '../types/character-5e'
 import type { AbilityName, AbilityScoreSet, SpellEntry } from '../types/character-common'
 import { abilityModifier } from '../types/character-common'
-import { load5eSpells } from './data-provider'
+import { load5eSpells, load5eSpellSlots } from './data-provider'
+
+// Module-level caches (populated from spell-slots.json)
+let _loaded = false
 
 // Spellcasting ability by class
 export const SPELLCASTING_ABILITY_MAP: Record<string, AbilityName> = {
@@ -21,6 +24,115 @@ const THIRD_CASTER_ABILITY_MAP: Record<string, AbilityName> = {
   'arcane-trickster': 'intelligence'
 }
 
+// Spell slot progression tables (loaded from JSON, initialized with defaults)
+export let WARLOCK_PACT_SLOTS: Record<number, Record<number, number>> = {
+  1: { 1: 1 }, 2: { 1: 2 }, 3: { 2: 2 }, 4: { 2: 2 }, 5: { 3: 2 },
+  6: { 3: 2 }, 7: { 4: 2 }, 8: { 4: 2 }, 9: { 5: 2 }, 10: { 5: 2 },
+  11: { 5: 3 }, 12: { 5: 3 }, 13: { 5: 3 }, 14: { 5: 3 }, 15: { 5: 3 },
+  16: { 5: 3 }, 17: { 5: 4 }, 18: { 5: 4 }, 19: { 5: 4 }, 20: { 5: 4 }
+}
+
+export let FULL_CASTER_SLOTS: Record<number, Record<number, number>> = {
+  1: { 1: 2 }, 2: { 1: 3 }, 3: { 1: 4, 2: 2 }, 4: { 1: 4, 2: 3 },
+  5: { 1: 4, 2: 3, 3: 2 }, 6: { 1: 4, 2: 3, 3: 3 },
+  7: { 1: 4, 2: 3, 3: 3, 4: 1 }, 8: { 1: 4, 2: 3, 3: 3, 4: 2 },
+  9: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 }, 10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 }, 12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 }, 14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 }, 16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 }, 18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
+  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 }, 20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }
+}
+
+// Cantrips known for 5e casters
+export let CANTRIPS_KNOWN: Record<string, Record<number, number>> = {
+  bard: { 1: 2, 4: 3, 10: 4 },
+  cleric: { 1: 3, 4: 4, 10: 5 },
+  druid: { 1: 2, 4: 3, 10: 4 },
+  sorcerer: { 1: 4, 4: 5, 10: 6 },
+  warlock: { 1: 2, 4: 3, 10: 4 },
+  wizard: { 1: 3, 4: 4, 10: 5 }
+}
+
+export const FULL_CASTERS_5E = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard']
+export const HALF_CASTERS_5E = ['paladin', 'ranger']
+
+// Prepared spells tables for all caster classes (2024 PHB)
+export let PREPARED_SPELLS: Record<string, Record<number, number>> = {
+  bard: { 1: 4, 2: 5, 3: 6, 4: 7, 5: 9, 6: 10, 7: 11, 8: 12, 9: 14, 10: 15, 11: 16, 12: 16, 13: 17, 14: 17, 15: 18, 16: 18, 17: 19, 18: 20, 19: 21, 20: 22 },
+  cleric: { 1: 4, 2: 5, 3: 6, 4: 7, 5: 9, 6: 10, 7: 11, 8: 12, 9: 14, 10: 15, 11: 16, 12: 16, 13: 17, 14: 17, 15: 18, 16: 18, 17: 19, 18: 20, 19: 21, 20: 22 },
+  druid: { 1: 4, 2: 5, 3: 6, 4: 7, 5: 9, 6: 10, 7: 11, 8: 12, 9: 14, 10: 15, 11: 16, 12: 16, 13: 17, 14: 17, 15: 18, 16: 18, 17: 19, 18: 20, 19: 21, 20: 22 },
+  paladin: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 6, 7: 7, 8: 7, 9: 9, 10: 9, 11: 10, 12: 10, 13: 11, 14: 11, 15: 12, 16: 12, 17: 14, 18: 14, 19: 15, 20: 15 },
+  ranger: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 6, 7: 7, 8: 7, 9: 9, 10: 9, 11: 10, 12: 10, 13: 11, 14: 11, 15: 12, 16: 12, 17: 14, 18: 14, 19: 15, 20: 15 },
+  sorcerer: { 1: 2, 2: 4, 3: 6, 4: 7, 5: 9, 6: 10, 7: 11, 8: 12, 9: 14, 10: 15, 11: 16, 12: 16, 13: 17, 14: 17, 15: 18, 16: 18, 17: 19, 18: 20, 19: 21, 20: 22 },
+  warlock: { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 10, 10: 10, 11: 11, 12: 11, 13: 12, 14: 12, 15: 13, 16: 13, 17: 14, 18: 14, 19: 15, 20: 15 },
+  wizard: { 1: 4, 2: 5, 3: 6, 4: 7, 5: 9, 6: 10, 7: 11, 8: 12, 9: 14, 10: 15, 11: 16, 12: 16, 13: 17, 14: 17, 15: 18, 16: 18, 17: 19, 18: 22, 19: 23, 20: 25 }
+}
+
+// Third-caster subclasses
+export let THIRD_CASTER_SUBCLASSES: Record<string, string[]> = {
+  fighter: ['eldritch-knight'],
+  rogue: ['arcane-trickster']
+}
+
+// Load from JSON and overwrite defaults
+function parseSlotTable(raw: Record<string, Record<string, number>>): Record<number, Record<number, number>> {
+  const result: Record<number, Record<number, number>> = {}
+  for (const [levelStr, slots] of Object.entries(raw)) {
+    const level = Number(levelStr)
+    result[level] = {}
+    for (const [slotStr, count] of Object.entries(slots)) {
+      result[level][Number(slotStr)] = count
+    }
+  }
+  return result
+}
+
+load5eSpellSlots().then((raw) => {
+  const data = raw as Record<string, unknown>
+  if (_loaded) return
+  _loaded = true
+
+  if (data.fullCaster) FULL_CASTER_SLOTS = parseSlotTable(data.fullCaster as Record<string, Record<string, number>>)
+  if (data.warlock) WARLOCK_PACT_SLOTS = parseSlotTable(data.warlock as Record<string, Record<string, number>>)
+
+  if (data.cantripsKnown) {
+    const raw = data.cantripsKnown as Record<string, Record<string, number>>
+    const parsed: Record<string, Record<number, number>> = {}
+    for (const [cls, table] of Object.entries(raw)) {
+      parsed[cls] = {}
+      for (const [lvl, count] of Object.entries(table)) {
+        parsed[cls][Number(lvl)] = count
+      }
+    }
+    CANTRIPS_KNOWN = parsed
+  }
+
+  if (data.preparedSpells) {
+    const raw = data.preparedSpells as Record<string, Record<string, number>>
+    const parsed: Record<string, Record<number, number>> = {}
+    for (const [cls, table] of Object.entries(raw)) {
+      parsed[cls] = {}
+      for (const [lvl, count] of Object.entries(table)) {
+        parsed[cls][Number(lvl)] = count
+      }
+    }
+    PREPARED_SPELLS = parsed
+  }
+
+  if (data.thirdCasterSubclasses) {
+    THIRD_CASTER_SUBCLASSES = data.thirdCasterSubclasses as Record<string, string[]>
+  }
+
+  if (data.spellcastingAbilityMap) {
+    Object.assign(SPELLCASTING_ABILITY_MAP, data.spellcastingAbilityMap)
+  }
+
+  if (data.thirdCasterAbilityMap) {
+    Object.assign(THIRD_CASTER_ABILITY_MAP, data.thirdCasterAbilityMap)
+  }
+}).catch(() => {})
+
 /**
  * Returns the spellcasting ability for a class (or subclass for third-casters).
  */
@@ -32,7 +144,6 @@ export function getSpellcastingAbility(classId: string, subclassId?: string): Ab
 
 /**
  * Computes spellcasting info (ability, DC, attack bonus) for a 5e character.
- * Returns undefined for non-casters.
  */
 export function computeSpellcastingInfo(
   classes: Array<{ classId: string; subclassId?: string; level: number }>,
@@ -41,7 +152,6 @@ export function computeSpellcastingInfo(
   primaryClassId?: string,
   primarySubclassId?: string
 ): SpellcastingInfo5e | undefined {
-  // Determine spellcasting ability: use primary class first, then scan classes
   let ability: AbilityName | undefined
   if (primaryClassId) {
     ability = getSpellcastingAbility(primaryClassId, primarySubclassId)
@@ -66,37 +176,11 @@ export function computeSpellcastingInfo(
 
 /**
  * Returns the maximum number of prepared spells for any caster class.
- * In 2024 PHB, ALL caster classes are prepared casters with fixed tables.
- * Returns null for non-casters.
  */
 export function getPreparedSpellMax(classId: string, classLevel: number): number | null {
   const table = PREPARED_SPELLS[classId]
   if (!table) return null
   return table[classLevel] ?? null
-}
-
-// Warlock Pact Magic slot progression
-export const WARLOCK_PACT_SLOTS: Record<number, Record<number, number>> = {
-  1: { 1: 1 },
-  2: { 1: 2 },
-  3: { 2: 2 },
-  4: { 2: 2 },
-  5: { 3: 2 },
-  6: { 3: 2 },
-  7: { 4: 2 },
-  8: { 4: 2 },
-  9: { 5: 2 },
-  10: { 5: 2 },
-  11: { 5: 3 },
-  12: { 5: 3 },
-  13: { 5: 3 },
-  14: { 5: 3 },
-  15: { 5: 3 },
-  16: { 5: 3 },
-  17: { 5: 4 },
-  18: { 5: 4 },
-  19: { 5: 4 },
-  20: { 5: 4 }
 }
 
 export function isWarlockPactMagic(classId: string): boolean {
@@ -110,43 +194,6 @@ export function getWarlockMaxSpellLevel(level: number): number {
   return Math.max(...Object.keys(slots).map(Number))
 }
 
-// Spell slot progression for 5e full casters
-export const FULL_CASTER_SLOTS: Record<number, Record<number, number>> = {
-  1: { 1: 2 },
-  2: { 1: 3 },
-  3: { 1: 4, 2: 2 },
-  4: { 1: 4, 2: 3 },
-  5: { 1: 4, 2: 3, 3: 2 },
-  6: { 1: 4, 2: 3, 3: 3 },
-  7: { 1: 4, 2: 3, 3: 3, 4: 1 },
-  8: { 1: 4, 2: 3, 3: 3, 4: 2 },
-  9: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
-  10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
-  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-  12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
-  14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
-  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
-  16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
-  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 },
-  18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
-  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 },
-  20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }
-}
-
-// Cantrips known for 5e casters
-export const CANTRIPS_KNOWN: Record<string, Record<number, number>> = {
-  bard: { 1: 2, 4: 3, 10: 4 },
-  cleric: { 1: 3, 4: 4, 10: 5 },
-  druid: { 1: 2, 4: 3, 10: 4 },
-  sorcerer: { 1: 4, 4: 5, 10: 6 },
-  warlock: { 1: 2, 4: 3, 10: 4 },
-  wizard: { 1: 3, 4: 4, 10: 5 }
-}
-
-export const FULL_CASTERS_5E = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard']
-export const HALF_CASTERS_5E = ['paladin', 'ranger']
-
 export function getCantripsKnown(classId: string, level: number): number {
   const table = CANTRIPS_KNOWN[classId]
   if (!table) return 0
@@ -157,187 +204,6 @@ export function getCantripsKnown(classId: string, level: number): number {
   return known
 }
 
-// Prepared spells tables for all caster classes (2024 PHB)
-// In 2024, ALL caster classes are prepared casters with fixed tables
-export const PREPARED_SPELLS: Record<string, Record<number, number>> = {
-  bard: {
-    1: 4,
-    2: 5,
-    3: 6,
-    4: 7,
-    5: 9,
-    6: 10,
-    7: 11,
-    8: 12,
-    9: 14,
-    10: 15,
-    11: 16,
-    12: 16,
-    13: 17,
-    14: 17,
-    15: 18,
-    16: 18,
-    17: 19,
-    18: 20,
-    19: 21,
-    20: 22
-  },
-  cleric: {
-    1: 4,
-    2: 5,
-    3: 6,
-    4: 7,
-    5: 9,
-    6: 10,
-    7: 11,
-    8: 12,
-    9: 14,
-    10: 15,
-    11: 16,
-    12: 16,
-    13: 17,
-    14: 17,
-    15: 18,
-    16: 18,
-    17: 19,
-    18: 20,
-    19: 21,
-    20: 22
-  },
-  druid: {
-    1: 4,
-    2: 5,
-    3: 6,
-    4: 7,
-    5: 9,
-    6: 10,
-    7: 11,
-    8: 12,
-    9: 14,
-    10: 15,
-    11: 16,
-    12: 16,
-    13: 17,
-    14: 17,
-    15: 18,
-    16: 18,
-    17: 19,
-    18: 20,
-    19: 21,
-    20: 22
-  },
-  paladin: {
-    1: 2,
-    2: 3,
-    3: 4,
-    4: 5,
-    5: 6,
-    6: 6,
-    7: 7,
-    8: 7,
-    9: 9,
-    10: 9,
-    11: 10,
-    12: 10,
-    13: 11,
-    14: 11,
-    15: 12,
-    16: 12,
-    17: 14,
-    18: 14,
-    19: 15,
-    20: 15
-  },
-  ranger: {
-    1: 2,
-    2: 3,
-    3: 4,
-    4: 5,
-    5: 6,
-    6: 6,
-    7: 7,
-    8: 7,
-    9: 9,
-    10: 9,
-    11: 10,
-    12: 10,
-    13: 11,
-    14: 11,
-    15: 12,
-    16: 12,
-    17: 14,
-    18: 14,
-    19: 15,
-    20: 15
-  },
-  sorcerer: {
-    1: 2,
-    2: 4,
-    3: 6,
-    4: 7,
-    5: 9,
-    6: 10,
-    7: 11,
-    8: 12,
-    9: 14,
-    10: 15,
-    11: 16,
-    12: 16,
-    13: 17,
-    14: 17,
-    15: 18,
-    16: 18,
-    17: 19,
-    18: 20,
-    19: 21,
-    20: 22
-  },
-  warlock: {
-    1: 2,
-    2: 3,
-    3: 4,
-    4: 5,
-    5: 6,
-    6: 7,
-    7: 8,
-    8: 9,
-    9: 10,
-    10: 10,
-    11: 11,
-    12: 11,
-    13: 12,
-    14: 12,
-    15: 13,
-    16: 13,
-    17: 14,
-    18: 14,
-    19: 15,
-    20: 15
-  },
-  wizard: {
-    1: 4,
-    2: 5,
-    3: 6,
-    4: 7,
-    5: 9,
-    6: 10,
-    7: 11,
-    8: 12,
-    9: 14,
-    10: 15,
-    11: 16,
-    12: 16,
-    13: 17,
-    14: 17,
-    15: 18,
-    16: 18,
-    17: 19,
-    18: 22,
-    19: 23,
-    20: 25
-  }
-}
-
 export function getSlotProgression(classId: string, level: number): Record<number, number> {
   if (isWarlockPactMagic(classId)) {
     return WARLOCK_PACT_SLOTS[level] ?? {}
@@ -346,17 +212,10 @@ export function getSlotProgression(classId: string, level: number): Record<numbe
     return FULL_CASTER_SLOTS[level] ?? {}
   }
   if (HALF_CASTERS_5E.includes(classId)) {
-    // Half-casters use full-caster table at half level (rounded up)
     const effectiveLevel = Math.ceil(level / 2)
     return effectiveLevel >= 1 ? (FULL_CASTER_SLOTS[effectiveLevel] ?? {}) : {}
   }
   return {}
-}
-
-// Third-caster subclasses (gain spellcasting via subclass at class level 3)
-export const THIRD_CASTER_SUBCLASSES: Record<string, string[]> = {
-  fighter: ['eldritch-knight'],
-  rogue: ['arcane-trickster']
 }
 
 export function isThirdCaster(classId: string, subclassId?: string): boolean {
@@ -365,9 +224,7 @@ export function isThirdCaster(classId: string, subclassId?: string): boolean {
 }
 
 /**
- * Calculate spell slots for a multiclass character using the PHB 2024 multiclass spellcaster table.
- * Full casters add all levels, half casters add ceil(level/2), third casters add floor(level/3).
- * Warlock (Pact Magic) is NOT added to the combined total.
+ * Calculate spell slots for a multiclass character.
  */
 export function getMulticlassSpellSlots(
   classes: Array<{ classId: string; subclassId?: string; level: number }>
@@ -387,8 +244,7 @@ export function getMulticlassSpellSlots(
 }
 
 /**
- * Returns true if the character has multiple non-Warlock spellcasting classes
- * and should use the multiclass spell slot table.
+ * Returns true if the character has multiple non-Warlock spellcasting classes.
  */
 export function isMulticlassSpellcaster(
   classes: Array<{ classId: string; subclassId?: string; level: number }>
@@ -409,7 +265,6 @@ export function isMulticlassSpellcaster(
 
 /**
  * Returns Warlock Pact Magic slots for a multiclass character.
- * Returns empty object if no warlock class.
  */
 export function getWarlockPactSlots(classes: Array<{ classId: string; level: number }>): Record<number, number> {
   const warlockClass = classes.find((c) => c.classId === 'warlock')
@@ -418,14 +273,14 @@ export function getWarlockPactSlots(classes: Array<{ classId: string; level: num
 }
 
 /**
- * Returns true if any class in the array is a spellcaster (including warlock).
+ * Returns true if any class in the array is a spellcaster.
  */
 export function hasAnySpellcasting(classId: string): boolean {
   return FULL_CASTERS_5E.includes(classId) || HALF_CASTERS_5E.includes(classId) || isWarlockPactMagic(classId)
 }
 
 /**
- * Loads the full 5e spell list from the JSON data file and returns it as SpellEntry[].
+ * Loads the full 5e spell list from the JSON data file.
  */
 export async function loadSpells(): Promise<SpellEntry[]> {
   const raw = (await load5eSpells()) as unknown as Array<Record<string, unknown>>

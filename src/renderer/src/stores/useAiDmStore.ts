@@ -54,6 +54,10 @@ interface AiDmState {
   // Scene preparation
   sceneStatus: 'idle' | 'preparing' | 'ready' | 'error'
 
+  // File read / web search status
+  fileReadStatus: { path: string; status: string } | null
+  webSearchStatus: { query: string; status: string } | null
+
   // Errors
   lastError: string | null
 
@@ -104,6 +108,8 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
   sceneStatus: 'idle',
   lastStatChanges: [],
   lastDmActions: [],
+  fileReadStatus: null,
+  webSearchStatus: null,
   lastError: null,
 
   setDmApprovalRequired: (required: boolean) => set({ dmApprovalRequired: required }),
@@ -188,7 +194,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       get().cancelStream()
     }
 
-    set({ isTyping: true, streamingText: '', lastError: null })
+    set({ isTyping: true, streamingText: '', lastError: null, fileReadStatus: null, webSearchStatus: null })
 
     // Safety timeout: if still typing after 60s, auto-clear
     const streamStartTime = Date.now()
@@ -341,9 +347,25 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       }
     }
 
+    const handleFileRead = (data: { streamId: string; path: string; status: string }): void => {
+      const state = get()
+      if (data.streamId === state.activeStreamId) {
+        set({ fileReadStatus: { path: data.path, status: data.status } })
+      }
+    }
+
+    const handleWebSearch = (data: { streamId: string; query: string; status: string }): void => {
+      const state = get()
+      if (data.streamId === state.activeStreamId) {
+        set({ webSearchStatus: { query: data.query, status: data.status } })
+      }
+    }
+
     window.api.ai.onStreamChunk(handleChunk)
     window.api.ai.onStreamDone(handleDone)
     window.api.ai.onStreamError(handleError)
+    window.api.ai.onStreamFileRead(handleFileRead)
+    window.api.ai.onStreamWebSearch(handleWebSearch)
 
     // Return cleanup function
     return () => {

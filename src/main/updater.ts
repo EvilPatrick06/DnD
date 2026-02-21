@@ -89,7 +89,7 @@ export function registerUpdateHandlers(): void {
       const win = BrowserWindow.getFocusedWindow()
       const pendingVersion = currentStatus.state === 'available' ? currentStatus.version : ''
 
-      autoUpdater.on('download-progress', (progress) => {
+      autoUpdater.on('download-progress', (progress: { percent: number }) => {
         currentStatus = { state: 'downloading', percent: Math.round(progress.percent) }
         sendStatus(win)
       })

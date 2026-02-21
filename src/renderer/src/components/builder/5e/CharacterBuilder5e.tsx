@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
+import { load5eSpells } from '../../../services/data-provider'
 import { getCantripsKnown, getPreparedSpellMax, hasAnySpellcasting } from '../../../services/spell-data'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
@@ -65,9 +66,8 @@ export default function CharacterBuilder5e(): JSX.Element {
   // Load spell level map for spell validation
   const [spellLevelMap, setSpellLevelMap] = useState<Map<string, number>>(new Map())
   useEffect(() => {
-    fetch('./data/5e/spells.json')
-      .then((r) => r.json())
-      .then((spells: { id: string; level: number }[]) => {
+    load5eSpells()
+      .then((spells) => {
         const map = new Map<string, number>()
         for (const s of spells) map.set(s.id, s.level)
         setSpellLevelMap(map)

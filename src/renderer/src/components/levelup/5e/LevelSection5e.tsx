@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getExpertiseGrants } from '../../../services/build-tree-5e'
-import { load5eFeats, load5eSubclasses, loadJson } from '../../../services/data-provider'
+import { load5eClassFeatures, load5eFeats, load5eSpells, load5eSubclasses } from '../../../services/data-provider'
 import { getSlotProgression, isWarlockPactMagic } from '../../../services/spell-data'
 import { useLevelUpStore } from '../../../stores/useLevelUpStore'
 import type { Character5e } from '../../../types/character-5e'
@@ -80,7 +80,7 @@ export default function LevelSection5e({
       classLevel = existingLevel + 1
     }
 
-    loadJson<Record<string, { features: ClassFeature[] }>>('./data/5e/class-features.json')
+    load5eClassFeatures()
       .then((data) => {
         const cf = data[effectiveClassId]
         if (cf) {
@@ -694,9 +694,7 @@ function BlessedWarriorCantripPicker(): JSX.Element {
   >([])
 
   useEffect(() => {
-    loadJson<Array<{ id: string; name: string; level: number; school?: string; classes?: string[] }>>(
-      './data/5e/spells.json'
-    )
+    load5eSpells()
       .then(setAllSpells)
       .catch(() => setAllSpells([]))
   }, [])
@@ -765,9 +763,7 @@ function DruidicWarriorCantripPicker(): JSX.Element {
   >([])
 
   useEffect(() => {
-    loadJson<Array<{ id: string; name: string; level: number; school?: string; classes?: string[] }>>(
-      './data/5e/spells.json'
-    )
+    load5eSpells()
       .then(setAllSpells)
       .catch(() => setAllSpells([]))
   }, [])

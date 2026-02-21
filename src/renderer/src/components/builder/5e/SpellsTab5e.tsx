@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { getSpellsFromTraits } from '../../../services/auto-populate-5e'
-import { load5eSubclasses } from '../../../services/data-provider'
+import { load5eSpells, load5eSubclasses } from '../../../services/data-provider'
 import {
   getCantripsKnown,
   getPreparedSpellMax,
@@ -269,9 +269,8 @@ export default function SpellsTab5e(): JSX.Element {
 
   // Load spells
   useEffect(() => {
-    fetch('./data/5e/spells.json')
-      .then((r) => r.json())
-      .then((data) => setAllSpells(data))
+    load5eSpells()
+      .then((data) => setAllSpells(data as SpellData[]))
       .catch(() => setAllSpells([]))
   }, [])
 

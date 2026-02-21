@@ -56,7 +56,7 @@ export async function loadAdventures(): Promise<Adventure[]> {
   if (cachedAdventures) return cachedAdventures
 
   try {
-    const res = await fetch('./data/adventures/adventures.json')
+    const res = await fetch('./data/5e/adventures/adventures.json')
     if (!res.ok) return []
     const data: Adventure[] = await res.json()
     cachedAdventures = data

@@ -16,7 +16,7 @@ function loadMonsterData(): Map<string, Record<string, unknown>> {
   if (monsterDataCache) return monsterDataCache
   monsterDataCache = new Map()
   const dataDir = path.join(__dirname, '..', '..', 'renderer', 'public', 'data', '5e')
-  for (const file of ['monsters.json', 'creatures.json', 'npcs.json']) {
+  for (const file of ['creatures/monsters.json', 'creatures/creatures.json', 'creatures/npcs.json']) {
     try {
       const filePath = path.join(dataDir, file)
       const data = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>[]

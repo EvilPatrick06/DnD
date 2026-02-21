@@ -31,7 +31,6 @@ function buildSavePayload(): Record<string, unknown> {
     inGameTime: gs.inGameTime,
     restTracking: gs.restTracking,
     activeLightSources: gs.activeLightSources,
-    dmNotes: gs.dmNotes,
     sessionLog: gs.sessionLog,
     currentSessionId: gs.currentSessionId,
     currentSessionLabel: gs.currentSessionLabel,

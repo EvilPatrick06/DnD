@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger'
+
 // ---- Facility Types ----
 
 export type BastionOrderType = 'craft' | 'empower' | 'harvest' | 'maintain' | 'recruit' | 'research' | 'trade'
@@ -357,7 +359,7 @@ export function migrateBastion(raw: Record<string, unknown>): Bastion {
   }
 
   const old = raw as unknown as OldBastion
-  console.log(`[Bastion Migration] Migrating bastion "${old.name}" from old format`)
+  logger.debug(`[Bastion Migration] Migrating bastion "${old.name}" from old format`)
 
   const basicFacilities: BasicFacility[] = []
   const specialFacilities: SpecialFacility[] = []

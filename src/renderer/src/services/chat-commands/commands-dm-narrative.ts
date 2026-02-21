@@ -1,3 +1,4 @@
+import { load5eNpcNames, load5eRandomTables } from '../../services/data-provider'
 import type { ChatCommand } from './types'
 
 const npcCommand: ChatCommand = {
@@ -76,8 +77,7 @@ const nameCommand: ChatCommand = {
   category: 'dm',
   execute: async (args, ctx) => {
     try {
-      const response = await fetch('/data/5e/npc-names.json')
-      const data = await response.json()
+      const data = await load5eNpcNames() as unknown as Record<string, Record<string, string[]>>
       const parts = args.trim().toLowerCase().split(/\s+/).filter(Boolean)
       const speciesList = Object.keys(data)
       let species = parts[0]
@@ -144,8 +144,7 @@ const randomCommand: ChatCommand = {
     }
 
     try {
-      const response = await fetch('/data/5e/random-tables.json')
-      const data = await response.json()
+      const data = await load5eRandomTables() as unknown as Record<string, unknown>
       const table = data[tableName]
 
       if (!table || !Array.isArray(table) || table.length === 0) {

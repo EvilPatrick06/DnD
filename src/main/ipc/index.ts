@@ -269,10 +269,6 @@ export function registerIpcHandlers(): void {
       const banPath = join(bansDir, `${campaignId}.json`)
       const content = await readFile(banPath, 'utf-8')
       const parsed = JSON.parse(content)
-      // Support both old format (string[]) and new format ({ peerIds, names })
-      if (Array.isArray(parsed)) {
-        return { peerIds: parsed as string[], names: [] as string[] }
-      }
       return {
         peerIds: Array.isArray(parsed.peerIds) ? (parsed.peerIds as string[]) : [],
         names: Array.isArray(parsed.names) ? (parsed.names as string[]) : []

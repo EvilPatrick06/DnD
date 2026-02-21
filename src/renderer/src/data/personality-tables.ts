@@ -1,39 +1,13 @@
 import type { AbilityScoreSet } from '../types/character-common'
+import { load5ePersonalityTables } from '../services/data-provider'
 
-export const ABILITY_PERSONALITY: Record<string, { high: string[]; low: string[] }> = {
-  strength: {
-    high: ['Muscular', 'Sinewy', 'Protective', 'Direct'],
-    low: ['Weak', 'Slight', 'Self-conscious', 'Indirect']
-  },
-  dexterity: {
-    high: ['Lithe', 'Dynamic', 'Fidgety', 'Poised'],
-    low: ['Jittery', 'Clumsy', 'Hesitant', 'Unsteady']
-  },
-  constitution: {
-    high: ['Energetic', 'Hale', 'Hearty', 'Stable'],
-    low: ['Frail', 'Squeamish', 'Lethargic', 'Fragile']
-  },
-  intelligence: {
-    high: ['Decisive', 'Logical', 'Informative', 'Curious'],
-    low: ['Artless', 'Illogical', 'Uninformed', 'Frivolous']
-  },
-  wisdom: {
-    high: ['Serene', 'Considerate', 'Attentive', 'Wary'],
-    low: ['Rash', 'Distracted', 'Oblivious', 'Naive']
-  },
-  charisma: {
-    high: ['Charming', 'Commanding', 'Hilarious', 'Inspiring'],
-    low: ['Pedantic', 'Humorless', 'Reserved', 'Tactless']
-  }
-}
+export const ABILITY_PERSONALITY: Record<string, { high: string[]; low: string[] }> = {}
+export const ALIGNMENT_PERSONALITY: Record<string, string[]> = {}
 
-export const ALIGNMENT_PERSONALITY: Record<string, string[]> = {
-  Chaotic: ['Boastful', 'Impulsive', 'Rebellious', 'Self-absorbed'],
-  Good: ['Compassionate', 'Helpful', 'Honest', 'Kind'],
-  Evil: ['Dishonest', 'Vengeful', 'Cruel', 'Greedy'],
-  Lawful: ['Cooperative', 'Loyal', 'Judgmental', 'Methodical'],
-  Neutral: ['Selfish', 'Disinterested', 'Laconic', 'Pragmatic']
-}
+load5ePersonalityTables().then((data) => {
+  Object.assign(ABILITY_PERSONALITY, data.ability)
+  Object.assign(ALIGNMENT_PERSONALITY, data.alignment)
+}).catch(() => {})
 
 function rollD4<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * 4)]

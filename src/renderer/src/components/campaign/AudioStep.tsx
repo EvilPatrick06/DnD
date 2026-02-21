@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { Button } from '../ui'
+import { logger } from '../../utils/logger'
 
 type AudioCategory = 'ambient' | 'effect' | 'music'
 
@@ -137,7 +138,7 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
       // This will work for files already uploaded (in DM Audio Panel).
       // In the wizard, this is a no-op placeholder.
       setPreviewingId(null)
-      console.log('[AudioStep] Preview not available in wizard for:', fileName)
+      logger.debug('[AudioStep] Preview not available in wizard for:', fileName)
     },
     [previewingId]
   )

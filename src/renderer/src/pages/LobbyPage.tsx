@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
+import { logger } from '../utils/logger'
 import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../config/constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
 import {
@@ -173,7 +174,7 @@ export default function LobbyPage(): JSX.Element {
     // Check if we fell back to listen-only mode
     if (isListenOnly()) {
       setVoiceError('Listen-only mode (no microphone detected)')
-      console.warn('[LobbyPage] Voice started in listen-only mode — no microphone available')
+      logger.warn('[LobbyPage] Voice started in listen-only mode — no microphone available')
     }
 
     // Register speaking change callback
@@ -438,12 +439,12 @@ export default function LobbyPage(): JSX.Element {
                 .getState()
                 .saveCharacter(character)
                 .then(() => {
-                  console.log('[LobbyPage] DM character update saved:', payload.characterId)
+                  logger.debug('[LobbyPage] DM character update saved:', payload.characterId)
                   // Reload characters to ensure store is in sync
                   useCharacterStore.getState().loadCharacters()
                 })
                 .catch((err) => {
-                  console.error('[LobbyPage] Failed to save DM character update:', err)
+                  logger.error('[LobbyPage] Failed to save DM character update:', err)
                 })
             }
           }

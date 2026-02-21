@@ -1,18 +1,11 @@
 import { useEffect, useState } from 'react'
-import { load5eInvocations, load5eMetamagic, loadJson } from '../../../services/data-provider'
+import { load5eClasses, load5eInvocations, load5eMetamagic } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/useLevelUpStore'
 import type { Character5e } from '../../../types/character-5e'
 import { abilityModifier } from '../../../types/character-common'
-import type { InvocationData, MetamagicData } from '../../../types/data'
+import type { ClassData, InvocationData, MetamagicData } from '../../../types/data'
 import LevelSection5e from './LevelSection5e'
 import SpellSelectionSection5e from './SpellSelectionSection5e'
-
-interface ClassInfo {
-  id: string
-  name: string
-  hitDie: number
-  multiclassPrerequisites?: Record<string, number> | { or: Array<Record<string, number>> }
-}
 
 interface LevelUpWizard5eProps {
   character: Character5e
@@ -36,10 +29,10 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
     return useLevelUpStore.subscribe(update)
   }, [])
 
-  const [allClasses, setAllClasses] = useState<ClassInfo[]>([])
+  const [allClasses, setAllClasses] = useState<ClassData[]>([])
 
   useEffect(() => {
-    loadJson<ClassInfo[]>('./data/5e/classes.json')
+    load5eClasses()
       .then(setAllClasses)
       .catch(() => setAllClasses([]))
   }, [])
@@ -173,9 +166,25 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
 
 function meetsPrerequisites(
   character: Character5e,
-  prereqs: Record<string, number> | { or: Array<Record<string, number>> } | undefined
+  prereqs: string | Record<string, number> | { or: Array<Record<string, number>> } | undefined
 ): boolean {
   if (!prereqs) return true
+  // ClassData stores prerequisites as a descriptive string (e.g. "Strength 13")
+  if (typeof prereqs === 'string') {
+    // Parse "Ability Score" patterns like "Strength 13" or "Strength 13 or Dexterity 13"
+    const parts = prereqs.split(/\s+or\s+/i)
+    if (parts.length > 1) {
+      return parts.some((part) => meetsPrerequisites(character, part.trim()))
+    }
+    const match = prereqs.match(/^(\w+)\s+(\d+)$/i)
+    if (match) {
+      const ability = match[1].toLowerCase()
+      const minScore = Number(match[2])
+      const score = character.abilityScores[ability as keyof typeof character.abilityScores]
+      return score !== undefined && score >= minScore
+    }
+    return true
+  }
   if ('or' in prereqs && Array.isArray(prereqs.or)) {
     return prereqs.or.some((req: Record<string, number>) => meetsPrerequisites(character, req))
   }
@@ -196,7 +205,7 @@ function ClassLevelSelector({
 }: {
   character: Character5e
   level: number
-  allClasses: ClassInfo[]
+  allClasses: ClassData[]
   selectedClassId: string
   onSelect: (classId: string) => void
 }): JSX.Element {
@@ -241,7 +250,7 @@ function calculateSummary5e(
   hpRolls: Record<number, number>,
   asiSelections: Record<string, string[]>,
   classLevelChoices: Record<number, string>,
-  allClasses: ClassInfo[]
+  allClasses: ClassData[]
 ): {
   newMaxHP: number
   asiChanges: string[]

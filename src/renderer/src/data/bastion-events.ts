@@ -1,7 +1,10 @@
 // ============================================================================
 // Bastion Events — D&D 5e (2024 PHB) bastion turn event tables, dice helpers,
 // and resolution functions for automating bastion management between sessions.
+// Data loaded from bastion-events.json via DataStore.
 // ============================================================================
+
+import { load5eBastionEvents } from '../services/data-provider'
 
 // ---- Dice Helpers ----------------------------------------------------------
 
@@ -53,129 +56,6 @@ export interface TreasureResult {
   category: string
 }
 
-// ---- All Is Well Flavors (d8) — DMG 2024 p.235 ----------------------------
-
-export const ALL_IS_WELL_FLAVORS: { roll: number; flavor: string }[] = [
-  { roll: 1, flavor: 'Accident reports are way down.' },
-  { roll: 2, flavor: 'The leak in the roof has been fixed.' },
-  { roll: 3, flavor: 'No vermin infestations to report.' },
-  { roll: 4, flavor: 'You-Know-Who lost their spectacles again.' },
-  { roll: 5, flavor: 'One of your hirelings adopted a stray dog.' },
-  { roll: 6, flavor: 'You received a lovely letter from a friend.' },
-  { roll: 7, flavor: 'Some practical joker has been putting rotten eggs in people\'s boots.' },
-  { roll: 8, flavor: 'Someone thought they saw a ghost.' }
-]
-
-// ---- Guest Table (d4) — DMG 2024 p.235 ------------------------------------
-
-export const GUEST_TABLE: { roll: number; guestType: string; description: string }[] = [
-  {
-    roll: 1,
-    guestType: 'Renowned Individual',
-    description:
-      'The guest is an individual of great renown who stays for 7 days. At the end of their stay, the guest gives you a letter of recommendation.'
-  },
-  {
-    roll: 2,
-    guestType: 'Sanctuary Seeker',
-    description:
-      'The guest requests sanctuary while avoiding persecution for their beliefs or crimes. They depart 7 days later, but not before offering you a gift of 1d6 × 100 GP.'
-  },
-  {
-    roll: 3,
-    guestType: 'Mercenary',
-    description:
-      "The guest is a mercenary, giving you one additional Bastion Defender. The guest doesn't require a facility to house them, and they stay until you send them away or they're killed."
-  },
-  {
-    roll: 4,
-    guestType: 'Friendly Monster',
-    description:
-      'The guest is a Friendly monster, such as a brass dragon or a treant. If your Bastion is attacked while this monster is your guest, it defends your Bastion, and you lose no Bastion Defenders. The monster leaves after it defends your Bastion once or when you send it away.'
-  }
-]
-
-// ---- Treasure Table (d100) — DMG 2024 p.236 --------------------------------
-
-export const TREASURE_TABLE: { min: number; max: number; category: string; description: string }[] = [
-  {
-    min: 1,
-    max: 40,
-    category: 'art-25gp',
-    description: 'Roll on the 25 GP Art Objects table.'
-  },
-  {
-    min: 41,
-    max: 63,
-    category: 'art-250gp',
-    description: 'Roll on the 250 GP Art Objects table.'
-  },
-  {
-    min: 64,
-    max: 73,
-    category: 'art-750gp',
-    description: 'Roll on the 750 GP Art Objects table.'
-  },
-  {
-    min: 74,
-    max: 75,
-    category: 'art-2500gp',
-    description: 'Roll on the 2,500 GP Art Objects table.'
-  },
-  {
-    min: 76,
-    max: 90,
-    category: 'magic-common',
-    description: 'Roll on a Common Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
-  },
-  {
-    min: 91,
-    max: 98,
-    category: 'magic-uncommon',
-    description: 'Roll on an Uncommon Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
-  },
-  {
-    min: 99,
-    max: 100,
-    category: 'magic-rare',
-    description: 'Roll on a Rare Magic Items table of your choice (Arcana, Armaments, Implements, or Relics).'
-  }
-]
-
-// ---- Bastion Events Table (d100) -------------------------------------------
-
-interface BastionEventEntry {
-  min: number
-  max: number
-  eventType: string
-  label: string
-}
-
-export const BASTION_EVENTS_TABLE: BastionEventEntry[] = [
-  { min: 1, max: 50, eventType: 'all-is-well', label: 'All Is Well' },
-  { min: 51, max: 55, eventType: 'attack', label: 'Attack' },
-  { min: 56, max: 58, eventType: 'criminal-hireling', label: 'Criminal Hireling' },
-  { min: 59, max: 63, eventType: 'extraordinary-opportunity', label: 'Extraordinary Opportunity' },
-  { min: 64, max: 72, eventType: 'friendly-visitors', label: 'Friendly Visitors' },
-  { min: 73, max: 76, eventType: 'guest', label: 'Guest' },
-  { min: 77, max: 79, eventType: 'lost-hirelings', label: 'Lost Hirelings' },
-  { min: 80, max: 83, eventType: 'magical-discovery', label: 'Magical Discovery' },
-  { min: 84, max: 91, eventType: 'refugees', label: 'Refugees' },
-  { min: 92, max: 98, eventType: 'request-for-aid', label: 'Request for Aid' },
-  { min: 99, max: 100, eventType: 'treasure', label: 'Treasure' }
-]
-
-// ---- Gaming Hall Winnings (d100) — DMG 2024 p.216 --------------------------
-
-export const GAMING_HALL_WINNINGS: { min: number; max: number; diceCount: number; description: string }[] = [
-  { min: 1, max: 50, diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' },
-  { min: 51, max: 85, diceCount: 2, description: 'The house takes in 2d6 × 10 GP.' },
-  { min: 86, max: 95, diceCount: 4, description: 'The house takes in 4d6 × 10 GP.' },
-  { min: 96, max: 100, diceCount: 10, description: 'The house takes in 10d6 × 10 GP.' }
-]
-
-// ---- Menagerie Creatures ---------------------------------------------------
-
 export interface MenagerieCreatureEntry {
   name: string
   creatureType: string
@@ -184,36 +64,6 @@ export interface MenagerieCreatureEntry {
   cr: string
 }
 
-// DMG 2024 p.226 — Menagerie Creatures table
-export const MENAGERIE_CREATURES: MenagerieCreatureEntry[] = [
-  { name: 'Ape', creatureType: 'Beast', size: 'medium', cost: 500, cr: '1/2' },
-  { name: 'Black Bear', creatureType: 'Beast', size: 'medium', cost: 500, cr: '1/2' },
-  { name: 'Brown Bear', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
-  { name: 'Constrictor Snake', creatureType: 'Beast', size: 'large', cost: 250, cr: '1/4' },
-  { name: 'Crocodile', creatureType: 'Beast', size: 'large', cost: 500, cr: '1/2' },
-  { name: 'Dire Wolf', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
-  { name: 'Giant Vulture', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
-  { name: 'Hyena', creatureType: 'Beast', size: 'medium', cost: 50, cr: '0' },
-  { name: 'Jackal', creatureType: 'Beast', size: 'small', cost: 50, cr: '0' },
-  { name: 'Lion', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' },
-  { name: 'Owlbear', creatureType: 'Monstrosity', size: 'large', cost: 3500, cr: '3' },
-  { name: 'Panther', creatureType: 'Beast', size: 'medium', cost: 250, cr: '1/4' },
-  { name: 'Tiger', creatureType: 'Beast', size: 'large', cost: 1000, cr: '1' }
-]
-
-// DMG 2024 p.226 — Creature Costs by Challenge Rating (for custom creatures)
-export const CREATURE_COSTS_BY_CR: { cr: string; cost: number }[] = [
-  { cr: '0', cost: 50 },
-  { cr: '1/8', cost: 50 },
-  { cr: '1/4', cost: 250 },
-  { cr: '1/2', cost: 500 },
-  { cr: '1', cost: 1000 },
-  { cr: '2', cost: 2000 },
-  { cr: '3', cost: 3500 }
-]
-
-// ---- Expert Trainers -------------------------------------------------------
-
 export interface ExpertTrainerEntry {
   type: 'battle' | 'skills' | 'tools' | 'unarmed-combat' | 'weapon'
   name: string
@@ -221,150 +71,22 @@ export interface ExpertTrainerEntry {
   description: string
 }
 
-// DMG 2024 p.232 — Expert Trainers table
-export const EXPERT_TRAINERS: ExpertTrainerEntry[] = [
-  {
-    type: 'battle',
-    name: 'Battle Expert',
-    empowerEffect:
-      'When you take damage from an attack made with an Unarmed Strike or a weapon, you can take a Reaction to reduce this damage by 1d4.',
-    description:
-      'A veteran warrior who drills defenders and visitors in combat tactics, formations, and battlefield awareness.'
-  },
-  {
-    type: 'skills',
-    name: 'Skills Expert',
-    empowerEffect:
-      'You gain proficiency in one of the following skills of your choice: Acrobatics, Athletics, Performance, Sleight of Hand, or Stealth.',
-    description:
-      'A versatile instructor who coaches students in acrobatics, athletics, stealth, performance, and sleight of hand.'
-  },
-  {
-    type: 'tools',
-    name: 'Tools Expert',
-    empowerEffect: 'You gain proficiency with one tool of your choice.',
-    description:
-      'A master artisan who teaches the finer points of craftsmanship, from smithing and carpentry to alchemy and calligraphy.'
-  },
-  {
-    type: 'unarmed-combat',
-    name: 'Unarmed Combat Expert',
-    empowerEffect:
-      'When you hit with your Unarmed Strike and deal damage, the attack deals an extra 1d4 Bludgeoning damage.',
-    description: 'A martial arts master who teaches striking, grappling, and defensive techniques for unarmed fighting.'
-  },
-  {
-    type: 'weapon',
-    name: 'Weapon Expert',
-    empowerEffect:
-      "Choose a kind of Simple or Martial weapon, such as Spear or Longbow. If you aren't proficient with the weapon, you gain proficiency with it. If you already have proficiency with the weapon, you can use its mastery property.",
-    description: 'An arms instructor specializing in swordsmanship, archery, polearms, and other weapon disciplines.'
-  }
-]
-
-// ---- Pub Specials ----------------------------------------------------------
-
 export interface PubSpecialEntry {
   name: string
   description: string
   effect: string
 }
 
-export const PUB_SPECIALS: PubSpecialEntry[] = [
-  {
-    name: 'Dragonfire Ale',
-    description: 'A fiery red ale brewed with fire pepper extract. Smoke curls from the mug.',
-    effect: 'A creature that drinks this gains resistance to Fire damage for 1 hour.'
-  },
-  {
-    name: 'Fey Nectar Mead',
-    description: 'A shimmering golden mead said to be made from honey gathered in the Feywild.',
-    effect: 'A creature that drinks this has advantage on Charisma (Persuasion) checks for 1 hour.'
-  },
-  {
-    name: 'Shadowdark Stout',
-    description: 'An impossibly dark beer that seems to absorb light. Served in an opaque tankard.',
-    effect:
-      'A creature that drinks this gains Darkvision (60 ft.) for 8 hours, or extends existing Darkvision by 30 ft.'
-  },
-  {
-    name: "Healer's Herbal Tonic",
-    description: 'A warm, soothing brew of medicinal herbs and honey with a hint of mint.',
-    effect:
-      'A creature that drinks this regains 2d4 + 2 Hit Points and is cured of one minor ailment (headache, nausea, etc.).'
-  },
-  {
-    name: "Giant's Grog",
-    description: 'A thick, foamy brew served in an oversized stein. Even a sip makes you feel ten feet tall.',
-    effect:
-      'A creature that drinks this has advantage on Strength checks for 1 hour and gains 1d4 Temporary Hit Points.'
-  }
-]
-
-// ---- Sample Guilds ---------------------------------------------------------
-
 export interface GuildEntry {
   guildType: string
   description: string
 }
-
-export const SAMPLE_GUILDS: GuildEntry[] = [
-  {
-    guildType: "Adventurers' Guild",
-    description:
-      'A guild for adventurers seeking quests, companions, and shared resources. Members post job boards and split bounties.'
-  },
-  {
-    guildType: "Merchants' Guild",
-    description:
-      'A trade guild that negotiates bulk rates, protects caravans, and maintains trade routes. Members enjoy discounted goods.'
-  },
-  {
-    guildType: "Crafters' Guild",
-    description:
-      'A guild of artisans and crafters who share techniques, tools, and apprentices. Members can use shared workshops.'
-  },
-  {
-    guildType: "Thieves' Guild",
-    description:
-      'A secretive guild of rogues and information brokers. Members gain access to fences, safe houses, and underworld contacts.'
-  },
-  {
-    guildType: "Mages' Guild",
-    description:
-      'An arcane society for sharing magical knowledge, spell research, and component sourcing. Members can copy spells at reduced cost.'
-  },
-  {
-    guildType: 'Mercenary Company',
-    description:
-      'A guild of soldiers-for-hire providing security, escorts, and military contracts. Members can recruit trained fighters.'
-  }
-]
-
-// ---- Emerald Enclave Creatures (FR setting) --------------------------------
 
 export interface EnclaveCreatureEntry {
   creatureType: string
   examples: string
   cr: string
 }
-
-export const EMERALD_ENCLAVE_CREATURES: EnclaveCreatureEntry[] = [
-  { creatureType: 'Awakened Shrub', examples: 'Awakened Shrub', cr: '0' },
-  { creatureType: 'Awakened Tree', examples: 'Awakened Tree', cr: '2' },
-  { creatureType: 'Blink Dog', examples: 'Blink Dog', cr: '1/4' },
-  { creatureType: 'Dryad', examples: 'Dryad', cr: '1' },
-  { creatureType: 'Giant Elk', examples: 'Giant Elk', cr: '2' },
-  { creatureType: 'Pixie', examples: 'Pixie', cr: '1/4' },
-  { creatureType: 'Satyr', examples: 'Satyr', cr: '1/2' },
-  { creatureType: 'Sprite', examples: 'Sprite', cr: '1/4' },
-  { creatureType: 'Treant', examples: 'Treant (grove guardian)', cr: '9' },
-  { creatureType: 'Unicorn', examples: 'Unicorn', cr: '5' },
-  { creatureType: "Will-o'-Wisp", examples: "Will-o'-Wisp (tamed, guides lost travelers)", cr: '2' },
-  { creatureType: 'Wood Woad', examples: 'Wood Woad', cr: '5' }
-]
-
-// ---- Forge Constructs (Eberron construct-forge) ----------------------------
 
 export interface ForgeConstructEntry {
   name: string
@@ -374,71 +96,49 @@ export interface ForgeConstructEntry {
   description: string
 }
 
-export const FORGE_CONSTRUCTS: ForgeConstructEntry[] = [
-  {
-    name: 'Homunculus Servant',
-    cr: '0',
-    timeDays: 7,
-    costGP: 100,
-    description: 'A tiny mechanical helper that can perform simple tasks and deliver messages.'
-  },
-  {
-    name: 'Iron Defender',
-    cr: '1',
-    timeDays: 14,
-    costGP: 500,
-    description: 'A loyal mechanical hound that serves as a guard and combatant.'
-  },
-  {
-    name: 'Steel Defender',
-    cr: '1',
-    timeDays: 14,
-    costGP: 750,
-    description: 'An advanced mechanical guardian with enhanced combat capabilities.'
-  },
-  {
-    name: 'Bronze Scout',
-    cr: '1',
-    timeDays: 14,
-    costGP: 500,
-    description: 'A small, agile construct designed for reconnaissance and scouting missions.'
-  },
-  {
-    name: 'Iron Cobra',
-    cr: '4',
-    timeDays: 30,
-    costGP: 2000,
-    description: 'A serpentine construct capable of delivering venomous strikes and guarding passages.'
-  },
-  {
-    name: 'Stone Defender',
-    cr: '4',
-    timeDays: 30,
-    costGP: 2500,
-    description: 'A hulking stone guardian with exceptional durability and crushing strength.'
-  },
-  {
-    name: 'Shield Guardian',
-    cr: '7',
-    timeDays: 60,
-    costGP: 10000,
-    description: 'A powerful construct bound to an amulet, capable of absorbing damage for its master.'
-  },
-  {
-    name: 'Iron Golem',
-    cr: '16',
-    timeDays: 120,
-    costGP: 50000,
-    description: 'The pinnacle of construct creation. A massive iron automaton of devastating power.'
-  }
-]
+interface BastionEventEntry {
+  min: number
+  max: number
+  eventType: string
+  label: string
+}
+
+// ---- Data tables (loaded from JSON) ----------------------------------------
+
+export let ALL_IS_WELL_FLAVORS: { roll: number; flavor: string }[] = []
+export let GUEST_TABLE: { roll: number; guestType: string; description: string }[] = []
+export let TREASURE_TABLE: { min: number; max: number; category: string; description: string }[] = []
+export let BASTION_EVENTS_TABLE: BastionEventEntry[] = []
+export let GAMING_HALL_WINNINGS: { min: number; max: number; diceCount: number; description: string }[] = []
+export let MENAGERIE_CREATURES: MenagerieCreatureEntry[] = []
+export let CREATURE_COSTS_BY_CR: { cr: string; cost: number }[] = []
+export let EXPERT_TRAINERS: ExpertTrainerEntry[] = []
+export let PUB_SPECIALS: PubSpecialEntry[] = []
+export let SAMPLE_GUILDS: GuildEntry[] = []
+export let EMERALD_ENCLAVE_CREATURES: EnclaveCreatureEntry[] = []
+export let FORGE_CONSTRUCTS: ForgeConstructEntry[] = []
+
+load5eBastionEvents().then((raw) => {
+  const data = raw as Record<string, unknown>
+  if (data.allIsWellFlavors) ALL_IS_WELL_FLAVORS = data.allIsWellFlavors as typeof ALL_IS_WELL_FLAVORS
+  if (data.guestTable) GUEST_TABLE = data.guestTable as typeof GUEST_TABLE
+  if (data.treasureTable) TREASURE_TABLE = data.treasureTable as typeof TREASURE_TABLE
+  if (data.eventsTable) BASTION_EVENTS_TABLE = data.eventsTable as typeof BASTION_EVENTS_TABLE
+  if (data.gamingHallWinnings) GAMING_HALL_WINNINGS = data.gamingHallWinnings as typeof GAMING_HALL_WINNINGS
+  if (data.menagerieCreatures) MENAGERIE_CREATURES = data.menagerieCreatures as typeof MENAGERIE_CREATURES
+  if (data.creatureCostsByCr) CREATURE_COSTS_BY_CR = data.creatureCostsByCr as typeof CREATURE_COSTS_BY_CR
+  if (data.expertTrainers) EXPERT_TRAINERS = data.expertTrainers as typeof EXPERT_TRAINERS
+  if (data.pubSpecials) PUB_SPECIALS = data.pubSpecials as typeof PUB_SPECIALS
+  if (data.sampleGuilds) SAMPLE_GUILDS = data.sampleGuilds as typeof SAMPLE_GUILDS
+  if (data.emeraldEnclaveCreatures) EMERALD_ENCLAVE_CREATURES = data.emeraldEnclaveCreatures as typeof EMERALD_ENCLAVE_CREATURES
+  if (data.forgeConstructs) FORGE_CONSTRUCTS = data.forgeConstructs as typeof FORGE_CONSTRUCTS
+}).catch(() => {})
 
 // ---- Resolution Functions --------------------------------------------------
 
 function findEventEntry(roll: number): BastionEventEntry {
   const entry = BASTION_EVENTS_TABLE.find((e) => roll >= e.min && roll <= e.max)
-  // Should never happen for 1-100, but fallback to All Is Well
-  return entry ?? BASTION_EVENTS_TABLE[0]
+  return entry ?? BASTION_EVENTS_TABLE[0] ?? { min: 1, max: 100, eventType: 'all-is-well', label: 'All Is Well' }
 }
 
 function findTreasureEntry(roll: number): { description: string; category: string } {
@@ -452,9 +152,7 @@ function findGamblingEntry(roll: number): { diceCount: number; description: stri
 }
 
 /**
- * Roll a bastion event on the d100 table. Returns the event type, a
- * human-readable description with all sub-rolls already resolved, the
- * primary d100 roll, and a record of any sub-rolls that were made.
+ * Roll a bastion event on the d100 table.
  */
 export function rollBastionEvent(): BastionEventResult {
   const roll = rollD100()
@@ -561,13 +259,7 @@ export function rollBastionEvent(): BastionEventResult {
 }
 
 /**
- * Resolve an Attack bastion event. Rolls 6d6 by default; each 1 kills a
- * defender. Armory upgrades dice to d8s; defensive walls reduce dice count by 2.
- *
- * @param defenderCount  - Number of defenders currently in the bastion.
- * @param hasArmory      - If true, roll d8s instead of d6s (stocked armory).
- * @param hasWalls       - If true, roll 4 dice instead of 6 (fully enclosed walls).
- * @returns The attack outcome including dice results.
+ * Resolve an Attack bastion event.
  */
 export function resolveAttackEvent(defenderCount: number, hasArmory: boolean, hasWalls: boolean): AttackEventResult {
   const diceCount = hasWalls ? 4 : 6
@@ -589,40 +281,6 @@ export function resolveAttackEvent(defenderCount: number, hasArmory: boolean, ha
     if (hasWalls) description += ' (Defensive Walls: reduced dice count by 2.)'
   }
 
-  return {
-    defendersLost,
-    facilityShutdown,
-    attackDice,
-    description
-  }
+  return { defendersLost, facilityShutdown, attackDice, description }
 }
 
-/**
- * Roll gambling winnings for a Gaming Hall facility order.
- * Returns the d100 roll, the GP multiplier, and a description.
- */
-export function rollGamblingWinnings(): GamblingResult {
-  const roll = rollD100()
-  const entry = findGamblingEntry(roll)
-  const diceRolled = rollND(entry.diceCount, 6)
-  const goldEarned = diceRolled.reduce((a, b) => a + b, 0) * 10
-  return {
-    roll,
-    goldEarned,
-    diceRolled,
-    description: `${entry.description} Rolled [${diceRolled.join(', ')}] × 10 = ${goldEarned} GP.`
-  }
-}
-
-/**
- * Roll on the treasure table (d100) and return the result.
- */
-export function rollTreasure(): TreasureResult {
-  const roll = rollD100()
-  const entry = findTreasureEntry(roll)
-  return {
-    roll,
-    description: entry.description,
-    category: entry.category
-  }
-}

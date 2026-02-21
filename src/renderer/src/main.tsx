@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import App from './App'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import { setIceConfig } from './network/peer-manager'
+import { logger } from './utils/logger'
 import './styles/globals.css'
 
 // Log unhandled errors to console (ErrorBoundary catches render errors,
@@ -21,7 +22,7 @@ window.api
   .then((settings) => {
     if (settings.turnServers && settings.turnServers.length > 0) {
       setIceConfig(settings.turnServers)
-      console.log('[Settings] Loaded custom ICE servers:', settings.turnServers.length)
+      logger.debug('[Settings] Loaded custom ICE servers:', settings.turnServers.length)
     }
   })
   .catch(() => {})

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { load5eEquipment } from '../../../services/data-provider'
 import { getMasteryDescription } from '../../../data/weapon-mastery'
 import type { WeaponContext } from '../../../services/effect-resolver-5e'
 import { resolveEffects } from '../../../services/effect-resolver-5e'
@@ -29,9 +30,8 @@ interface WeaponData5e {
 function useWeaponDatabase(): WeaponData5e[] {
   const [weaponList, setWeaponList] = useState<WeaponData5e[]>([])
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
-      .then((data) => setWeaponList(data.weapons ?? []))
+    load5eEquipment()
+      .then((data) => setWeaponList((data.weapons as unknown as WeaponData5e[]) ?? []))
       .catch(() => {})
   }, [])
   return weaponList

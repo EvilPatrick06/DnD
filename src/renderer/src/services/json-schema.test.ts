@@ -11,8 +11,38 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 const DATA_DIR = resolve(__dirname, '../../public/data/5e')
 
+// Files were reorganized into subdirectories — map flat names to actual paths
+const FILE_PATH_MAP: Record<string, string> = {
+  'species.json': 'character/species.json',
+  'species-traits.json': 'character/species-traits.json',
+  'classes.json': 'character/classes.json',
+  'backgrounds.json': 'character/backgrounds.json',
+  'subclasses.json': 'character/subclasses.json',
+  'feats.json': 'character/feats.json',
+  'class-features.json': 'character/class-features.json',
+  'spells.json': 'spells/spells.json',
+  'equipment.json': 'equipment/equipment.json',
+  'magic-items.json': 'equipment/magic-items.json',
+  'monsters.json': 'creatures/monsters.json',
+  'creatures.json': 'creatures/creatures.json',
+  'npcs.json': 'creatures/npcs.json',
+  'invocations.json': 'mechanics/invocations.json',
+  'metamagic.json': 'mechanics/metamagic.json',
+  'crafting.json': 'world/crafting.json',
+  'treasure-tables.json': 'world/treasure-tables.json',
+  'encounter-budgets.json': 'encounters/encounter-budgets.json',
+  'encounter-presets.json': 'encounters/encounter-presets.json',
+  'random-tables.json': 'encounters/random-tables.json',
+  'chase-tables.json': 'encounters/chase-tables.json',
+  'diseases.json': 'hazards/diseases.json',
+  'traps.json': 'hazards/traps.json',
+  'hazards.json': 'hazards/hazards.json',
+  'poisons.json': 'hazards/poisons.json',
+}
+
 function loadJsonFile<T>(filename: string): T {
-  const raw = readFileSync(resolve(DATA_DIR, filename), 'utf-8')
+  const resolved = FILE_PATH_MAP[filename] ?? filename
+  const raw = readFileSync(resolve(DATA_DIR, resolved), 'utf-8')
   return JSON.parse(raw) as T
 }
 
@@ -44,11 +74,76 @@ describe('species.json', () => {
     }
   })
 
+  it('trait entries are objects with name and description', () => {
+    for (const species of data as Array<{ traits: unknown[] }>) {
+      for (const trait of species.traits) {
+        expect(typeof trait).toBe('object')
+        const t = trait as Record<string, unknown>
+        expect(t).toHaveProperty('name')
+        expect(t).toHaveProperty('description')
+        expect(typeof t.name).toBe('string')
+        expect(typeof t.description).toBe('string')
+      }
+    }
+  })
+
+  it('subrace traitModifications.add entries are objects with name and description', () => {
+    for (const species of data as Array<{ subraces?: Array<{ traitModifications: { add: unknown[] } }> }>) {
+      if (!species.subraces) continue
+      for (const sr of species.subraces) {
+        for (const trait of sr.traitModifications.add) {
+          expect(typeof trait).toBe('object')
+          const t = trait as Record<string, unknown>
+          expect(t).toHaveProperty('name')
+          expect(t).toHaveProperty('description')
+          expect(typeof t.name).toBe('string')
+          expect(typeof t.description).toBe('string')
+        }
+      }
+    }
+  })
+
   it('IDs are kebab-case and unique', () => {
     const ids = (data as Array<{ id: string }>).map((s) => s.id)
     expect(new Set(ids).size).toBe(ids.length)
     for (const id of ids) {
       expect(id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    }
+  })
+})
+
+// === species-traits.json ===
+describe('species-traits.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('species-traits.json')
+  })
+
+  it('is a non-empty object', () => {
+    expect(typeof data).toBe('object')
+    expect(data).not.toBeNull()
+    expect(Object.keys(data).length).toBeGreaterThan(0)
+  })
+
+  it('keys are kebab-case', () => {
+    for (const key of Object.keys(data)) {
+      expect(key).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    }
+  })
+
+  it('each entry has name and description', () => {
+    for (const [key, value] of Object.entries(data)) {
+      const trait = value as Record<string, unknown>
+      expect(trait).toHaveProperty('name')
+      expect(trait).toHaveProperty('description')
+      expect(typeof trait.name).toBe('string')
+      expect(typeof trait.description).toBe('string')
+      expect((trait.name as string).length).toBeGreaterThan(0)
+      expect((trait.description as string).length).toBeGreaterThan(0)
+      // spellGranted is optional
+      if ('spellGranted' in trait && trait.spellGranted !== null && trait.spellGranted !== undefined) {
+        expect(['string', 'object']).toContain(typeof trait.spellGranted)
+      }
     }
   })
 })
@@ -605,7 +700,7 @@ describe('cross-references', () => {
     const feats = loadJsonFile<Array<{ id: string; name: string }>>('feats.json')
     const featNames = new Set(feats.map((f) => f.name))
     for (const bg of backgrounds) {
-      if (bg.originFeat) {
+      if (bg.originFeat && bg.originFeat !== 'any') {
         // originFeat uses display names; strip parenthetical variant (e.g. "Magic Initiate (Cleric)" → "Magic Initiate")
         const baseName = bg.originFeat.replace(/\s*\(.*\)$/, '')
         expect(featNames.has(baseName)).toBe(true)
@@ -619,6 +714,30 @@ describe('cross-references', () => {
     const subclasses = loadJsonFile<Array<{ class: string }>>('subclasses.json')
     for (const sc of subclasses) {
       expect(classIds.has(sc.class)).toBe(true)
+    }
+  })
+
+  it('species inline traits have name and description', () => {
+    const species = loadJsonFile<Array<{
+      id: string
+      traits: Array<{ name: string; description: string }>
+      subraces?: Array<{ id: string; traitModifications: { add: Array<{ name: string; description: string }> } }>
+    }>>('species.json')
+    for (const sp of species) {
+      for (const trait of sp.traits) {
+        expect(typeof trait.name, `Species "${sp.id}" has trait with invalid name`).toBe('string')
+        expect(trait.name.length).toBeGreaterThan(0)
+        expect(typeof trait.description, `Species "${sp.id}" trait "${trait.name}" has invalid description`).toBe('string')
+        expect(trait.description.length).toBeGreaterThan(0)
+      }
+      if (sp.subraces) {
+        for (const sr of sp.subraces) {
+          for (const trait of sr.traitModifications.add) {
+            expect(typeof trait.name, `Subrace "${sr.id}" has trait with invalid name`).toBe('string')
+            expect(typeof trait.description, `Subrace "${sr.id}" trait "${trait.name}" has invalid description`).toBe('string')
+          }
+        }
+      }
     }
   })
 })

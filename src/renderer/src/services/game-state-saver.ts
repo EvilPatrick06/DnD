@@ -24,7 +24,6 @@ export function buildSavableCampaign(campaign: Campaign): Campaign {
     inGameTime: gs.inGameTime,
     restTracking: gs.restTracking,
     activeLightSources: gs.activeLightSources,
-    dmNotes: gs.dmNotes,
     handouts: gs.handouts,
     combatTimer: gs.combatTimer ?? undefined
   }

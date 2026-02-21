@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { load5eRandomTables } from '../../../services/data-provider'
 
 interface NPCGeneratorModalProps {
   onClose: () => void
@@ -65,13 +66,9 @@ export default function NPCGeneratorModal({ onClose, onBroadcastResult }: NPCGen
   const [npc, setNpc] = useState<GeneratedNPC | null>(null)
 
   useEffect(() => {
-    fetch('./data/5e/random-tables.json')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load random tables')
-        return res.json()
-      })
-      .then((json: RandomTablesData) => {
-        setData(json)
+    load5eRandomTables()
+      .then((json) => {
+        setData(json as unknown as RandomTablesData)
         setError(null)
       })
       .catch((err) => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { load5eCrafting, load5eEquipment } from '../../../services/data-provider'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'
@@ -74,9 +75,8 @@ function parseCostToCopper(costStr: string): number {
 function useCraftingData(): CraftingToolEntry[] {
   const [data, setData] = useState<CraftingToolEntry[]>([])
   useEffect(() => {
-    fetch('./data/5e/crafting.json')
-      .then((r) => r.json())
-      .then((d: CraftingToolEntry[]) => setData(d))
+    load5eCrafting()
+      .then((d) => setData(d as unknown as CraftingToolEntry[]))
       .catch(() => {})
   }, [])
   return data
@@ -85,9 +85,8 @@ function useCraftingData(): CraftingToolEntry[] {
 function useEquipmentDatabase(): EquipmentDatabase {
   const [db, setDb] = useState<EquipmentDatabase>({ weapons: [], armor: [] })
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
-      .then((d) => setDb({ weapons: d.weapons ?? [], armor: d.armor ?? [] }))
+    load5eEquipment()
+      .then((d) => setDb({ weapons: (d.weapons as unknown as WeaponData5e[]) ?? [], armor: (d.armor as unknown as ArmorData5e[]) ?? [] }))
       .catch(() => {})
   }, [])
   return db

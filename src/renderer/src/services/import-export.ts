@@ -177,7 +177,7 @@ export async function exportAllData(): Promise<BackupStats | null> {
     characters: Array.isArray(characters) ? characters : [],
     campaigns: Array.isArray(campaigns) ? campaigns : [],
     bastions: Array.isArray(bastions) ? bastions : [],
-    appSettings: appSettings ?? {},
+    appSettings: (appSettings ?? {}) as Record<string, unknown>,
     preferences: gatherLocalStoragePreferences()
   }
 

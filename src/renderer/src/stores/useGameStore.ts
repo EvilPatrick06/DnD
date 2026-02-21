@@ -126,7 +126,6 @@ interface GameStoreState extends GameState {
       inGameTime?: InGameTimeState | null
       restTracking?: { lastLongRestSeconds: number | null; lastShortRestSeconds: number | null } | null
       activeLightSources?: ActiveLightSource[]
-      dmNotes?: string
       sessionLog?: SessionLogEntry[]
       currentSessionId?: string
       currentSessionLabel?: string
@@ -218,10 +217,6 @@ interface GameStoreState extends GameState {
   setShowWeatherOverlay: (show: boolean) => void
   addSavedWeatherPreset: (preset: GameStoreState['savedWeatherPresets'][number]) => void
   removeSavedWeatherPreset: (name: string) => void
-
-  // DM Notes (legacy single-text, kept for migration)
-  dmNotes: string
-  setDmNotes: (notes: string) => void
 
   // Session Log
   sessionLog: SessionLogEntry[]
@@ -990,7 +985,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       restTracking: null,
       activeLightSources: [],
       pendingPlacement: null,
-      dmNotes: '',
       weatherOverride: null,
       moonOverride: null,
       savedWeatherPresets: [],
@@ -1015,7 +1009,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       inGameTime?: InGameTimeState | null
       restTracking?: { lastLongRestSeconds: number | null; lastShortRestSeconds: number | null } | null
       activeLightSources?: ActiveLightSource[]
-      dmNotes?: string
       sessionLog?: SessionLogEntry[]
       currentSessionId?: string
       currentSessionLabel?: string
@@ -1026,7 +1019,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       combatTimer?: CombatTimerConfig | null
     }
   ) => {
-    const { allies, enemies, places, inGameTime, restTracking, activeLightSources, dmNotes, sessionLog, currentSessionId, currentSessionLabel, weatherOverride, moonOverride, savedWeatherPresets, handouts, combatTimer, ...gameState } = state
+    const { allies, enemies, places, inGameTime, restTracking, activeLightSources, sessionLog, currentSessionId, currentSessionLabel, weatherOverride, moonOverride, savedWeatherPresets, handouts, combatTimer, ...gameState } = state
     set({
       ...gameState,
       ...(allies ? { allies } : {}),
@@ -1035,7 +1028,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       ...(inGameTime !== undefined ? { inGameTime } : {}),
       ...(restTracking !== undefined ? { restTracking } : {}),
       ...(activeLightSources ? { activeLightSources } : {}),
-      ...(dmNotes !== undefined ? { dmNotes } : {}),
       ...(sessionLog ? { sessionLog } : {}),
       ...(currentSessionId ? { currentSessionId } : {}),
       ...(currentSessionLabel ? { currentSessionLabel } : {}),
@@ -1230,10 +1222,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   removeSavedWeatherPreset: (name) => set((s) => ({
     savedWeatherPresets: s.savedWeatherPresets.filter((p) => p.name !== name)
   })),
-
-  // --- DM Notes ---
-  dmNotes: '',
-  setDmNotes: (notes: string) => set({ dmNotes: notes }),
 
   // --- Session Log ---
   sessionLog: [],

@@ -27,10 +27,17 @@ import {
   load5eSpells,
   load5eSubclasses,
   load5eSupernaturalGifts,
+  load5eTrinkets,
   load5eTraps,
   load5eTreasureTables,
   load5eVehicles,
-  loadJson
+  load5eConditions,
+  load5eWeaponMastery,
+  load5eLanguages,
+  load5eSkills,
+  load5eFightingStyles,
+  load5eDowntime,
+  load5eSounds,
 } from './data-provider'
 
 function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
@@ -261,8 +268,8 @@ export async function loadCategoryItems(
       return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'trinkets': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/trinkets.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eTrinkets()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'settlements': {
       const data = await load5eSettlements()
@@ -297,8 +304,8 @@ export async function loadCategoryItems(
       return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'downtime': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/downtime.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eDowntime()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'encounter-presets': {
       const data = await load5eEncounterPresets()
@@ -329,34 +336,34 @@ export async function loadCategoryItems(
       )
     }
     case 'sounds': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/sounds.json')
-      return toLibraryItems(data, category)
+      const data = await load5eSounds()
+      return toLibraryItems(data as unknown as Record<string, unknown>[], category)
     }
     case 'conditions': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/conditions.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eConditions()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'weapon-mastery': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/weapon-mastery.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eWeaponMastery()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'languages': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/languages.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eLanguages()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'skills': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/skills.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eSkills()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'fighting-styles': {
-      const data = await loadJson<Record<string, unknown>[]>('./data/5e/fighting-styles.json')
-      return [...toLibraryItems(data, category), ...hbItems]
+      const data = await load5eFightingStyles()
+      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'class-features': {
       const cfData = await load5eClassFeatures()
       const items: Record<string, unknown>[] = []
       for (const [className, classData] of Object.entries(cfData)) {
-        for (const feat of (classData as Record<string, unknown>).features as { level: number; name: string; description: string }[]) {
+        for (const feat of (classData as unknown as Record<string, unknown>).features as { level: number; name: string; description: string }[]) {
           items.push({ id: `${className}-${feat.name}-${feat.level}`, name: feat.name, level: feat.level, description: feat.description, class: className })
         }
       }

@@ -1,4 +1,5 @@
 import type { MagicItemRarity5e } from '../types/character-common'
+import { load5eStartingEquipment } from '../services/data-provider'
 
 export interface HigherLevelEquipment {
   baseGold: number
@@ -7,52 +8,32 @@ export interface HigherLevelEquipment {
   magicItems: Partial<Record<MagicItemRarity5e, number>>
 }
 
-/**
- * 2024 PHB Starting Equipment at Higher Levels table.
- * Level ranges map to extra starting gold and magic item grants.
- */
-const HIGHER_LEVEL_TABLE: Array<{ minLevel: number; maxLevel: number; equipment: HigherLevelEquipment }> = [
-  {
-    minLevel: 2,
-    maxLevel: 4,
-    equipment: {
-      baseGold: 0,
-      diceCount: 0,
-      diceMultiplier: 0,
-      magicItems: { common: 1 }
-    }
-  },
-  {
-    minLevel: 5,
-    maxLevel: 10,
-    equipment: {
-      baseGold: 500,
-      diceCount: 1,
-      diceMultiplier: 25,
-      magicItems: { common: 1, uncommon: 1 }
-    }
-  },
-  {
-    minLevel: 11,
-    maxLevel: 16,
-    equipment: {
-      baseGold: 5000,
-      diceCount: 1,
-      diceMultiplier: 250,
-      magicItems: { common: 2, uncommon: 3, rare: 1 }
-    }
-  },
-  {
-    minLevel: 17,
-    maxLevel: 20,
-    equipment: {
-      baseGold: 20000,
-      diceCount: 1,
-      diceMultiplier: 250,
-      magicItems: { common: 2, uncommon: 4, rare: 3, 'very-rare': 1 }
-    }
+interface RawEntry {
+  minLevel: number
+  maxLevel: number
+  baseGold: number
+  diceCount: number
+  diceMultiplier: number
+  magicItems: Record<string, number>
+}
+
+const HIGHER_LEVEL_TABLE: Array<{ minLevel: number; maxLevel: number; equipment: HigherLevelEquipment }> = []
+
+load5eStartingEquipment().then((data) => {
+  HIGHER_LEVEL_TABLE.length = 0
+  for (const entry of data as RawEntry[]) {
+    HIGHER_LEVEL_TABLE.push({
+      minLevel: entry.minLevel,
+      maxLevel: entry.maxLevel,
+      equipment: {
+        baseGold: entry.baseGold,
+        diceCount: entry.diceCount,
+        diceMultiplier: entry.diceMultiplier,
+        magicItems: entry.magicItems as Partial<Record<MagicItemRarity5e, number>>
+      }
+    })
   }
-]
+}).catch(() => {})
 
 /**
  * Get the higher-level starting equipment for a given character level.
@@ -72,14 +53,6 @@ export function getStartingGoldBonus(level: number): { base: number; diceCount: 
   const eq = getHigherLevelEquipment(level)
   if (!eq) return { base: 0, diceCount: 0, diceMultiplier: 0 }
   return { base: eq.baseGold, diceCount: eq.diceCount, diceMultiplier: eq.diceMultiplier }
-}
-
-/**
- * Get the magic item grants by rarity for a given level.
- */
-export function getMagicItemGrants(level: number): Partial<Record<MagicItemRarity5e, number>> {
-  const eq = getHigherLevelEquipment(level)
-  return eq?.magicItems ?? {}
 }
 
 /**

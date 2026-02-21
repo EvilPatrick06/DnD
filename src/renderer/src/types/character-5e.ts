@@ -152,28 +152,6 @@ export function totalHitDiceMaximum(hitDice: HitDiceEntry[]): number {
   return hitDice.reduce((sum, hd) => sum + hd.maximum, 0)
 }
 
-/**
- * Migrate legacy `hitDiceRemaining: number` to per-class `hitDice` array.
- * Distributes remaining dice proportionally across classes.
- */
-export function migrateHitDice(
-  classes: CharacterClass5e[],
-  level: number,
-  hitDiceRemaining?: number,
-  hitDice?: HitDiceEntry[]
-): HitDiceEntry[] {
-  if (hitDice && hitDice.length > 0) return hitDice
-  const remaining = hitDiceRemaining ?? level
-  let distributed = 0
-  return classes.map((cls, i) => {
-    const proportion = cls.level / level
-    const classRemaining =
-      i === classes.length - 1 ? remaining - distributed : Math.round(remaining * proportion)
-    distributed += classRemaining
-    return { current: Math.max(0, Math.min(cls.level, classRemaining)), maximum: cls.level, dieType: cls.hitDie }
-  })
-}
-
 export interface CharacterDetails {
   gender?: string
   deity?: string
@@ -224,6 +202,11 @@ export interface EquipmentItem {
   armorClass?: number
   armorType?: string
   category?: string
+  magicItemId?: string
+  maxCharges?: number
+  currentCharges?: number
+  rechargeType?: 'dawn' | 'dusk' | 'short-rest' | 'long-rest'
+  rechargeFormula?: string
 }
 
 export interface Feature {

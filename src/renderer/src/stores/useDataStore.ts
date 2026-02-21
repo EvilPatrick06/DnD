@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 type DataCategory =
-  | 'species' | 'classes' | 'backgrounds' | 'subclasses' | 'feats' | 'spells'
+  | 'species' | 'speciesTraits' | 'classes' | 'backgrounds' | 'subclasses' | 'feats' | 'spells'
   | 'classFeatures' | 'equipment' | 'crafting' | 'diseases' | 'encounterBudgets'
   | 'treasureTables' | 'randomTables' | 'chaseTables' | 'encounterPresets'
   | 'npcNames' | 'invocations' | 'metamagic' | 'bastionFacilities' | 'magicItems'
@@ -9,6 +9,10 @@ type DataCategory =
   | 'environmentalEffects' | 'curses' | 'supernaturalGifts' | 'siegeEquipment'
   | 'settlements' | 'mounts' | 'vehicles' | 'downtime' | 'sounds'
   | 'conditions' | 'weaponMastery' | 'languages' | 'skills' | 'fightingStyles'
+  | 'variantItems' | 'lightSources' | 'npcAppearance' | 'npcMannerisms'
+  | 'alignmentDescriptions' | 'wearableItems' | 'personalityTables'
+  | 'xpThresholds' | 'startingEquipment' | 'bastionEvents' | 'sentientItems'
+  | 'weatherGeneration' | 'calendarPresets' | 'effectDefinitions' | 'spellSlots' | 'trinkets'
 
 interface CacheEntry {
   data: unknown
@@ -37,10 +41,10 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
   loadHomebrew: async () => {
     if (get().homebrewLoaded) return
     try {
-      const result = await window.api.homebrew.loadAll()
-      if (result.success && result.data) {
+      const result = await window.api.loadAllHomebrew()
+      if (Array.isArray(result)) {
         const byCategory = new Map<string, Record<string, unknown>[]>()
-        for (const entry of result.data) {
+        for (const entry of result) {
           const cat = (entry.type as string) || 'unknown'
           const existing = byCategory.get(cat) || []
           existing.push(entry)
@@ -136,6 +140,7 @@ function mergeHomebrew<T>(
 function categoryToHomebrewKey(category: DataCategory): string {
   const map: Record<DataCategory, string> = {
     species: 'species',
+    speciesTraits: 'species-traits',
     classes: 'classes',
     backgrounds: 'backgrounds',
     subclasses: 'subclasses',
@@ -174,7 +179,23 @@ function categoryToHomebrewKey(category: DataCategory): string {
     weaponMastery: 'weapon-mastery',
     languages: 'languages',
     skills: 'skills',
-    fightingStyles: 'fighting-styles'
+    fightingStyles: 'fighting-styles',
+    variantItems: 'variant-items',
+    lightSources: 'light-sources',
+    npcAppearance: 'npc-appearance',
+    npcMannerisms: 'npc-mannerisms',
+    alignmentDescriptions: 'alignment-descriptions',
+    wearableItems: 'wearable-items',
+    personalityTables: 'personality-tables',
+    xpThresholds: 'xp-thresholds',
+    startingEquipment: 'starting-equipment',
+    bastionEvents: 'bastion-events',
+    sentientItems: 'sentient-items',
+    weatherGeneration: 'weather-generation',
+    calendarPresets: 'calendar-presets',
+    effectDefinitions: 'effect-definitions',
+    spellSlots: 'spell-slots',
+    trinkets: 'trinkets'
   }
   return map[category]
 }

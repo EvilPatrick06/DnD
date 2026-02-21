@@ -1,27 +1,16 @@
+import { load5eXpThresholds } from '../services/data-provider'
+
 // 5e XP thresholds: XP required to reach each level (index = level)
-const XP_THRESHOLDS_5E = [
-  0, // Level 0 (unused)
-  0, // Level 1
-  300, // Level 2
-  900, // Level 3
-  2700, // Level 4
-  6500, // Level 5
-  14000, // Level 6
-  23000, // Level 7
-  34000, // Level 8
-  48000, // Level 9
-  64000, // Level 10
-  85000, // Level 11
-  100000, // Level 12
-  120000, // Level 13
-  140000, // Level 14
-  165000, // Level 15
-  195000, // Level 16
-  225000, // Level 17
-  265000, // Level 18
-  305000, // Level 19
-  355000 // Level 20
+const XP_THRESHOLDS_5E: number[] = [
+  0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
+  85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
 ]
+
+// Overwrite with JSON data when available
+load5eXpThresholds().then((data) => {
+  XP_THRESHOLDS_5E.length = 0
+  XP_THRESHOLDS_5E.push(...data)
+}).catch(() => {})
 
 export function xpThresholdForLevel(level: number): number {
   return XP_THRESHOLDS_5E[Math.min(level, 20)] ?? 0

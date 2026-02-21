@@ -202,7 +202,6 @@ export interface SavedGameState {
     lastShortRestSeconds: number | null
   } | null
   activeLightSources: ActiveLightSource[]
-  dmNotes: string
   handouts: Handout[]
   combatTimer?: CombatTimerConfig
 }

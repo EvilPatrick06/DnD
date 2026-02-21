@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getHigherLevelEquipment, rollStartingGold } from '../../../data/starting-equipment-table'
-import { load5eMagicItems } from '../../../services/data-provider'
+import { load5eEquipment, load5eMagicItems } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import type { MagicItemRarity5e } from '../../../types/character-common'
 import type { MagicItemData } from '../../../types/data'
@@ -147,9 +147,8 @@ interface EquipmentDatabase {
 function useEquipmentDatabase(): EquipmentDatabase | null {
   const [db, setDb] = useState<EquipmentDatabase | null>(null)
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
-      .then((data) => setDb(data))
+    load5eEquipment()
+      .then((data) => setDb(data as unknown as EquipmentDatabase))
       .catch((err) => console.error('Failed to load equipment data:', err))
   }, [])
   return db

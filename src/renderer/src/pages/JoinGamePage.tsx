@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { BackButton, Button, Input, Spinner } from '../components/ui'
 import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../config/constants'
 import { useNetworkStore } from '../stores/useNetworkStore'
+import { logger } from '../utils/logger'
 
 const DISPLAY_NAME_KEY = 'dnd-vtt-display-name'
 
@@ -12,7 +13,7 @@ export default function JoinGamePage(): JSX.Element {
 
   const [inviteCode, setInviteCode] = useState('')
   const [displayName, setDisplayName] = useState(() => {
-    try { return localStorage.getItem(DISPLAY_NAME_KEY) || '' } catch (e) { console.warn('[JoinGame] localStorage read failed:', e); return '' }
+    try { return localStorage.getItem(DISPLAY_NAME_KEY) || '' } catch (e) { logger.warn('[JoinGame] localStorage read failed:', e); return '' }
   })
   const [waitingForCampaign, setWaitingForCampaign] = useState(false)
   const navigatedRef = useRef(false)
@@ -45,11 +46,11 @@ export default function JoinGamePage(): JSX.Element {
           await joinGame(session.inviteCode, session.displayName)
           setWaitingForCampaign(true)
         } catch (err) {
-          console.error('[JoinGame] Auto-rejoin failed:', err)
+          logger.error('[JoinGame] Auto-rejoin failed:', err)
         }
       }, 0)
     } catch (e) {
-      console.warn('[JoinGame] Auto-rejoin read failed:', e)
+      logger.warn('[JoinGame] Auto-rejoin read failed:', e)
     }
   }, [joinGame])
 
@@ -75,7 +76,7 @@ export default function JoinGamePage(): JSX.Element {
         const filtered = sessions.filter((s) => s.campaignId !== campaignId)
         const updated = [session, ...filtered].slice(0, 10)
         localStorage.setItem(JOINED_SESSIONS_KEY, JSON.stringify(updated))
-      } catch (e) { console.warn('[JoinGame] Failed to save session:', e) }
+      } catch (e) { logger.warn('[JoinGame] Failed to save session:', e) }
 
       navigate(`/lobby/${campaignId}`)
     }
@@ -103,13 +104,13 @@ export default function JoinGamePage(): JSX.Element {
 
     try {
       localStorage.setItem(DISPLAY_NAME_KEY, displayName.trim())
-    } catch (e) { console.warn('[JoinGame] localStorage write failed:', e) }
+    } catch (e) { logger.warn('[JoinGame] localStorage write failed:', e) }
 
     try {
       await joinGame(inviteCode.trim().toUpperCase(), displayName.trim())
       setWaitingForCampaign(true)
     } catch (error) {
-      console.error('[JoinGame] Failed to join game:', error)
+      logger.error('[JoinGame] Failed to join game:', error)
     }
   }
 

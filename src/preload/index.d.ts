@@ -241,6 +241,9 @@ interface AiAPI {
   onStreamError: (cb: (data: AiStreamErrorData) => void) => void
   onIndexProgress: (cb: (data: AiIndexProgressData) => void) => void
   onOllamaProgress: (cb: (data: OllamaProgressData) => void) => void
+  onStreamFileRead: (cb: (data: { streamId: string; path: string; status: string }) => void) => void
+  onStreamWebSearch: (cb: (data: { streamId: string; query: string; status: string }) => void) => void
+  approveWebSearch: (streamId: string, approved: boolean) => Promise<void>
   removeAllAiListeners: () => void
 }
 

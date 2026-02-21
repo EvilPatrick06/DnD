@@ -202,6 +202,7 @@ export interface SidebarEntry {
   description?: string
   notes?: string // DM-only notes
   statBlock?: SidebarEntryStatBlock
+  attitude?: 'friendly' | 'indifferent' | 'hostile'
   visibleToPlayers: boolean
   isAutoPopulated: boolean // true = from connected player/token/lore, false = DM-added
   sourceId?: string // peerId, tokenId, or loreEntryId it was generated from

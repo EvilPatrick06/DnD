@@ -99,6 +99,8 @@ export interface MapToken {
   /** Spell that created this token */
   sourceSpell?: string
 
+  /** Save modifier for unarmed strike grapple/shove contests */
+  saveMod?: number
   /** Custom token color (hex string) */
   color?: string
   /** Custom border color (hex string) */

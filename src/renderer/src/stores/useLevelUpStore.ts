@@ -3,7 +3,7 @@ import { getClassResources } from '../data/class-resources'
 import { getSpeciesResources } from '../data/species-resources'
 import { getSpeciesSpellProgression } from '../services/auto-populate-5e'
 import { generate5eLevelUpSlots, getExpertiseGrants } from '../services/build-tree-5e'
-import { load5eSpecies, load5eSubclasses, loadJson } from '../services/data-provider'
+import { load5eClasses, load5eClassFeatures, load5eSpells, load5eSpecies, load5eSubclasses } from '../services/data-provider'
 import {
   computeSpellcastingInfo,
   FULL_CASTERS_5E,
@@ -56,14 +56,6 @@ function checkMulticlassPrerequisites(classId: string, scores: AbilityScoreSet):
     }
   }
   return null
-}
-
-interface ClassFeaturesFile {
-  [classId: string]: {
-    features: Array<{ level: number; name: string; description: string }>
-    subclassLevel: number
-    spellSlots: Record<string, Record<string, number>> | null
-  }
 }
 
 export type HpChoice = 'average' | 'roll'
@@ -664,15 +656,10 @@ async function apply5eLevelUp(
   // Load class data for hit dice and names
   const classDataMap: Record<
     string,
-    { name: string; hitDie: number; multiclassProficiencies?: { armor: string[]; weapons: string[]; tools: string[] } }
+    { name: string; hitDie: number; multiclassProficiencies?: Partial<{ armor: string[]; weapons: string[]; tools: string[] }> }
   > = {}
   try {
-    const classes: Array<{
-      id: string
-      name: string
-      hitDie: number
-      multiclassProficiencies?: { armor: string[]; weapons: string[]; tools: string[] }
-    }> = await loadJson('./data/5e/classes.json')
+    const classes = await load5eClasses()
     for (const cls of classes) {
       classDataMap[cls.id] = {
         name: cls.name,
@@ -786,7 +773,7 @@ async function apply5eLevelUp(
   // 6. Load class features for new levels (class-level aware)
   const allNewFeatures: Array<{ level: number; name: string; description: string; source: string }> = []
   try {
-    const cfData = await loadJson<ClassFeaturesFile>('./data/5e/class-features.json')
+    const cfData = await load5eClassFeatures()
 
     // Track class levels as we iterate
     const classLvlTracker: Record<string, number> = {}
@@ -820,21 +807,7 @@ async function apply5eLevelUp(
   const newSpells: SpellEntry[] = []
   if (newSpellIds.length > 0) {
     try {
-      const spellData: Array<{
-        id: string
-        name: string
-        level: number
-        school?: string
-        castingTime?: string
-        castTime?: string
-        range?: string
-        duration?: string
-        description: string
-        concentration?: boolean
-        ritual?: boolean
-        components?: string
-        classes?: string[]
-      }> = await loadJson('./data/5e/spells.json')
+      const spellData = await load5eSpells()
 
       for (const id of newSpellIds) {
         const raw = spellData.find((s) => s.id === id)
@@ -844,7 +817,7 @@ async function apply5eLevelUp(
             name: raw.name,
             level: raw.level,
             description: raw.description,
-            castingTime: raw.castingTime || raw.castTime || '',
+            castingTime: raw.castingTime || (raw as unknown as Record<string, unknown>).castTime as string || '',
             range: raw.range || '',
             duration: raw.duration || '',
             components: typeof raw.components === 'string' ? raw.components : '',
@@ -863,21 +836,7 @@ async function apply5eLevelUp(
   // 7b. Add Blessed Warrior cantrips if fighting style was selected
   if (fightingStyleSelection?.id === 'fighting-style-blessed-warrior' && blessedWarriorCantrips.length > 0) {
     try {
-      const spellData: Array<{
-        id: string
-        name: string
-        level: number
-        school?: string
-        castingTime?: string
-        castTime?: string
-        range?: string
-        duration?: string
-        description: string
-        concentration?: boolean
-        ritual?: boolean
-        components?: string
-        classes?: string[]
-      }> = await loadJson('./data/5e/spells.json')
+      const spellData = await load5eSpells()
       for (const cantripId of blessedWarriorCantrips) {
         if (!character.knownSpells.some((ks) => ks.id === cantripId) && !newSpells.some((ns) => ns.id === cantripId)) {
           const raw = spellData.find((s) => s.id === cantripId)
@@ -887,7 +846,7 @@ async function apply5eLevelUp(
               name: raw.name,
               level: raw.level,
               description: raw.description,
-              castingTime: raw.castingTime || raw.castTime || '',
+              castingTime: raw.castingTime || (raw as unknown as Record<string, unknown>).castTime as string || '',
               range: raw.range || '',
               duration: raw.duration || '',
               components: typeof raw.components === 'string' ? raw.components : '',
@@ -908,21 +867,7 @@ async function apply5eLevelUp(
   // 7b2. Add Druidic Warrior cantrips if fighting style was selected (Ranger)
   if (fightingStyleSelection?.id === 'druidic-warrior' && druidicWarriorCantrips.length > 0) {
     try {
-      const spellData: Array<{
-        id: string
-        name: string
-        level: number
-        school?: string
-        castingTime?: string
-        castTime?: string
-        range?: string
-        duration?: string
-        description: string
-        concentration?: boolean
-        ritual?: boolean
-        components?: string
-        classes?: string[]
-      }> = await loadJson('./data/5e/spells.json')
+      const spellData = await load5eSpells()
       for (const cantripId of druidicWarriorCantrips) {
         if (!character.knownSpells.some((ks) => ks.id === cantripId) && !newSpells.some((ns) => ns.id === cantripId)) {
           const raw = spellData.find((s) => s.id === cantripId)
@@ -932,7 +877,7 @@ async function apply5eLevelUp(
               name: raw.name,
               level: raw.level,
               description: raw.description,
-              castingTime: raw.castingTime || raw.castTime || '',
+              castingTime: raw.castingTime || (raw as unknown as Record<string, unknown>).castTime as string || '',
               range: raw.range || '',
               duration: raw.duration || '',
               components: typeof raw.components === 'string' ? raw.components : '',
@@ -982,21 +927,7 @@ async function apply5eLevelUp(
       const subclasses = await load5eSubclasses()
       const sc = subclasses.find((s) => s.id === primarySubclassId)
       if (sc?.alwaysPreparedSpells) {
-        const spellData: Array<{
-          id: string
-          name: string
-          level: number
-          school?: string
-          castingTime?: string
-          castTime?: string
-          range?: string
-          duration?: string
-          description: string
-          concentration?: boolean
-          ritual?: boolean
-          components?: string
-          classes?: string[]
-        }> = await loadJson('./data/5e/spells.json')
+        const spellData = await load5eSpells()
         for (const [lvlStr, spellNames] of Object.entries(sc.alwaysPreparedSpells)) {
           if (targetLevel >= Number(lvlStr)) {
             for (const name of spellNames) {
@@ -1011,7 +942,7 @@ async function apply5eLevelUp(
                     name: raw.name,
                     level: raw.level,
                     description: raw.description,
-                    castingTime: raw.castingTime || raw.castTime || '',
+                    castingTime: raw.castingTime || (raw as unknown as Record<string, unknown>).castTime as string || '',
                     range: raw.range || '',
                     duration: raw.duration || '',
                     components: typeof raw.components === 'string' ? raw.components : '',
@@ -1136,9 +1067,9 @@ async function apply5eLevelUp(
     if (mcProfs) {
       updatedProficiencies = {
         ...updatedProficiencies,
-        armor: [...new Set([...updatedProficiencies.armor, ...mcProfs.armor])],
-        weapons: [...new Set([...updatedProficiencies.weapons, ...mcProfs.weapons])],
-        tools: [...new Set([...updatedProficiencies.tools, ...mcProfs.tools])]
+        armor: [...new Set([...updatedProficiencies.armor, ...(mcProfs.armor ?? [])])],
+        weapons: [...new Set([...updatedProficiencies.weapons, ...(mcProfs.weapons ?? [])])],
+        tools: [...new Set([...updatedProficiencies.tools, ...(mcProfs.tools ?? [])])]
       }
     }
   }
@@ -1193,21 +1124,7 @@ async function apply5eLevelUp(
   for (const { spellName, classRef } of alwaysPreparedClassSpells) {
     if (classRef && !updatedKnownSpells.some((s) => s.name === spellName)) {
       try {
-        const spellData: Array<{
-          id: string
-          name: string
-          level: number
-          school?: string
-          castingTime?: string
-          castTime?: string
-          range?: string
-          duration?: string
-          description: string
-          concentration?: boolean
-          ritual?: boolean
-          components?: string
-          classes?: string[]
-        }> = await loadJson('./data/5e/spells.json')
+        const spellData = await load5eSpells()
         const found = spellData.find((s) => s.name === spellName)
         if (found) {
           updatedKnownSpells.push({
@@ -1215,7 +1132,7 @@ async function apply5eLevelUp(
             name: found.name,
             level: found.level,
             description: found.description,
-            castingTime: found.castingTime || found.castTime || '',
+            castingTime: found.castingTime || (found as unknown as Record<string, unknown>).castTime as string || '',
             range: found.range || '',
             duration: found.duration || '',
             components: typeof found.components === 'string' ? found.components : '',

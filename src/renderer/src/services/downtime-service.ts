@@ -3,6 +3,8 @@
  * Manages between-adventure activities: crafting, training, recuperating, etc.
  */
 
+import { load5eDowntime } from './data-provider'
+
 export interface DowntimeActivity {
   id: string
   name: string
@@ -33,9 +35,9 @@ let cachedActivities: DowntimeActivity[] | null = null
 
 export async function loadDowntimeActivities(): Promise<DowntimeActivity[]> {
   if (cachedActivities) return cachedActivities
-  const resp = await fetch('./data/5e/downtime.json')
-  cachedActivities = await resp.json()
-  return cachedActivities!
+  const data = await load5eDowntime()
+  cachedActivities = data as unknown as DowntimeActivity[]
+  return cachedActivities
 }
 
 /**

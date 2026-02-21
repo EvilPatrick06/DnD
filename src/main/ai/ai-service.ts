@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { app, safeStorage } from 'electron'
+import { app, BrowserWindow, safeStorage } from 'electron'
+import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { saveConversation } from '../storage/aiConversationStorage'
 import { buildChunkIndex, loadChunkIndex } from './chunk-builder'
 import {
@@ -14,6 +15,15 @@ import { buildContext, setSearchEngine } from './context-builder'
 import { getMemoryManager } from './memory-manager'
 import { ConversationManager } from './conversation-manager'
 import { parseDmActions, stripDmActions } from './dm-actions'
+import {
+  FILE_READ_MAX_DEPTH,
+  formatFileContent,
+  hasFileReadTag,
+  parseFileRead,
+  readRequestedFile,
+  stripFileRead
+} from './file-reader'
+import { hasWebSearchTag, parseWebSearch, performWebSearch, formatSearchResults, stripWebSearch } from './web-search'
 import { isOllamaRunning, listOllamaModels, ollamaChatOnce, ollamaStreamChat } from './ollama-client'
 import { SearchEngine } from './search-engine'
 import { applyMutations, describeChange, isNegativeChange, parseStatChanges, stripStatChanges } from './stat-mutations'
@@ -108,7 +118,7 @@ let currentConfig: {
   model: ModelChoice
   ollamaModel: string
 } = {
-  provider: 'claude',
+  provider: 'ollama',
   model: 'sonnet',
   ollamaModel: 'llama3.1'
 }
@@ -158,7 +168,7 @@ export function getConfig(): AiConfig {
     try {
       const saved = JSON.parse(readFileSync(configPath, 'utf-8'))
       currentConfig = {
-        provider: saved.provider || 'claude',
+        provider: saved.provider || 'ollama',
         model: saved.model || 'sonnet',
         ollamaModel: saved.ollamaModel || 'llama3.1'
       }
@@ -311,7 +321,11 @@ export function startChat(
         request.activeCreatures,
         request.gameState
       )
-      const { systemPrompt, messages } = await conv.getMessagesForApi(context)
+      const providerContext =
+        currentConfig.provider === 'ollama'
+          ? '\n\n[PROVIDER CONTEXT]\nYou are running 100% locally on the user\'s computer via Ollama. All processing happens on their hardware — no data is sent to any remote server. You are NOT a cloud-based AI. If asked, confirm you run locally. You have no internet access unless you use the [WEB_SEARCH] action.\n[/PROVIDER CONTEXT]'
+          : ''
+      const { systemPrompt, messages } = await conv.getMessagesForApi(context + providerContext)
 
       // Stream response
       let fullText = ''
@@ -325,41 +339,18 @@ export function startChat(
           fullText = text
           activeStreams.delete(streamId)
 
-          try {
-            // Clean narrative formatting violations
-            if (hasViolations(fullText)) {
-              fullText = cleanNarrativeText(fullText)
-            }
-
-            // Parse stat changes and DM actions
-            const statChanges = parseStatChanges(fullText)
-            const dmActions = parseDmActions(fullText)
-            const displayText = stripDmActions(stripStatChanges(fullText))
-
-            // Add assistant message to conversation
-            conv.addMessage('assistant', displayText)
-
-            // Auto-save conversation after each assistant message
-            saveConversation(request.campaignId, conv.serialize()).catch((err) =>
-              console.error('[AI] Failed to auto-save conversation:', err)
-            )
-
-            // Update memory manager with session log
-            try {
-              const memMgr = getMemoryManager(request.campaignId)
-              const sessionId = new Date().toISOString().slice(0, 10) // daily session
-              const logEntry = `[${request.senderName ?? 'Player'}]: ${request.message}\n[AI DM]: ${displayText.slice(0, 500)}`
-              memMgr.appendSessionLog(sessionId, logEntry).catch(() => {})
-            } catch {
-              // Non-fatal
-            }
-
-            onDone(fullText, displayText, statChanges, dmActions)
-          } catch (err) {
-            console.error('[AI] Error parsing AI response, delivering raw text:', err)
-            conv.addMessage('assistant', fullText)
-            onDone(fullText, fullText, [], [])
-          }
+          // Handle file read recursion
+          handleStreamCompletion(
+            fullText,
+            request,
+            conv,
+            streamId,
+            abortController,
+            onChunk,
+            onDone,
+            onError,
+            0
+          )
         },
         onError: (error: Error) => {
           activeStreams.delete(streamId)
@@ -401,6 +392,209 @@ export function startChat(
   })()
 
   return streamId
+}
+
+/**
+ * Handle AI stream completion — checks for [FILE_READ] and [WEB_SEARCH] tags,
+ * processes them recursively, then finalizes the response.
+ */
+async function handleStreamCompletion(
+  fullText: string,
+  request: AiChatRequest,
+  conv: ConversationManager,
+  streamId: string,
+  abortController: AbortController,
+  onChunk: (text: string) => void,
+  onDone: (fullText: string, displayText: string, statChanges: StatChange[], dmActions: DmActionData[]) => void,
+  onError: (error: string) => void,
+  fileReadDepth: number
+): Promise<void> {
+  // Check for file read tag
+  if (hasFileReadTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
+    const fileReq = parseFileRead(fullText)
+    if (fileReq) {
+      // Notify renderer of file read status
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        win.webContents.send(IPC_CHANNELS.AI_STREAM_FILE_READ, {
+          streamId,
+          path: fileReq.path,
+          status: 'reading'
+        })
+      }
+
+      const result = await readRequestedFile(fileReq.path)
+      const fileContent = formatFileContent(result)
+
+      // Strip the FILE_READ tag from display text
+      const strippedText = stripFileRead(fullText)
+
+      // Inject file content as a synthetic user message and continue conversation
+      conv.addMessage('assistant', strippedText)
+      conv.addMessage('user', fileContent)
+
+      // Re-stream with the file content injected
+      activeStreams.set(streamId, abortController)
+      let nextFullText = ''
+      const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
+
+      const nextCallbacks = {
+        onText: (text: string) => {
+          nextFullText += text
+          onChunk(text)
+        },
+        onDone: (text: string) => {
+          nextFullText = text
+          activeStreams.delete(streamId)
+          handleStreamCompletion(
+            nextFullText,
+            request,
+            conv,
+            streamId,
+            abortController,
+            onChunk,
+            onDone,
+            onError,
+            fileReadDepth + 1
+          )
+        },
+        onError: (error: Error) => {
+          activeStreams.delete(streamId)
+          onError(error.message)
+        }
+      }
+
+      if (currentConfig.provider === 'claude') {
+        await streamWithRetry(
+          (signal) => claudeStreamChat(sp, msgs, nextCallbacks, currentConfig.model, signal),
+          abortController,
+          (errMsg) => {
+            activeStreams.delete(streamId)
+            onError(errMsg)
+          }
+        )
+      } else {
+        await streamWithRetry(
+          (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
+          abortController,
+          (errMsg) => {
+            activeStreams.delete(streamId)
+            onError(errMsg)
+          }
+        )
+      }
+      return
+    }
+  }
+
+  // Check for web search tag
+  if (hasWebSearchTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
+    const searchReq = parseWebSearch(fullText)
+    if (searchReq) {
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        win.webContents.send(IPC_CHANNELS.AI_STREAM_WEB_SEARCH, {
+          streamId,
+          query: searchReq.query,
+          status: 'searching'
+        })
+      }
+
+      const results = await performWebSearch(searchReq.query)
+      const searchContent = formatSearchResults(searchReq.query, results)
+
+      // Strip the WEB_SEARCH tag from display text
+      const strippedText = stripWebSearch(fullText)
+
+      // Inject search results and continue
+      conv.addMessage('assistant', strippedText)
+      conv.addMessage('user', searchContent)
+
+      activeStreams.set(streamId, abortController)
+      let nextFullText = ''
+      const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
+
+      const nextCallbacks = {
+        onText: (text: string) => {
+          nextFullText += text
+          onChunk(text)
+        },
+        onDone: (text: string) => {
+          nextFullText = text
+          activeStreams.delete(streamId)
+          handleStreamCompletion(
+            nextFullText,
+            request,
+            conv,
+            streamId,
+            abortController,
+            onChunk,
+            onDone,
+            onError,
+            fileReadDepth + 1
+          )
+        },
+        onError: (error: Error) => {
+          activeStreams.delete(streamId)
+          onError(error.message)
+        }
+      }
+
+      if (currentConfig.provider === 'claude') {
+        await streamWithRetry(
+          (signal) => claudeStreamChat(sp, msgs, nextCallbacks, currentConfig.model, signal),
+          abortController,
+          (errMsg) => {
+            activeStreams.delete(streamId)
+            onError(errMsg)
+          }
+        )
+      } else {
+        await streamWithRetry(
+          (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
+          abortController,
+          (errMsg) => {
+            activeStreams.delete(streamId)
+            onError(errMsg)
+          }
+        )
+      }
+      return
+    }
+  }
+
+  // No special tags — finalize response
+  try {
+    let cleaned = fullText
+    if (hasViolations(cleaned)) {
+      cleaned = cleanNarrativeText(cleaned)
+    }
+
+    const statChanges = parseStatChanges(cleaned)
+    const dmActions = parseDmActions(cleaned)
+    const displayText = stripDmActions(stripStatChanges(cleaned))
+
+    conv.addMessage('assistant', displayText)
+
+    saveConversation(request.campaignId, conv.serialize()).catch((err) =>
+      console.error('[AI] Failed to auto-save conversation:', err)
+    )
+
+    try {
+      const memMgr = getMemoryManager(request.campaignId)
+      const sessionId = new Date().toISOString().slice(0, 10)
+      const logEntry = `[${request.senderName ?? 'Player'}]: ${request.message}\n[AI DM]: ${displayText.slice(0, 500)}`
+      memMgr.appendSessionLog(sessionId, logEntry).catch(() => {})
+    } catch {
+      // Non-fatal
+    }
+
+    onDone(cleaned, displayText, statChanges, dmActions)
+  } catch (err) {
+    console.error('[AI] Error parsing AI response, delivering raw text:', err)
+    conv.addMessage('assistant', fullText)
+    onDone(fullText, fullText, [], [])
+  }
 }
 
 export function cancelChat(streamId: string): void {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { load5eChaseTables } from '../../../services/data-provider'
 
 interface ChaseTrackerModalProps {
   onClose: () => void
@@ -72,9 +73,8 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
   const [newIsQuarry, setNewIsQuarry] = useState(false)
 
   useEffect(() => {
-    fetch('./data/5e/chase-tables.json')
-      .then((res) => res.json())
-      .then((data: ChaseTableData) => setChaseTables(data))
+    load5eChaseTables()
+      .then((data) => setChaseTables(data as unknown as ChaseTableData))
       .catch(() => {})
   }, [])
 

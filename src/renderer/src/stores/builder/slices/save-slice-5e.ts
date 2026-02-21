@@ -5,11 +5,14 @@ import { getSpeciesSpellProgression, getSpellsFromTraits, populateSkills5e } fro
 import { generate5eBuildSlots } from '../../../services/build-tree-5e'
 import {
   load5eBackgrounds,
+  load5eClassFeatures,
   load5eClasses,
+  load5eEquipment,
+  load5eFeats,
   load5eMagicItems,
   load5eSpecies,
-  load5eSubclasses,
-  loadJson
+  load5eSpells,
+  load5eSubclasses
 } from '../../../services/data-provider'
 import { computeSpellcastingInfo, getSlotProgression } from '../../../services/spell-data'
 import { calculate5eStats, calculateArmorClass5e, getWildShapeMax } from '../../../services/stat-calculator-5e'
@@ -99,28 +102,11 @@ interface EquipmentArmorData {
   description?: string
 }
 
-interface EquipmentWeaponData5e {
-  name: string
-  category: string
-  damage: string
-  damageType: string
-  weight: number
-  properties: string[]
-  cost: string
-  description?: string
-}
-
 interface GearDataItem {
   name: string
   description?: string
   cost?: string
   price?: string
-}
-
-interface EquipmentFileData {
-  armor?: EquipmentArmorData[]
-  weapons?: EquipmentWeaponData5e[]
-  gear?: GearDataItem[]
 }
 
 type SetState = (partial: Partial<BuilderState>) => void
@@ -130,7 +116,7 @@ export async function buildArmorFromEquipment5e(
   equipment: Array<{ name: string; quantity: number }>
 ): Promise<{ armor: import('../../../types/character-common').ArmorEntry[]; matchedNames: Set<string> }> {
   try {
-    const eqData = await loadJson<EquipmentFileData>('./data/5e/equipment.json')
+    const eqData = await load5eEquipment()
     const armorData = eqData.armor ?? []
     const result: import('../../../types/character-common').ArmorEntry[] = []
     const matchedNames = new Set<string>()
@@ -150,7 +136,7 @@ export async function buildArmorFromEquipment5e(
           category: match.category.toLowerCase().replace(' armor', ''),
           dexCap: match.dexBonusMax,
           stealthDisadvantage: match.stealthDisadvantage,
-          strength: match.strengthRequirement
+          strength: (match as EquipmentArmorData).strengthRequirement
         })
       }
     }
@@ -165,7 +151,7 @@ export async function buildWeaponsFromEquipment5e(
   equipment: Array<{ name: string; quantity: number }>
 ): Promise<{ weapons: import('../../../types/character-common').WeaponEntry[]; matchedNames: Set<string> }> {
   try {
-    const eqData = await loadJson<EquipmentFileData>('./data/5e/equipment.json')
+    const eqData = await load5eEquipment()
     const weaponData = eqData.weapons ?? []
     const result: import('../../../types/character-common').WeaponEntry[] = []
     const matchedNames = new Set<string>()
@@ -497,13 +483,9 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     load5eSpecies(),
     load5eClasses(),
     load5eBackgrounds(),
-    loadJson<Array<{ id: string; name: string; category: string; description: string }>>(
-      './data/5e/feats.json'
-    ).catch(() => [] as Array<{ id: string; name: string; category: string; description: string }>),
-    loadJson<Record<string, { features: Array<{ level: number; name: string; description: string }> }>>(
-      './data/5e/class-features.json'
-    ).catch(
-      (): Record<string, { features: Array<{ level: number; name: string; description: string }> }> => ({})
+    load5eFeats().catch(() => [] as Awaited<ReturnType<typeof load5eFeats>>),
+    load5eClassFeatures().catch(
+      (): Awaited<ReturnType<typeof load5eClassFeatures>> => ({})
     )
   ])
 
@@ -623,10 +605,8 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
   const armorBuildResult = await buildArmorFromEquipment5e(allEquipment)
 
   // Build wearable items as clothing armor entries
-  const eqDataForGear = await loadJson<EquipmentFileData>('./data/5e/equipment.json').catch(() => ({
-    gear: [] as GearDataItem[]
-  }))
-  const gearData = (eqDataForGear as { gear?: GearDataItem[] }).gear ?? []
+  const eqDataForGear = await load5eEquipment().catch(() => null)
+  const gearData: GearDataItem[] = eqDataForGear?.gear ?? []
   const wearableArmor: import('../../../types/character-common').ArmorEntry[] = []
   const wearableMatchedNames = new Set<string>()
   for (const item of allEquipment) {
@@ -999,7 +979,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
           traditions?: string[]
           traits?: string[]
           heightened?: Record<string, string>
-        }> = await loadJson('./data/5e/spells.json')
+        }> = await load5eSpells()
 
         const selectedSpells: SpellEntry[] = []
         for (const id of selectedSpellIds) {

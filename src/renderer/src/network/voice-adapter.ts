@@ -8,6 +8,7 @@
  */
 
 import type { Room } from 'livekit-client'
+import { logger } from '../utils/logger'
 import * as livekit from './voice-livekit'
 import type { LiveKitConfig, ParticipantInfo } from './voice-livekit'
 
@@ -152,12 +153,12 @@ export function createVoiceAdapter(): VoiceAdapter {
       } catch {
         // livekit-client not available or room not accessible
       }
-      console.log('[VoiceAdapter] Input device set to:', deviceId)
+      logger.debug('[VoiceAdapter] Input device set to:', deviceId)
     },
 
     async setOutputDevice(deviceId: string): Promise<void> {
       selectedOutputDeviceId = deviceId
-      console.log('[VoiceAdapter] Output device set to:', deviceId)
+      logger.debug('[VoiceAdapter] Output device set to:', deviceId)
     },
 
     isMuted(): boolean {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { load5eEquipment } from '../../../services/data-provider'
 import { getMagicItemEffects } from '../../../data/effect-definitions'
 import { LANGUAGE_DESCRIPTIONS } from '../../../data/language-descriptions'
 import { isWearableItem } from '../../../data/wearable-items'
@@ -30,10 +31,9 @@ interface GearItem {
 function useGearDatabase(): GearItem[] {
   const [gearList, setGearList] = useState<GearItem[]>([])
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
+    load5eEquipment()
       .then((data) => {
-        const gear: GearItem[] = data.gear ?? []
+        const gear: GearItem[] = (data.gear as unknown as GearItem[]) ?? []
         setGearList(gear)
       })
       .catch(() => {})

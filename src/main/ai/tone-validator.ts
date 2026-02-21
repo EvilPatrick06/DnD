@@ -23,10 +23,12 @@ const VIOLATION_PATTERNS: Array<{ type: ToneViolation['type']; pattern: RegExp }
 ]
 
 export function detectToneViolations(text: string): ToneViolation[] {
-  // Don't check inside JSON blocks
+  // Don't check inside JSON/action blocks
   const cleanedText = text
     .replace(/\[STAT_CHANGES\][\s\S]*?\[\/STAT_CHANGES\]/g, '')
     .replace(/\[DM_ACTIONS\][\s\S]*?\[\/DM_ACTIONS\]/g, '')
+    .replace(/\[FILE_READ\][\s\S]*?\[\/FILE_READ\]/g, '')
+    .replace(/\[WEB_SEARCH\][\s\S]*?\[\/WEB_SEARCH\]/g, '')
 
   const violations: ToneViolation[] = []
 
@@ -45,7 +47,7 @@ export function cleanNarrativeText(text: string): string {
   // Preserve JSON blocks
   const jsonBlocks: string[] = []
   let cleaned = text.replace(
-    /(\[STAT_CHANGES\][\s\S]*?\[\/STAT_CHANGES\]|\[DM_ACTIONS\][\s\S]*?\[\/DM_ACTIONS\])/g,
+    /(\[STAT_CHANGES\][\s\S]*?\[\/STAT_CHANGES\]|\[DM_ACTIONS\][\s\S]*?\[\/DM_ACTIONS\]|\[FILE_READ\][\s\S]*?\[\/FILE_READ\]|\[WEB_SEARCH\][\s\S]*?\[\/WEB_SEARCH\])/g,
     (match) => {
       jsonBlocks.push(match)
       return `__JSON_BLOCK_${jsonBlocks.length - 1}__`

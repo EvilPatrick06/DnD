@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { loadJson } from '../../../services/data-provider'
+import { load5eSpells } from '../../../services/data-provider'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'
@@ -46,7 +46,7 @@ export default function HighElfCantripSwapDialog5e({
 
   useEffect(() => {
     if (!open) return
-    loadJson<SpellData[]>('./data/5e/spells.json')
+    load5eSpells()
       .then((spells) => {
         const cantrips = spells
           .filter((s) => s.level === 0 && s.spellList?.includes('arcane'))

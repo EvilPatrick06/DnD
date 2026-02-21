@@ -82,7 +82,6 @@ export default function TokenContextMenu({
   }
 
   const handleApplyCondition = (): void => {
-    console.log('[TokenContextMenu] Apply condition to:', token.label, token.id)
     onClose()
   }
 

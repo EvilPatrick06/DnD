@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { load5eEncounterBudgets, load5eMonsters } from '../../../services/data-provider'
 
 interface EncounterBuilderModalProps {
   onClose: () => void
@@ -101,15 +102,14 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
   const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch('./data/5e/monsters.json')
-      .then((res) => res.json())
-      .then((data: MonsterData[]) => setAllMonsters(data))
+    load5eMonsters()
+      .then((data) => setAllMonsters(data as unknown as MonsterData[]))
       .catch(() => setAllMonsters([]))
 
-    fetch('./data/5e/encounter-budgets.json')
-      .then((res) => res.json())
-      .then((data: BudgetEntry[]) => {
-        if (Array.isArray(data) && data.length > 0) setBudgetData(data)
+    load5eEncounterBudgets()
+      .then((data) => {
+        const entries = data as unknown as BudgetEntry[]
+        if (Array.isArray(entries) && entries.length > 0) setBudgetData(entries)
       })
       .catch(() => {})
   }, [])

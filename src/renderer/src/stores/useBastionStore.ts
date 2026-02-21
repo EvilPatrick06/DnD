@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { resolveAttackEvent, rollBastionEvent } from '../data/bastion-events'
+import { logger } from '../utils/logger'
 import type {
   BasicFacility,
   BasicFacilityType,
@@ -210,7 +211,7 @@ export const useBastionStore = create<BastionState>((set, get) => ({
 
     // Check treasury
     if (bastion.treasury < costs.gp) {
-      console.warn(`[Bastion] Not enough gold to build ${name}. Need ${costs.gp} gp, have ${bastion.treasury} gp`)
+      logger.warn(`[Bastion] Not enough gold to build ${name}. Need ${costs.gp} gp, have ${bastion.treasury} gp`)
       return
     }
 

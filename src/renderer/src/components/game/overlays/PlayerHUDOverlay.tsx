@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CONDITIONS_5E } from '../../../data/conditions'
 import { rollSingle } from '../../../services/dice-service'
 import { resolveEffects } from '../../../services/effect-resolver-5e'
@@ -39,8 +39,6 @@ interface PlayerHUDOverlayProps {
   conditions: EntityCondition[]
 }
 
-const CONDITION_NAMES = CONDITIONS_5E.map((c) => c.name)
-
 export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOverlayProps): JSX.Element {
   const underwaterCombat = useGameStore((s) => s.underwaterCombat)
   const ambientLight = useGameStore((s) => s.ambientLight)
@@ -55,6 +53,21 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
   const [editingHP, setEditingHP] = useState(false)
   const [hpInput, setHpInput] = useState('')
   const [showConditionPicker, setShowConditionPicker] = useState(false)
+  const [conditionNames, setConditionNames] = useState<string[]>(() => CONDITIONS_5E.map((c) => c.name))
+
+  useEffect(() => {
+    // Re-derive condition names once the async data loads into the mutable array
+    if (CONDITIONS_5E.length > 0 && conditionNames.length === 0) {
+      setConditionNames(CONDITIONS_5E.map((c) => c.name))
+    }
+    // Also schedule a check for when the data arrives asynchronously
+    const timer = setTimeout(() => {
+      if (CONDITIONS_5E.length > 0) {
+        setConditionNames(CONDITIONS_5E.map((c) => c.name))
+      }
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [conditionNames.length])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Don't initiate drag on interactive elements
@@ -546,7 +559,7 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
             </button>
             {showConditionPicker && (
               <div className="absolute top-full mt-1 left-0 z-20 bg-gray-900 border border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto w-36">
-                {CONDITION_NAMES.map((name) => (
+                {conditionNames.map((name) => (
                   <button
                     key={name}
                     onClick={() => addConditionFromPicker(name)}

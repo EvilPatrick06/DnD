@@ -13,6 +13,7 @@ import { clearMovementOverlay, drawMovementOverlay, drawTerrainOverlay } from '.
 import { createTokenSprite } from './TokenSprite'
 import { LIGHT_SOURCES } from '../../data/light-sources'
 import { drawLightingOverlay, type LightingConfig } from './LightingOverlay'
+import { logger } from '../../utils/logger'
 import { drawWalls, findNearbyWallEndpoint } from './WallLayer'
 import { WeatherOverlayLayer, presetToWeatherType } from './WeatherOverlay'
 
@@ -145,7 +146,7 @@ export default function MapCanvas({
       const container = containerRef.current!
       let attempts = 0
       while ((container.clientWidth === 0 || container.clientHeight === 0) && attempts < 10) {
-        console.log(`[MapCanvas] Container has zero dimensions, waiting... (attempt ${attempts + 1})`)
+        logger.debug(`[MapCanvas] Container has zero dimensions, waiting... (attempt ${attempts + 1})`)
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
         attempts++
         if (cancelled) return
@@ -159,7 +160,7 @@ export default function MapCanvas({
 
       if (cancelled) return
 
-      console.log(`[MapCanvas] Container dimensions: ${container.clientWidth}x${container.clientHeight}`)
+      logger.debug(`[MapCanvas] Container dimensions: ${container.clientWidth}x${container.clientHeight}`)
 
       try {
         await app.init({
@@ -187,7 +188,7 @@ export default function MapCanvas({
         return
       }
 
-      console.log('[MapCanvas] PixiJS initialized successfully')
+      logger.debug('[MapCanvas] PixiJS initialized successfully')
 
       container.appendChild(app.canvas)
 
@@ -258,7 +259,7 @@ export default function MapCanvas({
 
       setInitialized(true)
       setInitError(null)
-      console.log('[MapCanvas] All layers created, ready to render')
+      logger.debug('[MapCanvas] All layers created, ready to render')
     }
 
     initApp()
@@ -308,7 +309,7 @@ export default function MapCanvas({
 
       try {
         const resolvedUrl = new URL(map.imagePath, window.location.href).href
-        console.log('[MapCanvas] Loading background image:', resolvedUrl)
+        logger.debug('[MapCanvas] Loading background image:', resolvedUrl)
         const texture = await Assets.load(map.imagePath)
         // Set nearest-neighbor scaling for crisp pixels when zoomed
         if (texture.source) {
@@ -320,7 +321,7 @@ export default function MapCanvas({
         worldRef.current?.addChildAt(sprite, 0)
         bgSpriteRef.current = sprite
         setBgLoadError(null)
-        console.log('[MapCanvas] Background image loaded successfully')
+        logger.debug('[MapCanvas] Background image loaded successfully')
 
         // Auto-center: fit map to viewport
         const container = containerRef.current
@@ -339,7 +340,7 @@ export default function MapCanvas({
         }
       } catch (err) {
         const msg = `Failed to load map image: ${map.imagePath}`
-        console.warn('[MapCanvas]', msg, err)
+        logger.warn('[MapCanvas]', msg, err)
         setBgLoadError(msg)
       }
     }

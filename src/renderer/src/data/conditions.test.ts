@@ -1,9 +1,32 @@
-import { describe, expect, it } from 'vitest'
-import { CONDITIONS_5E } from './conditions'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { isBloodied } from '../types/character-common'
 
+// vi.hoisted ensures this runs before vi.mock factory
+const conditionsJson = vi.hoisted(() => {
+  const { readFileSync: readSync } = require('fs')
+  const { resolve: resolvePath } = require('path')
+  return JSON.parse(
+    readSync(resolvePath(__dirname, '../../public/data/5e/hazards/conditions.json'), 'utf-8')
+  )
+})
+
+// Mock load5eConditions before importing conditions module
+vi.mock('../services/data-provider', () => ({
+  load5eConditions: vi.fn(() => Promise.resolve(conditionsJson))
+}))
+
+// Import after mock is set up
+import type { ConditionDef } from './conditions'
+import { getConditions5e } from './conditions'
+
 describe('CONDITIONS_5E — PHB 2024 accuracy', () => {
-  const findCondition = (name: string) => CONDITIONS_5E.find((c) => c.name === name)
+  let conditions: ConditionDef[]
+
+  beforeAll(async () => {
+    conditions = await getConditions5e()
+  })
+
+  const findCondition = (name: string) => conditions.find((c) => c.name === name)
 
   it('has all 15 standard conditions plus Bloodied and Burning', () => {
     const expected = [
@@ -14,7 +37,7 @@ describe('CONDITIONS_5E — PHB 2024 accuracy', () => {
     for (const name of expected) {
       expect(findCondition(name), `Missing condition: ${name}`).toBeDefined()
     }
-    expect(CONDITIONS_5E.length).toBe(17)
+    expect(conditions.length).toBe(17)
   })
 
   it('Exhaustion: max level is 6 (not 10)', () => {
@@ -70,7 +93,7 @@ describe('CONDITIONS_5E — PHB 2024 accuracy', () => {
   })
 
   it('all conditions have system dnd5e', () => {
-    for (const c of CONDITIONS_5E) {
+    for (const c of conditions) {
       expect(c.system).toBe('dnd5e')
     }
   })

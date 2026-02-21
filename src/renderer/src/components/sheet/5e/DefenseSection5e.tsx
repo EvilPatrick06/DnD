@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { load5eEquipment } from '../../../services/data-provider'
 import { DAMAGE_TYPE_LABELS } from '../../../constants/damage-types'
 import { CONDITIONS_5E } from '../../../data/conditions'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
@@ -27,9 +28,8 @@ interface ArmorData5e {
 function useArmorDatabase(): ArmorData5e[] {
   const [armorList, setArmorList] = useState<ArmorData5e[]>([])
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
-      .then((data) => setArmorList(data.armor ?? []))
+    load5eEquipment()
+      .then((data) => setArmorList((data.armor as unknown as ArmorData5e[]) ?? []))
       .catch(() => {})
   }, [])
   return armorList
@@ -108,9 +108,9 @@ const DAMAGE_TYPE_DESCRIPTIONS: Record<string, string> = {
   slashing: 'Cutting attacks from swords, axes, and claws. Resistance often specifies nonmagical attacks only.'
 }
 
-const CONDITION_DESCRIPTIONS: Record<string, string> = Object.fromEntries(
-  CONDITIONS_5E.map((c) => [c.name.toLowerCase(), c.description])
-)
+function getConditionDescriptions(): Record<string, string> {
+  return Object.fromEntries(CONDITIONS_5E.map((c) => [c.name.toLowerCase(), c.description]))
+}
 
 // --- Tool description hook ---
 
@@ -123,11 +123,10 @@ interface ToolData {
 function useToolDescriptions(): ToolData[] {
   const [tools, setTools] = useState<ToolData[]>([])
   useEffect(() => {
-    fetch('./data/5e/equipment.json')
-      .then((r) => r.json())
+    load5eEquipment()
       .then((data) => {
         const gear = data.gear ?? []
-        setTools(gear.filter((g: { category?: string }) => g.category === 'Tool'))
+        setTools((gear as unknown as Array<{ category?: string } & ToolData>).filter((g) => g.category === 'Tool'))
       })
       .catch(() => {})
   }, [])
@@ -189,6 +188,7 @@ export default function DefenseSection5e({ character, readonly }: DefenseSection
 
   const armorDatabase = useArmorDatabase()
   const toolDescriptions = useToolDescriptions()
+  const CONDITION_DESCRIPTIONS = getConditionDescriptions()
 
   const armor: ArmorEntry[] = character.armor ?? []
   const equippedArmor = armor.find((a) => a.equipped && a.type === 'armor')

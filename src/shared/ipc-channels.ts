@@ -100,6 +100,9 @@ export const IPC_CHANNELS = {
   AI_STREAM_ERROR: 'ai:stream-error',
   AI_INDEX_PROGRESS: 'ai:index-progress',
   AI_OLLAMA_PROGRESS: 'ai:ollama-progress',
+  AI_STREAM_FILE_READ: 'ai:stream-file-read',
+  AI_STREAM_WEB_SEARCH: 'ai:stream-web-search',
+  AI_WEB_SEARCH_APPROVE: 'ai:web-search-approve',
 
   // === Voice Chat ===
   VOICE_GENERATE_TOKEN: 'voice:generate-token',

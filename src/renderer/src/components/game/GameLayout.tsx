@@ -1471,7 +1471,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
                         changed = true
                       }
                     }
-                    if (changed) charStore.updateCharacter(ch.id, { equipment: items5e } as Partial<import('../../types/character-5e').Character5e>)
+                    if (changed) charStore.saveCharacter({ ...ch, equipment: items5e } as import('../../types/character-5e').Character5e)
                   }
                 }
               }

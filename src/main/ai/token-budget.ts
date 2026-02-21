@@ -26,6 +26,8 @@ export const TOKEN_BUDGETS = {
   memory: 2000,
   conversationHistory: 4000,
   responseBuffer: 4000,
+  fileReadContent: 4000,
+  webSearchResults: 2000,
   total: 25000
 } as const
 

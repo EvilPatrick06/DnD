@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { load5eTreasureTables } from '../../../services/data-provider'
 import { rollMultiple, rollSingle } from '../../../services/dice-service'
 
 interface TreasureGeneratorModalProps {
@@ -298,9 +299,8 @@ export default function TreasureGeneratorModal({
   const [treasureData, setTreasureData] = useState<TreasureTableData | null>(null)
 
   useEffect(() => {
-    fetch('./data/5e/treasure-tables.json')
-      .then((res) => res.json())
-      .then((data: TreasureTableData) => setTreasureData(data))
+    load5eTreasureTables()
+      .then((data) => setTreasureData(data as unknown as TreasureTableData))
       .catch(() => {})
   }, [])
 

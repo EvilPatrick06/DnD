@@ -1,6 +1,6 @@
 // ============================================================================
 // Auto-Generated TypeScript Interfaces for 5e JSON Data Files
-// Each interface maps to a JSON file in src/renderer/public/data/5e/
+// Each interface maps to a JSON file in src/renderer/public/data/5e/<subdirectory>/
 // ============================================================================
 
 // === Shared Enums / Literal Unions ===
@@ -53,6 +53,9 @@ export interface SpeciesTrait {
   spellGranted?: string | { list: string; count: number }
 }
 
+/** Central species-traits.json — keyed by trait ID */
+export type SpeciesTraitsFile = Record<string, SpeciesTrait>
+
 export interface SpeciesSubrace {
   id: string
   name: string
@@ -75,6 +78,34 @@ export interface SpeciesData {
   languages: string[]
   proficiencies?: string[]
   subraces?: SpeciesSubrace[]
+  source?: string
+  creatureType?: string
+}
+
+/** Raw subrace as stored in species.json (trait IDs instead of objects) */
+export interface RawSpeciesSubrace {
+  id: string
+  name: string
+  description: string
+  traitModifications: {
+    add: string[]
+    remove: string[]
+  }
+  speedModifier?: number
+  spellProgression?: Array<{ spellId: string; grantedAtLevel: number; innateUses: number }>
+}
+
+/** Raw species as stored in species.json (trait IDs instead of objects) */
+export interface RawSpeciesData {
+  id: string
+  name: string
+  abilityBonuses: Record<string, number>
+  speed: number
+  size: string | string[]
+  traits: string[]
+  languages: string[]
+  proficiencies?: string[]
+  subraces?: RawSpeciesSubrace[]
   source?: string
   creatureType?: string
 }
@@ -564,23 +595,6 @@ export interface MountsFile {
   mounts: MountData[]
 }
 
-// === vehicles.json ===
-
-export interface VehicleJsonData {
-  id: string
-  name: string
-  type: 'water' | 'land' | 'air'
-  size: string
-  speed: string
-  speedFeet: number
-  hp: number
-  ac: number
-  crew: number
-  passengers: number
-  cargo: string
-  cost: string
-  reference: string
-}
 
 // === Compatibility Aliases ===
 // These match the names used by the individual .types.ts files and data-provider.ts

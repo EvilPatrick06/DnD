@@ -129,12 +129,22 @@ const api = {
     onOllamaProgress: (cb: (data: { type: string; percent: number }) => void) => {
       ipcRenderer.on(IPC_CHANNELS.AI_OLLAMA_PROGRESS, (_e, data) => cb(data))
     },
+    onStreamFileRead: (cb: (data: { streamId: string; path: string; status: string }) => void) => {
+      ipcRenderer.on(IPC_CHANNELS.AI_STREAM_FILE_READ, (_e, data) => cb(data))
+    },
+    onStreamWebSearch: (cb: (data: { streamId: string; query: string; status: string }) => void) => {
+      ipcRenderer.on(IPC_CHANNELS.AI_STREAM_WEB_SEARCH, (_e, data) => cb(data))
+    },
+    approveWebSearch: (streamId: string, approved: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_WEB_SEARCH_APPROVE, streamId, approved),
     removeAllAiListeners: () => {
       ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_STREAM_CHUNK)
       ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_STREAM_DONE)
       ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_STREAM_ERROR)
       ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_INDEX_PROGRESS)
       ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_OLLAMA_PROGRESS)
+      ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_STREAM_FILE_READ)
+      ipcRenderer.removeAllListeners(IPC_CHANNELS.AI_STREAM_WEB_SEARCH)
     }
   },
 

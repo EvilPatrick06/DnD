@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ALIGNMENT_DESCRIPTIONS } from '../../../data/alignment-descriptions'
 import { rollPersonalityTraits } from '../../../data/personality-tables'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
-import { load5eBackgrounds, load5eClasses, load5eFeats, loadJson } from '../../../services/data-provider'
+import { DATA_PATHS, load5eBackgrounds, load5eClasses, load5eFeats, loadJson } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import type { FeatData5e } from '../../../types/data'
 import SectionBanner from '../shared/SectionBanner'
@@ -18,7 +18,7 @@ function TrinketRoller(): JSX.Element {
 
   const handleRoll = useCallback(async () => {
     try {
-      const trinkets = await loadJson<string[]>('./data/5e/trinkets.json')
+      const trinkets = await loadJson<string[]>(DATA_PATHS.trinkets)
       const idx = Math.floor(Math.random() * trinkets.length)
       setRollNumber(idx + 1)
       addEquipmentItem({ name: trinkets[idx], quantity: 1, source: 'trinket' })

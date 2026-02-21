@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { load5eCurses, load5eDiseases } from '../../../services/data-provider'
 import { useGameStore } from '../../../stores/useGameStore'
 import type {
   ActiveCurse,
@@ -52,12 +53,10 @@ export default function DiseaseCurseTracker({
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [diseasesRes, cursesRes] = await Promise.all([
-        fetch('./data/5e/diseases.json'),
-        fetch('./data/5e/curses.json')
+      const [diseasesData, cursesData] = await Promise.all([
+        load5eDiseases() as Promise<Disease[]>,
+        load5eCurses() as Promise<Curse[]>
       ])
-      const diseasesData: Disease[] = await diseasesRes.json()
-      const cursesData: Curse[] = await cursesRes.json()
       setDiseases(diseasesData)
       setCurses(cursesData)
       if (diseasesData.length > 0 && !addDiseaseId) setAddDiseaseId(diseasesData[0].id)

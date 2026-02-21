@@ -69,8 +69,6 @@ export function analyzeCapabilities(character: Character5e): CharacterCapabiliti
 export function meetsFacilityPrerequisite(capabilities: CharacterCapabilities, prereq: FacilityPrerequisite | null): boolean {
   if (!prereq || prereq.type === 'none') return true
   switch (prereq.type) {
-    case 'none':
-      return true
     case 'arcane-focus':
       return capabilities.canUseArcaneFocus
     case 'holy-symbol':

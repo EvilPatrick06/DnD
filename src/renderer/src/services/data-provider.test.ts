@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MonsterStatBlock } from '../types/monster'
-import { loadJson, searchMonsters } from './data-provider'
+import { clearDataCache, loadJson, searchMonsters } from './data-provider'
 
 // Mock fetch for loadJson tests
 const mockFetch = vi.fn()
@@ -8,6 +8,7 @@ vi.stubGlobal('fetch', mockFetch)
 
 beforeEach(() => {
   mockFetch.mockReset()
+  clearDataCache()
 })
 
 describe('loadJson', () => {

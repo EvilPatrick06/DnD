@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { load5eSubclasses, loadJson } from '../../../services/data-provider'
+import { load5eSpells, load5eSubclasses } from '../../../services/data-provider'
 import { getSlotProgression, hasAnySpellcasting, isThirdCaster, PREPARED_SPELLS } from '../../../services/spell-data'
 import { useLevelUpStore } from '../../../stores/useLevelUpStore'
 import type { Character5e } from '../../../types/character-5e'
@@ -117,7 +117,7 @@ export default function SpellSelectionSection5e({
       setLoading(false)
       return
     }
-    loadJson<RawSpell[]>('./data/5e/spells.json')
+    load5eSpells()
       .then((spells) => {
         const existingIds = new Set(character.knownSpells?.map((s) => s.id) ?? [])
         // Third-casters use wizard spell list
