@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { CharacterCard } from '../components/character'
-import { ConfirmDialog, Spinner } from '../components/ui'
+import { CharacterCard, ConfirmDialog, Spinner } from '../components/ui'
 import { addToast } from '../hooks/useToast'
 import { exportCharacterToFile, importCharacterFromFile } from '../services/io/character-io'
 import { useCharacterStore } from '../stores/useCharacterStore'

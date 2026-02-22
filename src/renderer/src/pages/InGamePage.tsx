@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
-import { LOADING_GRACE_PERIOD_MS } from '../config/constants'
+import { LOADING_GRACE_PERIOD_MS } from '../constants/app-constants'
 import { Spinner } from '../components/ui'
 import { useAutoSaveGame } from '../hooks/useAutoSave'
 import { useBastionStore } from '../stores/useBastionStore'

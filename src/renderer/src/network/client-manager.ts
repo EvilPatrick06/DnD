@@ -1,5 +1,5 @@
 import type { DataConnection } from 'peerjs'
-import { BASE_RETRY_MS, CONNECTION_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, MAX_RECONNECT_RETRIES, MAX_RETRY_MS } from '../config/constants'
+import { BASE_RETRY_MS, CONNECTION_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, MAX_RECONNECT_RETRIES, MAX_RETRY_MS } from '../constants/app-constants'
 import { logger } from '../utils/logger'
 import { createPeer, destroyPeer, getPeerId } from './peer-manager'
 import { validateNetworkMessage } from './schemas'

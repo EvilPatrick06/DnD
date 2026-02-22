@@ -1,7 +1,7 @@
 import type Peer from 'peerjs'
 import type { MediaConnection } from 'peerjs'
 
-import { VAD_CHECK_INTERVAL_MS, VAD_THRESHOLD, VOICE_RETRY_COUNT, VOICE_RETRY_INTERVAL_MS } from '../config/constants'
+import { VAD_CHECK_INTERVAL_MS, VAD_THRESHOLD, VOICE_RETRY_COUNT, VOICE_RETRY_INTERVAL_MS } from '../constants/app-constants'
 import { logger } from '../utils/logger'
 
 // Module-level state

@@ -13,7 +13,7 @@ import {
   MAX_RECONNECT_ATTEMPTS,
   MESSAGE_SIZE_LIMIT,
   RATE_LIMIT_WINDOW_MS
-} from '../config/constants'
+} from '../constants/app-constants'
 import { DEFAULT_BLOCKED_WORDS, filterMessage } from '../data/moderation'
 import { createMessageRouter } from './message-handler'
 import { createPeer, destroyPeer, generateInviteCode, getPeer, getPeerId } from './peer-manager'

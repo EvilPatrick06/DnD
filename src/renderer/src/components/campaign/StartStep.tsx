@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../../config/constants'
+import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../../constants/app-constants'
 import { addToast } from '../../hooks/useToast'
 import { exportCampaignToFile } from '../../services/io/campaign-io'
 import { useCampaignStore } from '../../stores/useCampaignStore'

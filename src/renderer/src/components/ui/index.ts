@@ -1,6 +1,7 @@
 export { default as BackButton } from './BackButton'
 export { default as Button } from './Button'
 export { default as Card } from './Card'
+export { default as CharacterCard } from './CharacterCard'
 export { default as ConfirmDialog } from './ConfirmDialog'
 export { default as EmptyState } from './EmptyState'
 export { default as ErrorBoundary } from './ErrorBoundary'

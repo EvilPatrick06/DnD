@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
 import { logger } from '../utils/logger'
-import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../config/constants'
+import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../constants/app-constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
 import {
   getConnectedPeers,

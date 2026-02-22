@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { LAST_SESSION_KEY } from '../config/constants'
+import { LAST_SESSION_KEY } from '../constants/app-constants'
 import * as clientManager from '../network/client-manager'
 import * as hostManager from '../network/host-manager'
 import { broadcastExcluding, setGameStateProvider, sendToPeer } from '../network/host-manager'

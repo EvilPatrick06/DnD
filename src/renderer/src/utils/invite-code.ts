@@ -1,4 +1,4 @@
-import { INVITE_CODE_LENGTH } from '../config/constants'
+import { INVITE_CODE_LENGTH } from '../constants/app-constants'
 
 const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import OllamaManagement from '../components/settings/OllamaManagement'
+import OllamaManagement from '../components/ui/OllamaManagement'
 import { addToast } from '../hooks/useToast'
 import { exportEntities, importEntities } from '../services/io/entity-io'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
