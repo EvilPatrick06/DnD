@@ -32,7 +32,7 @@ import type { MapToken } from '../../types/map'
 import DMBottomBar from './bottom/DMBottomBar'
 // Bottom bars
 import PlayerBottomBar from './bottom/PlayerBottomBar'
-import MapCanvas from './MapCanvas'
+import MapCanvas from './map/MapCanvas'
 import ClockOverlay from './overlays/ClockOverlay'
 import DmAlertTray from './overlays/DmAlertTray'
 import InitiativeOverlay from './overlays/InitiativeOverlay'
@@ -106,10 +106,10 @@ import type { Companion5e } from '../../types/companion'
 import type { MonsterStatBlock } from '../../types/monster'
 import { formatInGameTime } from '../../utils/calendar-utils'
 import { getBuilderCreatePath } from '../../utils/character-routes'
-import type { AoEConfig } from './AoEOverlay'
+import type { AoEConfig } from './map/AoEOverlay'
 import { DiceOverlay, trigger3dDice } from './dice3d'
 import DiceTray from './dice3d/DiceTray'
-import ResizeHandle from './shared/ResizeHandle'
+import ResizeHandle from './ResizeHandle'
 
 interface GameLayoutProps {
   campaign: Campaign

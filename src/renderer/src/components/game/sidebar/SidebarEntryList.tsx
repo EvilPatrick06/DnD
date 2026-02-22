@@ -18,7 +18,7 @@ import { monsterToSidebar, sidebarToDisplay } from '../../../utils/stat-block-co
 import PlacesTree from './PlacesTree'
 import StatBlockForm from './StatBlockForm'
 
-const UnifiedStatBlock = lazy(() => import('../shared/UnifiedStatBlock'))
+const UnifiedStatBlock = lazy(() => import('../UnifiedStatBlock'))
 
 // --- NPC Templates (Part A) ---
 

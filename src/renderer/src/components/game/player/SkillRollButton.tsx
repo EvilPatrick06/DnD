@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { SKILLS_5E } from '../../data/skills'
-import { useGameStore } from '../../stores/useGameStore'
-import type { Character } from '../../types/character'
-import type { Character5e } from '../../types/character-5e'
-import type { AbilityName } from '../../types/character-common'
-import { abilityModifier, formatMod } from '../../types/character-common'
+import { SKILLS_5E } from '../../../data/skills'
+import { useGameStore } from '../../../stores/useGameStore'
+import type { Character } from '../../../types/character'
+import type { Character5e } from '../../../types/character-5e'
+import type { AbilityName } from '../../../types/character-common'
+import { abilityModifier, formatMod } from '../../../types/character-common'
 
 interface SkillRollButtonProps {
   character: Character | null

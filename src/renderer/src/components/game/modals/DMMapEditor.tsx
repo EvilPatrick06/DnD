@@ -9,7 +9,7 @@ import { getSizeTokenDimensions } from '../../../types/monster'
 import { DMNotepad, DMToolbar, FogBrush, MapSelector, NPCManager, ShopPanel, TokenPlacer } from '../dm'
 import GridControlPanel from '../dm/GridControlPanel'
 import type { DmToolId } from '../dm/DMToolbar'
-import MapCanvas from '../MapCanvas'
+import MapCanvas from '../map/MapCanvas'
 
 const CreateMapDialog = lazy(() => import('./CreateMapDialog'))
 

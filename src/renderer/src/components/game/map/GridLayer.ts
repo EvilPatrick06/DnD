@@ -1,5 +1,5 @@
 import type { Graphics } from 'pixi.js'
-import type { GridSettings } from '../../types/map'
+import type { GridSettings } from '../../../types/map'
 
 /**
  * Draws grid lines onto a PixiJS Graphics object.

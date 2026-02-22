@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { parseDiceFormula, rollDice } from '../../services/dice/dice-engine'
-import { play, playDiceSound } from '../../services/sound-manager'
-import type { GameSystem } from '../../types/game-system'
+import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
+import { play, playDiceSound } from '../../../services/sound-manager'
+import type { GameSystem } from '../../../types/game-system'
 import DiceResult from './DiceResult'
-import diceTypesJson from '../../../public/data/5e/mechanics/dice-types.json'
+import diceTypesJson from '../../../../public/data/5e/mechanics/dice-types.json'
 
 interface DiceRollerProps {
   system: GameSystem

@@ -1,5 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js'
-import type { MapToken } from '../../types/map'
+import type { MapToken } from '../../../types/map'
 
 const ENTITY_COLORS: Record<string, number> = {
   player: 0x3b82f6, // blue

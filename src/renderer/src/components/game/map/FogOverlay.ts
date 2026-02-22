@@ -1,5 +1,5 @@
 import type { Application, Graphics } from 'pixi.js'
-import type { FogOfWarData, GridSettings } from '../../types/map'
+import type { FogOfWarData, GridSettings } from '../../../types/map'
 
 // ─── Fog Animation State ─────────────────────────────────────
 

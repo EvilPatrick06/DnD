@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { Campaign } from '../../../types/campaign'
-import ResizeHandle from '../shared/ResizeHandle'
+import ResizeHandle from '../ResizeHandle'
 import ChatPanel from './ChatPanel'
 import DMTabPanel from './DMTabPanel'
 

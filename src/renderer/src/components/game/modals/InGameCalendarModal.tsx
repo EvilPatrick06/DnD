@@ -26,7 +26,7 @@ import {
   getDateParts,
   getTimeOfDayPhase
 } from '../../../utils/calendar-utils'
-import { presetToWeatherType } from '../WeatherOverlay'
+import { presetToWeatherType } from '../map/WeatherOverlay'
 
 interface InGameCalendarModalProps {
   calendar: CalendarConfig

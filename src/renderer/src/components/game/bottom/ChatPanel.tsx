@@ -9,9 +9,9 @@ import type { Campaign } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
-import DiceResult from '../DiceResult'
+import DiceResult from '../dice3d/DiceResult'
 import { trigger3dDice } from '../dice3d'
-import SkillRollButton from '../SkillRollButton'
+import SkillRollButton from '../player/SkillRollButton'
 import CommandAutocomplete from './CommandAutocomplete'
 
 const BottomChatMessage = memo(function BottomChatMessage({

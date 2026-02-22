@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useGameStore } from '../../stores/useGameStore'
-import type { DiceRollRecord } from '../../types/game-state'
+import { useGameStore } from '../../../stores/useGameStore'
+import type { DiceRollRecord } from '../../../types/game-state'
 
 interface DiceHistoryProps {
   onClose?: () => void

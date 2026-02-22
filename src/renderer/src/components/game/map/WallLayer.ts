@@ -5,7 +5,7 @@
  */
 
 import type { Graphics } from 'pixi.js'
-import type { GridSettings, WallSegment } from '../../types/map'
+import type { GridSettings, WallSegment } from '../../../types/map'
 
 // ─── Colors ───────────────────────────────────────────────────
 

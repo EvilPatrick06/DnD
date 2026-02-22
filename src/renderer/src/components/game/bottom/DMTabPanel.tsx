@@ -8,9 +8,9 @@ import lightingTravelJson from '../../../../public/data/5e/mechanics/lighting-tr
 
 const DMAudioPanel = lazy(() => import('./DMAudioPanel'))
 const AiContextPanel = lazy(() => import('./AiContextPanel'))
-const DiseaseCurseTracker = lazy(() => import('../panels/DiseaseCurseTracker'))
-const EnvironmentalEffectsPanel = lazy(() => import('../panels/EnvironmentalEffectsPanel'))
-const TrapPlacerPanel = lazy(() => import('../panels/TrapPlacerPanel'))
+const DiseaseCurseTracker = lazy(() => import('../dm/DiseaseCurseTracker'))
+const EnvironmentalEffectsPanel = lazy(() => import('../dm/EnvironmentalEffectsPanel'))
+const TrapPlacerPanel = lazy(() => import('../dm/TrapPlacerPanel'))
 
 interface DMTabPanelProps {
   onOpenModal: (modal: string) => void

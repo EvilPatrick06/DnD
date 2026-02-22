@@ -5,7 +5,7 @@ import type { MapToken } from '../../../types/map'
 import type { MonsterStatBlock } from '../../../types/monster'
 import { monsterToDisplay } from '../../../utils/stat-block-converter'
 
-const UnifiedStatBlock = lazy(() => import('../shared/UnifiedStatBlock'))
+const UnifiedStatBlock = lazy(() => import('../UnifiedStatBlock'))
 
 interface TokenEditorModalProps {
   token: MapToken
