@@ -7,9 +7,9 @@ import type { InitiativeEntry } from '../../../types/game-state'
 import type { GameMap, MapToken, TerrainCell, WallSegment } from '../../../types/map'
 import { getSizeTokenDimensions } from '../../../types/monster'
 import { DMNotepad, DMToolbar, FogBrush, MapSelector, NPCManager, ShopPanel, TokenPlacer } from '../dm'
-import GridControlPanel from '../dm/GridControlPanel'
-import type { DmToolId } from '../dm/DMToolbar'
-import MapCanvas from '../map/MapCanvas'
+import GridControlPanel from '../../dm/GridControlPanel'
+import type { DmToolId } from '../../dm/DMToolbar'
+import MapCanvas from '../../map/MapCanvas'
 
 const CreateMapDialog = lazy(() => import('./CreateMapDialog'))
 

@@ -1,6 +1,6 @@
 import { useGameStore } from '../../../stores/useGameStore'
 import type { GridSettings } from '../../../types/map'
-import GridControlPanel from '../dm/GridControlPanel'
+import GridControlPanel from '../../dm/GridControlPanel'
 
 interface GridSettingsModalProps {
   onClose: () => void

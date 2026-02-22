@@ -1,4 +1,4 @@
-import QuickReferencePanel from '../sidebar/QuickReferencePanel'
+import QuickReferencePanel from '../../sidebar/QuickReferencePanel'
 
 interface SpellReferenceModalProps {
   onClose: () => void
