@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { parseDiceFormula, rollDice } from '../../services/dice-engine'
+import { parseDiceFormula, rollDice } from '../../services/dice/dice-engine'
 import { play, playDiceSound } from '../../services/sound-manager'
 import type { GameSystem } from '../../types/game-system'
 import DiceResult from './DiceResult'
+import diceTypesJson from '../../../public/data/5e/mechanics/dice-types.json'
 
 interface DiceRollerProps {
   system: GameSystem
@@ -22,16 +23,7 @@ interface RollResult {
   isCritDamage?: boolean
 }
 
-const DICE = [
-  { sides: 3, label: 'd3' },
-  { sides: 4, label: 'd4' },
-  { sides: 6, label: 'd6' },
-  { sides: 8, label: 'd8' },
-  { sides: 10, label: 'd10' },
-  { sides: 12, label: 'd12' },
-  { sides: 20, label: 'd20' },
-  { sides: 100, label: 'd100' }
-]
+const DICE = diceTypesJson
 
 export default function DiceRoller({ system, rollerName, onRoll, allowCritDoubling = true }: DiceRollerProps): JSX.Element {
   const [modifier, setModifier] = useState(0)

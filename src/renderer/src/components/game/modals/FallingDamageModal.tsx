@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollMultiple } from '../../../services/dice-service'
+import { rollMultiple } from '../../../services/dice/dice-service'
 import { useGameStore } from '../../../stores/useGameStore'
 import type { MapToken } from '../../../types/map'
 

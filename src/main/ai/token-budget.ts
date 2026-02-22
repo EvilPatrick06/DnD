@@ -16,20 +16,22 @@ export interface ContextTokenBreakdown {
   total: number
 }
 
-export const TOKEN_BUDGETS = {
-  systemPrompt: 1500,
-  retrievedChunks: 8000,
-  srdData: 2000,
-  campaignData: 2000,
-  creatures: 2000,
-  gameState: 1500,
-  memory: 2000,
-  conversationHistory: 4000,
-  responseBuffer: 4000,
-  fileReadContent: 4000,
-  webSearchResults: 2000,
-  total: 25000
-} as const
+import tokenBudgetsJson from '../data/token-budgets.json'
+
+export const TOKEN_BUDGETS = tokenBudgetsJson as {
+  readonly systemPrompt: number
+  readonly retrievedChunks: number
+  readonly srdData: number
+  readonly campaignData: number
+  readonly creatures: number
+  readonly gameState: number
+  readonly memory: number
+  readonly conversationHistory: number
+  readonly responseBuffer: number
+  readonly fileReadContent: number
+  readonly webSearchResults: number
+  readonly total: number
+}
 
 /**
  * Trim text to fit within a token budget, cutting at paragraph boundaries.

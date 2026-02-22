@@ -4,7 +4,7 @@ import {
   getShortRestPreview,
   rollShortRestDice,
   type ShortRestDiceRoll
-} from '../../../services/rest-service-5e'
+} from '../../../services/character/rest-service-5e'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'

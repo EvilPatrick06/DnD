@@ -3,6 +3,8 @@ import { useAiDmStore } from '../../../stores/useAiDmStore'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import type { Campaign } from '../../../types/campaign'
+import dmTabsJson from '../../../../public/data/5e/ui/dm-tabs.json'
+import lightingTravelJson from '../../../../public/data/5e/mechanics/lighting-travel.json'
 
 const DMAudioPanel = lazy(() => import('./DMAudioPanel'))
 const AiContextPanel = lazy(() => import('./AiContextPanel'))
@@ -17,21 +19,9 @@ interface DMTabPanelProps {
   onEditMap: () => void
 }
 
-const TABS = [
-  { id: 'combat', label: 'Combat', icon: '\u2694\uFE0F' },
-  { id: 'magic', label: 'Magic', icon: '\u2728' },
-  { id: 'dmtools', label: 'DM Tools', icon: '\uD83D\uDEE0\uFE0F' },
-  { id: 'map', label: 'Map', icon: '\uD83D\uDDFA\uFE0F' },
-  { id: 'party', label: 'Party', icon: '\uD83D\uDC65' },
-  { id: 'audio', label: 'Audio', icon: '\uD83D\uDD0A' },
-  { id: 'aidm', label: 'AI DM', icon: '\uD83E\uDD16' },
-  { id: 'campaign', label: 'Campaign', icon: '\uD83D\uDCD6' },
-  { id: 'dice', label: 'Dice & Rolls', icon: '\uD83C\uDFB2' },
-  { id: 'chat', label: 'Chat & Social', icon: '\uD83D\uDCAC' },
-  { id: 'utility', label: 'Utility', icon: '\u2699\uFE0F' }
-] as const
+const TABS = dmTabsJson as readonly { id: string; label: string; icon: string }[]
 
-type TabId = (typeof TABS)[number]['id']
+type TabId = string
 
 const btnClass =
   'px-3 py-2 text-xs font-medium rounded-lg bg-gray-800/60 border border-gray-700/50 text-gray-300 hover:bg-amber-600/20 hover:border-amber-500/40 hover:text-amber-300 transition-all cursor-pointer whitespace-nowrap'
@@ -218,22 +208,10 @@ export default function DMTabPanel({
               {/* Lighting */}
               <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-[10px] text-gray-500">Lighting:</span>
-                {(
-                  [
-                    { level: 'bright' as const, tip: 'Normal illumination' },
-                    {
-                      level: 'dim' as const,
-                      tip: 'Lightly Obscured \u2014 Disadvantage on Perception (sight)'
-                    },
-                    {
-                      level: 'darkness' as const,
-                      tip: 'Heavily Obscured \u2014 Blinded condition without Darkvision'
-                    }
-                  ] as const
-                ).map(({ level, tip }) => (
+                {lightingTravelJson.lightingLevels.map(({ level, tip }) => (
                   <button
                     key={level}
-                    onClick={() => setAmbientLight(level)}
+                    onClick={() => setAmbientLight(level as 'bright' | 'dim' | 'darkness')}
                     title={tip}
                     className={`px-1.5 py-0.5 text-[10px] rounded cursor-pointer ${
                       ambientLight === level
@@ -253,10 +231,10 @@ export default function DMTabPanel({
               {/* Travel pace */}
               <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-[10px] text-gray-500">Pace:</span>
-                {([null, 'fast', 'normal', 'slow'] as const).map((pace) => (
+                {(lightingTravelJson.travelPaces as Array<string | null>).map((pace) => (
                   <button
                     key={pace ?? 'none'}
-                    onClick={() => setTravelPace(pace)}
+                    onClick={() => setTravelPace(pace as 'fast' | 'normal' | 'slow' | null)}
                     className={`px-1.5 py-0.5 text-[10px] rounded cursor-pointer ${
                       travelPace === pace
                         ? 'bg-amber-600 text-white'

@@ -7,7 +7,7 @@ import {
   rollShortRestDice,
   type ShortRestDiceRoll,
   type ShortRestPreview as SRPreview
-} from '../../../services/rest-service-5e'
+} from '../../../services/character/rest-service-5e'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'

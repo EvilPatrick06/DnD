@@ -1,6 +1,6 @@
 import { trigger3dDice } from '../../components/game/dice3d'
 import { playConditionSound } from '../../services/sound-manager'
-import { rollSingle } from '../dice-service'
+import { rollSingle } from '../dice/dice-service'
 import { useCharacterStore } from '../../stores/useCharacterStore'
 import { useGameStore } from '../../stores/useGameStore'
 import type { MapToken } from '../../types/map'

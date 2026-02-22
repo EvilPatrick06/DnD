@@ -1,6 +1,6 @@
 import type { MonsterAction, MonsterStatBlock } from '../../../types/monster'
 import { abilityModifier } from '../../../types/monster'
-import { extractConditionsFromDescription } from '../../../services/condition-extractor'
+import { extractConditionsFromDescription } from '../../../services/combat/condition-extractor'
 
 interface MonsterStatBlockViewProps {
   monster: MonsterStatBlock

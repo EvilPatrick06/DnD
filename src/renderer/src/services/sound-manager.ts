@@ -7,6 +7,8 @@
  * Module-level state with exported functions.
  */
 
+import soundEventsJson from '../../public/data/5e/audio/sound-events.json'
+
 // -- Combat sounds (10) --
 // -- Spell school sounds (10) --
 // -- Condition sounds (10) --
@@ -127,147 +129,26 @@ export type AmbientSound =
   | 'ambient-victory'
   | 'ambient-defeat'
 
-const SOUND_EVENTS: SoundEvent[] = [
-  // Combat
-  'attack-hit',
-  'attack-miss',
-  'crit-hit',
-  'crit-miss',
-  'melee-attack',
-  'ranged-attack',
-  'damage',
-  'death',
-  'stabilize',
-  'instant-kill',
-  // Spells
-  'spell-abjuration',
-  'spell-conjuration',
-  'spell-divination',
-  'spell-enchantment',
-  'spell-evocation',
-  'spell-illusion',
-  'spell-necromancy',
-  'spell-transmutation',
-  'spell-fizzle',
-  'counterspell',
-  // Conditions
-  'condition-blinded',
-  'condition-charmed',
-  'condition-frightened',
-  'condition-paralyzed',
-  'condition-poisoned',
-  'condition-prone',
-  'condition-restrained',
-  'condition-stunned',
-  'condition-unconscious',
-  'condition-exhaustion',
-  // Dice
-  'dice-d4',
-  'dice-d6',
-  'dice-d8',
-  'dice-d10',
-  'dice-d12',
-  'dice-d20',
-  'dice-d100',
-  'dice-advantage',
-  'dice-disadvantage',
-  'dice-roll',
-  'nat-20',
-  'nat-1',
-  // UI & Events
-  'initiative-start',
-  'turn-notify',
-  'round-end',
-  'level-up',
-  'xp-gain',
-  'short-rest',
-  'long-rest',
-  'shop-open',
-  'loot-found',
-  'door-open',
-  'trap-triggered',
-  'bastion-event',
-  // General
-  'heal',
-  'death-save',
-  'announcement',
-  'ping',
-  'condition-apply',
-  // Weapons
-  'weapon-sword',
-  'weapon-mace',
-  'weapon-bow',
-  'weapon-dagger',
-  'weapon-axe',
-  'weapon-staff',
-  'weapon-crossbow',
-  'weapon-hammer',
-  'weapon-spear',
-  'weapon-whip',
-  'weapon-shield-bash',
-  'weapon-flaming',
-  'weapon-frost',
-  'weapon-lightning',
-  'weapon-holy',
-  // Creatures
-  'creature-dragon',
-  'creature-wolf',
-  'creature-goblin',
-  'creature-undead',
-  'creature-giant',
-  'creature-snake',
-  'creature-bear',
-  'creature-demon',
-  'creature-ghost',
-  'creature-owl',
-  'creature-bat',
-  'creature-horse',
-  'creature-rat',
-  'creature-crow',
-  'creature-spider',
-  'creature-elemental',
-  'creature-troll',
-  'creature-ogre'
-]
+const SOUND_EVENTS: SoundEvent[] = soundEventsJson.soundEvents as SoundEvent[]
 
 const POOL_SIZE = 3
 
-const AMBIENT_EVENTS: AmbientSound[] = [
-  'ambient-tavern',
-  'ambient-dungeon',
-  'ambient-forest',
-  'ambient-cave',
-  'ambient-city',
-  'ambient-battle',
-  'ambient-tension',
-  'ambient-victory',
-  'ambient-defeat'
-]
+const AMBIENT_EVENTS: AmbientSound[] = soundEventsJson.ambientSounds as AmbientSound[]
 
 // --- Sound file path resolution ---
 // Files are organized into category subfolders with stripped prefixes:
 //   sounds/dice/d20.mp3, sounds/combat/attack-hit.mp3, sounds/ui/heal.mp3,
 //   sounds/weapons/melee/sword.mp3, sounds/creatures/beasts/wolf.mp3, etc.
 
-const COMBAT_EVENTS = new Set<string>([
-  'attack-hit', 'attack-miss', 'crit-hit', 'crit-miss', 'melee-attack',
-  'ranged-attack', 'damage', 'death', 'stabilize', 'instant-kill'
-])
-const UI_EVENTS = new Set<string>([
-  'initiative-start', 'turn-notify', 'round-end', 'level-up', 'xp-gain',
-  'short-rest', 'long-rest', 'shop-open', 'loot-found', 'door-open',
-  'trap-triggered', 'bastion-event', 'heal', 'death-save', 'announcement', 'ping'
-])
+const COMBAT_EVENTS = new Set<string>(soundEventsJson.categories.combat)
+const UI_EVENTS = new Set<string>(soundEventsJson.categories.ui)
 
-const WEAPON_RANGED = new Set<string>(['weapon-bow', 'weapon-crossbow'])
-const WEAPON_MAGIC = new Set<string>(['weapon-flaming', 'weapon-frost', 'weapon-lightning', 'weapon-holy'])
+const WEAPON_RANGED = new Set<string>(soundEventsJson.weaponSubcategories.ranged)
+const WEAPON_MAGIC = new Set<string>(soundEventsJson.weaponSubcategories.magic)
 
-const CREATURE_BEASTS = new Set<string>([
-  'creature-wolf', 'creature-bear', 'creature-snake', 'creature-horse',
-  'creature-rat', 'creature-bat', 'creature-owl', 'creature-crow', 'creature-spider'
-])
+const CREATURE_BEASTS = new Set<string>(soundEventsJson.creatureSubcategories.beasts)
 
-const STRIP_PREFIXES = ['creature-', 'spell-', 'condition-', 'dice-', 'weapon-', 'ambient-']
+const STRIP_PREFIXES = soundEventsJson.stripPrefixes
 
 function getSoundFolder(event: string): string {
   if (event.startsWith('nat-')) return 'dice'
@@ -637,20 +518,7 @@ export function getAllAmbientSounds(): AmbientSound[] {
  * Call this early in app initialization.
  */
 export function preloadEssential(): void {
-  const essentialEvents: SoundEvent[] = [
-    'dice-d4',
-    'dice-d6',
-    'dice-d8',
-    'dice-d10',
-    'dice-d12',
-    'dice-d20',
-    'dice-d100',
-    'dice-roll',
-    'nat-20',
-    'nat-1',
-    'turn-notify',
-    'initiative-start'
-  ]
+  const essentialEvents: SoundEvent[] = soundEventsJson.essentialEvents as SoundEvent[]
 
   for (const event of essentialEvents) {
     const pool = pools.get(event)

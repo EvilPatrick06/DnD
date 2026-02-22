@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { load5eSpells, load5eSubclasses } from '../../../services/data-provider'
-import { getSlotProgression, hasAnySpellcasting, isThirdCaster, PREPARED_SPELLS } from '../../../services/spell-data'
+import { getSlotProgression, hasAnySpellcasting, isThirdCaster, PREPARED_SPELLS } from '../../../services/character/spell-data'
 import { useLevelUpStore } from '../../../stores/useLevelUpStore'
 import type { Character5e } from '../../../types/character-5e'
 

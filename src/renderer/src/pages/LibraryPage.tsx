@@ -10,7 +10,7 @@ import {
   loadAllStatBlocks,
   searchMonsters
 } from '../services/data-provider'
-import { exportEntities, importEntities, reIdItems } from '../services/entity-io'
+import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
 import type { MonsterStatBlock } from '../types/monster'
 import { crToNumber } from '../types/monster'
 

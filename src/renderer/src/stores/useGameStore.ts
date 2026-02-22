@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ShopItem } from '../network/types'
+import { useLobbyStore } from './useLobbyStore'
 import type { ActiveLightSource, CombatTimerConfig } from '../types/campaign'
 import type {
   ActiveCurse,
@@ -510,18 +511,16 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       if (expired.length > 0) {
         set({ conditions: remaining })
         // Post system messages for expired conditions
-        import('./useLobbyStore').then(({ useLobbyStore }) => {
-          for (const c of expired) {
-            useLobbyStore.getState().addChatMessage({
-              id: crypto.randomUUID(),
-              senderId: 'system',
-              senderName: 'System',
-              content: `${c.entityName}'s ${c.condition} condition has expired (after ${c.duration} round${c.duration !== 1 ? 's' : ''}).`,
-              timestamp: Date.now(),
-              isSystem: true
-            })
-          }
-        })
+        for (const c of expired) {
+          useLobbyStore.getState().addChatMessage({
+            id: crypto.randomUUID(),
+            senderId: 'system',
+            senderName: 'System',
+            content: `${c.entityName}'s ${c.condition} condition has expired (after ${c.duration} round${c.duration !== 1 ? 's' : ''}).`,
+            timestamp: Date.now(),
+            isSystem: true
+          })
+        }
       }
     }
   },
@@ -632,15 +631,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           get().updateToken(map.id, token.id, { currentHP: 0 })
         }
       }
-      import('./useLobbyStore').then(({ useLobbyStore }) => {
-        useLobbyStore.getState().addChatMessage({
-          id: crypto.randomUUID(),
-          senderId: 'system',
-          senderName: 'System',
-          content: `${condition.entityName} dies from Exhaustion level 6!`,
-          timestamp: Date.now(),
-          isSystem: true
-        })
+      useLobbyStore.getState().addChatMessage({
+        id: crypto.randomUUID(),
+        senderId: 'system',
+        senderName: 'System',
+        content: `${condition.entityName} dies from Exhaustion level 6!`,
+        timestamp: Date.now(),
+        isSystem: true
       })
     }
   },
@@ -667,15 +664,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             get().updateToken(map.id, token.id, { currentHP: 0 })
           }
         }
-        import('./useLobbyStore').then(({ useLobbyStore }) => {
-          useLobbyStore.getState().addChatMessage({
-            id: crypto.randomUUID(),
-            senderId: 'system',
-            senderName: 'System',
-            content: `${updated.entityName} dies from Exhaustion level 6!`,
-            timestamp: Date.now(),
-            isSystem: true
-          })
+        useLobbyStore.getState().addChatMessage({
+          id: crypto.randomUUID(),
+          senderId: 'system',
+          senderName: 'System',
+          content: `${updated.entityName} dies from Exhaustion level 6!`,
+          timestamp: Date.now(),
+          isSystem: true
         })
       }
     }

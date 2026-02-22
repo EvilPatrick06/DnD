@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { getClassResources } from '../data/class-resources'
 import { getSpeciesResources } from '../data/species-resources'
-import { getSpeciesSpellProgression } from '../services/auto-populate-5e'
-import { generate5eLevelUpSlots, getExpertiseGrants } from '../services/build-tree-5e'
+import { getSpeciesSpellProgression } from '../services/character/auto-populate-5e'
+import { generate5eLevelUpSlots, getExpertiseGrants } from '../services/character/build-tree-5e'
 import { load5eClasses, load5eClassFeatures, load5eSpells, load5eSpecies, load5eSubclasses } from '../services/data-provider'
 import {
   computeSpellcastingInfo,
@@ -12,8 +12,8 @@ import {
   getWarlockPactSlots,
   HALF_CASTERS_5E,
   isMulticlassSpellcaster
-} from '../services/spell-data'
-import { calculateHPBonusFromTraits, getWildShapeMax } from '../services/stat-calculator-5e'
+} from '../services/character/spell-data'
+import { calculateHPBonusFromTraits, getWildShapeMax } from '../services/character/stat-calculator-5e'
 import type { Character } from '../types/character'
 import { is5eCharacter } from '../types/character'
 import type { Character5e, MulticlassEntry } from '../types/character-5e'

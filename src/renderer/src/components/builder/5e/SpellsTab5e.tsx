@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { getSpellsFromTraits } from '../../../services/auto-populate-5e'
+import { getSpellsFromTraits } from '../../../services/character/auto-populate-5e'
 import { load5eSpells, load5eSubclasses } from '../../../services/data-provider'
 import {
   getCantripsKnown,
@@ -7,7 +7,7 @@ import {
   getSlotProgression,
   hasAnySpellcasting,
   isWarlockPactMagic
-} from '../../../services/spell-data'
+} from '../../../services/character/spell-data'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import SectionBanner from '../shared/SectionBanner'
 

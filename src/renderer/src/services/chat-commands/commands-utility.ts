@@ -1,5 +1,5 @@
 import { trigger3dDice } from '../../components/game/dice3d'
-import { rollSingle } from '../dice-service'
+import { rollSingle } from '../dice/dice-service'
 import type { ChatCommand } from './types'
 
 const undoCommand: ChatCommand = {

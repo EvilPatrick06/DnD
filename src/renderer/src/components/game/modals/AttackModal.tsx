@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { getAttackConditionEffects } from '../../../services/attack-condition-effects'
+import { getAttackConditionEffects } from '../../../services/combat/attack-condition-effects'
 import {
   type CoverType,
   canGrappleOrShove,
@@ -11,11 +11,11 @@ import {
   isInMeleeRange,
   type MasteryEffectResult,
   unarmedStrikeDC
-} from '../../../services/combat-rules'
-import { calculateCover } from '../../../services/cover-calculator'
-import { rollMultiple, rollSingle } from '../../../services/dice-service'
-import { resolveEffects, type WeaponContext } from '../../../services/effect-resolver-5e'
-import { checkFlanking as checkFlankingFn } from '../../../services/flanking'
+} from '../../../services/combat/combat-rules'
+import { calculateCover } from '../../../services/combat/cover-calculator'
+import { rollMultiple, rollSingle } from '../../../services/dice/dice-service'
+import { resolveEffects, type WeaponContext } from '../../../services/combat/effect-resolver-5e'
+import { checkFlanking as checkFlankingFn } from '../../../services/combat/flanking'
 import { useGameStore } from '../../../stores/useGameStore'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useNetworkStore } from '../../../stores/useNetworkStore'

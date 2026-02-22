@@ -16,7 +16,7 @@ import {
   type Point,
   type Segment,
   wallsToSegments
-} from '../../services/raycast-visibility'
+} from '../../services/map/raycast-visibility'
 import type { GameMap, MapToken } from '../../types/map'
 
 // ─── Types ────────────────────────────────────────────────────

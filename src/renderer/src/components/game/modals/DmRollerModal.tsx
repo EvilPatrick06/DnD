@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollMultiple, rollSingle } from '../../../services/dice-service'
+import { rollMultiple, rollSingle } from '../../../services/dice/dice-service'
 import { load5eMonsterById } from '../../../services/data-provider'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'

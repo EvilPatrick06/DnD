@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { generate5eBuildSlots } from '../../../services/build-tree-5e'
+import { generate5eBuildSlots } from '../../../services/character/build-tree-5e'
 import type { BuilderState, CoreSliceState } from '../types'
 import { DEFAULT_SCORES } from '../types'
 

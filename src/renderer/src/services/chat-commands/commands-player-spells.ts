@@ -1,5 +1,5 @@
 import { trigger3dDice } from '../../components/game/dice3d'
-import { rollMultiple, rollSingle } from '../dice-service'
+import { rollMultiple, rollSingle } from '../dice/dice-service'
 import type { ChatCommand } from './types'
 
 const castCommand: ChatCommand = {

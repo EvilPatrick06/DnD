@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getWildShapeEligibleBeasts } from '../../../services/companion-service'
+import { getWildShapeEligibleBeasts } from '../../../services/character/companion-service'
 import { load5eMonsters } from '../../../services/data-provider'
 import type { MonsterStatBlock } from '../../../types/monster'
 import MonsterStatBlockView from '../dm/MonsterStatBlockView'

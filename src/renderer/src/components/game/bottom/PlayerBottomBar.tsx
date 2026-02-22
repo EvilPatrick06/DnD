@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { parseDiceFormula, rollDice } from '../../../services/dice-engine'
+import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
 import { useLobbyStore } from '../../../stores/useLobbyStore'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'

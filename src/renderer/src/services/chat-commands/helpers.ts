@@ -3,7 +3,7 @@ import {
   parseFormula as parseFormulaSvc,
   rollMultiple,
   rollSingle as rollSingleSvc
-} from '../dice-service'
+} from '../dice/dice-service'
 import { useCharacterStore } from '../../stores/useCharacterStore'
 import { useGameStore } from '../../stores/useGameStore'
 import { useLobbyStore } from '../../stores/useLobbyStore'

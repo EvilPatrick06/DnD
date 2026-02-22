@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SPELL_SCHOOLS } from '../../../constants/spell-schools'
 import { load5eEquipment, load5eMonsters } from '../../../services/data-provider'
-import { loadSpells } from '../../../services/spell-data'
+import { loadSpells } from '../../../services/character/spell-data'
 import type { SpellEntry } from '../../../types/character-common'
 import type { EquipmentFile } from '../../../types/data'
 import type { MonsterStatBlock } from '../../../types/monster'

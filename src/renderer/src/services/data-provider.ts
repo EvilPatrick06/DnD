@@ -1,27 +1,48 @@
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
 import type {
+  AbilityScoreConfigFile,
   BackgroundData,
+  BuiltInMapEntry,
   ChaseTablesFile,
   ClassData,
   ClassFeaturesFile,
+  ClassResourcesFile,
   CraftingToolEntry,
+  CurrencyConfigEntry,
+  DiceColorsFile,
+  DiceTypeDef,
   DiseaseData,
+  DmTabDef,
   EncounterBudgetsFile,
   EncounterPreset,
   EquipmentFile,
   FeatData,
   InvocationData,
+  KeyboardShortcutDef,
+  LightingTravelFile,
   MagicItemData,
   MetamagicData,
+  ModerationFile,
+  NotificationTemplatesFile,
   NpcNamesFile,
+  PresetIcon,
   RandomTablesFile,
   RawSpeciesData,
+  SessionZeroConfigFile,
+  SoundEventsFile,
   SpeciesData,
+  SpeciesResourcesFile,
+  SpeciesSpellsFile,
   SpeciesTrait,
   SpeciesTraitsFile,
   SpellData,
   SubclassData,
-  TreasureTablesFile
+  TreasureTablesFile,
+  AdventureSeedsFile,
+  CreatureTypesFile,
+  AmbientTracksFile,
+  LanguageD12Entry,
+  RarityOptionEntry
 } from '../types/data'
 import type {
   Curse,
@@ -58,7 +79,7 @@ export const DATA_PATHS = {
   magicItems:         `${BASE}/equipment/magic-items.json`,
   mounts:             `${BASE}/equipment/mounts.json`,
   sentientItems:      `${BASE}/equipment/sentient-items.json`,
-  supernaturalGifts:  `${BASE}/equipment/supernatural-gifts.json`,
+  supernaturalGifts:  `${BASE}/hazards/supernatural-gifts.json`,
   trinkets:           `${BASE}/equipment/trinkets.json`,
   variantItems:       `${BASE}/equipment/variant-items.json`,
   wearableItems:      `${BASE}/equipment/wearable-items.json`,
@@ -106,8 +127,30 @@ export const DATA_PATHS = {
   spellSlots:         `${BASE}/mechanics/spell-slots.json`,
   weaponMastery:      `${BASE}/mechanics/weapon-mastery.json`,
   xpThresholds:       `${BASE}/mechanics/xp-thresholds.json`,
-  // audio/
-  sounds:             `${BASE}/audio/sounds.json`,
+  // NEW externalized data (audio, character, mechanics, ui, etc.)
+  soundEvents:        `${BASE}/audio/sound-events.json`,
+  speciesSpells:      `${BASE}/character/species-spells.json`,
+  classResources:     `${BASE}/mechanics/class-resources.json`,
+  speciesResources:   `${BASE}/mechanics/species-resources.json`,
+  abilityScoreConfig: `${BASE}/character/ability-score-config.json`,
+  presetIcons:        `${BASE}/character/preset-icons.json`,
+  keyboardShortcuts:  `${BASE}/ui/keyboard-shortcuts.json`,
+  themes:             `${BASE}/ui/themes.json`,
+  diceColors:         `${BASE}/ui/dice-colors.json`,
+  dmTabs:             `${BASE}/ui/dm-tabs.json`,
+  notificationTemplates: `${BASE}/ui/notification-templates.json`,
+  builtInMaps:        `${BASE}/world/built-in-maps.json`,
+  sessionZeroConfig:  `${BASE}/world/session-zero-config.json`,
+  diceTypes:          `${BASE}/mechanics/dice-types.json`,
+  lightingTravel:     `${BASE}/mechanics/lighting-travel.json`,
+  currencyConfig:     `${BASE}/equipment/currency-config.json`,
+  moderation:         `${BASE}/ai/moderation.json`,
+  // Round 2 externalized data
+  adventureSeeds:     `${BASE}/world/adventure-seeds.json`,
+  creatureTypes:      `${BASE}/creatures/creature-types.json`,
+  ambientTracks:      `${BASE}/audio/ambient-tracks.json`,
+  languageD12Table:   `${BASE}/character/language-d12-table.json`,
+  rarityOptions:      `${BASE}/ui/rarity-options.json`,
 } as const
 
 const jsonCache = new Map<string, unknown>()
@@ -818,5 +861,96 @@ export async function load5eTrinkets(): Promise<Record<string, unknown>[]> {
 }
 
 export async function load5eSounds(): Promise<Record<string, unknown>[]> {
-  return ds().get('sounds', () => loadJson<Record<string, unknown>[]>(DATA_PATHS.sounds))
+  const events = await load5eSoundEvents()
+  return events.soundFileMappings as unknown as Record<string, unknown>[]
+}
+
+export async function load5eSoundEvents(): Promise<SoundEventsFile> {
+  return ds().get('soundEvents', () => loadJson<SoundEventsFile>(DATA_PATHS.soundEvents))
+}
+
+export async function load5eSpeciesSpells(): Promise<SpeciesSpellsFile> {
+  return ds().get('speciesSpells', () => loadJson<SpeciesSpellsFile>(DATA_PATHS.speciesSpells))
+}
+
+export async function load5eClassResources(): Promise<ClassResourcesFile> {
+  return ds().get('classResources', () => loadJson<ClassResourcesFile>(DATA_PATHS.classResources))
+}
+
+export async function load5eSpeciesResources(): Promise<SpeciesResourcesFile> {
+  return ds().get('speciesResources', () => loadJson<SpeciesResourcesFile>(DATA_PATHS.speciesResources))
+}
+
+export async function load5eAbilityScoreConfig(): Promise<AbilityScoreConfigFile> {
+  return ds().get('abilityScoreConfig', () => loadJson<AbilityScoreConfigFile>(DATA_PATHS.abilityScoreConfig))
+}
+
+export async function load5ePresetIcons(): Promise<PresetIcon[]> {
+  return ds().get('presetIcons', () => loadJson<PresetIcon[]>(DATA_PATHS.presetIcons))
+}
+
+export async function load5eKeyboardShortcuts(): Promise<KeyboardShortcutDef[]> {
+  return ds().get('keyboardShortcuts', () => loadJson<KeyboardShortcutDef[]>(DATA_PATHS.keyboardShortcuts))
+}
+
+export async function load5eThemes(): Promise<Record<string, Record<string, string>>> {
+  return ds().get('themes', () => loadJson<Record<string, Record<string, string>>>(DATA_PATHS.themes))
+}
+
+export async function load5eDiceColors(): Promise<DiceColorsFile> {
+  return ds().get('diceColors', () => loadJson<DiceColorsFile>(DATA_PATHS.diceColors))
+}
+
+export async function load5eDmTabs(): Promise<DmTabDef[]> {
+  return ds().get('dmTabs', () => loadJson<DmTabDef[]>(DATA_PATHS.dmTabs))
+}
+
+export async function load5eNotificationTemplates(): Promise<NotificationTemplatesFile> {
+  return ds().get('notificationTemplates', () => loadJson<NotificationTemplatesFile>(DATA_PATHS.notificationTemplates))
+}
+
+export async function load5eBuiltInMaps(): Promise<BuiltInMapEntry[]> {
+  return ds().get('builtInMaps', () => loadJson<BuiltInMapEntry[]>(DATA_PATHS.builtInMaps))
+}
+
+export async function load5eSessionZeroConfig(): Promise<SessionZeroConfigFile> {
+  return ds().get('sessionZeroConfig', () => loadJson<SessionZeroConfigFile>(DATA_PATHS.sessionZeroConfig))
+}
+
+export async function load5eDiceTypes(): Promise<DiceTypeDef[]> {
+  return ds().get('diceTypes', () => loadJson<DiceTypeDef[]>(DATA_PATHS.diceTypes))
+}
+
+export async function load5eLightingTravel(): Promise<LightingTravelFile> {
+  return ds().get('lightingTravel', () => loadJson<LightingTravelFile>(DATA_PATHS.lightingTravel))
+}
+
+export async function load5eCurrencyConfig(): Promise<CurrencyConfigEntry[]> {
+  return ds().get('currencyConfig', () => loadJson<CurrencyConfigEntry[]>(DATA_PATHS.currencyConfig))
+}
+
+export async function load5eModeration(): Promise<ModerationFile> {
+  return ds().get('moderation', () => loadJson<ModerationFile>(DATA_PATHS.moderation))
+}
+
+// --- Round 2 loaders ---
+
+export async function load5eAdventureSeeds(): Promise<AdventureSeedsFile> {
+  return ds().get('adventureSeeds', () => loadJson<AdventureSeedsFile>(DATA_PATHS.adventureSeeds))
+}
+
+export async function load5eCreatureTypes(): Promise<CreatureTypesFile> {
+  return ds().get('creatureTypes', () => loadJson<CreatureTypesFile>(DATA_PATHS.creatureTypes))
+}
+
+export async function load5eAmbientTracks(): Promise<AmbientTracksFile> {
+  return ds().get('ambientTracks', () => loadJson<AmbientTracksFile>(DATA_PATHS.ambientTracks))
+}
+
+export async function load5eLanguageD12Table(): Promise<LanguageD12Entry[]> {
+  return ds().get('languageD12Table', () => loadJson<LanguageD12Entry[]>(DATA_PATHS.languageD12Table))
+}
+
+export async function load5eRarityOptions(): Promise<RarityOptionEntry[]> {
+  return ds().get('rarityOptions', () => loadJson<RarityOptionEntry[]>(DATA_PATHS.rarityOptions))
 }

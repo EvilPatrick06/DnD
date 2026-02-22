@@ -3,44 +3,11 @@ import type { AbilityScoreMethod } from '../../../stores/useBuilderStore'
 import { POINT_BUY_BUDGET, POINT_BUY_COSTS, STANDARD_ARRAY, useBuilderStore } from '../../../stores/useBuilderStore'
 import type { AbilityName } from '../../../types/character-common'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
+import abilityScoreConfigJson from '../../../../public/data/5e/character/ability-score-config.json'
 
-// PHB 2024 p.38 — Suggested Standard Array distributions per class
-const STANDARD_ARRAY_BY_CLASS: Record<string, Record<AbilityName, number>> = {
-  barbarian: { strength: 15, dexterity: 13, constitution: 14, intelligence: 10, wisdom: 12, charisma: 8 },
-  bard: { strength: 8, dexterity: 14, constitution: 12, intelligence: 13, wisdom: 10, charisma: 15 },
-  cleric: { strength: 14, dexterity: 8, constitution: 13, intelligence: 10, wisdom: 15, charisma: 12 },
-  druid: { strength: 8, dexterity: 12, constitution: 14, intelligence: 13, wisdom: 15, charisma: 10 },
-  fighter: { strength: 15, dexterity: 14, constitution: 13, intelligence: 8, wisdom: 10, charisma: 12 },
-  monk: { strength: 12, dexterity: 15, constitution: 13, intelligence: 10, wisdom: 14, charisma: 8 },
-  paladin: { strength: 15, dexterity: 10, constitution: 13, intelligence: 8, wisdom: 12, charisma: 14 },
-  ranger: { strength: 12, dexterity: 15, constitution: 13, intelligence: 8, wisdom: 14, charisma: 10 },
-  rogue: { strength: 12, dexterity: 15, constitution: 13, intelligence: 14, wisdom: 10, charisma: 8 },
-  sorcerer: { strength: 10, dexterity: 13, constitution: 14, intelligence: 8, wisdom: 12, charisma: 15 },
-  warlock: { strength: 8, dexterity: 14, constitution: 13, intelligence: 12, wisdom: 10, charisma: 15 },
-  wizard: { strength: 8, dexterity: 12, constitution: 13, intelligence: 15, wisdom: 14, charisma: 10 }
-}
-
-const CLASS_DISPLAY_ORDER = [
-  'barbarian',
-  'bard',
-  'cleric',
-  'druid',
-  'fighter',
-  'monk',
-  'paladin',
-  'ranger',
-  'rogue',
-  'sorcerer',
-  'warlock',
-  'wizard'
-]
-
-const METHODS: Array<{ id: AbilityScoreMethod; label: string; desc: string }> = [
-  { id: 'standard', label: 'Standard Array', desc: 'Assign 15, 14, 13, 12, 10, 8' },
-  { id: 'pointBuy', label: 'Point Buy', desc: '27 points, scores 8-15' },
-  { id: 'roll', label: 'Roll', desc: '4d6 drop lowest' },
-  { id: 'custom', label: 'Custom', desc: 'Enter any values' }
-]
+const STANDARD_ARRAY_BY_CLASS = abilityScoreConfigJson.standardArrayByClass as Record<string, Record<AbilityName, number>>
+const CLASS_DISPLAY_ORDER = abilityScoreConfigJson.classDisplayOrder
+const METHODS: Array<{ id: AbilityScoreMethod; label: string; desc: string }> = abilityScoreConfigJson.methods as Array<{ id: AbilityScoreMethod; label: string; desc: string }>
 
 export default function AbilityScoreModal(): JSX.Element {
   const abilityScores = useBuilderStore((s) => s.abilityScores)

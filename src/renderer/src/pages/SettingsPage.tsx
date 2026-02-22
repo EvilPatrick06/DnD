@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import OllamaManagement from '../components/settings/OllamaManagement'
 import { addToast } from '../hooks/useToast'
-import { exportEntities, importEntities } from '../services/entity-io'
+import { exportEntities, importEntities } from '../services/io/entity-io'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 
 const THEME_LABELS: Record<ThemeName, string> = {

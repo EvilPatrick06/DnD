@@ -1,5 +1,7 @@
 // keyboard-shortcuts.ts — Global keyboard shortcut manager for the game view
 
+import shortcutsJson from '../../public/data/5e/ui/keyboard-shortcuts.json'
+
 export interface ShortcutDefinition {
   key: string // e.g., 'Space', 'Escape', 'd', '1'-'9'
   ctrl?: boolean
@@ -10,34 +12,7 @@ export interface ShortcutDefinition {
   category: 'combat' | 'navigation' | 'tools' | 'general'
 }
 
-export const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
-  // Combat
-  { key: ' ', action: 'end-turn', description: 'End Turn', category: 'combat' },
-  { key: 'Tab', action: 'cycle-tokens', description: 'Cycle Through Tokens', category: 'combat' },
-  { key: 'i', action: 'toggle-initiative', description: 'Toggle Initiative Panel', category: 'combat' },
-  { key: '1', action: 'quick-action-1', description: 'Quick Action Slot 1', category: 'combat' },
-  { key: '2', action: 'quick-action-2', description: 'Quick Action Slot 2', category: 'combat' },
-  { key: '3', action: 'quick-action-3', description: 'Quick Action Slot 3', category: 'combat' },
-  { key: '4', action: 'quick-action-4', description: 'Quick Action Slot 4', category: 'combat' },
-  { key: '5', action: 'quick-action-5', description: 'Quick Action Slot 5', category: 'combat' },
-
-  // Navigation
-  { key: 'c', action: 'focus-chat', description: 'Focus Chat Input', category: 'navigation' },
-  { key: 'j', action: 'toggle-journal', description: 'Toggle Journal', category: 'navigation' },
-  { key: '+', ctrl: true, action: 'zoom-in', description: 'Zoom In', category: 'navigation' },
-  { key: '-', ctrl: true, action: 'zoom-out', description: 'Zoom Out', category: 'navigation' },
-  { key: '0', ctrl: true, action: 'zoom-fit', description: 'Zoom to Fit', category: 'navigation' },
-
-  // Tools (DM)
-  { key: 'd', action: 'open-dice', description: 'Open Dice Roller', category: 'tools' },
-  { key: 'm', action: 'toggle-map-editor', description: 'Toggle Map Editor (DM)', category: 'tools' },
-
-  // General
-  { key: 'Escape', action: 'close-modal', description: 'Close Modal / Deselect', category: 'general' },
-  { key: '/', action: 'show-shortcuts', description: 'Show Shortcuts Reference', category: 'general' },
-  { key: 'z', ctrl: true, action: 'undo', description: 'Undo', category: 'general' },
-  { key: 'y', ctrl: true, action: 'redo', description: 'Redo', category: 'general' }
-]
+export const DEFAULT_SHORTCUTS: ShortcutDefinition[] = shortcutsJson as ShortcutDefinition[]
 
 type ShortcutHandler = (action: string) => void
 

@@ -4,7 +4,7 @@
  */
 
 import { LIGHT_SOURCES } from '../data/light-sources'
-import { rollMultiple } from './dice-service'
+import { rollMultiple } from './dice/dice-service'
 import { useGameStore } from '../stores/useGameStore'
 import { useLobbyStore } from '../stores/useLobbyStore'
 import { useNetworkStore } from '../stores/useNetworkStore'

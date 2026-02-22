@@ -540,7 +540,7 @@ export interface RandomTablesFile {
   plotHooks: string[]
 }
 
-// === sounds.json ===
+// === Sound entries (merged into sound-events.json as soundFileMappings) ===
 
 export interface SoundEntry {
   id: string
@@ -595,6 +595,217 @@ export interface MountsFile {
   mounts: MountData[]
 }
 
+
+// === Resource Scaling (class-resources.json, species-resources.json) ===
+
+export interface ResourceScaling {
+  minLevel: number
+  maxLevel?: number
+  max?: number
+  maxFormula?: 'profBonus' | 'classLevel' | 'classLevel*5' | 'wisdomMod'
+}
+
+export interface ResourceDefinition {
+  id: string
+  name: string
+  shortRestRestore: number | 'all'
+  scaling: ResourceScaling[]
+}
+
+export interface ClassResourcesFile {
+  classes: Record<string, { resources: ResourceDefinition[] }>
+  feats: Record<string, ResourceDefinition>
+}
+
+export interface SpeciesResourceEntry {
+  resources: ResourceDefinition[]
+  heritages?: Record<string, ResourceDefinition[]>
+}
+
+export interface SpeciesResourcesFile {
+  species: Record<string, SpeciesResourceEntry>
+}
+
+// === Sound Events (sound-events.json) ===
+
+export interface SoundEventsFile {
+  soundFileMappings: SoundEntry[]
+  soundEvents: string[]
+  ambientSounds: string[]
+  categories: Record<string, string[]>
+  weaponSubcategories: Record<string, string[]>
+  creatureSubcategories: Record<string, string[]>
+  stripPrefixes: string[]
+  essentialEvents: string[]
+}
+
+// === Species Spells (species-spells.json) ===
+
+export interface SpeciesSpellEntry {
+  name: string
+  level: number
+  description: string
+  castingTime: string
+  range: string
+  duration: string
+  components: string
+  school: string
+  concentration?: boolean
+  ritual?: boolean
+}
+
+export type SpeciesSpellsFile = Record<string, SpeciesSpellEntry>
+
+// === Ability Score Config (ability-score-config.json) ===
+
+export interface AbilityScoreConfigFile {
+  pointBuyCosts: Record<string, number>
+  pointBuyBudget: number
+  standardArray: number[]
+  defaultScores: Record<string, number>
+  pointBuyStart: Record<string, number>
+  methods: Array<{ id: string; label: string; desc: string }>
+  standardArrayByClass: Record<string, Record<string, number>>
+  classDisplayOrder: string[]
+}
+
+// === Preset Icons (preset-icons.json) ===
+
+export interface PresetIcon {
+  id: string
+  label: string
+  emoji: string
+}
+
+// === Keyboard Shortcuts (keyboard-shortcuts.json) ===
+
+export interface KeyboardShortcutDef {
+  key: string
+  ctrl?: boolean
+  shift?: boolean
+  alt?: boolean
+  action: string
+  description: string
+  category: string
+}
+
+// === Themes (themes.json) ===
+
+export type ThemesFile = Record<string, Record<string, string>>
+
+// === Dice Colors (dice-colors.json) ===
+
+export interface DiceColorsFile {
+  default: { bodyColor: string; numberColor: string }
+  presets: Array<{ label: string; bodyColor: string; numberColor: string }>
+}
+
+// === DM Tabs (dm-tabs.json) ===
+
+export interface DmTabDef {
+  id: string
+  label: string
+  icon: string
+}
+
+// === Notification Templates (notification-templates.json) ===
+
+export type NotificationTemplatesFile = Record<string, { title: string; body: string }>
+
+// === Built-in Maps (built-in-maps.json) ===
+
+export interface BuiltInMapEntry {
+  id: string
+  name: string
+  preview: string
+  imagePath: string
+}
+
+// === Session Zero Config (session-zero-config.json) ===
+
+export interface SessionZeroConfigFile {
+  toneOptions: Array<{ value: string; label: string; description: string }>
+  deathOptions: Array<{ value: string; label: string; description: string }>
+  commonLimits: string[]
+  ruleCategories: Array<{ value: string; label: string }>
+  categoryColors: Record<string, string>
+}
+
+// === Dice Types (dice-types.json) ===
+
+export interface DiceTypeDef {
+  sides: number
+  label: string
+}
+
+// === Lighting & Travel (lighting-travel.json) ===
+
+export interface LightingTravelFile {
+  lightingLevels: Array<{ level: string; tip: string }>
+  travelPaces: Array<string | null>
+}
+
+// === Currency Config (currency-config.json) ===
+
+export interface CurrencyConfigEntry {
+  key: string
+  label: string
+  fullName: string
+  ring: string
+  bg: string
+  text: string
+}
+
+// === Moderation (moderation.json) ===
+
+export interface ModerationFile {
+  blockedWords: string[]
+}
+
+// === Adventure Seeds (adventure-seeds.json) ===
+
+export type AdventureSeedsFile = Record<string, string[]>
+
+// === Creature Types (creature-types.json) ===
+
+export interface CreatureTypesFile {
+  sizes: string[]
+  types: string[]
+}
+
+// === Ambient Tracks (ambient-tracks.json) ===
+
+export interface AmbientTrackEntry {
+  id: string
+  label: string
+  icon: string
+}
+
+export interface QuickSfxEntry {
+  event: string
+  label: string
+}
+
+export interface AmbientTracksFile {
+  ambientTracks: AmbientTrackEntry[]
+  quickSfx: QuickSfxEntry[]
+}
+
+// === Language D12 Table (language-d12-table.json) ===
+
+export interface LanguageD12Entry {
+  min: number
+  max: number
+  language: string
+}
+
+// === Rarity Options (rarity-options.json) ===
+
+export interface RarityOptionEntry {
+  value: string
+  label: string
+  color: string
+}
 
 // === Compatibility Aliases ===
 // These match the names used by the individual .types.ts files and data-provider.ts

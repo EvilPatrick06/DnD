@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { CampaignWizard } from '../components/campaign'
 import { BackButton, Button } from '../components/ui'
-import { importCampaignFromFile } from '../services/campaign-io'
+import { importCampaignFromFile } from '../services/io/campaign-io'
 import { useCampaignStore } from '../stores/useCampaignStore'
 
 export default function MakeGamePage(): JSX.Element {

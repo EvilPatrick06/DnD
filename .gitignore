@@ -9,6 +9,7 @@ nul
 .env.*
 .env.local
 .vscode/
+.claude/
 .idea/
 *.swp
 *.swo
@@ -16,6 +17,8 @@ nul
 *.asar
 *.blockmap
 *.tsbuildinfo
+dev-app-update.yml
+resources/chunk-index.json
 
 # Reference PDFs (too large for GitHub)
 5.5e References/

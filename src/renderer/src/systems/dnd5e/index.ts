@@ -12,7 +12,7 @@ import {
   HALF_CASTERS_5E,
   isThirdCaster,
   THIRD_CASTER_SUBCLASSES
-} from '../../services/spell-data'
+} from '../../services/character/spell-data'
 import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../../types/character-common'
 import type { GameSystemPlugin, SheetConfig } from '../types'
 

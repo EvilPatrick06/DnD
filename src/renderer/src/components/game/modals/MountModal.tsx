@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getTokenSizeCategory, isAdjacent } from '../../../services/combat-rules'
+import { getTokenSizeCategory, isAdjacent } from '../../../services/combat/combat-rules'
 import { useGameStore } from '../../../stores/useGameStore'
 import type { Character } from '../../../types/character'
 import type { MapToken } from '../../../types/map'

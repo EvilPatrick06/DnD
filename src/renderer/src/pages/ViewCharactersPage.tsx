@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { CharacterCard } from '../components/character'
 import { ConfirmDialog, Spinner } from '../components/ui'
 import { addToast } from '../hooks/useToast'
-import { exportCharacterToFile, importCharacterFromFile } from '../services/character-io'
+import { exportCharacterToFile, importCharacterFromFile } from '../services/io/character-io'
 import { useCharacterStore } from '../stores/useCharacterStore'
 import { getCharacterSheetPath } from '../utils/character-routes'
 

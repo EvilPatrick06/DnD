@@ -7,12 +7,17 @@ type DataCategory =
   | 'npcNames' | 'invocations' | 'metamagic' | 'bastionFacilities' | 'magicItems'
   | 'monsters' | 'npcs' | 'creatures' | 'traps' | 'hazards' | 'poisons'
   | 'environmentalEffects' | 'curses' | 'supernaturalGifts' | 'siegeEquipment'
-  | 'settlements' | 'mounts' | 'vehicles' | 'downtime' | 'sounds'
+  | 'settlements' | 'mounts' | 'vehicles' | 'downtime'
   | 'conditions' | 'weaponMastery' | 'languages' | 'skills' | 'fightingStyles'
   | 'variantItems' | 'lightSources' | 'npcAppearance' | 'npcMannerisms'
   | 'alignmentDescriptions' | 'wearableItems' | 'personalityTables'
   | 'xpThresholds' | 'startingEquipment' | 'bastionEvents' | 'sentientItems'
   | 'weatherGeneration' | 'calendarPresets' | 'effectDefinitions' | 'spellSlots' | 'trinkets'
+  | 'soundEvents' | 'speciesSpells' | 'classResources' | 'speciesResources'
+  | 'abilityScoreConfig' | 'presetIcons' | 'keyboardShortcuts' | 'themes'
+  | 'diceColors' | 'dmTabs' | 'notificationTemplates' | 'builtInMaps'
+  | 'sessionZeroConfig' | 'diceTypes' | 'lightingTravel' | 'currencyConfig' | 'moderation'
+  | 'adventureSeeds' | 'creatureTypes' | 'ambientTracks' | 'languageD12Table' | 'rarityOptions'
 
 interface CacheEntry {
   data: unknown
@@ -174,7 +179,6 @@ function categoryToHomebrewKey(category: DataCategory): string {
     mounts: 'mounts',
     vehicles: 'vehicles',
     downtime: 'downtime',
-    sounds: 'sounds',
     conditions: 'conditions',
     weaponMastery: 'weapon-mastery',
     languages: 'languages',
@@ -195,7 +199,29 @@ function categoryToHomebrewKey(category: DataCategory): string {
     calendarPresets: 'calendar-presets',
     effectDefinitions: 'effect-definitions',
     spellSlots: 'spell-slots',
-    trinkets: 'trinkets'
+    trinkets: 'trinkets',
+    soundEvents: 'sound-events',
+    speciesSpells: 'species-spells',
+    classResources: 'class-resources',
+    speciesResources: 'species-resources',
+    abilityScoreConfig: 'ability-score-config',
+    presetIcons: 'preset-icons',
+    keyboardShortcuts: 'keyboard-shortcuts',
+    themes: 'themes',
+    diceColors: 'dice-colors',
+    dmTabs: 'dm-tabs',
+    notificationTemplates: 'notification-templates',
+    builtInMaps: 'built-in-maps',
+    sessionZeroConfig: 'session-zero-config',
+    diceTypes: 'dice-types',
+    lightingTravel: 'lighting-travel',
+    currencyConfig: 'currency-config',
+    moderation: 'moderation',
+    adventureSeeds: 'adventure-seeds',
+    creatureTypes: 'creature-types',
+    ambientTracks: 'ambient-tracks',
+    languageD12Table: 'language-d12-table',
+    rarityOptions: 'rarity-options'
   }
   return map[category]
 }

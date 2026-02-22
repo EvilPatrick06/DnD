@@ -7,7 +7,7 @@ import {
   HALF_CASTERS_5E,
   isMulticlassSpellcaster,
   isWarlockPactMagic
-} from '../../../services/spell-data'
+} from '../../../services/character/spell-data'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'
 import type { Character } from '../../../types/character'

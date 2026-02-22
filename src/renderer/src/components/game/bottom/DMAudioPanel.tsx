@@ -26,28 +26,10 @@ interface CustomAudioEntry {
   volume: number
 }
 
-/** Ambient track definitions with display labels and icons */
-const AMBIENT_TRACKS: Array<{ id: AmbientSound; label: string; icon: string }> = [
-  { id: 'ambient-tavern', label: 'Tavern', icon: '\uD83C\uDFFA' },
-  { id: 'ambient-dungeon', label: 'Dungeon', icon: '\uD83D\uDD73\uFE0F' },
-  { id: 'ambient-forest', label: 'Forest', icon: '\uD83C\uDF32' },
-  { id: 'ambient-cave', label: 'Cave', icon: '\u26F0\uFE0F' },
-  { id: 'ambient-city', label: 'City', icon: '\uD83C\uDFD9\uFE0F' },
-  { id: 'ambient-battle', label: 'Battle', icon: '\u2694\uFE0F' },
-  { id: 'ambient-tension', label: 'Tension', icon: '\uD83D\uDE28' },
-  { id: 'ambient-victory', label: 'Victory', icon: '\uD83C\uDFC6' },
-  { id: 'ambient-defeat', label: 'Defeat', icon: '\uD83D\uDC80' }
-]
+import ambientTracksJson from '../../../../public/data/5e/audio/ambient-tracks.json'
 
-/** Quick sound effect buttons for the DM */
-const QUICK_SFX: Array<{ event: SoundEvent; label: string }> = [
-  { event: 'door-open', label: 'Door' },
-  { event: 'trap-triggered', label: 'Trap' },
-  { event: 'loot-found', label: 'Loot' },
-  { event: 'announcement', label: 'Announce' },
-  { event: 'initiative-start', label: 'Initiative' },
-  { event: 'death', label: 'Death' }
-]
+const AMBIENT_TRACKS = ambientTracksJson.ambientTracks as Array<{ id: AmbientSound; label: string; icon: string }>
+const QUICK_SFX = ambientTracksJson.quickSfx as Array<{ event: SoundEvent; label: string }>
 
 export default function DMAudioPanel(): JSX.Element {
   const [activeAmbient, setActiveAmbient] = useState<AmbientSound | null>(null)

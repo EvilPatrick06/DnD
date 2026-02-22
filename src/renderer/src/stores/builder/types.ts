@@ -4,6 +4,8 @@ import type { Character5e } from '../../types/character-5e'
 import type { AbilityName, AbilityScoreSet, BuildSlot, Rarity } from '../../types/character-common'
 import { ABILITY_NAMES } from '../../types/character-common'
 import type { GameSystem } from '../../types/game-system'
+import abilityScoreConfigJson from '../../../public/data/5e/character/ability-score-config.json'
+import presetIconsJson from '../../../public/data/5e/character/preset-icons.json'
 
 // --- Constants ---
 
@@ -12,58 +14,18 @@ export const FOUNDATION_SLOT_IDS = ['class', 'background', 'ancestry', 'heritage
 
 export type AbilityScoreMethod = 'standard' | 'pointBuy' | 'roll' | 'custom'
 
-export const POINT_BUY_COSTS: Record<number, number> = {
-  8: 0,
-  9: 1,
-  10: 2,
-  11: 3,
-  12: 4,
-  13: 5,
-  14: 7,
-  15: 9
-}
-export const POINT_BUY_BUDGET = 27
+export const POINT_BUY_COSTS: Record<number, number> = Object.fromEntries(
+  Object.entries(abilityScoreConfigJson.pointBuyCosts).map(([k, v]) => [Number(k), v])
+)
+export const POINT_BUY_BUDGET = abilityScoreConfigJson.pointBuyBudget
 
-export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8]
+export const STANDARD_ARRAY = abilityScoreConfigJson.standardArray
 
-export const PRESET_ICONS = [
-  { id: 'sword', label: 'Sword', emoji: '\u2694\uFE0F' },
-  { id: 'shield', label: 'Shield', emoji: '\uD83D\uDEE1\uFE0F' },
-  { id: 'bow', label: 'Bow', emoji: '\uD83C\uDFF9' },
-  { id: 'staff', label: 'Staff', emoji: '\uD83E\uDE84' },
-  { id: 'skull', label: 'Skull', emoji: '\uD83D\uDC80' },
-  { id: 'crown', label: 'Crown', emoji: '\uD83D\uDC51' },
-  { id: 'dragon', label: 'Dragon', emoji: '\uD83D\uDC09' },
-  { id: 'fire', label: 'Fire', emoji: '\uD83D\uDD25' },
-  { id: 'star', label: 'Star', emoji: '\u2B50' },
-  { id: 'moon', label: 'Moon', emoji: '\uD83C\uDF19' },
-  { id: 'gem', label: 'Gem', emoji: '\uD83D\uDC8E' },
-  { id: 'wolf', label: 'Wolf', emoji: '\uD83D\uDC3A' },
-  { id: 'eagle', label: 'Eagle', emoji: '\uD83E\uDD85' },
-  { id: 'book', label: 'Book', emoji: '\uD83D\uDCD6' },
-  { id: 'potion', label: 'Potion', emoji: '\uD83E\uDDEA' },
-  { id: 'dagger', label: 'Dagger', emoji: '\uD83D\uDDE1\uFE0F' },
-  { id: 'crystal', label: 'Crystal Ball', emoji: '\uD83D\uDD2E' },
-  { id: 'helmet', label: 'Helmet', emoji: '\uD83E\uDE96' }
-]
+export const PRESET_ICONS = presetIconsJson
 
-export const DEFAULT_SCORES: AbilityScoreSet = {
-  strength: 15,
-  dexterity: 14,
-  constitution: 13,
-  intelligence: 12,
-  wisdom: 10,
-  charisma: 8
-}
+export const DEFAULT_SCORES: AbilityScoreSet = abilityScoreConfigJson.defaultScores as AbilityScoreSet
 
-export const POINT_BUY_START: AbilityScoreSet = {
-  strength: 8,
-  dexterity: 8,
-  constitution: 8,
-  intelligence: 8,
-  wisdom: 8,
-  charisma: 8
-}
+export const POINT_BUY_START: AbilityScoreSet = abilityScoreConfigJson.pointBuyStart as AbilityScoreSet
 
 // --- Helper functions ---
 

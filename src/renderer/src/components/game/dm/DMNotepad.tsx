@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { saveGameState } from '../../../services/game-state-saver'
+import { saveGameState } from '../../../services/io/game-state-saver'
 import { useCampaignStore } from '../../../stores/useCampaignStore'
 import { useGameStore, type SessionLogEntry } from '../../../stores/useGameStore'
 

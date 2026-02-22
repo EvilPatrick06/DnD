@@ -3,7 +3,7 @@ import type { DiceColors } from '../components/game/dice3d'
 import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
 import { MAX_CHAT_LENGTH } from '../config/constants'
 import { PLAYER_COLORS } from '../network/types'
-import { rollFormula } from '../services/dice-engine'
+import { rollFormula } from '../services/dice/dice-engine'
 import { setDeafened, setMuted, setRemotePeerMuted } from '../network/voice-manager'
 import type { Character } from '../types/character'
 

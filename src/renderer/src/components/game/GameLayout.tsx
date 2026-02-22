@@ -19,7 +19,7 @@ import {
   type MovementType,
   proneStandUpCost,
   triggersOpportunityAttack
-} from '../../services/combat-rules'
+} from '../../services/combat/combat-rules'
 import { init as initSounds, play as playSound, playAmbient, stopAmbient, setAmbientVolume } from '../../services/sound-manager'
 import type { SoundEvent, AmbientSound } from '../../services/sound-manager'
 import { useAiDmStore } from '../../stores/useAiDmStore'
@@ -95,10 +95,10 @@ const HandoutViewerModal = lazy(() => import('./modals/HandoutViewerModal'))
 const MagicItemTrackerModal = lazy(() => import('./modals/MagicItemTrackerModal'))
 const NarrationOverlay = lazy(() => import('./overlays/NarrationOverlay'))
 
-import { createCompanionToken } from '../../services/companion-service'
+import { createCompanionToken } from '../../services/character/companion-service'
 import { load5eMonsterById } from '../../services/data-provider'
-import { flushAutoSave, loadPersistedGameState, startAutoSave, stopAutoSave } from '../../services/game-auto-save'
-import { saveGameState } from '../../services/game-state-saver'
+import { flushAutoSave, loadPersistedGameState, startAutoSave, stopAutoSave } from '../../services/io/game-auto-save'
+import { saveGameState } from '../../services/io/game-state-saver'
 import { startGameSync, stopGameSync } from '../../services/game-sync'
 import { useCharacterStore } from '../../stores/useCharacterStore'
 import { is5eCharacter } from '../../types/character'

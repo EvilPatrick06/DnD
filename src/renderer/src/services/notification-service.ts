@@ -3,6 +3,8 @@
 // Uses the Web Notification API (available in the Electron renderer process).
 // ---------------------------------------------------------------------------
 
+import templatesJson from '../../public/data/5e/ui/notification-templates.json'
+
 export type NotificationEvent =
   | 'your-turn'
   | 'roll-request'
@@ -22,16 +24,8 @@ interface NotificationConfig {
 
 // ---- Default content templates per event ----
 
-const DEFAULT_TEMPLATES: Record<NotificationEvent, { title: string; body: string }> = {
-  'your-turn': { title: 'Your Turn!', body: "It's your turn in combat" },
-  'roll-request': { title: 'Roll Requested', body: '' },
-  whisper: { title: 'Whisper', body: '' },
-  'ai-response': { title: 'DM Response', body: 'The DM has responded' },
-  'timer-expired': { title: "Time's Up!", body: 'Timer expired' },
-  'combat-start': { title: 'Roll Initiative!', body: 'Combat has begun' },
-  'level-up': { title: 'Level Up!', body: '' },
-  'damage-taken': { title: 'Damage!', body: '' }
-}
+const DEFAULT_TEMPLATES: Record<NotificationEvent, { title: string; body: string }> =
+  templatesJson as Record<NotificationEvent, { title: string; body: string }>
 
 // ---- Persistence helpers ----
 

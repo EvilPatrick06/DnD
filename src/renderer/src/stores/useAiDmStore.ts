@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
+import { useLobbyStore } from './useLobbyStore'
 import type { Campaign } from '../types/campaign'
 
 interface AiStatChange {
@@ -130,15 +131,13 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     const { pendingActions } = get()
     if (!pendingActions) return
     // Log the override to chat
-    import('../stores/useLobbyStore').then(({ useLobbyStore }) => {
-      useLobbyStore.getState().addChatMessage({
-        id: `dm-override-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-        senderId: 'dm',
-        senderName: 'DM',
-        content: `[DM Override] AI ruling rejected${dmNote ? `: ${dmNote}` : ''}`,
-        timestamp: Date.now(),
-        isSystem: true
-      })
+    useLobbyStore.getState().addChatMessage({
+      id: `dm-override-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+      senderId: 'dm',
+      senderName: 'DM',
+      content: `[DM Override] AI ruling rejected${dmNote ? `: ${dmNote}` : ''}`,
+      timestamp: Date.now(),
+      isSystem: true
     })
     set({ pendingActions: null })
   },

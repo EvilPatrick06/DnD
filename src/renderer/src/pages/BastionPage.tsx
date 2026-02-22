@@ -4,7 +4,7 @@ import { ConfirmDialog } from '../components/ui'
 import Modal from '../components/ui/Modal'
 import { addToast } from '../hooks/useToast'
 import { load5eBastionFacilities } from '../services/data-provider'
-import { exportEntities, importEntities, reIdItems } from '../services/entity-io'
+import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
 import { useBastionStore } from '../stores/useBastionStore'
 import { useCharacterStore } from '../stores/useCharacterStore'
 import type {

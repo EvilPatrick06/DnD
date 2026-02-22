@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import diceColorsJson from '../../../../public/data/5e/ui/dice-colors.json'
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -11,21 +12,9 @@ export interface DiceColors {
   numberColor: string // hex e.g. '#f5c542'
 }
 
-export const DEFAULT_DICE_COLORS: DiceColors = {
-  bodyColor: '#1a1a2e',
-  numberColor: '#f5c542'
-}
+export const DEFAULT_DICE_COLORS: DiceColors = diceColorsJson.default
 
-export const DICE_COLOR_PRESETS = [
-  { label: 'Obsidian', bodyColor: '#1a1a2e', numberColor: '#f5c542' },
-  { label: 'Classic White', bodyColor: '#f0f0f0', numberColor: '#111111' },
-  { label: 'Classic Black', bodyColor: '#222222', numberColor: '#ffffff' },
-  { label: 'Ruby', bodyColor: '#9b1b30', numberColor: '#ffd700' },
-  { label: 'Sapphire', bodyColor: '#1a3a6e', numberColor: '#e0e8ff' },
-  { label: 'Emerald', bodyColor: '#1a5e3a', numberColor: '#c0ffd0' },
-  { label: 'Amethyst', bodyColor: '#4a1a6e', numberColor: '#e8c0ff' },
-  { label: 'Gold', bodyColor: '#8b7320', numberColor: '#1a1a1a' }
-] as const
+export const DICE_COLOR_PRESETS = diceColorsJson.presets as readonly { label: string; bodyColor: string; numberColor: string }[]
 
 export interface DieDefinition {
   sides: number

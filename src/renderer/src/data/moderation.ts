@@ -1,23 +1,6 @@
-export const DEFAULT_BLOCKED_WORDS: string[] = [
-  'fuck',
-  'shit',
-  'ass',
-  'bitch',
-  'damn',
-  'crap',
-  'dick',
-  'pussy',
-  'cock',
-  'cunt',
-  'bastard',
-  'slut',
-  'whore',
-  'nigger',
-  'nigga',
-  'faggot',
-  'retard',
-  'retarded'
-]
+import moderationJson from '../../public/data/5e/ai/moderation.json'
+
+export const DEFAULT_BLOCKED_WORDS: string[] = moderationJson.blockedWords
 
 export function filterMessage(message: string, blockedWords: string[]): string {
   let filtered = message

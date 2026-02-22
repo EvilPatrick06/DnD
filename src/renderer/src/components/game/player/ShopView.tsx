@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollSingle } from '../../../services/dice-service'
+import { rollSingle } from '../../../services/dice/dice-service'
 import type { ShopItem, ShopItemCategory } from '../../../network/types'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import { useGameStore } from '../../../stores/useGameStore'

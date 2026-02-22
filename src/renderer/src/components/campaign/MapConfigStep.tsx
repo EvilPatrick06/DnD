@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { GameMap } from '../../types/map'
 import { Button, Input } from '../ui'
+import builtInMapsJson from '../../../public/data/5e/world/built-in-maps.json'
 
 interface MapConfigStepProps {
   maps: GameMap[]
@@ -9,98 +10,7 @@ interface MapConfigStepProps {
   adventureMaps?: Array<{ id: string; name: string }>
 }
 
-const BUILT_IN_MAPS = [
-  {
-    id: 'barrow-crypt',
-    name: 'Barrow Crypt',
-    preview: 'An underground burial crypt with narrow passages',
-    imagePath: './data/5e/maps/barrow-crypt.png'
-  },
-  {
-    id: 'caravan-encampment',
-    name: 'Caravan Encampment',
-    preview: 'A roadside camp with wagons and tents',
-    imagePath: './data/5e/maps/caravan-encampment.png'
-  },
-  {
-    id: 'crossroads-village',
-    name: 'Crossroads Village',
-    preview: 'A small village at a crossroads intersection',
-    imagePath: './data/5e/maps/crossroads-village.png'
-  },
-  {
-    id: 'dragons-lair',
-    name: "Dragon's Lair",
-    preview: 'A cavernous lair suitable for a dragon encounter',
-    imagePath: './data/5e/maps/dragons-lair.png'
-  },
-  {
-    id: 'dungeon-hideout',
-    name: 'Dungeon Hideout',
-    preview: 'A multi-room dungeon hideout with corridors',
-    imagePath: './data/5e/maps/dungeon-hideout.png'
-  },
-  {
-    id: 'farmstead',
-    name: 'Farmstead',
-    preview: 'A rural farmstead with buildings and fields',
-    imagePath: './data/5e/maps/farmstead.png'
-  },
-  {
-    id: 'keep',
-    name: 'Keep',
-    preview: 'A fortified stone keep with battlements',
-    imagePath: './data/5e/maps/keep.png'
-  },
-  {
-    id: 'manor',
-    name: 'Manor',
-    preview: 'A large manor house with multiple rooms',
-    imagePath: './data/5e/maps/manor.png'
-  },
-  {
-    id: 'mine',
-    name: 'Mine',
-    preview: 'A branching mine with tunnels and chambers',
-    imagePath: './data/5e/maps/mine.png'
-  },
-  {
-    id: 'roadside-inn',
-    name: 'Roadside Inn',
-    preview: 'A cozy roadside inn with rooms and stables',
-    imagePath: './data/5e/maps/roadside-inn.png'
-  },
-  {
-    id: 'ship',
-    name: 'Ship',
-    preview: 'A sailing ship with deck and lower hold',
-    imagePath: './data/5e/maps/ship.png'
-  },
-  {
-    id: 'spooky-house',
-    name: 'Spooky House',
-    preview: 'A haunted house with eerie rooms',
-    imagePath: './data/5e/maps/spooky-house.png'
-  },
-  {
-    id: 'underdark-warren',
-    name: 'Underdark Warren',
-    preview: 'A twisting network of underground tunnels',
-    imagePath: './data/5e/maps/underdark-warren.png'
-  },
-  {
-    id: 'volcanic-caves',
-    name: 'Volcanic Caves',
-    preview: 'Fiery volcanic caverns with lava flows',
-    imagePath: './data/5e/maps/volcanic-caves.png'
-  },
-  {
-    id: 'wizards-tower',
-    name: "Wizard's Tower",
-    preview: 'A multi-story arcane tower',
-    imagePath: './data/5e/maps/wizards-tower.png'
-  }
-]
+const BUILT_IN_MAPS = builtInMapsJson
 
 export default function MapConfigStep({ maps, campaignId, onChange, adventureMaps }: MapConfigStepProps): JSX.Element {
   const [showAddForm, setShowAddForm] = useState(false)

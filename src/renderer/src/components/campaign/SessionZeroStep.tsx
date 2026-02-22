@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { CustomRule } from '../../types/campaign'
+import sessionZeroJson from '../../../public/data/5e/world/session-zero-config.json'
 
 export interface SessionZeroData {
   contentLimits: string[]
@@ -19,54 +20,13 @@ export const DEFAULT_SESSION_ZERO: SessionZeroData = {
   additionalNotes: ''
 }
 
-const TONE_OPTIONS = [
-  { value: 'heroic', label: 'Heroic', description: 'Classic fantasy adventure with clear heroes and villains' },
-  { value: 'dark', label: 'Dark', description: 'Grim themes, moral ambiguity, and mature content' },
-  { value: 'comedic', label: 'Comedic', description: 'Lighthearted fun with humor and absurdity' },
-  { value: 'horror', label: 'Horror', description: 'Suspense, dread, and frightening scenarios' },
-  { value: 'intrigue', label: 'Intrigue', description: 'Political machinations, espionage, and social maneuvering' },
-  { value: 'sandbox', label: 'Sandbox', description: 'Open-world exploration with player-driven narrative' }
-]
-
-const DEATH_OPTIONS = [
-  { value: 'rare', label: 'Rare', description: 'Death is unlikely except through extreme carelessness' },
-  { value: 'possible', label: 'Possible', description: 'Death can happen in dangerous situations' },
-  { value: 'likely', label: 'Likely', description: 'The world is dangerous and death is a real risk' },
-  { value: 'permanent', label: 'Permanent & Harsh', description: 'No easy resurrection; death has lasting consequences' }
-]
-
-const COMMON_LIMITS = [
-  'Graphic violence',
-  'Torture',
-  'Sexual content',
-  'Real-world religions',
-  'Harm to children',
-  'Slavery/trafficking',
-  'Mental illness',
-  'Self-harm/suicide',
-  'Spiders/insects',
-  'Body horror',
-  'Substance abuse',
-  'Imprisonment/claustrophobia'
-]
-
 type RuleCategory = CustomRule['category']
 
-const RULE_CATEGORIES: Array<{ value: RuleCategory; label: string }> = [
-  { value: 'combat', label: 'Combat' },
-  { value: 'exploration', label: 'Exploration' },
-  { value: 'social', label: 'Social' },
-  { value: 'rest', label: 'Rest' },
-  { value: 'other', label: 'Other' }
-]
-
-const CATEGORY_COLORS: Record<RuleCategory, string> = {
-  combat: 'bg-red-900/40 text-red-300',
-  exploration: 'bg-green-900/40 text-green-300',
-  social: 'bg-blue-900/40 text-blue-300',
-  rest: 'bg-purple-900/40 text-purple-300',
-  other: 'bg-gray-800 text-gray-300'
-}
+const TONE_OPTIONS = sessionZeroJson.toneOptions
+const DEATH_OPTIONS = sessionZeroJson.deathOptions
+const COMMON_LIMITS = sessionZeroJson.commonLimits
+const RULE_CATEGORIES = sessionZeroJson.ruleCategories as Array<{ value: RuleCategory; label: string }>
+const CATEGORY_COLORS = sessionZeroJson.categoryColors as Record<RuleCategory, string>
 
 interface SessionZeroStepProps {
   data: SessionZeroData

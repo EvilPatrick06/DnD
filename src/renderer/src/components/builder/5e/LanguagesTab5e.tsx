@@ -1,21 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import languageD12Json from '../../../../public/data/5e/character/language-d12-table.json'
 import { LANGUAGE_DESCRIPTIONS } from '../../../data/language-descriptions'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import { RARE_LANGUAGES_5E, STANDARD_LANGUAGES_5E } from '../../../types/character-common'
 import SectionBanner from '../shared/SectionBanner'
 
-const LANGUAGE_D12_TABLE: { min: number; max: number; language: string }[] = [
-  { min: 1, max: 1, language: 'Common Sign Language' },
-  { min: 2, max: 2, language: 'Draconic' },
-  { min: 3, max: 4, language: 'Dwarvish' },
-  { min: 5, max: 6, language: 'Elvish' },
-  { min: 7, max: 7, language: 'Giant' },
-  { min: 8, max: 8, language: 'Gnomish' },
-  { min: 9, max: 9, language: 'Goblin' },
-  { min: 10, max: 11, language: 'Halfling' },
-  { min: 12, max: 12, language: 'Orc' }
-]
+const LANGUAGE_D12_TABLE: { min: number; max: number; language: string }[] = languageD12Json
 
 function rollD12Language(knownSet: Set<string>): { roll: number; language: string } | null {
   // Collect all rollable languages not yet known

@@ -1,7 +1,7 @@
 import 'pixi.js/unsafe-eval' // CSP-compatible PixiJS shaders (must be before any pixi usage)
 import { Application, Assets, Container, Graphics, Sprite } from 'pixi.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { canMoveToPosition } from '../../services/combat-rules'
+import { canMoveToPosition } from '../../services/combat/combat-rules'
 import { useGameStore } from '../../stores/useGameStore'
 import type { TurnState } from '../../types/game-state'
 import type { GameMap, MapToken } from '../../types/map'

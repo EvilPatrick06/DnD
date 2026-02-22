@@ -7,41 +7,16 @@ import type { MagicItemRarity5e } from '../../../types/character-common'
 import type { MagicItemData } from '../../../types/data'
 import { deductWithConversion, parseCost, totalInCopper } from '../../../utils/currency'
 import SectionBanner from '../shared/SectionBanner'
+import currencyConfigJson from '../../../../public/data/5e/equipment/currency-config.json'
 
-const CURRENCY_CONFIG = [
-  {
-    key: 'pp' as const,
-    label: 'PP',
-    fullName: 'Platinum',
-    ring: 'border-gray-400',
-    bg: 'bg-gray-500',
-    text: 'text-gray-100'
-  },
-  {
-    key: 'gp' as const,
-    label: 'GP',
-    fullName: 'Gold',
-    ring: 'border-yellow-500',
-    bg: 'bg-yellow-600',
-    text: 'text-yellow-100'
-  },
-  {
-    key: 'sp' as const,
-    label: 'SP',
-    fullName: 'Silver',
-    ring: 'border-gray-300',
-    bg: 'bg-gray-300',
-    text: 'text-gray-800'
-  },
-  {
-    key: 'cp' as const,
-    label: 'CP',
-    fullName: 'Copper',
-    ring: 'border-amber-700',
-    bg: 'bg-amber-700',
-    text: 'text-amber-100'
-  }
-]
+const CURRENCY_CONFIG = currencyConfigJson as Array<{
+  key: 'pp' | 'gp' | 'sp' | 'cp'
+  label: string
+  fullName: string
+  ring: string
+  bg: string
+  text: string
+}>
 
 function EditableCurrencyCircle({
   config,

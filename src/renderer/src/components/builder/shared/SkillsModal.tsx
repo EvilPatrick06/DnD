@@ -1,28 +1,12 @@
 import { useMemo } from 'react'
+import skillsJson from '../../../../public/data/5e/mechanics/skills.json'
 import { useBuilderStore } from '../../../stores/useBuilderStore'
 import type { AbilityName } from '../../../types/character-common'
 import { abilityModifier, formatMod } from '../../../types/character-common'
 
-const SKILLS_5E: Array<{ name: string; ability: AbilityName }> = [
-  { name: 'Acrobatics', ability: 'dexterity' },
-  { name: 'Animal Handling', ability: 'wisdom' },
-  { name: 'Arcana', ability: 'intelligence' },
-  { name: 'Athletics', ability: 'strength' },
-  { name: 'Deception', ability: 'charisma' },
-  { name: 'History', ability: 'intelligence' },
-  { name: 'Insight', ability: 'wisdom' },
-  { name: 'Intimidation', ability: 'charisma' },
-  { name: 'Investigation', ability: 'intelligence' },
-  { name: 'Medicine', ability: 'wisdom' },
-  { name: 'Nature', ability: 'intelligence' },
-  { name: 'Perception', ability: 'wisdom' },
-  { name: 'Performance', ability: 'charisma' },
-  { name: 'Persuasion', ability: 'charisma' },
-  { name: 'Religion', ability: 'intelligence' },
-  { name: 'Sleight of Hand', ability: 'dexterity' },
-  { name: 'Stealth', ability: 'dexterity' },
-  { name: 'Survival', ability: 'wisdom' }
-]
+const SKILLS_5E: Array<{ name: string; ability: AbilityName }> = (skillsJson as Array<{ name: string; ability: string }>).map(
+  (s) => ({ name: s.name, ability: s.ability as AbilityName })
+)
 
 export default function SkillsModal(): JSX.Element {
   const abilityScores = useBuilderStore((s) => s.abilityScores)

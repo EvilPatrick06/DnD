@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import creatureTypesJson from '../../../../public/data/5e/creatures/creature-types.json'
 import type { CreatureSize, CreatureType, MonsterAction, MonsterStatBlock, MonsterTrait } from '../../../types/monster'
 
 interface StatBlockEditorProps {
@@ -6,43 +7,13 @@ interface StatBlockEditorProps {
   onChange: (stats: Partial<MonsterStatBlock>) => void
 }
 
-const SIZES: CreatureSize[] = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
-const TYPES: CreatureType[] = [
-  'Aberration',
-  'Beast',
-  'Celestial',
-  'Construct',
-  'Dragon',
-  'Elemental',
-  'Fey',
-  'Fiend',
-  'Giant',
-  'Humanoid',
-  'Monstrosity',
-  'Ooze',
-  'Plant',
-  'Undead'
-]
+const SIZES = creatureTypesJson.sizes as CreatureSize[]
+const TYPES = creatureTypesJson.types as CreatureType[]
 
 const COMMON_SKILLS = [
-  'Acrobatics',
-  'Animal Handling',
-  'Arcana',
-  'Athletics',
-  'Deception',
-  'History',
-  'Insight',
-  'Intimidation',
-  'Investigation',
-  'Medicine',
-  'Nature',
-  'Perception',
-  'Performance',
-  'Persuasion',
-  'Religion',
-  'Sleight of Hand',
-  'Stealth',
-  'Survival'
+  'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History',
+  'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception',
+  'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'
 ]
 
 function CollapsibleSection({

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollMultiple } from '../../../services/dice-service'
+import { rollMultiple } from '../../../services/dice/dice-service'
 import { getConsumableEffects } from '../../../data/effect-definitions'
 import { useCharacterStore } from '../../../stores/useCharacterStore'
 import type { Character } from '../../../types/character'

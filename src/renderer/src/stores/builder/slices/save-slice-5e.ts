@@ -1,8 +1,8 @@
 import { getClassResources } from '../../../data/class-resources'
 import { getSpeciesResources } from '../../../data/species-resources'
 import { isWearableItem } from '../../../data/wearable-items'
-import { getSpeciesSpellProgression, getSpellsFromTraits, populateSkills5e } from '../../../services/auto-populate-5e'
-import { generate5eBuildSlots } from '../../../services/build-tree-5e'
+import { getSpeciesSpellProgression, getSpellsFromTraits, populateSkills5e } from '../../../services/character/auto-populate-5e'
+import { generate5eBuildSlots } from '../../../services/character/build-tree-5e'
 import {
   load5eBackgrounds,
   load5eClassFeatures,
@@ -14,8 +14,8 @@ import {
   load5eSpells,
   load5eSubclasses
 } from '../../../services/data-provider'
-import { computeSpellcastingInfo, getSlotProgression } from '../../../services/spell-data'
-import { calculate5eStats, calculateArmorClass5e, getWildShapeMax } from '../../../services/stat-calculator-5e'
+import { computeSpellcastingInfo, getSlotProgression } from '../../../services/character/spell-data'
+import { calculate5eStats, calculateArmorClass5e, getWildShapeMax } from '../../../services/character/stat-calculator-5e'
 import type { Character5e, MagicItemEntry5e } from '../../../types/character-5e'
 import type { AbilityName, SpellEntry } from '../../../types/character-common'
 import type { MagicItemData } from '../../../types/data'

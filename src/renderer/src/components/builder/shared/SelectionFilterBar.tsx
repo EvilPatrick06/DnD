@@ -1,3 +1,4 @@
+import rarityOptionsJson from '../../../../public/data/5e/ui/rarity-options.json'
 import type { Rarity } from '../../../types/character-common'
 
 interface SelectionFilterBarProps {
@@ -7,13 +8,7 @@ interface SelectionFilterBarProps {
   onSearchChange: (query: string) => void
 }
 
-const RARITY_OPTIONS: Array<{ value: Rarity | 'all'; label: string; color: string }> = [
-  { value: 'all', label: 'All', color: 'bg-gray-600 hover:bg-gray-500' },
-  { value: 'common', label: 'Common', color: 'bg-gray-600 hover:bg-gray-500' },
-  { value: 'uncommon', label: 'Uncommon', color: 'bg-orange-700 hover:bg-orange-600' },
-  { value: 'rare', label: 'Rare', color: 'bg-blue-700 hover:bg-blue-600' },
-  { value: 'unique', label: 'Unique', color: 'bg-purple-700 hover:bg-purple-600' }
-]
+const RARITY_OPTIONS = rarityOptionsJson as Array<{ value: Rarity | 'all'; label: string; color: string }>
 
 export default function SelectionFilterBar({
   rarityFilter,

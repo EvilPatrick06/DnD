@@ -9,18 +9,13 @@ interface ToneViolation {
   index: number
 }
 
-// Patterns that indicate bad narrative formatting
-const VIOLATION_PATTERNS: Array<{ type: ToneViolation['type']; pattern: RegExp }> = [
-  { type: 'markdown_header', pattern: /^#{1,6}\s+.+$/gm },
-  { type: 'bold_text', pattern: /\*\*[^*]+\*\*/g },
-  { type: 'bullet_list', pattern: /^[\s]*[-*]\s+/gm },
-  { type: 'numbered_list', pattern: /^\s*\d+\.\s+/gm },
-  {
-    type: 'meta_label',
-    pattern:
-      /^(Scene Setting|Description|Overview|Read-aloud text|Summary|Introduction|Conclusion|Setting|Atmosphere|DM Note|Narration|Box Text)[:\s]/gim
-  }
-]
+import toneValidationJson from '../data/tone-validation.json'
+
+const VIOLATION_PATTERNS: Array<{ type: ToneViolation['type']; pattern: RegExp }> =
+  toneValidationJson.violationPatterns.map((p: { type: string; pattern: string; flags: string }) => ({
+    type: p.type as ToneViolation['type'],
+    pattern: new RegExp(p.pattern, p.flags)
+  }))
 
 export function detectToneViolations(text: string): ToneViolation[] {
   // Don't check inside JSON/action blocks
