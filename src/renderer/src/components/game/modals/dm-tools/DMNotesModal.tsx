@@ -1,4 +1,4 @@
-import { DMNotepad } from '../dm'
+import { DMNotepad } from '../../dm'
 
 interface DMNotesModalProps {
   onClose: () => void

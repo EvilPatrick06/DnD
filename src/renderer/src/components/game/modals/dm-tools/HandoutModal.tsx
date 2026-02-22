@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { Handout } from '../../../types/game-state'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { Handout } from '../../../../types/game-state'
 
 interface HandoutModalProps {
   onClose: () => void

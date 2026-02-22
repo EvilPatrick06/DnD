@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollMultiple } from '../../../services/dice/dice-service'
-import { getConsumableEffects } from '../../../data/effect-definitions'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import type { Character } from '../../../types/character'
-import { is5eCharacter } from '../../../types/character'
-import type { Character5e } from '../../../types/character-5e'
+import { trigger3dDice } from '../../../../components/game/dice3d'
+import { rollMultiple } from '../../../../services/dice/dice-service'
+import { getConsumableEffects } from '../../../../data/effect-definitions'
+import { useCharacterStore } from '../../../../stores/useCharacterStore'
+import type { Character } from '../../../../types/character'
+import { is5eCharacter } from '../../../../types/character'
+import type { Character5e } from '../../../../types/character-5e'
 
 interface ItemModalProps {
   character: Character | null

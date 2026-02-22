@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { load5eChaseTables } from '../../../services/data-provider'
+import { load5eChaseTables } from '../../../../services/data-provider'
 
 interface ChaseTrackerModalProps {
   onClose: () => void

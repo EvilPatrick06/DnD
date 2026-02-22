@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../network/types'
-import { load5eEquipment, load5eMagicItems } from '../../../services/data-provider'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
-import type { ArmorData, EquipmentFile, GearData, MagicItemData, WeaponData } from '../../../types/data'
+import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network/types'
+import { load5eEquipment, load5eMagicItems } from '../../../../services/data-provider'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { useNetworkStore } from '../../../../stores/useNetworkStore'
+import type { ArmorData, EquipmentFile, GearData, MagicItemData, WeaponData } from '../../../../types/data'
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -3,7 +3,7 @@ import {
   calculateDowntimeCost,
   type DowntimeActivity,
   loadDowntimeActivities
-} from '../../../services/downtime-service'
+} from '../../../../services/downtime-service'
 
 interface DowntimeModalProps {
   characterName?: string

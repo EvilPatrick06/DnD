@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { useLobbyStore } from '../../../../stores/useLobbyStore'
 import DiceResult from '../../dice3d/DiceResult'
 
 interface HiddenDiceModalProps {

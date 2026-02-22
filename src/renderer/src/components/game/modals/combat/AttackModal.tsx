@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { trigger3dDice } from '../../../components/game/dice3d'
-import { getAttackConditionEffects } from '../../../services/combat/attack-condition-effects'
+import { trigger3dDice } from '../../../../components/game/dice3d'
+import { getAttackConditionEffects } from '../../../../services/combat/attack-condition-effects'
 import {
   type CoverType,
   canGrappleOrShove,
@@ -11,19 +11,19 @@ import {
   isInMeleeRange,
   type MasteryEffectResult,
   unarmedStrikeDC
-} from '../../../services/combat/combat-rules'
-import { calculateCover } from '../../../services/combat/cover-calculator'
-import { rollMultiple, rollSingle } from '../../../services/dice/dice-service'
-import { resolveEffects, type WeaponContext } from '../../../services/combat/effect-resolver-5e'
-import { checkFlanking as checkFlankingFn } from '../../../services/combat/flanking'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
-import type { Character } from '../../../types/character'
-import type { Character5e } from '../../../types/character-5e'
-import { abilityModifier, formatMod } from '../../../types/character-common'
-import type { MapToken } from '../../../types/map'
-import { applyDamageToCharacter, type DamageApplicationResult } from '../../../utils/damage'
+} from '../../../../services/combat/combat-rules'
+import { calculateCover } from '../../../../services/combat/cover-calculator'
+import { rollMultiple, rollSingle } from '../../../../services/dice/dice-service'
+import { resolveEffects, type WeaponContext } from '../../../../services/combat/effect-resolver-5e'
+import { checkFlanking as checkFlankingFn } from '../../../../services/combat/flanking'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { useLobbyStore } from '../../../../stores/useLobbyStore'
+import { useNetworkStore } from '../../../../stores/useNetworkStore'
+import type { Character } from '../../../../types/character'
+import type { Character5e } from '../../../../types/character-5e'
+import { abilityModifier, formatMod } from '../../../../types/character-common'
+import type { MapToken } from '../../../../types/map'
+import { applyDamageToCharacter, type DamageApplicationResult } from '../../../../utils/damage'
 
 interface AttackModalProps {
   character: Character | null

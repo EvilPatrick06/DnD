@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollSingle } from '../../../services/dice/dice-service'
+import { trigger3dDice } from '../../../../components/game/dice3d'
+import { rollSingle } from '../../../../services/dice/dice-service'
 
 interface GroupRollModalProps {
   onClose: () => void

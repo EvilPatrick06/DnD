@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getIceConfig, resetIceConfig, setIceConfig } from '../../../network/peer-manager'
+import { getIceConfig, resetIceConfig, setIceConfig } from '../../../../network/peer-manager'
 
 interface TurnEntry {
   urls: string

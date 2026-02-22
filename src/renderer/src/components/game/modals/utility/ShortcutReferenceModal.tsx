@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import type { ShortcutDefinition } from '../../../services/keyboard-shortcuts'
-import { formatKeyCombo, getShortcutsByCategory } from '../../../services/keyboard-shortcuts'
+import type { ShortcutDefinition } from '../../../../services/keyboard-shortcuts'
+import { formatKeyCombo, getShortcutsByCategory } from '../../../../services/keyboard-shortcuts'
 
 interface ShortcutReferenceModalProps {
   onClose: () => void

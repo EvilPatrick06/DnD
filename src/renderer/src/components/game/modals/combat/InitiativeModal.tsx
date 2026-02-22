@@ -1,5 +1,5 @@
-import { useGameStore } from '../../../stores/useGameStore'
-import { InitiativeTracker } from '../dm'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { InitiativeTracker } from '../../dm'
 
 interface InitiativeModalProps {
   onClose: () => void

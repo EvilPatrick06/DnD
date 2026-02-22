@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { Character } from '../../../types/character'
-import { abilityModifier } from '../../../types/character-common'
+import type { Character } from '../../../../types/character'
+import { abilityModifier } from '../../../../types/character-common'
 
 interface JumpModalProps {
   character: Character

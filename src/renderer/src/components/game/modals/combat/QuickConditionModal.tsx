@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { CONDITIONS_5E } from '../../../data/conditions'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
+import { CONDITIONS_5E } from '../../../../data/conditions'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { useLobbyStore } from '../../../../stores/useLobbyStore'
 
 interface QuickConditionModalProps {
   onClose: () => void

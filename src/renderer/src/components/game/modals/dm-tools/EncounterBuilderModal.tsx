@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { load5eEncounterBudgets, load5eMonsters } from '../../../services/data-provider'
+import { load5eEncounterBudgets, load5eMonsters } from '../../../../services/data-provider'
 
 interface EncounterBuilderModalProps {
   onClose: () => void

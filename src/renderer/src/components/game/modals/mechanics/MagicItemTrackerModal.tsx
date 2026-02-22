@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
-import type { Campaign } from '../../../types/campaign'
+import type { Campaign } from '../../../../types/campaign'
 
-const MagicItemTracker = lazy(() => import('../../campaign/MagicItemTracker'))
+const MagicItemTracker = lazy(() => import('../../../campaign/MagicItemTracker'))
 
 interface MagicItemTrackerModalProps {
   campaign: Campaign

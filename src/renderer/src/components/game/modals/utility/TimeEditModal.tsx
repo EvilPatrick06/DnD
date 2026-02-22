@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useBastionStore } from '../../../stores/useBastionStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { CalendarConfig } from '../../../types/campaign'
-import { formatInGameTime, getDateParts, totalSecondsFromDateTime } from '../../../utils/calendar-utils'
+import { useBastionStore } from '../../../../stores/useBastionStore'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { CalendarConfig } from '../../../../types/campaign'
+import { formatInGameTime, getDateParts, totalSecondsFromDateTime } from '../../../../utils/calendar-utils'
 
 interface TimeEditModalProps {
   calendar: CalendarConfig

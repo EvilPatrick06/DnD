@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { CustomEffect, EffectType, MechanicalEffect } from '../../../types/effects'
-import type { MapToken } from '../../../types/map'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { CustomEffect, EffectType, MechanicalEffect } from '../../../../types/effects'
+import type { MapToken } from '../../../../types/map'
 
 interface CustomEffectModalProps {
   tokens: MapToken[]

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollSingle } from '../../../services/dice/dice-service'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { Character } from '../../../types/character'
-import type { Character5e } from '../../../types/character-5e'
-import { abilityModifier } from '../../../types/character-common'
-import type { MapToken } from '../../../types/map'
+import { trigger3dDice } from '../../../../components/game/dice3d'
+import { rollSingle } from '../../../../services/dice/dice-service'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { Character } from '../../../../types/character'
+import type { Character5e } from '../../../../types/character-5e'
+import { abilityModifier } from '../../../../types/character-common'
+import type { MapToken } from '../../../../types/map'
 
 interface HelpModalProps {
   character: Character

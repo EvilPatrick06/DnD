@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../../stores/useGameStore'
 
 interface TravelPaceModalProps {
   onClose: () => void

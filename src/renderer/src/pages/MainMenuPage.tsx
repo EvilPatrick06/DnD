@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useNetworkStore } from '../stores/useNetworkStore'
 
-const NetworkSettingsModal = lazy(() => import('../components/game/modals/NetworkSettingsModal'))
+const NetworkSettingsModal = lazy(() => import('../components/game/modals/utility/NetworkSettingsModal'))
 
 const menuItems = [
   {

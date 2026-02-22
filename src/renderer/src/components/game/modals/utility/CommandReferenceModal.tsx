@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getCommands } from '../../../services/chat-commands'
+import { getCommands } from '../../../../services/chat-commands'
 
 interface CommandReferenceModalProps {
   isDM: boolean

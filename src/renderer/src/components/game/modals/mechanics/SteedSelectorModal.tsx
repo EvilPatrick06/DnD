@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { getSteedForms } from '../../../services/character/companion-service'
-import { load5eMonsters } from '../../../services/data-provider'
-import type { Companion5e } from '../../../types/companion'
-import type { MonsterStatBlock } from '../../../types/monster'
+import { getSteedForms } from '../../../../services/character/companion-service'
+import { load5eMonsters } from '../../../../services/data-provider'
+import type { Companion5e } from '../../../../types/companion'
+import type { MonsterStatBlock } from '../../../../types/monster'
 import MonsterStatBlockView from '../../dm/MonsterStatBlockView'
 
 interface SteedSelectorModalProps {

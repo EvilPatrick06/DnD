@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import type { Handout } from '../../../types/game-state'
+import type { Handout } from '../../../../types/game-state'
 
 interface HandoutViewerModalProps {
   handout: Handout

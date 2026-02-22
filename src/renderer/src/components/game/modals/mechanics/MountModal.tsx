@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { getTokenSizeCategory, isAdjacent } from '../../../services/combat/combat-rules'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { Character } from '../../../types/character'
-import type { MapToken } from '../../../types/map'
+import { getTokenSizeCategory, isAdjacent } from '../../../../services/combat/combat-rules'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { Character } from '../../../../types/character'
+import type { MapToken } from '../../../../types/map'
 
 interface MountModalProps {
   character: Character | null

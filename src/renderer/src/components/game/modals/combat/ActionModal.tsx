@@ -1,4 +1,4 @@
-import { ActionBar } from '../player'
+import { ActionBar } from '../../player'
 
 interface ActionModalProps {
   isMyTurn: boolean

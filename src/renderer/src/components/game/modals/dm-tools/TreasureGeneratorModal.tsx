@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { load5eTreasureTables } from '../../../services/data-provider'
-import { rollMultiple, rollSingle } from '../../../services/dice/dice-service'
+import { load5eTreasureTables } from '../../../../services/data-provider'
+import { rollMultiple, rollSingle } from '../../../../services/dice/dice-service'
 
 interface TreasureGeneratorModalProps {
   onClose: () => void

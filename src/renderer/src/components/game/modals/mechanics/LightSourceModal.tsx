@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../../data/light-sources'
-import { useGameStore } from '../../../stores/useGameStore'
+import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../../../data/light-sources'
+import { useGameStore } from '../../../../stores/useGameStore'
 
 interface LightSourceModalProps {
   onClose: () => void

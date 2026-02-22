@@ -7,14 +7,14 @@ import {
   rollShortRestDice,
   type ShortRestDiceRoll,
   type ShortRestPreview as SRPreview
-} from '../../../services/character/rest-service-5e'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
-import { is5eCharacter } from '../../../types/character'
-import type { Character5e } from '../../../types/character-5e'
-import { abilityModifier } from '../../../types/character-common'
+} from '../../../../services/character/rest-service-5e'
+import { useCharacterStore } from '../../../../stores/useCharacterStore'
+import { useGameStore } from '../../../../stores/useGameStore'
+import { useLobbyStore } from '../../../../stores/useLobbyStore'
+import { useNetworkStore } from '../../../../stores/useNetworkStore'
+import { is5eCharacter } from '../../../../types/character'
+import type { Character5e } from '../../../../types/character-5e'
+import { abilityModifier } from '../../../../types/character-common'
 
 interface RestModalProps {
   mode: 'shortRest' | 'longRest'

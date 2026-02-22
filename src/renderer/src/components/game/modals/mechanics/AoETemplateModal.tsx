@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { MapToken } from '../../../types/map'
+import type { MapToken } from '../../../../types/map'
 import type { AoEConfig, AoEShape, Direction8 } from '../../map/AoEOverlay'
 import { getAoECells } from '../../map/AoEOverlay'
 

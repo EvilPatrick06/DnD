@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { load5eRandomTables } from '../../../services/data-provider'
+import { load5eRandomTables } from '../../../../services/data-provider'
 
 interface NPCGeneratorModalProps {
   onClose: () => void

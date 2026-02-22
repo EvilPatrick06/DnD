@@ -9,7 +9,7 @@ import {
   type MoonPhase,
   type Season,
   type Weather
-} from '../../../services/calendar-service'
+} from '../../../../services/calendar-service'
 import {
   generateWeather as generateRandomWeather,
   weatherToOverride,
@@ -17,15 +17,15 @@ import {
   SEASONS,
   type Climate,
   type Season as WeatherSeason
-} from '../../../data/weather-tables'
-import { useGameStore } from '../../../stores/useGameStore'
-import type { CalendarConfig } from '../../../types/campaign'
+} from '../../../../data/weather-tables'
+import { useGameStore } from '../../../../stores/useGameStore'
+import type { CalendarConfig } from '../../../../types/campaign'
 import {
   formatInGameDate,
   formatInGameTime,
   getDateParts,
   getTimeOfDayPhase
-} from '../../../utils/calendar-utils'
+} from '../../../../utils/calendar-utils'
 import { presetToWeatherType } from '../../map/WeatherOverlay'
 
 interface InGameCalendarModalProps {
