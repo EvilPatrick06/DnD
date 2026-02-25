@@ -42,6 +42,7 @@ import {
 } from './overlays/GameToasts'
 import InitiativeOverlay from './overlays/InitiativeOverlay'
 import PlayerHUDOverlay from './overlays/PlayerHUDOverlay'
+import RollRequestOverlay from './overlays/RollRequestOverlay'
 import SettingsDropdown from './overlays/SettingsDropdown'
 import TimerOverlay from './overlays/TimerOverlay'
 import TokenContextMenu from './overlays/TokenContextMenu'
@@ -134,6 +135,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   const networkRole = useNetworkStore((s) => s.role)
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const addChatMessage = useLobbyStore((s) => s.addChatMessage)
+  const lobbyPeerId = useLobbyStore((s) => s.peerId)
+  const lobbyDisplayName = useLobbyStore((s) => s.displayName)
   const aiDmStore = useAiDmStore()
   const aiInitRef = useRef(false)
   const allCharacters = useCharacterStore((s) => s.characters)
@@ -497,6 +500,21 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         <Suspense fallback={null}>
           <NarrationOverlay text={narrationText} onDismiss={() => setNarrationText(null)} />
         </Suspense>
+      )}
+      {!effectiveIsDM && gameStore.pendingGroupRoll && character && (
+        <RollRequestOverlay
+          request={gameStore.pendingGroupRoll}
+          character={character}
+          onRoll={(result) => {
+            gameStore.addGroupRollResult({
+              entityId: lobbyPeerId ?? '',
+              entityName: lobbyDisplayName ?? 'Player',
+              ...result
+            })
+            gameStore.setPendingGroupRoll(null)
+          }}
+          onDismiss={() => gameStore.setPendingGroupRoll(null)}
+        />
       )}
 
       {/* DM toolbars */}

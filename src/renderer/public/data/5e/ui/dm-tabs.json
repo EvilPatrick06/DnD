@@ -9,5 +9,7 @@
   { "id": "campaign", "label": "Campaign", "icon": "\uD83D\uDCD6" },
   { "id": "dice", "label": "Dice & Rolls", "icon": "\uD83C\uDFB2" },
   { "id": "chat", "label": "Chat & Social", "icon": "\uD83D\uDCAC" },
-  { "id": "utility", "label": "Utility", "icon": "\u2699\uFE0F" }
+  { "id": "utility", "label": "Utility", "icon": "\u2699\uFE0F" },
+  { "id": "combatlog", "label": "Combat Log", "icon": "\uD83D\uDCDC" },
+  { "id": "journal", "label": "Journal", "icon": "\uD83D\uDCD4" }
 ]

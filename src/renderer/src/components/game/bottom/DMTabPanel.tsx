@@ -11,6 +11,8 @@ const AiContextPanel = lazy(() => import('./AiContextPanel'))
 const DiseaseCurseTracker = lazy(() => import('../dm/DiseaseCurseTracker'))
 const EnvironmentalEffectsPanel = lazy(() => import('../dm/EnvironmentalEffectsPanel'))
 const TrapPlacerPanel = lazy(() => import('../dm/TrapPlacerPanel'))
+const CombatLogPanel = lazy(() => import('../sidebar/CombatLogPanel'))
+const JournalPanel = lazy(() => import('../sidebar/JournalPanel'))
 
 interface DMTabPanelProps {
   onOpenModal: (modal: string) => void
@@ -44,7 +46,6 @@ export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap
   const dmApprovalRequired = useAiDmStore((s) => s.dmApprovalRequired)
   const setDmApprovalRequired = useAiDmStore((s) => s.setDmApprovalRequired)
 
-  // Lobby store for broadcasting disease/curse messages
   const addChatMessage = useLobbyStore((s) => s.addChatMessage)
 
   // Game store environment toggles
@@ -486,6 +487,20 @@ export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap
               Quick Reference
             </button>
           </div>
+        )
+
+      case 'combatlog':
+        return (
+          <Suspense fallback={<div />}>
+            <CombatLogPanel />
+          </Suspense>
+        )
+
+      case 'journal':
+        return (
+          <Suspense fallback={<div />}>
+            <JournalPanel campaignId={campaign.id} isDM={true} playerName="DM" />
+          </Suspense>
         )
 
       default:
