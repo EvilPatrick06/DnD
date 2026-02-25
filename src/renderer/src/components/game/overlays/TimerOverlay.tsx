@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 
 export default function TimerOverlay(): JSX.Element {
   const timerSeconds = useGameStore((s) => s.timerSeconds)

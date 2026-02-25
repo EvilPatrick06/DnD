@@ -1,5 +1,5 @@
-import { useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { useRef } from 'react'
 import type { LibraryItem } from '../../types/library'
 import { getCategoryDef } from '../../types/library'
 
@@ -44,8 +44,18 @@ export default function LibraryItemList({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-        <svg className="w-12 h-12 mb-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        <svg
+          className="w-12 h-12 mb-3 text-gray-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
         </svg>
         <p className="text-lg mb-1">No items found</p>
         <p className="text-sm mb-4">Try adjusting your search or filters</p>
@@ -61,9 +71,7 @@ export default function LibraryItemList({
 
   return (
     <div ref={parentRef} className="flex-1 overflow-y-auto">
-      <div
-        style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}
-      >
+      <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index]
           const catDef = getCategoryDef(item.category)
@@ -85,9 +93,7 @@ export default function LibraryItemList({
                 className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-800/50
                   hover:bg-gray-800/40 transition-colors cursor-pointer group"
               >
-                {catDef && (
-                  <span className="text-lg leading-none flex-shrink-0">{catDef.icon}</span>
-                )}
+                {catDef && <span className="text-lg leading-none flex-shrink-0">{catDef.icon}</span>}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-100 group-hover:text-amber-400 transition-colors truncate">

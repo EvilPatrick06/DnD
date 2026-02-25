@@ -22,9 +22,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "0",
     "xp": 10,
     "proficiencyBonus": 2,
@@ -45,9 +43,7 @@
       }
     ],
     "description": "Commoners include peasants, serfs, servants, pilgrims, merchants, artisans, and hermits.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -84,9 +80,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/8",
     "xp": 25,
     "proficiencyBonus": 2,
@@ -122,9 +116,7 @@
       }
     ],
     "description": "Bandits rove in gangs and are sometimes led by thugs, veterans, or spellcasters. Not all bandits are combative; some are desperate commoners who resort to lawlessness out of necessity.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -160,9 +152,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/8",
     "xp": 25,
     "proficiencyBonus": 2,
@@ -188,9 +178,7 @@
       }
     ],
     "description": "Cultists swear allegiance to dark powers such as elemental princes, demon lords, or archdevils.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -228,9 +216,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/8",
     "xp": 25,
     "proficiencyBonus": 2,
@@ -252,9 +238,7 @@
       }
     ],
     "description": "Guards include city watch members, sentries, and bodyguards that protect a person or place.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -291,9 +275,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/8",
     "xp": 25,
     "proficiencyBonus": 2,
@@ -319,9 +301,7 @@
       }
     ],
     "description": "Nobles wield great authority and influence as members of the upper class, possessing wealth and connections that can make them as combative and dangerous as combatants.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -352,9 +332,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/8",
     "xp": 25,
     "proficiencyBonus": 2,
@@ -382,9 +360,7 @@
       }
     ],
     "description": "Warrior infantry are rank-and-file soldiers that make up the bulk of any organized army.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -419,9 +395,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/4",
     "xp": 50,
     "proficiencyBonus": 2,
@@ -433,10 +407,7 @@
       "ability": "Wisdom",
       "saveDC": 10,
       "attackBonus": 0,
-      "atWill": [
-        "Light",
-        "Thaumaturgy"
-      ]
+      "atWill": ["Light", "Thaumaturgy"]
     },
     "actions": [
       {
@@ -464,9 +435,7 @@
       }
     ],
     "description": "Acolytes are junior members of the clergy, usually answerable to a priest. They perform a variety of functions in a temple and are granted minor spellcasting power by their deities.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -510,9 +479,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/2",
     "xp": 100,
     "proficiencyBonus": 2,
@@ -540,9 +507,7 @@
       }
     ],
     "description": "Performers include bards, minstrels, actors, and other entertainers who use their talents to earn a living.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -594,9 +559,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/2",
     "xp": 100,
     "proficiencyBonus": 2,
@@ -614,9 +577,7 @@
       {
         "name": "Multiattack",
         "description": "The scout makes two attacks, using Shortsword and Longbow in any combination.",
-        "multiattackActions": [
-          "scout makes two"
-        ]
+        "multiattackActions": ["scout makes two"]
       },
       {
         "name": "Shortsword",
@@ -639,9 +600,7 @@
       }
     ],
     "description": "Scouts are skilled hunters and trackers who offer their services for a fee.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -676,9 +635,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1/2",
     "xp": 100,
     "proficiencyBonus": 2,
@@ -722,9 +679,7 @@
       }
     ],
     "description": "Toughs are upgraded enforcers who command fear through brute intimidation.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -759,9 +714,7 @@
     "senses": {
       "passivePerception": 11
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1",
     "xp": 200,
     "proficiencyBonus": 2,
@@ -779,11 +732,7 @@
       {
         "name": "Multiattack",
         "description": "The pirate makes two Dagger attacks. It can replace one attack with a use of Enthralling Panache.",
-        "multiattackActions": [
-          "pirate makes two Dagger",
-          "can replace one",
-          "of Enthralling Panache"
-        ]
+        "multiattackActions": ["pirate makes two Dagger", "can replace one", "of Enthralling Panache"]
       },
       {
         "name": "Dagger",
@@ -804,9 +753,7 @@
       }
     ],
     "description": "Pirates sail the seas in search of plunder. Some are little more than armed sailors, while others are ruthless reavers.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -850,9 +797,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "1",
     "xp": 200,
     "proficiencyBonus": 2,
@@ -894,9 +839,7 @@
       }
     ],
     "description": "Spies are skilled in deception and subterfuge. Many work as informants or intelligence agents.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -943,9 +886,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -957,9 +898,7 @@
       {
         "name": "Multiattack",
         "description": "The bandit makes two attacks, using Scimitar and Pistol in any combination.",
-        "multiattackActions": [
-          "bandit makes two"
-        ]
+        "multiattackActions": ["bandit makes two"]
       },
       {
         "name": "Scimitar",
@@ -988,9 +927,7 @@
       }
     ],
     "description": "Bandit captains command gangs of bandits and often use them to prey on caravans, raid villages, or patrol for a thieves' guild.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1022,9 +959,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -1050,9 +985,7 @@
       }
     ],
     "description": "Berserkers are ferocious warriors who throw themselves into battle with reckless abandon.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1088,9 +1021,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -1108,14 +1039,9 @@
       "ability": "Wisdom",
       "saveDC": 12,
       "attackBonus": 4,
-      "atWill": [
-        "Light",
-        "Thaumaturgy"
-      ],
+      "atWill": ["Light", "Thaumaturgy"],
       "perDay": {
-        "2": [
-          "Command"
-        ]
+        "2": ["Command"]
       }
     },
     "actions": [
@@ -1135,9 +1061,7 @@
       }
     ],
     "description": "Cult fanatics are zealous devotees who lead cult cells and preach the dark will of their masters.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1184,10 +1108,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common",
-      "Druidic"
-    ],
+    "languages": ["Common", "Druidic"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -1199,24 +1120,16 @@
       "ability": "Wisdom",
       "saveDC": 13,
       "attackBonus": 0,
-      "atWill": [
-        "Druidcraft",
-        "Speak with Animals"
-      ],
+      "atWill": ["Druidcraft", "Speak with Animals"],
       "perDay": {
-        "2": [
-          "Entangle",
-          "Thunderwave"
-        ]
+        "2": ["Entangle", "Thunderwave"]
       }
     },
     "actions": [
       {
         "name": "Multiattack",
         "description": "The druid makes two attacks, using Vine Staff or Verdant Wisp in any combination.",
-        "multiattackActions": [
-          "druid makes two"
-        ]
+        "multiattackActions": ["druid makes two"]
       },
       {
         "name": "Vine Staff",
@@ -1243,9 +1156,7 @@
       }
     ],
     "description": "Druids dwell in forests and other secluded wilderness locations, where they protect the natural world from monsters and the encroachment of civilization.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1280,9 +1191,7 @@
     "senses": {
       "passivePerception": 13
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -1294,17 +1203,9 @@
       "ability": "Intelligence",
       "saveDC": 13,
       "attackBonus": 5,
-      "atWill": [
-        "Mage Hand",
-        "Prestidigitation"
-      ],
+      "atWill": ["Mage Hand", "Prestidigitation"],
       "perDay": {
-        "1": [
-          "Disguise Self",
-          "Ice Knife",
-          "Mage Armor",
-          "Thunderwave"
-        ]
+        "1": ["Disguise Self", "Ice Knife", "Mage Armor", "Thunderwave"]
       }
     },
     "actions": [
@@ -1324,9 +1225,7 @@
       }
     ],
     "description": "Mage apprentices are fledgling spellcasters learning the ways of arcane magic.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1368,9 +1267,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "2",
     "xp": 450,
     "proficiencyBonus": 2,
@@ -1382,23 +1279,16 @@
       "ability": "Wisdom",
       "saveDC": 10,
       "attackBonus": 0,
-      "atWill": [
-        "Light",
-        "Thaumaturgy"
-      ],
+      "atWill": ["Light", "Thaumaturgy"],
       "perDay": {
-        "1": [
-          "Spirit Guardians"
-        ]
+        "1": ["Spirit Guardians"]
       }
     },
     "actions": [
       {
         "name": "Multiattack",
         "description": "The priest makes two attacks, using Mace or Radiant Flame in any combination.",
-        "multiattackActions": [
-          "priest makes two"
-        ]
+        "multiattackActions": ["priest makes two"]
       },
       {
         "name": "Mace",
@@ -1425,9 +1315,7 @@
       }
     ],
     "description": "Priests bring the teachings of their gods to the common folk. They are the spiritual leaders of temples and shrines.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1471,9 +1359,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "3",
     "xp": 700,
     "proficiencyBonus": 2,
@@ -1491,9 +1377,7 @@
       {
         "name": "Multiattack",
         "description": "The knight makes two attacks, using Greatsword or Heavy Crossbow in any combination.",
-        "multiattackActions": [
-          "knight makes two"
-        ]
+        "multiattackActions": ["knight makes two"]
       },
       {
         "name": "Greatsword",
@@ -1530,18 +1414,14 @@
       }
     ],
     "description": "Knights are warriors who pledge service to rulers, religious orders, and noble causes.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
     },
     "source": "mm2025",
     "group": "Knights",
-    "conditionImmunities": [
-      "Frightened"
-    ]
+    "conditionImmunities": ["Frightened"]
   },
   {
     "id": "scout-captain",
@@ -1567,9 +1447,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "3",
     "xp": 700,
     "proficiencyBonus": 2,
@@ -1577,9 +1455,7 @@
       {
         "name": "Multiattack",
         "description": "The scout makes two attacks, using Shortsword or Longbow in any combination.",
-        "multiattackActions": [
-          "scout makes two"
-        ]
+        "multiattackActions": ["scout makes two"]
       },
       {
         "name": "Shortsword",
@@ -1621,11 +1497,7 @@
       "Stealth": 7,
       "Survival": 6
     },
-    "gear": [
-      "Longbow",
-      "Shortsword",
-      "Studded Leather Armor"
-    ],
+    "gear": ["Longbow", "Shortsword", "Studded Leather Armor"],
     "bonusActions": [
       {
         "name": "Aim",
@@ -1638,9 +1510,7 @@
         "description": "*Trigger:* The scout is hit by an attack roll. *Response:* The scout halves the damage (round down) it takes from that attack."
       }
     ],
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Scouts"
   },
   {
@@ -1671,9 +1541,7 @@
     "senses": {
       "passivePerception": 12
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "3",
     "xp": 700,
     "proficiencyBonus": 2,
@@ -1685,9 +1553,7 @@
       {
         "name": "Multiattack",
         "description": "The warrior makes two Greatsword or Heavy Crossbow attacks.",
-        "multiattackActions": [
-          "warrior makes two Greatsword or Heavy Crossbow"
-        ]
+        "multiattackActions": ["warrior makes two Greatsword or Heavy Crossbow"]
       },
       {
         "name": "Greatsword",
@@ -1710,9 +1576,7 @@
       }
     ],
     "description": "Veterans are professional soldiers who have seen numerous battles and emerged victorious.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1759,9 +1623,7 @@
     "senses": {
       "passivePerception": 14
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "4",
     "xp": 1100,
     "proficiencyBonus": 2,
@@ -1773,9 +1635,7 @@
       {
         "name": "Multiattack",
         "description": "The guard makes two attacks, using Javelin or Longsword in any combination.",
-        "multiattackActions": [
-          "guard makes two"
-        ]
+        "multiattackActions": ["guard makes two"]
       },
       {
         "name": "Javelin",
@@ -1805,9 +1665,7 @@
       }
     ],
     "description": "Guard captains oversee the protection of a settlement, noble estate, or other location.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -1838,9 +1696,7 @@
     "senses": {
       "passivePerception": 10
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "4",
     "xp": 1100,
     "proficiencyBonus": 2,
@@ -1848,9 +1704,7 @@
       {
         "name": "Multiattack",
         "description": "The tough makes two attacks, using Warhammer or Heavy Crossbow in any combination.",
-        "multiattackActions": [
-          "tough makes two"
-        ]
+        "multiattackActions": ["tough makes two"]
       },
       {
         "name": "Warhammer",
@@ -1886,20 +1740,14 @@
       "con": 5,
       "cha": 2
     },
-    "gear": [
-      "Chain Mail",
-      "Heavy Crossbow",
-      "Warhammer"
-    ],
+    "gear": ["Chain Mail", "Heavy Crossbow", "Warhammer"],
     "traits": [
       {
         "name": "Pack Tactics",
         "description": "The tough has Advantage on an attack roll against a creature if at least one of the tough's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition."
       }
     ],
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Toughs"
   },
   {
@@ -1936,9 +1784,7 @@
     "senses": {
       "passivePerception": 11
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "5",
     "xp": 1800,
     "proficiencyBonus": 3,
@@ -1956,11 +1802,7 @@
       {
         "name": "Multiattack",
         "description": "The gladiator makes three Spear attacks. It can replace one attack with a use of Shield Bash.",
-        "multiattackActions": [
-          "gladiator makes three Spear",
-          "can replace one",
-          "of Shield Bash"
-        ]
+        "multiattackActions": ["gladiator makes three Spear", "can replace one", "of Shield Bash"]
       },
       {
         "name": "Spear",
@@ -1987,9 +1829,7 @@
       }
     ],
     "description": "Gladiators battle for the entertainment of raucous crowds. Some gladiators are combatants forced to fight to the death, while others are professional combatants.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -2029,9 +1869,7 @@
     "senses": {
       "passivePerception": 14
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "6",
     "xp": 2300,
     "proficiencyBonus": 3,
@@ -2043,27 +1881,16 @@
       "ability": "Intelligence",
       "saveDC": 14,
       "attackBonus": 0,
-      "atWill": [
-        "Detect Magic",
-        "Light",
-        "Mage Armor",
-        "Mage Hand",
-        "Prestidigitation"
-      ],
+      "atWill": ["Detect Magic", "Light", "Mage Armor", "Mage Hand", "Prestidigitation"],
       "perDay": {
-        "2": [
-          "Fireball",
-          "Invisibility"
-        ]
+        "2": ["Fireball", "Invisibility"]
       }
     },
     "actions": [
       {
         "name": "Multiattack",
         "description": "The mage makes three Arcane Burst attacks.",
-        "multiattackActions": [
-          "mage makes three Arcane Burst"
-        ]
+        "multiattackActions": ["mage makes three Arcane Burst"]
       },
       {
         "name": "Arcane Burst",
@@ -2080,9 +1907,7 @@
       }
     ],
     "description": "Mages are accomplished spellcasters who study the arcane arts.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -2128,9 +1953,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "6",
     "xp": 2300,
     "proficiencyBonus": 3,
@@ -2138,9 +1961,7 @@
       {
         "name": "Multiattack",
         "description": "The performer makes three Rapier attacks.",
-        "multiattackActions": [
-          "performer makes three Rapier"
-        ]
+        "multiattackActions": ["performer makes three Rapier"]
       },
       {
         "name": "Rapier",
@@ -2187,26 +2008,17 @@
       "Performance": 10,
       "Stealth": 7
     },
-    "gear": [
-      "Rapier"
-    ],
+    "gear": ["Rapier"],
     "spellcasting": {
       "ability": "Charisma",
       "saveDC": 15,
       "attackBonus": 0,
-      "atWill": [
-        "Minor Illusion",
-        "Prestidigitation"
-      ],
+      "atWill": ["Minor Illusion", "Prestidigitation"],
       "perDay": {
-        "1": [
-          "Tasha's Hideous Laughter"
-        ]
+        "1": ["Tasha's Hideous Laughter"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Performers"
   },
   {
@@ -2243,9 +2055,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "6",
     "xp": 2300,
     "proficiencyBonus": 3,
@@ -2257,9 +2067,7 @@
       {
         "name": "Multiattack",
         "description": "The pirate makes three attacks, using Rapier or Pistol in any combination.",
-        "multiattackActions": [
-          "pirate makes three"
-        ]
+        "multiattackActions": ["pirate makes three"]
       },
       {
         "name": "Rapier",
@@ -2288,9 +2096,7 @@
       }
     ],
     "description": "Pirate captains command crews of pirates and scallywags, plundering vessels and coastal settlements.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -2329,10 +2135,7 @@
     "senses": {
       "passivePerception": 14
     },
-    "languages": [
-      "Common",
-      "Thieves' Cant"
-    ],
+    "languages": ["Common", "Thieves' Cant"],
     "cr": "7",
     "xp": 2900,
     "proficiencyBonus": 3,
@@ -2340,9 +2143,7 @@
       {
         "name": "Multiattack",
         "description": "The bandit makes three Dagger attacks.",
-        "multiattackActions": [
-          "bandit makes three Dagger"
-        ]
+        "multiattackActions": ["bandit makes three Dagger"]
       },
       {
         "name": "Dagger",
@@ -2390,30 +2191,17 @@
       "Perception": 4,
       "Stealth": 9
     },
-    "gear": [
-      "Daggers (6)",
-      "Wand"
-    ],
+    "gear": ["Daggers (6)", "Wand"],
     "spellcasting": {
       "ability": "Intelligence",
       "saveDC": 14,
       "attackBonus": 0,
-      "atWill": [
-        "Disguise Self",
-        "Mage Hand",
-        "Minor Illusion"
-      ],
+      "atWill": ["Disguise Self", "Mage Hand", "Minor Illusion"],
       "perDay": {
-        "1": [
-          "Hold Person",
-          "Mage Armor",
-          "Major Image"
-        ]
+        "1": ["Hold Person", "Mage Armor", "Major Image"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Bandits"
   },
   {
@@ -2440,10 +2228,7 @@
       "passivePerception": 17,
       "darkvision": 90
     },
-    "languages": [
-      "Common",
-      "Deep Speech"
-    ],
+    "languages": ["Common", "Deep Speech"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2451,11 +2236,7 @@
       {
         "name": "Multiattack",
         "description": "The cultist makes two Tentacle Lash attacks. It can replace any attack with a use of Mind Rot.",
-        "multiattackActions": [
-          "cultist makes two Tentacle Lash",
-          "can replace any",
-          "of Mind Rot"
-        ]
+        "multiattackActions": ["cultist makes two Tentacle Lash", "can replace any", "of Mind Rot"]
       },
       {
         "name": "Tentacle Lash",
@@ -2509,14 +2290,9 @@
       "ability": "Wisdom",
       "saveDC": 15,
       "attackBonus": 0,
-      "atWill": [
-        "Detect Thoughts",
-        "Minor Illusion"
-      ]
+      "atWill": ["Detect Thoughts", "Minor Illusion"]
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Cultists"
   },
   {
@@ -2549,16 +2325,11 @@
       "Perception": 6,
       "Stealth": 10
     },
-    "resistances": [
-      "Poison"
-    ],
+    "resistances": ["Poison"],
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common",
-      "Thieves' Cant"
-    ],
+    "languages": ["Common", "Thieves' Cant"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2584,9 +2355,7 @@
       {
         "name": "Multiattack",
         "description": "The assassin makes three attacks, using Shortsword or Light Crossbow in any combination.",
-        "multiattackActions": [
-          "assassin makes three"
-        ]
+        "multiattackActions": ["assassin makes three"]
       },
       {
         "name": "Shortsword",
@@ -2617,9 +2386,7 @@
       }
     ],
     "description": "Assassins are remorseless killers who work for money, revenge, or ideology.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -2655,9 +2422,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2665,9 +2430,7 @@
       {
         "name": "Multiattack",
         "description": "The berserker makes three attacks, using Greataxe or Javelin in any combination.",
-        "multiattackActions": [
-          "berserker makes three"
-        ]
+        "multiattackActions": ["berserker makes three"]
       },
       {
         "name": "Greataxe",
@@ -2708,14 +2471,8 @@
       "Athletics": 7,
       "Perception": 5
     },
-    "conditionImmunities": [
-      "Charmed",
-      "Frightened"
-    ],
-    "gear": [
-      "Greataxe",
-      "Javelins (6)"
-    ],
+    "conditionImmunities": ["Charmed", "Frightened"],
+    "gear": ["Greataxe", "Javelins (6)"],
     "traits": [
       {
         "name": "Bloodied Frenzy",
@@ -2728,9 +2485,7 @@
         "description": "Each ally within 30 feet of the berserker can take a Reaction to move up to half the ally's Speed without provoking Opportunity Attacks. The berserker can also move up to half its Speed without provoking Opportunity Attacks."
       }
     ],
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Berserkers"
   },
   {
@@ -2756,9 +2511,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common"
-    ],
+    "languages": ["Common"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2766,9 +2519,7 @@
       {
         "name": "Multiattack",
         "description": "The cultist makes three attacks, using Dread Scythe or Deathly Ray in any combination.",
-        "multiattackActions": [
-          "cultist makes three"
-        ]
+        "multiattackActions": ["cultist makes three"]
       },
       {
         "name": "Dread Scythe",
@@ -2812,9 +2563,7 @@
       "Perception": 6,
       "Religion": 4
     },
-    "gear": [
-      "Splint Armor"
-    ],
+    "gear": ["Splint Armor"],
     "bonusActions": [
       {
         "name": "Spirit Wail",
@@ -2832,14 +2581,9 @@
       "ability": "Wisdom",
       "saveDC": 14,
       "attackBonus": 0,
-      "atWill": [
-        "Speak with Dead",
-        "Thaumaturgy"
-      ]
+      "atWill": ["Speak with Dead", "Thaumaturgy"]
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Cultists"
   },
   {
@@ -2865,10 +2609,7 @@
     "senses": {
       "passivePerception": 17
     },
-    "languages": [
-      "Common",
-      "Primordial"
-    ],
+    "languages": ["Common", "Primordial"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2876,9 +2617,7 @@
       {
         "name": "Multiattack",
         "description": "The cultist makes three attacks, using Elemental Flail or Elemental Claw in any combination.",
-        "multiattackActions": [
-          "cultist makes three"
-        ]
+        "multiattackActions": ["cultist makes three"]
       },
       {
         "name": "Elemental Flail",
@@ -2917,9 +2656,7 @@
       "Perception": 7,
       "Religion": 5
     },
-    "gear": [
-      "Chain Mail"
-    ],
+    "gear": ["Chain Mail"],
     "reactions": [
       {
         "name": "Elemental Absorption",
@@ -2931,14 +2668,9 @@
       "ability": "Wisdom",
       "saveDC": 15,
       "attackBonus": 0,
-      "atWill": [
-        "Elementalism",
-        "Mage Hand"
-      ]
+      "atWill": ["Elementalism", "Mage Hand"]
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Cultists"
   },
   {
@@ -2965,11 +2697,7 @@
       "passivePerception": 17,
       "darkvision": 90
     },
-    "languages": [
-      "Abyssal",
-      "Common",
-      "Infernal"
-    ],
+    "languages": ["Abyssal", "Common", "Infernal"],
     "cr": "8",
     "xp": 3900,
     "proficiencyBonus": 3,
@@ -2977,9 +2705,7 @@
       {
         "name": "Multiattack",
         "description": "The cultist makes three Pact Axe attacks.",
-        "multiattackActions": [
-          "cultist makes three Pact Axe"
-        ]
+        "multiattackActions": ["cultist makes three Pact Axe"]
       },
       {
         "name": "Pact Axe",
@@ -3013,9 +2739,7 @@
       "Perception": 7,
       "Religion": 4
     },
-    "gear": [
-      "Breastplate"
-    ],
+    "gear": ["Breastplate"],
     "reactions": [
       {
         "name": "Hellish Rebuke",
@@ -3026,19 +2750,12 @@
       "ability": "Wisdom",
       "saveDC": 15,
       "attackBonus": 7,
-      "atWill": [
-        "Scorching Ray",
-        "Thaumaturgy"
-      ],
+      "atWill": ["Scorching Ray", "Thaumaturgy"],
       "perDay": {
-        "2": [
-          "Fireball"
-        ]
+        "2": ["Fireball"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Cultists"
   },
   {
@@ -3064,10 +2781,7 @@
     "senses": {
       "passivePerception": 17
     },
-    "languages": [
-      "Celestial",
-      "Common"
-    ],
+    "languages": ["Celestial", "Common"],
     "cr": "10",
     "xp": 5900,
     "proficiencyBonus": 4,
@@ -3075,9 +2789,7 @@
       {
         "name": "Multiattack",
         "description": "The cultist makes three attacks, using Pact Blade or Radiant Ray in any combination.",
-        "multiattackActions": [
-          "cultist makes three"
-        ]
+        "multiattackActions": ["cultist makes three"]
       },
       {
         "name": "Pact Blade",
@@ -3121,28 +2833,17 @@
       "Persuasion": 9,
       "Religion": 5
     },
-    "gear": [
-      "Breastplate",
-      "Holy Symbol"
-    ],
+    "gear": ["Breastplate", "Holy Symbol"],
     "spellcasting": {
       "ability": "Charisma",
       "saveDC": 17,
       "attackBonus": 0,
-      "atWill": [
-        "Mage Armor",
-        "Thaumaturgy"
-      ],
+      "atWill": ["Mage Armor", "Thaumaturgy"],
       "perDay": {
-        "1": [
-          "Jallarzi's Storm of Radiance",
-          "Mass Suggestion"
-        ]
+        "1": ["Jallarzi's Storm of Radiance", "Mass Suggestion"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Cultists"
   },
   {
@@ -3168,9 +2869,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common plus two other languages"
-    ],
+    "languages": ["Common plus two other languages"],
     "cr": "10",
     "xp": 5900,
     "proficiencyBonus": 4,
@@ -3178,9 +2877,7 @@
       {
         "name": "Multiattack",
         "description": "The noble makes three Beguiling Strike attacks.",
-        "multiattackActions": [
-          "noble makes three Beguiling Strike"
-        ]
+        "multiattackActions": ["noble makes three Beguiling Strike"]
       },
       {
         "name": "Beguiling Strike",
@@ -3226,24 +2923,12 @@
       "ability": "Charisma",
       "saveDC": 16,
       "attackBonus": 0,
-      "atWill": [
-        "Mage Armor",
-        "Mage Hand",
-        "Minor Illusion"
-      ],
+      "atWill": ["Mage Armor", "Mage Hand", "Minor Illusion"],
       "perDay": {
-        "1": [
-          "Befuddlement",
-          "Detect Thoughts",
-          "Fly",
-          "Scrying",
-          "Shatter"
-        ]
+        "1": ["Befuddlement", "Detect Thoughts", "Fly", "Scrying", "Shatter"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Nobles"
   },
   {
@@ -3269,9 +2954,7 @@
     "senses": {
       "passivePerception": 17
     },
-    "languages": [
-      "Common plus two other languages"
-    ],
+    "languages": ["Common plus two other languages"],
     "cr": "10",
     "xp": 5900,
     "proficiencyBonus": 4,
@@ -3279,9 +2962,7 @@
       {
         "name": "Multiattack",
         "description": "The performer makes three Bejeweled Baton attacks.",
-        "multiattackActions": [
-          "performer makes three Bejeweled Baton"
-        ]
+        "multiattackActions": ["performer makes three Bejeweled Baton"]
       },
       {
         "name": "Bejeweled Baton",
@@ -3341,21 +3022,12 @@
       "ability": "Charisma",
       "saveDC": 17,
       "attackBonus": 0,
-      "atWill": [
-        "Mage Hand",
-        "Minor Illusion",
-        "Prestidigitation"
-      ],
+      "atWill": ["Mage Hand", "Minor Illusion", "Prestidigitation"],
       "perDay": {
-        "1": [
-          "Major Image",
-          "Project Image"
-        ]
+        "1": ["Major Image", "Project Image"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Performers"
   },
   {
@@ -3396,10 +3068,7 @@
     "senses": {
       "passivePerception": 21
     },
-    "languages": [
-      "Common",
-      "Thieves' Cant"
-    ],
+    "languages": ["Common", "Thieves' Cant"],
     "cr": "10",
     "xp": 5900,
     "proficiencyBonus": 4,
@@ -3425,9 +3094,7 @@
       {
         "name": "Multiattack",
         "description": "The spy makes three attacks, using Rapier or Hand Crossbow in any combination.",
-        "multiattackActions": [
-          "spy makes three"
-        ]
+        "multiattackActions": ["spy makes three"]
       },
       {
         "name": "Rapier",
@@ -3469,9 +3136,7 @@
       }
     ],
     "description": "Spy masters are the heads of intelligence networks, skilled at manipulating others and extracting secrets.",
-    "tags": [
-      "npc"
-    ],
+    "tags": ["npc"],
     "tokenSize": {
       "x": 1,
       "y": 1
@@ -3521,9 +3186,7 @@
     "senses": {
       "passivePerception": 17
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "10",
     "xp": 5900,
     "proficiencyBonus": 4,
@@ -3536,9 +3199,7 @@
       {
         "name": "Multiattack",
         "description": "The warrior makes three attacks, using Greatsword or Longbow in any combination.",
-        "multiattackActions": [
-          "warrior makes three"
-        ]
+        "multiattackActions": ["warrior makes three"]
       },
       {
         "name": "Greatsword",
@@ -3612,10 +3273,7 @@
     "senses": {
       "passivePerception": 20
     },
-    "languages": [
-      "Common",
-      "Thieves' Cant"
-    ],
+    "languages": ["Common", "Thieves' Cant"],
     "cr": "11",
     "xp": 7200,
     "proficiencyBonus": 4,
@@ -3623,9 +3281,7 @@
       {
         "name": "Multiattack",
         "description": "The bandit makes three attacks, using Scimitar or Pistol in any combination.",
-        "multiattackActions": [
-          "bandit makes three"
-        ]
+        "multiattackActions": ["bandit makes three"]
       },
       {
         "name": "Scimitar",
@@ -3667,11 +3323,7 @@
       "Perception": 10,
       "Stealth": 13
     },
-    "gear": [
-      "Pistols (2)",
-      "Scimitar",
-      "Studded Leather Armor"
-    ],
+    "gear": ["Pistols (2)", "Scimitar", "Studded Leather Armor"],
     "traits": [
       {
         "name": "Evasion",
@@ -3684,9 +3336,7 @@
         "description": "The bandit gives itself Advantage on the next attack roll it makes during the current turn. If that attack hits, the target takes an extra 28 (8d6) Poison damage."
       }
     ],
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Bandits"
   },
   {
@@ -3712,9 +3362,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common plus five other languages"
-    ],
+    "languages": ["Common plus five other languages"],
     "cr": "12",
     "xp": 8400,
     "proficiencyBonus": 4,
@@ -3722,9 +3370,7 @@
       {
         "name": "Multiattack",
         "description": "The archmage makes four Arcane Burst attacks.",
-        "multiattackActions": [
-          "archmage makes four Arcane Burst"
-        ]
+        "multiattackActions": ["archmage makes four Arcane Burst"]
       },
       {
         "name": "Arcane Burst",
@@ -3759,15 +3405,9 @@
       "History": 9,
       "Perception": 6
     },
-    "damageImmunities": [
-      "Psychic"
-    ],
-    "conditionImmunities": [
-      "Charmed (with *Mind Blank*)"
-    ],
-    "gear": [
-      "Wand"
-    ],
+    "damageImmunities": ["Psychic"],
+    "conditionImmunities": ["Charmed (with *Mind Blank*)"],
+    "gear": ["Wand"],
     "traits": [
       {
         "name": "Magic Resistance",
@@ -3803,15 +3443,10 @@
         "Prestidigitation"
       ],
       "perDay": {
-        "2": [
-          "Fly",
-          "Lightning Bolt"
-        ]
+        "2": ["Fly", "Lightning Bolt"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Mages"
   },
   {
@@ -3837,9 +3472,7 @@
     "senses": {
       "passivePerception": 19
     },
-    "languages": [
-      "Common plus two other languages"
-    ],
+    "languages": ["Common plus two other languages"],
     "cr": "12",
     "xp": 8400,
     "proficiencyBonus": 4,
@@ -3847,9 +3480,7 @@
       {
         "name": "Multiattack",
         "description": "The archpriest makes three Radiant Burst attacks.",
-        "multiattackActions": [
-          "archpriest makes three Radiant Burst"
-        ]
+        "multiattackActions": ["archpriest makes three Radiant Burst"]
       },
       {
         "name": "Radiant Burst",
@@ -3898,10 +3529,7 @@
       "Perception": 9,
       "Religion": 10
     },
-    "gear": [
-      "Chain Mail",
-      "Holy Symbol"
-    ],
+    "gear": ["Chain Mail", "Holy Symbol"],
     "bonusActions": [
       {
         "name": "Divine Aid",
@@ -3913,22 +3541,12 @@
       "ability": "Wisdom",
       "saveDC": 17,
       "attackBonus": 0,
-      "atWill": [
-        "Light",
-        "Thaumaturgy"
-      ],
+      "atWill": ["Light", "Thaumaturgy"],
       "perDay": {
-        "1": [
-          "Flame Strike",
-          "Greater Restoration",
-          "Raise Dead",
-          "Zone of Truth"
-        ]
+        "1": ["Flame Strike", "Greater Restoration", "Raise Dead", "Zone of Truth"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Priests"
   },
   {
@@ -3954,9 +3572,7 @@
     "senses": {
       "passivePerception": 16
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "12",
     "xp": 8400,
     "proficiencyBonus": 4,
@@ -3964,9 +3580,7 @@
       {
         "name": "Multiattack",
         "description": "The pirate makes three attacks, using Scimitar or Pistol in any combination.",
-        "multiattackActions": [
-          "pirate makes three"
-        ]
+        "multiattackActions": ["pirate makes three"]
       },
       {
         "name": "Scimitar",
@@ -4019,10 +3633,7 @@
       "Athletics": 6,
       "Perception": 6
     },
-    "gear": [
-      "Pistol",
-      "Scimitar"
-    ],
+    "gear": ["Pistol", "Scimitar"],
     "bonusActions": [
       {
         "name": "Rally",
@@ -4036,9 +3647,7 @@
         "description": "*Trigger:* The pirate is hit by a melee attack roll while holding a weapon. *Response:* The pirate adds 4 to its AC against melee attack rolls (including the triggering attack) until the start of its next turn, possibly causing the attacks to miss."
       }
     ],
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Pirates"
   },
   {
@@ -4064,9 +3673,7 @@
     "senses": {
       "passivePerception": 15
     },
-    "languages": [
-      "Common plus one other language"
-    ],
+    "languages": ["Common plus one other language"],
     "cr": "12",
     "xp": 8400,
     "proficiencyBonus": 4,
@@ -4074,9 +3681,7 @@
       {
         "name": "Multiattack",
         "description": "The knight makes three attacks, using Greatsword or Longbow in any combination.",
-        "multiattackActions": [
-          "knight makes three"
-        ]
+        "multiattackActions": ["knight makes three"]
       },
       {
         "name": "Greatsword",
@@ -4124,15 +3729,8 @@
       "Perception": 5,
       "Persuasion": 8
     },
-    "conditionImmunities": [
-      "Charmed",
-      "Frightened"
-    ],
-    "gear": [
-      "Greatsword",
-      "Longbow",
-      "Plate Armor"
-    ],
+    "conditionImmunities": ["Charmed", "Frightened"],
+    "gear": ["Greatsword", "Longbow", "Plate Armor"],
     "traits": [
       {
         "name": "Aura of Bravery",
@@ -4144,17 +3742,10 @@
       "saveDC": 16,
       "attackBonus": 0,
       "perDay": {
-        "1": [
-          "Daylight",
-          "Dispel Evil and Good",
-          "Greater Restoration",
-          "Phantom Steed"
-        ]
+        "1": ["Daylight", "Dispel Evil and Good", "Greater Restoration", "Phantom Steed"]
       }
     },
-    "habitat": [
-      "Any"
-    ],
+    "habitat": ["Any"],
     "group": "Knights"
   }
 ]

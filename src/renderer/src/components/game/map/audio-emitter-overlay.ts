@@ -85,12 +85,7 @@ export class AudioEmitterLayer {
   }
 
   /** Calculate volume for a token at position (tx, ty) based on distance from emitter */
-  static calculateSpatialVolume(
-    emitter: AudioEmitter,
-    tx: number,
-    ty: number,
-    _cellSize: number
-  ): number {
+  static calculateSpatialVolume(emitter: AudioEmitter, tx: number, ty: number, _cellSize: number): number {
     if (!emitter.spatial) return emitter.volume
     const dx = emitter.x + 0.5 - (tx + 0.5)
     const dy = emitter.y + 0.5 - (ty + 0.5)

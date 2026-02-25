@@ -1,7 +1,11 @@
-import type { MessageType } from '../network/types'
-import { useGameStore } from '../stores/useGameStore'
 import type { EntityCondition } from '../types/game-state'
+
+function getGameStore() {
+  return (require('../stores/use-game-store') as typeof import('../stores/use-game-store')).useGameStore
+}
+
 import type { GameMap } from '../types/map'
+import type { MessageType } from './types'
 
 type SendMessageFn = (type: MessageType, payload: unknown) => void
 
@@ -21,7 +25,10 @@ async function encodeMapImage(imagePath: string): Promise<string | null> {
       canvas.width = img.naturalWidth
       canvas.height = img.naturalHeight
       const ctx = canvas.getContext('2d')
-      if (!ctx) { resolve(null); return }
+      if (!ctx) {
+        resolve(null)
+        return
+      }
       ctx.drawImage(img, 0, 0)
       let dataUrl = canvas.toDataURL('image/jpeg', 0.85)
       if (dataUrl.length > MAX_IMAGE_BYTES) {
@@ -47,16 +54,16 @@ async function encodeMapImage(imagePath: string): Promise<string | null> {
 export function startGameSync(sendMessage: SendMessageFn): void {
   stopGameSync()
 
-  let prevMaps: GameMap[] = useGameStore.getState().maps
-  let prevActiveMapId: string | null = useGameStore.getState().activeMapId
-  let prevInitiative = useGameStore.getState().initiative
-  let prevRound = useGameStore.getState().round
-  let prevConditions: EntityCondition[] = useGameStore.getState().conditions
-  let prevTurnMode = useGameStore.getState().turnMode
-  let prevIsPaused = useGameStore.getState().isPaused
-  let prevTurnStates = useGameStore.getState().turnStates
+  let prevMaps: GameMap[] = getGameStore().getState().maps
+  let prevActiveMapId: string | null = getGameStore().getState().activeMapId
+  let prevInitiative = getGameStore().getState().initiative
+  let prevRound = getGameStore().getState().round
+  let prevConditions: EntityCondition[] = getGameStore().getState().conditions
+  let prevTurnMode = getGameStore().getState().turnMode
+  let prevIsPaused = getGameStore().getState().isPaused
+  let prevTurnStates = getGameStore().getState().turnStates
 
-  unsubscribe = useGameStore.subscribe((state) => {
+  unsubscribe = getGameStore().subscribe((state) => {
     if (state.activeMapId !== prevActiveMapId) {
       prevActiveMapId = state.activeMapId
       const map = state.maps.find((m) => m.id === state.activeMapId)
@@ -176,7 +183,7 @@ export function stopGameSync(): void {
  * Encodes map images as base64 data URLs so clients can render them.
  */
 export async function buildFullGameStatePayload(): Promise<Record<string, unknown>> {
-  const gs = useGameStore.getState()
+  const gs = getGameStore().getState()
   const mapsWithImages = await Promise.all(
     gs.maps.map(async (m) => {
       const imageData = await encodeMapImage(m.imagePath)

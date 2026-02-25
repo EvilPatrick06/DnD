@@ -4,31 +4,14 @@
     "name": "Barbarian",
     "hitDie": 12,
     "primaryAbility": "Strength",
-    "savingThrows": [
-      "Strength",
-      "Constitution"
-    ],
+    "savingThrows": ["Strength", "Constitution"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Animal Handling",
-          "Athletics",
-          "Intimidation",
-          "Nature",
-          "Perception",
-          "Survival"
-        ]
+        "options": ["Animal Handling", "Athletics", "Intimidation", "Nature", "Perception", "Survival"]
       }
     },
     "startingEquipment": [
@@ -59,12 +42,8 @@
       "strength": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Shields"
-      ],
-      "weapons": [
-        "Martial weapons"
-      ],
+      "armor": ["Shields"],
+      "weapons": ["Martial weapons"],
       "tools": []
     }
   },
@@ -73,20 +52,11 @@
     "name": "Bard",
     "hitDie": 8,
     "primaryAbility": "Charisma",
-    "savingThrows": [
-      "Dexterity",
-      "Charisma"
-    ],
+    "savingThrows": ["Dexterity", "Charisma"],
     "proficiencies": {
-      "armor": [
-        "Light armor"
-      ],
-      "weapons": [
-        "Simple weapons"
-      ],
-      "tools": [
-        "Three musical instruments of your choice"
-      ],
+      "armor": ["Light armor"],
+      "weapons": ["Simple weapons"],
+      "tools": ["Three musical instruments of your choice"],
       "skills": {
         "numToChoose": 3,
         "options": [
@@ -138,13 +108,9 @@
       "charisma": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor"
-      ],
+      "armor": ["Light armor"],
       "weapons": [],
-      "tools": [
-        "Musical Instrument (one of your choice)"
-      ],
+      "tools": ["Musical Instrument (one of your choice)"],
       "skills": {
         "numToChoose": 1,
         "options": [
@@ -175,29 +141,14 @@
     "name": "Cleric",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
-    "savingThrows": [
-      "Wisdom",
-      "Charisma"
-    ],
+    "savingThrows": ["Wisdom", "Charisma"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Simple weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "History",
-          "Insight",
-          "Medicine",
-          "Persuasion",
-          "Religion"
-        ]
+        "options": ["History", "Insight", "Medicine", "Persuasion", "Religion"]
       }
     },
     "startingEquipment": [
@@ -230,11 +181,7 @@
       "wisdom": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
       "weapons": [],
       "tools": []
     }
@@ -244,33 +191,14 @@
     "name": "Druid",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
-    "savingThrows": [
-      "Intelligence",
-      "Wisdom"
-    ],
+    "savingThrows": ["Intelligence", "Wisdom"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons"
-      ],
-      "tools": [
-        "Herbalism kit"
-      ],
+      "armor": ["Light armor", "Shields"],
+      "weapons": ["Simple weapons"],
+      "tools": ["Herbalism kit"],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Arcana",
-          "Animal Handling",
-          "Insight",
-          "Medicine",
-          "Nature",
-          "Perception",
-          "Religion",
-          "Survival"
-        ]
+        "options": ["Arcana", "Animal Handling", "Insight", "Medicine", "Nature", "Perception", "Religion", "Survival"]
       }
     },
     "startingEquipment": [
@@ -308,10 +236,7 @@
       "wisdom": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor",
-        "Shields"
-      ],
+      "armor": ["Light armor", "Shields"],
       "weapons": [],
       "tools": []
     }
@@ -321,21 +246,10 @@
     "name": "Fighter",
     "hitDie": 10,
     "primaryAbility": "Strength or Dexterity",
-    "savingThrows": [
-      "Strength",
-      "Constitution"
-    ],
+    "savingThrows": ["Strength", "Constitution"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Heavy armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
@@ -463,14 +377,8 @@
       ]
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Martial weapons"],
       "tools": []
     }
   },
@@ -479,29 +387,14 @@
     "name": "Monk",
     "hitDie": 8,
     "primaryAbility": "Dexterity & Wisdom",
-    "savingThrows": [
-      "Strength",
-      "Dexterity"
-    ],
+    "savingThrows": ["Strength", "Dexterity"],
     "proficiencies": {
       "armor": [],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons that have the Light property"
-      ],
-      "tools": [
-        "One type of artisan's tools or one musical instrument"
-      ],
+      "weapons": ["Simple weapons", "Martial weapons that have the Light property"],
+      "tools": ["One type of artisan's tools or one musical instrument"],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Acrobatics",
-          "Athletics",
-          "History",
-          "Insight",
-          "Religion",
-          "Stealth"
-        ]
+        "options": ["Acrobatics", "Athletics", "History", "Insight", "Religion", "Stealth"]
       }
     },
     "startingEquipment": [
@@ -526,10 +419,7 @@
     },
     "multiclassProficiencies": {
       "armor": [],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons that have the Light property"
-      ],
+      "weapons": ["Simple weapons", "Martial weapons that have the Light property"],
       "tools": []
     }
   },
@@ -538,32 +428,14 @@
     "name": "Paladin",
     "hitDie": 10,
     "primaryAbility": "Strength & Charisma",
-    "savingThrows": [
-      "Wisdom",
-      "Charisma"
-    ],
+    "savingThrows": ["Wisdom", "Charisma"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Heavy armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Athletics",
-          "Insight",
-          "Intimidation",
-          "Medicine",
-          "Persuasion",
-          "Religion"
-        ]
+        "options": ["Athletics", "Insight", "Intimidation", "Medicine", "Persuasion", "Religion"]
       }
     },
     "startingEquipment": [
@@ -608,15 +480,8 @@
       "charisma": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": []
     }
   },
@@ -625,20 +490,10 @@
     "name": "Ranger",
     "hitDie": 10,
     "primaryAbility": "Dexterity & Wisdom",
-    "savingThrows": [
-      "Strength",
-      "Dexterity"
-    ],
+    "savingThrows": ["Strength", "Dexterity"],
     "proficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 3,
@@ -745,15 +600,8 @@
       "wisdom": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor",
-        "Medium armor",
-        "Shields"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons"
-      ],
+      "armor": ["Light armor", "Medium armor", "Shields"],
+      "weapons": ["Simple weapons", "Martial weapons"],
       "tools": []
     }
   },
@@ -762,21 +610,11 @@
     "name": "Rogue",
     "hitDie": 8,
     "primaryAbility": "Dexterity",
-    "savingThrows": [
-      "Dexterity",
-      "Intelligence"
-    ],
+    "savingThrows": ["Dexterity", "Intelligence"],
     "proficiencies": {
-      "armor": [
-        "Light armor"
-      ],
-      "weapons": [
-        "Simple weapons",
-        "Martial weapons that have the Finesse or Light property"
-      ],
-      "tools": [
-        "Thieves' Tools"
-      ],
+      "armor": ["Light armor"],
+      "weapons": ["Simple weapons", "Martial weapons that have the Finesse or Light property"],
+      "tools": ["Thieves' Tools"],
       "skills": {
         "numToChoose": 4,
         "options": [
@@ -841,13 +679,9 @@
       "dexterity": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor"
-      ],
+      "armor": ["Light armor"],
       "weapons": [],
-      "tools": [
-        "Thieves' Tools"
-      ],
+      "tools": ["Thieves' Tools"],
       "skills": {
         "numToChoose": 1,
         "options": [
@@ -870,26 +704,14 @@
     "name": "Sorcerer",
     "hitDie": 6,
     "primaryAbility": "Charisma",
-    "savingThrows": [
-      "Constitution",
-      "Charisma"
-    ],
+    "savingThrows": ["Constitution", "Charisma"],
     "proficiencies": {
       "armor": [],
-      "weapons": [
-        "Simple weapons"
-      ],
+      "weapons": ["Simple weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Arcana",
-          "Deception",
-          "Insight",
-          "Intimidation",
-          "Persuasion",
-          "Religion"
-        ]
+        "options": ["Arcana", "Deception", "Insight", "Intimidation", "Persuasion", "Religion"]
       }
     },
     "startingEquipment": [
@@ -928,29 +750,14 @@
     "name": "Warlock",
     "hitDie": 8,
     "primaryAbility": "Charisma",
-    "savingThrows": [
-      "Wisdom",
-      "Charisma"
-    ],
+    "savingThrows": ["Wisdom", "Charisma"],
     "proficiencies": {
-      "armor": [
-        "Light armor"
-      ],
-      "weapons": [
-        "Simple weapons"
-      ],
+      "armor": ["Light armor"],
+      "weapons": ["Simple weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Arcana",
-          "Deception",
-          "History",
-          "Intimidation",
-          "Investigation",
-          "Nature",
-          "Religion"
-        ]
+        "options": ["Arcana", "Deception", "History", "Intimidation", "Investigation", "Nature", "Religion"]
       }
     },
     "startingEquipment": [
@@ -987,12 +794,8 @@
       "charisma": 13
     },
     "multiclassProficiencies": {
-      "armor": [
-        "Light armor"
-      ],
-      "weapons": [
-        "Simple weapons"
-      ],
+      "armor": ["Light armor"],
+      "weapons": ["Simple weapons"],
       "tools": []
     }
   },
@@ -1001,27 +804,14 @@
     "name": "Wizard",
     "hitDie": 6,
     "primaryAbility": "Intelligence",
-    "savingThrows": [
-      "Intelligence",
-      "Wisdom"
-    ],
+    "savingThrows": ["Intelligence", "Wisdom"],
     "proficiencies": {
       "armor": [],
-      "weapons": [
-        "Simple weapons"
-      ],
+      "weapons": ["Simple weapons"],
       "tools": [],
       "skills": {
         "numToChoose": 2,
-        "options": [
-          "Arcana",
-          "History",
-          "Insight",
-          "Investigation",
-          "Medicine",
-          "Nature",
-          "Religion"
-        ]
+        "options": ["Arcana", "History", "Insight", "Investigation", "Medicine", "Nature", "Religion"]
       }
     },
     "startingEquipment": [

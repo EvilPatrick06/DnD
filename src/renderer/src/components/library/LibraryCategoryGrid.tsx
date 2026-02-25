@@ -6,17 +6,12 @@ interface LibraryCategoryGridProps {
   itemCounts: Record<string, number>
 }
 
-export default function LibraryCategoryGrid({
-  onSelectCategory,
-  itemCounts
-}: LibraryCategoryGridProps): JSX.Element {
+export default function LibraryCategoryGrid({ onSelectCategory, itemCounts }: LibraryCategoryGridProps): JSX.Element {
   return (
     <div className="space-y-8">
       {LIBRARY_GROUPS.map((group) => (
         <section key={group.id}>
-          <h2 className="text-lg font-bold text-gray-200 mb-3 border-b border-gray-800 pb-2">
-            {group.label}
-          </h2>
+          <h2 className="text-lg font-bold text-gray-200 mb-3 border-b border-gray-800 pb-2">{group.label}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {group.categories.map((cat) => {
               const count = itemCounts[cat.id] ?? 0
@@ -32,9 +27,7 @@ export default function LibraryCategoryGrid({
                   <span className="text-sm font-medium text-gray-200 group-hover:text-amber-400 transition-colors">
                     {cat.label}
                   </span>
-                  {count > 0 && (
-                    <span className="text-xs text-gray-500">{count} items</span>
-                  )}
+                  {count > 0 && <span className="text-xs text-gray-500">{count} items</span>}
                 </button>
               )
             })}

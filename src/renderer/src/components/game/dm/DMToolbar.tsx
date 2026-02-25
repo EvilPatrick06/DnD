@@ -1,12 +1,4 @@
-export type DmToolId =
-  | 'select'
-  | 'token'
-  | 'fog-reveal'
-  | 'fog-hide'
-  | 'measure'
-  | 'terrain'
-  | 'wall'
-  | 'fill'
+export type DmToolId = 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill'
 
 interface DMToolbarProps {
   activeTool: DmToolId

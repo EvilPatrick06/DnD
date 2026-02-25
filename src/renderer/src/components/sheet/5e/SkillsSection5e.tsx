@@ -10,7 +10,7 @@ interface SkillsSection5eProps {
   readonly?: boolean
 }
 
-export default function SkillsSection5e({ character, readonly }: SkillsSection5eProps): JSX.Element {
+export default function SkillsSection5e({ character, readonly: _readonly }: SkillsSection5eProps): JSX.Element {
   const profBonus = Math.ceil(character.level / 4) + 1
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null)
 

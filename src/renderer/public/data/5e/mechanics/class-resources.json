@@ -16,10 +16,7 @@
           "id": "action-surge",
           "name": "Action Surge",
           "shortRestRestore": "all",
-          "scaling": [
-            { "minLevel": 2, "maxLevel": 16, "max": 1 },
-            { "minLevel": 17, "max": 2 }
-          ]
+          "scaling": [{ "minLevel": 2, "maxLevel": 16, "max": 1 }, { "minLevel": 17, "max": 2 }]
         },
         {
           "id": "indomitable",
@@ -39,9 +36,7 @@
           "id": "stroke-of-luck",
           "name": "Stroke of Luck",
           "shortRestRestore": "all",
-          "scaling": [
-            { "minLevel": 20, "max": 1 }
-          ]
+          "scaling": [{ "minLevel": 20, "max": 1 }]
         }
       ]
     },
@@ -51,17 +46,13 @@
           "id": "innate-sorcery",
           "name": "Innate Sorcery",
           "shortRestRestore": 0,
-          "scaling": [
-            { "minLevel": 1, "max": 2 }
-          ]
+          "scaling": [{ "minLevel": 1, "max": 2 }]
         },
         {
           "id": "sorcery-points",
           "name": "Sorcery Points",
           "shortRestRestore": 0,
-          "scaling": [
-            { "minLevel": 2, "maxFormula": "classLevel" }
-          ]
+          "scaling": [{ "minLevel": 2, "maxFormula": "classLevel" }]
         }
       ]
     },
@@ -71,9 +62,7 @@
           "id": "focus-points",
           "name": "Focus Points",
           "shortRestRestore": "all",
-          "scaling": [
-            { "minLevel": 2, "maxFormula": "classLevel" }
-          ]
+          "scaling": [{ "minLevel": 2, "maxFormula": "classLevel" }]
         }
       ]
     },
@@ -83,18 +72,13 @@
           "id": "lay-on-hands",
           "name": "Lay On Hands",
           "shortRestRestore": 0,
-          "scaling": [
-            { "minLevel": 1, "maxFormula": "classLevel*5" }
-          ]
+          "scaling": [{ "minLevel": 1, "maxFormula": "classLevel*5" }]
         },
         {
           "id": "channel-divinity",
           "name": "Channel Divinity",
           "shortRestRestore": 1,
-          "scaling": [
-            { "minLevel": 3, "maxLevel": 10, "max": 2 },
-            { "minLevel": 11, "max": 3 }
-          ]
+          "scaling": [{ "minLevel": 3, "maxLevel": 10, "max": 2 }, { "minLevel": 11, "max": 3 }]
         }
       ]
     },
@@ -116,17 +100,13 @@
           "id": "tireless",
           "name": "Tireless",
           "shortRestRestore": 0,
-          "scaling": [
-            { "minLevel": 10, "maxFormula": "wisdomMod" }
-          ]
+          "scaling": [{ "minLevel": 10, "maxFormula": "wisdomMod" }]
         },
         {
           "id": "natures-veil",
           "name": "Nature's Veil",
           "shortRestRestore": 0,
-          "scaling": [
-            { "minLevel": 14, "maxFormula": "wisdomMod" }
-          ]
+          "scaling": [{ "minLevel": 14, "maxFormula": "wisdomMod" }]
         }
       ]
     }
@@ -136,9 +116,7 @@
       "id": "lucky",
       "name": "Lucky (Luck Points)",
       "shortRestRestore": 0,
-      "scaling": [
-        { "minLevel": 1, "maxFormula": "profBonus" }
-      ]
+      "scaling": [{ "minLevel": 1, "maxFormula": "profBonus" }]
     }
   }
 }

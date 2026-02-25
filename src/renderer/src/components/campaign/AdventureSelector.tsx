@@ -1,9 +1,5 @@
-import { useState, useEffect } from 'react'
-import {
-  type Adventure,
-  type AdventureChapter,
-  loadAdventures
-} from '../../services/adventure-loader'
+import { useEffect, useState } from 'react'
+import { type Adventure, type AdventureChapter, loadAdventures } from '../../services/adventure-loader'
 import type { CampaignType } from '../../types/campaign'
 import type { GameSystem } from '../../types/game-system'
 import { Card } from '../ui'
@@ -99,9 +95,7 @@ function ToggleRow({
       <button
         onClick={onToggle}
         className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${
-          included
-            ? 'bg-amber-500 border-amber-500 text-black'
-            : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+          included ? 'bg-amber-500 border-amber-500 text-black' : 'border-gray-600 bg-gray-800 hover:border-gray-500'
         }`}
       >
         {included && <span className="text-xs font-bold">{'\u2713'}</span>}
@@ -111,13 +105,7 @@ function ToggleRow({
   )
 }
 
-function ChapterDetail({
-  chapter,
-  index
-}: {
-  chapter: AdventureChapter
-  index: number
-}): JSX.Element {
+function ChapterDetail({ chapter, index }: { chapter: AdventureChapter; index: number }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
   return (
     <div className="bg-gray-800/30 rounded-lg p-3">
@@ -132,20 +120,12 @@ function ChapterDetail({
       {expanded && (
         <div className="mt-2 ml-6 space-y-2">
           <p className="text-sm text-gray-400">{chapter.description}</p>
-          {chapter.maps.length > 0 && (
-            <div className="text-xs text-gray-500">
-              Maps: {chapter.maps.join(', ')}
-            </div>
-          )}
+          {chapter.maps.length > 0 && <div className="text-xs text-gray-500">Maps: {chapter.maps.join(', ')}</div>}
           {chapter.encounters.length > 0 && (
-            <div className="text-xs text-gray-500">
-              Encounters: {chapter.encounters.join(', ')}
-            </div>
+            <div className="text-xs text-gray-500">Encounters: {chapter.encounters.join(', ')}</div>
           )}
           {chapter.keyEvents && chapter.keyEvents.length > 0 && (
-            <div className="text-xs text-gray-500">
-              Key Events: {chapter.keyEvents.join(', ')}
-            </div>
+            <div className="text-xs text-gray-500">Key Events: {chapter.keyEvents.join(', ')}</div>
           )}
         </div>
       )}
@@ -183,9 +163,7 @@ export default function AdventureSelector({
   const selectedAdventure = adventures.find((a) => a.id === selectedAdventureId) ?? null
 
   const toggleNpc = (id: string): void => {
-    onExcludedNpcsChange(
-      excludedNpcIds.includes(id) ? excludedNpcIds.filter((x) => x !== id) : [...excludedNpcIds, id]
-    )
+    onExcludedNpcsChange(excludedNpcIds.includes(id) ? excludedNpcIds.filter((x) => x !== id) : [...excludedNpcIds, id])
   }
 
   const toggleLore = (id: string): void => {
@@ -196,16 +174,12 @@ export default function AdventureSelector({
 
   const toggleEncounter = (id: string): void => {
     onExcludedEncounterChange(
-      excludedEncounterIds.includes(id)
-        ? excludedEncounterIds.filter((x) => x !== id)
-        : [...excludedEncounterIds, id]
+      excludedEncounterIds.includes(id) ? excludedEncounterIds.filter((x) => x !== id) : [...excludedEncounterIds, id]
     )
   }
 
   const toggleMap = (id: string): void => {
-    onExcludedMapsChange(
-      excludedMapIds.includes(id) ? excludedMapIds.filter((x) => x !== id) : [...excludedMapIds, id]
-    )
+    onExcludedMapsChange(excludedMapIds.includes(id) ? excludedMapIds.filter((x) => x !== id) : [...excludedMapIds, id])
   }
 
   return (
@@ -311,11 +285,7 @@ export default function AdventureSelector({
                   </div>
 
                   {/* Chapters */}
-                  <CollapsibleSection
-                    title="Chapters"
-                    count={selectedAdventure.chapters.length}
-                    defaultOpen
-                  >
+                  <CollapsibleSection title="Chapters" count={selectedAdventure.chapters.length} defaultOpen>
                     {selectedAdventure.chapters.map((ch, i) => (
                       <ChapterDetail key={i} chapter={ch} index={i} />
                     ))}
@@ -374,10 +344,7 @@ export default function AdventureSelector({
 
                   {/* Encounters */}
                   {selectedAdventure.encounters && selectedAdventure.encounters.length > 0 && (
-                    <CollapsibleSection
-                      title="Encounters"
-                      count={selectedAdventure.encounters.length}
-                    >
+                    <CollapsibleSection title="Encounters" count={selectedAdventure.encounters.length}>
                       {selectedAdventure.encounters.map((enc) => (
                         <ToggleRow
                           key={enc.id}
@@ -397,10 +364,7 @@ export default function AdventureSelector({
 
                   {/* Maps */}
                   {selectedAdventure.mapAssignments && selectedAdventure.mapAssignments.length > 0 && (
-                    <CollapsibleSection
-                      title="Maps"
-                      count={selectedAdventure.mapAssignments.length}
-                    >
+                    <CollapsibleSection title="Maps" count={selectedAdventure.mapAssignments.length}>
                       {selectedAdventure.mapAssignments.map((assign) => {
                         const chapter = selectedAdventure.chapters[assign.chapterIndex]
                         return (

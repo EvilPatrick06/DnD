@@ -1215,7 +1215,20 @@
       "description": "Artisan's tools for working with leather to create armor, pouches, waterskins, and other leather goods.",
       "ability": "Dexterity",
       "utilize": "Add a design to a leather item (DC 10)",
-      "craft": ["Sling", "Whip", "Hide Armor", "Leather Armor", "Studded Leather Armor", "Backpack", "Crossbow Bolt Case", "Map or Scroll Case", "Parchment", "Pouch", "Quiver", "Waterskin"]
+      "craft": [
+        "Sling",
+        "Whip",
+        "Hide Armor",
+        "Leather Armor",
+        "Studded Leather Armor",
+        "Backpack",
+        "Crossbow Bolt Case",
+        "Map or Scroll Case",
+        "Parchment",
+        "Pouch",
+        "Quiver",
+        "Waterskin"
+      ]
     },
     {
       "name": "Mason's Tools",
@@ -1255,7 +1268,21 @@
       "description": "Artisan's tools for working metal to create weapons, armor, chains, and other metal goods.",
       "ability": "Strength",
       "utilize": "Pry open a door or container (DC 20)",
-      "craft": ["Any Melee weapon (except Club, Greatclub, Quarterstaff, and Whip)", "Medium armor (except Hide)", "Heavy armor", "Ball Bearings", "Bucket", "Caltrops", "Chain", "Crowbar", "Firearm Bullets", "Grappling Hook", "Iron Pot", "Iron Spikes", "Sling Bullets"]
+      "craft": [
+        "Any Melee weapon (except Club, Greatclub, Quarterstaff, and Whip)",
+        "Medium armor (except Hide)",
+        "Heavy armor",
+        "Ball Bearings",
+        "Bucket",
+        "Caltrops",
+        "Chain",
+        "Crowbar",
+        "Firearm Bullets",
+        "Grappling Hook",
+        "Iron Pot",
+        "Iron Spikes",
+        "Sling Bullets"
+      ]
     },
     {
       "name": "Tinker's Tools",
@@ -1265,7 +1292,21 @@
       "description": "Artisan's tools for repairing everyday objects and creating small mechanical devices, locks, and traps.",
       "ability": "Dexterity",
       "utilize": "Assemble a Tiny item composed of scrap, which falls apart in 1 minute (DC 20)",
-      "craft": ["Musket", "Pistol", "Bell", "Bullseye Lantern", "Flask", "Hooded Lantern", "Hunting Trap", "Lock", "Manacles", "Mirror", "Shovel", "Signal Whistle", "Tinderbox"]
+      "craft": [
+        "Musket",
+        "Pistol",
+        "Bell",
+        "Bullseye Lantern",
+        "Flask",
+        "Hooded Lantern",
+        "Hunting Trap",
+        "Lock",
+        "Manacles",
+        "Mirror",
+        "Shovel",
+        "Signal Whistle",
+        "Tinderbox"
+      ]
     },
     {
       "name": "Weaver's Tools",
@@ -1275,7 +1316,20 @@
       "description": "Artisan's tools for weaving cloth, rope, nets, and other textile goods.",
       "ability": "Dexterity",
       "utilize": "Mend a tear in clothing (DC 10), or sew a Tiny design (DC 10)",
-      "craft": ["Padded Armor", "Basket", "Bedroll", "Blanket", "Fine Clothes", "Net", "Robe", "Rope", "Sack", "String", "Tent", "Traveler's Clothes"]
+      "craft": [
+        "Padded Armor",
+        "Basket",
+        "Bedroll",
+        "Blanket",
+        "Fine Clothes",
+        "Net",
+        "Robe",
+        "Rope",
+        "Sack",
+        "String",
+        "Tent",
+        "Traveler's Clothes"
+      ]
     },
     {
       "name": "Woodcarver's Tools",
@@ -1285,7 +1339,18 @@
       "description": "Artisan's tools for carving wood into weapons, arcane focuses, arrows, and other wooden items.",
       "ability": "Dexterity",
       "utilize": "Carve a pattern in wood (DC 10)",
-      "craft": ["Club", "Greatclub", "Quarterstaff", "Ranged weapons (except Pistol, Musket, and Sling)", "Arcane Focus", "Arrows", "Bolts", "Druidic Focus", "Ink Pen", "Needles"]
+      "craft": [
+        "Club",
+        "Greatclub",
+        "Quarterstaff",
+        "Ranged weapons (except Pistol, Musket, and Sling)",
+        "Arcane Focus",
+        "Arrows",
+        "Bolts",
+        "Druidic Focus",
+        "Ink Pen",
+        "Needles"
+      ]
     },
     {
       "name": "Disguise Kit",

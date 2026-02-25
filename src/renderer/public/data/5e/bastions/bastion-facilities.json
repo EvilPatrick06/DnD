@@ -45,9 +45,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": {
         "name": "Arcane Study Charm",
@@ -89,9 +87,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "permanentBenefit": "While the Armory is stocked, when any event causes you to roll dice to determine if your Bastion loses defenders, roll 1d8 in place of each 1d6 you would normally roll. When the event is over, the Armory is depleted regardless of outcome.",
       "orderOptions": [
@@ -117,9 +113,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": true,
       "orderOptions": [
         {
@@ -144,9 +138,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "harvest"
-      ],
+      "orders": ["harvest"],
       "allowMultiple": true,
       "charm": null,
       "orderOptions": [
@@ -193,9 +185,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -221,10 +211,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "craft",
-        "research"
-      ],
+      "orders": ["craft", "research"],
       "allowMultiple": false,
       "charm": {
         "name": "Sanctuary Charm",
@@ -269,9 +256,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -305,9 +290,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": true,
       "orderOptions": [
         {
@@ -339,9 +322,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 3,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -368,9 +349,7 @@
       "defaultSpace": "vast",
       "enlargeable": true,
       "hirelingCount": 4,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -430,9 +409,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "harvest"
-      ],
+      "orders": ["harvest"],
       "allowMultiple": false,
       "charm": null,
       "fruitOfRestoration": {
@@ -468,9 +445,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -518,10 +493,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "craft",
-        "empower"
-      ],
+      "orders": ["craft", "empower"],
       "allowMultiple": false,
       "charm": {
         "name": "Sacristy Charm",
@@ -563,9 +535,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -613,9 +583,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "permanentBenefit": "Mounts stabled here recover all Hit Point Dice on a Long Rest.",
       "orderOptions": [
@@ -648,9 +616,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": false,
       "permanentBenefit": "Contains a permanent Teleportation Circle. Anyone who knows the sigil sequence can teleport to this circle. The owner can link to one other permanent circle whose sigil sequence they know.",
       "orderOptions": [
@@ -673,9 +639,7 @@
       "defaultSpace": "vast",
       "enlargeable": true,
       "hirelingCount": 4,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -708,9 +672,7 @@
       "defaultSpace": "vast",
       "enlargeable": true,
       "hirelingCount": 4,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -764,9 +726,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "permanentBenefit": "Visitors who see the trophy room are favorably disposed toward you. You have Advantage on Charisma (Persuasion) checks with NPCs who have seen it.",
       "orderOptions": [
@@ -799,9 +759,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -831,9 +789,7 @@
       "defaultSpace": "cramped",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -859,9 +815,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": false,
       "permanentBenefit": "Creatures in the menagerie can serve as Bastion Defenders. The menagerie can hold up to 6 Medium or smaller creatures, or 3 Large creatures, or 1 Huge creature.",
       "orderOptions": [
@@ -969,9 +923,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "charm": {
         "name": "Observatory Charm",
@@ -1008,9 +960,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -1061,9 +1011,7 @@
       "defaultSpace": "cramped",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "harvest"
-      ],
+      "orders": ["harvest"],
       "allowMultiple": false,
       "charm": {
         "name": "Reliquary Charm",
@@ -1100,9 +1048,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "permanentBenefit": "The demiplane is a 30-foot cube that can take any form you desire. Time passes normally inside. The door is invisible from the outside and can only be opened by you.",
       "orderOptions": [
@@ -1128,9 +1074,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": false,
       "permanentBenefit": "You can recruit skilled hirelings through the guild. Guild members provide a 10% discount on services related to the guild's trade.",
       "orderOptions": [
@@ -1191,9 +1135,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 4,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "charm": {
         "name": "Sanctum Charm",
@@ -1237,9 +1179,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": false,
       "charm": null,
       "orderOptions": [
@@ -1272,9 +1212,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 0,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "permanentBenefit": "A young amethyst dragon lairs here. The dragon serves as a powerful Bastion Defender (CR 4) and can provide psionic readings.",
       "orderOptions": [
@@ -1302,9 +1240,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1329,9 +1265,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 0,
-      "orders": [
-        "recruit"
-      ],
+      "orders": ["recruit"],
       "allowMultiple": false,
       "permanentBenefit": "Undead defenders raised here do not require food, water, or pay. They follow simple orders without question.",
       "orderOptions": [
@@ -1359,9 +1293,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1395,10 +1327,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "harvest",
-        "recruit"
-      ],
+      "orders": ["harvest", "recruit"],
       "allowMultiple": false,
       "charm": {
         "name": "Grove Charm",
@@ -1437,10 +1366,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "empower",
-        "trade"
-      ],
+      "orders": ["empower", "trade"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1474,10 +1400,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "empower",
-        "recruit"
-      ],
+      "orders": ["empower", "recruit"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1511,9 +1434,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "charm": {
         "name": "Draconic Lore Charm",
@@ -1551,9 +1472,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1586,9 +1505,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "permanentBenefit": "Items stored in the vault cannot be stolen by bastion events. The vault holds up to 50,000 GP worth of treasure.",
       "orderOptions": [
@@ -1615,9 +1532,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1650,9 +1565,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "trade"
-      ],
+      "orders": ["trade"],
       "allowMultiple": false,
       "permanentBenefit": "Functions as a limited Teleportation Circle connected to the House Orien network. Can transport up to 6 creatures to any Orien station.",
       "orderOptions": [
@@ -1685,9 +1598,7 @@
       "defaultSpace": "roomy",
       "enlargeable": true,
       "hirelingCount": 1,
-      "orders": [
-        "craft"
-      ],
+      "orders": ["craft"],
       "allowMultiple": false,
       "charm": {
         "name": "Artificer's Charm",
@@ -1731,9 +1642,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "research"
-      ],
+      "orders": ["research"],
       "allowMultiple": false,
       "orderOptions": [
         {
@@ -1773,9 +1682,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "permanentBenefit": "The bastion and surrounding 1-mile radius have controlled weather. Crops always thrive, and severe weather cannot damage the bastion.",
       "orderOptions": [
@@ -1808,9 +1715,7 @@
       "defaultSpace": "roomy",
       "enlargeable": false,
       "hirelingCount": 0,
-      "orders": [
-        "empower"
-      ],
+      "orders": ["empower"],
       "allowMultiple": false,
       "permanentBenefit": "The manifest zone provides passive benefits based on the linked plane. Irian: healing spells heal +2 HP. Thelanis: illusion spells have +1 DC. Fernia: fire spells deal +2 damage.",
       "orderOptions": [
@@ -1836,10 +1741,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 1,
-      "orders": [
-        "trade",
-        "research"
-      ],
+      "orders": ["trade", "research"],
       "allowMultiple": false,
       "charm": {
         "name": "Museum Charm",
@@ -1876,10 +1778,7 @@
       "defaultSpace": "vast",
       "enlargeable": false,
       "hirelingCount": 2,
-      "orders": [
-        "craft",
-        "recruit"
-      ],
+      "orders": ["craft", "recruit"],
       "allowMultiple": false,
       "permanentBenefit": "Constructs created here do not require food, water, or rest. They serve as tireless workers and powerful defenders.",
       "orderOptions": [

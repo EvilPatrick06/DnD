@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
-import { load5eSpells } from '../../../services/data-provider'
 import { getCantripsKnown, getPreparedSpellMax, hasAnySpellcasting } from '../../../services/character/spell-data'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { load5eSpells } from '../../../services/data-provider'
+import { useBuilderStore } from '../../../stores/use-builder-store'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
+import { logger } from '../../../utils/logger'
 import Modal from '../../ui/Modal'
 import BuildSidebar from '../shared/BuildSidebar'
 import CharacterSummaryBar5e from './CharacterSummaryBar5e'
@@ -72,7 +73,7 @@ export default function CharacterBuilder5e(): JSX.Element {
         for (const s of spells) map.set(s.id, s.level)
         setSpellLevelMap(map)
       })
-      .catch((err) => console.error('Failed to load spell data:', err))
+      .catch((err) => logger.error('Failed to load spell data:', err))
   }, [])
 
   // Validation
@@ -302,7 +303,7 @@ export default function CharacterBuilder5e(): JSX.Element {
       resetBuilder()
       navigate(returnTo || `/characters/5e/${character.id}`)
     } catch (err) {
-      console.error('Failed to save character:', err)
+      logger.error('Failed to save character:', err)
     } finally {
       savingRef.current = false
       setSaving(false)

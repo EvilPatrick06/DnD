@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+import { useCharacterStore } from '../../stores/use-character-store'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useNetworkStore } from '../../stores/use-network-store'
 import type { Character } from '../../types/character'
 
 interface CharacterSelectorProps {

@@ -1,4 +1,4 @@
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import AbilityScoreModal from '../shared/AbilityScoreModal'
 import AsiModal from '../shared/AsiModal'
 import SelectionModal from '../shared/SelectionModal'

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import CharacterBuilder5e from '../components/builder/5e/CharacterBuilder5e'
-import { clearBuilderDraft, loadBuilderDraft, useAutoSaveBuilderDraft } from '../hooks/useAutoSave'
-import { addToast } from '../hooks/useToast'
-import { useBuilderStore } from '../stores/useBuilderStore'
+import { clearBuilderDraft, loadBuilderDraft, useAutoSaveBuilderDraft } from '../hooks/use-auto-save'
+import { addToast } from '../hooks/use-toast'
+import { useBuilderStore } from '../stores/use-builder-store'
 
 export default function CreateCharacterPage(): JSX.Element {
   const phase = useBuilderStore((s) => s.phase)

@@ -2,6 +2,7 @@ import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/pro
 import { join } from 'node:path'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
+import { logToFile } from '../log'
 import type { StorageResult } from './types'
 
 let creaturesDirReady: Promise<string> | null = null
@@ -63,7 +64,7 @@ export async function loadCustomCreatures(): Promise<StorageResult<Record<string
       if (r.status === 'fulfilled') {
         creatures.push(r.value)
       } else {
-        console.error('Failed to load a custom creature file:', r.reason)
+        logToFile('ERROR', 'Failed to load a custom creature file:', String(r.reason))
       }
     }
     return { success: true, data: creatures }

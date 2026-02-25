@@ -29,10 +29,12 @@ function mapEntry(e: SkillEntry): SkillDescription {
 export const SKILLS_5E: SkillDescription[] = []
 
 // Auto-populate on first load
-load5eSkills().then((entries) => {
-  SKILLS_5E.length = 0
-  SKILLS_5E.push(...entries.map(mapEntry))
-}).catch(() => {})
+load5eSkills()
+  .then((entries) => {
+    SKILLS_5E.length = 0
+    SKILLS_5E.push(...entries.map(mapEntry))
+  })
+  .catch(() => {})
 
 export function getSkillDescription(skillName: string): SkillDescription | undefined {
   return SKILLS_5E.find((s) => s.name === skillName)

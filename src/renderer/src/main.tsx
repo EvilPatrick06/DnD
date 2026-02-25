@@ -10,10 +10,10 @@ import './styles/globals.css'
 // Log unhandled errors to console (ErrorBoundary catches render errors,
 // these catch everything else)
 window.addEventListener('error', (e) => {
-  console.error('[Global] Uncaught error:', e.error ?? e.message)
+  logger.error('[Global] Uncaught error:', e.error ?? e.message)
 })
 window.addEventListener('unhandledrejection', (e) => {
-  console.error('[Global] Unhandled promise rejection:', e.reason)
+  logger.error('[Global] Unhandled promise rejection:', e.reason)
 })
 
 // Load saved network settings (TURN servers) at startup

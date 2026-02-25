@@ -1,5 +1,5 @@
 import { load5eMonsters } from '../../services/data-provider'
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import type { MapToken } from '../../types/map'
 import type { ChatCommand } from './types'
 

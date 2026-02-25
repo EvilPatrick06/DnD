@@ -84,10 +84,7 @@ export default function AdventureWizard({ onSave, onCancel }: AdventureWizardPro
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] text-gray-500 uppercase tracking-wide">Premise / Situation</label>
-              <button
-                onClick={rollSeed}
-                className="text-[10px] text-purple-400 hover:text-purple-300 cursor-pointer"
-              >
+              <button onClick={rollSeed} className="text-[10px] text-purple-400 hover:text-purple-300 cursor-pointer">
                 Roll Random Seed
               </button>
             </div>
@@ -160,13 +157,16 @@ export default function AdventureWizard({ onSave, onCancel }: AdventureWizardPro
             <textarea
               value={data.encounters}
               onChange={(e) => update('encounters', e.target.value)}
-              placeholder={"1. (Exploration) The party investigates the abandoned mine...\n2. (Social) They negotiate with the miners' guild...\n3. (Combat) Ambush by kobolds in the tunnels..."}
+              placeholder={
+                "1. (Exploration) The party investigates the abandoned mine...\n2. (Social) They negotiate with the miners' guild...\n3. (Combat) Ambush by kobolds in the tunnels..."
+              }
               rows={6}
               className="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-gray-200 resize-none"
             />
           </div>
           <div className="text-[10px] text-gray-500 bg-gray-800/50 rounded p-2">
-            Mix encounter types for variety. Use a blend of combat, social interaction, and exploration. Successive encounters should build tension toward the climax.
+            Mix encounter types for variety. Use a blend of combat, social interaction, and exploration. Successive
+            encounters should build tension toward the climax.
           </div>
         </div>
       )
@@ -187,7 +187,9 @@ export default function AdventureWizard({ onSave, onCancel }: AdventureWizardPro
             />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-wide mb-1">Resolution & Consequences</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Resolution & Consequences
+            </label>
             <textarea
               value={data.resolution}
               onChange={(e) => update('resolution', e.target.value)}

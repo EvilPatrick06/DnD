@@ -1,8 +1,8 @@
 import { trigger3dDice } from '../../components/game/dice3d'
-import { LIGHT_SOURCES, LIGHT_SOURCE_LABELS } from '../../data/light-sources'
+import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../data/light-sources'
+import { useGameStore } from '../../stores/use-game-store'
 import { findWeapon, formatAttackResult, resolveAttack } from '../combat/attack-resolver'
 import { rollMultiple, rollSingle } from '../dice/dice-service'
-import { useGameStore } from '../../stores/useGameStore'
 import { findTokenByName } from './helpers'
 import type { ChatCommand } from './types'
 
@@ -269,7 +269,12 @@ const offhandAttackCommand: ChatCommand = {
     trigger3dDice({ formula: '1d20', rolls: [attackRoll], total: attackRoll, rollerName: ctx.playerName })
     // Trigger 3D dice for damage if applicable
     if (damageRolls.length > 0) {
-      trigger3dDice({ formula: `${damageRolls.length}d${match![2]}`, rolls: damageRolls, total: damageTotal, rollerName: ctx.playerName })
+      trigger3dDice({
+        formula: `${damageRolls.length}d${match![2]}`,
+        rolls: damageRolls,
+        total: damageTotal,
+        rollerName: ctx.playerName
+      })
     }
 
     ctx.broadcastSystemMessage(
@@ -468,9 +473,7 @@ const torchCommand: ChatCommand = {
       const matchByKey = Object.keys(LIGHT_SOURCES).find(
         (k) => k.includes(lower) || lower.includes(k.replace(/-/g, ' '))
       )
-      const matchByLabel = Object.entries(LIGHT_SOURCE_LABELS).find(([, label]) =>
-        label.toLowerCase().includes(lower)
-      )
+      const matchByLabel = Object.entries(LIGHT_SOURCE_LABELS).find(([, label]) => label.toLowerCase().includes(lower))
 
       if (matchByKey) {
         sourceKey = matchByKey

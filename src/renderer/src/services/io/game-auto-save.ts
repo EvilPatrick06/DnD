@@ -1,5 +1,6 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import type { GameMap } from '../../types/map'
+import { logger } from '../../utils/logger'
 
 const AUTO_SAVE_DEBOUNCE_MS = 5000
 
@@ -53,7 +54,7 @@ function scheduleSave(): void {
     try {
       await window.api.saveGameState(activeCampaignId, buildSavePayload())
     } catch (err) {
-      console.error('[AutoSave] Failed to save game state:', err)
+      logger.error('[AutoSave] Failed to save game state:', err)
     }
   }, AUTO_SAVE_DEBOUNCE_MS)
 }
@@ -114,7 +115,7 @@ export async function flushAutoSave(campaignId: string): Promise<void> {
   try {
     await window.api.saveGameState(campaignId, buildSavePayload())
   } catch (err) {
-    console.error('[AutoSave] Flush failed:', err)
+    logger.error('[AutoSave] Flush failed:', err)
   }
 }
 
@@ -125,12 +126,11 @@ export async function loadPersistedGameState(campaignId: string): Promise<boolea
   try {
     const data = await window.api.loadGameState(campaignId)
     if (data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      useGameStore.getState().loadGameState(data as any)
+      useGameStore.getState().loadGameState(data)
       return true
     }
   } catch (err) {
-    console.error('[AutoSave] Failed to load game state:', err)
+    logger.error('[AutoSave] Failed to load game state:', err)
   }
   return false
 }

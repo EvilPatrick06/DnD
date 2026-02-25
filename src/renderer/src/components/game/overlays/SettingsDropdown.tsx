@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { PRESET_LABELS } from '../../../data/calendar-presets'
-import { addToast } from '../../../hooks/useToast'
-import { useAiDmStore } from '../../../stores/useAiDmStore'
-import { useGameStore } from '../../../stores/useGameStore'
+import { addToast } from '../../../hooks/use-toast'
+import { useAiDmStore } from '../../../stores/use-ai-dm-store'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { Campaign } from '../../../types/campaign'
 import { formatInGameTime } from '../../../utils/calendar-utils'
+import { logger } from '../../../utils/logger'
 
 interface SettingsDropdownProps {
   campaign: Campaign
@@ -27,7 +28,7 @@ function SaveCampaignButton({ onSave }: { onSave: () => Promise<void> }): JSX.El
       await onSave()
       addToast('Campaign saved', 'success')
     } catch (err) {
-      console.error('[SettingsDropdown] Save failed:', err)
+      logger.error('[SettingsDropdown] Save failed:', err)
       addToast('Failed to save campaign', 'error')
     } finally {
       setSaving(false)
@@ -72,7 +73,7 @@ function CalendarSettingsSection({
 
 function AiDmSettingsSection(): JSX.Element {
   const aiPaused = useAiDmStore((s) => s.paused)
-  const aiProvider = useAiDmStore((s) => s.provider)
+  const aiModel = 'Ollama'
   const aiIsTyping = useAiDmStore((s) => s.isTyping)
   const setPaused = useAiDmStore((s) => s.setPaused)
 
@@ -80,7 +81,7 @@ function AiDmSettingsSection(): JSX.Element {
     <div className="px-4 py-2 border-b border-gray-800">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs text-gray-400">AI DM</span>
-        <span className="text-[10px] text-purple-400 capitalize">{aiProvider}</span>
+        <span className="text-[10px] text-purple-400 capitalize">{aiModel}</span>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-gray-500">

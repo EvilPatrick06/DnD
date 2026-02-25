@@ -263,34 +263,8 @@
       ]
     },
     "monosyllabic": {
-      "given": [
-        "Chen",
-        "Creel",
-        "Dain",
-        "Dorn",
-        "Flint",
-        "Glim",
-        "Henk",
-        "Krusk",
-        "Nox",
-        "Nyx",
-        "Rukh",
-        "Shan"
-      ],
-      "surname": [
-        "Dench",
-        "Drog",
-        "Dusk",
-        "Holg",
-        "Horn",
-        "Imsh",
-        "Jask",
-        "Keth",
-        "Ku",
-        "Kung",
-        "Mott",
-        "Quaal"
-      ]
+      "given": ["Chen", "Creel", "Dain", "Dorn", "Flint", "Glim", "Henk", "Krusk", "Nox", "Nyx", "Rukh", "Shan"],
+      "surname": ["Dench", "Drog", "Dusk", "Holg", "Horn", "Imsh", "Jask", "Keth", "Ku", "Kung", "Mott", "Quaal"]
     },
     "sinister": {
       "given": [

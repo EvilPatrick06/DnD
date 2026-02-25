@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import type { ArmorForAC } from '../../../services/character/stat-calculator-5e'
 import { calculate5eStats } from '../../../services/character/stat-calculator-5e'
+import { load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { buildArmorFromEquipment5e } from '../../../stores/builder/slices/save-slice-5e'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
 import { CharacterIcon } from '../shared/IconPicker'
 

@@ -16,396 +16,345 @@ const NetworkMessageEnvelopeSchema = z.object({
 
 // ── Payload Schemas ──
 
-const JoinPayloadSchema = z
-  .object({
-    displayName: z.string(),
-    characterId: z.string().nullable(),
-    characterName: z.string().nullable(),
-    color: z.string().optional()
-  })
+const JoinPayloadSchema = z.object({
+  displayName: z.string(),
+  characterId: z.string().nullable(),
+  characterName: z.string().nullable(),
+  color: z.string().optional()
+})
 
-const ChatPayloadSchema = z
-  .object({
-    message: z.string(),
-    isSystem: z.boolean().optional(),
-    isDiceRoll: z.boolean().optional(),
-    diceResult: z
-      .object({
-        formula: z.string(),
-        total: z.number(),
-        rolls: z.array(z.number())
-      })
-      .optional()
-  })
+const ChatPayloadSchema = z.object({
+  message: z.string(),
+  isSystem: z.boolean().optional(),
+  isDiceRoll: z.boolean().optional(),
+  diceResult: z
+    .object({
+      formula: z.string(),
+      total: z.number(),
+      rolls: z.array(z.number())
+    })
+    .optional()
+})
 
-const WhisperPayloadSchema = z
-  .object({
-    message: z.string(),
-    targetPeerId: z.string(),
-    targetName: z.string()
-  })
+const WhisperPayloadSchema = z.object({
+  message: z.string(),
+  targetPeerId: z.string(),
+  targetName: z.string()
+})
 
-const DiceRollPayloadSchema = z
-  .object({
-    formula: z.string(),
-    reason: z.string().optional()
-  })
+const DiceRollPayloadSchema = z.object({
+  formula: z.string(),
+  reason: z.string().optional()
+})
 
-const DiceResultPayloadSchema = z
-  .object({
-    formula: z.string(),
-    rolls: z.array(z.number()),
-    total: z.number(),
-    isCritical: z.boolean(),
-    isFumble: z.boolean(),
-    reason: z.string().optional(),
-    rollerName: z.string()
-  })
+const DiceResultPayloadSchema = z.object({
+  formula: z.string(),
+  rolls: z.array(z.number()),
+  total: z.number(),
+  isCritical: z.boolean(),
+  isFumble: z.boolean(),
+  reason: z.string().optional(),
+  rollerName: z.string()
+})
 
-const StateUpdatePayloadSchema = z
-  .object({
-    path: z.string(),
-    value: z.unknown()
-  })
+const StateUpdatePayloadSchema = z.object({
+  path: z.string(),
+  value: z.unknown()
+})
 
-const TokenMovePayloadSchema = z
-  .object({
-    tokenId: z.string(),
-    gridX: z.number(),
-    gridY: z.number()
-  })
+const TokenMovePayloadSchema = z.object({
+  tokenId: z.string(),
+  gridX: z.number(),
+  gridY: z.number()
+})
 
-const FogRevealPayloadSchema = z
-  .object({
-    cells: z.array(z.object({ x: z.number(), y: z.number() })),
-    reveal: z.boolean()
-  })
+const FogRevealPayloadSchema = z.object({
+  cells: z.array(z.object({ x: z.number(), y: z.number() })),
+  reveal: z.boolean()
+})
 
-const MapChangePayloadSchema = z
-  .object({
-    mapId: z.string()
-  })
+const MapChangePayloadSchema = z.object({
+  mapId: z.string()
+})
 
-const CharacterSelectPayloadSchema = z
-  .object({
-    characterId: z.string().nullable(),
-    characterName: z.string().nullable(),
-    characterData: z.unknown().optional()
-  })
+const CharacterSelectPayloadSchema = z.object({
+  characterId: z.string().nullable(),
+  characterName: z.string().nullable(),
+  characterData: z.unknown().optional()
+})
 
-const InitiativeUpdatePayloadSchema = z
-  .object({
-    order: z.array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        initiative: z.number()
-      })
-    ),
-    currentTurnIndex: z.number()
-  })
+const InitiativeUpdatePayloadSchema = z.object({
+  order: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      initiative: z.number()
+    })
+  ),
+  currentTurnIndex: z.number()
+})
 
-const ConditionUpdatePayloadSchema = z
-  .object({
-    targetId: z.string(),
-    condition: z.string(),
-    active: z.boolean()
-  })
+const ConditionUpdatePayloadSchema = z.object({
+  targetId: z.string(),
+  condition: z.string(),
+  active: z.boolean()
+})
 
-const KickPayloadSchema = z
-  .object({
-    peerId: z.string(),
-    reason: z.string().optional()
-  })
+const KickPayloadSchema = z.object({
+  peerId: z.string(),
+  reason: z.string().optional()
+})
 
-const BanPayloadSchema = z
-  .object({
-    peerId: z.string(),
-    reason: z.string().optional()
-  })
+const BanPayloadSchema = z.object({
+  peerId: z.string(),
+  reason: z.string().optional()
+})
 
-const MuteTogglePayloadSchema = z
-  .object({
-    peerId: z.string(),
-    isMuted: z.boolean()
-  })
+const MuteTogglePayloadSchema = z.object({
+  peerId: z.string(),
+  isMuted: z.boolean()
+})
 
-const DeafenTogglePayloadSchema = z
-  .object({
-    peerId: z.string(),
-    isDeafened: z.boolean()
-  })
+const DeafenTogglePayloadSchema = z.object({
+  peerId: z.string(),
+  isDeafened: z.boolean()
+})
 
-const ForceMutePayloadSchema = z
-  .object({
-    peerId: z.string(),
-    isForceMuted: z.boolean()
-  })
+const ForceMutePayloadSchema = z.object({
+  peerId: z.string(),
+  isForceMuted: z.boolean()
+})
 
-const ForceDeafenPayloadSchema = z
-  .object({
-    peerId: z.string(),
-    isForceDeafened: z.boolean()
-  })
+const ForceDeafenPayloadSchema = z.object({
+  peerId: z.string(),
+  isForceDeafened: z.boolean()
+})
 
-const CharacterUpdatePayloadSchema = z
-  .object({
-    characterId: z.string(),
-    characterData: z.unknown(),
-    targetPeerId: z.string().optional()
-  })
+const CharacterUpdatePayloadSchema = z.object({
+  characterId: z.string(),
+  characterData: z.unknown(),
+  targetPeerId: z.string().optional()
+})
 
-const PriceSchema = z
-  .object({
-    cp: z.number().optional(),
-    sp: z.number().optional(),
-    gp: z.number().optional(),
-    pp: z.number().optional()
-  })
+const PriceSchema = z.object({
+  cp: z.number().optional(),
+  sp: z.number().optional(),
+  gp: z.number().optional(),
+  pp: z.number().optional()
+})
 
-const ShopItemSchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    category: z.string(),
-    price: PriceSchema,
-    quantity: z.number(),
-    description: z.string().optional(),
-    weight: z.number().optional(),
-    bulk: z.number().optional(),
-    shopCategory: z
-      .enum(['weapon', 'armor', 'potion', 'scroll', 'wondrous', 'tool', 'adventuring', 'trade', 'other'])
-      .optional(),
-    rarity: z.enum(['common', 'uncommon', 'rare', 'very rare', 'legendary', 'artifact']).optional(),
-    stockLimit: z.number().optional(),
-    stockRemaining: z.number().optional(),
-    dmNotes: z.string().optional(),
-    hiddenFromPlayerIds: z.array(z.string()).optional(),
-    isHidden: z.boolean().optional()
-  })
+const ShopItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  category: z.string(),
+  price: PriceSchema,
+  quantity: z.number(),
+  description: z.string().optional(),
+  weight: z.number().optional(),
+  bulk: z.number().optional(),
+  shopCategory: z
+    .enum(['weapon', 'armor', 'potion', 'scroll', 'wondrous', 'tool', 'adventuring', 'trade', 'other'])
+    .optional(),
+  rarity: z.enum(['common', 'uncommon', 'rare', 'very rare', 'legendary', 'artifact']).optional(),
+  stockLimit: z.number().optional(),
+  stockRemaining: z.number().optional(),
+  dmNotes: z.string().optional(),
+  hiddenFromPlayerIds: z.array(z.string()).optional(),
+  isHidden: z.boolean().optional()
+})
 
-const ShopUpdatePayloadSchema = z
-  .object({
-    shopInventory: z.array(ShopItemSchema),
-    shopName: z.string().optional()
-  })
+const ShopUpdatePayloadSchema = z.object({
+  shopInventory: z.array(ShopItemSchema),
+  shopName: z.string().optional()
+})
 
-const BuyItemPayloadSchema = z
-  .object({
-    itemId: z.string(),
-    itemName: z.string(),
-    price: PriceSchema
-  })
+const BuyItemPayloadSchema = z.object({
+  itemId: z.string(),
+  itemName: z.string(),
+  price: PriceSchema
+})
 
-const SellItemPayloadSchema = z
-  .object({
-    itemName: z.string(),
-    price: PriceSchema
-  })
+const SellItemPayloadSchema = z.object({
+  itemName: z.string(),
+  price: PriceSchema
+})
 
-const GameStateFullPayloadSchema = z
-  .object({
-    peers: z.array(
-      z
-        .object({
-          peerId: z.string(),
-          displayName: z.string(),
-          characterId: z.string().nullable(),
-          characterName: z.string().nullable(),
-          isReady: z.boolean(),
-          isMuted: z.boolean(),
-          isDeafened: z.boolean(),
-          isSpeaking: z.boolean(),
-          isHost: z.boolean(),
-          isForceMuted: z.boolean(),
-          isForceDeafened: z.boolean(),
-          color: z.string().optional(),
-          isCoDM: z.boolean().optional()
-        })
-    ),
-    campaignId: z.string().optional()
-  })
+const GameStateFullPayloadSchema = z.object({
+  peers: z.array(
+    z.object({
+      peerId: z.string(),
+      displayName: z.string(),
+      characterId: z.string().nullable(),
+      characterName: z.string().nullable(),
+      isReady: z.boolean(),
+      isMuted: z.boolean(),
+      isDeafened: z.boolean(),
+      isSpeaking: z.boolean(),
+      isHost: z.boolean(),
+      isForceMuted: z.boolean(),
+      isForceDeafened: z.boolean(),
+      color: z.string().optional(),
+      isCoDM: z.boolean().optional()
+    })
+  ),
+  campaignId: z.string().optional()
+})
 
-const ChatTimeoutPayloadSchema = z
-  .object({
-    peerId: z.string(),
-    duration: z.number()
-  })
+const ChatTimeoutPayloadSchema = z.object({
+  peerId: z.string(),
+  duration: z.number()
+})
 
-const CoDMPayloadSchema = z
-  .object({
-    peerId: z.string(),
-    isCoDM: z.boolean()
-  })
+const CoDMPayloadSchema = z.object({
+  peerId: z.string(),
+  isCoDM: z.boolean()
+})
 
-const ColorChangePayloadSchema = z
-  .object({
-    color: z.string()
-  })
+const ColorChangePayloadSchema = z.object({
+  color: z.string()
+})
 
-const ChatFilePayloadSchema = z
-  .object({
-    fileName: z.string(),
-    fileType: z.string(),
-    fileData: z.string(),
-    mimeType: z.string(),
-    senderId: z.string(),
-    senderName: z.string()
-  })
+const ChatFilePayloadSchema = z.object({
+  fileName: z.string(),
+  fileType: z.string(),
+  fileData: z.string(),
+  mimeType: z.string(),
+  senderId: z.string(),
+  senderName: z.string()
+})
 
-const SlowModePayloadSchema = z
-  .object({
-    seconds: z.number()
-  })
+const SlowModePayloadSchema = z.object({
+  seconds: z.number()
+})
 
-const FileSharingPayloadSchema = z
-  .object({
-    enabled: z.boolean()
-  })
+const FileSharingPayloadSchema = z.object({
+  enabled: z.boolean()
+})
 
-const TimerStartPayloadSchema = z
-  .object({
-    seconds: z.number(),
-    targetName: z.string()
-  })
+const TimerStartPayloadSchema = z.object({
+  seconds: z.number(),
+  targetName: z.string()
+})
 
-const WhisperPlayerPayloadSchema = z
-  .object({
-    targetPeerId: z.string(),
-    targetName: z.string(),
-    message: z.string()
-  })
+const WhisperPlayerPayloadSchema = z.object({
+  targetPeerId: z.string(),
+  targetName: z.string(),
+  message: z.string()
+})
 
-const TimeRequestPayloadSchema = z
-  .object({
-    requesterId: z.string(),
-    requesterName: z.string()
-  })
+const TimeRequestPayloadSchema = z.object({
+  requesterId: z.string(),
+  requesterName: z.string()
+})
 
-const TimeSharePayloadSchema = z
-  .object({
-    formattedTime: z.string(),
-    targetPeerId: z.string().optional(),
-    targetName: z.string().optional()
-  })
+const TimeSharePayloadSchema = z.object({
+  formattedTime: z.string(),
+  targetPeerId: z.string().optional(),
+  targetName: z.string().optional()
+})
 
-const TimeSyncPayloadSchema = z
-  .object({
-    totalSeconds: z.number()
-  })
+const TimeSyncPayloadSchema = z.object({
+  totalSeconds: z.number()
+})
 
-const RollRequestPayloadSchema = z
-  .object({
-    id: z.string(),
-    type: z.enum(['ability', 'save', 'skill']),
-    ability: z.string().optional(),
-    skill: z.string().optional(),
-    dc: z.number(),
-    isSecret: z.boolean(),
-    requesterId: z.string(),
-    requesterName: z.string()
-  })
+const RollRequestPayloadSchema = z.object({
+  id: z.string(),
+  type: z.enum(['ability', 'save', 'skill']),
+  ability: z.string().optional(),
+  skill: z.string().optional(),
+  dc: z.number(),
+  isSecret: z.boolean(),
+  requesterId: z.string(),
+  requesterName: z.string()
+})
 
-const RollResultPayloadSchema = z
-  .object({
-    requestId: z.string(),
-    entityId: z.string(),
-    entityName: z.string(),
-    roll: z.number(),
-    modifier: z.number(),
-    total: z.number(),
-    success: z.boolean()
-  })
+const RollResultPayloadSchema = z.object({
+  requestId: z.string(),
+  entityId: z.string(),
+  entityName: z.string(),
+  roll: z.number(),
+  modifier: z.number(),
+  total: z.number(),
+  success: z.boolean()
+})
 
-const LootAwardPayloadSchema = z
-  .object({
-    targetPeerIds: z.array(z.string()).optional(),
-    items: z.array(z.object({ name: z.string(), quantity: z.number() })),
-    currency: PriceSchema.optional()
-  })
+const LootAwardPayloadSchema = z.object({
+  targetPeerIds: z.array(z.string()).optional(),
+  items: z.array(z.object({ name: z.string(), quantity: z.number() })),
+  currency: PriceSchema.optional()
+})
 
-const XpAwardPayloadSchema = z
-  .object({
-    targetPeerIds: z.array(z.string()).optional(),
-    xp: z.number(),
-    reason: z.string().optional()
-  })
+const XpAwardPayloadSchema = z.object({
+  targetPeerIds: z.array(z.string()).optional(),
+  xp: z.number(),
+  reason: z.string().optional()
+})
 
-const HandoutPayloadSchema = z
-  .object({
-    id: z.string(),
-    title: z.string(),
-    content: z.string(),
-    imagePath: z.string().optional(),
-    targetPeerIds: z.array(z.string()).optional()
-  })
+const HandoutPayloadSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  imagePath: z.string().optional(),
+  targetPeerIds: z.array(z.string()).optional()
+})
 
-const AnnouncementPayloadSchema = z
-  .object({
-    message: z.string(),
-    style: z.enum(['info', 'warning', 'success', 'dramatic']).optional()
-  })
+const AnnouncementPayloadSchema = z.object({
+  message: z.string(),
+  style: z.enum(['info', 'warning', 'success', 'dramatic']).optional()
+})
 
-const MapPingPayloadSchema = z
-  .object({
-    gridX: z.number(),
-    gridY: z.number(),
-    color: z.string().optional(),
-    label: z.string().optional()
-  })
+const MapPingPayloadSchema = z.object({
+  gridX: z.number(),
+  gridY: z.number(),
+  color: z.string().optional(),
+  label: z.string().optional()
+})
 
-const DiceRoll3dPayloadSchema = z
-  .object({
-    dice: z.array(
-      z.object({
-        type: z.enum(['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100']),
-        count: z.number()
-      })
-    ),
-    results: z.array(z.number()),
-    total: z.number(),
-    formula: z.string(),
-    reason: z.string().optional(),
-    rollerName: z.string(),
-    isSecret: z.boolean().optional()
-  })
+const DiceRoll3dPayloadSchema = z.object({
+  dice: z.array(
+    z.object({
+      type: z.enum(['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100']),
+      count: z.number()
+    })
+  ),
+  results: z.array(z.number()),
+  total: z.number(),
+  formula: z.string(),
+  reason: z.string().optional(),
+  rollerName: z.string(),
+  isSecret: z.boolean().optional()
+})
 
-const TurnEndPayloadSchema = z
-  .object({
-    entityId: z.string()
-  })
+const TurnEndPayloadSchema = z.object({
+  entityId: z.string()
+})
 
-const MoveDeclarePayloadSchema = z
-  .object({
-    entityId: z.string(),
-    fromX: z.number(),
-    fromY: z.number(),
-    toX: z.number(),
-    toY: z.number(),
-    path: z.array(z.object({ x: z.number(), y: z.number() })).optional()
-  })
+const MoveDeclarePayloadSchema = z.object({
+  entityId: z.string(),
+  fromX: z.number(),
+  fromY: z.number(),
+  toX: z.number(),
+  toY: z.number(),
+  path: z.array(z.object({ x: z.number(), y: z.number() })).optional()
+})
 
-const TypingPayloadSchema = z
-  .object({
-    isTyping: z.boolean()
-  })
+const TypingPayloadSchema = z.object({
+  isTyping: z.boolean()
+})
 
-const NarrationPayloadSchema = z
-  .object({
-    text: z.string(),
-    style: z.enum(['chat', 'dramatic'])
-  })
+const NarrationPayloadSchema = z.object({
+  text: z.string(),
+  style: z.enum(['chat', 'dramatic'])
+})
 
-const PlaySoundPayloadSchema = z
-  .object({
-    event: z.string()
-  })
+const PlaySoundPayloadSchema = z.object({
+  event: z.string()
+})
 
-const PlayAmbientPayloadSchema = z
-  .object({
-    ambient: z.string(),
-    volume: z.number().optional()
-  })
+const PlayAmbientPayloadSchema = z.object({
+  ambient: z.string(),
+  volume: z.number().optional()
+})
 
 const StopAmbientPayloadSchema = z.object({})
 

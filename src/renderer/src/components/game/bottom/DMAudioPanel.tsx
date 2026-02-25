@@ -12,8 +12,8 @@ import {
   stopAmbient,
   stopCustomAudio
 } from '../../../services/sound-manager'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 
 type CustomAudioCategory = 'all' | 'ambient' | 'effect' | 'music'
 
@@ -27,6 +27,7 @@ interface CustomAudioEntry {
 }
 
 import ambientTracksJson from '../../../../public/data/5e/audio/ambient-tracks.json'
+import { logger } from '../../../utils/logger'
 
 const AMBIENT_TRACKS = ambientTracksJson.ambientTracks as Array<{ id: AmbientSound; label: string; icon: string }>
 const QUICK_SFX = ambientTracksJson.quickSfx as Array<{ event: SoundEvent; label: string }>
@@ -101,21 +102,15 @@ export default function DMAudioPanel(): JSX.Element {
     [activeAmbient, ambientVol, sendMessage]
   )
 
-  const handleAmbientVolumeChange = useCallback(
-    (value: number) => {
-      setAmbientVol(value)
-      setAmbientVolume(value / 100)
-    },
-    []
-  )
+  const handleAmbientVolumeChange = useCallback((value: number) => {
+    setAmbientVol(value)
+    setAmbientVolume(value / 100)
+  }, [])
 
-  const handleMasterVolumeChange = useCallback(
-    (value: number) => {
-      setMasterVol(value)
-      setVolume(value / 100)
-    },
-    []
-  )
+  const handleMasterVolumeChange = useCallback((value: number) => {
+    setMasterVol(value)
+    setVolume(value / 100)
+  }, [])
 
   const handlePlaySfx = useCallback(
     (event: SoundEvent) => {
@@ -138,13 +133,7 @@ export default function DMAudioPanel(): JSX.Element {
       }
       const { fileName, buffer } = result.data
       const displayName = fileName.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
-      const uploadResult = await window.api.audioUploadCustom(
-        campaignId,
-        fileName,
-        buffer,
-        displayName,
-        'effect'
-      )
+      const uploadResult = await window.api.audioUploadCustom(campaignId, fileName, buffer, displayName, 'effect')
       if (uploadResult.success && uploadResult.data) {
         setCustomAudioEntries((prev) => [
           ...prev,
@@ -159,7 +148,7 @@ export default function DMAudioPanel(): JSX.Element {
         ])
       }
     } catch (err) {
-      console.error('[DMAudioPanel] Upload failed:', err)
+      logger.error('[DMAudioPanel] Upload failed:', err)
     } finally {
       setUploading(false)
     }
@@ -193,23 +182,17 @@ export default function DMAudioPanel(): JSX.Element {
       }
 
       playCustomAudio(filePath, { loop: entry.loop, volume: entry.volume / 100 })
-      setCustomAudioEntries((prev) =>
-        prev.map((e) => (e.fileName === fileName ? { ...e, playing: true } : e))
-      )
+      setCustomAudioEntries((prev) => prev.map((e) => (e.fileName === fileName ? { ...e, playing: true } : e)))
     },
     [campaignId, customAudioEntries]
   )
 
   const handleCustomVolumeChange = useCallback((fileName: string, vol: number) => {
-    setCustomAudioEntries((prev) =>
-      prev.map((e) => (e.fileName === fileName ? { ...e, volume: vol } : e))
-    )
+    setCustomAudioEntries((prev) => prev.map((e) => (e.fileName === fileName ? { ...e, volume: vol } : e)))
   }, [])
 
   const handleCustomLoopToggle = useCallback((fileName: string) => {
-    setCustomAudioEntries((prev) =>
-      prev.map((e) => (e.fileName === fileName ? { ...e, loop: !e.loop } : e))
-    )
+    setCustomAudioEntries((prev) => prev.map((e) => (e.fileName === fileName ? { ...e, loop: !e.loop } : e)))
   }, [])
 
   const handleDeleteCustom = useCallback(
@@ -224,9 +207,7 @@ export default function DMAudioPanel(): JSX.Element {
   )
 
   const filteredCustom =
-    customFilter === 'all'
-      ? customAudioEntries
-      : customAudioEntries.filter((e) => e.category === customFilter)
+    customFilter === 'all' ? customAudioEntries : customAudioEntries.filter((e) => e.category === customFilter)
 
   return (
     <div className="flex flex-col gap-2">
@@ -252,11 +233,7 @@ export default function DMAudioPanel(): JSX.Element {
               >
                 <span className="text-xs">{track.icon}</span>
                 <span className="truncate">{track.label}</span>
-                {isActive && (
-                  <span className="ml-auto text-[8px] text-amber-400 animate-pulse">
-                    {'\u25B6'}
-                  </span>
-                )}
+                {isActive && <span className="ml-auto text-[8px] text-amber-400 animate-pulse">{'\u25B6'}</span>}
               </button>
             )
           })}
@@ -265,9 +242,7 @@ export default function DMAudioPanel(): JSX.Element {
 
       {/* Volume sliders */}
       <div className="border-t border-gray-700/40 pt-1.5">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1 block">
-          Volume
-        </span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1 block">Volume</span>
         <div className="space-y-1.5">
           {/* Ambient volume */}
           <div className="flex items-center gap-2">
@@ -300,9 +275,7 @@ export default function DMAudioPanel(): JSX.Element {
 
       {/* Quick SFX buttons */}
       <div className="border-t border-gray-700/40 pt-1.5">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1 block">
-          Quick SFX
-        </span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1 block">Quick SFX</span>
         <div className="flex flex-wrap gap-1">
           {QUICK_SFX.map((sfx) => (
             <button
@@ -319,9 +292,7 @@ export default function DMAudioPanel(): JSX.Element {
       {/* Custom Sounds */}
       <div className="border-t border-gray-700/40 pt-1.5">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
-            Custom Sounds
-          </span>
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Custom Sounds</span>
           <button
             onClick={handleUploadCustom}
             disabled={uploading || !campaignId}
@@ -351,17 +322,12 @@ export default function DMAudioPanel(): JSX.Element {
         {/* Custom audio list */}
         {filteredCustom.length === 0 ? (
           <p className="text-[9px] text-gray-600 italic">
-            {customAudioEntries.length === 0
-              ? 'No custom sounds uploaded yet.'
-              : 'No sounds in this category.'}
+            {customAudioEntries.length === 0 ? 'No custom sounds uploaded yet.' : 'No sounds in this category.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {filteredCustom.map((entry) => (
-              <div
-                key={entry.fileName}
-                className="flex items-center gap-1 bg-gray-800/40 rounded px-1.5 py-1"
-              >
+              <div key={entry.fileName} className="flex items-center gap-1 bg-gray-800/40 rounded px-1.5 py-1">
                 {/* Play/Stop toggle */}
                 <button
                   onClick={() => handleToggleCustomPlay(entry.fileName)}
@@ -376,9 +342,7 @@ export default function DMAudioPanel(): JSX.Element {
                 </button>
 
                 {/* Name */}
-                <span className="text-[10px] text-gray-300 truncate flex-1 min-w-0">
-                  {entry.displayName}
-                </span>
+                <span className="text-[10px] text-gray-300 truncate flex-1 min-w-0">{entry.displayName}</span>
 
                 {/* Volume slider */}
                 <input

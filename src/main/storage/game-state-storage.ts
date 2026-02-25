@@ -35,10 +35,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-export async function saveGameState(
-  campaignId: string,
-  state: Record<string, unknown>
-): Promise<StorageResult<void>> {
+export async function saveGameState(campaignId: string, state: Record<string, unknown>): Promise<StorageResult<void>> {
   if (!isValidUUID(campaignId)) {
     return { success: false, error: 'Invalid campaign ID' }
   }
@@ -51,9 +48,7 @@ export async function saveGameState(
   }
 }
 
-export async function loadGameState(
-  campaignId: string
-): Promise<StorageResult<Record<string, unknown> | null>> {
+export async function loadGameState(campaignId: string): Promise<StorageResult<Record<string, unknown> | null>> {
   if (!isValidUUID(campaignId)) {
     return { success: false, error: 'Invalid campaign ID' }
   }

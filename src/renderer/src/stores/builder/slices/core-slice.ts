@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand'
 import { generate5eBuildSlots } from '../../../services/character/build-tree-5e'
 import type { BuilderState, CoreSliceState } from '../types'
 import { DEFAULT_SCORES } from '../types'
+import { DEFAULT_CHARACTER_DETAILS } from './character-details-slice'
 
 export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState> = (set, get) => ({
   phase: 'system-select',
@@ -23,13 +24,15 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
 
   resetBuilder: () =>
     set({
+      // Core slice defaults
       phase: 'system-select',
       gameSystem: null,
       buildSlots: [],
       selectionModal: null,
       activeTab: 'details',
       targetLevel: 1,
-      characterName: '',
+      editingCharacterId: null,
+      // Ability score slice defaults
       abilityScores: { ...DEFAULT_SCORES },
       abilityScoreMethod: 'standard',
       standardArrayAssignments: {
@@ -40,58 +43,10 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
         wisdom: null,
         charisma: null
       },
-      selectedSkills: [],
-      maxSkills: 2,
-      iconType: 'letter',
-      iconPreset: '',
-      iconCustom: '',
-      editingCharacterId: null,
       activeAsiSlotId: null,
       asiSelections: {},
-      customModal: null,
-      characterGender: '',
-      characterDeity: '',
-      characterAge: '',
-      characterNotes: '',
-      characterPersonality: '',
-      characterIdeals: '',
-      characterBonds: '',
-      characterFlaws: '',
-      characterBackstory: '',
-      characterHeight: '',
-      characterWeight: '',
-      characterEyes: '',
-      characterHair: '',
-      characterSkin: '',
-      characterAppearance: '',
-      characterAlignment: '',
-      speciesLanguages: [],
-      speciesExtraLangCount: 0,
-      bgLanguageCount: 0,
-      classExtraLangCount: 0,
-      chosenLanguages: [],
-      speciesSize: 'Medium',
-      speciesSpeed: 30,
-      speciesTraits: [],
-      speciesProficiencies: [],
-      classEquipment: [],
-      bgEquipment: [],
-      currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
-      higherLevelGoldBonus: 0,
-      selectedMagicItems: [],
-      pets: [],
-      currentHP: null,
-      tempHP: 0,
-      conditions: [],
-      classSkillOptions: [],
-      classMandatorySkills: [],
-      selectedSpellIds: [],
-      backgroundAbilityBonuses: {},
-      backgroundEquipmentChoice: null,
-      classEquipmentChoice: null,
-      speciesSpellcastingAbility: null,
-      keenSensesSkill: null,
-      blessedWarriorCantrips: []
+      // Character details slice defaults
+      ...DEFAULT_CHARACTER_DETAILS
     }),
 
   setTargetLevel: (level) => {

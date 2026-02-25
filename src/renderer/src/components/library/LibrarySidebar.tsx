@@ -13,9 +13,7 @@ export default function LibrarySidebar({
   onSelectCategory,
   homebrewCounts
 }: LibrarySidebarProps): JSX.Element {
-  const [expandedGroups, setExpandedGroups] = useState<Set<LibraryGroup>>(
-    new Set(LIBRARY_GROUPS.map((g) => g.id))
-  )
+  const [expandedGroups, setExpandedGroups] = useState<Set<LibraryGroup>>(new Set(LIBRARY_GROUPS.map((g) => g.id)))
 
   const toggleGroup = (groupId: LibraryGroup): void => {
     setExpandedGroups((prev) => {
@@ -63,16 +61,16 @@ export default function LibrarySidebar({
                     key={cat.id}
                     onClick={() => onSelectCategory(cat.id)}
                     className={`w-full text-left px-4 py-1.5 text-sm flex items-center gap-2 transition-colors cursor-pointer
-                      ${selectedCategory === cat.id
-                        ? 'text-amber-400 bg-amber-900/20 border-r-2 border-amber-500'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'}`}
+                      ${
+                        selectedCategory === cat.id
+                          ? 'text-amber-400 bg-amber-900/20 border-r-2 border-amber-500'
+                          : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+                      }`}
                   >
                     <span className="text-base leading-none">{cat.icon}</span>
                     <span className="flex-1 truncate">{cat.label}</span>
                     {hbCount > 0 && (
-                      <span className="text-[10px] bg-amber-600/30 text-amber-400 px-1.5 rounded-full">
-                        {hbCount}
-                      </span>
+                      <span className="text-[10px] bg-amber-600/30 text-amber-400 px-1.5 rounded-full">{hbCount}</span>
                     )}
                   </button>
                 )

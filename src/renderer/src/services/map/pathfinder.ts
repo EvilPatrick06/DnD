@@ -114,13 +114,7 @@ function isHorizontalWallAtEdge(cellX: number, edgeY: number, wall: WallSegment)
  * Standard: Chebyshev (all diagonals = 5ft).
  * Alternate: uses octile distance (diag pairs cost 15ft per 2 diags).
  */
-function heuristic(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  diagonalRule: DiagonalRule = 'standard'
-): number {
+function heuristic(x1: number, y1: number, x2: number, y2: number, diagonalRule: DiagonalRule = 'standard'): number {
   const dx = Math.abs(x2 - x1)
   const dy = Math.abs(y2 - y1)
   if (diagonalRule === 'alternate') {
@@ -137,13 +131,7 @@ function heuristic(
 /**
  * Calculate movement cost for a single step, considering terrain and diagonal rule.
  */
-function stepCost(
-  toX: number,
-  toY: number,
-  terrain: TerrainCell[],
-  tokenSpeeds?: TokenSpeeds,
-  baseCost = 5
-): number {
+function stepCost(toX: number, toY: number, terrain: TerrainCell[], tokenSpeeds?: TokenSpeeds, baseCost = 5): number {
   const cell = terrain.find((t) => t.x === toX && t.y === toY)
   if (!cell) return baseCost
 

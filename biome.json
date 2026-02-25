@@ -1,14 +1,11 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
     "ignoreUnknown": true,
     "includes": ["src/**"],
-    "experimentalScannerIgnores": ["out/**", "dist/**", "node_modules/**", "resources/**"]
+    "experimentalScannerIgnores": ["out/**", "dist/**", "node_modules/**", "resources/**"],
+    "maxSize": 1572864
   },
   "formatter": {
     "enabled": true,
@@ -27,10 +24,7 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "complexity": {
-        "noForEach": "off",
-        "noUselessFragments": "off"
-      },
+      "complexity": { "noForEach": "off", "noUselessFragments": "off" },
       "suspicious": {
         "noExplicitAny": "warn",
         "noConfusingVoidType": "off",
@@ -38,9 +32,7 @@
         "noAssignInExpressions": "off",
         "useIterableCallbackReturn": "off"
       },
-      "a11y": {
-        "recommended": false
-      },
+      "a11y": { "recommended": false },
       "style": {
         "noNonNullAssertion": "off",
         "useNodejsImportProtocol": "off",

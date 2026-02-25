@@ -47,11 +47,7 @@ const CELL_SIZE_FT = 5 // Each grid cell is 5 feet
  * @param excludeTokenId - Token to exclude (e.g., the caster)
  * @returns Affected tokens and grid cells
  */
-export function getTokensInAoE(
-  aoe: AoEDefinition,
-  tokens: MapToken[],
-  excludeTokenId?: string
-): AoETargetResult {
+export function getTokensInAoE(aoe: AoEDefinition, tokens: MapToken[], excludeTokenId?: string): AoETargetResult {
   const affectedCells = getAffectedCells(aoe)
   const cellSet = new Set(affectedCells.map((c) => `${c.x},${c.y}`))
 
@@ -98,11 +94,7 @@ export function getAffectedCells(aoe: AoEDefinition): Array<{ x: number; y: numb
  * PHB 2024: A sphere's origin is a point, and the sphere extends outward.
  * We use Chebyshev distance (D&D standard diagonal = 5ft) for grid intersection.
  */
-function getSphereCells(
-  originX: number,
-  originY: number,
-  radiusFt: number
-): Array<{ x: number; y: number }> {
+function getSphereCells(originX: number, originY: number, radiusFt: number): Array<{ x: number; y: number }> {
   const cells: Array<{ x: number; y: number }> = []
   const radiusCells = Math.floor(radiusFt / CELL_SIZE_FT)
 
@@ -228,10 +220,6 @@ function getCubeCells(
 /**
  * Count the number of tokens affected by an AoE (for UI preview).
  */
-export function countTargetsInAoE(
-  aoe: AoEDefinition,
-  tokens: MapToken[],
-  excludeTokenId?: string
-): number {
+export function countTargetsInAoE(aoe: AoEDefinition, tokens: MapToken[], excludeTokenId?: string): number {
   return getTokensInAoE(aoe, tokens, excludeTokenId).targets.length
 }

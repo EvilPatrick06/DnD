@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { load5eSpells } from '../../../services/data-provider'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { SpellEntry } from '../../../types/character-common'
 import Modal from '../../ui/Modal'
 
-interface HighElfCantripSwapDialog5eProps {
+interface HighElfCantripSwapModal5eProps {
   character: Character5e
   open: boolean
   onClose: () => void
@@ -30,11 +30,11 @@ interface SpellData {
   spellList?: string[]
 }
 
-export default function HighElfCantripSwapDialog5e({
+export default function HighElfCantripSwapModal5e({
   character,
   open,
   onClose
-}: HighElfCantripSwapDialog5eProps): JSX.Element | null {
+}: HighElfCantripSwapModal5eProps): JSX.Element | null {
   const [wizardCantrips, setWizardCantrips] = useState<SpellData[]>([])
   const [selectedCantripId, setSelectedCantripId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')

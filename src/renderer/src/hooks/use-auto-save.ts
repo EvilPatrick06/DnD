@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { saveGameState } from '../services/io/game-state-saver'
-import { useBuilderStore } from '../stores/useBuilderStore'
-import { useGameStore } from '../stores/useGameStore'
+import { useBuilderStore } from '../stores/use-builder-store'
+import { useGameStore } from '../stores/use-game-store'
 import type { Campaign } from '../types/campaign'
 import type { AbilityScoreSet } from '../types/character-common'
-import { addToast } from './useToast'
+import { logger } from '../utils/logger'
+import { addToast } from './use-toast'
 
 const AUTO_SAVE_INTERVAL = 60_000
 
@@ -27,7 +28,7 @@ export function useAutoSaveGame(campaign: Campaign | null, isDM: boolean): void 
       dirtyRef.current = false
       lastSaveRef.current = now
       saveGameState(campaign).catch((err) => {
-        console.error('[AutoSave] Failed:', err)
+        logger.error('[AutoSave] Failed:', err)
         addToast('Auto-save failed', 'warning')
       })
     }, 10_000)

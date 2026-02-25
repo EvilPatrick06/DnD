@@ -1,4 +1,4 @@
-import { loadCharacter as loadCharacterFromStorage } from '../storage/characterStorage'
+import { loadCharacter as loadCharacterFromStorage } from '../storage/character-storage'
 
 interface AbilityScores {
   strength: number

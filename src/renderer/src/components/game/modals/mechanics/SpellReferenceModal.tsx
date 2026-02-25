@@ -11,7 +11,11 @@ export default function SpellReferenceModal({ onClose }: SpellReferenceModalProp
       <div className="relative bg-gray-900 border border-gray-700 rounded-xl w-[700px] max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
           <h3 className="text-sm font-semibold text-gray-200">Quick Reference</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

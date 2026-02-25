@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { deserializeCharacter, serializeCharacter } from './character-io'
 import type { Character5e } from '../../types/character-5e'
+import { deserializeCharacter, serializeCharacter } from './character-io'
 
 const minimalCharacter: Character5e = {
   id: 'char-1',

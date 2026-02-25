@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Campaign } from '../types/campaign'
 import { generateInviteCode } from '../utils/invite-code'
+import { logger } from '../utils/logger'
 
 function generateId(): string {
   return crypto.randomUUID()
@@ -33,12 +34,12 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       const rawData = await window.api.loadCampaigns()
       if (!Array.isArray(rawData)) {
         const err = rawData as { success?: boolean; error?: string } | undefined
-        console.error('Failed to load campaigns:', err?.error ?? 'unexpected response')
+        logger.error('Failed to load campaigns:', err?.error ?? 'unexpected response')
         set({ loading: false })
         return
       }
-      const diskCampaigns = (rawData
-        .filter((c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string')
+      const diskCampaigns = rawData.filter(
+        (c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string'
       ) as unknown as Campaign[]
       set((state) => {
         const diskIds = new Set(diskCampaigns.map((c) => c.id))
@@ -46,7 +47,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         return { campaigns: [...diskCampaigns, ...inMemoryOnly], loading: false }
       })
     } catch (error) {
-      console.error('Failed to load campaigns:', error)
+      logger.error('Failed to load campaigns:', error)
       set({ loading: false })
     }
   },
@@ -64,7 +65,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         set({ campaigns: [...campaigns, campaign] })
       }
     } catch (error) {
-      console.error('Failed to save campaign:', error)
+      logger.error('Failed to save campaign:', error)
     }
   },
 
@@ -77,7 +78,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         activeCampaignId: activeCampaignId === id ? null : activeCampaignId
       })
     } catch (error) {
-      console.error('Failed to delete campaign:', error)
+      logger.error('Failed to delete campaign:', error)
     }
   },
 
@@ -87,7 +88,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       try {
         await window.api.deleteCampaign(c.id)
       } catch (error) {
-        console.error('Failed to delete campaign:', c.id, error)
+        logger.error('Failed to delete campaign:', c.id, error)
       }
     }
     set({ campaigns: [], activeCampaignId: null })

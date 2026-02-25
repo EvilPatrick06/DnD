@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
-import { LOADING_GRACE_PERIOD_MS } from '../constants/app-constants'
 import { Spinner } from '../components/ui'
-import { useAutoSaveGame } from '../hooks/useAutoSave'
-import { useBastionStore } from '../stores/useBastionStore'
-import { useCampaignStore } from '../stores/useCampaignStore'
-import { useCharacterStore } from '../stores/useCharacterStore'
-import { useGameStore } from '../stores/useGameStore'
-import { useNetworkStore } from '../stores/useNetworkStore'
+import { LOADING_GRACE_PERIOD_MS } from '../constants/app-constants'
+import { useAutoSaveGame } from '../hooks/use-auto-save'
+import { useBastionStore } from '../stores/use-bastion-store'
+import { useCampaignStore } from '../stores/use-campaign-store'
+import { useCharacterStore } from '../stores/use-character-store'
+import { useGameStore } from '../stores/use-game-store'
+import { useNetworkStore } from '../stores/use-network-store'
 import { totalSecondsFromDateTime } from '../utils/calendar-utils'
 
 export default function InGamePage(): JSX.Element {
@@ -29,8 +29,8 @@ export default function InGamePage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [reconnectAttempt, setReconnectAttempt] = useState(0)
   const [showReconnect, setShowReconnect] = useState(false)
-  const [showExitConfirm, setShowExitConfirm] = useState(false)
-  const exitTargetRef = useRef<string | null>(null)
+  const [_showExitConfirm, _setShowExitConfirm] = useState(false)
+  const _exitTargetRef = useRef<string | null>(null)
 
   useEffect(() => {
     loadCampaigns()
@@ -208,9 +208,7 @@ export default function InGamePage(): JSX.Element {
             <div className="w-8 h-8 border-2 border-red-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h2 className="text-lg font-bold text-red-400 mb-2">Connection Lost</h2>
             <p className="text-sm text-gray-400 mb-1">
-              {reconnectAttempt > 0
-                ? `Reconnecting... (attempt ${reconnectAttempt}/3)`
-                : 'Attempting to reconnect...'}
+              {reconnectAttempt > 0 ? `Reconnecting... (attempt ${reconnectAttempt}/3)` : 'Attempting to reconnect...'}
             </p>
             {reconnectAttempt >= 3 && (
               <p className="text-xs text-red-400/70 mb-3">

@@ -1,4 +1,4 @@
-import { useCharacterStore } from '../../../stores/useCharacterStore'
+import { useCharacterStore } from '../../../stores/use-character-store'
 import type { Character5e } from '../../../types/character-5e'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 

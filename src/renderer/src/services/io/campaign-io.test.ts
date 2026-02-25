@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { exportCampaign, importCampaign } from './campaign-io'
 import type { Campaign } from '../../types/campaign'
+import { exportCampaign, importCampaign } from './campaign-io'
 
 const minimalCampaign: Campaign = {
   id: 'camp-1',
@@ -26,7 +26,6 @@ const minimalCampaign: Campaign = {
   customRules: [],
   settings: {
     maxPlayers: 6,
-    voiceEnabled: false,
     lobbyMessage: '',
     levelRange: { min: 1, max: 20 },
     allowCharCreationInLobby: true

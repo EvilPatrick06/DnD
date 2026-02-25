@@ -1,4 +1,4 @@
-import { loadCharacter, saveCharacter } from '../storage/characterStorage'
+import { loadCharacter, saveCharacter } from '../storage/character-storage'
 import type { MutationResult, StatChange } from './types'
 
 const STAT_CHANGES_RE = /\[STAT_CHANGES\]\s*([\s\S]*?)\s*\[\/STAT_CHANGES\]/

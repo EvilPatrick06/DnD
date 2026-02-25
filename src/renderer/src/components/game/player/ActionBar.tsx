@@ -32,7 +32,8 @@ const ACTIONS_5E = [
     id: 'help',
     label: 'Help',
     type: 'action' as const,
-    tooltip: 'Assist Check (requires proficiency), Assist Attack (must be within 5 ft of enemy), or Administer First Aid (DC 10 Medicine to stabilize)'
+    tooltip:
+      'Assist Check (requires proficiency), Assist Attack (must be within 5 ft of enemy), or Administer First Aid (DC 10 Medicine to stabilize)'
   },
   { id: 'hide', label: 'Hide', type: 'action' as const, tooltip: 'Make a Stealth check to become Hidden' },
   {

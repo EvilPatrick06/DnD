@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LIGHT_SOURCE_LABELS } from '../../../data/light-sources'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { CalendarConfig } from '../../../types/campaign'
 import type { TimeOfDayPhase } from '../../../utils/calendar-utils'
 import {

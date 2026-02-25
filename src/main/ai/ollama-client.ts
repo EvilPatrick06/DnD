@@ -1,6 +1,16 @@
 import type { ChatMessage, StreamCallbacks } from './types'
 
-const OLLAMA_BASE_URL = 'http://localhost:11434'
+let ollamaBaseUrl = 'http://localhost:11434'
+
+/** Set the Ollama base URL (e.g. for remote GPU servers). */
+export function setOllamaUrl(url: string): void {
+  ollamaBaseUrl = url.replace(/\/+$/, '') // strip trailing slashes
+}
+
+/** Get the current Ollama base URL. */
+export function getOllamaUrl(): string {
+  return ollamaBaseUrl
+}
 
 interface OllamaChatResponse {
   choices?: Array<{
@@ -12,7 +22,7 @@ interface OllamaChatResponse {
 /** Check if Ollama is running (2s timeout). */
 export async function isOllamaRunning(): Promise<boolean> {
   try {
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+    const res = await fetch(`${ollamaBaseUrl}/api/tags`, {
       signal: AbortSignal.timeout(2000)
     })
     return res.ok
@@ -24,7 +34,7 @@ export async function isOllamaRunning(): Promise<boolean> {
 /** List installed Ollama models. */
 export async function listOllamaModels(): Promise<string[]> {
   try {
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`)
+    const res = await fetch(`${ollamaBaseUrl}/api/tags`)
     if (!res.ok) return []
     const data = (await res.json()) as { models?: Array<{ name: string }> }
     return (data.models || []).map((m) => m.name)
@@ -50,7 +60,7 @@ export async function ollamaStreamChat(
     const timeoutSignal = AbortSignal.timeout(120_000)
     const combinedSignal = abortSignal ? AbortSignal.any([abortSignal, timeoutSignal]) : timeoutSignal
 
-    const res = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
+    const res = await fetch(`${ollamaBaseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages: apiMessages, stream: true }),
@@ -122,7 +132,7 @@ export async function ollamaChatOnce(
     ...messages.map((m) => ({ role: m.role as string, content: m.content }))
   ]
 
-  const res = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
+  const res = await fetch(`${ollamaBaseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages: apiMessages, stream: false })

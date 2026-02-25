@@ -263,9 +263,12 @@ function generateHoard(tier: CrTier, tables: TreasureTableData | null): Treasure
 
   // Use hoardDetails for the correct gem/art/magic table per tier
   const details = tables?.hoardDetails?.[tier]
-  const gemTier = details?.gemTier ?? (tier === '0-4' ? '50gp' : tier === '5-10' ? '100gp' : tier === '11-16' ? '500gp' : '1000gp')
-  const artTier = details?.artTier ?? (tier === '0-4' ? '25gp' : tier === '5-10' ? '250gp' : tier === '11-16' ? '750gp' : '2500gp')
-  const magicTableKey = details?.magicTable ?? (tier === '0-4' ? 'A' : tier === '5-10' ? 'B' : tier === '11-16' ? 'C' : 'D')
+  const gemTier =
+    details?.gemTier ?? (tier === '0-4' ? '50gp' : tier === '5-10' ? '100gp' : tier === '11-16' ? '500gp' : '1000gp')
+  const artTier =
+    details?.artTier ?? (tier === '0-4' ? '25gp' : tier === '5-10' ? '250gp' : tier === '11-16' ? '750gp' : '2500gp')
+  const magicTableKey =
+    details?.magicTable ?? (tier === '0-4' ? 'A' : tier === '5-10' ? 'B' : tier === '11-16' ? 'C' : 'D')
 
   const gemList = tables?.gems?.[gemTier] ?? FALLBACK_GEMS
   const artList = tables?.art?.[artTier] ?? FALLBACK_ART
@@ -279,7 +282,8 @@ function generateHoard(tier: CrTier, tables: TreasureTableData | null): Treasure
   }
 
   // DMG 2024: roll on lettered magic item tables for specific item names
-  const magicDice = entry?.magicItems ?? (tier === '0-4' ? '1d4-1' : tier === '5-10' ? '1d3' : tier === '11-16' ? '1d4' : '1d6')
+  const magicDice =
+    entry?.magicItems ?? (tier === '0-4' ? '1d4-1' : tier === '5-10' ? '1d3' : tier === '11-16' ? '1d4' : '1d6')
   let magicCount = rollDice(magicDice)
   if (magicCount < 0) magicCount = 0
   for (let i = 0; i < magicCount; i++) {
@@ -341,7 +345,11 @@ export default function TreasureGeneratorModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
           <h2 className="text-lg font-bold text-amber-400">Treasure Generator</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl leading-none px-1"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

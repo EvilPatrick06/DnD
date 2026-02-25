@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { CampaignWizard } from '../components/campaign'
 import { BackButton, Button } from '../components/ui'
 import { importCampaignFromFile } from '../services/io/campaign-io'
-import { useCampaignStore } from '../stores/useCampaignStore'
+import { useCampaignStore } from '../stores/use-campaign-store'
 
 export default function MakeGamePage(): JSX.Element {
   const navigate = useNavigate()

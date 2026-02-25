@@ -1,10 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { useAiDmStore } from '../../../stores/useAiDmStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import type { Campaign } from '../../../types/campaign'
-import dmTabsJson from '../../../../public/data/5e/ui/dm-tabs.json'
 import lightingTravelJson from '../../../../public/data/5e/mechanics/lighting-travel.json'
+import dmTabsJson from '../../../../public/data/5e/ui/dm-tabs.json'
+import { useAiDmStore } from '../../../stores/use-ai-dm-store'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import type { Campaign } from '../../../types/campaign'
 
 const DMAudioPanel = lazy(() => import('./DMAudioPanel'))
 const AiContextPanel = lazy(() => import('./AiContextPanel'))
@@ -31,19 +31,14 @@ const toggleOnClass =
 
 const toggleOffClass = btnClass
 
-export default function DMTabPanel({
-  onOpenModal,
-  campaign,
-  onDispute,
-  onEditMap
-}: DMTabPanelProps): JSX.Element {
+export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap }: DMTabPanelProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabId>('combat')
 
   // AI DM store
   const aiEnabled = useAiDmStore((s) => s.enabled)
   const aiPaused = useAiDmStore((s) => s.paused)
   const aiIsTyping = useAiDmStore((s) => s.isTyping)
-  const aiProvider = useAiDmStore((s) => s.provider)
+  const aiModel = 'Ollama'
   const setPaused = useAiDmStore((s) => s.setPaused)
   const cancelStream = useAiDmStore((s) => s.cancelStream)
   const dmApprovalRequired = useAiDmStore((s) => s.dmApprovalRequired)
@@ -90,9 +85,7 @@ export default function DMTabPanel({
 
       // No breakdown yet (no chat sent) — run a preview build so the user
       // can see realistic token counts for characters, campaign, SRD, etc.
-      const characterIds = campaign.players
-        .map((p) => p.characterId)
-        .filter((id): id is string => id !== null)
+      const characterIds = campaign.players.map((p) => p.characterId).filter((id): id is string => id !== null)
       const preview = await window.api.ai.previewTokenBudget(campaign.id, characterIds)
       if (preview) {
         setTokenBudget(preview)
@@ -236,9 +229,7 @@ export default function DMTabPanel({
                     key={pace ?? 'none'}
                     onClick={() => setTravelPace(pace as 'fast' | 'normal' | 'slow' | null)}
                     className={`px-1.5 py-0.5 text-[10px] rounded cursor-pointer ${
-                      travelPace === pace
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      travelPace === pace ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
                     {pace ? pace.charAt(0).toUpperCase() + pace.slice(1) : 'None'}
@@ -252,11 +243,7 @@ export default function DMTabPanel({
               <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
                 Diseases & Curses
               </span>
-              <Suspense
-                fallback={
-                  <div className="text-[10px] text-gray-500">Loading tracker...</div>
-                }
-              >
+              <Suspense fallback={<div className="text-[10px] text-gray-500">Loading tracker...</div>}>
                 <DiseaseCurseTracker
                   onBroadcastResult={(message) => {
                     addChatMessage({
@@ -277,11 +264,7 @@ export default function DMTabPanel({
               <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
                 Environmental Effects
               </span>
-              <Suspense
-                fallback={
-                  <div className="text-[10px] text-gray-500">Loading effects...</div>
-                }
-              >
+              <Suspense fallback={<div className="text-[10px] text-gray-500">Loading effects...</div>}>
                 <EnvironmentalEffectsPanel
                   onBroadcastResult={(message) => {
                     addChatMessage({
@@ -302,11 +285,7 @@ export default function DMTabPanel({
               <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1.5 block">
                 Traps
               </span>
-              <Suspense
-                fallback={
-                  <div className="text-[10px] text-gray-500">Loading traps...</div>
-                }
-              >
+              <Suspense fallback={<div className="text-[10px] text-gray-500">Loading traps...</div>}>
                 <TrapPlacerPanel
                   onBroadcastResult={(message) => {
                     addChatMessage({
@@ -359,11 +338,7 @@ export default function DMTabPanel({
 
       case 'audio':
         return (
-          <Suspense
-            fallback={
-              <div className="text-xs text-gray-500 p-2">Loading audio panel...</div>
-            }
-          >
+          <Suspense fallback={<div className="text-xs text-gray-500 p-2">Loading audio panel...</div>}>
             <DMAudioPanel />
           </Suspense>
         )
@@ -374,12 +349,9 @@ export default function DMTabPanel({
             {aiEnabled ? (
               <>
                 <span className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider w-full">
-                  AI DM ({aiProvider}) {aiPaused ? '\u2014 Paused' : ''}
+                  AI DM ({aiModel}) {aiPaused ? '\u2014 Paused' : ''}
                 </span>
-                <button
-                  className={aiPaused ? toggleOnClass : btnClass}
-                  onClick={() => setPaused(!aiPaused)}
-                >
+                <button className={aiPaused ? toggleOnClass : btnClass} onClick={() => setPaused(!aiPaused)}>
                   {aiPaused ? 'Resume AI' : 'Pause AI'}
                 </button>
                 {aiIsTyping && (
@@ -427,34 +399,23 @@ export default function DMTabPanel({
                     ))}
                     <div className="flex justify-between text-[10px] border-t border-gray-700 pt-0.5 mt-0.5">
                       <span className="text-purple-400 font-semibold">Total Context</span>
-                      <span className="text-purple-400 font-semibold">
-                        {tokenBudget.total.toLocaleString()}
-                      </span>
+                      <span className="text-purple-400 font-semibold">{tokenBudget.total.toLocaleString()}</span>
                     </div>
                   </div>
                 )}
 
-                <Suspense
-                  fallback={
-                    <div className="text-[10px] text-gray-500 w-full">Loading context panel...</div>
-                  }
-                >
+                <Suspense fallback={<div className="text-[10px] text-gray-500 w-full">Loading context panel...</div>}>
                   <AiContextPanel campaignId={campaign.id} />
                 </Suspense>
 
                 {onDispute && (
-                  <button
-                    className={btnClass}
-                    onClick={() => onDispute('last ruling')}
-                  >
+                  <button className={btnClass} onClick={() => onDispute('last ruling')}>
                     Dispute Ruling
                   </button>
                 )}
               </>
             ) : (
-              <span className="text-xs text-gray-500">
-                AI DM is not enabled for this campaign.
-              </span>
+              <span className="text-xs text-gray-500">AI DM is not enabled for this campaign.</span>
             )}
           </div>
         )

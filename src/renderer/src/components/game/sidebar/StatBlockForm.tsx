@@ -1,14 +1,7 @@
 import { useState } from 'react'
 import type { SidebarEntryStatBlock } from '../../../types/game-state'
 
-const SIZE_OPTIONS: SidebarEntryStatBlock['size'][] = [
-  'Tiny',
-  'Small',
-  'Medium',
-  'Large',
-  'Huge',
-  'Gargantuan'
-]
+const SIZE_OPTIONS: SidebarEntryStatBlock['size'][] = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 
 const ABILITY_NAMES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 const ABILITY_LABELS: Record<string, string> = {
@@ -116,11 +109,7 @@ function NameDescRows({ items, onChange, showCost = false }: NameDescRowProps): 
           </button>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={addRow}
-        className="text-[10px] text-gray-500 hover:text-amber-400 cursor-pointer"
-      >
+      <button type="button" onClick={addRow} className="text-[10px] text-gray-500 hover:text-amber-400 cursor-pointer">
         + Add
       </button>
     </div>
@@ -212,7 +201,7 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
     if (!sb.spellcasting) return
     const slots = { ...(sb.spellcasting.slots ?? {}) }
     const numVal = parseInt(value, 10)
-    if (!value || isNaN(numVal)) {
+    if (!value || Number.isNaN(numVal)) {
       delete slots[level]
     } else {
       slots[level] = numVal
@@ -449,7 +438,9 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
             <input
               type="text"
               value={sb.resistances?.join(', ') ?? ''}
-              onChange={(e) => update({ resistances: e.target.value ? parseCommaSeparated(e.target.value) : undefined })}
+              onChange={(e) =>
+                update({ resistances: e.target.value ? parseCommaSeparated(e.target.value) : undefined })
+              }
               className="w-full px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500"
               placeholder="fire, cold, ..."
             />
@@ -499,9 +490,7 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
             <input
               type="number"
               value={sb.passivePerception ?? ''}
-              onChange={(e) =>
-                update({ passivePerception: e.target.value ? parseInt(e.target.value, 10) : undefined })
-              }
+              onChange={(e) => update({ passivePerception: e.target.value ? parseInt(e.target.value, 10) : undefined })}
               className="w-full px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500"
             />
           </div>
@@ -520,11 +509,17 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
 
       {/* Traits & Actions */}
       <CollapsibleSection title="Traits">
-        <NameDescRows items={sb.traits ?? []} onChange={(items) => update({ traits: items.length ? items : undefined })} />
+        <NameDescRows
+          items={sb.traits ?? []}
+          onChange={(items) => update({ traits: items.length ? items : undefined })}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection title="Actions">
-        <NameDescRows items={sb.actions ?? []} onChange={(items) => update({ actions: items.length ? items : undefined })} />
+        <NameDescRows
+          items={sb.actions ?? []}
+          onChange={(items) => update({ actions: items.length ? items : undefined })}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection title="Bonus Actions">

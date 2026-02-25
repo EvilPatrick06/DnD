@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { CharacterCard, ConfirmDialog, Spinner } from '../components/ui'
-import { addToast } from '../hooks/useToast'
+import { addToast } from '../hooks/use-toast'
 import { exportCharacterToFile, importCharacterFromFile } from '../services/io/character-io'
-import { useCharacterStore } from '../stores/useCharacterStore'
+import { useCharacterStore } from '../stores/use-character-store'
 import { getCharacterSheetPath } from '../utils/character-routes'
+import { logger } from '../utils/logger'
 
 type StatusFilter = 'active' | 'retired' | 'deceased' | 'all'
 
@@ -40,7 +41,7 @@ export default function ViewCharactersPage(): JSX.Element {
       await exportCharacterToFile(character)
       addToast('Character exported', 'success')
     } catch (err) {
-      console.error('Failed to export character:', err)
+      logger.error('Failed to export character:', err)
       addToast('Failed to export character', 'error')
     }
   }

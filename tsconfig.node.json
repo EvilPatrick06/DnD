@@ -15,6 +15,7 @@
   },
   "include": [
     "src/main/**/*",
+    "src/main/data/**/*.json",
     "src/preload/**/*",
     "src/shared/**/*",
     "electron.vite.config.ts"

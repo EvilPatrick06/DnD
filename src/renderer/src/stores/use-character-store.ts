@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Character } from '../types/character'
 import type { ActiveCondition } from '../types/character-common'
+import { logger } from '../utils/logger'
 
 interface CharacterState {
   characters: Character[]
@@ -30,16 +31,16 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
       const rawData = await window.api.loadCharacters()
       if (!Array.isArray(rawData)) {
         const err = rawData as { success?: boolean; error?: string } | undefined
-        console.error('Failed to load characters:', err?.error ?? 'unexpected response')
+        logger.error('Failed to load characters:', err?.error ?? 'unexpected response')
         set({ loading: false })
         return
       }
-      const characters = (rawData
-        .filter((c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string')
+      const characters = rawData.filter(
+        (c) => c != null && typeof c === 'object' && typeof (c as Record<string, unknown>).id === 'string'
       ) as unknown as Character[]
       set({ characters, loading: false })
     } catch (error) {
-      console.error('Failed to load characters:', error)
+      logger.error('Failed to load characters:', error)
       set({ loading: false })
     }
   },
@@ -48,7 +49,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     try {
       const result = await window.api.saveCharacter(character as unknown as Record<string, unknown>)
       if (result && typeof result === 'object' && 'success' in result && !(result as { success: boolean }).success) {
-        console.error('Character save returned failure:', (result as { error?: string }).error, 'id:', character.id)
+        logger.error('Character save returned failure:', (result as { error?: string }).error, 'id:', character.id)
       }
       const { characters } = get()
       const index = characters.findIndex((c) => c.id === character.id)
@@ -60,7 +61,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         set({ characters: [...characters, character] })
       }
     } catch (error) {
-      console.error('Failed to save character:', error, 'id:', character.id, 'name:', character.name)
+      logger.error('Failed to save character:', error, 'id:', character.id, 'name:', character.name)
     }
   },
 
@@ -69,7 +70,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
       await window.api.deleteCharacter(id)
       set({ characters: get().characters.filter((c) => c.id !== id) })
     } catch (error) {
-      console.error('Failed to delete character:', error)
+      logger.error('Failed to delete character:', error)
     }
   },
 
@@ -79,7 +80,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
       try {
         await window.api.deleteCharacter(c.id)
       } catch (error) {
-        console.error('Failed to delete character:', c.id, error)
+        logger.error('Failed to delete character:', c.id, error)
       }
     }
     set({ characters: [], selectedCharacterId: null })

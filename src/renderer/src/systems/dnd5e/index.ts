@@ -1,19 +1,19 @@
 import {
-  load5eSpells,
-  load5eBackgrounds,
-  load5eClassFeatures,
-  load5eEquipment,
-  load5eSpellSlots
-} from '../../services/data-provider'
-import {
-  WARLOCK_PACT_SLOTS,
   FULL_CASTER_SLOTS,
   FULL_CASTERS_5E,
   HALF_CASTERS_5E,
-  isThirdCaster,
-  THIRD_CASTER_SUBCLASSES
+  THIRD_CASTER_SUBCLASSES,
+  WARLOCK_PACT_SLOTS
 } from '../../services/character/spell-data'
+import {
+  load5eBackgrounds,
+  load5eClassFeatures,
+  load5eEquipment,
+  load5eSpellSlots,
+  load5eSpells
+} from '../../services/data-provider'
 import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../../types/character-common'
+import { logger } from '../../utils/logger'
 import type { GameSystemPlugin, SheetConfig } from '../types'
 
 // --- Spell slot tables loaded from JSON via spell-data.ts ---
@@ -34,11 +34,14 @@ function parseSlotTable(raw: Record<string, Record<string, number>>): Record<num
   return result
 }
 
-load5eSpellSlots().then((raw) => {
-  const data = raw as Record<string, unknown>
-  if (data.halfCaster) HALF_CASTER_SLOTS = parseSlotTable(data.halfCaster as Record<string, Record<string, number>>)
-  if (data.thirdCaster) THIRD_CASTER_SLOTS = parseSlotTable(data.thirdCaster as Record<string, Record<string, number>>)
-}).catch(() => {})
+load5eSpellSlots()
+  .then((raw) => {
+    const data = raw as Record<string, unknown>
+    if (data.halfCaster) HALF_CASTER_SLOTS = parseSlotTable(data.halfCaster as Record<string, Record<string, number>>)
+    if (data.thirdCaster)
+      THIRD_CASTER_SLOTS = parseSlotTable(data.thirdCaster as Record<string, Record<string, number>>)
+  })
+  .catch(() => {})
 
 const FULL_CASTERS = FULL_CASTERS_5E
 const HALF_CASTERS = HALF_CASTERS_5E
@@ -120,7 +123,7 @@ export const dnd5ePlugin: GameSystemPlugin = {
           classes: s.classes
         }))
     } catch (error) {
-      console.error('[dnd5e] Failed to load spell list:', error)
+      logger.error('[dnd5e] Failed to load spell list:', error)
       return []
     }
   },
@@ -136,7 +139,7 @@ export const dnd5ePlugin: GameSystemPlugin = {
       const gold = bg?.startingGold ?? 10
       return { cp: 0, sp: 0, gp: gold, pp: 0, ep: 0 }
     } catch (error) {
-      console.error('[dnd5e] Failed to load starting gold:', error)
+      logger.error('[dnd5e] Failed to load starting gold:', error)
       return { cp: 0, sp: 0, gp: 10, pp: 0, ep: 0 }
     }
   },
@@ -155,14 +158,17 @@ export const dnd5ePlugin: GameSystemPlugin = {
           description: f.description ?? ''
         }))
     } catch (error) {
-      console.error('[dnd5e] Failed to load class features:', error)
+      logger.error('[dnd5e] Failed to load class features:', error)
       return []
     }
   },
 
   async loadEquipment(): Promise<{ weapons: unknown[]; armor: unknown[]; shields: unknown[]; gear: unknown[] }> {
     try {
-      const data = await load5eEquipment() as import('../../types/data').EquipmentFile & { shields?: unknown[]; adventuringGear?: unknown[] }
+      const data = (await load5eEquipment()) as import('../../types/data').EquipmentFile & {
+        shields?: unknown[]
+        adventuringGear?: unknown[]
+      }
       return {
         weapons: data.weapons ?? [],
         armor: data.armor ?? [],
@@ -170,7 +176,7 @@ export const dnd5ePlugin: GameSystemPlugin = {
         gear: data.gear ?? data.adventuringGear ?? []
       }
     } catch (error) {
-      console.error('[dnd5e] Failed to load equipment:', error)
+      logger.error('[dnd5e] Failed to load equipment:', error)
       return { weapons: [], armor: [], shields: [], gear: [] }
     }
   },

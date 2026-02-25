@@ -1,4 +1,4 @@
-import { loadCampaign } from '../storage/campaignStorage'
+import { loadCampaign } from '../storage/campaign-storage'
 
 export async function loadCampaignById(id: string): Promise<Record<string, unknown> | null> {
   const result = await loadCampaign(id)
@@ -123,14 +123,16 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
   }
 
   // Session Zero preferences
-  const sessionZero = campaign.sessionZero as {
-    contentLimits?: string[]
-    tone?: string
-    pvpAllowed?: boolean
-    characterDeathExpectation?: string
-    playSchedule?: string
-    additionalNotes?: string
-  } | undefined
+  const sessionZero = campaign.sessionZero as
+    | {
+        contentLimits?: string[]
+        tone?: string
+        pvpAllowed?: boolean
+        characterDeathExpectation?: string
+        playSchedule?: string
+        additionalNotes?: string
+      }
+    | undefined
   if (sessionZero) {
     parts.push('')
     parts.push('Session Zero Preferences:')
@@ -145,18 +147,20 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
   }
 
   // Calendar config
-  const calendar = campaign.calendar as {
-    preset?: string
-    months?: Array<{ name: string }>
-    daysPerYear?: number
-    startingYear?: number
-    hoursPerDay?: number
-  } | undefined
+  const calendar = campaign.calendar as
+    | {
+        preset?: string
+        months?: Array<{ name: string }>
+        daysPerYear?: number
+        startingYear?: number
+        hoursPerDay?: number
+      }
+    | undefined
   if (calendar) {
     parts.push('')
     parts.push('Calendar:')
     if (calendar.preset) parts.push(`- Preset: ${calendar.preset}`)
-    if (calendar.months) parts.push(`- Months: ${calendar.months.map(m => m.name).join(', ')}`)
+    if (calendar.months) parts.push(`- Months: ${calendar.months.map((m) => m.name).join(', ')}`)
     if (calendar.startingYear) parts.push(`- Starting Year: ${calendar.startingYear}`)
   }
 
@@ -168,15 +172,14 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
     parts.push('')
     parts.push('Prepared Encounters:')
     for (const enc of encounters) {
-      const monsters = enc.monsters?.map(m => m.count && m.count > 1 ? `${m.count}x ${m.name}` : m.name).join(', ') ?? ''
+      const monsters =
+        enc.monsters?.map((m) => (m.count && m.count > 1 ? `${m.count}x ${m.name}` : m.name)).join(', ') ?? ''
       parts.push(`- ${enc.name || 'Unnamed'}: ${monsters}`)
     }
   }
 
   // Custom audio (so AI can reference music/ambient cues)
-  const customAudio = campaign.customAudio as
-    | Array<{ displayName: string; category?: string }>
-    | undefined
+  const customAudio = campaign.customAudio as Array<{ displayName: string; category?: string }> | undefined
   if (customAudio && customAudio.length > 0) {
     parts.push('')
     parts.push('Available Audio:')
@@ -211,7 +214,9 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
   }
 
   // Session journal (recent entries for continuity)
-  const journal = campaign.journal as { entries?: Array<{ sessionNumber: number; title: string; content: string }> } | undefined
+  const journal = campaign.journal as
+    | { entries?: Array<{ sessionNumber: number; title: string; content: string }> }
+    | undefined
   if (journal?.entries && journal.entries.length > 0) {
     const sorted = [...journal.entries].sort((a, b) => b.sessionNumber - a.sessionNumber)
     const recent = sorted.slice(0, 5)
@@ -220,7 +225,7 @@ export function formatCampaignForContext(campaign: Record<string, unknown>): str
     for (const entry of recent) {
       parts.push(`- Session ${entry.sessionNumber}: ${entry.title}`)
       if (entry.content) {
-        const truncated = entry.content.length > 300 ? entry.content.slice(0, 300) + '...' : entry.content
+        const truncated = entry.content.length > 300 ? `${entry.content.slice(0, 300)}...` : entry.content
         parts.push(`  ${truncated}`)
       }
     }

@@ -148,7 +148,7 @@ export class MemoryManager {
     const histDir = path.join(this.basePath, 'session-history')
     await fs.mkdir(histDir, { recursive: true })
     const filePath = path.join(histDir, `${sessionId}.md`)
-    await fs.appendFile(filePath, text + '\n', 'utf-8')
+    await fs.appendFile(filePath, `${text}\n`, 'utf-8')
   }
 
   async getSessionLog(sessionId: string): Promise<string> {
@@ -197,7 +197,9 @@ export class MemoryManager {
   }
 
   async getCharacterContext(): Promise<Array<{ id: string; formatted: string }> | null> {
-    const data = await this.readJson<{ characters: Array<{ id: string; formatted: string }>; updatedAt: string }>('characters.json')
+    const data = await this.readJson<{ characters: Array<{ id: string; formatted: string }>; updatedAt: string }>(
+      'characters.json'
+    )
     return data?.characters ?? null
   }
 
@@ -214,12 +216,17 @@ export class MemoryManager {
     const sections: string[] = []
 
     if (worldState) {
-      sections.push(`[WORLD STATE] Map: ${worldState.currentMapName ?? 'Unknown'}, Time: ${worldState.timeOfDay}, Weather: ${worldState.weather}, Scene: ${worldState.currentScene}`)
+      sections.push(
+        `[WORLD STATE] Map: ${worldState.currentMapName ?? 'Unknown'}, Time: ${worldState.timeOfDay}, Weather: ${worldState.weather}, Scene: ${worldState.currentScene}`
+      )
     }
 
     if (combatState?.inCombat) {
       const entries = combatState.entries
-        .map((e) => `${e.name} (Init:${e.initiative}, HP:${e.hp.current}/${e.hp.max}${e.conditions.length ? ', ' + e.conditions.join(', ') : ''})`)
+        .map(
+          (e) =>
+            `${e.name} (Init:${e.initiative}, HP:${e.hp.current}/${e.hp.max}${e.conditions.length ? `, ${e.conditions.join(', ')}` : ''})`
+        )
         .join('; ')
       sections.push(`[COMBAT] Round ${combatState.round}, Turn: ${combatState.currentTurnEntity ?? 'N/A'}. ${entries}`)
     }
@@ -229,9 +236,7 @@ export class MemoryManager {
       ? npcs.filter((n) => n.location === currentScene || n.attitude !== 'unknown')
       : npcs.slice(0, 20)
     if (relevantNPCs.length > 0) {
-      const npcList = relevantNPCs
-        .map((n) => `${n.name} (${n.role}, ${n.attitude}, at ${n.location})`)
-        .join('; ')
+      const npcList = relevantNPCs.map((n) => `${n.name} (${n.role}, ${n.attitude}, at ${n.location})`).join('; ')
       sections.push(`[NPCS] ${npcList}`)
     }
 
@@ -244,7 +249,7 @@ export class MemoryManager {
 
     if (campaignNotes) {
       // Trim to last 500 chars to save context
-      const trimmed = campaignNotes.length > 500 ? '...' + campaignNotes.slice(-500) : campaignNotes
+      const trimmed = campaignNotes.length > 500 ? `...${campaignNotes.slice(-500)}` : campaignNotes
       sections.push(`[CAMPAIGN NOTES] ${trimmed}`)
     }
 

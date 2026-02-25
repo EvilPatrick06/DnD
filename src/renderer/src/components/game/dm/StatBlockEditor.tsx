@@ -11,9 +11,24 @@ const SIZES = creatureTypesJson.sizes as CreatureSize[]
 const TYPES = creatureTypesJson.types as CreatureType[]
 
 const COMMON_SKILLS = [
-  'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History',
-  'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception',
-  'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'
+  'Acrobatics',
+  'Animal Handling',
+  'Arcana',
+  'Athletics',
+  'Deception',
+  'History',
+  'Insight',
+  'Intimidation',
+  'Investigation',
+  'Medicine',
+  'Nature',
+  'Perception',
+  'Performance',
+  'Persuasion',
+  'Religion',
+  'Sleight of Hand',
+  'Stealth',
+  'Survival'
 ]
 
 function CollapsibleSection({
@@ -404,9 +419,7 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
                   <input
                     type="number"
                     value={saves[ab] ?? 0}
-                    onChange={(e) =>
-                      update('savingThrows', { ...saves, [ab]: parseInt(e.target.value, 10) || 0 })
-                    }
+                    onChange={(e) => update('savingThrows', { ...saves, [ab]: parseInt(e.target.value, 10) || 0 })}
                     className="w-10 bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-[10px] text-gray-100 text-center"
                   />
                 )}

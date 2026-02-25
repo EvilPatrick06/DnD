@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react'
 import { load5eChaseTables } from '../../../../services/data-provider'
+import ChaseControls, { type Participant } from './ChaseControls'
+import ChaseMap from './ChaseMap'
 
 interface ChaseTrackerModalProps {
   onClose: () => void
   onBroadcastResult: (message: string) => void
-}
-
-interface Participant {
-  id: string
-  name: string
-  position: number
-  speed: number
-  dashesUsed: number
-  conModifier: number
-  isQuarry: boolean
 }
 
 type ComplicationType = 'urban' | 'wilderness'
@@ -60,7 +52,15 @@ const ESCAPE_DISTANCE = 3
 export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseTrackerModalProps): JSX.Element {
   const [participants, setParticipants] = useState<Participant[]>([
     { id: crypto.randomUUID(), name: 'Quarry', position: 3, speed: 30, dashesUsed: 0, conModifier: 1, isQuarry: true },
-    { id: crypto.randomUUID(), name: 'Pursuer 1', position: 0, speed: 30, dashesUsed: 0, conModifier: 1, isQuarry: false }
+    {
+      id: crypto.randomUUID(),
+      name: 'Pursuer 1',
+      position: 0,
+      speed: 30,
+      dashesUsed: 0,
+      conModifier: 1,
+      isQuarry: false
+    }
   ])
   const [currentRound, setCurrentRound] = useState(1)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -69,8 +69,6 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
   const [chaseTables, setChaseTables] = useState<ChaseTableData | null>(null)
   const [chaseEnded, setChaseEnded] = useState(false)
   const [endMessage, setEndMessage] = useState('')
-  const [newName, setNewName] = useState('')
-  const [newIsQuarry, setNewIsQuarry] = useState(false)
 
   useEffect(() => {
     load5eChaseTables()
@@ -91,27 +89,27 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
     return table[roll]
   }
 
-  const [newConMod, setNewConMod] = useState(1)
-
   const getFreeDashes = (conMod: number): number => Math.max(1, 3 + conMod)
 
-  const addParticipant = (): void => {
-    if (!newName.trim()) return
+  const moveParticipant = (id: string, zones: number): void => {
+    setParticipants((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, position: Math.max(0, Math.min(MAX_ZONES, p.position + zones)) } : p))
+    )
+  }
+
+  const addParticipant = (name: string, conMod: number, isQuarry: boolean): void => {
     setParticipants((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        name: newName.trim(),
-        position: newIsQuarry ? 3 : 0,
+        name,
+        position: isQuarry ? 3 : 0,
         speed: 30,
         dashesUsed: 0,
-        conModifier: newConMod,
-        isQuarry: newIsQuarry
+        conModifier: conMod,
+        isQuarry
       }
     ])
-    setNewName('')
-    setNewIsQuarry(false)
-    setNewConMod(1)
   }
 
   const removeParticipant = (id: string): void => {
@@ -119,12 +117,6 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
     if (activeIndex >= participants.length - 1) {
       setActiveIndex(Math.max(0, participants.length - 2))
     }
-  }
-
-  const moveParticipant = (id: string, zones: number): void => {
-    setParticipants((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, position: Math.max(0, Math.min(MAX_ZONES, p.position + zones)) } : p))
-    )
   }
 
   const handleDash = (id: string): void => {
@@ -151,14 +143,20 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
     const zones = Math.max(1, Math.floor(p.speed / 30))
     moveParticipant(id, zones)
 
-    // Roll complication
     const comp = rollComplication()
     setCurrentComplication(comp)
     onBroadcastResult(`${p.name} moves ${zones} zone(s). Complication: ${comp}`)
   }
 
+  const updateSpeed = (id: string, speed: number): void => {
+    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, speed: Math.max(0, speed) } : p)))
+  }
+
+  const updateConModifier = (id: string, conMod: number): void => {
+    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, conModifier: conMod } : p)))
+  }
+
   const nextTurn = (): void => {
-    // Check for escape or capture
     const quarries = participants.filter((p) => p.isQuarry)
     const pursuers = participants.filter((p) => !p.isQuarry)
 
@@ -181,7 +179,6 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
       }
     }
 
-    // Advance turn
     const nextIdx = activeIndex + 1
     if (nextIdx >= participants.length) {
       const nextRound = currentRound + 1
@@ -197,14 +194,6 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
       setActiveIndex(nextIdx)
     }
     setCurrentComplication(null)
-  }
-
-  const updateConModifier = (id: string, conMod: number): void => {
-    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, conModifier: conMod } : p)))
-  }
-
-  const updateSpeed = (id: string, speed: number): void => {
-    setParticipants((prev) => prev.map((p) => (p.id === id ? { ...p, speed: Math.max(0, speed) } : p)))
   }
 
   const resetChase = (): void => {
@@ -236,7 +225,11 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
               Round {currentRound}/{MAX_ROUNDS}
             </span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl leading-none px-1"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>
@@ -269,42 +262,7 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
           </div>
 
           {/* Distance Track */}
-          <div>
-            <label className="block text-xs text-gray-400 mb-2">Distance Track (Zones)</label>
-            <div className="relative bg-gray-800 rounded-lg border border-gray-700 p-3">
-              {/* Zone markers */}
-              <div className="flex">
-                {Array.from({ length: MAX_ZONES + 1 }, (_, i) => (
-                  <div key={i} className="flex-1 text-center">
-                    <div className="text-[10px] text-gray-500 mb-1">{i}</div>
-                    <div className="h-4 border-l border-gray-600 mx-auto w-0" />
-                  </div>
-                ))}
-              </div>
-              {/* Participant markers */}
-              <div className="relative h-8 mt-1">
-                {participants.map((p, idx) => {
-                  const leftPct = (p.position / MAX_ZONES) * 100
-                  return (
-                    <div
-                      key={p.id}
-                      className="absolute -translate-x-1/2 flex flex-col items-center"
-                      style={{ left: `${leftPct}%`, top: `${idx % 2 === 0 ? 0 : 14}px` }}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center text-[8px] font-bold ${
-                          p.isQuarry ? 'bg-red-600 border-red-400 text-white' : 'bg-blue-600 border-blue-400 text-white'
-                        }`}
-                        title={p.name}
-                      >
-                        {p.name[0]}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+          <ChaseMap participants={participants} maxZones={MAX_ZONES} />
 
           {/* Chase Ended */}
           {chaseEnded && (
@@ -327,139 +285,19 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
             </div>
           )}
 
-          {/* Participant List */}
-          <div className="space-y-2">
-            <label className="block text-xs text-gray-400">Participants</label>
-            {participants.map((p, idx) => (
-              <div
-                key={p.id}
-                className={`flex items-center gap-2 p-2 rounded-lg border ${
-                  idx === activeIndex && !chaseEnded ? 'bg-gray-800 border-amber-600' : 'bg-gray-800/50 border-gray-700'
-                }`}
-              >
-                {/* Active indicator */}
-                <div className="w-2">
-                  {idx === activeIndex && !chaseEnded && <div className="w-2 h-2 rounded-full bg-amber-400" />}
-                </div>
-
-                {/* Name & role */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-white truncate">{p.name}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        p.isQuarry ? 'bg-red-900/50 text-red-400' : 'bg-blue-900/50 text-blue-400'
-                      }`}
-                    >
-                      {p.isQuarry ? 'Quarry' : 'Pursuer'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Zone */}
-                <div className="text-xs text-gray-400">
-                  Zone <span className="text-white font-medium">{p.position}</span>
-                </div>
-
-                {/* Speed */}
-                <div className="flex items-center gap-1">
-                  <label className="text-[10px] text-gray-500">Spd:</label>
-                  <input
-                    type="number"
-                    value={p.speed}
-                    onChange={(e) => updateSpeed(p.id, Number(e.target.value))}
-                    className="w-14 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
-                    step={5}
-                  />
-                </div>
-
-                {/* CON Mod */}
-                <div className="flex items-center gap-1">
-                  <label className="text-[10px] text-gray-500">CON:</label>
-                  <input
-                    type="number"
-                    value={p.conModifier}
-                    onChange={(e) =>
-                      setParticipants((prev) =>
-                        prev.map((pp) => (pp.id === p.id ? { ...pp, conModifier: Number(e.target.value) } : pp))
-                      )
-                    }
-                    className="w-10 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
-                  />
-                </div>
-
-                {/* Dashes */}
-                <div className="text-[10px] text-gray-500">
-                  Dashes: <span className={p.dashesUsed > getFreeDashes(p.conModifier) ? 'text-red-400' : 'text-amber-400'}>{p.dashesUsed}</span>
-                  <span className="text-gray-600">/{getFreeDashes(p.conModifier)}</span>
-                </div>
-
-                {/* Actions */}
-                {idx === activeIndex && !chaseEnded && (
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleMove(p.id)}
-                      className="px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded"
-                    >
-                      Move
-                    </button>
-                    <button
-                      onClick={() => handleDash(p.id)}
-                      className="px-2 py-1 bg-orange-700 hover:bg-orange-600 text-white text-xs rounded"
-                    >
-                      Dash
-                    </button>
-                  </div>
-                )}
-
-                {/* Remove */}
-                <button
-                  onClick={() => removeParticipant(p.id)}
-                  className="text-red-500 hover:text-red-400 text-xs px-1"
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Add Participant */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Participant name..."
-              className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') addParticipant()
-              }}
-            />
-            <div className="flex items-center gap-1">
-              <label className="text-[10px] text-gray-500">CON:</label>
-              <input
-                type="number"
-                value={newConMod}
-                onChange={(e) => setNewConMod(Number(e.target.value))}
-                className="w-10 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
-              />
-            </div>
-            <label className="flex items-center gap-1 text-xs text-gray-400">
-              <input
-                type="checkbox"
-                checked={newIsQuarry}
-                onChange={(e) => setNewIsQuarry(e.target.checked)}
-                className="rounded"
-              />
-              Quarry
-            </label>
-            <button
-              onClick={addParticipant}
-              className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded"
-            >
-              Add
-            </button>
-          </div>
+          {/* Participant Controls */}
+          <ChaseControls
+            participants={participants}
+            activeIndex={activeIndex}
+            chaseEnded={chaseEnded}
+            getFreeDashes={getFreeDashes}
+            onMove={handleMove}
+            onDash={handleDash}
+            onUpdateSpeed={updateSpeed}
+            onUpdateConModifier={updateConModifier}
+            onRemove={removeParticipant}
+            onAddParticipant={addParticipant}
+          />
         </div>
 
         {/* Footer */}

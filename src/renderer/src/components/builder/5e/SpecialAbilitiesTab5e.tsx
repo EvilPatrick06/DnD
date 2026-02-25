@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { load5eBackgrounds, load5eSpecies } from '../../../services/data-provider'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'
 import { ABILITY_NAMES } from '../../../types/character-common'
 import type { BackgroundData } from '../../../types/data'

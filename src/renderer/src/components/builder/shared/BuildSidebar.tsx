@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import BuildLevelGroup from './BuildLevelGroup'
 import IconPicker from './IconPicker'
 

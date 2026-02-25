@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import LevelUpWizard5e from '../components/levelup/5e/LevelUpWizard5e'
-import { useCharacterStore } from '../stores/useCharacterStore'
-import { useLevelUpStore } from '../stores/useLevelUpStore'
-import { useLobbyStore } from '../stores/useLobbyStore'
-import { useNetworkStore } from '../stores/useNetworkStore'
+import { useCharacterStore } from '../stores/use-character-store'
+import { useLevelUpStore } from '../stores/use-level-up-store'
+import { useLobbyStore } from '../stores/use-lobby-store'
+import { useNetworkStore } from '../stores/use-network-store'
 import { is5eCharacter } from '../types/character'
 import type { Character5e } from '../types/character-5e'
+import { logger } from '../utils/logger'
 
 export default function LevelUp5ePage(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -98,7 +99,7 @@ export default function LevelUp5ePage(): JSX.Element {
       reset()
       navigate(returnTo || `/characters/5e/${updated.id}`)
     } catch (err) {
-      console.error('Failed to apply level up:', err)
+      logger.error('Failed to apply level up:', err)
       setError(err instanceof Error ? err.message : 'Failed to apply level up')
     } finally {
       setSaving(false)

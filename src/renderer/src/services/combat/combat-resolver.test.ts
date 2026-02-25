@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock all stores before importing the module under test
 vi.mock('../../stores/useGameStore', () => ({
@@ -41,14 +41,14 @@ vi.mock('../../components/game/dice3d', () => ({
 }))
 
 import {
-  expendSpellSlot,
   canCastAsRitual,
-  getCantripDiceCount,
-  scaleCantrip,
-  resolveDeathSave,
   deathSaveDamageAtZero,
+  expendSpellSlot,
+  getCantripDiceCount,
   resolveConcentrationCheck,
-  type SpellSlotState
+  resolveDeathSave,
+  type SpellSlotState,
+  scaleCantrip
 } from './combat-resolver'
 
 describe('combat-resolver', () => {

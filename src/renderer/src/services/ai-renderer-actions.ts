@@ -11,7 +11,7 @@
  * Tag format: [ACTION:type param1=value1 param2="quoted value" param3=[json]]
  */
 
-export type AiDmRendererAction =
+export type AiRendererAction =
   | { type: 'roll-request'; ability?: string; skill?: string; dc: number; targetPlayerIds?: string[] }
   | { type: 'loot-award'; items: Array<{ name: string; quantity: number }>; gold?: number; targetPlayerIds?: string[] }
   | { type: 'xp-award'; amount: number; reason?: string; targetPlayerIds?: string[] }
@@ -33,8 +33,8 @@ export type AiDmRendererAction =
  * [ACTION:map-reveal cells=[{"x":5,"y":3},{"x":5,"y":4}]]
  * [ACTION:sound-effect sound=combat-start]
  */
-export function parseRendererActions(text: string): AiDmRendererAction[] {
-  const actions: AiDmRendererAction[] = []
+export function parseRendererActions(text: string): AiRendererAction[] {
+  const actions: AiRendererAction[] = []
   // Regex to find [ACTION:type ...params]
   const regex = /\[ACTION:(\S+)(.*?)\]/g
   let match: RegExpExecArray | null
@@ -86,7 +86,7 @@ export function parseRendererActions(text: string): AiDmRendererAction[] {
           break
         }
         case 'narration': {
-          const moodValue = params.mood as AiDmRendererAction extends { type: 'narration'; mood?: infer M } ? M : never
+          const moodValue = params.mood as AiRendererAction extends { type: 'narration'; mood?: infer M } ? M : never
           const validMoods = ['dramatic', 'calm', 'tense', 'mysterious'] as const
           actions.push({
             type: 'narration',
@@ -186,8 +186,8 @@ export function stripActionTags(text: string): string {
  * Each dispatch callback is optional — callers only need to provide handlers
  * for the action types they care about.
  */
-export function processAiDmActions(
-  actions: AiDmRendererAction[],
+export function processAiRendererActions(
+  actions: AiRendererAction[],
   dispatch: {
     triggerRollRequest?: (ability: string | undefined, skill: string | undefined, dc: number) => void
     awardXP?: (amount: number, reason?: string) => void

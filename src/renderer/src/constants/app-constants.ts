@@ -25,12 +25,6 @@ export const MAX_CHAT_LENGTH = 2000
 export const MAX_READ_FILE_SIZE = 50 * 1024 * 1024 // 50 MB (maps)
 export const MAX_WRITE_CONTENT_SIZE = 10 * 1024 * 1024 // 10 MB (data files)
 
-// Voice: voice-manager
-export const VAD_THRESHOLD = 30
-export const VAD_CHECK_INTERVAL_MS = 100
-export const VOICE_RETRY_COUNT = 10
-export const VOICE_RETRY_INTERVAL_MS = 1000
-
 // UI: pages
 export const LOADING_GRACE_PERIOD_MS = 4000
 export const LOBBY_COPY_TIMEOUT_MS = 2000

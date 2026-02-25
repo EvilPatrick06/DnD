@@ -2,6 +2,7 @@ import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/pro
 import { join } from 'node:path'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
+import { logToFile } from '../log'
 import { CURRENT_SCHEMA_VERSION, migrateData } from './migrations'
 import type { StorageResult } from './types'
 
@@ -65,7 +66,7 @@ export async function loadBastions(): Promise<StorageResult<Record<string, unkno
       if (r.status === 'fulfilled') {
         bastions.push(r.value)
       } else {
-        console.error('Failed to load a bastion file:', r.reason)
+        logToFile('ERROR', 'Failed to load a bastion file:', String(r.reason))
       }
     }
     return { success: true, data: bastions }

@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollSingle } from '../../../services/dice/dice-service'
-import { resolveEffects } from '../../../services/combat/effect-resolver-5e'
+import { useMemo } from 'react'
 import { computeSpellcastingInfo } from '../../../services/character/spell-data'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { resolveEffects } from '../../../services/combat/effect-resolver-5e'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import type { ArmorEntry } from '../../../types/character-common'
 import { abilityModifier, formatMod } from '../../../types/character-common'
+import DeathSaves5e from './DeathSaves5e'
+import HitPointsBar5e from './HitPointsBar5e'
 
 interface CombatStatsBar5eProps {
   character: Character5e
@@ -20,20 +20,6 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
   const saveCharacter = useCharacterStore((s) => s.saveCharacter)
   const storeCharacter = useCharacterStore((s) => s.characters.find((c) => c.id === character.id))
   const effectiveCharacter = (storeCharacter ?? character) as Character5e
-  const [editingHP, setEditingHP] = useState(false)
-  const [hpCurrent, setHpCurrent] = useState(effectiveCharacter.hitPoints.current)
-  const [hpMax, setHpMax] = useState(effectiveCharacter.hitPoints.maximum)
-  const [hpTemp, setHpTemp] = useState(effectiveCharacter.hitPoints.temporary)
-
-  useEffect(() => {
-    setHpCurrent(effectiveCharacter.hitPoints.current)
-    setHpMax(effectiveCharacter.hitPoints.maximum)
-    setHpTemp(effectiveCharacter.hitPoints.temporary)
-  }, [
-    effectiveCharacter.hitPoints.current,
-    effectiveCharacter.hitPoints.maximum,
-    effectiveCharacter.hitPoints.temporary
-  ])
 
   const profBonus = Math.ceil(character.level / 4) + 1
 
@@ -54,18 +40,14 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
   const dynamicAC = (() => {
     let ac: number
     if (equippedArmor) {
-      // 5e: acBonus IS the full base AC (e.g., 17 for Splint)
       let dexCap = equippedArmor.dexCap
-      // Medium Armor Master: increase DEX cap by 1 for medium armor
       if (hasMediumArmorMaster && dexCap != null && dexCap > 0 && equippedArmor.category === 'medium') {
         dexCap = dexCap + 1
       }
       const cappedDex = dexCap === 0 ? 0 : dexCap != null ? Math.min(dexMod, dexCap) : dexMod
       ac = equippedArmor.acBonus + cappedDex
-      // Defense FS: +1 AC while wearing armor
       if (hasDefenseFS) ac += 1
     } else {
-      // Unarmored Defense class features
       const classNames = effectiveCharacter.classes.map((c) => c.name.toLowerCase())
       const conMod = abilityModifier(effectiveCharacter.abilityScores.constitution)
       const wisMod = abilityModifier(effectiveCharacter.abilityScores.wisdom)
@@ -80,83 +62,19 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
       if (isDraconicSorcerer) candidates.push(10 + dexMod + chaMod)
       ac = Math.max(...candidates)
     }
-    // Add shield bonus
     if (equippedShield) {
       ac += equippedShield.acBonus
     }
-    // Add resolved effect AC bonuses (magic items like Ring of Protection, Bracers of Defense)
-    // Exclude Defense FS since it's already checked above via hasDefenseFS
     const effectACBonus = resolved.acBonus - (hasDefenseFS && equippedArmor ? 1 : 0)
     if (effectACBonus > 0) ac += effectACBonus
     return ac
   })()
 
-  const saveHP = (): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
-    const updated = {
-      ...latest,
-      hitPoints: { current: hpCurrent, maximum: hpMax, temporary: hpTemp },
-      updatedAt: new Date().toISOString()
-    }
-    saveCharacter(updated)
-    setEditingHP(false)
-
-    const { role, sendMessage } = useNetworkStore.getState()
-    if (role === 'host' && updated.playerId !== 'local') {
-      sendMessage('dm:character-update', {
-        characterId: updated.id,
-        characterData: updated,
-        targetPeerId: updated.playerId
-      })
-      useLobbyStore.getState().setRemoteCharacter(updated.id, updated as Character)
-    }
-  }
-
-  // Death saves state
-  const deathSaves = effectiveCharacter.deathSaves
-
-  const saveDeathSaves = (successes: number, failures: number): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
-    const updated = {
-      ...latest,
-      deathSaves: { successes, failures },
-      updatedAt: new Date().toISOString()
-    }
-    saveCharacter(updated)
-
-    const { role, sendMessage } = useNetworkStore.getState()
-    if (role === 'host' && updated.playerId !== 'local') {
-      sendMessage('dm:character-update', {
-        characterId: updated.id,
-        characterData: updated,
-        targetPeerId: updated.playerId
-      })
-      useLobbyStore.getState().setRemoteCharacter(updated.id, updated as Character)
-    }
-  }
-
-  const resetDeathSaves = (): void => {
-    saveDeathSaves(0, 0)
-  }
-
-  const toggleSuccess = (index: number): void => {
-    if (readonly) return
-    const newSuccesses = index < deathSaves.successes ? index : index + 1
-    saveDeathSaves(Math.min(3, Math.max(0, newSuccesses)), deathSaves.failures)
-  }
-
-  const toggleFailure = (index: number): void => {
-    if (readonly) return
-    const newFailures = index < deathSaves.failures ? index : index + 1
-    saveDeathSaves(deathSaves.successes, Math.min(3, Math.max(0, newFailures)))
-  }
-
-  // Initiative for 5e — include Alert feat bonus + resolved effects
+  // Initiative for 5e
   const hasAlert = feats.some((f) => f.id === 'alert')
   const dynamicInitiative = dexMod + (hasAlert ? profBonus : 0) + resolved.initiativeBonus
   const thirdStat = { label: 'Initiative', value: formatMod(dynamicInitiative) }
 
-  // Initiative tooltip breakdown
   const initTooltipParts = [`DEX ${formatMod(dexMod)}`]
   if (hasAlert) initTooltipParts.push(`+${profBonus} (Alert)`)
   if (resolved.initiativeBonus > 0) {
@@ -169,7 +87,7 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
   }
   initTooltipParts.push(`= ${formatMod(dynamicInitiative)}`)
 
-  // AC equipment bonus indicator (use best unarmored AC for comparison)
+  // AC equipment bonus indicator
   const classNames = effectiveCharacter.classes.map((c) => c.name.toLowerCase())
   const unarmoredCandidates: number[] = [10 + dexMod]
   if (classNames.includes('barbarian'))
@@ -184,112 +102,13 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
   const unarmoredAC = Math.max(...unarmoredCandidates)
   const acEquipmentBonus = dynamicAC - unarmoredAC
 
-  // Size display
   const characterSize = effectiveCharacter.size ?? 'Medium'
 
   return (
     <div className="mb-6">
       <div className="grid grid-cols-5 gap-3">
         {/* HP */}
-        <div
-          className={`bg-gray-900/50 border rounded-lg p-3 text-center transition-colors ${
-            readonly
-              ? 'border-gray-700'
-              : editingHP
-                ? 'border-amber-500 cursor-pointer'
-                : 'border-gray-700 hover:border-gray-500 cursor-pointer'
-          }`}
-          onClick={readonly ? undefined : () => !editingHP && setEditingHP(true)}
-          title={readonly ? undefined : editingHP ? undefined : 'Click to edit HP'}
-        >
-          <div className="text-xs text-gray-400 uppercase">HP</div>
-          {editingHP ? (
-            <div className="space-y-1 mt-1">
-              <div className="flex items-center justify-center gap-1">
-                <input
-                  type="number"
-                  value={hpCurrent}
-                  onChange={(e) => setHpCurrent(parseInt(e.target.value, 10) || 0)}
-                  className="w-12 bg-gray-800 border border-gray-600 rounded text-center text-sm text-green-400 focus:outline-none focus:border-amber-500"
-                />
-                <span className="text-gray-500">/</span>
-                <input
-                  type="number"
-                  value={hpMax}
-                  onChange={(e) => setHpMax(parseInt(e.target.value, 10) || 0)}
-                  className="w-12 bg-gray-800 border border-gray-600 rounded text-center text-sm text-green-400 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-xs text-gray-500">Temp:</span>
-                <input
-                  type="number"
-                  value={hpTemp}
-                  onChange={(e) => setHpTemp(parseInt(e.target.value, 10) || 0)}
-                  className="w-10 bg-gray-800 border border-gray-600 rounded text-center text-xs text-blue-400 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-              <div className="flex gap-1 justify-center">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    saveHP()
-                  }}
-                  className="px-2 py-0.5 text-xs bg-green-700 hover:bg-green-600 rounded text-white"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingHP(false)
-                  }}
-                  className="px-2 py-0.5 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="text-xl font-bold text-green-400">
-                {effectiveCharacter.hitPoints.current + effectiveCharacter.hitPoints.temporary}/
-                {effectiveCharacter.hitPoints.maximum}
-              </div>
-              {effectiveCharacter.hitPoints.temporary > 0 && (
-                <div className="text-xs text-blue-400">+{effectiveCharacter.hitPoints.temporary} temp</div>
-              )}
-              {/* Bloodied indicator */}
-              {effectiveCharacter.hitPoints.current > 0 &&
-                effectiveCharacter.hitPoints.current <= Math.floor(effectiveCharacter.hitPoints.maximum / 2) && (
-                  <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-0.5">Bloodied</div>
-                )}
-              {/* Hit Point Dice */}
-              {(() => {
-                const remaining = effectiveCharacter.hitDice.reduce((s, h) => s + h.current, 0)
-                const total = effectiveCharacter.hitDice.reduce((s, h) => s + h.maximum, 0)
-                const isMulticlass = effectiveCharacter.hitDice.length > 1
-                const spent = total - remaining
-                if (isMulticlass) {
-                  const diceDisplay = effectiveCharacter.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')
-                  return (
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {remaining}/{total} ({diceDisplay})
-                      {spent > 0 && <span className="text-red-400 ml-1">({spent} spent)</span>}
-                    </div>
-                  )
-                }
-                const hitDie = effectiveCharacter.hitDice[0]?.dieType ?? 8
-                return (
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {remaining}/{total} d{hitDie}
-                    {spent > 0 && <span className="text-red-400 ml-1">({spent} spent)</span>}
-                  </div>
-                )
-              })()}
-            </>
-          )}
-        </div>
+        <HitPointsBar5e character={character} effectiveCharacter={effectiveCharacter} readonly={readonly} />
 
         {/* AC */}
         <div
@@ -337,7 +156,6 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
         {/* Speed */}
         {(() => {
           const rawSpeed = character.speed ?? 30
-          // Apply feat speed bonuses
           const hasSpeedy = feats.some((f) => f.id === 'speedy')
           const hasBoonOfSpeed = feats.some((f) => f.id === 'boon-of-speed')
           const featSpeedBonus = (hasSpeedy ? 10 : 0) + (hasBoonOfSpeed ? 30 : 0)
@@ -428,10 +246,7 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
             return (
               <>
                 <span title={dcTooltipParts.length > 1 ? dcTooltipParts.join(' ') : undefined}>
-                  Save DC:{' '}
-                  <span className="font-semibold text-amber-400">
-                    {effectiveDC}
-                  </span>
+                  Save DC: <span className="font-semibold text-amber-400">{effectiveDC}</span>
                 </span>
                 <span
                   title={
@@ -544,132 +359,7 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
       )}
 
       {/* Death Saves (when HP <= 0) */}
-      {effectiveCharacter.hitPoints.current <= 0 && (
-        <div className="mt-3 bg-gray-900/50 border border-gray-700 rounded-lg p-3">
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm text-gray-400 font-semibold">Death Saves:</span>
-
-            {/* Successes */}
-            <div className="flex items-center gap-1">
-              {[0, 1, 2].map((i) => (
-                <button
-                  key={`success-${i}`}
-                  onClick={() => toggleSuccess(i)}
-                  disabled={readonly}
-                  className={`text-lg ${readonly ? '' : 'cursor-pointer'}`}
-                  title={`Success ${i + 1}`}
-                >
-                  {i < deathSaves.successes ? (
-                    <span className="text-green-500">{'\u25CF'}</span>
-                  ) : (
-                    <span className="text-gray-600">{'\u25CB'}</span>
-                  )}
-                </button>
-              ))}
-              <span className="text-xs text-gray-500 ml-1">Successes</span>
-            </div>
-
-            <span className="text-gray-600">|</span>
-
-            {/* Failures */}
-            <div className="flex items-center gap-1">
-              {[0, 1, 2].map((i) => (
-                <button
-                  key={`failure-${i}`}
-                  onClick={() => toggleFailure(i)}
-                  disabled={readonly}
-                  className={`text-lg ${readonly ? '' : 'cursor-pointer'}`}
-                  title={`Failure ${i + 1}`}
-                >
-                  {i < deathSaves.failures ? (
-                    <span className="text-red-500">{'\u25CF'}</span>
-                  ) : (
-                    <span className="text-gray-600">{'\u25CB'}</span>
-                  )}
-                </button>
-              ))}
-              <span className="text-xs text-gray-500 ml-1">Failures</span>
-            </div>
-
-            {/* Roll Death Save button */}
-            {!readonly && deathSaves.successes < 3 && deathSaves.failures < 3 && (
-              <button
-                onClick={() => {
-                  const roll = rollSingle(20)
-                  // Trigger 3D dice animation for death save
-                  trigger3dDice({
-                    formula: '1d20',
-                    rolls: [roll],
-                    total: roll,
-                    rollerName: effectiveCharacter.name
-                  })
-                  let newSuccesses = deathSaves.successes
-                  let newFailures = deathSaves.failures
-                  let resultMsg = ''
-
-                  if (roll === 1) {
-                    // Nat 1: two failures
-                    newFailures = Math.min(3, newFailures + 2)
-                    resultMsg = `Death Save: Natural 1! Two failures (${newFailures}/3)`
-                  } else if (roll === 20) {
-                    // Nat 20: regain 1 HP, clear death saves
-                    resultMsg = `Death Save: Natural 20! Regains 1 HP!`
-                    const latest =
-                      useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
-                    const updated = {
-                      ...latest,
-                      hitPoints: { ...effectiveCharacter.hitPoints, current: 1 },
-                      deathSaves: { successes: 0, failures: 0 },
-                      updatedAt: new Date().toISOString()
-                    }
-                    saveCharacter(updated)
-                    const { role, sendMessage } = useNetworkStore.getState()
-                    if (role === 'host' && updated.playerId !== 'local') {
-                      sendMessage('dm:character-update', {
-                        characterId: updated.id,
-                        characterData: updated,
-                        targetPeerId: updated.playerId
-                      })
-                      useLobbyStore.getState().setRemoteCharacter(updated.id, updated as Character)
-                    }
-                    // Broadcast to chat
-                    const { sendMessage: send } = useNetworkStore.getState()
-                    send('chat:message', { message: `${effectiveCharacter.name} ${resultMsg}`, isSystem: true })
-                    return
-                  } else if (roll >= 10) {
-                    newSuccesses = Math.min(3, newSuccesses + 1)
-                    resultMsg = `Death Save: ${roll} - Success! (${newSuccesses}/3)`
-                  } else {
-                    newFailures = Math.min(3, newFailures + 1)
-                    resultMsg = `Death Save: ${roll} - Failure (${newFailures}/3)`
-                  }
-
-                  saveDeathSaves(newSuccesses, newFailures)
-                  const { sendMessage: send } = useNetworkStore.getState()
-                  send('chat:message', { message: `${effectiveCharacter.name} ${resultMsg}`, isSystem: true })
-                }}
-                className="px-2.5 py-1 text-xs bg-amber-700 hover:bg-amber-600 rounded text-white font-semibold cursor-pointer"
-              >
-                Roll Death Save
-              </button>
-            )}
-
-            {/* Reset button */}
-            {!readonly && (deathSaves.successes > 0 || deathSaves.failures > 0) && (
-              <button
-                onClick={resetDeathSaves}
-                className="px-2 py-0.5 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300 ml-auto"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-
-          {/* Status messages */}
-          {deathSaves.successes >= 3 && <div className="mt-2 text-sm text-green-400 font-semibold">Stabilized!</div>}
-          {deathSaves.failures >= 3 && <div className="mt-2 text-sm text-red-400 font-semibold">Dead!</div>}
-        </div>
-      )}
+      <DeathSaves5e character={character} effectiveCharacter={effectiveCharacter} readonly={readonly} />
     </div>
   )
 }

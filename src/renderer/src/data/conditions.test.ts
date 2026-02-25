@@ -5,9 +5,7 @@ import { isBloodied } from '../types/character-common'
 const conditionsJson = vi.hoisted(() => {
   const { readFileSync: readSync } = require('fs')
   const { resolve: resolvePath } = require('path')
-  return JSON.parse(
-    readSync(resolvePath(__dirname, '../../public/data/5e/hazards/conditions.json'), 'utf-8')
-  )
+  return JSON.parse(readSync(resolvePath(__dirname, '../../public/data/5e/hazards/conditions.json'), 'utf-8'))
 })
 
 // Mock load5eConditions before importing conditions module
@@ -30,9 +28,23 @@ describe('CONDITIONS_5E — PHB 2024 accuracy', () => {
 
   it('has all 15 standard conditions plus Bloodied and Burning', () => {
     const expected = [
-      'Blinded', 'Charmed', 'Deafened', 'Exhaustion', 'Frightened',
-      'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified',
-      'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Bloodied', 'Burning'
+      'Blinded',
+      'Charmed',
+      'Deafened',
+      'Exhaustion',
+      'Frightened',
+      'Grappled',
+      'Incapacitated',
+      'Invisible',
+      'Paralyzed',
+      'Petrified',
+      'Poisoned',
+      'Prone',
+      'Restrained',
+      'Stunned',
+      'Unconscious',
+      'Bloodied',
+      'Burning'
     ]
     for (const name of expected) {
       expect(findCondition(name), `Missing condition: ${name}`).toBeDefined()

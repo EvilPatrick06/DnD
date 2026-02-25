@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger'
 import type { MessageType, NetworkMessage } from './types'
 
 type MessageHandler<T = unknown> = (message: NetworkMessage<T>) => void
@@ -52,11 +53,11 @@ export function createMessageRouter(): MessageRouter {
           try {
             handler(message)
           } catch (err) {
-            console.error(`[MessageRouter] Error in handler for "${message.type}":`, err)
+            logger.error(`[MessageRouter] Error in handler for "${message.type}":`, err)
           }
         }
       } else {
-        console.debug(`[MessageRouter] No handler for message type: ${message.type}`)
+        logger.debug(`[MessageRouter] No handler for message type: ${message.type}`)
       }
     },
 

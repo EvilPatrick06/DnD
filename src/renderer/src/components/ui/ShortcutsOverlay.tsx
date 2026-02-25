@@ -37,7 +37,11 @@ function ShortcutRow({ keys, description }: ShortcutEntry): JSX.Element {
   )
 }
 
-export default function ShortcutsOverlay({ open, onClose, context = 'global' }: ShortcutsOverlayProps): JSX.Element | null {
+export default function ShortcutsOverlay({
+  open,
+  onClose,
+  context = 'global'
+}: ShortcutsOverlayProps): JSX.Element | null {
   if (!open) return null
 
   return (
@@ -59,7 +63,9 @@ export default function ShortcutsOverlay({ open, onClose, context = 'global' }: 
           <div>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">General</h3>
             <div className="divide-y divide-gray-800">
-              {globalShortcuts.map((s) => <ShortcutRow key={s.keys} {...s} />)}
+              {globalShortcuts.map((s) => (
+                <ShortcutRow key={s.keys} {...s} />
+              ))}
             </div>
           </div>
 
@@ -67,7 +73,9 @@ export default function ShortcutsOverlay({ open, onClose, context = 'global' }: 
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">In-Game</h3>
               <div className="divide-y divide-gray-800">
-                {gameShortcuts.map((s) => <ShortcutRow key={s.keys} {...s} />)}
+                {gameShortcuts.map((s) => (
+                  <ShortcutRow key={s.keys} {...s} />
+                ))}
               </div>
             </div>
           )}

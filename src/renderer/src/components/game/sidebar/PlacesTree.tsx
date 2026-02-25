@@ -172,9 +172,7 @@ function TreeNodeRow({
 
   const descendantIds = getDescendantIds(node)
 
-  const moveTargets = allEntries.filter(
-    (e) => e.id !== entry.id && !descendantIds.has(e.id)
-  )
+  const moveTargets = allEntries.filter((e) => e.id !== entry.id && !descendantIds.has(e.id))
 
   return (
     <>
@@ -303,7 +301,9 @@ function TreeNodeRow({
                         setMoveMenuOpen(false)
                       }}
                       className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-800 cursor-pointer ${
-                        entry.parentId === target.id ? 'text-amber-400 font-semibold' : 'text-gray-300 hover:text-gray-100'
+                        entry.parentId === target.id
+                          ? 'text-amber-400 font-semibold'
+                          : 'text-gray-300 hover:text-gray-100'
                       }`}
                     >
                       {target.placeType && (
@@ -352,20 +352,14 @@ function TreeNodeRow({
 
       {/* Description (collapsed inline) */}
       {entry.description && (
-        <div
-          className="text-[10px] text-gray-500 truncate"
-          style={{ paddingLeft: `${indentPx + 24}px` }}
-        >
+        <div className="text-[10px] text-gray-500 truncate" style={{ paddingLeft: `${indentPx + 24}px` }}>
           {entry.description}
         </div>
       )}
 
       {/* DM notes */}
       {isDM && entry.notes && (
-        <div
-          className="text-[9px] text-amber-400/60 italic truncate"
-          style={{ paddingLeft: `${indentPx + 24}px` }}
-        >
+        <div className="text-[9px] text-amber-400/60 italic truncate" style={{ paddingLeft: `${indentPx + 24}px` }}>
           {entry.notes}
         </div>
       )}

@@ -25,7 +25,12 @@ const contestCommand: ChatCommand = {
     const myTag = myRoll === 20 ? ' **Nat 20!**' : myRoll === 1 ? ' *Nat 1!*' : ''
     const theirTag = theirRoll === 20 ? ' **Nat 20!**' : theirRoll === 1 ? ' *Nat 1!*' : ''
 
-    trigger3dDice({ formula: '2d20', rolls: [myRoll, theirRoll], total: myRoll + theirRoll, rollerName: ctx.playerName })
+    trigger3dDice({
+      formula: '2d20',
+      rolls: [myRoll, theirRoll],
+      total: myRoll + theirRoll,
+      rollerName: ctx.playerName
+    })
 
     return {
       type: 'broadcast',

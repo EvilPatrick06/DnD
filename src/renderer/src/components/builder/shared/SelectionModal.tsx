@@ -1,4 +1,4 @@
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import SelectionDetailPanel from './SelectionDetailPanel'
 import SelectionFilterBar from './SelectionFilterBar'
 import SelectionOptionList from './SelectionOptionList'

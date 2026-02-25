@@ -1,25 +1,27 @@
+import speciesResourcesJson from '../../public/data/5e/mechanics/species-resources.json'
 import type { ClassResource } from '../types/character-common'
 import type { ResourceDefinition, ResourceScaling } from '../types/data'
-import speciesResourcesJson from '../../public/data/5e/mechanics/species-resources.json'
 
 // --- Generic resource interpreter (same as class-resources) ---
 
 function resolveMax(scaling: ResourceScaling, level: number): number {
   if (scaling.max !== undefined) return scaling.max
   switch (scaling.maxFormula) {
-    case 'profBonus': return Math.ceil(level / 4) + 1
-    case 'classLevel': return level
-    case 'classLevel*5': return level * 5
-    default: return 1
+    case 'profBonus':
+      return Math.ceil(level / 4) + 1
+    case 'classLevel':
+      return level
+    case 'classLevel*5':
+      return level * 5
+    default:
+      return 1
   }
 }
 
 function resolveResources(definitions: ResourceDefinition[], level: number): ClassResource[] {
   const resources: ClassResource[] = []
   for (const def of definitions) {
-    const tier = def.scaling.find(
-      (s) => level >= s.minLevel && (s.maxLevel === undefined || level <= s.maxLevel)
-    )
+    const tier = def.scaling.find((s) => level >= s.minLevel && (s.maxLevel === undefined || level <= s.maxLevel))
     if (!tier) continue
 
     const max = resolveMax(tier, level)
@@ -37,10 +39,13 @@ function resolveResources(definitions: ResourceDefinition[], level: number): Cla
 // --- Typed JSON data ---
 
 const data = speciesResourcesJson as {
-  species: Record<string, {
-    resources: ResourceDefinition[]
-    heritages?: Record<string, ResourceDefinition[]>
-  }>
+  species: Record<
+    string,
+    {
+      resources: ResourceDefinition[]
+      heritages?: Record<string, ResourceDefinition[]>
+    }
+  >
 }
 
 // --- Public API (signature preserved) ---

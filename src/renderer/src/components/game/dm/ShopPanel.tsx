@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { load5ePoisons } from '../../../services/data-provider'
 import type { ShopItem } from '../../../network/types'
+import { load5ePoisons } from '../../../services/data-provider'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Poison } from '../../../types/dm-toolbox'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
 
 const PRESET_ITEMS: ShopItem[] = [
   {
@@ -94,7 +94,7 @@ export default function ShopPanel(): JSX.Element {
             id: `poison-${p.id}`,
             name: p.name,
             category: 'Poison' as const,
-            price: { gp: parseInt(p.cost) || 100 },
+            price: { gp: parseInt(p.cost, 10) || 100 },
             quantity: 3,
             description: `${p.type} — ${p.effect}`
           }))

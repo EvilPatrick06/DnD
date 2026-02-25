@@ -6,8 +6,8 @@ import { AiChatRequestSchema, AiConfigSchema } from '../../shared/ipc-schemas'
 import * as aiService from '../ai/ai-service'
 import { buildContext, getLastTokenBreakdown } from '../ai/context-builder'
 import {
-  checkOllamaUpdate,
   CURATED_MODELS,
+  checkOllamaUpdate,
   deleteModel,
   detectOllama,
   downloadOllama,
@@ -20,7 +20,7 @@ import {
   updateOllama
 } from '../ai/ollama-manager'
 import type { AiChatRequest, AiConfig, StatChange } from '../ai/types'
-import { deleteConversation, loadConversation, saveConversation } from '../storage/aiConversationStorage'
+import { deleteConversation, loadConversation, saveConversation } from '../storage/ai-conversation-storage'
 
 export function registerAiHandlers(): void {
   // ── Configuration ──
@@ -45,6 +45,14 @@ export function registerAiHandlers(): void {
   // ── Index Building ──
 
   ipcMain.handle(IPC_CHANNELS.AI_BUILD_INDEX, async (event) => {
+    if (app.isPackaged) {
+      return {
+        success: false,
+        error:
+          'Rebuilding the rulebook index is disabled in packaged builds. The bundled index is loaded automatically.'
+      }
+    }
+
     const win = BrowserWindow.fromWebContents(event.sender)
     try {
       const result = aiService.buildIndex((percent, stage) => {
@@ -98,6 +106,16 @@ export function registerAiHandlers(): void {
     return { success: true }
   })
 
+  ipcMain.handle(IPC_CHANNELS.AI_WEB_SEARCH_APPROVE, async (_event, streamId: string, approved: boolean) => {
+    if (typeof streamId !== 'string') {
+      return { success: false, error: 'Invalid streamId' }
+    }
+    if (typeof approved !== 'boolean') {
+      return { success: false, error: 'Invalid approval value' }
+    }
+    return aiService.approveWebSearch(streamId, approved)
+  })
+
   // ── Stat Mutations ──
 
   ipcMain.handle(IPC_CHANNELS.AI_APPLY_MUTATIONS, async (_event, characterId: string, changes: StatChange[]) => {
@@ -126,18 +144,15 @@ export function registerAiHandlers(): void {
     return getLastTokenBreakdown()
   })
 
-  ipcMain.handle(
-    IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW,
-    async (_event, campaignId: string, characterIds: string[]) => {
-      // Build context without sending a message — just to populate the token breakdown
-      try {
-        await buildContext('preview query for token budget', characterIds, campaignId)
-        return getLastTokenBreakdown()
-      } catch {
-        return null
-      }
+  ipcMain.handle(IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW, async (_event, campaignId: string, characterIds: string[]) => {
+    // Build context without sending a message — just to populate the token breakdown
+    try {
+      await buildContext('preview query for token budget', characterIds, campaignId)
+      return getLastTokenBreakdown()
+    } catch {
+      return null
     }
-  )
+  })
 
   // ── Conversation Persistence ──
 

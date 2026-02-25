@@ -125,7 +125,13 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
       { id: 'species', label: 'Species', group: 'character-options', source: 'mixed', icon: '🧝' },
       { id: 'backgrounds', label: 'Backgrounds', group: 'character-options', source: 'mixed', icon: '📖' },
       { id: 'feats', label: 'Feats', group: 'character-options', source: 'mixed', icon: '💪' },
-      { id: 'supernatural-gifts', label: 'Supernatural Gifts', group: 'character-options', source: 'mixed', icon: '🌟' },
+      {
+        id: 'supernatural-gifts',
+        label: 'Supernatural Gifts',
+        group: 'character-options',
+        source: 'mixed',
+        icon: '🌟'
+      },
       { id: 'class-features', label: 'Class Features', group: 'character-options', source: 'static', icon: '📋' },
       { id: 'fighting-styles', label: 'Fighting Styles', group: 'character-options', source: 'static', icon: '🤺' }
     ]
@@ -165,7 +171,13 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
       { id: 'poisons', label: 'Poisons', group: 'world-building', source: 'mixed', icon: '☠️' },
       { id: 'diseases', label: 'Diseases', group: 'world-building', source: 'mixed', icon: '🦠' },
       { id: 'curses', label: 'Curses', group: 'world-building', source: 'mixed', icon: '🌑' },
-      { id: 'environmental-effects', label: 'Environmental Effects', group: 'world-building', source: 'mixed', icon: '🌪️' },
+      {
+        id: 'environmental-effects',
+        label: 'Environmental Effects',
+        group: 'world-building',
+        source: 'mixed',
+        icon: '🌪️'
+      },
       { id: 'crafting', label: 'Crafting', group: 'world-building', source: 'mixed', icon: '🔨' },
       { id: 'downtime', label: 'Downtime', group: 'world-building', source: 'mixed', icon: '🏖️' }
     ]
@@ -183,9 +195,7 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
   {
     id: 'media',
     label: 'Media',
-    categories: [
-      { id: 'sounds', label: 'Sounds & Audio', group: 'media', source: 'static', icon: '🔊' }
-    ]
+    categories: [{ id: 'sounds', label: 'Sounds & Audio', group: 'media', source: 'static', icon: '🔊' }]
   }
 ]
 

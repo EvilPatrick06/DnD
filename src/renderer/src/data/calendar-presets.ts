@@ -1,5 +1,5 @@
-import type { CalendarConfig, CalendarMonth, CalendarPresetId } from '../types/campaign'
 import { load5eCalendarPresets } from '../services/data-provider'
+import type { CalendarConfig, CalendarMonth, CalendarPresetId } from '../types/campaign'
 
 interface CalendarPresetData {
   months: CalendarMonth[]
@@ -22,19 +22,21 @@ export const PRESET_LABELS: Record<CalendarPresetId, string> = {
   custom: 'Custom'
 }
 
-load5eCalendarPresets().then((raw) => {
-  const data = raw as { presets: Record<string, CalendarPresetData>; labels: Record<string, string> }
-  if (data.presets) {
-    for (const [key, value] of Object.entries(data.presets)) {
-      if (CALENDAR_PRESETS[key as CalendarPresetId]) {
-        Object.assign(CALENDAR_PRESETS[key as CalendarPresetId], value)
+load5eCalendarPresets()
+  .then((raw) => {
+    const data = raw as { presets: Record<string, CalendarPresetData>; labels: Record<string, string> }
+    if (data.presets) {
+      for (const [key, value] of Object.entries(data.presets)) {
+        if (CALENDAR_PRESETS[key as CalendarPresetId]) {
+          Object.assign(CALENDAR_PRESETS[key as CalendarPresetId], value)
+        }
       }
     }
-  }
-  if (data.labels) {
-    Object.assign(PRESET_LABELS, data.labels)
-  }
-}).catch(() => {})
+    if (data.labels) {
+      Object.assign(PRESET_LABELS, data.labels)
+    }
+  })
+  .catch(() => {})
 
 export function buildCalendarConfig(
   preset: CalendarPresetId,

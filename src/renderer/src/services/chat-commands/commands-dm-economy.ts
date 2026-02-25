@@ -1,4 +1,4 @@
-import { useLobbyStore } from '../../stores/useLobbyStore'
+import { useLobbyStore } from '../../stores/use-lobby-store'
 import { is5eCharacter } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
 import { getLatestCharacter, saveAndBroadcastCharacter } from './helpers'

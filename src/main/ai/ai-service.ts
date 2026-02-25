@@ -1,18 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { app, BrowserWindow, safeStorage } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import { saveConversation } from '../storage/aiConversationStorage'
+import { logToFile } from '../log'
+import { saveConversation } from '../storage/ai-conversation-storage'
 import { buildChunkIndex, loadChunkIndex } from './chunk-builder'
-import {
-  claudeChatOnce,
-  claudeStreamChat,
-  initClaudeClient,
-  isClaudeConfigured,
-  testClaudeConnection
-} from './claude-client'
 import { buildContext, setSearchEngine } from './context-builder'
-import { getMemoryManager } from './memory-manager'
 import { ConversationManager } from './conversation-manager'
 import { parseDmActions, stripDmActions } from './dm-actions'
 import {
@@ -23,26 +16,38 @@ import {
   readRequestedFile,
   stripFileRead
 } from './file-reader'
-import { hasWebSearchTag, parseWebSearch, performWebSearch, formatSearchResults, stripWebSearch } from './web-search'
-import { isOllamaRunning, listOllamaModels, ollamaChatOnce, ollamaStreamChat } from './ollama-client'
+import { getMemoryManager } from './memory-manager'
+import {
+  getOllamaUrl,
+  isOllamaRunning,
+  listOllamaModels,
+  ollamaChatOnce,
+  ollamaStreamChat,
+  setOllamaUrl
+} from './ollama-client'
 import { SearchEngine } from './search-engine'
 import { applyMutations, describeChange, isNegativeChange, parseStatChanges, stripStatChanges } from './stat-mutations'
 import { cleanNarrativeText, hasViolations } from './tone-validator'
-import type {
-  AiChatRequest,
-  AiConfig,
-  DmActionData,
-  ModelChoice,
-  ProviderChoice,
-  ProviderStatus,
-  StatChange
-} from './types'
+import type { AiChatRequest, AiConfig, DmActionData, ProviderStatus, StatChange } from './types'
+import { formatSearchResults, hasWebSearchTag, parseWebSearch, performWebSearch, stripWebSearch } from './web-search'
 
 // Per-campaign conversation managers
 const conversations = new Map<string, ConversationManager>()
 
 // Active stream abort controllers
 const activeStreams = new Map<string, AbortController>()
+
+interface PendingWebSearchApproval {
+  resolve: (approved: boolean) => void
+  timeout: ReturnType<typeof setTimeout>
+  onAbort: () => void
+  signal: AbortSignal
+}
+
+const pendingWebSearchApprovals = new Map<string, PendingWebSearchApproval>()
+const WEB_SEARCH_APPROVAL_TIMEOUT_MS = 30_000
+const WEB_SEARCH_DENIED_MESSAGE =
+  '[WEB SEARCH DENIED]\nThe requested web search was not approved. Continue responding using existing campaign and rulebook context only.\n[/WEB SEARCH DENIED]'
 
 // Scene preparation status per campaign
 const scenePrepStatus = new Map<string, { status: 'preparing' | 'ready' | 'error'; streamId: string | null }>()
@@ -51,13 +56,12 @@ const scenePrepStatus = new Map<string, { status: 'preparing' | 'ready' | 'error
 
 let consecutiveFailures = 0
 const MAX_RETRY_DELAY_MS = 30_000
-const FALLBACK_THRESHOLD = 3 // Auto-switch to Ollama after N Claude failures
 
 export type AiConnectionStatus = 'connected' | 'degraded' | 'disconnected'
 
 export function getConnectionStatus(): AiConnectionStatus {
   if (consecutiveFailures === 0) return 'connected'
-  if (consecutiveFailures < FALLBACK_THRESHOLD) return 'degraded'
+  if (consecutiveFailures < 3) return 'degraded'
   return 'disconnected'
 }
 
@@ -90,23 +94,14 @@ async function streamWithRetry(
       consecutiveFailures++
       const msg = error instanceof Error ? error.message : String(error)
 
-      // Don't retry on abort or auth errors
+      // Don't retry on abort
       if (abortController.signal.aborted) return
-      if (msg.includes('401') || msg.includes('403') || msg.includes('API key')) {
-        onError(msg)
-        return
-      }
 
       if (attempt < maxRetries) {
         const delay = getRetryDelay(attempt)
         await sleep(delay)
       } else {
-        // Auto-fallback: if Claude fails N times, suggest Ollama
-        if (currentConfig.provider === 'claude' && consecutiveFailures >= FALLBACK_THRESHOLD) {
-          onError(`Claude API failed after ${consecutiveFailures} attempts. Consider switching to Ollama.`)
-        } else {
-          onError(msg)
-        }
+        onError(msg)
       }
     }
   }
@@ -114,13 +109,11 @@ async function streamWithRetry(
 
 // Current config
 let currentConfig: {
-  provider: ProviderChoice
-  model: ModelChoice
   ollamaModel: string
+  ollamaUrl: string
 } = {
-  provider: 'ollama',
-  model: 'sonnet',
-  ollamaModel: 'llama3.1'
+  ollamaModel: 'llama3.1',
+  ollamaUrl: 'http://localhost:11434'
 }
 
 let searchEngine: SearchEngine | null = null
@@ -130,35 +123,25 @@ function getConfigPath(): string {
   return join(app.getPath('userData'), 'ai-config.json')
 }
 
-function getApiKeyPath(): string {
-  return join(app.getPath('userData'), 'ai-api-key.bin')
-}
-
 // ── Config Management ──
 
 export function configure(config: AiConfig): void {
   currentConfig = {
-    provider: config.provider,
-    model: config.model,
-    ollamaModel: config.ollamaModel || 'llama3.1'
+    ollamaModel: config.ollamaModel || 'llama3.1',
+    ollamaUrl: config.ollamaUrl || 'http://localhost:11434'
   }
 
-  // Save non-sensitive config
+  setOllamaUrl(currentConfig.ollamaUrl)
+
+  // Save config
   const configPath = getConfigPath()
   writeFileSync(
     configPath,
     JSON.stringify({
-      provider: currentConfig.provider,
-      model: currentConfig.model,
-      ollamaModel: currentConfig.ollamaModel
+      ollamaModel: currentConfig.ollamaModel,
+      ollamaUrl: currentConfig.ollamaUrl
     })
   )
-
-  // Save API key encrypted
-  if (config.apiKey) {
-    saveApiKey(config.apiKey)
-    initClaudeClient(config.apiKey)
-  }
 }
 
 export function getConfig(): AiConfig {
@@ -168,9 +151,8 @@ export function getConfig(): AiConfig {
     try {
       const saved = JSON.parse(readFileSync(configPath, 'utf-8'))
       currentConfig = {
-        provider: saved.provider || 'ollama',
-        model: saved.model || 'sonnet',
-        ollamaModel: saved.ollamaModel || 'llama3.1'
+        ollamaModel: saved.ollamaModel || 'llama3.1',
+        ollamaUrl: saved.ollamaUrl || 'http://localhost:11434'
       }
     } catch {
       // Use defaults
@@ -178,48 +160,15 @@ export function getConfig(): AiConfig {
   }
 
   return {
-    provider: currentConfig.provider,
-    model: currentConfig.model,
-    ollamaModel: currentConfig.ollamaModel
+    ollamaModel: currentConfig.ollamaModel,
+    ollamaUrl: currentConfig.ollamaUrl
   }
 }
 
-function saveApiKey(key: string): void {
-  try {
-    if (safeStorage.isEncryptionAvailable()) {
-      const encrypted = safeStorage.encryptString(key)
-      writeFileSync(getApiKeyPath(), encrypted)
-    } else {
-      // Fallback: store plaintext (dev mode)
-      writeFileSync(getApiKeyPath(), key, 'utf-8')
-    }
-  } catch (err) {
-    console.error('Failed to save API key:', err)
-  }
-}
-
-function loadApiKey(): string | null {
-  const keyPath = getApiKeyPath()
-  if (!existsSync(keyPath)) return null
-
-  try {
-    const raw = readFileSync(keyPath)
-    if (safeStorage.isEncryptionAvailable()) {
-      return safeStorage.decryptString(raw)
-    }
-    return raw.toString('utf-8')
-  } catch {
-    return null
-  }
-}
-
-/** Initialize the Claude client from saved API key and auto-load chunk index. */
+/** Initialize from saved config and auto-load chunk index. */
 export function initFromSavedConfig(): void {
   getConfig() // Load config from disk
-  const apiKey = loadApiKey()
-  if (apiKey && currentConfig.provider === 'claude') {
-    initClaudeClient(apiKey)
-  }
+  setOllamaUrl(currentConfig.ollamaUrl)
 
   // Auto-load pre-built chunk index so it's ready when any campaign starts
   loadIndex()
@@ -228,17 +177,20 @@ export function initFromSavedConfig(): void {
 // ── Provider Status ──
 
 export async function checkProviders(): Promise<ProviderStatus> {
-  const apiKey = loadApiKey()
-  const claudeOk = apiKey ? await testClaudeConnection(apiKey) : false
   const ollamaOk = await isOllamaRunning()
   const ollamaModels = ollamaOk ? await listOllamaModels() : []
 
-  return { claude: claudeOk, ollama: ollamaOk, ollamaModels }
+  return { ollama: ollamaOk, ollamaModels }
 }
 
 // ── Index Management ──
 
 export function buildIndex(onProgress?: (percent: number, stage: string) => void): { chunkCount: number } {
+  if (app.isPackaged) {
+    throw new Error(
+      'Rebuilding the rulebook index is disabled in packaged builds. The bundled chunk index is used instead.'
+    )
+  }
   const index = buildChunkIndex(onProgress)
   searchEngine = new SearchEngine()
   searchEngine.load(index)
@@ -293,6 +245,61 @@ export interface StreamResult {
   }>
 }
 
+function clearPendingWebSearchApproval(streamId: string, approved = false): boolean {
+  const pending = pendingWebSearchApprovals.get(streamId)
+  if (!pending) return false
+
+  pendingWebSearchApprovals.delete(streamId)
+  clearTimeout(pending.timeout)
+  pending.signal.removeEventListener('abort', pending.onAbort)
+  pending.resolve(approved)
+  return true
+}
+
+function waitForWebSearchApproval(streamId: string, abortSignal: AbortSignal): Promise<boolean> {
+  // Defensive cleanup if a stale pending request exists for this stream.
+  clearPendingWebSearchApproval(streamId, false)
+
+  return new Promise((resolve) => {
+    const onAbort = () => {
+      clearPendingWebSearchApproval(streamId, false)
+    }
+    const timeout = setTimeout(() => {
+      clearPendingWebSearchApproval(streamId, false)
+    }, WEB_SEARCH_APPROVAL_TIMEOUT_MS)
+
+    pendingWebSearchApprovals.set(streamId, {
+      resolve,
+      timeout,
+      onAbort,
+      signal: abortSignal
+    })
+    abortSignal.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+export function approveWebSearch(streamId: string, approved: boolean): { success: boolean; error?: string } {
+  const found = clearPendingWebSearchApproval(streamId, approved)
+  if (!found) {
+    return { success: false, error: 'No pending web search request for this stream.' }
+  }
+  return { success: true }
+}
+
+function sendWebSearchStatus(
+  streamId: string,
+  query: string,
+  status: 'pending_approval' | 'searching' | 'rejected'
+): void {
+  const win = BrowserWindow.getAllWindows()[0]
+  if (!win) return
+  win.webContents.send(IPC_CHANNELS.AI_STREAM_WEB_SEARCH, {
+    streamId,
+    query,
+    status
+  })
+}
+
 export function startChat(
   request: AiChatRequest,
   onChunk: (text: string) => void,
@@ -321,10 +328,7 @@ export function startChat(
         request.activeCreatures,
         request.gameState
       )
-      const providerContext =
-        currentConfig.provider === 'ollama'
-          ? '\n\n[PROVIDER CONTEXT]\nYou are running 100% locally on the user\'s computer via Ollama. All processing happens on their hardware — no data is sent to any remote server. You are NOT a cloud-based AI. If asked, confirm you run locally. You have no internet access unless you use the [WEB_SEARCH] action.\n[/PROVIDER CONTEXT]'
-          : ''
+      const providerContext = `\n\n[PROVIDER CONTEXT]\nYou are running via Ollama at ${getOllamaUrl()}. You have no internet access unless you use the [WEB_SEARCH] action.\n[/PROVIDER CONTEXT]`
       const { systemPrompt, messages } = await conv.getMessagesForApi(context + providerContext)
 
       // Stream response
@@ -336,56 +340,30 @@ export function startChat(
           onChunk(text)
         },
         onDone: (text: string) => {
+          clearPendingWebSearchApproval(streamId, false)
           fullText = text
           activeStreams.delete(streamId)
 
           // Handle file read recursion
-          handleStreamCompletion(
-            fullText,
-            request,
-            conv,
-            streamId,
-            abortController,
-            onChunk,
-            onDone,
-            onError,
-            0
-          )
+          handleStreamCompletion(fullText, request, conv, streamId, abortController, onChunk, onDone, onError, 0)
         },
         onError: (error: Error) => {
+          clearPendingWebSearchApproval(streamId, false)
           activeStreams.delete(streamId)
           onError(error.message)
         }
       }
 
-      if (currentConfig.provider === 'claude') {
-        if (!isClaudeConfigured()) {
-          const apiKey = loadApiKey()
-          if (apiKey) initClaudeClient(apiKey)
-          else {
-            onError('Claude API key not configured')
-            return
-          }
+      await streamWithRetry(
+        (signal) => ollamaStreamChat(systemPrompt, messages, callbacks, currentConfig.ollamaModel, signal),
+        abortController,
+        (errMsg) => {
+          activeStreams.delete(streamId)
+          onError(errMsg)
         }
-        await streamWithRetry(
-          (signal) => claudeStreamChat(systemPrompt, messages, callbacks, currentConfig.model, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      } else {
-        await streamWithRetry(
-          (signal) => ollamaStreamChat(systemPrompt, messages, callbacks, currentConfig.ollamaModel, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      }
+      )
     } catch (error) {
+      clearPendingWebSearchApproval(streamId, false)
       activeStreams.delete(streamId)
       onError(error instanceof Error ? error.message : String(error))
     }
@@ -409,6 +387,49 @@ async function handleStreamCompletion(
   onError: (error: string) => void,
   fileReadDepth: number
 ): Promise<void> {
+  const restreamConversation = async (): Promise<void> => {
+    activeStreams.set(streamId, abortController)
+    let nextFullText = ''
+    const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
+
+    const nextCallbacks = {
+      onText: (text: string) => {
+        nextFullText += text
+        onChunk(text)
+      },
+      onDone: (text: string) => {
+        nextFullText = text
+        activeStreams.delete(streamId)
+        handleStreamCompletion(
+          nextFullText,
+          request,
+          conv,
+          streamId,
+          abortController,
+          onChunk,
+          onDone,
+          onError,
+          fileReadDepth + 1
+        )
+      },
+      onError: (error: Error) => {
+        clearPendingWebSearchApproval(streamId, false)
+        activeStreams.delete(streamId)
+        onError(error.message)
+      }
+    }
+
+    await streamWithRetry(
+      (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
+      abortController,
+      (errMsg) => {
+        clearPendingWebSearchApproval(streamId, false)
+        activeStreams.delete(streamId)
+        onError(errMsg)
+      }
+    )
+  }
+
   // Check for file read tag
   if (hasFileReadTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
     const fileReq = parseFileRead(fullText)
@@ -433,56 +454,7 @@ async function handleStreamCompletion(
       conv.addMessage('assistant', strippedText)
       conv.addMessage('user', fileContent)
 
-      // Re-stream with the file content injected
-      activeStreams.set(streamId, abortController)
-      let nextFullText = ''
-      const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
-
-      const nextCallbacks = {
-        onText: (text: string) => {
-          nextFullText += text
-          onChunk(text)
-        },
-        onDone: (text: string) => {
-          nextFullText = text
-          activeStreams.delete(streamId)
-          handleStreamCompletion(
-            nextFullText,
-            request,
-            conv,
-            streamId,
-            abortController,
-            onChunk,
-            onDone,
-            onError,
-            fileReadDepth + 1
-          )
-        },
-        onError: (error: Error) => {
-          activeStreams.delete(streamId)
-          onError(error.message)
-        }
-      }
-
-      if (currentConfig.provider === 'claude') {
-        await streamWithRetry(
-          (signal) => claudeStreamChat(sp, msgs, nextCallbacks, currentConfig.model, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      } else {
-        await streamWithRetry(
-          (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      }
+      await restreamConversation()
       return
     }
   }
@@ -491,74 +463,27 @@ async function handleStreamCompletion(
   if (hasWebSearchTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
     const searchReq = parseWebSearch(fullText)
     if (searchReq) {
-      const win = BrowserWindow.getAllWindows()[0]
-      if (win) {
-        win.webContents.send(IPC_CHANNELS.AI_STREAM_WEB_SEARCH, {
-          streamId,
-          query: searchReq.query,
-          status: 'searching'
-        })
+      sendWebSearchStatus(streamId, searchReq.query, 'pending_approval')
+      const approved = await waitForWebSearchApproval(streamId, abortController.signal)
+      if (abortController.signal.aborted) return
+
+      const strippedText = stripWebSearch(fullText)
+      conv.addMessage('assistant', strippedText)
+
+      if (!approved) {
+        sendWebSearchStatus(streamId, searchReq.query, 'rejected')
+        conv.addMessage('user', WEB_SEARCH_DENIED_MESSAGE)
+        await restreamConversation()
+        return
       }
 
+      sendWebSearchStatus(streamId, searchReq.query, 'searching')
       const results = await performWebSearch(searchReq.query)
+      if (abortController.signal.aborted) return
       const searchContent = formatSearchResults(searchReq.query, results)
-
-      // Strip the WEB_SEARCH tag from display text
-      const strippedText = stripWebSearch(fullText)
-
-      // Inject search results and continue
-      conv.addMessage('assistant', strippedText)
       conv.addMessage('user', searchContent)
 
-      activeStreams.set(streamId, abortController)
-      let nextFullText = ''
-      const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
-
-      const nextCallbacks = {
-        onText: (text: string) => {
-          nextFullText += text
-          onChunk(text)
-        },
-        onDone: (text: string) => {
-          nextFullText = text
-          activeStreams.delete(streamId)
-          handleStreamCompletion(
-            nextFullText,
-            request,
-            conv,
-            streamId,
-            abortController,
-            onChunk,
-            onDone,
-            onError,
-            fileReadDepth + 1
-          )
-        },
-        onError: (error: Error) => {
-          activeStreams.delete(streamId)
-          onError(error.message)
-        }
-      }
-
-      if (currentConfig.provider === 'claude') {
-        await streamWithRetry(
-          (signal) => claudeStreamChat(sp, msgs, nextCallbacks, currentConfig.model, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      } else {
-        await streamWithRetry(
-          (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
-          abortController,
-          (errMsg) => {
-            activeStreams.delete(streamId)
-            onError(errMsg)
-          }
-        )
-      }
+      await restreamConversation()
       return
     }
   }
@@ -577,7 +502,7 @@ async function handleStreamCompletion(
     conv.addMessage('assistant', displayText)
 
     saveConversation(request.campaignId, conv.serialize()).catch((err) =>
-      console.error('[AI] Failed to auto-save conversation:', err)
+      logToFile('ERROR', '[AI] Failed to auto-save conversation:', String(err))
     )
 
     try {
@@ -591,13 +516,14 @@ async function handleStreamCompletion(
 
     onDone(cleaned, displayText, statChanges, dmActions)
   } catch (err) {
-    console.error('[AI] Error parsing AI response, delivering raw text:', err)
+    logToFile('ERROR', '[AI] Error parsing AI response, delivering raw text:', String(err))
     conv.addMessage('assistant', fullText)
     onDone(fullText, fullText, [], [])
   }
 }
 
 export function cancelChat(streamId: string): void {
+  clearPendingWebSearchApproval(streamId, false)
   const controller = activeStreams.get(streamId)
   if (controller) {
     controller.abort()
@@ -608,17 +534,7 @@ export function cancelChat(streamId: string): void {
 /** Non-streaming chat for summarization and world state extraction. */
 async function chatOnce(systemPrompt: string, userMessage: string): Promise<string> {
   const messages = [{ role: 'user' as const, content: userMessage }]
-
-  if (currentConfig.provider === 'claude') {
-    if (!isClaudeConfigured()) {
-      const apiKey = loadApiKey()
-      if (apiKey) initClaudeClient(apiKey)
-      else throw new Error('Claude API key not configured')
-    }
-    return await claudeChatOnce(systemPrompt, messages, 'haiku')
-  } else {
-    return await ollamaChatOnce(systemPrompt, messages, currentConfig.ollamaModel)
-  }
+  return await ollamaChatOnce(systemPrompt, messages, currentConfig.ollamaModel)
 }
 
 // ── Scene Preparation ──

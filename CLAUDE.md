@@ -55,12 +55,20 @@ Tests are co-located next to source files (`*.test.ts`). Vitest config in `vites
 |------|---------|
 | `src/renderer/src/App.tsx` | React Router root (all routes) |
 | `src/renderer/src/stores/builder/` | Builder store slices |
-| `src/renderer/src/services/stat-calculator-5e.ts` | Character stat computation |
+| `src/renderer/src/services/character/stat-calculator-5e.ts` | Character stat computation |
 | `src/renderer/src/services/data-provider.ts` | Game data loading with cache |
-| `src/renderer/src/components/game/` | In-game UI (map, dice, DM tools, player HUD, modals, overlays) |
+| `src/renderer/src/services/combat/` | Attack, damage, effects, flanking, cover, AoE |
+| `src/renderer/src/services/character/` | Stats, build tree, spells, rest, companions |
+| `src/renderer/src/services/dice/` | Dice engine, service, inline roller |
+| `src/renderer/src/services/io/` | Character/campaign IO, auto-save, import/export |
+| `src/renderer/src/services/map/` | Pathfinding, visibility, map utilities |
+| `src/renderer/src/components/game/map/` | MapCanvas, overlays, grid, walls, tokens |
+| `src/renderer/src/components/game/dice3d/` | 3D dice physics + UI (roller, result, history) |
+| `src/renderer/src/components/game/modals/` | 4 subdirs: combat/, dm-tools/, mechanics/, utility/ |
+| `src/renderer/src/constants/` | App constants, damage types, spell schools |
 | `src/renderer/src/network/` | P2P networking (host/client managers, voice, types) |
 | `src/main/ipc/` | IPC handler registration |
-| `src/main/ai/` | AI DM integration (Claude API + Ollama) |
+| `src/main/ai/` | AI DM integration (Ollama) |
 | `src/main/storage/` | File-based CRUD (characters, campaigns, bastions, AI conversations) |
 
 ## Type System

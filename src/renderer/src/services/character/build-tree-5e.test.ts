@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  generate5eBuildSlots,
-  generate5eLevelUpSlots,
-  getExpertiseGrants
-} from './build-tree-5e'
+import { generate5eBuildSlots, generate5eLevelUpSlots, getExpertiseGrants } from './build-tree-5e'
 
 describe('generate5eBuildSlots', () => {
   it('1. Foundation slots present at level 1', () => {
@@ -89,9 +85,7 @@ describe('generate5eLevelUpSlots', () => {
     expect(levelUpSlots.every((s) => !currentSlotIds.has(s.id))).toBe(true)
 
     // Count should match the delta
-    const expectedNewSlots = fullSlots.filter(
-      (s) => s.level > 0 && s.level > 5 && !currentSlotIds.has(s.id)
-    )
+    const expectedNewSlots = fullSlots.filter((s) => s.level > 5 && !currentSlotIds.has(s.id))
     expect(levelUpSlots).toHaveLength(expectedNewSlots.length)
   })
 })

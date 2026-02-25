@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useCharacterEditor } from '../../../hooks/use-character-editor'
+import { useEquipmentData } from '../../../hooks/use-equipment-data'
 import { load5eCrafting, load5eEquipment } from '../../../services/data-provider'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import type { ArmorEntry, WeaponEntry } from '../../../types/character-common'
 import { abilityModifier } from '../../../types/character-common'
 import { deductWithConversion, totalInCopper } from '../../../utils/currency'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
+import CraftingProgress5e from './CraftingProgress5e'
+import CraftingRecipeList5e from './CraftingRecipeList5e'
 
 // --- Types ---
 
@@ -73,23 +74,18 @@ function parseCostToCopper(costStr: string): number {
 // --- Hooks ---
 
 function useCraftingData(): CraftingToolEntry[] {
-  const [data, setData] = useState<CraftingToolEntry[]>([])
-  useEffect(() => {
-    load5eCrafting()
-      .then((d) => setData(d as unknown as CraftingToolEntry[]))
-      .catch(() => {})
-  }, [])
-  return data
+  return useEquipmentData(() => load5eCrafting().then((d) => d as unknown as CraftingToolEntry[]), [])
 }
 
 function useEquipmentDatabase(): EquipmentDatabase {
-  const [db, setDb] = useState<EquipmentDatabase>({ weapons: [], armor: [] })
-  useEffect(() => {
-    load5eEquipment()
-      .then((d) => setDb({ weapons: (d.weapons as unknown as WeaponData5e[]) ?? [], armor: (d.armor as unknown as ArmorData5e[]) ?? [] }))
-      .catch(() => {})
-  }, [])
-  return db
+  return useEquipmentData(
+    () =>
+      load5eEquipment().then((d) => ({
+        weapons: (d.weapons as unknown as WeaponData5e[]) ?? [],
+        armor: (d.armor as unknown as ArmorData5e[]) ?? []
+      })),
+    { weapons: [], armor: [] }
+  )
 }
 
 // --- Helpers ---
@@ -131,6 +127,21 @@ function armorDataToEntry(a: ArmorData5e): ArmorEntry {
   }
 }
 
+// --- Spell scroll cost/time table per PHB 2024 ---
+
+const SCROLL_COSTS: Record<number, { cost: number; days: number }> = {
+  0: { cost: 15, days: 1 },
+  1: { cost: 25, days: 1 },
+  2: { cost: 100, days: 3 },
+  3: { cost: 150, days: 5 },
+  4: { cost: 1000, days: 10 },
+  5: { cost: 1500, days: 25 },
+  6: { cost: 10000, days: 40 },
+  7: { cost: 12500, days: 50 },
+  8: { cost: 15000, days: 60 },
+  9: { cost: 50000, days: 120 }
+}
+
 // --- Main Component ---
 
 interface CraftingSection5eProps {
@@ -139,10 +150,10 @@ interface CraftingSection5eProps {
 }
 
 export default function CraftingSection5e({ character, readonly }: CraftingSection5eProps): JSX.Element {
+  const { getLatest, saveAndBroadcast } = useCharacterEditor(character.id)
   const craftingData = useCraftingData()
   const equipmentDb = useEquipmentDatabase()
 
-  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({})
   const [craftWarning, setCraftWarning] = useState<string | null>(null)
   const [craftSuccess, setCraftSuccess] = useState<string | null>(null)
 
@@ -166,29 +177,10 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
     )
   )
 
-  // Spell scroll cost/time table per PHB 2024
-  const SCROLL_COSTS: Record<number, { cost: number; days: number }> = {
-    0: { cost: 15, days: 1 },
-    1: { cost: 25, days: 1 },
-    2: { cost: 100, days: 3 },
-    3: { cost: 150, days: 5 },
-    4: { cost: 1000, days: 10 },
-    5: { cost: 1500, days: 25 },
-    6: { cost: 10000, days: 40 },
-    7: { cost: 12500, days: 50 },
-    8: { cost: 15000, days: 60 },
-    9: { cost: 50000, days: 120 }
-  }
-
-  const [scrollLevelFilter, setScrollLevelFilter] = useState<number | 'all'>('all')
-  const [scrollExpanded, setScrollExpanded] = useState(false)
-
   const preparedSpells = character.knownSpells ?? []
-  const filteredScrollSpells =
-    scrollLevelFilter === 'all' ? preparedSpells : preparedSpells.filter((s) => s.level === scrollLevelFilter)
 
   const handleCraftScroll = (spell: { id: string; name: string; level: number }): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
+    const latest = getLatest() || character
 
     const scrollInfo = SCROLL_COSTS[spell.level]
     if (!scrollInfo) return
@@ -226,37 +218,17 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
       treasure: { ...latest.treasure, ...newCurrency },
       updatedAt: new Date().toISOString()
     } as Character
-    useCharacterStore.getState().saveCharacter(updated)
-    broadcastIfDM(updated)
+    saveAndBroadcast(updated)
 
     setCraftWarning(null)
     setCraftSuccess(`Crafted ${scrollName} successfully`)
     setTimeout(() => setCraftSuccess(null), 3000)
   }
 
-  const broadcastIfDM = (updated: Character): void => {
-    const { role, sendMessage } = useNetworkStore.getState()
-    if (role === 'host' && updated.playerId !== 'local') {
-      sendMessage('dm:character-update', {
-        characterId: updated.id,
-        characterData: updated,
-        targetPeerId: updated.playerId
-      })
-      useLobbyStore.getState().setRemoteCharacter(updated.id, updated)
-    }
-  }
-
-  const toggleTool = (tool: string): void => {
-    setExpandedTools((prev) => ({ ...prev, [tool]: !prev[tool] }))
-  }
-
   const handleCraft = (item: CraftableItem): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
+    const latest = getLatest() || character
 
-    // Calculate cost in copper from multi-denomination string
     const costInCopper = parseCostToCopper(item.rawMaterialCost)
-
-    // Check if character can afford raw materials
     const currentCurrency = {
       pp: latest.treasure.pp,
       gp: latest.treasure.gp,
@@ -271,8 +243,6 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
       return
     }
 
-    // Deduct cost using the largest denomination that fits
-    // Convert copper cost to a single denomination for deductWithConversion
     let deductDenom: 'gp' | 'sp' | 'cp' = 'cp'
     let deductAmount = costInCopper
     if (costInCopper >= 100 && costInCopper % 100 === 0) {
@@ -295,7 +265,6 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
 
     const updatedTreasure = { ...latest.treasure, ...newCurrency }
 
-    // Create the appropriate item based on category
     if (item.category === 'weapon') {
       const weaponData = equipmentDb.weapons.find((w) => w.name.toLowerCase() === item.name.toLowerCase())
       if (weaponData) {
@@ -307,10 +276,8 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
           treasure: updatedTreasure,
           updatedAt: new Date().toISOString()
         } as Character
-        useCharacterStore.getState().saveCharacter(updated)
-        broadcastIfDM(updated)
+        saveAndBroadcast(updated)
       } else {
-        // Fallback for weapons not in equipment.json (e.g., Net)
         const newWeapon: WeaponEntry = {
           id: crypto.randomUUID(),
           name: item.name,
@@ -327,8 +294,7 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
           treasure: updatedTreasure,
           updatedAt: new Date().toISOString()
         } as Character
-        useCharacterStore.getState().saveCharacter(updated)
-        broadcastIfDM(updated)
+        saveAndBroadcast(updated)
       }
     } else if (item.category === 'armor') {
       const armorData = equipmentDb.armor.find((a) => a.name.toLowerCase() === item.name.toLowerCase())
@@ -341,10 +307,8 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
           treasure: updatedTreasure,
           updatedAt: new Date().toISOString()
         } as Character
-        useCharacterStore.getState().saveCharacter(updated)
-        broadcastIfDM(updated)
+        saveAndBroadcast(updated)
       } else {
-        // Fallback for armor not in equipment.json
         const newArmor: ArmorEntry = {
           id: crypto.randomUUID(),
           name: item.name,
@@ -359,11 +323,9 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
           treasure: updatedTreasure,
           updatedAt: new Date().toISOString()
         } as Character
-        useCharacterStore.getState().saveCharacter(updated)
-        broadcastIfDM(updated)
+        saveAndBroadcast(updated)
       }
     } else {
-      // Gear - add to equipment array
       const newItem = { name: item.name, quantity: 1 }
       const updated = {
         ...latest,
@@ -371,39 +333,12 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
         treasure: updatedTreasure,
         updatedAt: new Date().toISOString()
       } as Character
-      useCharacterStore.getState().saveCharacter(updated)
-      broadcastIfDM(updated)
+      saveAndBroadcast(updated)
     }
 
     setCraftWarning(null)
     setCraftSuccess(`Crafted ${item.name} successfully`)
     setTimeout(() => setCraftSuccess(null), 3000)
-  }
-
-  const categoryLabel = (cat: string): string => {
-    switch (cat) {
-      case 'weapon':
-        return 'Weapon'
-      case 'armor':
-        return 'Armor'
-      case 'gear':
-        return 'Gear'
-      default:
-        return cat
-    }
-  }
-
-  const categoryColor = (cat: string): string => {
-    switch (cat) {
-      case 'weapon':
-        return 'text-red-400 bg-red-900/30 border-red-700/50'
-      case 'armor':
-        return 'text-blue-400 bg-blue-900/30 border-blue-700/50'
-      case 'gear':
-        return 'text-green-400 bg-green-900/30 border-green-700/50'
-      default:
-        return 'text-gray-400 bg-gray-900/30 border-gray-700/50'
-    }
   }
 
   if (matchingTools.length === 0 && !canCraftScrolls) {
@@ -430,175 +365,16 @@ export default function CraftingSection5e({ character, readonly }: CraftingSecti
         </div>
       )}
 
-      {/* Tool proficiency summary */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {matchingTools.map((entry) => (
-          <span
-            key={entry.tool}
-            className="inline-flex items-center bg-amber-900/30 text-amber-300 border border-amber-700/50 rounded-full px-2.5 py-0.5 text-xs"
-          >
-            {entry.tool}
-          </span>
-        ))}
-      </div>
-
-      {/* Collapsible sections per tool */}
-      <div className="space-y-2">
-        {matchingTools.map((entry) => {
-          const isExpanded = expandedTools[entry.tool] ?? false
-          return (
-            <div key={entry.tool} className="border border-gray-700 rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleTool(entry.tool)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-gray-800/60 hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                <span className="text-sm font-medium text-gray-200">{entry.tool}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
-                    {entry.items.length} recipe{entry.items.length !== 1 ? 's' : ''}
-                  </span>
-                  <svg
-                    className={`w-3.5 h-3.5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </button>
-
-              {isExpanded && (
-                <div className="border-t border-gray-700">
-                  {entry.items.map((item, idx) => (
-                    <div
-                      key={item.name}
-                      className={`flex items-center justify-between px-3 py-2 text-sm ${
-                        idx < entry.items.length - 1 ? 'border-b border-gray-800' : ''
-                      } hover:bg-gray-900/30 transition-colors`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-200 font-medium truncate">{item.name}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${categoryColor(item.category)}`}>
-                            {categoryLabel(item.category)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-xs text-amber-400">{item.rawMaterialCost}</span>
-                          <span className="text-xs text-gray-500">
-                            {item.craftingTimeDays} day{item.craftingTimeDays !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      </div>
-                      {!readonly && (
-                        <button
-                          onClick={() => handleCraft(item)}
-                          className="ml-2 px-2.5 py-1 text-xs bg-amber-600 hover:bg-amber-500 rounded text-white cursor-pointer transition-colors flex-shrink-0"
-                        >
-                          Craft
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+      <CraftingRecipeList5e matchingTools={matchingTools} readonly={readonly} onCraft={handleCraft} />
 
       {/* Spell Scroll Crafting */}
       {canCraftScrolls && (
-        <div className="mt-3">
-          <div className="border border-gray-700 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setScrollExpanded(!scrollExpanded)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-purple-900/20 hover:bg-purple-900/30 transition-colors cursor-pointer"
-            >
-              <span className="text-sm font-medium text-purple-300">Spell Scrolls</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">
-                  {preparedSpells.length} spell{preparedSpells.length !== 1 ? 's' : ''} available
-                </span>
-                <svg
-                  className={`w-3.5 h-3.5 text-gray-500 transition-transform ${scrollExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </button>
-
-            {scrollExpanded && (
-              <div className="border-t border-gray-700">
-                {/* Level filter */}
-                <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-800">
-                  <span className="text-xs text-gray-500">Level:</span>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => setScrollLevelFilter('all')}
-                      className={`px-2 py-0.5 text-xs rounded ${scrollLevelFilter === 'all' ? 'bg-purple-700 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-                    >
-                      All
-                    </button>
-                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((lvl) => (
-                      <button
-                        key={lvl}
-                        onClick={() => setScrollLevelFilter(lvl)}
-                        className={`px-2 py-0.5 text-xs rounded ${scrollLevelFilter === lvl ? 'bg-purple-700 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-                      >
-                        {lvl === 0 ? 'C' : lvl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {filteredScrollSpells.length === 0 ? (
-                  <div className="px-3 py-3 text-xs text-gray-500">No spells available at this level.</div>
-                ) : (
-                  filteredScrollSpells.map((spell, idx) => {
-                    const scrollInfo = SCROLL_COSTS[spell.level]
-                    if (!scrollInfo) return null
-                    return (
-                      <div
-                        key={spell.id}
-                        className={`flex items-center justify-between px-3 py-2 text-sm ${
-                          idx < filteredScrollSpells.length - 1 ? 'border-b border-gray-800' : ''
-                        } hover:bg-gray-900/30 transition-colors`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-200 font-medium truncate">{spell.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded border text-purple-400 bg-purple-900/30 border-purple-700/50">
-                              {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5">
-                            <span className="text-xs text-amber-400">{scrollInfo.cost.toLocaleString()} GP</span>
-                            <span className="text-xs text-gray-500">
-                              {scrollInfo.days} day{scrollInfo.days !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-                        {!readonly && (
-                          <button
-                            onClick={() => handleCraftScroll(spell)}
-                            className="ml-2 px-2.5 py-1 text-xs bg-purple-600 hover:bg-purple-500 rounded text-white cursor-pointer transition-colors flex-shrink-0"
-                          >
-                            Craft
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <CraftingProgress5e
+          preparedSpells={preparedSpells}
+          scrollCosts={SCROLL_COSTS}
+          readonly={readonly}
+          onCraftScroll={handleCraftScroll}
+        />
       )}
     </SheetSectionWrapper>
   )

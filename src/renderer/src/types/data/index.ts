@@ -595,7 +595,6 @@ export interface MountsFile {
   mounts: MountData[]
 }
 
-
 // === Resource Scaling (class-resources.json, species-resources.json) ===
 
 export interface ResourceScaling {

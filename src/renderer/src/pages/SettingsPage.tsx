@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import OllamaManagement from '../components/ui/OllamaManagement'
-import { addToast } from '../hooks/useToast'
+import { addToast } from '../hooks/use-toast'
 import { exportEntities, importEntities } from '../services/io/entity-io'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 
@@ -145,7 +145,9 @@ export default function SettingsPage(): JSX.Element {
                       : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-lg ${preview.bg} border border-gray-600 flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-lg ${preview.bg} border border-gray-600 flex items-center justify-center`}
+                  >
                     <div className={`w-4 h-4 rounded ${preview.accent}`} />
                   </div>
                   <div className="text-left">
@@ -265,7 +267,9 @@ export default function SettingsPage(): JSX.Element {
                   }
                   const ok = await exportEntities('settings', [{ settings, preferences: prefs }])
                   if (ok) addToast('Settings exported', 'success')
-                } catch { addToast('Settings export failed', 'error') }
+                } catch {
+                  addToast('Settings export failed', 'error')
+                }
               }}
               className="px-4 py-1.5 text-sm rounded-lg border bg-gray-800 border-gray-700 text-gray-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer"
             >
@@ -274,7 +278,10 @@ export default function SettingsPage(): JSX.Element {
             <button
               onClick={async () => {
                 try {
-                  const result = await importEntities<{ settings?: Record<string, unknown>; preferences?: Record<string, string> }>('settings')
+                  const result = await importEntities<{
+                    settings?: Record<string, unknown>
+                    preferences?: Record<string, string>
+                  }>('settings')
                   if (!result) return
                   const item = result.items[0]
                   if (item.settings) {

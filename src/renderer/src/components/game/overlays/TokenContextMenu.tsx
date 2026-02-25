@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { SidebarEntry } from '../../../types/game-state'
 import type { MapToken } from '../../../types/map'
 
@@ -113,12 +113,13 @@ export default function TokenContextMenu({
       visibleToPlayers: true,
       isAutoPopulated: false,
       sourceId: token.id,
-      statBlock: token.ac || token.maxHP
-        ? {
-            ...(token.ac ? { ac: token.ac } : {}),
-            ...(token.maxHP ? { hpMax: token.maxHP, hpCurrent: token.currentHP ?? token.maxHP } : {})
-          }
-        : undefined
+      statBlock:
+        token.ac || token.maxHP
+          ? {
+              ...(token.ac ? { ac: token.ac } : {}),
+              ...(token.maxHP ? { hpMax: token.maxHP, hpCurrent: token.currentHP ?? token.maxHP } : {})
+            }
+          : undefined
     }
     addSidebarEntry(category, entry)
     onClose()

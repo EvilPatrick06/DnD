@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
+import { logToFile } from '../log'
 import type { BookSource, Chunk, ChunkIndex } from './types'
 
 const MAX_CHUNK_TOKENS = 4000
@@ -231,7 +232,7 @@ export function buildChunkIndex(onProgress?: (percent: number, stage: string) =>
     const sourceDir = getSourcePath(source)
 
     if (!existsSync(sourceDir)) {
-      console.warn(`Warning: ${source.book} directory not found at ${sourceDir}, skipping`)
+      logToFile('WARN', `Warning: ${source.book} directory not found at ${sourceDir}, skipping`)
       continue
     }
 
@@ -240,11 +241,14 @@ export function buildChunkIndex(onProgress?: (percent: number, stage: string) =>
 
     const mdFiles = collectMarkdownFiles(sourceDir)
     if (mdFiles.length === 0) {
-      console.warn(`Warning: no markdown files found in ${sourceDir}, skipping`)
+      logToFile('WARN', `Warning: no markdown files found in ${sourceDir}, skipping`)
       continue
     }
 
-    const markdown = mdFiles.map((f) => readFileSync(f, 'utf-8')).join('\n\n').replace(/\r\n?/g, '\n')
+    const markdown = mdFiles
+      .map((f) => readFileSync(f, 'utf-8'))
+      .join('\n\n')
+      .replace(/\r\n?/g, '\n')
     const tree = parseMarkdownStructure(markdown)
     const chunks = flattenToChunks(tree, source.book, source.book.toLowerCase())
 

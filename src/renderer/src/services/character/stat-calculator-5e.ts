@@ -178,12 +178,12 @@ export type LifestyleLevel = 'wretched' | 'squalid' | 'poor' | 'modest' | 'comfo
 
 export const LIFESTYLE_COSTS: Record<LifestyleLevel, number> = {
   wretched: 0,
-  squalid: 0.1,    // 1 sp/day
-  poor: 0.2,        // 2 sp/day
-  modest: 1,        // 1 gp/day
-  comfortable: 2,   // 2 gp/day
-  wealthy: 4,       // 4 gp/day
-  aristocratic: 10  // 10 gp/day minimum
+  squalid: 0.1, // 1 sp/day
+  poor: 0.2, // 2 sp/day
+  modest: 1, // 1 gp/day
+  comfortable: 2, // 2 gp/day
+  wealthy: 4, // 4 gp/day
+  aristocratic: 10 // 10 gp/day minimum
 }
 
 /**
@@ -207,36 +207,113 @@ export interface ToolSkillInteraction {
  * When proficient with a tool AND the relevant skill, the character gains advantage.
  */
 export const TOOL_SKILL_INTERACTIONS: ToolSkillInteraction[] = [
-  { tool: "Alchemist's Supplies", skills: ['Arcana', 'Investigation'], benefit: 'Advantage on Arcana/Investigation checks involving potions or alchemical substances' },
-  { tool: "Brewer's Supplies", skills: ['Medicine', 'Persuasion'], benefit: 'Advantage on checks to detect poisons in drinks or to ply someone with alcohol' },
-  { tool: "Calligrapher's Supplies", skills: ['History', 'Deception'], benefit: 'Advantage on History checks involving written works or Deception checks involving forgeries' },
-  { tool: "Carpenter's Tools", skills: ['Investigation', 'Perception'], benefit: 'Advantage on checks to identify structural weaknesses or hidden compartments' },
-  { tool: "Cartographer's Tools", skills: ['Nature', 'Survival'], benefit: 'Advantage on navigation and mapping-related checks' },
-  { tool: "Cobbler's Tools", skills: ['Investigation', 'Perception'], benefit: 'Advantage on tracking-related checks involving footprints' },
-  { tool: "Cook's Utensils", skills: ['Medicine', 'Survival'], benefit: 'Advantage on checks to identify food safety or forage edible plants' },
-  { tool: "Glassblower's Tools", skills: ['Arcana', 'Investigation'], benefit: 'Advantage on checks involving glass objects or crystal components' },
-  { tool: "Herbalism Kit", skills: ['Medicine', 'Nature'], benefit: 'Advantage on checks to identify plants or create herbal remedies' },
-  { tool: "Jeweler's Tools", skills: ['Arcana', 'Investigation'], benefit: 'Advantage on checks to appraise gems or identify magical gemstones' },
-  { tool: "Leatherworker's Tools", skills: ['Investigation', 'Survival'], benefit: 'Advantage on checks to identify leather types or repair leather goods' },
-  { tool: "Mason's Tools", skills: ['Investigation', 'Perception'], benefit: 'Advantage on checks to find secret doors or weak points in stone structures' },
+  {
+    tool: "Alchemist's Supplies",
+    skills: ['Arcana', 'Investigation'],
+    benefit: 'Advantage on Arcana/Investigation checks involving potions or alchemical substances'
+  },
+  {
+    tool: "Brewer's Supplies",
+    skills: ['Medicine', 'Persuasion'],
+    benefit: 'Advantage on checks to detect poisons in drinks or to ply someone with alcohol'
+  },
+  {
+    tool: "Calligrapher's Supplies",
+    skills: ['History', 'Deception'],
+    benefit: 'Advantage on History checks involving written works or Deception checks involving forgeries'
+  },
+  {
+    tool: "Carpenter's Tools",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on checks to identify structural weaknesses or hidden compartments'
+  },
+  {
+    tool: "Cartographer's Tools",
+    skills: ['Nature', 'Survival'],
+    benefit: 'Advantage on navigation and mapping-related checks'
+  },
+  {
+    tool: "Cobbler's Tools",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on tracking-related checks involving footprints'
+  },
+  {
+    tool: "Cook's Utensils",
+    skills: ['Medicine', 'Survival'],
+    benefit: 'Advantage on checks to identify food safety or forage edible plants'
+  },
+  {
+    tool: "Glassblower's Tools",
+    skills: ['Arcana', 'Investigation'],
+    benefit: 'Advantage on checks involving glass objects or crystal components'
+  },
+  {
+    tool: 'Herbalism Kit',
+    skills: ['Medicine', 'Nature'],
+    benefit: 'Advantage on checks to identify plants or create herbal remedies'
+  },
+  {
+    tool: "Jeweler's Tools",
+    skills: ['Arcana', 'Investigation'],
+    benefit: 'Advantage on checks to appraise gems or identify magical gemstones'
+  },
+  {
+    tool: "Leatherworker's Tools",
+    skills: ['Investigation', 'Survival'],
+    benefit: 'Advantage on checks to identify leather types or repair leather goods'
+  },
+  {
+    tool: "Mason's Tools",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on checks to find secret doors or weak points in stone structures'
+  },
   { tool: "Navigator's Tools", skills: ['Survival'], benefit: 'Advantage on checks to navigate or determine position' },
-  { tool: "Painter's Supplies", skills: ['Investigation', 'Perception'], benefit: 'Advantage on checks to discern forgeries or notice visual details' },
-  { tool: "Poisoner's Kit", skills: ['Medicine', 'Nature'], benefit: 'Advantage on checks to identify or treat poisons' },
-  { tool: "Potter's Tools", skills: ['History', 'Investigation'], benefit: 'Advantage on checks to date ceramic artifacts or identify cultural origins' },
-  { tool: "Smith's Tools", skills: ['Arcana', 'Investigation'], benefit: 'Advantage on checks to identify metal weapons/armor or assess metalwork quality' },
-  { tool: "Thieves' Tools", skills: ['Investigation', 'Perception'], benefit: 'Advantage on checks to find or disable traps' },
-  { tool: "Tinker's Tools", skills: ['Investigation'], benefit: 'Advantage on checks to repair or understand mechanical devices' },
-  { tool: "Weaver's Tools", skills: ['Investigation', 'Perception'], benefit: 'Advantage on checks to identify fabric types or find hidden objects in cloth' },
-  { tool: "Woodcarver's Tools", skills: ['Nature', 'Survival'], benefit: 'Advantage on checks involving wood identification or crafting wooden items' }
+  {
+    tool: "Painter's Supplies",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on checks to discern forgeries or notice visual details'
+  },
+  {
+    tool: "Poisoner's Kit",
+    skills: ['Medicine', 'Nature'],
+    benefit: 'Advantage on checks to identify or treat poisons'
+  },
+  {
+    tool: "Potter's Tools",
+    skills: ['History', 'Investigation'],
+    benefit: 'Advantage on checks to date ceramic artifacts or identify cultural origins'
+  },
+  {
+    tool: "Smith's Tools",
+    skills: ['Arcana', 'Investigation'],
+    benefit: 'Advantage on checks to identify metal weapons/armor or assess metalwork quality'
+  },
+  {
+    tool: "Thieves' Tools",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on checks to find or disable traps'
+  },
+  {
+    tool: "Tinker's Tools",
+    skills: ['Investigation'],
+    benefit: 'Advantage on checks to repair or understand mechanical devices'
+  },
+  {
+    tool: "Weaver's Tools",
+    skills: ['Investigation', 'Perception'],
+    benefit: 'Advantage on checks to identify fabric types or find hidden objects in cloth'
+  },
+  {
+    tool: "Woodcarver's Tools",
+    skills: ['Nature', 'Survival'],
+    benefit: 'Advantage on checks involving wood identification or crafting wooden items'
+  }
 ]
 
 /**
  * Check if a tool proficiency grants advantage on a specific skill check.
  */
-export function getToolSkillAdvantage(
-  toolProficiencies: string[],
-  skillName: string
-): ToolSkillInteraction | null {
+export function getToolSkillAdvantage(toolProficiencies: string[], skillName: string): ToolSkillInteraction | null {
   for (const interaction of TOOL_SKILL_INTERACTIONS) {
     if (
       toolProficiencies.some((t) => t.toLowerCase() === interaction.tool.toLowerCase()) &&
@@ -290,8 +367,15 @@ export interface ArmorClassOptions {
  *   - Only one base AC formula applies; use the highest
  */
 export function calculateArmorClass5e(options: ArmorClassOptions): number {
-  const { dexMod, armor, classNames = [], conMod = 0, wisMod = 0, draconicSorcererLevel = 0, acBonusFromEffects = 0 } =
-    options
+  const {
+    dexMod,
+    armor,
+    classNames = [],
+    conMod = 0,
+    wisMod = 0,
+    draconicSorcererLevel = 0,
+    acBonusFromEffects = 0
+  } = options
 
   const equippedArmor = armor.find((a) => a.type === 'armor' && a.equipped)
   const equippedShield = armor.find((a) => a.type === 'shield' && a.equipped)

@@ -204,9 +204,7 @@ export async function buildContext(
 
   // 5. Active map creatures (enriched with stat block data)
   if (activeCreatures?.length) {
-    const creatureBlock =
-      '[ACTIVE CREATURES ON MAP]\n' +
-      activeCreatures.map((c) => formatCreatureContext(c)).join('\n')
+    const creatureBlock = `[ACTIVE CREATURES ON MAP]\n${activeCreatures.map((c) => formatCreatureContext(c)).join('\n')}`
     const trimmed = trimToTokenBudget(creatureBlock, TOKEN_BUDGETS.creatures)
     breakdown.creatures = estimateTokens(trimmed)
     parts.push(trimmed)

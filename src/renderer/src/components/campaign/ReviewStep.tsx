@@ -6,9 +6,8 @@ import type { GameMap } from '../../types/map'
 import { Button, Card } from '../ui'
 
 interface AiDmSummary {
-  provider: 'claude' | 'ollama'
-  model: 'opus' | 'sonnet' | 'haiku'
   ollamaModel: string
+  ollamaUrl: string
 }
 
 interface ReviewStepProps {
@@ -138,9 +137,9 @@ export default function ReviewStep({
             <h3 className="text-lg font-semibold mb-3">AI Dungeon Master</h3>
             <div className="grid grid-cols-2 gap-y-2 text-sm">
               <span className="text-gray-400">Provider</span>
-              <span className="capitalize">
-                {aiDm.provider === 'claude' ? `Claude (${aiDm.model})` : `Ollama (${aiDm.ollamaModel})`}
-              </span>
+              <span>Ollama ({aiDm.ollamaModel})</span>
+              <span className="text-gray-400">URL</span>
+              <span className="text-xs text-gray-300">{aiDm.ollamaUrl}</span>
             </div>
           </Card>
         )}
@@ -162,7 +161,8 @@ export default function ReviewStep({
           <Card>
             <h3 className="text-lg font-semibold mb-3">Custom Audio ({customAudioCount})</h3>
             <p className="text-sm text-gray-400">
-              {customAudioCount} custom audio file{customAudioCount !== 1 ? 's' : ''} will be uploaded when the campaign is created.
+              {customAudioCount} custom audio file{customAudioCount !== 1 ? 's' : ''} will be uploaded when the campaign
+              is created.
             </p>
           </Card>
         )}

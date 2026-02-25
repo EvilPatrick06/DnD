@@ -26,7 +26,13 @@ let fogAnimState: FogAnimState | null = null
  * Initializes the fog animation ticker. Call once when the PixiJS app is ready.
  * The ticker smoothly interpolates per-cell fog alpha values each frame.
  */
-export function initFogAnimation(app: Application, graphics: Graphics, gridSettings: GridSettings, mapWidth: number, mapHeight: number): void {
+export function initFogAnimation(
+  app: Application,
+  graphics: Graphics,
+  gridSettings: GridSettings,
+  mapWidth: number,
+  mapHeight: number
+): void {
   // Clean up any previous animation
   destroyFogAnimation()
 
@@ -61,9 +67,7 @@ export function initFogAnimation(app: Application, graphics: Graphics, gridSetti
       // Compute interpolation rate from duration
       const duration = target > alpha ? HIDE_DURATION_MS : REVEAL_DURATION_MS
       const rate = (FOG_TARGET_ALPHA / duration) * dt
-      const newAlpha = target > alpha
-        ? Math.min(alpha + rate, target)
-        : Math.max(alpha - rate, target)
+      const newAlpha = target > alpha ? Math.min(alpha + rate, target) : Math.max(alpha - rate, target)
 
       cellAlphas.set(key, newAlpha)
       needsRedraw = true
@@ -213,7 +217,7 @@ function redrawFogFromAlphas(
     const parts = key.split(',')
     const col = parseInt(parts[0], 10)
     const row = parseInt(parts[1], 10)
-    const bucketIndex = Math.round(alpha / FOG_TARGET_ALPHA * BUCKET_COUNT)
+    const bucketIndex = Math.round((alpha / FOG_TARGET_ALPHA) * BUCKET_COUNT)
     buckets[Math.min(bucketIndex, BUCKET_COUNT)].push({ col, row })
   }
 

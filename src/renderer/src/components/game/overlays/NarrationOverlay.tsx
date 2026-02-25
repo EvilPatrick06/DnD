@@ -6,11 +6,7 @@ interface NarrationOverlayProps {
   autoDismissSeconds?: number
 }
 
-export default function NarrationOverlay({
-  text,
-  onDismiss,
-  autoDismissSeconds
-}: NarrationOverlayProps): JSX.Element {
+export default function NarrationOverlay({ text, onDismiss, autoDismissSeconds }: NarrationOverlayProps): JSX.Element {
   const [visible, setVisible] = useState(false)
   const [remaining, setRemaining] = useState(autoDismissSeconds ?? 0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -82,16 +78,12 @@ export default function NarrationOverlay({
         <div className="absolute top-0 left-4 right-4 h-0.5 bg-amber-700/30" />
         <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-amber-700/30" />
 
-        <p className="text-amber-950 font-serif text-lg leading-relaxed whitespace-pre-wrap text-center">
-          {text}
-        </p>
+        <p className="text-amber-950 font-serif text-lg leading-relaxed whitespace-pre-wrap text-center">{text}</p>
 
         {/* Auto-dismiss countdown */}
         {autoDismissSeconds && autoDismissSeconds > 0 && remaining > 0 && (
           <div className="mt-4 flex flex-col items-center gap-1">
-            <span className="text-xs text-amber-700/60 font-serif">
-              {remaining}s
-            </span>
+            <span className="text-xs text-amber-700/60 font-serif">{remaining}s</span>
             <div className="w-32 h-1 bg-amber-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-amber-600/60 rounded-full transition-all duration-1000"

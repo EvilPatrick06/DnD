@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { load5eMonsterById } from '../../../services/data-provider'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { NPC } from '../../../types/campaign'
 import type { SidebarCategory, SidebarEntry } from '../../../types/game-state'
 import type { MonsterStatBlock } from '../../../types/monster'
@@ -81,12 +81,13 @@ export default function NPCManager({
       description: descParts.length > 0 ? descParts.join(' | ') : undefined,
       visibleToPlayers: true,
       isAutoPopulated: false,
-      statBlock: ac || hp
-        ? {
-            ...(ac ? { ac } : {}),
-            ...(hp ? { hpMax: hp, hpCurrent: hp } : {})
-          }
-        : undefined
+      statBlock:
+        ac || hp
+          ? {
+              ...(ac ? { ac } : {}),
+              ...(hp ? { hpMax: hp, hpCurrent: hp } : {})
+            }
+          : undefined
     }
 
     addSidebarEntry(sidebarCategory, entry)

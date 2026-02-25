@@ -54,18 +54,3 @@ export type {
   TokenMovePayload,
   WhisperPayload
 } from './types'
-
-// Voice manager
-export {
-  answerCall,
-  callPeer,
-  isDeafened,
-  isMuted,
-  isSpeaking,
-  onSpeakingChange,
-  removePeer as removeVoicePeer,
-  setDeafened,
-  setMuted,
-  startVoice,
-  stopVoice
-} from './voice-manager'

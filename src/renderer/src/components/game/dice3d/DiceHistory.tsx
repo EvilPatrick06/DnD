@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { DiceRollRecord } from '../../../types/game-state'
 
 interface DiceHistoryProps {
@@ -111,9 +111,7 @@ export default function DiceHistory({ onClose }: DiceHistoryProps): JSX.Element 
                 <span className="text-[9px] text-gray-600 shrink-0">{formatTime(roll.timestamp)}</span>
               </div>
 
-              {roll.reason && (
-                <div className="text-[10px] text-gray-400 mt-0.5 truncate">{roll.reason}</div>
-              )}
+              {roll.reason && <div className="text-[10px] text-gray-400 mt-0.5 truncate">{roll.reason}</div>}
 
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-[10px] text-gray-500 font-mono">{roll.formula}</span>

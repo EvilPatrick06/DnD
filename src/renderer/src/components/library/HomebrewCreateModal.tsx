@@ -30,9 +30,7 @@ export default function HomebrewCreateModal({
   const basedOn = existingItem?.data._basedOn as string | undefined
 
   const initialData: Record<string, unknown> = existingItem
-    ? Object.fromEntries(
-        Object.entries(existingItem.data).filter(([k]) => !EDITABLE_SKIP.has(k))
-      )
+    ? Object.fromEntries(Object.entries(existingItem.data).filter(([k]) => !EDITABLE_SKIP.has(k)))
     : { name: '', description: '' }
 
   const [formData, setFormData] = useState<Record<string, unknown>>(initialData)
@@ -83,15 +81,10 @@ export default function HomebrewCreateModal({
     [onClose]
   )
 
-  const editableFields = Object.entries(formData).filter(
-    ([k]) => !EDITABLE_SKIP.has(k)
-  )
+  const editableFields = Object.entries(formData).filter(([k]) => !EDITABLE_SKIP.has(k))
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={handleBackdropClick}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleBackdropClick}>
       <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
       <div className="relative bg-gray-900 border border-gray-700 rounded-lg w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-gray-800">
@@ -101,11 +94,7 @@ export default function HomebrewCreateModal({
               <h2 className="text-xl font-bold text-gray-100">
                 {isEditing ? 'Edit' : 'Create'} Custom {catDef?.label ?? category}
               </h2>
-              {basedOn && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Based on: {existingItem?.name}
-                </p>
-              )}
+              {basedOn && <p className="text-xs text-gray-500 mt-0.5">Based on: {existingItem?.name}</p>}
             </div>
           </div>
           <button
@@ -179,11 +168,7 @@ export default function HomebrewCreateModal({
   )
 }
 
-function renderEditField(
-  key: string,
-  value: unknown,
-  onChange: (key: string, value: unknown) => void
-): JSX.Element {
+function renderEditField(key: string, value: unknown, onChange: (key: string, value: unknown) => void): JSX.Element {
   if (typeof value === 'boolean') {
     return (
       <label className="flex items-center gap-2 cursor-pointer">
@@ -225,7 +210,15 @@ function renderEditField(
       <input
         type="text"
         value={value.join(', ')}
-        onChange={(e) => onChange(key, e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+        onChange={(e) =>
+          onChange(
+            key,
+            e.target.value
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          )
+        }
         placeholder="Comma separated values..."
         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:border-amber-500 focus:outline-none"
       />

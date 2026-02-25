@@ -80,9 +80,7 @@ export default function AiContextPanel({ campaignId }: AiContextPanelProps): JSX
   return (
     <div className="w-full bg-gray-900/60 border border-gray-700/40 rounded-lg px-3 py-2 mt-1.5">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
-          AI Context Files
-        </span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">AI Context Files</span>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-gray-500">{formatSize(totalSize)} total</span>
           <button
@@ -109,9 +107,7 @@ export default function AiContextPanel({ campaignId }: AiContextPanelProps): JSX
           {files.map((file) => (
             <div key={file.name}>
               <div className="flex items-center justify-between py-0.5">
-                <span className="text-[10px] text-gray-400 font-mono truncate mr-2">
-                  {file.name}
-                </span>
+                <span className="text-[10px] text-gray-400 font-mono truncate mr-2">{file.name}</span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-[10px] text-gray-600">{formatSize(file.size)}</span>
                   <button

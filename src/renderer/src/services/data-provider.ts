@@ -1,6 +1,9 @@
+import { useDataStore } from '../stores/use-data-store'
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
 import type {
   AbilityScoreConfigFile,
+  AdventureSeedsFile,
+  AmbientTracksFile,
   BackgroundData,
   BuiltInMapEntry,
   ChaseTablesFile,
@@ -8,6 +11,7 @@ import type {
   ClassFeaturesFile,
   ClassResourcesFile,
   CraftingToolEntry,
+  CreatureTypesFile,
   CurrencyConfigEntry,
   DiceColorsFile,
   DiceTypeDef,
@@ -19,6 +23,7 @@ import type {
   FeatData,
   InvocationData,
   KeyboardShortcutDef,
+  LanguageD12Entry,
   LightingTravelFile,
   MagicItemData,
   MetamagicData,
@@ -27,6 +32,7 @@ import type {
   NpcNamesFile,
   PresetIcon,
   RandomTablesFile,
+  RarityOptionEntry,
   RawSpeciesData,
   SessionZeroConfigFile,
   SoundEventsFile,
@@ -37,16 +43,10 @@ import type {
   SpeciesTraitsFile,
   SpellData,
   SubclassData,
-  TreasureTablesFile,
-  AdventureSeedsFile,
-  CreatureTypesFile,
-  AmbientTracksFile,
-  LanguageD12Entry,
-  RarityOptionEntry
+  TreasureTablesFile
 } from '../types/data'
 import type {
   Curse,
-  Disease,
   EnvironmentalEffect,
   Hazard,
   Poison,
@@ -57,100 +57,100 @@ import type {
 import type { GameSystem } from '../types/game-system'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { MonsterStatBlock } from '../types/monster'
-import { useDataStore } from '../stores/useDataStore'
+import { logger } from '../utils/logger'
 
 const BASE = './data/5e'
 
 export const DATA_PATHS = {
   // character/
-  species:            `${BASE}/character/species.json`,
-  speciesTraits:      `${BASE}/character/species-traits.json`,
-  classes:            `${BASE}/character/classes.json`,
-  backgrounds:        `${BASE}/character/backgrounds.json`,
-  classFeatures:      `${BASE}/character/class-features.json`,
-  feats:              `${BASE}/character/feats.json`,
-  subclasses:         `${BASE}/character/subclasses.json`,
-  startingEquipment:  `${BASE}/character/starting-equipment.json`,
+  species: `${BASE}/character/species.json`,
+  speciesTraits: `${BASE}/character/species-traits.json`,
+  classes: `${BASE}/character/classes.json`,
+  backgrounds: `${BASE}/character/backgrounds.json`,
+  classFeatures: `${BASE}/character/class-features.json`,
+  feats: `${BASE}/character/feats.json`,
+  subclasses: `${BASE}/character/subclasses.json`,
+  startingEquipment: `${BASE}/character/starting-equipment.json`,
   // spells/
-  spells:             `${BASE}/spells/spells.json`,
+  spells: `${BASE}/spells/spells.json`,
   // equipment/
-  equipment:          `${BASE}/equipment/equipment.json`,
-  lightSources:       `${BASE}/equipment/light-sources.json`,
-  magicItems:         `${BASE}/equipment/magic-items.json`,
-  mounts:             `${BASE}/equipment/mounts.json`,
-  sentientItems:      `${BASE}/equipment/sentient-items.json`,
-  supernaturalGifts:  `${BASE}/hazards/supernatural-gifts.json`,
-  trinkets:           `${BASE}/equipment/trinkets.json`,
-  variantItems:       `${BASE}/equipment/variant-items.json`,
-  wearableItems:      `${BASE}/equipment/wearable-items.json`,
+  equipment: `${BASE}/equipment/equipment.json`,
+  lightSources: `${BASE}/equipment/light-sources.json`,
+  magicItems: `${BASE}/equipment/magic-items.json`,
+  mounts: `${BASE}/equipment/mounts.json`,
+  sentientItems: `${BASE}/equipment/sentient-items.json`,
+  supernaturalGifts: `${BASE}/hazards/supernatural-gifts.json`,
+  trinkets: `${BASE}/equipment/trinkets.json`,
+  variantItems: `${BASE}/equipment/variant-items.json`,
+  wearableItems: `${BASE}/equipment/wearable-items.json`,
   // creatures/
-  creatures:          `${BASE}/creatures/creatures.json`,
-  monsters:           `${BASE}/creatures/monsters.json`,
-  npcs:               `${BASE}/creatures/npcs.json`,
+  creatures: `${BASE}/creatures/creatures.json`,
+  monsters: `${BASE}/creatures/monsters.json`,
+  npcs: `${BASE}/creatures/npcs.json`,
   // npc/
   alignmentDescriptions: `${BASE}/npc/alignment-descriptions.json`,
-  npcAppearance:      `${BASE}/npc/npc-appearance.json`,
-  npcMannerisms:      `${BASE}/npc/npc-mannerisms.json`,
-  npcNames:           `${BASE}/npc/npc-names.json`,
-  personalityTables:  `${BASE}/npc/personality-tables.json`,
+  npcAppearance: `${BASE}/npc/npc-appearance.json`,
+  npcMannerisms: `${BASE}/npc/npc-mannerisms.json`,
+  npcNames: `${BASE}/npc/npc-names.json`,
+  personalityTables: `${BASE}/npc/personality-tables.json`,
   // encounters/
-  chaseTables:        `${BASE}/encounters/chase-tables.json`,
-  encounterBudgets:   `${BASE}/encounters/encounter-budgets.json`,
-  encounterPresets:   `${BASE}/encounters/encounter-presets.json`,
-  randomTables:       `${BASE}/encounters/random-tables.json`,
+  chaseTables: `${BASE}/encounters/chase-tables.json`,
+  encounterBudgets: `${BASE}/encounters/encounter-budgets.json`,
+  encounterPresets: `${BASE}/encounters/encounter-presets.json`,
+  randomTables: `${BASE}/encounters/random-tables.json`,
   // hazards/
-  conditions:         `${BASE}/hazards/conditions.json`,
-  curses:             `${BASE}/hazards/curses.json`,
-  diseases:           `${BASE}/hazards/diseases.json`,
+  conditions: `${BASE}/hazards/conditions.json`,
+  curses: `${BASE}/hazards/curses.json`,
+  diseases: `${BASE}/hazards/diseases.json`,
   environmentalEffects: `${BASE}/hazards/environmental-effects.json`,
-  hazards:            `${BASE}/hazards/hazards.json`,
-  poisons:            `${BASE}/hazards/poisons.json`,
-  traps:              `${BASE}/hazards/traps.json`,
+  hazards: `${BASE}/hazards/hazards.json`,
+  poisons: `${BASE}/hazards/poisons.json`,
+  traps: `${BASE}/hazards/traps.json`,
   // bastions/
-  bastionEvents:      `${BASE}/bastions/bastion-events.json`,
-  bastionFacilities:  `${BASE}/bastions/bastion-facilities.json`,
+  bastionEvents: `${BASE}/bastions/bastion-events.json`,
+  bastionFacilities: `${BASE}/bastions/bastion-facilities.json`,
   // world/
-  calendarPresets:    `${BASE}/world/calendar-presets.json`,
-  crafting:           `${BASE}/world/crafting.json`,
-  downtime:           `${BASE}/world/downtime.json`,
-  settlements:        `${BASE}/world/settlements.json`,
-  siegeEquipment:     `${BASE}/world/siege-equipment.json`,
-  treasureTables:     `${BASE}/world/treasure-tables.json`,
-  weatherGeneration:  `${BASE}/world/weather-generation.json`,
+  calendarPresets: `${BASE}/world/calendar-presets.json`,
+  crafting: `${BASE}/world/crafting.json`,
+  downtime: `${BASE}/world/downtime.json`,
+  settlements: `${BASE}/world/settlements.json`,
+  siegeEquipment: `${BASE}/world/siege-equipment.json`,
+  treasureTables: `${BASE}/world/treasure-tables.json`,
+  weatherGeneration: `${BASE}/world/weather-generation.json`,
   // mechanics/
-  effectDefinitions:  `${BASE}/mechanics/effect-definitions.json`,
-  fightingStyles:     `${BASE}/mechanics/fighting-styles.json`,
-  invocations:        `${BASE}/mechanics/invocations.json`,
-  languages:          `${BASE}/mechanics/languages.json`,
-  metamagic:          `${BASE}/mechanics/metamagic.json`,
-  skills:             `${BASE}/mechanics/skills.json`,
-  spellSlots:         `${BASE}/mechanics/spell-slots.json`,
-  weaponMastery:      `${BASE}/mechanics/weapon-mastery.json`,
-  xpThresholds:       `${BASE}/mechanics/xp-thresholds.json`,
+  effectDefinitions: `${BASE}/mechanics/effect-definitions.json`,
+  fightingStyles: `${BASE}/mechanics/fighting-styles.json`,
+  invocations: `${BASE}/mechanics/invocations.json`,
+  languages: `${BASE}/mechanics/languages.json`,
+  metamagic: `${BASE}/mechanics/metamagic.json`,
+  skills: `${BASE}/mechanics/skills.json`,
+  spellSlots: `${BASE}/mechanics/spell-slots.json`,
+  weaponMastery: `${BASE}/mechanics/weapon-mastery.json`,
+  xpThresholds: `${BASE}/mechanics/xp-thresholds.json`,
   // NEW externalized data (audio, character, mechanics, ui, etc.)
-  soundEvents:        `${BASE}/audio/sound-events.json`,
-  speciesSpells:      `${BASE}/character/species-spells.json`,
-  classResources:     `${BASE}/mechanics/class-resources.json`,
-  speciesResources:   `${BASE}/mechanics/species-resources.json`,
+  soundEvents: `${BASE}/audio/sound-events.json`,
+  speciesSpells: `${BASE}/character/species-spells.json`,
+  classResources: `${BASE}/mechanics/class-resources.json`,
+  speciesResources: `${BASE}/mechanics/species-resources.json`,
   abilityScoreConfig: `${BASE}/character/ability-score-config.json`,
-  presetIcons:        `${BASE}/character/preset-icons.json`,
-  keyboardShortcuts:  `${BASE}/ui/keyboard-shortcuts.json`,
-  themes:             `${BASE}/ui/themes.json`,
-  diceColors:         `${BASE}/ui/dice-colors.json`,
-  dmTabs:             `${BASE}/ui/dm-tabs.json`,
+  presetIcons: `${BASE}/character/preset-icons.json`,
+  keyboardShortcuts: `${BASE}/ui/keyboard-shortcuts.json`,
+  themes: `${BASE}/ui/themes.json`,
+  diceColors: `${BASE}/ui/dice-colors.json`,
+  dmTabs: `${BASE}/ui/dm-tabs.json`,
   notificationTemplates: `${BASE}/ui/notification-templates.json`,
-  builtInMaps:        `${BASE}/world/built-in-maps.json`,
-  sessionZeroConfig:  `${BASE}/world/session-zero-config.json`,
-  diceTypes:          `${BASE}/mechanics/dice-types.json`,
-  lightingTravel:     `${BASE}/mechanics/lighting-travel.json`,
-  currencyConfig:     `${BASE}/equipment/currency-config.json`,
-  moderation:         `${BASE}/ai/moderation.json`,
+  builtInMaps: `${BASE}/world/built-in-maps.json`,
+  sessionZeroConfig: `${BASE}/world/session-zero-config.json`,
+  diceTypes: `${BASE}/mechanics/dice-types.json`,
+  lightingTravel: `${BASE}/mechanics/lighting-travel.json`,
+  currencyConfig: `${BASE}/equipment/currency-config.json`,
+  moderation: `${BASE}/ai/moderation.json`,
   // Round 2 externalized data
-  adventureSeeds:     `${BASE}/world/adventure-seeds.json`,
-  creatureTypes:      `${BASE}/creatures/creature-types.json`,
-  ambientTracks:      `${BASE}/audio/ambient-tracks.json`,
-  languageD12Table:   `${BASE}/character/language-d12-table.json`,
-  rarityOptions:      `${BASE}/ui/rarity-options.json`,
+  adventureSeeds: `${BASE}/world/adventure-seeds.json`,
+  creatureTypes: `${BASE}/creatures/creature-types.json`,
+  ambientTracks: `${BASE}/audio/ambient-tracks.json`,
+  languageD12Table: `${BASE}/character/language-d12-table.json`,
+  rarityOptions: `${BASE}/ui/rarity-options.json`
 } as const
 
 const jsonCache = new Map<string, unknown>()
@@ -327,7 +327,7 @@ export async function getOptionsForSlot(
   category: BuildSlotCategory,
   context?: { slotId?: string; selectedClassId?: string }
 ): Promise<SelectableOption[]> {
-  const basePath = GAME_SYSTEMS[system].dataPath
+  const _basePath = GAME_SYSTEMS[system].dataPath
 
   if (system === 'dnd5e') {
     switch (category) {
@@ -359,7 +359,7 @@ export async function getOptionsForSlot(
             : subclasses
           return filtered.map(subclassToOption)
         } catch (error) {
-          console.error('[DataProvider] Failed to load subclasses:', error)
+          logger.error('[DataProvider] Failed to load subclasses:', error)
           return []
         }
       }
@@ -463,7 +463,9 @@ const ds = () => useDataStore.getState()
 
 async function load5eSpeciesTraits(): Promise<SpeciesTraitsFile> {
   return ds().get('speciesTraits', async () => {
-    const raw = await loadJson<Record<string, SpeciesTrait & { spellGranted?: string | { list: string; count: number } | null }>>(DATA_PATHS.speciesTraits)
+    const raw = await loadJson<
+      Record<string, SpeciesTrait & { spellGranted?: string | { list: string; count: number } | null }>
+    >(DATA_PATHS.speciesTraits)
     // Convert JSON null to undefined for spellGranted
     for (const trait of Object.values(raw)) {
       if (trait.spellGranted === null) trait.spellGranted = undefined
@@ -476,7 +478,7 @@ function resolveTrait(traitEntry: string | SpeciesTrait, traitMap: SpeciesTraits
   if (typeof traitEntry === 'object') return traitEntry
   const resolved = traitMap[traitEntry]
   if (!resolved) {
-    console.warn(`[DataProvider] Unknown species trait ID: "${traitEntry}"`)
+    logger.warn(`[DataProvider] Unknown species trait ID: "${traitEntry}"`)
     return { name: traitEntry, description: '' }
   }
   return resolved
@@ -577,7 +579,9 @@ export async function load5eMetamagic(): Promise<MetamagicData[]> {
 }
 
 export async function load5eBastionFacilities(): Promise<import('../types/bastion').BastionFacilitiesData> {
-  return ds().get('bastionFacilities', () => loadJson<import('../types/bastion').BastionFacilitiesData>(DATA_PATHS.bastionFacilities))
+  return ds().get('bastionFacilities', () =>
+    loadJson<import('../types/bastion').BastionFacilitiesData>(DATA_PATHS.bastionFacilities)
+  )
 }
 
 export async function load5eMagicItems(rarity?: string): Promise<MagicItemData[]> {
@@ -815,11 +819,25 @@ export async function load5eXpThresholds(): Promise<number[]> {
 }
 
 export async function load5eStartingEquipment(): Promise<
-  Array<{ minLevel: number; maxLevel: number; baseGold: number; diceCount: number; diceMultiplier: number; magicItems: Record<string, number> }>
+  Array<{
+    minLevel: number
+    maxLevel: number
+    baseGold: number
+    diceCount: number
+    diceMultiplier: number
+    magicItems: Record<string, number>
+  }>
 > {
   return ds().get('startingEquipment', () =>
     loadJson<
-      Array<{ minLevel: number; maxLevel: number; baseGold: number; diceCount: number; diceMultiplier: number; magicItems: Record<string, number> }>
+      Array<{
+        minLevel: number
+        maxLevel: number
+        baseGold: number
+        diceCount: number
+        diceMultiplier: number
+        magicItems: Record<string, number>
+      }>
     >(DATA_PATHS.startingEquipment)
   )
 }

@@ -1,0 +1,54 @@
+# BMO — Python dependencies for Raspberry Pi 5
+# Install: pip install -r requirements.txt
+
+# Core AI/ML
+faster-whisper
+openwakeword
+resemblyzer
+ollama
+
+# TTS
+piper-tts
+
+# Vision / Face / Object Detection
+face_recognition
+opencv-python-headless
+ultralytics
+easyocr
+
+# Audio
+pyaudio
+sounddevice
+numpy
+
+# Web framework
+flask
+flask-socketio
+gevent
+gevent-websocket
+
+# Google APIs
+google-api-python-client
+google-auth-oauthlib
+
+# Smart home / Chromecast
+pychromecast
+
+# TV Remote
+androidtvremote2
+
+# Music
+ytmusicapi
+yt-dlp
+python-vlc
+
+# CLI
+rich
+
+# MCP (Model Context Protocol)
+mcp
+httpx
+sseclient-py
+
+# Misc
+requests

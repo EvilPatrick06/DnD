@@ -83,22 +83,12 @@ describe('calculate5eStats', () => {
   })
 
   it('computes HP at level 1 as hitDie + CON mod', () => {
-    const result = calculate5eStats(
-      { ...baseScores, constitution: 14 },
-      null,
-      { hitDie: 10, savingThrows: [] },
-      1
-    )
+    const result = calculate5eStats({ ...baseScores, constitution: 14 }, null, { hitDie: 10, savingThrows: [] }, 1)
     expect(result.maxHP).toBe(12)
   })
 
   it('computes HP at multi-level with level 1 max die and average for subsequent levels', () => {
-    const result = calculate5eStats(
-      { ...baseScores, constitution: 14 },
-      null,
-      { hitDie: 10, savingThrows: [] },
-      5
-    )
+    const result = calculate5eStats({ ...baseScores, constitution: 14 }, null, { hitDie: 10, savingThrows: [] }, 5)
     expect(result.maxHP).toBe(44)
   })
 
@@ -116,7 +106,9 @@ describe('calculate5eStats', () => {
 
   it('adds Tough feat HP bonus to maxHP', () => {
     const noTough = calculate5eStats(baseScores, null, { hitDie: 8, savingThrows: [] }, 5, undefined, null, null)
-    const tough = calculate5eStats(baseScores, null, { hitDie: 8, savingThrows: [] }, 5, undefined, null, [{ id: 'tough' }])
+    const tough = calculate5eStats(baseScores, null, { hitDie: 8, savingThrows: [] }, 5, undefined, null, [
+      { id: 'tough' }
+    ])
     expect(tough.maxHP - noTough.maxHP).toBe(10)
   })
 
@@ -198,40 +190,68 @@ describe('calculateArmorClass5e — PHB 2024', () => {
   })
 
   it('Barbarian unarmored defense: 10 + DEX + CON', () => {
-    expect(calculateArmorClass5e({
-      dexMod: 2, armor: [], classNames: ['Barbarian'], conMod: 3
-    })).toBe(15)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 2,
+        armor: [],
+        classNames: ['Barbarian'],
+        conMod: 3
+      })
+    ).toBe(15)
   })
 
   it('Monk unarmored defense: 10 + DEX + WIS', () => {
-    expect(calculateArmorClass5e({
-      dexMod: 3, armor: [], classNames: ['Monk'], wisMod: 2
-    })).toBe(15)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 3,
+        armor: [],
+        classNames: ['Monk'],
+        wisMod: 2
+      })
+    ).toBe(15)
   })
 
   it('Draconic Resilience: 13 + DEX (Sorcerer level 3+)', () => {
-    expect(calculateArmorClass5e({
-      dexMod: 2, armor: [], draconicSorcererLevel: 3
-    })).toBe(15)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 2,
+        armor: [],
+        draconicSorcererLevel: 3
+      })
+    ).toBe(15)
   })
 
   it('unarmored defense uses highest available formula', () => {
-    expect(calculateArmorClass5e({
-      dexMod: 3, armor: [], classNames: ['Barbarian'], conMod: 1
-    })).toBe(14)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 3,
+        armor: [],
+        classNames: ['Barbarian'],
+        conMod: 1
+      })
+    ).toBe(14)
   })
 
   it('wearing armor overrides unarmored defense', () => {
     const chainShirt = { acBonus: 3, equipped: true, type: 'armor' as const, category: 'medium', dexCap: 2 }
-    expect(calculateArmorClass5e({
-      dexMod: 3, armor: [chainShirt], classNames: ['Barbarian'], conMod: 5
-    })).toBe(15)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 3,
+        armor: [chainShirt],
+        classNames: ['Barbarian'],
+        conMod: 5
+      })
+    ).toBe(15)
   })
 
   it('adds AC bonus from effects', () => {
-    expect(calculateArmorClass5e({
-      dexMod: 2, armor: [], acBonusFromEffects: 3
-    })).toBe(15)
+    expect(
+      calculateArmorClass5e({
+        dexMod: 2,
+        armor: [],
+        acBonusFromEffects: 3
+      })
+    ).toBe(15)
   })
 })
 

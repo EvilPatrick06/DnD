@@ -2,6 +2,7 @@ import { access, copyFile, mkdir, readdir, readFile, stat, unlink, writeFile } f
 import { join } from 'node:path'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
+import { logToFile } from '../log'
 import { CURRENT_SCHEMA_VERSION, migrateData } from './migrations'
 import type { StorageResult } from './types'
 
@@ -60,9 +61,7 @@ export async function saveCharacter(character: Record<string, unknown>): Promise
         await copyFile(path, bakPath)
 
         // Prune old versions, keep latest 20
-        const allVersions = (await readdir(versionsDir))
-          .filter((f) => f.endsWith('.json'))
-          .sort()
+        const allVersions = (await readdir(versionsDir)).filter((f) => f.endsWith('.json')).sort()
         if (allVersions.length > 20) {
           const toDelete = allVersions.slice(0, allVersions.length - 20)
           await Promise.allSettled(toDelete.map((f) => unlink(join(versionsDir, f))))
@@ -96,13 +95,20 @@ export async function listCharacterVersions(id: string): Promise<StorageResult<C
       return { success: true, data: [] }
     }
 
-    const files = (await readdir(versionsDir)).filter((f) => f.endsWith('.json')).sort().reverse()
+    const files = (await readdir(versionsDir))
+      .filter((f) => f.endsWith('.json'))
+      .sort()
+      .reverse()
     const versions: CharacterVersion[] = []
     for (const f of files) {
       const fileStat = await stat(join(versionsDir, f))
       // Extract timestamp from filename: id_YYYY-MM-DDTHH-MM-SS-MMMZ.json
       const tsMatch = f.match(/_(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/)
-      const timestamp = tsMatch ? tsMatch[1].replace(/-/g, (m, offset: number) => (offset > 9 ? ':' : m)).replace(/T(\d{2}):(\d{2}):(\d{2})/, 'T$1:$2:$3') : fileStat.mtime.toISOString()
+      const timestamp = tsMatch
+        ? tsMatch[1]
+            .replace(/-/g, (m, offset: number) => (offset > 9 ? ':' : m))
+            .replace(/T(\d{2}):(\d{2}):(\d{2})/, 'T$1:$2:$3')
+        : fileStat.mtime.toISOString()
       versions.push({ fileName: f, timestamp, sizeBytes: fileStat.size })
     }
     return { success: true, data: versions }
@@ -111,7 +117,10 @@ export async function listCharacterVersions(id: string): Promise<StorageResult<C
   }
 }
 
-export async function restoreCharacterVersion(id: string, fileName: string): Promise<StorageResult<Record<string, unknown>>> {
+export async function restoreCharacterVersion(
+  id: string,
+  fileName: string
+): Promise<StorageResult<Record<string, unknown>>> {
   if (!isValidUUID(id)) {
     return { success: false, error: 'Invalid character ID' }
   }
@@ -150,7 +159,7 @@ export async function loadCharacters(): Promise<StorageResult<Record<string, unk
       if (r.status === 'fulfilled') {
         characters.push(r.value)
       } else {
-        console.error('Failed to load a character file:', r.reason)
+        logToFile('ERROR', 'Failed to load a character file:', String(r.reason))
       }
     }
     return { success: true, data: characters }

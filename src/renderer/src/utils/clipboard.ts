@@ -1,4 +1,4 @@
-import { addToast } from '../hooks/useToast'
+import { addToast } from '../hooks/use-toast'
 
 export async function copyToClipboard(text: string, successMessage?: string): Promise<boolean> {
   try {

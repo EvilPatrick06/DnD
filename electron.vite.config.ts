@@ -45,7 +45,6 @@ export default defineConfig({
             if (id.includes('node_modules/cannon-es')) return 'vendor-physics'
             if (id.includes('node_modules/pixi.js') || id.includes('node_modules/@pixi')) return 'vendor-pixi'
             if (id.includes('node_modules/@tiptap')) return 'vendor-tiptap'
-            if (id.includes('node_modules/livekit-client')) return 'vendor-livekit'
           }
         }
       }

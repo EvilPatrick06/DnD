@@ -118,21 +118,24 @@ export let SAMPLE_GUILDS: GuildEntry[] = []
 export let EMERALD_ENCLAVE_CREATURES: EnclaveCreatureEntry[] = []
 export let FORGE_CONSTRUCTS: ForgeConstructEntry[] = []
 
-load5eBastionEvents().then((raw) => {
-  const data = raw as Record<string, unknown>
-  if (data.allIsWellFlavors) ALL_IS_WELL_FLAVORS = data.allIsWellFlavors as typeof ALL_IS_WELL_FLAVORS
-  if (data.guestTable) GUEST_TABLE = data.guestTable as typeof GUEST_TABLE
-  if (data.treasureTable) TREASURE_TABLE = data.treasureTable as typeof TREASURE_TABLE
-  if (data.eventsTable) BASTION_EVENTS_TABLE = data.eventsTable as typeof BASTION_EVENTS_TABLE
-  if (data.gamingHallWinnings) GAMING_HALL_WINNINGS = data.gamingHallWinnings as typeof GAMING_HALL_WINNINGS
-  if (data.menagerieCreatures) MENAGERIE_CREATURES = data.menagerieCreatures as typeof MENAGERIE_CREATURES
-  if (data.creatureCostsByCr) CREATURE_COSTS_BY_CR = data.creatureCostsByCr as typeof CREATURE_COSTS_BY_CR
-  if (data.expertTrainers) EXPERT_TRAINERS = data.expertTrainers as typeof EXPERT_TRAINERS
-  if (data.pubSpecials) PUB_SPECIALS = data.pubSpecials as typeof PUB_SPECIALS
-  if (data.sampleGuilds) SAMPLE_GUILDS = data.sampleGuilds as typeof SAMPLE_GUILDS
-  if (data.emeraldEnclaveCreatures) EMERALD_ENCLAVE_CREATURES = data.emeraldEnclaveCreatures as typeof EMERALD_ENCLAVE_CREATURES
-  if (data.forgeConstructs) FORGE_CONSTRUCTS = data.forgeConstructs as typeof FORGE_CONSTRUCTS
-}).catch(() => {})
+load5eBastionEvents()
+  .then((raw) => {
+    const data = raw as Record<string, unknown>
+    if (data.allIsWellFlavors) ALL_IS_WELL_FLAVORS = data.allIsWellFlavors as typeof ALL_IS_WELL_FLAVORS
+    if (data.guestTable) GUEST_TABLE = data.guestTable as typeof GUEST_TABLE
+    if (data.treasureTable) TREASURE_TABLE = data.treasureTable as typeof TREASURE_TABLE
+    if (data.eventsTable) BASTION_EVENTS_TABLE = data.eventsTable as typeof BASTION_EVENTS_TABLE
+    if (data.gamingHallWinnings) GAMING_HALL_WINNINGS = data.gamingHallWinnings as typeof GAMING_HALL_WINNINGS
+    if (data.menagerieCreatures) MENAGERIE_CREATURES = data.menagerieCreatures as typeof MENAGERIE_CREATURES
+    if (data.creatureCostsByCr) CREATURE_COSTS_BY_CR = data.creatureCostsByCr as typeof CREATURE_COSTS_BY_CR
+    if (data.expertTrainers) EXPERT_TRAINERS = data.expertTrainers as typeof EXPERT_TRAINERS
+    if (data.pubSpecials) PUB_SPECIALS = data.pubSpecials as typeof PUB_SPECIALS
+    if (data.sampleGuilds) SAMPLE_GUILDS = data.sampleGuilds as typeof SAMPLE_GUILDS
+    if (data.emeraldEnclaveCreatures)
+      EMERALD_ENCLAVE_CREATURES = data.emeraldEnclaveCreatures as typeof EMERALD_ENCLAVE_CREATURES
+    if (data.forgeConstructs) FORGE_CONSTRUCTS = data.forgeConstructs as typeof FORGE_CONSTRUCTS
+  })
+  .catch(() => {})
 
 // ---- Resolution Functions --------------------------------------------------
 
@@ -146,7 +149,7 @@ function findTreasureEntry(roll: number): { description: string; category: strin
   return entry ?? { description: 'A curious trinket of unknown value', category: 'art-25gp' }
 }
 
-function findGamblingEntry(roll: number): { diceCount: number; description: string } {
+function _findGamblingEntry(roll: number): { diceCount: number; description: string } {
   const entry = GAMING_HALL_WINNINGS.find((e) => roll >= e.min && roll <= e.max)
   return entry ?? { diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' }
 }
@@ -283,4 +286,3 @@ export function resolveAttackEvent(defenderCount: number, hasArmory: boolean, ha
 
   return { defendersLost, facilityShutdown, attackDice, description }
 }
-

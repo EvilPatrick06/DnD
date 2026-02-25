@@ -12,20 +12,19 @@
  * 8. Applying weapon mastery effects
  */
 
+import { useGameStore } from '../../stores/use-game-store'
 import type { Character5e } from '../../types/character-5e'
 import type { WeaponEntry } from '../../types/character-common'
 import type { MapToken } from '../../types/map'
-import { getAttackConditionEffects } from './attack-condition-effects'
-import { checkRangedRange, getCoverACBonus, getMasteryEffect, isAdjacent, isInMeleeRange } from './combat-rules'
-import type { CoverType } from './combat-rules'
-import type { MasteryEffectResult } from './combat-rules'
-import { calculateCover } from './cover-calculator'
-import { resolveDamage } from './damage-resolver'
-import type { DamageResolutionSummary } from './damage-resolver'
 import { rollMultiple, rollSingle } from '../dice/dice-service'
-import { resolveEffects } from './effect-resolver-5e'
+import { getAttackConditionEffects } from './attack-condition-effects'
+import type { CoverType, MasteryEffectResult } from './combat-rules'
+import { checkRangedRange, getCoverACBonus, getMasteryEffect, isAdjacent, isInMeleeRange } from './combat-rules'
+import { calculateCover } from './cover-calculator'
+import type { DamageResolutionSummary } from './damage-resolver'
+import { resolveDamage } from './damage-resolver'
 import type { WeaponContext } from './effect-resolver-5e'
-import { useGameStore } from '../../stores/useGameStore'
+import { resolveEffects } from './effect-resolver-5e'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -220,10 +219,7 @@ export function resolveUnarmedStrike(
 
   const anyEnemyNearAttacker = tokens.some(
     (t) =>
-      t.id !== attackerToken.id &&
-      t.id !== targetToken.id &&
-      t.entityType === 'enemy' &&
-      isAdjacent(attackerToken, t)
+      t.id !== attackerToken.id && t.id !== targetToken.id && t.entityType === 'enemy' && isAdjacent(attackerToken, t)
   )
   const targetTurnState = gameState.turnStates[targetToken.entityId ?? targetToken.id]
 
@@ -422,10 +418,7 @@ export function resolveAttack(
   const adjacentToTarget = isAdjacent(attackerToken, targetToken)
   const anyEnemyNearAttacker = tokens.some(
     (t) =>
-      t.id !== attackerToken.id &&
-      t.id !== targetToken.id &&
-      t.entityType === 'enemy' &&
-      isAdjacent(attackerToken, t)
+      t.id !== attackerToken.id && t.id !== targetToken.id && t.entityType === 'enemy' && isAdjacent(attackerToken, t)
   )
 
   const targetTurnState = gameState.turnStates[targetToken.entityId ?? targetToken.id]
@@ -528,9 +521,7 @@ export function resolveAttack(
     const targetVulnerabilities = targetToken.vulnerabilities ?? []
     const isMagical =
       weapon.properties.some((p) => p.toLowerCase() === 'magical') ||
-      (character.magicItems ?? []).some(
-        (mi) => mi.attuned && mi.name.toLowerCase().includes(weapon.name.toLowerCase())
-      )
+      (character.magicItems ?? []).some((mi) => mi.attuned && mi.name.toLowerCase().includes(weapon.name.toLowerCase()))
 
     damageResolution = resolveDamage(
       [{ rawDamage: damageTotal, damageType: weapon.damageType, isMagical }],
@@ -618,8 +609,7 @@ export function formatAttackResult(result: AttackResult): string {
   lines.push(`**${result.attackerName}** attacks **${result.targetName}** with **${result.weaponName}**`)
 
   // Roll info
-  const rollModeTag =
-    result.rollMode === 'advantage' ? ' (Adv)' : result.rollMode === 'disadvantage' ? ' (Dis)' : ''
+  const rollModeTag = result.rollMode === 'advantage' ? ' (Adv)' : result.rollMode === 'disadvantage' ? ' (Dis)' : ''
   lines.push(
     `Attack: [${result.attackRoll}]${rollModeTag} + ${result.attackTotal - result.attackRoll} = **${result.attackTotal}** vs AC ${result.targetAC} — **${hitMiss}**${critTag}${fumbleTag}`
   )

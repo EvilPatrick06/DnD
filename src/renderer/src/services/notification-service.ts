@@ -24,8 +24,10 @@ interface NotificationConfig {
 
 // ---- Default content templates per event ----
 
-const DEFAULT_TEMPLATES: Record<NotificationEvent, { title: string; body: string }> =
-  templatesJson as Record<NotificationEvent, { title: string; body: string }>
+const DEFAULT_TEMPLATES: Record<NotificationEvent, { title: string; body: string }> = templatesJson as Record<
+  NotificationEvent,
+  { title: string; body: string }
+>
 
 // ---- Persistence helpers ----
 

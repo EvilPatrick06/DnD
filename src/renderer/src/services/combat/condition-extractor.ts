@@ -29,13 +29,9 @@ const CONDITION_NAMES = [
   'Burning'
 ]
 
-const CONDITION_PATTERN = new RegExp(
-  `\\b(${CONDITION_NAMES.join('|')})\\b\\s*(condition)?`,
-  'gi'
-)
+const CONDITION_PATTERN = new RegExp(`\\b(${CONDITION_NAMES.join('|')})\\b\\s*(condition)?`, 'gi')
 
-const SAVE_PATTERN =
-  /DC\s+(\d+)\s+(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving\s+throw/gi
+const SAVE_PATTERN = /DC\s+(\d+)\s+(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving\s+throw/gi
 
 const SAVE_PATTERN_ALT =
   /(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving\s+throw[^.]*?DC\s+(\d+)/gi
@@ -75,10 +71,8 @@ export function extractConditionsFromDescription(description: string): Extracted
     if (saveMatch) {
       // Parse out the DC and ability from the match
       const dcMatch = description.match(/DC\s+(\d+)/)
-      const abilityMatch = description.match(
-        /(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving/i
-      )
-      if (dcMatch) extracted.saveDC = parseInt(dcMatch[1])
+      const abilityMatch = description.match(/(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving/i)
+      if (dcMatch) extracted.saveDC = parseInt(dcMatch[1], 10)
       if (abilityMatch) extracted.saveType = abilityMatch[1]
     }
 

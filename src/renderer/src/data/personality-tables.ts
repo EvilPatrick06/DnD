@@ -1,13 +1,15 @@
-import type { AbilityScoreSet } from '../types/character-common'
 import { load5ePersonalityTables } from '../services/data-provider'
+import type { AbilityScoreSet } from '../types/character-common'
 
 export const ABILITY_PERSONALITY: Record<string, { high: string[]; low: string[] }> = {}
 export const ALIGNMENT_PERSONALITY: Record<string, string[]> = {}
 
-load5ePersonalityTables().then((data) => {
-  Object.assign(ABILITY_PERSONALITY, data.ability)
-  Object.assign(ALIGNMENT_PERSONALITY, data.alignment)
-}).catch(() => {})
+load5ePersonalityTables()
+  .then((data) => {
+    Object.assign(ABILITY_PERSONALITY, data.ability)
+    Object.assign(ALIGNMENT_PERSONALITY, data.alignment)
+  })
+  .catch(() => {})
 
 function rollD4<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * 4)]

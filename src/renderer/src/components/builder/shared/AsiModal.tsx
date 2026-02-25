@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
 

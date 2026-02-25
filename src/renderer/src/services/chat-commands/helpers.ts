@@ -1,15 +1,11 @@
 import { trigger3dDice } from '../../components/game/dice3d'
-import {
-  parseFormula as parseFormulaSvc,
-  rollMultiple,
-  rollSingle as rollSingleSvc
-} from '../dice/dice-service'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useGameStore } from '../../stores/useGameStore'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+import { useCharacterStore } from '../../stores/use-character-store'
+import { useGameStore } from '../../stores/use-game-store'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useNetworkStore } from '../../stores/use-network-store'
 import { is5eCharacter } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
+import { parseFormula as parseFormulaSvc, rollMultiple, rollSingle as rollSingleSvc } from '../dice/dice-service'
 
 // ─── Dice helpers (delegate to dice-service) ──────────────────
 

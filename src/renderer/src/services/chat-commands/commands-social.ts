@@ -1,4 +1,4 @@
-import { useLobbyStore } from '../../stores/useLobbyStore'
+import { useLobbyStore } from '../../stores/use-lobby-store'
 import type { ChatCommand } from './types'
 
 const meCommand: ChatCommand = {

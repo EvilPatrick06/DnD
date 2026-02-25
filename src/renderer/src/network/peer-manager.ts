@@ -8,14 +8,50 @@ export { generateInviteCode } from '../utils/invite-code'
 let peer: Peer | null = null
 let localPeerId: string | null = null
 
-// Default ICE servers — Google STUN + Metered.ca TURN
+// Default ICE servers — Cloudflare TURN + Google STUN
+// Cloudflare Calls provides free TURN relay for NAT traversal
+// Configure TURN credentials in Cloudflare dashboard → Calls → TURN Keys
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.cloudflare.com:3478' },
   { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:standard.relay.metered.ca:80', username: 'open', credential: 'open' },
-  { urls: 'turn:standard.relay.metered.ca:443', username: 'open', credential: 'open' },
-  { urls: 'turns:standard.relay.metered.ca:443', username: 'open', credential: 'open' }
+  {
+    urls: 'turn:turn.cloudflare.com:3478?transport=udp',
+    username: '', // Set via setIceConfig() with Cloudflare Calls TURN credentials
+    credential: ''
+  },
+  {
+    urls: 'turns:turn.cloudflare.com:5349?transport=tcp',
+    username: '',
+    credential: ''
+  }
 ]
+
+// Custom PeerJS signaling server (Pi via Cloudflare Tunnel)
+let customSignalingHost: string | null = null
+let customSignalingPort: number | null = null
+let customSignalingPath: string = '/'
+let customSignalingSecure: boolean = true
+
+/**
+ * Configure a custom PeerJS signaling server (e.g. Pi via Cloudflare Tunnel).
+ * Call before createPeer() to take effect.
+ */
+export function setSignalingServer(host: string, port?: number, path?: string, secure?: boolean): void {
+  customSignalingHost = host
+  customSignalingPort = port ?? (secure !== false ? 443 : 80)
+  customSignalingPath = path ?? '/'
+  customSignalingSecure = secure !== false
+}
+
+/**
+ * Reset signaling server to PeerJS cloud default.
+ */
+export function resetSignalingServer(): void {
+  customSignalingHost = null
+  customSignalingPort = null
+  customSignalingPath = '/'
+  customSignalingSecure = true
+}
 
 let iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
 
@@ -53,9 +89,17 @@ export function createPeer(customId?: string): Promise<Peer> {
       destroyPeer()
     }
 
-    const options = {
+    const options: Record<string, unknown> = {
       debug: import.meta.env.DEV ? 2 : 0,
       config: { iceServers }
+    }
+
+    // Use custom signaling server if configured (Pi via Cloudflare Tunnel)
+    if (customSignalingHost) {
+      options.host = customSignalingHost
+      options.port = customSignalingPort ?? 443
+      options.path = customSignalingPath
+      options.secure = customSignalingSecure
     }
 
     const newPeer = customId ? new Peer(customId, options) : new Peer(options)

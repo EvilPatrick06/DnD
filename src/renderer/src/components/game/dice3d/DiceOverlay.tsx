@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DiceColors, DieType } from './DiceMeshes'
-import { DEFAULT_DICE_COLORS } from './DiceMeshes'
 import DiceRenderer, { type DiceRollRequest } from './DiceRenderer'
+import type { DiceColors, DieType } from './dice-meshes'
+import { DEFAULT_DICE_COLORS } from './dice-meshes'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -42,7 +42,9 @@ const trayListeners: Set<DiceTrayHandler> = new Set()
 
 export function onDiceTrayUpdate(handler: DiceTrayHandler): () => void {
   trayListeners.add(handler)
-  return () => { trayListeners.delete(handler) }
+  return () => {
+    trayListeners.delete(handler)
+  }
 }
 
 function emitTrayEntry(entry: DiceTrayEntry): void {

@@ -8,6 +8,7 @@
  */
 
 import soundEventsJson from '../../public/data/5e/audio/sound-events.json'
+import { logger } from '../utils/logger'
 
 // -- Combat sounds (10) --
 // -- Spell school sounds (10) --
@@ -234,10 +235,14 @@ export function init(): void {
       audio.preload = 'auto'
       audio.volume = muted ? 0 : volume
       // Fallback: if variant doesn't exist, use base path
-      audio.addEventListener('error', () => {
-        audio.src = basePath
-        audio.load()
-      }, { once: true })
+      audio.addEventListener(
+        'error',
+        () => {
+          audio.src = basePath
+          audio.load()
+        },
+        { once: true }
+      )
       pool.push(audio)
     }
 
@@ -537,10 +542,7 @@ export function preloadEssential(): void {
  * @param filePath Absolute path to the audio file on disk.
  * @param options Playback options (loop, volume).
  */
-export function playCustomAudio(
-  filePath: string,
-  options?: { loop?: boolean; volume?: number }
-): void {
+export function playCustomAudio(filePath: string, options?: { loop?: boolean; volume?: number }): void {
   if (!enabled) return
 
   // Stop any existing playback of this file
@@ -552,7 +554,7 @@ export function playCustomAudio(
   audio.loop = options?.loop ?? false
   audio.volume = muted ? 0 : Math.max(0, Math.min(1, options?.volume ?? 1))
   audio.play().catch((err) => {
-    console.warn('[SoundManager] Failed to play custom audio:', filePath, err)
+    logger.warn('[SoundManager] Failed to play custom audio:', filePath, err)
   })
 
   customAudioTracks.set(filePath, audio)

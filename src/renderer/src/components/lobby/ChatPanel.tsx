@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { memo, useEffect, useRef } from 'react'
-import { type ChatMessage, useLobbyStore } from '../../stores/useLobbyStore'
+import { type ChatMessage, useLobbyStore } from '../../stores/use-lobby-store'
 import ChatInput from './ChatInput'
 
 function formatTime(timestamp: number): string {

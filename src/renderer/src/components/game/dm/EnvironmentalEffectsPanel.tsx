@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { load5eEnvironmentalEffects } from '../../../services/data-provider'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { ActiveEnvironmentalEffect, EnvironmentalEffect } from '../../../types/dm-toolbox'
 
 const CATEGORY_LABELS: Record<EnvironmentalEffect['category'], string> = {
@@ -17,17 +17,14 @@ interface EnvironmentalEffectsPanelProps {
   onBroadcastResult?: (message: string) => void
 }
 
-export default function EnvironmentalEffectsPanel({
-  onBroadcastResult
-}: EnvironmentalEffectsPanelProps): JSX.Element {
-  const { activeEnvironmentalEffects, addEnvironmentalEffect, removeEnvironmentalEffect } =
-    useGameStore(
-      useShallow((s) => ({
-        activeEnvironmentalEffects: s.activeEnvironmentalEffects,
-        addEnvironmentalEffect: s.addEnvironmentalEffect,
-        removeEnvironmentalEffect: s.removeEnvironmentalEffect
-      }))
-    )
+export default function EnvironmentalEffectsPanel({ onBroadcastResult }: EnvironmentalEffectsPanelProps): JSX.Element {
+  const { activeEnvironmentalEffects, addEnvironmentalEffect, removeEnvironmentalEffect } = useGameStore(
+    useShallow((s) => ({
+      activeEnvironmentalEffects: s.activeEnvironmentalEffects,
+      addEnvironmentalEffect: s.addEnvironmentalEffect,
+      removeEnvironmentalEffect: s.removeEnvironmentalEffect
+    }))
+  )
 
   const [effects, setEffects] = useState<EnvironmentalEffect[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,9 +43,7 @@ export default function EnvironmentalEffectsPanel({
     const q = search.toLowerCase().trim()
     return effects.filter(
       (e) =>
-        e.name.toLowerCase().includes(q) ||
-        e.effect.toLowerCase().includes(q) ||
-        e.category.toLowerCase().includes(q)
+        e.name.toLowerCase().includes(q) || e.effect.toLowerCase().includes(q) || e.category.toLowerCase().includes(q)
     )
   }, [effects, search])
 
@@ -144,10 +139,7 @@ export default function EnvironmentalEffectsPanel({
                 {items.map((effect) => {
                   const isExpanded = expandedId === effect.id
                   return (
-                    <div
-                      key={effect.id}
-                      className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2"
-                    >
+                    <div key={effect.id} className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <span className="text-white text-sm font-medium">{effect.name}</span>
@@ -193,9 +185,7 @@ export default function EnvironmentalEffectsPanel({
         })}
       </div>
 
-      {filteredBySearch.length === 0 && (
-        <div className="text-xs text-gray-500">No effects match your search.</div>
-      )}
+      {filteredBySearch.length === 0 && <div className="text-xs text-gray-500">No effects match your search.</div>}
     </div>
   )
 }

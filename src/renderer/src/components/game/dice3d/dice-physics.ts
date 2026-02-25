@@ -258,18 +258,10 @@ export function addDieToWorld(
   })
 
   // Random initial rotation
-  body.quaternion.setFromEuler(
-    Math.random() * Math.PI * 2,
-    Math.random() * Math.PI * 2,
-    Math.random() * Math.PI * 2
-  )
+  body.quaternion.setFromEuler(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2)
 
   // Random initial velocity
-  body.velocity.set(
-    (Math.random() - 0.5) * 8,
-    -2 + Math.random() * 3,
-    (Math.random() - 0.5) * 8
-  )
+  body.velocity.set((Math.random() - 0.5) * 8, -2 + Math.random() * 3, (Math.random() - 0.5) * 8)
 
   // Randomized angular velocity for natural tumbling
   const angSpeed = 15 + Math.random() * 15

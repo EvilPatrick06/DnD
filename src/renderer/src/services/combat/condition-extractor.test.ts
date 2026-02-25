@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { extractConditionsFromDescription, actionAppliesConditions } from './condition-extractor'
+import { describe, expect, it } from 'vitest'
+import { actionAppliesConditions, extractConditionsFromDescription } from './condition-extractor'
 
 describe('extractConditionsFromDescription', () => {
   it('extracts a single condition with save DC', () => {
@@ -13,8 +13,7 @@ describe('extractConditionsFromDescription', () => {
   })
 
   it('extracts multiple conditions', () => {
-    const desc =
-      'On a hit, the target has the Blinded and Restrained conditions until the end of its next turn.'
+    const desc = 'On a hit, the target has the Blinded and Restrained conditions until the end of its next turn.'
     const result = extractConditionsFromDescription(desc)
     expect(result).toHaveLength(2)
     const names = result.map((r) => r.condition)
@@ -23,7 +22,7 @@ describe('extractConditionsFromDescription', () => {
   })
 
   it('extracts condition with duration', () => {
-    const desc = 'The target has the Frightened condition until the start of the target\'s next turn.'
+    const desc = "The target has the Frightened condition until the start of the target's next turn."
     const result = extractConditionsFromDescription(desc)
     expect(result).toHaveLength(1)
     expect(result[0].condition).toBe('Frightened')
@@ -38,7 +37,7 @@ describe('extractConditionsFromDescription', () => {
   })
 
   it('extracts Charmed with condition keyword', () => {
-    const desc = 'The target has the Charmed condition until the start of the pirate\'s next turn.'
+    const desc = "The target has the Charmed condition until the start of the pirate's next turn."
     const result = extractConditionsFromDescription(desc)
     expect(result).toHaveLength(1)
     expect(result[0].condition).toBe('Charmed')
@@ -51,8 +50,7 @@ describe('extractConditionsFromDescription', () => {
   })
 
   it('does not duplicate conditions mentioned multiple times', () => {
-    const desc =
-      'The target has the Paralyzed condition. While Paralyzed, the target takes 1d6 damage.'
+    const desc = 'The target has the Paralyzed condition. While Paralyzed, the target takes 1d6 damage.'
     const result = extractConditionsFromDescription(desc)
     expect(result).toHaveLength(1)
     expect(result[0].condition).toBe('Paralyzed')
@@ -71,9 +69,7 @@ describe('extractConditionsFromDescription', () => {
 
 describe('actionAppliesConditions', () => {
   it('returns true when description contains a condition', () => {
-    expect(actionAppliesConditions('The target is Stunned until the end of its next turn.')).toBe(
-      true
-    )
+    expect(actionAppliesConditions('The target is Stunned until the end of its next turn.')).toBe(true)
   })
 
   it('returns false when description has no condition', () => {

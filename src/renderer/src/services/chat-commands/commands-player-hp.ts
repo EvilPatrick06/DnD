@@ -1,6 +1,6 @@
 import { play as playSound } from '../../services/sound-manager'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useGameStore } from '../../stores/useGameStore'
+import { useCharacterStore } from '../../stores/use-character-store'
+import { useGameStore } from '../../stores/use-game-store'
 import { is5eCharacter } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
 import type { MapToken } from '../../types/map'

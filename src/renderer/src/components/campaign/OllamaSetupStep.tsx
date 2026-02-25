@@ -10,35 +10,21 @@ interface CuratedModel {
   desc: string
 }
 
-interface AiDmStepProps {
+interface OllamaSetupStepProps {
   enabled: boolean
-  provider: 'claude' | 'ollama'
-  model: 'opus' | 'sonnet' | 'haiku'
-  apiKey: string
   ollamaModel: string
+  ollamaUrl: string
   onOllamaReady: (ready: boolean) => void
-  onChange: (data: {
-    enabled: boolean
-    provider: 'claude' | 'ollama'
-    model: 'opus' | 'sonnet' | 'haiku'
-    apiKey: string
-    ollamaModel: string
-  }) => void
+  onChange: (data: { enabled: boolean; ollamaModel: string; ollamaUrl: string }) => void
 }
 
-export default function AiDmStep({
+export default function OllamaSetupStep({
   enabled,
-  provider,
-  model,
-  apiKey,
   ollamaModel,
+  ollamaUrl,
   onOllamaReady,
   onChange
-}: AiDmStepProps): JSX.Element {
-  // Claude state
-  const [testing, setTesting] = useState(false)
-  const [claudeOk, setClaudeOk] = useState<boolean | null>(null)
-
+}: OllamaSetupStepProps): JSX.Element {
   // Ollama state
   const [setupPhase, setSetupPhase] = useState<SetupPhase>('idle')
   const [ollamaInstalled, setOllamaInstalled] = useState(false)
@@ -51,7 +37,7 @@ export default function AiDmStep({
   const [curatedModels, setCuratedModels] = useState<CuratedModel[]>([])
   const [installedModels, setInstalledModels] = useState<string[]>([])
 
-  // Detect Ollama status when provider is ollama
+  // Detect Ollama status
   const detectStatus = useCallback(async () => {
     setSetupPhase('detecting')
     setErrorMessage(null)
@@ -86,7 +72,7 @@ export default function AiDmStep({
   }, [ollamaModel, onOllamaReady])
 
   useEffect(() => {
-    if (enabled && provider === 'ollama') {
+    if (enabled) {
       detectStatus()
 
       // Listen for progress events
@@ -99,7 +85,7 @@ export default function AiDmStep({
     return () => {
       // Cleanup handled by removeAllAiListeners on unmount
     }
-  }, [enabled, provider, detectStatus])
+  }, [enabled, detectStatus])
 
   // Auto-setup flow
   const handleAutoSetup = async (): Promise<void> => {
@@ -157,26 +143,6 @@ export default function AiDmStep({
     }
   }
 
-  // Claude test connection
-  const handleTestConnection = async (): Promise<void> => {
-    if (!apiKey.trim()) return
-    setTesting(true)
-    setClaudeOk(null)
-    try {
-      await window.api.ai.configure({
-        provider: 'claude',
-        model,
-        apiKey: apiKey.trim()
-      })
-      const result = await window.api.ai.checkProviders()
-      setClaudeOk(result.claude)
-    } catch {
-      setClaudeOk(false)
-    } finally {
-      setTesting(false)
-    }
-  }
-
   // GPU description
   const gpuDesc =
     vramMB > 0 ? `NVIDIA GPU detected (${Math.round(vramMB / 1024)} GB VRAM)` : 'No NVIDIA GPU detected (CPU mode)'
@@ -201,10 +167,8 @@ export default function AiDmStep({
               onChange={(e) =>
                 onChange({
                   enabled: e.target.checked,
-                  provider,
-                  model,
-                  apiKey,
-                  ollamaModel
+                  ollamaModel,
+                  ollamaUrl
                 })
               }
               className="w-5 h-5 rounded bg-gray-800 border-gray-600 text-amber-500 focus:ring-amber-500"
@@ -220,190 +184,112 @@ export default function AiDmStep({
         </Card>
 
         {enabled && (
-          <>
-            {/* Provider selection cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => onChange({ enabled, provider: 'ollama', model, apiKey, ollamaModel })}
-                className={`text-left p-4 rounded-lg border-2 transition-colors cursor-pointer ${
-                  provider === 'ollama'
-                    ? 'border-amber-500 bg-amber-500/10'
-                    : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                }`}
-              >
-                <div className="font-medium mb-1">Free (Ollama)</div>
-                <p className="text-gray-400 text-xs">
-                  Runs locally on your computer. Free, private, no API key needed.
-                </p>
-              </button>
+          <Card>
+            <h3 className="font-medium mb-3">Ollama Setup</h3>
 
-              <button
-                onClick={() => onChange({ enabled, provider: 'claude', model, apiKey, ollamaModel })}
-                className={`text-left p-4 rounded-lg border-2 transition-colors cursor-pointer ${
-                  provider === 'claude'
-                    ? 'border-amber-500 bg-amber-500/10'
-                    : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                }`}
-              >
-                <div className="font-medium mb-1">Claude API</div>
-                <p className="text-gray-400 text-xs">Best quality responses. Requires an Anthropic API key ($).</p>
-              </button>
+            {/* Status checklist */}
+            <div className="space-y-2 mb-4">
+              <StatusItem
+                label="Ollama installed"
+                done={ollamaInstalled}
+                active={setupPhase === 'downloading' || setupPhase === 'installing'}
+                progress={setupPhase === 'downloading' ? downloadProgress : undefined}
+                phaseLabel={
+                  setupPhase === 'downloading'
+                    ? `Downloading... ${downloadProgress}%`
+                    : setupPhase === 'installing'
+                      ? 'Installing...'
+                      : undefined
+                }
+              />
+              <StatusItem
+                label="Ollama running"
+                done={ollamaRunning}
+                active={setupPhase === 'starting'}
+                phaseLabel={setupPhase === 'starting' ? 'Starting server...' : undefined}
+              />
+              <StatusItem
+                label="Model ready"
+                done={modelReady}
+                active={setupPhase === 'pulling'}
+                progress={setupPhase === 'pulling' ? pullProgress : undefined}
+                phaseLabel={setupPhase === 'pulling' ? `Pulling model... ${pullProgress}%` : undefined}
+              />
             </div>
 
-            {/* Ollama path */}
-            {provider === 'ollama' && (
-              <Card>
-                <h3 className="font-medium mb-3">Ollama Setup</h3>
-
-                {/* Status checklist */}
-                <div className="space-y-2 mb-4">
-                  <StatusItem
-                    label="Ollama installed"
-                    done={ollamaInstalled}
-                    active={setupPhase === 'downloading' || setupPhase === 'installing'}
-                    progress={setupPhase === 'downloading' ? downloadProgress : undefined}
-                    phaseLabel={
-                      setupPhase === 'downloading'
-                        ? `Downloading... ${downloadProgress}%`
-                        : setupPhase === 'installing'
-                          ? 'Installing...'
-                          : undefined
-                    }
-                  />
-                  <StatusItem
-                    label="Ollama running"
-                    done={ollamaRunning}
-                    active={setupPhase === 'starting'}
-                    phaseLabel={setupPhase === 'starting' ? 'Starting server...' : undefined}
-                  />
-                  <StatusItem
-                    label="Model ready"
-                    done={modelReady}
-                    active={setupPhase === 'pulling'}
-                    progress={setupPhase === 'pulling' ? pullProgress : undefined}
-                    phaseLabel={setupPhase === 'pulling' ? `Pulling model... ${pullProgress}%` : undefined}
-                  />
-                </div>
-
-                {/* Setup / Retry button */}
-                {setupPhase !== 'ready' && (
-                  <div className="mb-4">
-                    {errorMessage && <p className="text-red-400 text-sm mb-2">{errorMessage}</p>}
-                    <Button onClick={handleAutoSetup} disabled={isSetupBusy || setupPhase === 'detecting'}>
-                      {isSetupBusy
-                        ? 'Setting up...'
-                        : setupPhase === 'error'
-                          ? 'Retry Setup'
-                          : setupPhase === 'detecting'
-                            ? 'Detecting...'
-                            : !ollamaInstalled
-                              ? 'Install & Setup'
-                              : !ollamaRunning
-                                ? 'Start & Setup'
-                                : 'Pull Model'}
-                    </Button>
-                  </div>
-                )}
-
-                {setupPhase === 'ready' && <p className="text-green-400 text-sm mb-4">Ready to go!</p>}
-
-                {/* Model selector */}
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Model</label>
-                  <select
-                    value={ollamaModel}
-                    onChange={(e) => {
-                      onChange({ enabled, provider, model, apiKey, ollamaModel: e.target.value })
-                      // Check if newly selected model is already installed
-                      const isReady = installedModels.some((m) => m.startsWith(e.target.value.split(':')[0]))
-                      setModelReady(isReady)
-                      if (!isReady) {
-                        setSetupPhase('idle')
-                        onOllamaReady(false)
-                      }
-                    }}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
-                  >
-                    {curatedModels.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.desc}
-                        {!modelFitsGpu(m) ? ' (may be slow)' : ''}
-                        {installedModels.some((i) => i.startsWith(m.id.split(':')[0])) ? ' (installed)' : ''}
-                      </option>
-                    ))}
-                    {/* Show installed models not in curated list */}
-                    {installedModels
-                      .filter((m) => !curatedModels.some((c) => m.startsWith(c.id.split(':')[0])))
-                      .map((m) => (
-                        <option key={m} value={m}>
-                          {m} (installed)
-                        </option>
-                      ))}
-                  </select>
-                  <p className="text-gray-500 text-xs mt-1">{gpuDesc}</p>
-                </div>
-              </Card>
+            {/* Setup / Retry button */}
+            {setupPhase !== 'ready' && (
+              <div className="mb-4">
+                {errorMessage && <p className="text-red-400 text-sm mb-2">{errorMessage}</p>}
+                <Button onClick={handleAutoSetup} disabled={isSetupBusy || setupPhase === 'detecting'}>
+                  {isSetupBusy
+                    ? 'Setting up...'
+                    : setupPhase === 'error'
+                      ? 'Retry Setup'
+                      : setupPhase === 'detecting'
+                        ? 'Detecting...'
+                        : !ollamaInstalled
+                          ? 'Install & Setup'
+                          : !ollamaRunning
+                            ? 'Start & Setup'
+                            : 'Pull Model'}
+                </Button>
+              </div>
             )}
 
-            {/* Claude path */}
-            {provider === 'claude' && (
-              <Card>
-                <h3 className="font-medium mb-3">Claude Configuration</h3>
+            {setupPhase === 'ready' && <p className="text-green-400 text-sm mb-4">Ready to go!</p>}
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">API Key</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        value={apiKey}
-                        onChange={(e) =>
-                          onChange({
-                            enabled,
-                            provider,
-                            model,
-                            apiKey: e.target.value,
-                            ollamaModel
-                          })
-                        }
-                        placeholder="sk-ant-..."
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
-                      />
-                      <Button variant="secondary" onClick={handleTestConnection} disabled={testing || !apiKey.trim()}>
-                        {testing ? 'Testing...' : 'Test'}
-                      </Button>
-                    </div>
-                    {claudeOk !== null && (
-                      <p className={`text-sm mt-1 ${claudeOk ? 'text-green-400' : 'text-red-400'}`}>
-                        {claudeOk ? 'Connection successful' : 'Connection failed — check your API key'}
-                      </p>
-                    )}
-                  </div>
+            {/* Model selector */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-1">Model</label>
+              <select
+                value={ollamaModel}
+                onChange={(e) => {
+                  onChange({ enabled, ollamaModel: e.target.value, ollamaUrl })
+                  // Check if newly selected model is already installed
+                  const isReady = installedModels.some((m) => m.startsWith(e.target.value.split(':')[0]))
+                  setModelReady(isReady)
+                  if (!isReady) {
+                    setSetupPhase('idle')
+                    onOllamaReady(false)
+                  }
+                }}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              >
+                {curatedModels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} — {m.desc}
+                    {!modelFitsGpu(m) ? ' (may be slow)' : ''}
+                    {installedModels.some((i) => i.startsWith(m.id.split(':')[0])) ? ' (installed)' : ''}
+                  </option>
+                ))}
+                {/* Show installed models not in curated list */}
+                {installedModels
+                  .filter((m) => !curatedModels.some((c) => m.startsWith(c.id.split(':')[0])))
+                  .map((m) => (
+                    <option key={m} value={m}>
+                      {m} (installed)
+                    </option>
+                  ))}
+              </select>
+              <p className="text-gray-500 text-xs mt-1">{gpuDesc}</p>
+            </div>
 
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Model</label>
-                    <select
-                      value={model}
-                      onChange={(e) =>
-                        onChange({
-                          enabled,
-                          provider,
-                          model: e.target.value as 'opus' | 'sonnet' | 'haiku',
-                          apiKey,
-                          ollamaModel
-                        })
-                      }
-                      className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
-                    >
-                      <option value="opus">Opus 4 (Most capable, highest cost)</option>
-                      <option value="sonnet">Sonnet 4 (Recommended)</option>
-                      <option value="haiku">Haiku 4 (Fastest, lowest cost)</option>
-                    </select>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </>
+            {/* Ollama URL */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Ollama URL</label>
+              <input
+                type="text"
+                value={ollamaUrl}
+                onChange={(e) => onChange({ enabled, ollamaModel, ollamaUrl: e.target.value })}
+                placeholder="http://localhost:11434"
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              />
+              <p className="text-gray-500 text-xs mt-1">
+                Default: http://localhost:11434. Change this to point to a remote GPU server.
+              </p>
+            </div>
+          </Card>
         )}
       </div>
     </div>

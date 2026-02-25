@@ -1,4 +1,4 @@
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { ContentTab } from '../../../types/builder'
 
 const TABS: Array<{ id: ContentTab; label: string }> = [

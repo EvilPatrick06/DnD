@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useCharacterEditor } from '../../../hooks/use-character-editor'
 import { load5eMonsterById } from '../../../services/data-provider'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
-import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import type { Companion5e, CompanionType } from '../../../types/companion'
 import type { MonsterStatBlock } from '../../../types/monster'
@@ -29,6 +26,7 @@ const TYPE_COLORS: Record<CompanionType, string> = {
 }
 
 export default function CompanionsSection5e({ character, readonly }: CompanionsSection5eProps): JSX.Element {
+  const { getLatest, saveAndBroadcast } = useCharacterEditor(character.id)
   const companions = character.companions ?? []
   const pets = character.pets ?? []
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -47,40 +45,26 @@ export default function CompanionsSection5e({ character, readonly }: CompanionsS
     })
   }, [companions, statBlocks])
 
-  const broadcastIfDM = (updated: Character): void => {
-    const { role, sendMessage } = useNetworkStore.getState()
-    if (role === 'host' && updated.playerId !== 'local') {
-      sendMessage('dm:character-update', {
-        characterId: updated.id,
-        characterData: updated,
-        targetPeerId: updated.playerId
-      })
-      useLobbyStore.getState().setRemoteCharacter(updated.id, updated)
-    }
-  }
-
   const updateCompanion = (companionId: string, updates: Partial<Companion5e>): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) as Character5e | undefined
+    const latest = getLatest() as Character5e | undefined
     if (!latest) return
     const updated: Character5e = {
       ...latest,
       companions: (latest.companions ?? []).map((c) => (c.id === companionId ? { ...c, ...updates } : c)),
       updatedAt: new Date().toISOString()
     }
-    useCharacterStore.getState().saveCharacter(updated)
-    broadcastIfDM(updated)
+    saveAndBroadcast(updated)
   }
 
   const removeCompanion = (companionId: string): void => {
-    const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) as Character5e | undefined
+    const latest = getLatest() as Character5e | undefined
     if (!latest) return
     const updated: Character5e = {
       ...latest,
       companions: (latest.companions ?? []).filter((c) => c.id !== companionId),
       updatedAt: new Date().toISOString()
     }
-    useCharacterStore.getState().saveCharacter(updated)
-    broadcastIfDM(updated)
+    saveAndBroadcast(updated)
   }
 
   if (companions.length === 0 && pets.length === 0) {

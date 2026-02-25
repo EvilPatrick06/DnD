@@ -77,7 +77,7 @@ const nameCommand: ChatCommand = {
   category: 'dm',
   execute: async (args, ctx) => {
     try {
-      const data = await load5eNpcNames() as unknown as Record<string, Record<string, string[]>>
+      const data = (await load5eNpcNames()) as unknown as Record<string, Record<string, string[]>>
       const parts = args.trim().toLowerCase().split(/\s+/).filter(Boolean)
       const speciesList = Object.keys(data)
       let species = parts[0]
@@ -144,7 +144,7 @@ const randomCommand: ChatCommand = {
     }
 
     try {
-      const data = await load5eRandomTables() as unknown as Record<string, unknown>
+      const data = (await load5eRandomTables()) as unknown as Record<string, unknown>
       const table = data[tableName]
 
       if (!table || !Array.isArray(table) || table.length === 0) {

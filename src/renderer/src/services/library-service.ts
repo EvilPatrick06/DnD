@@ -2,18 +2,22 @@ import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/libra
 import {
   load5eBackgrounds,
   load5eChaseTables,
-  load5eClassFeatures,
   load5eClasses,
+  load5eClassFeatures,
+  load5eConditions,
   load5eCrafting,
   load5eCreatures,
   load5eCurses,
   load5eDiseases,
+  load5eDowntime,
   load5eEncounterPresets,
   load5eEnvironmentalEffects,
   load5eEquipment,
   load5eFeats,
+  load5eFightingStyles,
   load5eHazards,
   load5eInvocations,
+  load5eLanguages,
   load5eMagicItems,
   load5eMetamagic,
   load5eMonsters,
@@ -23,21 +27,17 @@ import {
   load5eRandomTables,
   load5eSettlements,
   load5eSiegeEquipment,
+  load5eSkills,
+  load5eSounds,
   load5eSpecies,
   load5eSpells,
   load5eSubclasses,
   load5eSupernaturalGifts,
-  load5eTrinkets,
   load5eTraps,
   load5eTreasureTables,
+  load5eTrinkets,
   load5eVehicles,
-  load5eConditions,
-  load5eWeaponMastery,
-  load5eLanguages,
-  load5eSkills,
-  load5eFightingStyles,
-  load5eDowntime,
-  load5eSounds,
+  load5eWeaponMastery
 } from './data-provider'
 
 function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
@@ -53,9 +53,13 @@ function summarizeItem(item: Record<string, unknown>, category: LibraryCategory)
     case 'subclasses':
       return `${((item.class as string) ?? '').charAt(0).toUpperCase() + ((item.class as string) ?? '').slice(1)} - Level ${item.level ?? '?'}`
     case 'species':
-      return `Speed: ${item.speed ?? '?'} ft. | Size: ${Array.isArray(item.size) ? (item.size as string[]).join('/') : item.size ?? '?'}`
+      return `Speed: ${item.speed ?? '?'} ft. | Size: ${Array.isArray(item.size) ? (item.size as string[]).join('/') : (item.size ?? '?')}`
     case 'backgrounds':
-      return ((item.proficiencies as Record<string, unknown>)?.skills as string[])?.join(', ') ?? (item.description as string)?.slice(0, 80) ?? ''
+      return (
+        ((item.proficiencies as Record<string, unknown>)?.skills as string[])?.join(', ') ??
+        (item.description as string)?.slice(0, 80) ??
+        ''
+      )
     case 'feats':
       return `${item.category ?? ''} - Level ${item.level ?? '?'}`
     case 'weapons':
@@ -141,10 +145,7 @@ function homebrewToLibraryItems(entries: HomebrewEntry[], category: LibraryCateg
     }))
 }
 
-export async function loadCategoryItems(
-  category: LibraryCategory,
-  homebrew: HomebrewEntry[]
-): Promise<LibraryItem[]> {
+export async function loadCategoryItems(category: LibraryCategory, homebrew: HomebrewEntry[]): Promise<LibraryItem[]> {
   const hbItems = homebrewToLibraryItems(homebrew, category)
 
   switch (category) {
@@ -313,7 +314,7 @@ export async function loadCategoryItems(
     }
     case 'treasure-tables': {
       const data = await load5eTreasureTables()
-      const tables = (data as unknown as Record<string, unknown>)
+      const tables = data as unknown as Record<string, unknown>
       return toLibraryItems(
         Object.entries(tables).map(([key, val]) => ({ id: key, name: key, ...(val as Record<string, unknown>) })),
         category
@@ -321,7 +322,7 @@ export async function loadCategoryItems(
     }
     case 'random-tables': {
       const data = await load5eRandomTables()
-      const tables = (data as unknown as Record<string, unknown>)
+      const tables = data as unknown as Record<string, unknown>
       return toLibraryItems(
         Object.entries(tables).map(([key, val]) => ({ id: key, name: key, ...(val as Record<string, unknown>) })),
         category
@@ -329,7 +330,7 @@ export async function loadCategoryItems(
     }
     case 'chase-tables': {
       const data = await load5eChaseTables()
-      const tables = (data as unknown as Record<string, unknown>)
+      const tables = data as unknown as Record<string, unknown>
       return toLibraryItems(
         Object.entries(tables).map(([key, val]) => ({ id: key, name: key, ...(val as Record<string, unknown>) })),
         category
@@ -363,8 +364,18 @@ export async function loadCategoryItems(
       const cfData = await load5eClassFeatures()
       const items: Record<string, unknown>[] = []
       for (const [className, classData] of Object.entries(cfData)) {
-        for (const feat of (classData as unknown as Record<string, unknown>).features as { level: number; name: string; description: string }[]) {
-          items.push({ id: `${className}-${feat.name}-${feat.level}`, name: feat.name, level: feat.level, description: feat.description, class: className })
+        for (const feat of (classData as unknown as Record<string, unknown>).features as {
+          level: number
+          name: string
+          description: string
+        }[]) {
+          items.push({
+            id: `${className}-${feat.name}-${feat.level}`,
+            name: feat.name,
+            level: feat.level,
+            description: feat.description,
+            class: className
+          })
         }
       }
       return [...toLibraryItems(items, category), ...hbItems]
@@ -374,32 +385,43 @@ export async function loadCategoryItems(
   }
 }
 
-export async function searchAllCategories(
-  query: string,
-  homebrew: HomebrewEntry[]
-): Promise<LibraryItem[]> {
+export async function searchAllCategories(query: string, homebrew: HomebrewEntry[]): Promise<LibraryItem[]> {
   if (!query.trim()) return []
   const q = query.toLowerCase()
 
   const allCategories: LibraryCategory[] = [
-    'monsters', 'creatures', 'npcs', 'spells', 'classes', 'subclasses',
-    'species', 'backgrounds', 'feats', 'weapons', 'armor', 'magic-items',
-    'traps', 'poisons', 'diseases', 'curses', 'conditions', 'weapon-mastery',
-    'languages', 'skills', 'fighting-styles', 'class-features'
+    'monsters',
+    'creatures',
+    'npcs',
+    'spells',
+    'classes',
+    'subclasses',
+    'species',
+    'backgrounds',
+    'feats',
+    'weapons',
+    'armor',
+    'magic-items',
+    'traps',
+    'poisons',
+    'diseases',
+    'curses',
+    'conditions',
+    'weapon-mastery',
+    'languages',
+    'skills',
+    'fighting-styles',
+    'class-features'
   ]
 
-  const results = await Promise.allSettled(
-    allCategories.map((cat) => loadCategoryItems(cat, homebrew))
-  )
+  const results = await Promise.allSettled(allCategories.map((cat) => loadCategoryItems(cat, homebrew)))
 
   const allItems: LibraryItem[] = []
   for (const r of results) {
     if (r.status === 'fulfilled') {
-      allItems.push(...r.value.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          item.summary.toLowerCase().includes(q)
-      ))
+      allItems.push(
+        ...r.value.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
+      )
     }
   }
 

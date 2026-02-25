@@ -118,9 +118,7 @@ export default function CreatureModal({
             <button
               onClick={() => setTab('browse')}
               className={`text-sm font-bold transition-colors cursor-pointer pb-0.5 ${
-                tab === 'browse'
-                  ? 'text-amber-400 border-b-2 border-amber-400'
-                  : 'text-gray-500 hover:text-gray-300'
+                tab === 'browse' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               Browse
@@ -128,16 +126,12 @@ export default function CreatureModal({
             <button
               onClick={() => setTab('summon')}
               className={`text-sm font-bold transition-colors cursor-pointer pb-0.5 ${
-                tab === 'summon'
-                  ? 'text-purple-400 border-b-2 border-purple-400'
-                  : 'text-gray-500 hover:text-gray-300'
+                tab === 'summon' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               Summon
             </button>
-            {tab === 'summon' && spellName && (
-              <span className="text-xs text-gray-500">via {spellName}</span>
-            )}
+            {tab === 'summon' && spellName && <span className="text-xs text-gray-500">via {spellName}</span>}
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl cursor-pointer">
             x

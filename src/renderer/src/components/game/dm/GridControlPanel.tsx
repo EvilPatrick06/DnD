@@ -27,9 +27,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
 
       {/* Cell Size */}
       <div className="space-y-1">
-        <label className="text-[10px] text-gray-400 uppercase tracking-wider">
-          Cell Size: {grid.cellSize}px
-        </label>
+        <label className="text-[10px] text-gray-400 uppercase tracking-wider">Cell Size: {grid.cellSize}px</label>
         <input
           type="range"
           min={20}
@@ -46,9 +44,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
 
       {/* X Offset */}
       <div className="space-y-1">
-        <label className="text-[10px] text-gray-400 uppercase tracking-wider">
-          X Offset: {grid.offsetX}px
-        </label>
+        <label className="text-[10px] text-gray-400 uppercase tracking-wider">X Offset: {grid.offsetX}px</label>
         <input
           type="range"
           min={-50}
@@ -65,9 +61,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
 
       {/* Y Offset */}
       <div className="space-y-1">
-        <label className="text-[10px] text-gray-400 uppercase tracking-wider">
-          Y Offset: {grid.offsetY}px
-        </label>
+        <label className="text-[10px] text-gray-400 uppercase tracking-wider">Y Offset: {grid.offsetY}px</label>
         <input
           type="range"
           min={-50}
@@ -118,9 +112,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
           <button
             onClick={() => onUpdate({ type: 'square' })}
             className={`flex-1 py-1.5 text-xs rounded cursor-pointer transition-colors ${
-              grid.type === 'square'
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              grid.type === 'square' ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
           >
             Square
@@ -128,9 +120,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
           <button
             onClick={() => onUpdate({ type: 'hex' })}
             className={`flex-1 py-1.5 text-xs rounded cursor-pointer transition-colors ${
-              grid.type === 'hex'
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              grid.type === 'hex' ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
           >
             Hex
@@ -142,9 +132,7 @@ export default function GridControlPanel({ grid, onUpdate }: GridControlPanelPro
       <button
         onClick={() => onUpdate({ enabled: !grid.enabled })}
         className={`w-full py-1.5 text-xs rounded border transition-colors cursor-pointer ${
-          grid.enabled
-            ? 'bg-green-900/30 border-green-700 text-green-400'
-            : 'bg-gray-800 border-gray-700 text-gray-400'
+          grid.enabled ? 'bg-green-900/30 border-green-700 text-green-400' : 'bg-gray-800 border-gray-700 text-gray-400'
         }`}
       >
         Grid {grid.enabled ? 'ON' : 'OFF'}

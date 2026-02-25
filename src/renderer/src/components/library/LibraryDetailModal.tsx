@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import type { LibraryItem, LibraryCategory } from '../../types/library'
+import type { LibraryCategory, LibraryItem } from '../../types/library'
 import { getCategoryDef } from '../../types/library'
 
 interface LibraryDetailModalProps {
@@ -106,7 +106,20 @@ function getPriorityKeys(category: LibraryCategory): string[] {
     case 'monsters':
     case 'creatures':
     case 'npcs':
-      return ['name', 'cr', 'type', 'size', 'alignment', 'ac', 'hp', 'hitDice', 'speed', 'abilityScores', 'traits', 'actions']
+      return [
+        'name',
+        'cr',
+        'type',
+        'size',
+        'alignment',
+        'ac',
+        'hp',
+        'hitDice',
+        'speed',
+        'abilityScores',
+        'traits',
+        'actions'
+      ]
     case 'spells':
       return ['name', 'level', 'school', 'castingTime', 'range', 'components', 'duration', 'description', 'lists']
     case 'classes':
@@ -139,10 +152,7 @@ export default function LibraryDetailModal({
   )
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={handleBackdropClick}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleBackdropClick}>
       <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
       <div className="relative bg-gray-900 border border-gray-700 rounded-lg w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-gray-800">
@@ -158,9 +168,7 @@ export default function LibraryDetailModal({
                   </span>
                 )}
                 {item.source === 'official' && (
-                  <span className="text-[10px] bg-blue-600/30 text-blue-300 px-1.5 py-0.5 rounded-full">
-                    Official
-                  </span>
+                  <span className="text-[10px] bg-blue-600/30 text-blue-300 px-1.5 py-0.5 rounded-full">Official</span>
                 )}
               </div>
             </div>
@@ -175,9 +183,7 @@ export default function LibraryDetailModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          <dl className="space-y-4">
-            {fields.map(([key, value]) => renderField(formatLabel(key), value))}
-          </dl>
+          <dl className="space-y-4">{fields.map(([key, value]) => renderField(formatLabel(key), value))}</dl>
         </div>
 
         <div className="flex items-center gap-2 p-4 border-t border-gray-800">

@@ -10,7 +10,12 @@ interface CharacterCardProps {
   onExport?: () => void
 }
 
-export default memo(function CharacterCard({ character, onClick, onDelete, onExport }: CharacterCardProps): JSX.Element {
+export default memo(function CharacterCard({
+  character,
+  onClick,
+  onDelete,
+  onExport
+}: CharacterCardProps): JSX.Element {
   const className = character.classes.map((c) => c.name).join(' / ') || 'Unknown Class'
   const speciesName = character.species
   const subclass = character.classes[0]?.subclass

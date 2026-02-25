@@ -1,5 +1,5 @@
-import type { EffectSource } from '../types/effects'
 import { load5eEffectDefinitions } from '../services/data-provider'
+import type { EffectSource } from '../types/effects'
 
 // Module-level caches
 let magicItemEffects: Record<string, EffectSource> = {}
@@ -7,18 +7,20 @@ let featEffects: Record<string, EffectSource> = {}
 let fightingStyleEffects: Record<string, EffectSource> = {}
 let consumableEffects: Record<string, EffectSource> = {}
 
-load5eEffectDefinitions().then((data) => {
-  const d = data as {
-    magicItems: Record<string, EffectSource>
-    feats: Record<string, EffectSource>
-    fightingStyles: Record<string, EffectSource>
-    consumables: Record<string, EffectSource>
-  }
-  magicItemEffects = d.magicItems ?? {}
-  featEffects = d.feats ?? {}
-  fightingStyleEffects = d.fightingStyles ?? {}
-  consumableEffects = d.consumables ?? {}
-}).catch(() => {})
+load5eEffectDefinitions()
+  .then((data) => {
+    const d = data as {
+      magicItems: Record<string, EffectSource>
+      feats: Record<string, EffectSource>
+      fightingStyles: Record<string, EffectSource>
+      consumables: Record<string, EffectSource>
+    }
+    magicItemEffects = d.magicItems ?? {}
+    featEffects = d.feats ?? {}
+    fightingStyleEffects = d.fightingStyles ?? {}
+    consumableEffects = d.consumables ?? {}
+  })
+  .catch(() => {})
 
 // ─── Lookup Functions ────────────────────────────────────────
 

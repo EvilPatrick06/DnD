@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { trigger3dDice } from '../../../../components/game/dice3d'
-import { rollMultiple } from '../../../../services/dice/dice-service'
 import { getConsumableEffects } from '../../../../data/effect-definitions'
-import { useCharacterStore } from '../../../../stores/useCharacterStore'
+import { rollMultiple } from '../../../../services/dice/dice-service'
+import { useCharacterStore } from '../../../../stores/use-character-store'
 import type { Character } from '../../../../types/character'
 import { is5eCharacter } from '../../../../types/character'
 import type { Character5e } from '../../../../types/character-5e'
@@ -125,7 +125,11 @@ export default function ItemModal({ character, onClose, onUseItem }: ItemModalPr
       <div className="relative bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 max-w-lg w-full mx-4 shadow-2xl max-h-[60vh] flex flex-col">
         <div className="flex items-center justify-between mb-3 shrink-0">
           <h3 className="text-sm font-semibold text-gray-200">Equipment & Items</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

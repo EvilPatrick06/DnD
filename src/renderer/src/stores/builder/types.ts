@@ -1,11 +1,11 @@
+import abilityScoreConfigJson from '../../../public/data/5e/character/ability-score-config.json'
+import presetIconsJson from '../../../public/data/5e/character/preset-icons.json'
 import type { BuilderPhase, ContentTab, SelectionModalState } from '../../types/builder'
 import type { Character } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
 import type { AbilityName, AbilityScoreSet, BuildSlot, Rarity } from '../../types/character-common'
 import { ABILITY_NAMES } from '../../types/character-common'
 import type { GameSystem } from '../../types/game-system'
-import abilityScoreConfigJson from '../../../public/data/5e/character/ability-score-config.json'
-import presetIconsJson from '../../../public/data/5e/character/preset-icons.json'
 
 // --- Constants ---
 

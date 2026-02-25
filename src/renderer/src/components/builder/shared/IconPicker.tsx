@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { PRESET_ICONS, useBuilderStore } from '../../../stores/useBuilderStore'
+import { PRESET_ICONS, useBuilderStore } from '../../../stores/use-builder-store'
 
 export default function IconPicker(): JSX.Element {
   const iconType = useBuilderStore((s) => s.iconType)

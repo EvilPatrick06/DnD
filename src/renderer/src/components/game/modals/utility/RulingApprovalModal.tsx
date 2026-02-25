@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAiDmStore } from '../../../../stores/useAiDmStore'
+import { useAiDmStore } from '../../../../stores/use-ai-dm-store'
 
 /**
  * RulingApprovalModal — shown when DM approval is required for AI DM actions.

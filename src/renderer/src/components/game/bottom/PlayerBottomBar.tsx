@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Campaign } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
@@ -204,7 +204,9 @@ export default function PlayerBottomBar({
                 <div className="absolute bottom-full left-0 mb-1 w-48 max-h-[60vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl z-20">
                   {/* Combat & Movement */}
                   <div className="px-2 pt-2 pb-1">
-                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">Combat & Movement</span>
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">
+                      Combat & Movement
+                    </span>
                   </div>
                   <button
                     onClick={() => {

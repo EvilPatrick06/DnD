@@ -25,19 +25,38 @@ type WindWeight = [WindLevel, number][]
 type PrecipWeight = [PrecipitationLevel, number][]
 
 let TEMP_RANGES: Record<TemperatureLevel, { min: number; max: number }> = {
-  'freezing': { min: -20, max: 20 }, 'cold': { min: 20, max: 40 }, 'mild': { min: 40, max: 65 },
-  'warm': { min: 65, max: 85 }, 'hot': { min: 85, max: 100 }, 'extreme-heat': { min: 100, max: 120 }
+  freezing: { min: -20, max: 20 },
+  cold: { min: 20, max: 40 },
+  mild: { min: 40, max: 65 },
+  warm: { min: 65, max: 85 },
+  hot: { min: 85, max: 100 },
+  'extreme-heat': { min: 100, max: 120 }
 }
 
-let CLIMATE_SEASON_TEMPS: Record<Climate, Record<Season, TempWeight>> = {} as Record<Climate, Record<Season, TempWeight>>
+let CLIMATE_SEASON_TEMPS: Record<Climate, Record<Season, TempWeight>> = {} as Record<
+  Climate,
+  Record<Season, TempWeight>
+>
 let CLIMATE_SEASON_WIND: Record<Climate, Record<Season, WindWeight>> = {} as Record<Climate, Record<Season, WindWeight>>
-let CLIMATE_SEASON_PRECIP: Record<Climate, Record<Season, PrecipWeight>> = {} as Record<Climate, Record<Season, PrecipWeight>>
+let CLIMATE_SEASON_PRECIP: Record<Climate, Record<Season, PrecipWeight>> = {} as Record<
+  Climate,
+  Record<Season, PrecipWeight>
+>
 
 let TEMP_DESCRIPTIONS: Record<TemperatureLevel, string> = {
-  'freezing': 'Freezing', 'cold': 'Cold', 'mild': 'Mild', 'warm': 'Warm', 'hot': 'Hot', 'extreme-heat': 'Extremely hot'
+  freezing: 'Freezing',
+  cold: 'Cold',
+  mild: 'Mild',
+  warm: 'Warm',
+  hot: 'Hot',
+  'extreme-heat': 'Extremely hot'
 }
 let WIND_DESCRIPTIONS: Record<WindLevel, string> = {
-  calm: 'calm winds', light: 'a light breeze', moderate: 'moderate winds', strong: 'strong winds', severe: 'severe gale-force winds'
+  calm: 'calm winds',
+  light: 'a light breeze',
+  moderate: 'moderate winds',
+  strong: 'strong winds',
+  severe: 'severe gale-force winds'
 }
 let PRECIP_DESCRIPTIONS: Record<PrecipitationLevel, Record<'rain' | 'snow', string>> = {
   none: { rain: 'clear skies', snow: 'clear skies' },
@@ -46,26 +65,34 @@ let PRECIP_DESCRIPTIONS: Record<PrecipitationLevel, Record<'rain' | 'snow', stri
 }
 
 export let CLIMATES: { value: Climate; label: string }[] = [
-  { value: 'arctic', label: 'Arctic' }, { value: 'temperate', label: 'Temperate' },
-  { value: 'tropical', label: 'Tropical' }, { value: 'desert', label: 'Desert' }, { value: 'coastal', label: 'Coastal' }
+  { value: 'arctic', label: 'Arctic' },
+  { value: 'temperate', label: 'Temperate' },
+  { value: 'tropical', label: 'Tropical' },
+  { value: 'desert', label: 'Desert' },
+  { value: 'coastal', label: 'Coastal' }
 ]
 export let SEASONS: { value: Season; label: string }[] = [
-  { value: 'spring', label: 'Spring' }, { value: 'summer', label: 'Summer' },
-  { value: 'autumn', label: 'Autumn' }, { value: 'winter', label: 'Winter' }
+  { value: 'spring', label: 'Spring' },
+  { value: 'summer', label: 'Summer' },
+  { value: 'autumn', label: 'Autumn' },
+  { value: 'winter', label: 'Winter' }
 ]
 
-load5eWeatherGeneration().then((raw) => {
-  const data = raw as Record<string, unknown>
-  if (data.temperatureRanges) TEMP_RANGES = data.temperatureRanges as typeof TEMP_RANGES
-  if (data.climateSeasonTemps) CLIMATE_SEASON_TEMPS = data.climateSeasonTemps as typeof CLIMATE_SEASON_TEMPS
-  if (data.climateSeasonWind) CLIMATE_SEASON_WIND = data.climateSeasonWind as typeof CLIMATE_SEASON_WIND
-  if (data.climateSeasonPrecip) CLIMATE_SEASON_PRECIP = data.climateSeasonPrecip as typeof CLIMATE_SEASON_PRECIP
-  if (data.temperatureDescriptions) TEMP_DESCRIPTIONS = data.temperatureDescriptions as typeof TEMP_DESCRIPTIONS
-  if (data.windDescriptions) WIND_DESCRIPTIONS = data.windDescriptions as typeof WIND_DESCRIPTIONS
-  if (data.precipitationDescriptions) PRECIP_DESCRIPTIONS = data.precipitationDescriptions as typeof PRECIP_DESCRIPTIONS
-  if (data.climates) CLIMATES = data.climates as typeof CLIMATES
-  if (data.seasons) SEASONS = data.seasons as typeof SEASONS
-}).catch(() => {})
+load5eWeatherGeneration()
+  .then((raw) => {
+    const data = raw as Record<string, unknown>
+    if (data.temperatureRanges) TEMP_RANGES = data.temperatureRanges as typeof TEMP_RANGES
+    if (data.climateSeasonTemps) CLIMATE_SEASON_TEMPS = data.climateSeasonTemps as typeof CLIMATE_SEASON_TEMPS
+    if (data.climateSeasonWind) CLIMATE_SEASON_WIND = data.climateSeasonWind as typeof CLIMATE_SEASON_WIND
+    if (data.climateSeasonPrecip) CLIMATE_SEASON_PRECIP = data.climateSeasonPrecip as typeof CLIMATE_SEASON_PRECIP
+    if (data.temperatureDescriptions) TEMP_DESCRIPTIONS = data.temperatureDescriptions as typeof TEMP_DESCRIPTIONS
+    if (data.windDescriptions) WIND_DESCRIPTIONS = data.windDescriptions as typeof WIND_DESCRIPTIONS
+    if (data.precipitationDescriptions)
+      PRECIP_DESCRIPTIONS = data.precipitationDescriptions as typeof PRECIP_DESCRIPTIONS
+    if (data.climates) CLIMATES = data.climates as typeof CLIMATES
+    if (data.seasons) SEASONS = data.seasons as typeof SEASONS
+  })
+  .catch(() => {})
 
 // ---- Weighted Random Selection ---------------------------------------------
 
@@ -92,11 +119,7 @@ function getMapPreset(precipitation: PrecipitationLevel, temperature: Temperatur
 
 // ---- Mechanical Effects (DMG 2024) -----------------------------------------
 
-function getMechanicalEffects(
-  temp: TemperatureLevel,
-  wind: WindLevel,
-  precip: PrecipitationLevel
-): string[] {
+function getMechanicalEffects(temp: TemperatureLevel, wind: WindLevel, precip: PrecipitationLevel): string[] {
   const effects: string[] = []
 
   if (temp === 'freezing') {
@@ -111,14 +134,20 @@ function getMechanicalEffects(
   }
 
   if (wind === 'strong' || wind === 'severe') {
-    effects.push('Strong Wind: Disadvantage on ranged weapon attack rolls and Wisdom (Perception) checks relying on hearing.')
+    effects.push(
+      'Strong Wind: Disadvantage on ranged weapon attack rolls and Wisdom (Perception) checks relying on hearing.'
+    )
     if (wind === 'severe') {
-      effects.push('Severe Wind: Ranged weapon attacks beyond normal range are impossible. Open flames are extinguished.')
+      effects.push(
+        'Severe Wind: Ranged weapon attacks beyond normal range are impossible. Open flames are extinguished.'
+      )
     }
   }
 
   if (precip === 'heavy') {
-    effects.push('Heavy Precipitation: The area is Lightly Obscured. Disadvantage on Wisdom (Perception) checks relying on sight.')
+    effects.push(
+      'Heavy Precipitation: The area is Lightly Obscured. Disadvantage on Wisdom (Perception) checks relying on sight.'
+    )
   }
 
   return effects

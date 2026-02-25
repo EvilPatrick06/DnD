@@ -1,10 +1,8 @@
 import { z } from 'zod'
 
 export const AiConfigSchema = z.object({
-  provider: z.enum(['claude', 'ollama']),
-  model: z.enum(['opus', 'sonnet', 'haiku']),
-  apiKey: z.string().optional(),
-  ollamaModel: z.string().optional()
+  ollamaModel: z.string(),
+  ollamaUrl: z.string()
 })
 
 export const ActiveCreatureSchema = z.object({

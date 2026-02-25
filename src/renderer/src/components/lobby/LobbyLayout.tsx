@@ -1,12 +1,11 @@
 import { setCharacterInfo } from '../../network/client-manager'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+import { useCharacterStore } from '../../stores/use-character-store'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useNetworkStore } from '../../stores/use-network-store'
 import CharacterSelector from './CharacterSelector'
 import ChatPanel from './ChatPanel'
 import PlayerList from './PlayerList'
 import ReadyButton from './ReadyButton'
-import VoiceControls from './VoiceControls'
 
 export default function LobbyLayout(): JSX.Element {
   const updatePlayer = useLobbyStore((s) => s.updatePlayer)
@@ -40,16 +39,11 @@ export default function LobbyLayout(): JSX.Element {
         <ChatPanel />
       </div>
 
-      {/* Right panel: Character selector + voice + ready */}
+      {/* Right panel: Character selector + ready */}
       <div className="w-72 flex-shrink-0 flex flex-col gap-4">
         {/* Character selector */}
         <div className="flex-1 bg-gray-900/50 border border-gray-800 rounded-lg p-4 overflow-y-auto">
           <CharacterSelector onSelect={handleCharacterSelect} />
-        </div>
-
-        {/* Voice controls */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
-          <VoiceControls />
         </div>
 
         {/* Ready button */}

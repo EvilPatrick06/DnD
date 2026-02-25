@@ -34,10 +34,26 @@ const FILE_PATH_MAP: Record<string, string> = {
   'encounter-presets.json': 'encounters/encounter-presets.json',
   'random-tables.json': 'encounters/random-tables.json',
   'chase-tables.json': 'encounters/chase-tables.json',
+  'adventures.json': 'adventures/adventures.json',
+  'sound-events.json': 'audio/sound-events.json',
+  'bastion-events.json': 'bastions/bastion-events.json',
+  'bastion-facilities.json': 'bastions/bastion-facilities.json',
+  'ability-score-config.json': 'character/ability-score-config.json',
+  'currency-config.json': 'equipment/currency-config.json',
+  'sentient-items.json': 'equipment/sentient-items.json',
+  'class-resources.json': 'mechanics/class-resources.json',
+  'effect-definitions.json': 'mechanics/effect-definitions.json',
+  'species-resources.json': 'mechanics/species-resources.json',
+  'spell-slots.json': 'mechanics/spell-slots.json',
+  'xp-thresholds.json': 'mechanics/xp-thresholds.json',
+  'npc-mannerisms.json': 'npc/npc-mannerisms.json',
+  'built-in-maps.json': 'world/built-in-maps.json',
+  'session-zero-config.json': 'world/session-zero-config.json',
+  'settlements.json': 'world/settlements.json',
   'diseases.json': 'hazards/diseases.json',
   'traps.json': 'hazards/traps.json',
   'hazards.json': 'hazards/hazards.json',
-  'poisons.json': 'hazards/poisons.json',
+  'poisons.json': 'hazards/poisons.json'
 }
 
 function loadJsonFile<T>(filename: string): T {
@@ -132,7 +148,7 @@ describe('species-traits.json', () => {
   })
 
   it('each entry has name and description', () => {
-    for (const [key, value] of Object.entries(data)) {
+    for (const [_key, value] of Object.entries(data)) {
       const trait = value as Record<string, unknown>
       expect(trait).toHaveProperty('name')
       expect(trait).toHaveProperty('description')
@@ -680,6 +696,315 @@ describe('chase-tables.json', () => {
   })
 })
 
+// === adventures.json ===
+describe('adventures.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('adventures.json')
+  })
+
+  it('is a non-empty array', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('each adventure has required fields', () => {
+    for (const adventure of data as Record<string, unknown>[]) {
+      expect(adventure).toHaveProperty('id')
+      expect(adventure).toHaveProperty('name')
+      expect(adventure).toHaveProperty('description')
+      expect(adventure).toHaveProperty('chapters')
+      expect(Array.isArray(adventure.chapters)).toBe(true)
+    }
+  })
+})
+
+// === sound-events.json ===
+describe('sound-events.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('sound-events.json')
+  })
+
+  it('contains core top-level collections', () => {
+    expect(data).toHaveProperty('soundEvents')
+    expect(data).toHaveProperty('ambientSounds')
+    expect(data).toHaveProperty('categories')
+    expect(Array.isArray(data.soundEvents)).toBe(true)
+    expect(Array.isArray(data.ambientSounds)).toBe(true)
+  })
+})
+
+// === bastion-events.json ===
+describe('bastion-events.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('bastion-events.json')
+  })
+
+  it('contains expected event tables', () => {
+    expect(data).toHaveProperty('allIsWellFlavors')
+    expect(data).toHaveProperty('eventsTable')
+    expect(Array.isArray(data.allIsWellFlavors)).toBe(true)
+    expect(Array.isArray(data.eventsTable)).toBe(true)
+  })
+})
+
+// === bastion-facilities.json ===
+describe('bastion-facilities.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('bastion-facilities.json')
+  })
+
+  it('contains basic and special facility lists', () => {
+    expect(data).toHaveProperty('basicFacilities')
+    expect(data).toHaveProperty('specialFacilities')
+    expect(Array.isArray(data.basicFacilities)).toBe(true)
+    expect(Array.isArray(data.specialFacilities)).toBe(true)
+  })
+})
+
+// === ability-score-config.json ===
+describe('ability-score-config.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('ability-score-config.json')
+  })
+
+  it('contains builder ability score configuration fields', () => {
+    expect(data).toHaveProperty('pointBuyCosts')
+    expect(data).toHaveProperty('standardArray')
+    expect(data).toHaveProperty('methods')
+    expect(Array.isArray(data.standardArray)).toBe(true)
+    expect(Array.isArray(data.methods)).toBe(true)
+  })
+})
+
+// === creatures.json ===
+describe('creatures.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('creatures.json')
+  })
+
+  it('is a non-empty array', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('each creature has required combat fields', () => {
+    for (const creature of data as Record<string, unknown>[]) {
+      expect(creature).toHaveProperty('id')
+      expect(creature).toHaveProperty('name')
+      expect(creature).toHaveProperty('ac')
+      expect(creature).toHaveProperty('hp')
+    }
+  })
+})
+
+// === npcs.json ===
+describe('npcs.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('npcs.json')
+  })
+
+  it('is a non-empty array', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('each npc has required combat fields', () => {
+    for (const npc of data as Record<string, unknown>[]) {
+      expect(npc).toHaveProperty('id')
+      expect(npc).toHaveProperty('name')
+      expect(npc).toHaveProperty('ac')
+      expect(npc).toHaveProperty('hp')
+    }
+  })
+})
+
+// === currency-config.json ===
+describe('currency-config.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('currency-config.json')
+  })
+
+  it('is a non-empty array of currency entries', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('each currency entry has key metadata', () => {
+    for (const currency of data as Record<string, unknown>[]) {
+      expect(currency).toHaveProperty('key')
+      expect(currency).toHaveProperty('label')
+      expect(currency).toHaveProperty('fullName')
+    }
+  })
+})
+
+// === sentient-items.json ===
+describe('sentient-items.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('sentient-items.json')
+  })
+
+  it('contains sentient item lookup tables', () => {
+    expect(data).toHaveProperty('alignmentTable')
+    expect(data).toHaveProperty('communicationTable')
+    expect(data).toHaveProperty('sensesTable')
+  })
+})
+
+// === class-resources.json ===
+describe('class-resources.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('class-resources.json')
+  })
+
+  it('contains class and feat resource maps', () => {
+    expect(data).toHaveProperty('classes')
+    expect(data).toHaveProperty('feats')
+    expect(typeof data.classes).toBe('object')
+    expect(typeof data.feats).toBe('object')
+  })
+})
+
+// === effect-definitions.json ===
+describe('effect-definitions.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('effect-definitions.json')
+  })
+
+  it('contains effect definition groups', () => {
+    expect(data).toHaveProperty('magicItems')
+    expect(data).toHaveProperty('feats')
+    expect(data).toHaveProperty('fightingStyles')
+  })
+})
+
+// === species-resources.json ===
+describe('species-resources.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('species-resources.json')
+  })
+
+  it('contains species resource map', () => {
+    expect(data).toHaveProperty('species')
+    expect(typeof data.species).toBe('object')
+  })
+})
+
+// === spell-slots.json ===
+describe('spell-slots.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('spell-slots.json')
+  })
+
+  it('contains caster slot progressions', () => {
+    expect(data).toHaveProperty('fullCaster')
+    expect(data).toHaveProperty('halfCaster')
+    expect(data).toHaveProperty('thirdCaster')
+    expect(data).toHaveProperty('warlock')
+  })
+})
+
+// === xp-thresholds.json ===
+describe('xp-thresholds.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('xp-thresholds.json')
+  })
+
+  it('is a non-empty array of numbers', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+    for (const value of data) {
+      expect(typeof value).toBe('number')
+      expect(value).toBeGreaterThanOrEqual(0)
+    }
+  })
+})
+
+// === npc-mannerisms.json ===
+describe('npc-mannerisms.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('npc-mannerisms.json')
+  })
+
+  it('contains voice and mannerism tables', () => {
+    expect(data).toHaveProperty('voiceDescriptions')
+    expect(data).toHaveProperty('mannerisms')
+    expect(Array.isArray(data.voiceDescriptions)).toBe(true)
+    expect(Array.isArray(data.mannerisms)).toBe(true)
+  })
+})
+
+// === built-in-maps.json ===
+describe('built-in-maps.json', () => {
+  let data: unknown[]
+  beforeAll(() => {
+    data = loadJsonFile('built-in-maps.json')
+  })
+
+  it('is a non-empty array', () => {
+    expect(Array.isArray(data)).toBe(true)
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('each map has required fields', () => {
+    for (const map of data as Record<string, unknown>[]) {
+      expect(map).toHaveProperty('id')
+      expect(map).toHaveProperty('name')
+      expect(map).toHaveProperty('imagePath')
+    }
+  })
+})
+
+// === session-zero-config.json ===
+describe('session-zero-config.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('session-zero-config.json')
+  })
+
+  it('contains session zero option groups', () => {
+    expect(data).toHaveProperty('toneOptions')
+    expect(data).toHaveProperty('deathOptions')
+    expect(data).toHaveProperty('commonLimits')
+    expect(Array.isArray(data.toneOptions)).toBe(true)
+    expect(Array.isArray(data.deathOptions)).toBe(true)
+    expect(Array.isArray(data.commonLimits)).toBe(true)
+  })
+})
+
+// === settlements.json ===
+describe('settlements.json', () => {
+  let data: Record<string, unknown>
+  beforeAll(() => {
+    data = loadJsonFile('settlements.json')
+  })
+
+  it('contains settlement generation tables', () => {
+    expect(data).toHaveProperty('sizes')
+    expect(data).toHaveProperty('governmentTypes')
+    expect(data).toHaveProperty('definingTraits')
+    expect(Array.isArray(data.sizes)).toBe(true)
+    expect(Array.isArray(data.governmentTypes)).toBe(true)
+    expect(typeof data.definingTraits).toBe('object')
+    expect(data.definingTraits).not.toBeNull()
+  })
+})
+
 // === Cross-reference: encounter-presets monster IDs vs monsters.json ===
 describe('cross-references', () => {
   it('encounter preset monster IDs exist in monsters.json, creatures.json, or npcs.json', () => {
@@ -718,23 +1043,30 @@ describe('cross-references', () => {
   })
 
   it('species inline traits have name and description', () => {
-    const species = loadJsonFile<Array<{
-      id: string
-      traits: Array<{ name: string; description: string }>
-      subraces?: Array<{ id: string; traitModifications: { add: Array<{ name: string; description: string }> } }>
-    }>>('species.json')
+    const species =
+      loadJsonFile<
+        Array<{
+          id: string
+          traits: Array<{ name: string; description: string }>
+          subraces?: Array<{ id: string; traitModifications: { add: Array<{ name: string; description: string }> } }>
+        }>
+      >('species.json')
     for (const sp of species) {
       for (const trait of sp.traits) {
         expect(typeof trait.name, `Species "${sp.id}" has trait with invalid name`).toBe('string')
         expect(trait.name.length).toBeGreaterThan(0)
-        expect(typeof trait.description, `Species "${sp.id}" trait "${trait.name}" has invalid description`).toBe('string')
+        expect(typeof trait.description, `Species "${sp.id}" trait "${trait.name}" has invalid description`).toBe(
+          'string'
+        )
         expect(trait.description.length).toBeGreaterThan(0)
       }
       if (sp.subraces) {
         for (const sr of sp.subraces) {
           for (const trait of sr.traitModifications.add) {
             expect(typeof trait.name, `Subrace "${sr.id}" has trait with invalid name`).toBe('string')
-            expect(typeof trait.description, `Subrace "${sr.id}" trait "${trait.name}" has invalid description`).toBe('string')
+            expect(typeof trait.description, `Subrace "${sr.id}" trait "${trait.name}" has invalid description`).toBe(
+              'string'
+            )
           }
         }
       }

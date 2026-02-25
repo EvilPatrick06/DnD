@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SPELL_SCHOOLS } from '../../../constants/spell-schools'
-import { load5eEquipment, load5eMonsters } from '../../../services/data-provider'
 import { loadSpells } from '../../../services/character/spell-data'
+import { load5eEquipment, load5eMonsters } from '../../../services/data-provider'
 import type { SpellEntry } from '../../../types/character-common'
 import type { EquipmentFile } from '../../../types/data'
 import type { MonsterStatBlock } from '../../../types/monster'
@@ -10,7 +10,16 @@ import type { MonsterStatBlock } from '../../../types/monster'
 // Types
 // ---------------------------------------------------------------------------
 
-type TabId = 'actions' | 'conditions' | 'cover' | 'damage-types' | 'weapons' | 'dcs' | 'spells' | 'monsters' | 'equipment'
+type TabId =
+  | 'actions'
+  | 'conditions'
+  | 'cover'
+  | 'damage-types'
+  | 'weapons'
+  | 'dcs'
+  | 'spells'
+  | 'monsters'
+  | 'equipment'
 
 interface ReferenceItem {
   title: string
@@ -456,16 +465,16 @@ function MonstersTab(): JSX.Element {
 
   const crValues = useMemo(() => {
     const crs = new Set(monsters.map((m) => m.cr ?? String(Math.floor(m.hp / 15))))
-    return ['0', '1/8', '1/4', '1/2', ...Array.from({ length: 30 }, (_, i) => String(i + 1))].filter((cr) => crs.has(cr))
+    return ['0', '1/8', '1/4', '1/2', ...Array.from({ length: 30 }, (_, i) => String(i + 1))].filter((cr) =>
+      crs.has(cr)
+    )
   }, [monsters])
 
   const filtered = useMemo(() => {
     let result = monsters
     if (search.trim()) {
       const q = search.trim().toLowerCase()
-      result = result.filter(
-        (m) => m.name.toLowerCase().includes(q) || m.type.toLowerCase().includes(q)
-      )
+      result = result.filter((m) => m.name.toLowerCase().includes(q) || m.type.toLowerCase().includes(q))
     }
     if (crFilter) {
       result = result.filter((m) => (m.cr ?? '') === crFilter)
@@ -508,7 +517,8 @@ function MonstersTab(): JSX.Element {
       </div>
 
       <div className="text-[10px] text-gray-500">
-        {filtered.length} monster{filtered.length !== 1 ? 's' : ''}{filtered.length === 100 ? '+' : ''}
+        {filtered.length} monster{filtered.length !== 1 ? 's' : ''}
+        {filtered.length === 100 ? '+' : ''}
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
@@ -535,15 +545,21 @@ function MonsterCard({ monster }: { monster: MonsterStatBlock }): JSX.Element {
         <div className="text-[10px] text-gray-500 shrink-0">CR {monster.cr ?? '?'}</div>
       </div>
       <div className="text-[10px] text-gray-400 mt-0.5">
-        {monster.size} {monster.type}{monster.subtype ? ` (${monster.subtype})` : ''}
+        {monster.size} {monster.type}
+        {monster.subtype ? ` (${monster.subtype})` : ''}
       </div>
       {expanded && (
         <div className="mt-2 pt-2 border-t border-gray-700/30 space-y-1">
           <div className="grid grid-cols-3 gap-x-2 gap-y-0.5 text-[10px]">
             <span className="text-gray-500">AC</span>
-            <span className="text-gray-300 col-span-2">{monster.ac}{monster.acType ? ` (${monster.acType})` : ''}</span>
+            <span className="text-gray-300 col-span-2">
+              {monster.ac}
+              {monster.acType ? ` (${monster.acType})` : ''}
+            </span>
             <span className="text-gray-500">HP</span>
-            <span className="text-gray-300 col-span-2">{monster.hp} ({monster.hitDice})</span>
+            <span className="text-gray-300 col-span-2">
+              {monster.hp} ({monster.hitDice})
+            </span>
             <span className="text-gray-500">Speed</span>
             <span className="text-gray-300 col-span-2">
               {monster.speed.walk}ft
@@ -651,7 +667,9 @@ function EquipmentTab(): JSX.Element {
         ))}
       </div>
 
-      <div className="text-[10px] text-gray-500">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</div>
+      <div className="text-[10px] text-gray-500">
+        {filtered.length} item{filtered.length !== 1 ? 's' : ''}
+      </div>
 
       <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">
         {filtered.length === 0 ? (
@@ -663,9 +681,7 @@ function EquipmentTab(): JSX.Element {
                 <div className="text-xs font-semibold text-amber-400 truncate">{item.name}</div>
                 <span className="text-[10px] text-gray-500 shrink-0">{item.category}</span>
               </div>
-              {item.details && (
-                <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">{item.details}</p>
-              )}
+              {item.details && <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">{item.details}</p>}
             </div>
           ))
         )}

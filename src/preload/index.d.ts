@@ -12,7 +12,10 @@ interface CharacterAPI {
   loadCharacter: (id: string) => Promise<Record<string, unknown> | null>
   deleteCharacter: (id: string) => Promise<boolean>
   listCharacterVersions: (id: string) => Promise<{ success: boolean; data?: CharacterVersion[] }>
-  restoreCharacterVersion: (id: string, fileName: string) => Promise<{ success: boolean; data?: Record<string, unknown> }>
+  restoreCharacterVersion: (
+    id: string,
+    fileName: string
+  ) => Promise<{ success: boolean; data?: Record<string, unknown> }>
 }
 
 interface CampaignAPI {
@@ -104,16 +107,13 @@ interface AiIndexProgressData {
 }
 
 interface AiProviderStatus {
-  claude: boolean
   ollama: boolean
   ollamaModels: string[]
 }
 
 interface AiConfigData {
-  provider: 'claude' | 'ollama'
-  model: 'opus' | 'sonnet' | 'haiku'
-  apiKey?: string
-  ollamaModel?: string
+  ollamaModel: string
+  ollamaUrl: string
 }
 
 interface AiStatChange {
@@ -243,7 +243,7 @@ interface AiAPI {
   onOllamaProgress: (cb: (data: OllamaProgressData) => void) => void
   onStreamFileRead: (cb: (data: { streamId: string; path: string; status: string }) => void) => void
   onStreamWebSearch: (cb: (data: { streamId: string; query: string; status: string }) => void) => void
-  approveWebSearch: (streamId: string, approved: boolean) => Promise<void>
+  approveWebSearch: (streamId: string, approved: boolean) => Promise<{ success: boolean; error?: string }>
   removeAllAiListeners: () => void
 }
 
@@ -303,41 +303,12 @@ interface AudioAPI {
     category: string
   ) => Promise<{ success: boolean; data?: AudioUploadResult; error?: string }>
   audioListCustom: (campaignId: string) => Promise<{ success: boolean; data?: string[]; error?: string }>
-  audioDeleteCustom: (
-    campaignId: string,
-    fileName: string
-  ) => Promise<{ success: boolean; error?: string }>
+  audioDeleteCustom: (campaignId: string, fileName: string) => Promise<{ success: boolean; error?: string }>
   audioGetCustomPath: (
     campaignId: string,
     fileName: string
   ) => Promise<{ success: boolean; data?: string; error?: string }>
   audioPickFile: () => Promise<{ success: boolean; data?: AudioPickResult; error?: string }>
-}
-
-interface VoiceTokenOptions {
-  roomName: string
-  participantName: string
-  participantId: string
-  mode: 'local' | 'cloud'
-  apiKey?: string
-  apiSecret?: string
-}
-
-interface VoiceTokenResult {
-  token: string
-  serverUrl: string
-}
-
-interface VoiceChatAPI {
-  voiceGenerateToken: (options: VoiceTokenOptions) => Promise<{
-    success: boolean
-    data?: VoiceTokenResult
-    error?: string
-  }>
-  voiceGetServerUrl: (mode: 'local' | 'cloud', serverUrl?: string) => Promise<{
-    success: boolean
-    data?: string
-  }>
 }
 
 declare global {
@@ -353,8 +324,7 @@ declare global {
       FileAPI &
       WindowAPI &
       SettingsAPI &
-      AudioAPI &
-      VoiceChatAPI & {
+      AudioAPI & {
         ai: AiAPI
         update: UpdateAPI
         getVersion: () => Promise<string>

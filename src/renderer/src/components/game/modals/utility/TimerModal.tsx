@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useGameStore } from '../../../../stores/useGameStore'
-import { useNetworkStore } from '../../../../stores/useNetworkStore'
+import { useGameStore } from '../../../../stores/use-game-store'
+import { useNetworkStore } from '../../../../stores/use-network-store'
 
 interface TimerModalProps {
   onClose: () => void
@@ -31,7 +31,11 @@ export default function TimerModal({ onClose }: TimerModalProps): JSX.Element {
       <div className="relative bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 max-w-xs w-full mx-4 shadow-2xl">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-200">Turn Timer</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

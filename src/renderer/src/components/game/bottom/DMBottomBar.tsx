@@ -44,7 +44,11 @@ export default function DMBottomBar({
 
   // Resizable tab panel width
   const [tabPanelWidth, setTabPanelWidth] = useState(() => {
-    try { return parseInt(localStorage.getItem('dnd-vtt-tab-panel-width') || '320', 10) } catch { return 320 }
+    try {
+      return parseInt(localStorage.getItem('dnd-vtt-tab-panel-width') || '320', 10)
+    } catch {
+      return 320
+    }
   })
 
   const handleTabResize = useCallback((delta: number) => {
@@ -91,20 +95,11 @@ export default function DMBottomBar({
             className="shrink-0 flex flex-col min-h-0 border-r border-gray-700/50 overflow-hidden"
             style={{ width: tabPanelWidth }}
           >
-            <DMTabPanel
-              onOpenModal={handleOpenModal}
-              campaign={campaign}
-              onDispute={onDispute}
-              onEditMap={onEditMap}
-            />
+            <DMTabPanel onOpenModal={handleOpenModal} campaign={campaign} onDispute={onDispute} onEditMap={onEditMap} />
           </div>
 
           {/* Resize handle between tab panel and chat */}
-          <ResizeHandle
-            direction="horizontal"
-            onResize={handleTabResize}
-            onDoubleClick={handleTabDoubleClick}
-          />
+          <ResizeHandle direction="horizontal" onResize={handleTabResize} onDoubleClick={handleTabDoubleClick} />
 
           {/* Right: chat panel */}
           <ChatPanel

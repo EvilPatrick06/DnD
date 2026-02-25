@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useNetworkStore } from '../stores/useNetworkStore'
+import { useNetworkStore } from '../stores/use-network-store'
 
 const NetworkSettingsModal = lazy(() => import('../components/game/modals/utility/NetworkSettingsModal'))
 
@@ -101,7 +101,9 @@ export default function MainMenuPage(): JSX.Element {
         Network Settings
       </button>
 
-      <p className="text-gray-600 text-sm mt-4">Version {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}</p>
+      <p className="text-gray-600 text-sm mt-4">
+        Version {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
+      </p>
 
       {showNetworkSettings && (
         <Suspense fallback={null}>

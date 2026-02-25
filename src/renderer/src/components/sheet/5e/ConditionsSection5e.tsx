@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BUFFS_5E, type ConditionDef, getConditionsForSystem } from '../../../data/conditions'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
+import { useCharacterStore } from '../../../stores/use-character-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { ActiveCondition } from '../../../types/character-common'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'

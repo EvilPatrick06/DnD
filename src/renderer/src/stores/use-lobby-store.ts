@@ -4,12 +4,11 @@ import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
 import { MAX_CHAT_LENGTH } from '../constants/app-constants'
 import { PLAYER_COLORS } from '../network/types'
 import { rollFormula } from '../services/dice/dice-engine'
-import { setDeafened, setMuted, setRemotePeerMuted } from '../network/voice-manager'
 import type { Character } from '../types/character'
 
-function getNetworkStore(): typeof import('./useNetworkStore').useNetworkStore {
+function getNetworkStore(): typeof import('./use-network-store').useNetworkStore {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return (require('./useNetworkStore') as typeof import('./useNetworkStore')).useNetworkStore
+  return (require('./use-network-store') as typeof import('./use-network-store')).useNetworkStore
 }
 
 export interface LobbyPlayer {
@@ -252,9 +251,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       if (isNetworked) {
         // Find the target peer by display name (case-insensitive)
         const peers = getNetworkStore().getState().peers
-        const target = peers.find(
-          (p) => p.displayName.toLowerCase() === targetName.toLowerCase()
-        )
+        const target = peers.find((p) => p.displayName.toLowerCase() === targetName.toLowerCase())
         if (target) {
           sendMessage('chat:whisper', {
             message: whisperContent,
@@ -284,13 +281,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   toggleMute: () => {
     const newMuted = !get().localMuted
-    setMuted(newMuted)
     set({ localMuted: newMuted })
   },
 
   toggleDeafen: () => {
     const newDeafened = !get().localDeafened
-    setDeafened(newDeafened)
     set({
       localDeafened: newDeafened,
       localMuted: newDeafened ? true : get().localMuted
@@ -308,7 +303,6 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   toggleLocalMutePlayer: (peerId: string) => {
     set((state) => {
       const isMuted = state.locallyMutedPeers.includes(peerId)
-      setRemotePeerMuted(peerId, !isMuted)
       return {
         locallyMutedPeers: isMuted
           ? state.locallyMutedPeers.filter((id) => id !== peerId)
@@ -345,9 +339,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
   setDiceColors: (peerId: string, colors: DiceColors) => {
     set((state) => ({
-      players: state.players.map((p) =>
-        p.peerId === peerId ? { ...p, diceColors: colors } : p
-      )
+      players: state.players.map((p) => (p.peerId === peerId ? { ...p, diceColors: colors } : p))
     }))
   },
 

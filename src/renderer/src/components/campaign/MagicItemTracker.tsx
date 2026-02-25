@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { useCharacterStore } from '../../stores/useCharacterStore'
+import { useCharacterStore } from '../../stores/use-character-store'
 import type { Campaign } from '../../types/campaign'
-import type { MagicItemRarity5e } from '../../types/character-common'
 import type { Character5e } from '../../types/character-5e'
+import type { MagicItemRarity5e } from '../../types/character-common'
 
 // DMG 2024 recommended magic items by level tier (cumulative across levels 1-20)
 // 19 Common, 28 Uncommon, 23 Rare, 19 Very Rare, 11 Legendary = 100 total
@@ -53,7 +53,12 @@ export default function MagicItemTracker({ campaign }: MagicItemTrackerProps): J
     ) as Character5e[]
 
     const counts: Record<MagicItemRarity5e, number> = {
-      common: 0, uncommon: 0, rare: 0, 'very-rare': 0, legendary: 0, artifact: 0
+      common: 0,
+      uncommon: 0,
+      rare: 0,
+      'very-rare': 0,
+      legendary: 0,
+      artifact: 0
     }
 
     const perChar: { name: string; items: { name: string; rarity: MagicItemRarity5e }[] }[] = []
@@ -88,13 +93,13 @@ export default function MagicItemTracker({ campaign }: MagicItemTrackerProps): J
   const recommended = DMG_RECOMMENDED_BY_TIER[tier]
   const recommendedTotal = Object.values(recommended).reduce((a, b) => a + b, 0)
 
-  const status = totalItems < recommendedTotal * 0.7 ? 'behind' :
-    totalItems > recommendedTotal * 1.3 ? 'ahead' : 'on-track'
+  const status =
+    totalItems < recommendedTotal * 0.7 ? 'behind' : totalItems > recommendedTotal * 1.3 ? 'ahead' : 'on-track'
 
   const statusLabel: Record<string, { text: string; color: string }> = {
-    'behind': { text: 'Behind Curve', color: 'text-red-400 bg-red-900/30' },
+    behind: { text: 'Behind Curve', color: 'text-red-400 bg-red-900/30' },
     'on-track': { text: 'On Track', color: 'text-green-400 bg-green-900/30' },
-    'ahead': { text: 'Ahead of Curve', color: 'text-amber-400 bg-amber-900/30' }
+    ahead: { text: 'Ahead of Curve', color: 'text-amber-400 bg-amber-900/30' }
   }
 
   return (
@@ -116,7 +121,7 @@ export default function MagicItemTracker({ campaign }: MagicItemTrackerProps): J
         {RARITY_ORDER.map((rarity) => {
           const actual = itemsByRarity[rarity]
           const expected = recommended[rarity]
-          const pct = expected > 0 ? Math.min(100, (actual / expected) * 100) : (actual > 0 ? 100 : 0)
+          const pct = expected > 0 ? Math.min(100, (actual / expected) * 100) : actual > 0 ? 100 : 0
 
           return (
             <div key={rarity} className="flex items-center gap-2">

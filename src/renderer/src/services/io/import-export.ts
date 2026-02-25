@@ -5,6 +5,8 @@
  * All functions handle errors gracefully, returning false or null on failure.
  */
 
+import { logger } from '../../utils/logger'
+
 const JSON_FILTER = [{ name: 'JSON Files', extensions: ['json'] }]
 
 // ---------------------------------------------------------------------------
@@ -60,7 +62,7 @@ export async function exportCampaign(campaign: Record<string, unknown>): Promise
  * Validates that the parsed object contains required fields: id, name, gameSystem.
  * Returns the parsed character object, or null if cancelled/invalid/error.
  */
-export async function importCharacter(): Promise<any | null> {
+export async function importCharacter(): Promise<Record<string, unknown> | null> {
   try {
     const filePath = await window.api.showOpenDialog({
       title: 'Import Character',
@@ -78,13 +80,13 @@ export async function importCharacter(): Promise<any | null> {
       typeof parsed.name !== 'string' ||
       typeof parsed.gameSystem !== 'string'
     ) {
-      console.error('Import character: missing required fields (id, name, gameSystem)')
+      logger.error('Import character: missing required fields (id, name, gameSystem)')
       return null
     }
 
     return parsed
   } catch (err) {
-    console.error('Import character failed:', err)
+    logger.error('Import character failed:', err)
     return null
   }
 }
@@ -94,7 +96,7 @@ export async function importCharacter(): Promise<any | null> {
  * Validates that the parsed object contains required fields: id, name, system.
  * Returns the parsed campaign object, or null if cancelled/invalid/error.
  */
-export async function importCampaign(): Promise<any | null> {
+export async function importCampaign(): Promise<Record<string, unknown> | null> {
   try {
     const filePath = await window.api.showOpenDialog({
       title: 'Import Campaign',
@@ -112,13 +114,13 @@ export async function importCampaign(): Promise<any | null> {
       typeof parsed.name !== 'string' ||
       typeof parsed.system !== 'string'
     ) {
-      console.error('Import campaign: missing required fields (id, name, system)')
+      logger.error('Import campaign: missing required fields (id, name, system)')
       return null
     }
 
     return parsed
   } catch (err) {
-    console.error('Import campaign failed:', err)
+    logger.error('Import campaign failed:', err)
     return null
   }
 }
@@ -331,7 +333,7 @@ function applyAbilityBonuses(
  *
  * Returns the converted character object or null if cancelled/invalid/error.
  */
-export async function importDndBeyondCharacter(): Promise<any | null> {
+export async function importDndBeyondCharacter(): Promise<Record<string, unknown> | null> {
   try {
     const filePath = await window.api.showOpenDialog({
       title: 'Import D&D Beyond Character',
@@ -347,7 +349,7 @@ export async function importDndBeyondCharacter(): Promise<any | null> {
 
     // Validate minimum DDB structure
     if (!data || typeof data.name !== 'string') {
-      console.error('Import DDB: not a valid D&D Beyond character export')
+      logger.error('Import DDB: not a valid D&D Beyond character export')
       return null
     }
 
@@ -505,7 +507,7 @@ export async function importDndBeyondCharacter(): Promise<any | null> {
 
     return character
   } catch (err) {
-    console.error('Import D&D Beyond character failed:', err)
+    logger.error('Import D&D Beyond character failed:', err)
     return null
   }
 }

@@ -14,14 +14,18 @@ function loadPosition(): Position | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) return JSON.parse(stored) as Position
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return null
 }
 
 function savePosition(pos: Position): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pos))
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function getDieIcon(formula: string): string {
@@ -112,11 +116,7 @@ export default function DiceTray(): JSX.Element {
   if (entries.length === 0) return <></>
 
   return (
-    <div
-      ref={trayRef}
-      className="fixed z-50 pointer-events-auto"
-      style={{ left: position.x, top: position.y }}
-    >
+    <div ref={trayRef} className="fixed z-50 pointer-events-auto" style={{ left: position.x, top: position.y }}>
       {/* Header — draggable */}
       <div
         className={`flex items-center justify-between px-3 py-1.5 bg-gray-800/95 border border-gray-600 rounded-t-lg select-none ${
@@ -137,11 +137,7 @@ export default function DiceTray(): JSX.Element {
           >
             {collapsed ? '+' : '-'}
           </button>
-          <button
-            onClick={clearAll}
-            className="text-gray-400 hover:text-red-400 text-xs px-1"
-            title="Clear all"
-          >
+          <button onClick={clearAll} className="text-gray-400 hover:text-red-400 text-xs px-1" title="Clear all">
             x
           </button>
         </div>
@@ -149,23 +145,20 @@ export default function DiceTray(): JSX.Element {
 
       {/* Entries */}
       {!collapsed && (
-        <div className="bg-gray-900/95 border border-t-0 border-gray-600 rounded-b-lg overflow-hidden" style={{ width: 250 }}>
+        <div
+          className="bg-gray-900/95 border border-t-0 border-gray-600 rounded-b-lg overflow-hidden"
+          style={{ width: 250 }}
+        >
           {entries.map((entry) => (
             <div
               key={entry.id}
               className="flex items-center justify-between px-3 py-2 border-b border-gray-700/50 last:border-b-0 hover:bg-gray-800/50 group"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs text-amber-400 font-mono shrink-0">
-                  [{getDieIcon(entry.formula)}]
-                </span>
+                <span className="text-xs text-amber-400 font-mono shrink-0">[{getDieIcon(entry.formula)}]</span>
                 <div className="min-w-0">
-                  <div className="text-sm text-white font-medium truncate">
-                    {entry.formula}
-                  </div>
-                  {entry.rollerName && (
-                    <div className="text-xs text-gray-500 truncate">{entry.rollerName}</div>
-                  )}
+                  <div className="text-sm text-white font-medium truncate">{entry.formula}</div>
+                  {entry.rollerName && <div className="text-xs text-gray-500 truncate">{entry.rollerName}</div>}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

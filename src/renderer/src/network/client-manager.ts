@@ -1,5 +1,11 @@
 import type { DataConnection } from 'peerjs'
-import { BASE_RETRY_MS, CONNECTION_TIMEOUT_MS, HEARTBEAT_INTERVAL_MS, MAX_RECONNECT_RETRIES, MAX_RETRY_MS } from '../constants/app-constants'
+import {
+  BASE_RETRY_MS,
+  CONNECTION_TIMEOUT_MS,
+  HEARTBEAT_INTERVAL_MS,
+  MAX_RECONNECT_RETRIES,
+  MAX_RETRY_MS
+} from '../constants/app-constants'
 import { logger } from '../utils/logger'
 import { createPeer, destroyPeer, getPeerId } from './peer-manager'
 import { validateNetworkMessage } from './schemas'
@@ -299,7 +305,11 @@ async function attemptConnection(
           // Handle pong (keep-alive response) — forward to callbacks for latency tracking
           if (message.type === 'pong') {
             for (const cb of messageCallbacks) {
-              try { cb(message) } catch (_e) { /* ignore */ }
+              try {
+                cb(message)
+              } catch (_e) {
+                /* ignore */
+              }
             }
             return
           }
@@ -356,7 +366,9 @@ function handleDisconnection(reason: string): void {
     const delay = Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS)
     const jitter = Math.floor(Math.random() * 500)
     const totalDelay = delay + jitter
-    logger.debug(`[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RECONNECT_RETRIES}) in ${totalDelay}ms...`)
+    logger.debug(
+      `[ClientManager] Connection lost. Retrying (${retryCount}/${MAX_RECONNECT_RETRIES}) in ${totalDelay}ms...`
+    )
 
     // Destroy the old peer before retrying
     destroyPeer()

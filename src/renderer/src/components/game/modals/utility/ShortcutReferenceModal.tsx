@@ -58,7 +58,11 @@ export default function ShortcutReferenceModal({ onClose }: ShortcutReferenceMod
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
           <h2 className="text-lg font-bold text-amber-400">Keyboard Shortcuts</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl leading-none cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

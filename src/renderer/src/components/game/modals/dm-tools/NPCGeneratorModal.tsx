@@ -235,61 +235,21 @@ export default function NPCGeneratorModal({ onClose, onBroadcastResult }: NPCGen
           ) : (
             <div className="space-y-3">
               {/* Name */}
-              <TraitRow
-                label="Name"
-                value={npc.name}
-                onReroll={() => reroll('name')}
-              />
-              <TraitRow
-                label="Appearance"
-                value={npc.appearance}
-                onReroll={() => reroll('appearance')}
-              />
-              <TraitRow
-                label="High Ability"
-                value={npc.highAbility}
-                onReroll={() => reroll('highAbility')}
-              />
-              <TraitRow
-                label="Low Ability"
-                value={npc.lowAbility}
-                onReroll={() => reroll('lowAbility')}
-              />
-              <TraitRow
-                label="Talent"
-                value={npc.talent}
-                onReroll={() => reroll('talent')}
-              />
-              <TraitRow
-                label="Mannerism"
-                value={npc.mannerism}
-                onReroll={() => reroll('mannerism')}
-              />
+              <TraitRow label="Name" value={npc.name} onReroll={() => reroll('name')} />
+              <TraitRow label="Appearance" value={npc.appearance} onReroll={() => reroll('appearance')} />
+              <TraitRow label="High Ability" value={npc.highAbility} onReroll={() => reroll('highAbility')} />
+              <TraitRow label="Low Ability" value={npc.lowAbility} onReroll={() => reroll('lowAbility')} />
+              <TraitRow label="Talent" value={npc.talent} onReroll={() => reroll('talent')} />
+              <TraitRow label="Mannerism" value={npc.mannerism} onReroll={() => reroll('mannerism')} />
               <TraitRow
                 label="Interaction Trait"
                 value={npc.interactionTrait}
                 onReroll={() => reroll('interactionTrait')}
               />
-              <TraitRow
-                label="Ideal"
-                value={npc.ideal}
-                onReroll={() => reroll('ideal')}
-              />
-              <TraitRow
-                label="Bond"
-                value={npc.bond}
-                onReroll={() => reroll('bond')}
-              />
-              <TraitRow
-                label="Flaw"
-                value={npc.flaw}
-                onReroll={() => reroll('flaw')}
-              />
-              <TraitRow
-                label="Secret"
-                value={npc.secret}
-                onReroll={() => reroll('secret')}
-              />
+              <TraitRow label="Ideal" value={npc.ideal} onReroll={() => reroll('ideal')} />
+              <TraitRow label="Bond" value={npc.bond} onReroll={() => reroll('bond')} />
+              <TraitRow label="Flaw" value={npc.flaw} onReroll={() => reroll('flaw')} />
+              <TraitRow label="Secret" value={npc.secret} onReroll={() => reroll('secret')} />
             </div>
           )}
         </div>
@@ -298,15 +258,7 @@ export default function NPCGeneratorModal({ onClose, onBroadcastResult }: NPCGen
   )
 }
 
-function TraitRow({
-  label,
-  value,
-  onReroll
-}: {
-  label: string
-  value: string
-  onReroll: () => void
-}): JSX.Element {
+function TraitRow({ label, value, onReroll }: { label: string; value: string; onReroll: () => void }): JSX.Element {
   return (
     <div className="flex items-start gap-2 py-1.5 border-b border-gray-800 last:border-0">
       <span className="text-xs text-gray-400 shrink-0 w-28">{label}</span>

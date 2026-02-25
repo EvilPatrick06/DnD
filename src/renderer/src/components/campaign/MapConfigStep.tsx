@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
+import builtInMapsJson from '../../../public/data/5e/world/built-in-maps.json'
 import type { GameMap } from '../../types/map'
 import { Button, Input } from '../ui'
-import builtInMapsJson from '../../../public/data/5e/world/built-in-maps.json'
 
 interface MapConfigStepProps {
   maps: GameMap[]

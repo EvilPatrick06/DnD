@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { type Adventure, loadAdventures } from '../../services/adventure-loader'
-import { useCampaignStore } from '../../stores/useCampaignStore'
+import { useCampaignStore } from '../../stores/use-campaign-store'
 import type { CalendarConfig, CampaignType, CustomRule, TurnMode } from '../../types/campaign'
 import type { GameSystem } from '../../types/game-system'
 import type { GameMap } from '../../types/map'
+import { logger } from '../../utils/logger'
 import { Button } from '../ui'
 import AdventureSelector from './AdventureSelector'
-import AiDmStep from './AiDmStep'
 import AudioStep, { type CustomAudioEntry } from './AudioStep'
 import CalendarStep from './CalendarStep'
 import DetailsStep from './DetailsStep'
 import MapConfigStep from './MapConfigStep'
+import OllamaSetupStep from './OllamaSetupStep'
 import SessionZeroStep, { DEFAULT_SESSION_ZERO, type SessionZeroData } from './SessionZeroStep'
 import StartStep from './StartStep'
 import SystemStep from './SystemStep'
-import VoiceChatStep from './VoiceChatStep'
 
-const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Session Zero', 'Calendar', 'Maps', 'Voice', 'Audio']
+const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Session Zero', 'Calendar', 'Maps', 'Audio']
 
 export default function CampaignWizard(): JSX.Element {
   const navigate = useNavigate()
@@ -51,20 +51,10 @@ export default function CampaignWizard(): JSX.Element {
   const [excludedEncounterIds, setExcludedEncounterIds] = useState<string[]>([])
   const [excludedMapIds, setExcludedMapIds] = useState<string[]>([])
 
-  // Voice chat config
-  const [voiceConfig, setVoiceConfig] = useState<{
-    mode: 'local' | 'cloud'
-    apiKey: string
-    apiSecret: string
-    serverUrl: string
-  }>({ mode: 'local', apiKey: '', apiSecret: '', serverUrl: 'wss://' })
-
   // AI DM config
   const [aiEnabled, setAiEnabled] = useState(false)
-  const [aiProvider, setAiProvider] = useState<'claude' | 'ollama'>('claude')
-  const [aiModel, setAiModel] = useState<'opus' | 'sonnet' | 'haiku'>('sonnet')
-  const [aiApiKey, setAiApiKey] = useState('')
   const [aiOllamaModel, setAiOllamaModel] = useState('llama3.1')
+  const [aiOllamaUrl, setAiOllamaUrl] = useState('http://localhost:11434')
   const [ollamaReady, setOllamaReady] = useState(false)
 
   // For review step: resolve adventure name
@@ -91,8 +81,7 @@ export default function CampaignWizard(): JSX.Element {
         return name.trim().length > 0
       case 2:
         if (!aiEnabled) return true
-        if (aiProvider === 'ollama') return ollamaReady
-        return aiApiKey.trim().length > 0
+        return ollamaReady
       case 3:
         return campaignType === 'custom' || selectedAdventureId !== null
       case 4:
@@ -102,8 +91,6 @@ export default function CampaignWizard(): JSX.Element {
       case 6:
         return true // Maps are optional
       case 7:
-        return true // Voice is optional
-      case 8:
         return true // Audio is optional
       default:
         return false
@@ -185,8 +172,7 @@ export default function CampaignWizard(): JSX.Element {
               notes: `Role: ${npc.role}`
             })) ?? [],
         encounters:
-          selectedAdventure?.encounters?.filter((e) => !excludedEncounterIds.includes(e.id || '')) ??
-          undefined,
+          selectedAdventure?.encounters?.filter((e) => !excludedEncounterIds.includes(e.id || '')) ?? undefined,
         lore:
           selectedAdventure?.lore
             ?.filter((l) => !excludedLoreIds.includes(l.id))
@@ -201,20 +187,9 @@ export default function CampaignWizard(): JSX.Element {
         customRules,
         settings: {
           maxPlayers,
-          voiceEnabled: voiceConfig.mode !== undefined,
           lobbyMessage: lobbyMessage.trim(),
           levelRange: selectedAdventure?.levelRange ?? { min: 1, max: 20 },
           allowCharCreationInLobby: true
-        },
-        voiceChat: {
-          mode: voiceConfig.mode,
-          ...(voiceConfig.mode === 'cloud'
-            ? {
-                apiKey: voiceConfig.apiKey,
-                apiSecret: voiceConfig.apiSecret,
-                serverUrl: voiceConfig.serverUrl
-              }
-            : {})
         },
         calendar: calendar ?? undefined,
         customAudio:
@@ -226,7 +201,8 @@ export default function CampaignWizard(): JSX.Element {
                 category: a.category
               }))
             : undefined,
-        sessionZero: sessionZero.contentLimits.length > 0 ||
+        sessionZero:
+          sessionZero.contentLimits.length > 0 ||
           sessionZero.tone !== 'heroic' ||
           sessionZero.playSchedule.trim() ||
           sessionZero.additionalNotes.trim() ||
@@ -237,26 +213,23 @@ export default function CampaignWizard(): JSX.Element {
         aiDm: aiEnabled
           ? {
               enabled: true,
-              provider: aiProvider,
-              model: aiModel,
-              ollamaModel: aiProvider === 'ollama' ? aiOllamaModel : undefined
+              ollamaModel: aiOllamaModel,
+              ollamaUrl: aiOllamaUrl
             }
           : undefined
       })
 
-      // If AI DM enabled, configure the provider
+      // If AI DM enabled, configure Ollama
       if (aiEnabled) {
         await window.api.ai.configure({
-          provider: aiProvider,
-          model: aiModel,
-          apiKey: aiProvider === 'claude' ? aiApiKey : undefined,
-          ollamaModel: aiProvider === 'ollama' ? aiOllamaModel : undefined
+          ollamaModel: aiOllamaModel,
+          ollamaUrl: aiOllamaUrl
         })
       }
 
       navigate(`/campaign/${campaign.id}`)
     } catch (error) {
-      console.error('Failed to create campaign:', error)
+      logger.error('Failed to create campaign:', error)
     } finally {
       setSubmitting(false)
     }
@@ -305,19 +278,15 @@ export default function CampaignWizard(): JSX.Element {
       )}
 
       {step === 2 && (
-        <AiDmStep
+        <OllamaSetupStep
           enabled={aiEnabled}
-          provider={aiProvider}
-          model={aiModel}
-          apiKey={aiApiKey}
           ollamaModel={aiOllamaModel}
+          ollamaUrl={aiOllamaUrl}
           onOllamaReady={setOllamaReady}
           onChange={(data) => {
             setAiEnabled(data.enabled)
-            setAiProvider(data.provider)
-            setAiModel(data.model)
-            setAiApiKey(data.apiKey)
             setAiOllamaModel(data.ollamaModel)
+            setAiOllamaUrl(data.ollamaUrl)
           }}
         />
       )}
@@ -367,9 +336,7 @@ export default function CampaignWizard(): JSX.Element {
         />
       )}
 
-      {step === 7 && <VoiceChatStep config={voiceConfig} onChange={setVoiceConfig} />}
-
-      {step === 8 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
+      {step === 7 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
 
       {/* Navigation buttons */}
       <div className="flex gap-4 mt-8 max-w-2xl">

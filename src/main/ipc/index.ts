@@ -4,20 +4,9 @@ import { is } from '@electron-toolkit/utils'
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { isValidUUID } from '../../shared/utils/uuid'
-import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastionStorage'
-import {
-  deleteCustomCreature,
-  loadCustomCreature,
-  loadCustomCreatures,
-  saveCustomCreature
-} from '../storage/customCreatureStorage'
-import {
-  deleteHomebrewEntry,
-  loadAllHomebrew,
-  loadHomebrewEntries,
-  saveHomebrewEntry
-} from '../storage/homebrewStorage'
-import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaignStorage'
+import { logToFile } from '../log'
+import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastion-storage'
+import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaign-storage'
 import {
   deleteCharacter,
   listCharacterVersions,
@@ -25,17 +14,28 @@ import {
   loadCharacters,
   restoreCharacterVersion,
   saveCharacter
-} from '../storage/characterStorage'
+} from '../storage/character-storage'
+import {
+  deleteCustomCreature,
+  loadCustomCreature,
+  loadCustomCreatures,
+  saveCustomCreature
+} from '../storage/custom-creature-storage'
 import {
   deleteGameState,
   loadGameState as loadGameStateStorage,
   saveGameState as saveGameStateStorage
-} from '../storage/gameStateStorage'
-import type { AppSettings } from '../storage/settingsStorage'
-import { loadSettings, saveSettings } from '../storage/settingsStorage'
+} from '../storage/game-state-storage'
+import {
+  deleteHomebrewEntry,
+  loadAllHomebrew,
+  loadHomebrewEntries,
+  saveHomebrewEntry
+} from '../storage/homebrew-storage'
+import type { AppSettings } from '../storage/settings-storage'
+import { loadSettings, saveSettings } from '../storage/settings-storage'
 import { registerAiHandlers } from './ai-handlers'
 import { registerAudioHandlers } from './audio-handlers'
-import { registerVoiceHandlers } from './voice-handlers'
 
 // Tracks paths returned by file dialogs so fs:read-file / fs:write-file
 // only operate on user-selected locations or the app's own data directory.
@@ -109,11 +109,11 @@ export function registerIpcHandlers(): void {
     return { success: false, error: result.error ?? 'Failed to delete character' }
   })
 
-  ipcMain.handle('storage:character-versions', async (_event, id: string) => {
+  ipcMain.handle(IPC_CHANNELS.CHARACTER_VERSIONS, async (_event, id: string) => {
     return listCharacterVersions(id)
   })
 
-  ipcMain.handle('storage:character-restore-version', async (_event, id: string, fileName: string) => {
+  ipcMain.handle(IPC_CHANNELS.CHARACTER_RESTORE_VERSION, async (_event, id: string, fileName: string) => {
     return restoreCharacterVersion(id, fileName)
   })
 
@@ -373,7 +373,7 @@ export function registerIpcHandlers(): void {
       return content
     } catch (err) {
       if (err instanceof Error && err.message.startsWith('File too large')) throw err
-      console.error('fs:read-file failed:', err)
+      logToFile('ERROR', 'fs:read-file failed:', String(err))
       throw err
     } finally {
       dialogAllowedPaths.delete(resolvedPath)
@@ -391,7 +391,7 @@ export function registerIpcHandlers(): void {
     try {
       await writeFile(resolvedPath, content, 'utf-8')
     } catch (err) {
-      console.error('fs:write-file failed:', err)
+      logToFile('ERROR', 'fs:write-file failed:', String(err))
       throw err
     } finally {
       dialogAllowedPaths.delete(resolvedPath)
@@ -438,7 +438,4 @@ export function registerIpcHandlers(): void {
 
   // --- Audio handlers ---
   registerAudioHandlers()
-
-  // --- Voice handlers ---
-  registerVoiceHandlers()
 }

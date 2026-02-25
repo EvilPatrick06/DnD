@@ -2,6 +2,7 @@ import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/pro
 import { join } from 'node:path'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
+import { logToFile } from '../log'
 import { CURRENT_SCHEMA_VERSION, migrateData } from './migrations'
 import type { StorageResult } from './types'
 
@@ -65,7 +66,7 @@ export async function loadCampaigns(): Promise<StorageResult<Record<string, unkn
       if (r.status === 'fulfilled') {
         campaigns.push(r.value)
       } else {
-        console.error('Failed to load a campaign file:', r.reason)
+        logToFile('ERROR', 'Failed to load a campaign file:', String(r.reason))
       }
     }
     return { success: true, data: campaigns }

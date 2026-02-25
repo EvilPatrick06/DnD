@@ -1,17 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
-import { logger } from '../utils/logger'
 import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../constants/app-constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
-import {
-  getConnectedPeers,
-  onMessage as onHostMessage,
-  onPeerJoined,
-  setCampaignId as setHostCampaignId
-} from '../network/host-manager'
-import { getPeer } from '../network/peer-manager'
+import { onMessage as onHostMessage, setCampaignId as setHostCampaignId } from '../network/host-manager'
 import type {
   CharacterSelectPayload,
   CharacterUpdatePayload,
@@ -22,33 +15,25 @@ import type {
   ForceMutePayload,
   SlowModePayload
 } from '../network/types'
-import {
-  callPeer,
-  isListenOnly,
-  onSpeakingChange,
-  resumeAllAudio,
-  startVoice,
-  stopVoice
-} from '../network/voice-manager'
-import { useAiDmStore } from '../stores/useAiDmStore'
-import { useCampaignStore } from '../stores/useCampaignStore'
-import { useCharacterStore } from '../stores/useCharacterStore'
-import { useLobbyStore } from '../stores/useLobbyStore'
-import { useNetworkStore } from '../stores/useNetworkStore'
+import { useAiDmStore } from '../stores/use-ai-dm-store'
+import { useCampaignStore } from '../stores/use-campaign-store'
+import { useCharacterStore } from '../stores/use-character-store'
+import { useLobbyStore } from '../stores/use-lobby-store'
+import { useNetworkStore } from '../stores/use-network-store'
 import type { Campaign } from '../types/campaign'
 import type { Character } from '../types/character'
+import { logger } from '../utils/logger'
 
 export default function LobbyPage(): JSX.Element {
   const navigate = useNavigate()
   const { campaignId } = useParams<{ campaignId: string }>()
 
-  const { setCampaignId, setIsHost, addPlayer, updatePlayer, reset: resetLobby } = useLobbyStore()
+  const { setCampaignId, setIsHost, addPlayer, reset: resetLobby } = useLobbyStore()
   const { connectionState, inviteCode, localPeerId, displayName, role, disconnect } = useNetworkStore()
   const { campaigns, loadCampaigns } = useCampaignStore()
 
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
-  const [voiceError, setVoiceError] = useState<string | null>(null)
   const hasInitialized = useRef(false)
 
   const campaign = campaigns.find((c) => c.id === campaignId)
@@ -87,7 +72,6 @@ export default function LobbyPage(): JSX.Element {
 
   useEffect(() => {
     if (connectionState === 'disconnected' && error) {
-      stopVoice()
       resetLobby()
       navigate('/', { replace: true })
     }
@@ -109,7 +93,9 @@ export default function LobbyPage(): JSX.Element {
         session.campaignName = campaign.name
         localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     try {
       const raw = localStorage.getItem(JOINED_SESSIONS_KEY)
@@ -125,7 +111,9 @@ export default function LobbyPage(): JSX.Element {
       if (changed) {
         localStorage.setItem(JOINED_SESSIONS_KEY, JSON.stringify(sessions))
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [role, campaign?.name, campaignId])
 
   // Set the campaign ID on the host manager so joining clients learn it
@@ -163,88 +151,6 @@ export default function LobbyPage(): JSX.Element {
       // Cleanup on unmount handled by leave confirmation
     }
   }, [campaignId, localPeerId, displayName, isHost, setCampaignId, setIsHost, addPlayer])
-
-  // Auto-initialize voice when connected
-  const initVoice = useCallback(async () => {
-    const peer = getPeer()
-    if (!peer) return
-
-    await startVoice(peer)
-
-    // Check if we fell back to listen-only mode
-    if (isListenOnly()) {
-      setVoiceError('Listen-only mode (no microphone detected)')
-      logger.warn('[LobbyPage] Voice started in listen-only mode — no microphone available')
-    }
-
-    // Register speaking change callback
-    onSpeakingChange((peerId, isSpeaking) => {
-      updatePlayer(peerId, { isSpeaking })
-    })
-
-    // Connect voice to peers
-    if (isHost) {
-      // Host: call all existing connected peers
-      const connectedPeers = getConnectedPeers()
-      for (const p of connectedPeers) {
-        callPeer(p.peerId)
-      }
-    } else if (inviteCode) {
-      // Client: call the host
-      callPeer(inviteCode)
-    }
-  }, [isHost, inviteCode, updatePlayer])
-
-  useEffect(() => {
-    if (connectionState === 'connected' && localPeerId) {
-      initVoice()
-    }
-
-    return () => {
-      stopVoice()
-    }
-  }, [connectionState, localPeerId, initVoice])
-
-  // Periodically resume audio to catch late-arriving audio elements (autoplay policy)
-  useEffect(() => {
-    const handler = (): void => {
-      resumeAllAudio()
-      document.removeEventListener('click', handler)
-    }
-    document.addEventListener('click', handler)
-
-    // Also periodically try resumeAllAudio for the first 10 seconds
-    let count = 0
-    const interval = setInterval(() => {
-      count++
-      resumeAllAudio()
-      if (count >= 5) clearInterval(interval)
-    }, 2000)
-
-    return () => {
-      document.removeEventListener('click', handler)
-      clearInterval(interval)
-    }
-  }, [])
-
-  // Host: call new peers when they join
-  useEffect(() => {
-    if (!isHost) return
-
-    const timeouts: ReturnType<typeof setTimeout>[] = []
-    const unsubscribe = onPeerJoined((peer) => {
-      // Delay to let the peer's voice start (increased from 500ms for reliability)
-      const id = setTimeout(() => {
-        callPeer(peer.peerId)
-      }, 1500)
-      timeouts.push(id)
-    })
-
-    return () => {
-      timeouts.forEach(clearTimeout)
-      unsubscribe()
-    }
-  }, [isHost])
 
   // --- Bridge: sync networkStore.peers → lobbyStore.players ---
   const peers = useNetworkStore((s) => s.peers)
@@ -569,7 +475,6 @@ export default function LobbyPage(): JSX.Element {
   }
 
   const confirmLeave = (): void => {
-    stopVoice()
     disconnect()
     resetLobby()
     navigate('/')
@@ -577,21 +482,6 @@ export default function LobbyPage(): JSX.Element {
 
   return (
     <div className="p-6 h-screen flex flex-col overflow-hidden">
-      {/* Voice error banner */}
-      {voiceError && (
-        <div className="mb-3 flex items-center justify-between px-4 py-2 rounded-lg bg-amber-900/30 border border-amber-700/50 flex-shrink-0">
-          <span className="text-sm text-amber-300">{voiceError}</span>
-          <button
-            onClick={() => setVoiceError(null)}
-            className="ml-4 text-amber-400 hover:text-amber-200 cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-4">

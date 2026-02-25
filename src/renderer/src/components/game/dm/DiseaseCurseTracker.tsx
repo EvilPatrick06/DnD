@@ -1,42 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { load5eCurses, load5eDiseases } from '../../../services/data-provider'
-import { useGameStore } from '../../../stores/useGameStore'
-import type {
-  ActiveCurse,
-  ActiveDisease,
-  Curse,
-  Disease
-} from '../../../types/dm-toolbox'
+import { useGameStore } from '../../../stores/use-game-store'
+import type { ActiveCurse, ActiveDisease, Curse, Disease } from '../../../types/dm-toolbox'
 
 interface DiseaseCurseTrackerProps {
   onBroadcastResult: (message: string) => void
 }
 
-export default function DiseaseCurseTracker({
-  onBroadcastResult
-}: DiseaseCurseTrackerProps): JSX.Element {
-  const {
-    activeDiseases,
-    addDisease,
-    updateDisease,
-    removeDisease,
-    activeCurses,
-    addCurse,
-    updateCurse,
-    removeCurse
-  } = useGameStore(
-    useShallow((s) => ({
-      activeDiseases: s.activeDiseases,
-      addDisease: s.addDisease,
-      updateDisease: s.updateDisease,
-      removeDisease: s.removeDisease,
-      activeCurses: s.activeCurses,
-      addCurse: s.addCurse,
-      updateCurse: s.updateCurse,
-      removeCurse: s.removeCurse
-    }))
-  )
+export default function DiseaseCurseTracker({ onBroadcastResult }: DiseaseCurseTrackerProps): JSX.Element {
+  const { activeDiseases, addDisease, updateDisease, removeDisease, activeCurses, addCurse, updateCurse, removeCurse } =
+    useGameStore(
+      useShallow((s) => ({
+        activeDiseases: s.activeDiseases,
+        addDisease: s.addDisease,
+        updateDisease: s.updateDisease,
+        removeDisease: s.removeDisease,
+        activeCurses: s.activeCurses,
+        addCurse: s.addCurse,
+        updateCurse: s.updateCurse,
+        removeCurse: s.removeCurse
+      }))
+    )
 
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [curses, setCurses] = useState<Curse[]>([])
@@ -129,11 +114,7 @@ export default function DiseaseCurseTracker({
   )
 
   if (loading) {
-    return (
-      <div className="text-xs text-gray-500 p-2">
-        Loading diseases and curses...
-      </div>
-    )
+    return <div className="text-xs text-gray-500 p-2">Loading diseases and curses...</div>
   }
 
   return (
@@ -152,30 +133,17 @@ export default function DiseaseCurseTracker({
             const def = diseases.find((d) => d.id === ad.diseaseId)
             const isExpanded = expandedDisease === ad.id
             return (
-              <div
-                key={ad.id}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-3"
-              >
+              <div key={ad.id} className="bg-gray-800 border border-gray-700 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      onClick={() =>
-                        setExpandedDisease(isExpanded ? null : ad.id)
-                      }
+                      onClick={() => setExpandedDisease(isExpanded ? null : ad.id)}
                       className="flex items-center gap-1.5 text-left w-full"
                     >
-                      <span
-                        className={`text-xs transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                      >
-                        ▶
-                      </span>
-                      <span className="font-medium text-gray-200 truncate">
-                        {ad.name}
-                      </span>
-                      <span className="text-gray-500 text-[10px] truncate">
-                        — {ad.targetName}
-                      </span>
+                      <span className={`text-xs transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                      <span className="font-medium text-gray-200 truncate">{ad.name}</span>
+                      <span className="text-gray-500 text-[10px] truncate">— {ad.targetName}</span>
                     </button>
 
                     {/* Success/Fail counters */}
@@ -193,9 +161,7 @@ export default function DiseaseCurseTracker({
                         >
                           −
                         </button>
-                        <span className="w-5 text-center text-xs text-green-400">
-                          {ad.successCount}
-                        </span>
+                        <span className="w-5 text-center text-xs text-green-400">{ad.successCount}</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -221,9 +187,7 @@ export default function DiseaseCurseTracker({
                         >
                           −
                         </button>
-                        <span className="w-5 text-center text-xs text-red-400">
-                          {ad.failCount}
-                        </span>
+                        <span className="w-5 text-center text-xs text-red-400">{ad.failCount}</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -241,30 +205,24 @@ export default function DiseaseCurseTracker({
                     {isExpanded && def && (
                       <div className="mt-2 pt-2 border-t border-gray-700 space-y-1 text-[10px] text-gray-400">
                         <p>
-                          <span className="text-gray-500">Symptoms:</span>{' '}
-                          {def.symptoms}
+                          <span className="text-gray-500">Symptoms:</span> {def.symptoms}
                         </p>
                         <p>
-                          <span className="text-gray-500">DC:</span>{' '}
-                          {def.saveDC} {def.saveAbility}
+                          <span className="text-gray-500">DC:</span> {def.saveDC} {def.saveAbility}
                         </p>
                         <p className="text-amber-600/90">
-                          <span className="text-amber-500/80">Cure:</span>{' '}
-                          {def.cure}
+                          <span className="text-amber-500/80">Cure:</span> {def.cure}
                         </p>
                         {ad.notes && (
                           <p>
-                            <span className="text-gray-500">Notes:</span>{' '}
-                            {ad.notes}
+                            <span className="text-gray-500">Notes:</span> {ad.notes}
                           </p>
                         )}
                         <input
                           type="text"
                           placeholder="Add notes..."
                           value={ad.notes ?? ''}
-                          onChange={(e) =>
-                            updateDisease(ad.id, { notes: e.target.value })
-                          }
+                          onChange={(e) => updateDisease(ad.id, { notes: e.target.value })}
                           className="w-full mt-1 px-2 py-1 text-[10px] bg-gray-900/60 border border-gray-600 rounded text-gray-300 placeholder-gray-500"
                         />
                       </div>
@@ -320,9 +278,7 @@ export default function DiseaseCurseTracker({
       <section>
         <h3 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
           Active Curses
-          <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-700/60 text-gray-300">
-            {activeCurses.length}
-          </span>
+          <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-700/60 text-gray-300">{activeCurses.length}</span>
         </h3>
 
         <div className="space-y-2 mt-1.5">
@@ -330,61 +286,42 @@ export default function DiseaseCurseTracker({
             const def = curses.find((c) => c.id === ac.curseId)
             const isExpanded = expandedCurse === ac.id
             return (
-              <div
-                key={ac.id}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-3"
-              >
+              <div key={ac.id} className="bg-gray-800 border border-gray-700 rounded-lg p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      onClick={() =>
-                        setExpandedCurse(isExpanded ? null : ac.id)
-                      }
+                      onClick={() => setExpandedCurse(isExpanded ? null : ac.id)}
                       className="flex items-center gap-1.5 text-left w-full"
                     >
-                      <span
-                        className={`text-xs transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                      >
-                        ▶
-                      </span>
-                      <span className="font-medium text-gray-200 truncate">
-                        {ac.name}
-                      </span>
-                      <span className="text-gray-500 text-[10px] truncate">
-                        — {ac.targetName}
-                      </span>
+                      <span className={`text-xs transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                      <span className="font-medium text-gray-200 truncate">{ac.name}</span>
+                      <span className="text-gray-500 text-[10px] truncate">— {ac.targetName}</span>
                     </button>
 
                     {isExpanded && def && (
                       <div className="mt-2 pt-2 border-t border-gray-700 space-y-1 text-[10px] text-gray-400">
                         <p>
-                          <span className="text-gray-500">Effect:</span>{' '}
-                          {def.effect}
+                          <span className="text-gray-500">Effect:</span> {def.effect}
                         </p>
                         <p className="text-amber-600/90">
-                          <span className="text-amber-500/80">Removal:</span>{' '}
-                          {def.removal}
+                          <span className="text-amber-500/80">Removal:</span> {def.removal}
                         </p>
                         {def.saveDC != null && (
                           <p>
-                            <span className="text-gray-500">DC:</span>{' '}
-                            {def.saveDC} {def.saveAbility ?? ''}
+                            <span className="text-gray-500">DC:</span> {def.saveDC} {def.saveAbility ?? ''}
                           </p>
                         )}
                         {ac.notes && (
                           <p>
-                            <span className="text-gray-500">Notes:</span>{' '}
-                            {ac.notes}
+                            <span className="text-gray-500">Notes:</span> {ac.notes}
                           </p>
                         )}
                         <input
                           type="text"
                           placeholder="Add notes..."
                           value={ac.notes ?? ''}
-                          onChange={(e) =>
-                            updateCurse(ac.id, { notes: e.target.value })
-                          }
+                          onChange={(e) => updateCurse(ac.id, { notes: e.target.value })}
                           className="w-full mt-1 px-2 py-1 text-[10px] bg-gray-900/60 border border-gray-600 rounded text-gray-300 placeholder-gray-500"
                         />
                       </div>

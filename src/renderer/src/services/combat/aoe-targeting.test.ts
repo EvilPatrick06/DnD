@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getAffectedCells, getTokensInAoE, countTargetsInAoE, type AoEDefinition } from './aoe-targeting'
 import type { MapToken } from '../../types/map'
+import { type AoEDefinition, countTargetsInAoE, getAffectedCells, getTokensInAoE } from './aoe-targeting'
 
 function makeToken(id: string, gridX: number, gridY: number, sizeX = 1, sizeY = 1): MapToken {
   return {
@@ -48,7 +48,7 @@ describe('aoe-targeting', () => {
     })
 
     it('should return empty array for unknown shape', () => {
-      const aoe = { shape: 'unknown' as 'sphere', originX: 5, originY: 5, size: 10 }
+      const _aoe = { shape: 'unknown' as 'sphere', originX: 5, originY: 5, size: 10 }
       // Cylinder uses sphere cells
       const aoeCyl: AoEDefinition = { shape: 'cylinder', originX: 5, originY: 5, size: 10 }
       const cells = getAffectedCells(aoeCyl)
@@ -90,11 +90,7 @@ describe('aoe-targeting', () => {
   })
 
   describe('countTargetsInAoE', () => {
-    const tokens: MapToken[] = [
-      makeToken('a', 5, 5),
-      makeToken('b', 6, 5),
-      makeToken('c', 15, 15)
-    ]
+    const tokens: MapToken[] = [makeToken('a', 5, 5), makeToken('b', 6, 5), makeToken('c', 15, 15)]
 
     it('should return correct count', () => {
       const aoe: AoEDefinition = { shape: 'sphere', originX: 5, originY: 5, size: 10 }

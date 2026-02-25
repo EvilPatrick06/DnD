@@ -1,13 +1,17 @@
 import { useState } from 'react'
-import type { AbilityScoreMethod } from '../../../stores/useBuilderStore'
-import { POINT_BUY_BUDGET, POINT_BUY_COSTS, STANDARD_ARRAY, useBuilderStore } from '../../../stores/useBuilderStore'
+import abilityScoreConfigJson from '../../../../public/data/5e/character/ability-score-config.json'
+import type { AbilityScoreMethod } from '../../../stores/use-builder-store'
+import { POINT_BUY_BUDGET, POINT_BUY_COSTS, STANDARD_ARRAY, useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
-import abilityScoreConfigJson from '../../../../public/data/5e/character/ability-score-config.json'
 
-const STANDARD_ARRAY_BY_CLASS = abilityScoreConfigJson.standardArrayByClass as Record<string, Record<AbilityName, number>>
+const STANDARD_ARRAY_BY_CLASS = abilityScoreConfigJson.standardArrayByClass as Record<
+  string,
+  Record<AbilityName, number>
+>
 const CLASS_DISPLAY_ORDER = abilityScoreConfigJson.classDisplayOrder
-const METHODS: Array<{ id: AbilityScoreMethod; label: string; desc: string }> = abilityScoreConfigJson.methods as Array<{ id: AbilityScoreMethod; label: string; desc: string }>
+const METHODS: Array<{ id: AbilityScoreMethod; label: string; desc: string }> =
+  abilityScoreConfigJson.methods as Array<{ id: AbilityScoreMethod; label: string; desc: string }>
 
 export default function AbilityScoreModal(): JSX.Element {
   const abilityScores = useBuilderStore((s) => s.abilityScores)

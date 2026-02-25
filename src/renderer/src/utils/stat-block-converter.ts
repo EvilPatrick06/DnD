@@ -1,5 +1,5 @@
-import type { MonsterStatBlock } from '../types/monster'
 import type { SidebarEntryStatBlock } from '../types/game-state'
+import type { MonsterStatBlock } from '../types/monster'
 
 export interface DisplayStatBlock {
   name: string

@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand'
 import { getOptionsForSlot, load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { filterOptions } from '../../../types/builder'
 import type { SelectableOption } from '../../../types/character-common'
+import { logger } from '../../../utils/logger'
 import type { BuilderState, SelectionSliceState } from '../types'
 
 export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionSliceState> = (set, get) => ({
@@ -27,7 +28,7 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
     try {
       allOptions = await getOptionsForSlot(gameSystem, slot.category, context)
     } catch (err) {
-      console.error('[Builder] Failed to load options for slot', slotId, err)
+      logger.error('[Builder] Failed to load options for slot', slotId, err)
       return
     }
     if (allOptions.length === 0) return // Don't open empty modals

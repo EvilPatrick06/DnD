@@ -1,13 +1,8 @@
 // ── AI DM Types (Main Process) ──
 
-export type ModelChoice = 'opus' | 'sonnet' | 'haiku'
-export type ProviderChoice = 'claude' | 'ollama'
-
 export interface AiConfig {
-  provider: ProviderChoice
-  model: ModelChoice
-  apiKey?: string // Only used transiently — stored encrypted via safeStorage
-  ollamaModel?: string
+  ollamaModel: string
+  ollamaUrl: string
 }
 
 export interface ActiveCreatureInfo {
@@ -57,7 +52,6 @@ export interface AiIndexProgress {
 }
 
 export interface ProviderStatus {
-  claude: boolean
   ollama: boolean
   ollamaModels: string[]
 }

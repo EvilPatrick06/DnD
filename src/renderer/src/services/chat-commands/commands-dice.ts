@@ -1,4 +1,4 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import { broadcastDiceResult, getLastRoll, parseDiceFormula, rollDiceFormula, rollSingle, setLastRoll } from './helpers'
 import type { ChatCommand, CommandContext } from './types'
 

@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   calculateEncumbrance,
-  sumEquipmentWeight,
   calculateLifestyleCost,
   getToolSkillAdvantage,
-  LIFESTYLE_COSTS
+  sumEquipmentWeight
 } from './stat-calculator-5e'
 
 describe('encumbrance', () => {
@@ -61,7 +60,10 @@ describe('encumbrance', () => {
   describe('sumEquipmentWeight', () => {
     it('should sum weapon weights', () => {
       const total = sumEquipmentWeight(
-        [{ weight: 3, quantity: 2 }, { weight: 6, quantity: 1 }],
+        [
+          { weight: 3, quantity: 2 },
+          { weight: 6, quantity: 1 }
+        ],
         [],
         []
       )
@@ -71,18 +73,17 @@ describe('encumbrance', () => {
     it('should include armor weight', () => {
       const total = sumEquipmentWeight(
         [],
-        [{ weight: 65, equipped: true }, { weight: 13, equipped: false }],
+        [
+          { weight: 65, equipped: true },
+          { weight: 13, equipped: false }
+        ],
         []
       )
       expect(total).toBe(78)
     })
 
     it('should include gear weight', () => {
-      const total = sumEquipmentWeight(
-        [],
-        [],
-        [{ weight: 2, quantity: 5 }]
-      )
+      const total = sumEquipmentWeight([], [], [{ weight: 2, quantity: 5 }])
       expect(total).toBe(10)
     })
 
@@ -92,11 +93,7 @@ describe('encumbrance', () => {
     })
 
     it('should handle missing weights', () => {
-      const total = sumEquipmentWeight(
-        [{ quantity: 2 }],
-        [{ equipped: true }],
-        [{ quantity: 5 }]
-      )
+      const total = sumEquipmentWeight([{ quantity: 2 }], [{ equipped: true }], [{ quantity: 5 }])
       expect(total).toBe(0)
     })
   })
@@ -132,7 +129,7 @@ describe('encumbrance', () => {
     })
 
     it('should match case-insensitively', () => {
-      const result = getToolSkillAdvantage(["herbalism kit"], 'medicine')
+      const result = getToolSkillAdvantage(['herbalism kit'], 'medicine')
       expect(result).not.toBeNull()
     })
 

@@ -82,7 +82,11 @@ export default function MobCalculatorModal({ onClose, onBroadcastResult }: MobCa
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
           <h2 className="text-lg font-bold text-amber-400">Mob Attack Calculator</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl leading-none px-1"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

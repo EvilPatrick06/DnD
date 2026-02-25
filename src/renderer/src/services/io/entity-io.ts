@@ -7,6 +7,8 @@
  * Supports both single-item and bulk (array) exports.
  */
 
+import { logger } from '../../utils/logger'
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -85,11 +87,7 @@ function validateEnvelope(parsed: unknown, expectedType: EntityType): ExportEnve
  * Export one or more entities to a file via the native save dialog.
  * Returns true if saved, false if cancelled or errored.
  */
-export async function exportEntities<T>(
-  type: EntityType,
-  items: T[],
-  suggestedName?: string
-): Promise<boolean> {
+export async function exportEntities<T>(type: EntityType, items: T[], _suggestedName?: string): Promise<boolean> {
   const config = ENTITY_CONFIGS[type]
   if (!config) return false
 
@@ -111,7 +109,7 @@ export async function exportEntities<T>(
     await window.api.writeFile(filePath, JSON.stringify(envelope, null, 2))
     return true
   } catch (err) {
-    console.error(`Export ${type} failed:`, err)
+    logger.error(`Export ${type} failed:`, err)
     return false
   }
 }
@@ -172,9 +170,7 @@ export async function importEntities<T>(type: EntityType): Promise<ImportResult<
 
     const invalid = items.filter((it) => !validateItem(it, config))
     if (invalid.length > 0) {
-      throw new Error(
-        `${invalid.length} item(s) missing required fields (${config.requiredFields.join(', ')})`
-      )
+      throw new Error(`${invalid.length} item(s) missing required fields (${config.requiredFields.join(', ')})`)
     }
 
     return { items, count: items.length }

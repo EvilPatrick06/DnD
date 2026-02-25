@@ -1,0 +1,16 @@
+# GPU AI Server dependencies
+flask>=3.0
+gunicorn>=22.0
+requests>=2.31
+
+# STT
+faster-whisper>=1.0
+
+# Vision
+ultralytics>=8.2
+
+# Fish Speech TTS (installed separately via git clone)
+# See aws-setup.sh for installation
+
+# GPU monitoring
+nvidia-ml-py3>=7.352

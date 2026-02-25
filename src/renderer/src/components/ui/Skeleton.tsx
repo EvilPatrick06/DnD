@@ -9,10 +9,7 @@ export default function Skeleton({ lines = 3, className = '' }: SkeletonProps): 
   return (
     <div className={`space-y-3 ${className}`} role="status" aria-label="Loading content">
       {Array.from({ length: lines }, (_, i) => (
-        <div
-          key={i}
-          className={`h-4 rounded bg-gray-800 animate-pulse ${widths[i % widths.length]}`}
-        />
+        <div key={i} className={`h-4 rounded bg-gray-800 animate-pulse ${widths[i % widths.length]}`} />
       ))}
     </div>
   )

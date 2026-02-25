@@ -1,5 +1,10 @@
 import type { Companion5e, CompanionType } from '../../types/companion'
-import { CHAIN_PACT_FAMILIAR_FORMS, STANDARD_FAMILIAR_FORMS, STEED_FORMS, WILD_SHAPE_TIERS } from '../../types/companion'
+import {
+  CHAIN_PACT_FAMILIAR_FORMS,
+  STANDARD_FAMILIAR_FORMS,
+  STEED_FORMS,
+  WILD_SHAPE_TIERS
+} from '../../types/companion'
 import type { MapToken } from '../../types/map'
 import type { MonsterStatBlock } from '../../types/monster'
 import { crToNumber, getSizeTokenDimensions } from '../../types/monster'

@@ -1,4 +1,4 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import { is5eCharacter } from '../../types/character'
 import { getLatestCharacter } from './helpers'
 import type { ChatCommand, CommandContext, CommandResult } from './types'

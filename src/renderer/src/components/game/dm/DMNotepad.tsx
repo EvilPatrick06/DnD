@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { saveGameState } from '../../../services/io/game-state-saver'
-import { useCampaignStore } from '../../../stores/useCampaignStore'
-import { useGameStore, type SessionLogEntry } from '../../../stores/useGameStore'
+import { useCampaignStore } from '../../../stores/use-campaign-store'
+import { type SessionLogEntry, useGameStore } from '../../../stores/use-game-store'
 
 export default function DMNotepad(): JSX.Element {
   const sessionLog = useGameStore((s) => s.sessionLog)
@@ -26,7 +26,9 @@ export default function DMNotepad(): JSX.Element {
     if (!campaign) return
     try {
       await saveGameState(campaign)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   useEffect(() => {
@@ -51,9 +53,10 @@ export default function DMNotepad(): JSX.Element {
       const mins = Math.floor((totalSec % 3600) / 60)
       const days = Math.floor(hours / 24)
       const hh = hours % 24
-      inGameTs = days > 0
-        ? `Day ${days + 1}, ${String(hh).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
-        : `${String(hh).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+      inGameTs =
+        days > 0
+          ? `Day ${days + 1}, ${String(hh).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+          : `${String(hh).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
     }
     addLogEntry(content, inGameTs)
     setNewEntryText('')
@@ -74,11 +77,14 @@ export default function DMNotepad(): JSX.Element {
     setEditText('')
   }, [editingId, editText, updateLogEntry, scheduleAutoSave])
 
-  const handleDelete = useCallback((entryId: string) => {
-    deleteLogEntry(entryId)
-    setConfirmDeleteId(null)
-    scheduleAutoSave()
-  }, [deleteLogEntry, scheduleAutoSave])
+  const handleDelete = useCallback(
+    (entryId: string) => {
+      deleteLogEntry(entryId)
+      setConfirmDeleteId(null)
+      scheduleAutoSave()
+    },
+    [deleteLogEntry, scheduleAutoSave]
+  )
 
   const handleNewSession = useCallback(() => {
     startNewSession()
@@ -114,13 +120,9 @@ export default function DMNotepad(): JSX.Element {
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="flex items-center gap-2 w-full text-left cursor-pointer"
       >
-        <span className={`text-xs text-gray-500 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}>
-          &#9654;
-        </span>
+        <span className={`text-xs text-gray-500 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}>&#9654;</span>
         <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Session Notes</h3>
-        <span className="ml-auto text-[9px] text-gray-600">
-          {sessionLog.length} entries
-        </span>
+        <span className="ml-auto text-[9px] text-gray-600">{sessionLog.length} entries</span>
       </button>
 
       {!isCollapsed && (
@@ -133,9 +135,7 @@ export default function DMNotepad(): JSX.Element {
             >
               New Session
             </button>
-            <span className="text-[9px] text-gray-500 truncate flex-1">
-              {currentSessionLabel}
-            </span>
+            <span className="text-[9px] text-gray-500 truncate flex-1">{currentSessionLabel}</span>
           </div>
 
           {/* Search */}
@@ -183,7 +183,10 @@ export default function DMNotepad(): JSX.Element {
                 onStartEdit={handleStartEdit}
                 onEditTextChange={setEditText}
                 onSaveEdit={handleSaveEdit}
-                onCancelEdit={() => { setEditingId(null); setEditText('') }}
+                onCancelEdit={() => {
+                  setEditingId(null)
+                  setEditText('')
+                }}
                 onRequestDelete={setConfirmDeleteId}
                 onConfirmDelete={handleDelete}
                 onCancelDelete={() => setConfirmDeleteId(null)}
@@ -260,12 +263,8 @@ function SessionGroup({
               {/* Timestamps */}
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[9px] text-gray-500">{formatRealTime(entry.realTimestamp)}</span>
-                {entry.inGameTimestamp && (
-                  <span className="text-[9px] text-purple-400">{entry.inGameTimestamp}</span>
-                )}
-                {entry.editedAt && (
-                  <span className="text-[8px] text-gray-600">(edited)</span>
-                )}
+                {entry.inGameTimestamp && <span className="text-[9px] text-purple-400">{entry.inGameTimestamp}</span>}
+                {entry.editedAt && <span className="text-[8px] text-gray-600">(edited)</span>}
               </div>
 
               {/* Content */}
@@ -279,8 +278,18 @@ function SessionGroup({
                     autoFocus
                   />
                   <div className="flex gap-1">
-                    <button onClick={onSaveEdit} className="text-[9px] px-2 py-0.5 bg-green-600/30 text-green-300 rounded cursor-pointer">Save</button>
-                    <button onClick={onCancelEdit} className="text-[9px] px-2 py-0.5 bg-gray-700 text-gray-400 rounded cursor-pointer">Cancel</button>
+                    <button
+                      onClick={onSaveEdit}
+                      className="text-[9px] px-2 py-0.5 bg-green-600/30 text-green-300 rounded cursor-pointer"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={onCancelEdit}
+                      className="text-[9px] px-2 py-0.5 bg-gray-700 text-gray-400 rounded cursor-pointer"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               ) : (

@@ -325,7 +325,11 @@
     "environment": "any",
     "difficulty": "high",
     "partyLevelRange": "8-12",
-    "monsters": [{ "id": "green-slaad", "count": 1 }, { "id": "red-slaad", "count": 2 }, { "id": "slaad-tadpole", "count": 4 }],
+    "monsters": [
+      { "id": "green-slaad", "count": 1 },
+      { "id": "red-slaad", "count": 2 },
+      { "id": "slaad-tadpole", "count": 4 }
+    ],
     "tactics": "Green Slaad shapeshifts to ambush. Red Slaadi implant eggs via claw attacks. Tadpoles swarm the weakest.",
     "treasureHint": "Limbo crystals worth 500gp scattered near the rift"
   },
@@ -347,7 +351,11 @@
     "environment": "underdark",
     "difficulty": "low",
     "partyLevelRange": "1-4",
-    "monsters": [{ "id": "myconid-sovereign", "count": 1 }, { "id": "myconid-adult", "count": 4 }, { "id": "myconid-sprout", "count": 6 }],
+    "monsters": [
+      { "id": "myconid-sovereign", "count": 1 },
+      { "id": "myconid-adult", "count": 4 },
+      { "id": "myconid-sprout", "count": 6 }
+    ],
     "tactics": "Sovereign uses rapport spores to communicate. Colony attacks only if provoked. Gas spores nearby may detonate.",
     "treasureHint": "Rare fungi and potion components"
   },
@@ -413,7 +421,11 @@
     "environment": "plains",
     "difficulty": "moderate",
     "partyLevelRange": "3-6",
-    "monsters": [{ "id": "hobgoblin-warrior", "count": 6 }, { "id": "hobgoblin-captain", "count": 1 }, { "id": "worg", "count": 2 }],
+    "monsters": [
+      { "id": "hobgoblin-warrior", "count": 6 },
+      { "id": "hobgoblin-captain", "count": 1 },
+      { "id": "worg", "count": 2 }
+    ],
     "tactics": "Martial Advantage on flanked targets. Captain directs formation. Worgs scout and flank.",
     "treasureHint": "Military supplies and a battle standard"
   },
@@ -424,7 +436,12 @@
     "environment": "any",
     "difficulty": "high",
     "partyLevelRange": "6-9",
-    "monsters": [{ "id": "fire-elemental", "count": 1 }, { "id": "air-elemental", "count": 1 }, { "id": "earth-elemental", "count": 1 }, { "id": "water-elemental", "count": 1 }],
+    "monsters": [
+      { "id": "fire-elemental", "count": 1 },
+      { "id": "air-elemental", "count": 1 },
+      { "id": "earth-elemental", "count": 1 },
+      { "id": "water-elemental", "count": 1 }
+    ],
     "tactics": "Each elemental uses its terrain advantage. Fire ignites, Air throws, Earth grapples, Water engulfs.",
     "treasureHint": "Elemental gems form at the nexus center"
   }

@@ -104,10 +104,6 @@ export const IPC_CHANNELS = {
   AI_STREAM_WEB_SEARCH: 'ai:stream-web-search',
   AI_WEB_SEARCH_APPROVE: 'ai:web-search-approve',
 
-  // === Voice Chat ===
-  VOICE_GENERATE_TOKEN: 'voice:generate-token',
-  VOICE_GET_SERVER_URL: 'voice:get-server-url',
-
   // === App Updates ===
   UPDATE_CHECK: 'update:check',
   UPDATE_DOWNLOAD: 'update:download',
@@ -129,6 +125,17 @@ export const IPC_CHANNELS = {
   // === Settings ===
   SAVE_SETTINGS: 'storage:save-settings',
   LOAD_SETTINGS: 'storage:load-settings',
+
+  // === Audio: Custom Tracks ===
+  AUDIO_UPLOAD_CUSTOM: 'audio:upload-custom',
+  AUDIO_LIST_CUSTOM: 'audio:list-custom',
+  AUDIO_DELETE_CUSTOM: 'audio:delete-custom',
+  AUDIO_GET_CUSTOM_PATH: 'audio:get-custom-path',
+  AUDIO_PICK_FILE: 'audio:pick-file',
+
+  // === Storage: Character Versions ===
+  CHARACTER_VERSIONS: 'storage:character-versions',
+  CHARACTER_RESTORE_VERSION: 'storage:character-restore-version',
 
   // === App Info ===
   APP_VERSION: 'app:version'

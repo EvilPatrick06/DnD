@@ -1,5 +1,5 @@
-import { useCampaignStore } from '../../stores/useCampaignStore'
-import { useGameStore } from '../../stores/useGameStore'
+import { useCampaignStore } from '../../stores/use-campaign-store'
+import { useGameStore } from '../../stores/use-game-store'
 import type { Campaign, SavedGameState } from '../../types/campaign'
 
 /**

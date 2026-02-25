@@ -2,17 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
 import { BackButton, Button, Spinner } from '../components/ui'
-import { addToast } from '../hooks/useToast'
-import {
-  load5eCreatures,
-  load5eMonsters,
-  load5eNpcs,
-  loadAllStatBlocks,
-  searchMonsters
-} from '../services/data-provider'
+import { addToast } from '../hooks/use-toast'
+import { load5eCreatures, load5eMonsters, load5eNpcs, searchMonsters } from '../services/data-provider'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
 import type { MonsterStatBlock } from '../types/monster'
 import { crToNumber } from '../types/monster'
+import { logger } from '../utils/logger'
 
 type Tab = 'monsters' | 'creatures' | 'npcs' | 'custom'
 type SortField = 'name' | 'cr' | 'type' | 'size'
@@ -24,14 +19,66 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'custom', label: 'Custom' }
 ]
 
-const CR_OPTIONS = ['Any', '0', '1/8', '1/4', '1/2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30']
+const CR_OPTIONS = [
+  'Any',
+  '0',
+  '1/8',
+  '1/4',
+  '1/2',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+  '11',
+  '12',
+  '13',
+  '14',
+  '15',
+  '16',
+  '17',
+  '18',
+  '19',
+  '20',
+  '21',
+  '22',
+  '23',
+  '24',
+  '25',
+  '26',
+  '27',
+  '28',
+  '29',
+  '30'
+]
 
-const TYPE_OPTIONS = ['Any', 'Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead']
+const TYPE_OPTIONS = [
+  'Any',
+  'Aberration',
+  'Beast',
+  'Celestial',
+  'Construct',
+  'Dragon',
+  'Elemental',
+  'Fey',
+  'Fiend',
+  'Giant',
+  'Humanoid',
+  'Monstrosity',
+  'Ooze',
+  'Plant',
+  'Undead'
+]
 
 const SIZE_OPTIONS = ['Any', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 
 export default function LibraryPage(): JSX.Element {
-  const navigate = useNavigate()
+  const _navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('from') || '/'
 
@@ -82,10 +129,14 @@ export default function LibraryPage(): JSX.Element {
 
   const activeList = useMemo(() => {
     switch (tab) {
-      case 'monsters': return monsters
-      case 'creatures': return creatures
-      case 'npcs': return npcs
-      case 'custom': return custom
+      case 'monsters':
+        return monsters
+      case 'creatures':
+        return creatures
+      case 'npcs':
+        return npcs
+      case 'custom':
+        return custom
     }
   }, [tab, monsters, creatures, npcs, custom])
 
@@ -105,10 +156,18 @@ export default function LibraryPage(): JSX.Element {
     list.sort((a, b) => {
       let cmp = 0
       switch (sortField) {
-        case 'name': cmp = a.name.localeCompare(b.name); break
-        case 'cr': cmp = crToNumber(a.cr) - crToNumber(b.cr); break
-        case 'type': cmp = a.type.localeCompare(b.type); break
-        case 'size': cmp = sizeOrder(a.size) - sizeOrder(b.size); break
+        case 'name':
+          cmp = a.name.localeCompare(b.name)
+          break
+        case 'cr':
+          cmp = crToNumber(a.cr) - crToNumber(b.cr)
+          break
+        case 'type':
+          cmp = a.type.localeCompare(b.type)
+          break
+        case 'size':
+          cmp = sizeOrder(a.size) - sizeOrder(b.size)
+          break
       }
       return sortAsc ? cmp : -cmp
     })
@@ -158,7 +217,7 @@ export default function LibraryPage(): JSX.Element {
       if (ok) addToast(`Exported ${items.length} item(s)`, 'success')
     } catch (err) {
       addToast('Export failed', 'error')
-      console.error(err)
+      logger.error(err)
     } finally {
       setExporting(false)
     }
@@ -172,7 +231,7 @@ export default function LibraryPage(): JSX.Element {
       if (ok) addToast(`Exported ${filtered.length} item(s)`, 'success')
     } catch (err) {
       addToast('Export failed', 'error')
-      console.error(err)
+      logger.error(err)
     } finally {
       setExporting(false)
     }
@@ -182,7 +241,10 @@ export default function LibraryPage(): JSX.Element {
     setImporting(true)
     try {
       const result = await importEntities<MonsterStatBlock>('monster')
-      if (!result) { setImporting(false); return }
+      if (!result) {
+        setImporting(false)
+        return
+      }
 
       const items = reIdItems(result.items)
       for (const item of items) {
@@ -194,7 +256,7 @@ export default function LibraryPage(): JSX.Element {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Import failed'
       addToast(msg, 'error')
-      console.error(err)
+      logger.error(err)
     } finally {
       setImporting(false)
     }
@@ -203,7 +265,11 @@ export default function LibraryPage(): JSX.Element {
   const handleDeleteCustom = async (id: string): Promise<void> => {
     await window.api.deleteCustomCreature(id)
     setCustom((prev) => prev.filter((c) => c.id !== id))
-    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n })
+    setSelected((prev) => {
+      const n = new Set(prev)
+      n.delete(id)
+      return n
+    })
     addToast('Creature deleted', 'success')
   }
 
@@ -227,7 +293,9 @@ export default function LibraryPage(): JSX.Element {
     return (
       <div className="p-8 h-screen">
         <BackButton to={returnTo} />
-        <div className="flex items-center justify-center py-24"><Spinner size="lg" /></div>
+        <div className="flex items-center justify-center py-24">
+          <Spinner size="lg" />
+        </div>
       </div>
     )
   }
@@ -264,7 +332,11 @@ export default function LibraryPage(): JSX.Element {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => { setTab(t.id); setSelected(new Set()); setPreviewId(null) }}
+            onClick={() => {
+              setTab(t.id)
+              setSelected(new Set())
+              setPreviewId(null)
+            }}
             className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer transition-colors ${
               tab === t.id
                 ? 'bg-amber-600 text-white'
@@ -273,7 +345,15 @@ export default function LibraryPage(): JSX.Element {
           >
             {t.label}
             <span className="ml-1.5 text-xs opacity-70">
-              ({t.id === 'monsters' ? monsters.length : t.id === 'creatures' ? creatures.length : t.id === 'npcs' ? npcs.length : custom.length})
+              (
+              {t.id === 'monsters'
+                ? monsters.length
+                : t.id === 'creatures'
+                  ? creatures.length
+                  : t.id === 'npcs'
+                    ? npcs.length
+                    : custom.length}
+              )
             </span>
           </button>
         ))}
@@ -294,7 +374,9 @@ export default function LibraryPage(): JSX.Element {
           className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
         >
           {CR_OPTIONS.map((cr) => (
-            <option key={cr} value={cr}>{cr === 'Any' ? 'CR: Any' : `CR ${cr}`}</option>
+            <option key={cr} value={cr}>
+              {cr === 'Any' ? 'CR: Any' : `CR ${cr}`}
+            </option>
           ))}
         </select>
         <select
@@ -303,7 +385,9 @@ export default function LibraryPage(): JSX.Element {
           className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
         >
           {TYPE_OPTIONS.map((t) => (
-            <option key={t} value={t}>{t === 'Any' ? 'Type: Any' : t}</option>
+            <option key={t} value={t}>
+              {t === 'Any' ? 'Type: Any' : t}
+            </option>
           ))}
         </select>
         <select
@@ -312,7 +396,9 @@ export default function LibraryPage(): JSX.Element {
           className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
         >
           {SIZE_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s === 'Any' ? 'Size: Any' : s}</option>
+            <option key={s} value={s}>
+              {s === 'Any' ? 'Size: Any' : s}
+            </option>
           ))}
         </select>
       </div>
@@ -323,12 +409,7 @@ export default function LibraryPage(): JSX.Element {
         <div className="flex-1 flex flex-col min-h-0">
           {/* Table header */}
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 rounded-t-lg text-xs text-gray-500 font-semibold uppercase tracking-wider">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleSelectAll}
-              className="rounded shrink-0"
-            />
+            <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="rounded shrink-0" />
             <button onClick={() => handleSort('name')} className="flex-1 text-left cursor-pointer hover:text-gray-300">
               Name{sortIcon('name')}
             </button>
@@ -368,7 +449,10 @@ export default function LibraryPage(): JSX.Element {
                   <input
                     type="checkbox"
                     checked={selected.has(m.id)}
-                    onChange={(e) => { e.stopPropagation(); toggleSelect(m.id) }}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      toggleSelect(m.id)
+                    }}
                     onClick={(e) => e.stopPropagation()}
                     className="rounded shrink-0"
                   />
@@ -380,7 +464,10 @@ export default function LibraryPage(): JSX.Element {
                   <span className="w-12 text-center text-gray-400 text-xs">{m.ac}</span>
                   {tab === 'custom' && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteCustom(m.id) }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteCustom(m.id)
+                      }}
                       className="w-12 text-center text-gray-500 hover:text-red-400 text-xs cursor-pointer"
                       title="Delete"
                     >

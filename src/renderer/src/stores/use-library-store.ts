@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
+import { logger } from '../utils/logger'
 
 interface LibraryState {
   selectedCategory: LibraryCategory | null
@@ -40,7 +41,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         set({ homebrewEntries: raw as unknown as HomebrewEntry[], homebrewLoaded: true })
       }
     } catch (err) {
-      console.error('Failed to load homebrew entries:', err)
+      logger.error('Failed to load homebrew entries:', err)
     }
   },
 
@@ -61,7 +62,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       }
       return false
     } catch (err) {
-      console.error('Failed to save homebrew entry:', err)
+      logger.error('Failed to save homebrew entry:', err)
       return false
     }
   },
@@ -72,7 +73,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       set({ homebrewEntries: get().homebrewEntries.filter((e) => e.id !== id) })
       return true
     } catch (err) {
-      console.error('Failed to delete homebrew entry:', err)
+      logger.error('Failed to delete homebrew entry:', err)
       return false
     }
   }

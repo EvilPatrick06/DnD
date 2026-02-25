@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { MapToken } from '../../../../types/map'
-import type { AoEConfig, AoEShape, Direction8 } from '../../map/AoEOverlay'
-import { getAoECells } from '../../map/AoEOverlay'
+import type { AoEConfig, AoEShape, Direction8 } from '../../map/aoe-overlay'
+import { getAoECells } from '../../map/aoe-overlay'
 
 interface AoETemplateModalProps {
   tokens: MapToken[]
@@ -82,7 +82,11 @@ export default function AoETemplateModal({
           <h3 className="text-sm font-semibold text-gray-200">
             {step === 'config' ? 'AoE Template' : 'Place Template'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

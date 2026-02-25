@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useBastionStore } from '../../../../stores/useBastionStore'
-import { useGameStore } from '../../../../stores/useGameStore'
+import { useBastionStore } from '../../../../stores/use-bastion-store'
+import { useGameStore } from '../../../../stores/use-game-store'
 import type { CalendarConfig } from '../../../../types/campaign'
 import { formatInGameTime, getDateParts, totalSecondsFromDateTime } from '../../../../utils/calendar-utils'
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import languageD12Json from '../../../../public/data/5e/character/language-d12-table.json'
 import { LANGUAGE_DESCRIPTIONS } from '../../../data/language-descriptions'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import { RARE_LANGUAGES_5E, STANDARD_LANGUAGES_5E } from '../../../types/character-common'
 import SectionBanner from '../shared/SectionBanner'
 

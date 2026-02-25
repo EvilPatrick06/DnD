@@ -1,31 +1,30 @@
+import classResourcesJson from '../../public/data/5e/mechanics/class-resources.json'
 import type { ClassResource } from '../types/character-common'
 import type { ResourceDefinition, ResourceScaling } from '../types/data'
-import classResourcesJson from '../../public/data/5e/mechanics/class-resources.json'
 
 // --- Generic resource interpreter ---
 
 function resolveMax(scaling: ResourceScaling, level: number, wisdomMod: number): number {
   if (scaling.max !== undefined) return scaling.max
   switch (scaling.maxFormula) {
-    case 'profBonus': return Math.ceil(level / 4) + 1
-    case 'classLevel': return level
-    case 'classLevel*5': return level * 5
-    case 'wisdomMod': return Math.max(1, wisdomMod)
-    default: return 1
+    case 'profBonus':
+      return Math.ceil(level / 4) + 1
+    case 'classLevel':
+      return level
+    case 'classLevel*5':
+      return level * 5
+    case 'wisdomMod':
+      return Math.max(1, wisdomMod)
+    default:
+      return 1
   }
 }
 
-function resolveResources(
-  definitions: ResourceDefinition[],
-  level: number,
-  wisdomMod: number = 0
-): ClassResource[] {
+function resolveResources(definitions: ResourceDefinition[], level: number, wisdomMod: number = 0): ClassResource[] {
   const resources: ClassResource[] = []
   for (const def of definitions) {
     // Find the applicable scaling tier for this level
-    const tier = def.scaling.find(
-      (s) => level >= s.minLevel && (s.maxLevel === undefined || level <= s.maxLevel)
-    )
+    const tier = def.scaling.find((s) => level >= s.minLevel && (s.maxLevel === undefined || level <= s.maxLevel))
     if (!tier) continue
 
     const max = resolveMax(tier, level, wisdomMod)
@@ -84,9 +83,7 @@ export function getFeatResources(feats: Array<{ id: string }>, profBonus: number
   const resources: ClassResource[] = []
   for (const [featId, def] of Object.entries(data.feats)) {
     if (feats.some((f) => f.id === featId)) {
-      const tier = def.scaling.find(
-        (s) => 1 >= s.minLevel && (s.maxLevel === undefined || 1 <= s.maxLevel)
-      )
+      const tier = def.scaling.find((s) => 1 >= s.minLevel && (s.maxLevel === undefined || 1 <= s.maxLevel))
       if (tier) {
         const max = resolveMax(tier, 1, 0)
         // For profBonus formula, use the actual profBonus passed in

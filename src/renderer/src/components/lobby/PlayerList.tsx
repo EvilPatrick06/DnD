@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { banPeer, chatMutePeer, kickPeer } from '../../network/host-manager'
-import { useCampaignStore } from '../../stores/useCampaignStore'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+import { useCampaignStore } from '../../stores/use-campaign-store'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useNetworkStore } from '../../stores/use-network-store'
 import PlayerCard from './PlayerCard'
 
 export default function PlayerList(): JSX.Element {
@@ -26,8 +26,6 @@ export default function PlayerList(): JSX.Element {
   const campaigns = useCampaignStore((s) => s.campaigns)
   const campaign = campaigns.find((c) => c.id === campaignId)
   const aiDmEnabled = campaign?.aiDm?.enabled ?? false
-  const aiDmProvider = campaign?.aiDm?.provider ?? 'claude'
-  const aiDmModel = campaign?.aiDm?.model ?? 'sonnet'
   const aiDmOllamaModel = campaign?.aiDm?.ollamaModel ?? 'llama3.1'
 
   const sortedPlayers = useMemo(
@@ -92,11 +90,7 @@ export default function PlayerList(): JSX.Element {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-purple-200">AI Dungeon Master</div>
-              <div className="text-[10px] text-purple-400">
-                {aiDmProvider === 'claude'
-                  ? `Claude ${aiDmModel.charAt(0).toUpperCase() + aiDmModel.slice(1)}`
-                  : `Ollama (${aiDmOllamaModel})`}
-              </div>
+              <div className="text-[10px] text-purple-400">Ollama ({aiDmOllamaModel})</div>
             </div>
             <span className="text-[10px] text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">Ready</span>
           </div>

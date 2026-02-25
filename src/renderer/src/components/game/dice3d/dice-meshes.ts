@@ -8,13 +8,17 @@ const DIE_SCALE = 1.0
 // ─── Types ────────────────────────────────────────────────────
 
 export interface DiceColors {
-  bodyColor: string  // hex e.g. '#1a1a2e'
+  bodyColor: string // hex e.g. '#1a1a2e'
   numberColor: string // hex e.g. '#f5c542'
 }
 
 export const DEFAULT_DICE_COLORS: DiceColors = diceColorsJson.default
 
-export const DICE_COLOR_PRESETS = diceColorsJson.presets as readonly { label: string; bodyColor: string; numberColor: string }[]
+export const DICE_COLOR_PRESETS = diceColorsJson.presets as readonly {
+  label: string
+  bodyColor: string
+  numberColor: string
+}[]
 
 export interface DieDefinition {
   sides: number
@@ -117,7 +121,7 @@ function createFaceMaterials(
   })
 }
 
-function createSolidMaterial(colors: DiceColors): THREE.MeshStandardMaterial {
+function _createSolidMaterial(colors: DiceColors): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color(colors.bodyColor),
     roughness: 0.35,
@@ -154,9 +158,12 @@ function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
   for (let f = 0; f < 4; f++) {
     const base = f * 6
     // Equilateral triangle UVs
-    uvs[base] = 0.5; uvs[base + 1] = 1.0   // top
-    uvs[base + 2] = 0.0; uvs[base + 3] = 0.0 // bottom-left
-    uvs[base + 4] = 1.0; uvs[base + 5] = 0.0 // bottom-right
+    uvs[base] = 0.5
+    uvs[base + 1] = 1.0 // top
+    uvs[base + 2] = 0.0
+    uvs[base + 3] = 0.0 // bottom-left
+    uvs[base + 4] = 1.0
+    uvs[base + 5] = 0.0 // bottom-right
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
@@ -192,12 +199,12 @@ function createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
 
   // Face normals for reading results
   const faceNormals = [
-    new THREE.Vector3(0, 0, 1),   // 1 (front, +z)
-    new THREE.Vector3(0, -1, 0),  // 2 (bottom, -y)
-    new THREE.Vector3(-1, 0, 0),  // 3 (left, -x)
-    new THREE.Vector3(1, 0, 0),   // 4 (right, +x)
-    new THREE.Vector3(0, 1, 0),   // 5 (top, +y)
-    new THREE.Vector3(0, 0, -1)   // 6 (back, -z)
+    new THREE.Vector3(0, 0, 1), // 1 (front, +z)
+    new THREE.Vector3(0, -1, 0), // 2 (bottom, -y)
+    new THREE.Vector3(-1, 0, 0), // 3 (left, -x)
+    new THREE.Vector3(1, 0, 0), // 4 (right, +x)
+    new THREE.Vector3(0, 1, 0), // 5 (top, +y)
+    new THREE.Vector3(0, 0, -1) // 6 (back, -z)
   ]
 
   const wireGeo = new THREE.EdgesGeometry(geo)
@@ -222,9 +229,12 @@ function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
   const uvs = new Float32Array(24 * 2)
   for (let f = 0; f < 8; f++) {
     const base = f * 6
-    uvs[base] = 0.5; uvs[base + 1] = 1.0
-    uvs[base + 2] = 0.0; uvs[base + 3] = 0.0
-    uvs[base + 4] = 1.0; uvs[base + 5] = 0.0
+    uvs[base] = 0.5
+    uvs[base + 1] = 1.0
+    uvs[base + 2] = 0.0
+    uvs[base + 3] = 0.0
+    uvs[base + 4] = 1.0
+    uvs[base + 5] = 0.0
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
@@ -305,13 +315,19 @@ function createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean 
   for (let f = 0; f < 10; f++) {
     const base = f * 12
     // Triangle 1
-    uvs[base] = 0.5; uvs[base + 1] = 1.0
-    uvs[base + 2] = 0.0; uvs[base + 3] = 0.5
-    uvs[base + 4] = 0.5; uvs[base + 5] = 0.0
+    uvs[base] = 0.5
+    uvs[base + 1] = 1.0
+    uvs[base + 2] = 0.0
+    uvs[base + 3] = 0.5
+    uvs[base + 4] = 0.5
+    uvs[base + 5] = 0.0
     // Triangle 2
-    uvs[base + 6] = 0.5; uvs[base + 7] = 1.0
-    uvs[base + 8] = 0.5; uvs[base + 9] = 0.0
-    uvs[base + 10] = 1.0; uvs[base + 11] = 0.5
+    uvs[base + 6] = 0.5
+    uvs[base + 7] = 1.0
+    uvs[base + 8] = 0.5
+    uvs[base + 9] = 0.0
+    uvs[base + 10] = 1.0
+    uvs[base + 11] = 0.5
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
@@ -354,9 +370,12 @@ function createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
   for (let f = 0; f < 12; f++) {
     for (let t = 0; t < trisPerFace; t++) {
       const base = (f * vertsPerFace + t * 3) * 2
-      uvs[base] = 0.5; uvs[base + 1] = 1.0
-      uvs[base + 2] = 0.0; uvs[base + 3] = 0.0
-      uvs[base + 4] = 1.0; uvs[base + 5] = 0.0
+      uvs[base] = 0.5
+      uvs[base + 1] = 1.0
+      uvs[base + 2] = 0.0
+      uvs[base + 3] = 0.0
+      uvs[base + 4] = 1.0
+      uvs[base + 5] = 0.0
     }
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
@@ -389,9 +408,12 @@ function createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
   const uvs = new Float32Array(60 * 2)
   for (let f = 0; f < 20; f++) {
     const base = f * 6
-    uvs[base] = 0.5; uvs[base + 1] = 1.0
-    uvs[base + 2] = 0.0; uvs[base + 3] = 0.0
-    uvs[base + 4] = 1.0; uvs[base + 5] = 0.0
+    uvs[base] = 0.5
+    uvs[base + 1] = 1.0
+    uvs[base + 2] = 0.0
+    uvs[base + 3] = 0.0
+    uvs[base + 4] = 1.0
+    uvs[base + 5] = 0.0
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
@@ -449,13 +471,20 @@ export function createDie(type: DieType, options: CreateDieOptions = {}): DieDef
   const isHidden = options.isHidden || false
 
   switch (type) {
-    case 'd4': return createD4(colors, isHidden)
-    case 'd6': return createD6(colors, isHidden)
-    case 'd8': return createD8(colors, isHidden)
-    case 'd10': return createD10(colors, isHidden, false)
-    case 'd12': return createD12(colors, isHidden)
-    case 'd20': return createD20(colors, isHidden)
-    case 'd100': return createD10(colors, isHidden, true)
+    case 'd4':
+      return createD4(colors, isHidden)
+    case 'd6':
+      return createD6(colors, isHidden)
+    case 'd8':
+      return createD8(colors, isHidden)
+    case 'd10':
+      return createD10(colors, isHidden, false)
+    case 'd12':
+      return createD12(colors, isHidden)
+    case 'd20':
+      return createD20(colors, isHidden)
+    case 'd100':
+      return createD10(colors, isHidden, true)
   }
 }
 
@@ -500,9 +529,7 @@ export function readDieResult(def: DieDefinition, quaternion: THREE.Quaternion):
 
 /** Tint a die with crit/fumble highlight */
 export function tintDie(def: DieDefinition, color: number): void {
-  const materials = Array.isArray(def.mesh.material)
-    ? def.mesh.material
-    : [def.mesh.material]
+  const materials = Array.isArray(def.mesh.material) ? def.mesh.material : [def.mesh.material]
 
   for (const mat of materials) {
     if (mat instanceof THREE.MeshStandardMaterial) {

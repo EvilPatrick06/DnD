@@ -74,8 +74,7 @@ export default function MacroBar({ character, onRoll }: MacroBarProps): JSX.Elem
     // Skill check macros (proficient skills only when collapsed, all when expanded)
     for (const skill of char5e.skills) {
       const abilityKey = SKILL_ABILITIES[skill.name] ?? skill.ability
-      const abilityScore =
-        char5e.abilityScores[abilityKey as keyof typeof char5e.abilityScores] ?? 10
+      const abilityScore = char5e.abilityScores[abilityKey as keyof typeof char5e.abilityScores] ?? 10
       const mod = abilityModifier(abilityScore)
       let bonus = mod
       if (skill.proficient) bonus += pb
@@ -123,9 +122,7 @@ export default function MacroBar({ character, onRoll }: MacroBarProps): JSX.Elem
         ))}
 
       {macros.filter((m) => m.category === 'weapon').length > 0 &&
-        macros.filter((m) => m.category === 'skill').length > 0 && (
-          <div className="w-px h-4 bg-gray-700/50 shrink-0" />
-        )}
+        macros.filter((m) => m.category === 'skill').length > 0 && <div className="w-px h-4 bg-gray-700/50 shrink-0" />}
 
       {/* Skill macros */}
       {macros

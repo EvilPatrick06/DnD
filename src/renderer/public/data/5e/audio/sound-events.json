@@ -137,16 +137,8 @@
     ]
   },
   "weaponSubcategories": {
-    "ranged": [
-      "weapon-bow",
-      "weapon-crossbow"
-    ],
-    "magic": [
-      "weapon-flaming",
-      "weapon-frost",
-      "weapon-lightning",
-      "weapon-holy"
-    ]
+    "ranged": ["weapon-bow", "weapon-crossbow"],
+    "magic": ["weapon-flaming", "weapon-frost", "weapon-lightning", "weapon-holy"]
   },
   "creatureSubcategories": {
     "beasts": [
@@ -161,14 +153,7 @@
       "creature-spider"
     ]
   },
-  "stripPrefixes": [
-    "creature-",
-    "spell-",
-    "condition-",
-    "dice-",
-    "weapon-",
-    "ambient-"
-  ],
+  "stripPrefixes": ["creature-", "spell-", "condition-", "dice-", "weapon-", "ambient-"],
   "essentialEvents": [
     "dice-d4",
     "dice-d6",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { addToast } from '../../hooks/useToast'
+import { addToast } from '../../hooks/use-toast'
 
 interface InstalledModel {
   name: string
@@ -261,15 +261,9 @@ export default function OllamaManagement(): JSX.Element {
       {/* Status & Version */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-2 h-2 rounded-full ${ollamaStatus.running ? 'bg-green-400' : 'bg-gray-500'}`}
-          />
-          <span className="text-sm text-gray-300">
-            {ollamaStatus.running ? 'Running' : 'Stopped'}
-          </span>
-          {versionInfo && (
-            <span className="text-xs text-gray-500 font-mono">v{versionInfo.installed}</span>
-          )}
+          <div className={`w-2 h-2 rounded-full ${ollamaStatus.running ? 'bg-green-400' : 'bg-gray-500'}`} />
+          <span className="text-sm text-gray-300">{ollamaStatus.running ? 'Running' : 'Stopped'}</span>
+          {versionInfo && <span className="text-xs text-gray-500 font-mono">v{versionInfo.installed}</span>}
         </div>
         <div className="flex items-center gap-2">
           {versionInfo?.updateAvailable && (
@@ -281,9 +275,7 @@ export default function OllamaManagement(): JSX.Element {
               disabled={isBusy}
               className="px-3 py-1 text-xs rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {activeOp?.type === 'ollama-update'
-                ? `Updating... ${activeOp.percent}%`
-                : 'Update Ollama'}
+              {activeOp?.type === 'ollama-update' ? `Updating... ${activeOp.percent}%` : 'Update Ollama'}
             </button>
           ) : (
             <button
@@ -308,9 +300,7 @@ export default function OllamaManagement(): JSX.Element {
       )}
 
       {!ollamaStatus.running && (
-        <div className="text-xs text-gray-500">
-          Ollama is installed but not running. Start it to manage models.
-        </div>
+        <div className="text-xs text-gray-500">Ollama is installed but not running. Start it to manage models.</div>
       )}
 
       {ollamaStatus.running && (
@@ -318,9 +308,7 @@ export default function OllamaManagement(): JSX.Element {
           {/* Installed Models */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Installed Models
-              </h4>
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Installed Models</h4>
               {installedModels.length > 0 && (
                 <button
                   onClick={handleUpdateAllModels}
@@ -337,10 +325,8 @@ export default function OllamaManagement(): JSX.Element {
             ) : (
               <div className="space-y-1.5">
                 {installedModels.map((model) => {
-                  const isPulling =
-                    activeOp?.type === 'pull' && activeOp.model === model.name
-                  const isDeleting =
-                    activeOp?.type === 'delete' && activeOp.model === model.name
+                  const isPulling = activeOp?.type === 'pull' && activeOp.model === model.name
+                  const isDeleting = activeOp?.type === 'delete' && activeOp.model === model.name
                   return (
                     <div
                       key={model.digest}
@@ -348,9 +334,7 @@ export default function OllamaManagement(): JSX.Element {
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-200 font-medium truncate">
-                            {model.name}
-                          </span>
+                          <span className="text-sm text-gray-200 font-medium truncate">{model.name}</span>
                           {model.parameterSize && (
                             <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
                               {model.parameterSize}
@@ -375,9 +359,7 @@ export default function OllamaManagement(): JSX.Element {
                               style={{ width: `${activeOp.percent}%` }}
                             />
                           </div>
-                          <span className="text-[10px] text-gray-400 w-8 text-right">
-                            {activeOp.percent}%
-                          </span>
+                          <span className="text-[10px] text-gray-400 w-8 text-right">{activeOp.percent}%</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 ml-3">
@@ -435,13 +417,10 @@ export default function OllamaManagement(): JSX.Element {
           {/* Available Models */}
           {availableModels.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Available Models
-              </h4>
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Available Models</h4>
               <div className="space-y-1.5">
                 {availableModels.map((model) => {
-                  const isPulling =
-                    activeOp?.type === 'pull' && activeOp.model === model.id
+                  const isPulling = activeOp?.type === 'pull' && activeOp.model === model.id
                   const tooLarge = vram > 0 && model.vramMB > vram
                   return (
                     <div
@@ -468,9 +447,7 @@ export default function OllamaManagement(): JSX.Element {
                               style={{ width: `${activeOp.percent}%` }}
                             />
                           </div>
-                          <span className="text-[10px] text-gray-400 w-8 text-right">
-                            {activeOp.percent}%
-                          </span>
+                          <span className="text-[10px] text-gray-400 w-8 text-right">{activeOp.percent}%</span>
                         </div>
                       ) : (
                         <button
@@ -490,9 +467,7 @@ export default function OllamaManagement(): JSX.Element {
 
           {/* Custom Model Pull */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Pull Custom Model
-            </h4>
+            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pull Custom Model</h4>
             <div className="flex gap-2">
               <input
                 type="text"

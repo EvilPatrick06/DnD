@@ -1,4 +1,4 @@
-import { useBastionStore } from '../../stores/useBastionStore'
+import { useBastionStore } from '../../stores/use-bastion-store'
 import type { ChatCommand } from './types'
 
 const bastionCommand: ChatCommand = {

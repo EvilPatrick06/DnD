@@ -1,4 +1,4 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import type { ChatCommand } from './types'
 
 // Generate a condition shortcut command for each standard 5e condition

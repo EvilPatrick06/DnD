@@ -1,4 +1,4 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import type { MapToken } from '../../types/map'
 import { getLatestCharacter } from './helpers'
 import type { ChatCommand } from './types'

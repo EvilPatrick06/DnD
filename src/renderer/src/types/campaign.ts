@@ -36,9 +36,8 @@ export interface LoreEntry {
 
 export interface AiDmConfig {
   enabled: boolean
-  provider: 'claude' | 'ollama'
-  model: 'opus' | 'sonnet' | 'haiku'
   ollamaModel?: string
+  ollamaUrl?: string
 }
 
 export interface Campaign {
@@ -69,12 +68,6 @@ export interface Campaign {
     displayName: string
     category: 'ambient' | 'effect' | 'music'
   }>
-  voiceChat?: {
-    mode: 'local' | 'cloud'
-    apiKey?: string
-    apiSecret?: string
-    serverUrl?: string
-  }
   aiDm?: AiDmConfig
   savedGameState?: SavedGameState
   createdAt: string
@@ -93,7 +86,6 @@ export const DEFAULT_OPTIONAL_RULES: OptionalRules = {
 
 export interface CampaignSettings {
   maxPlayers: number
-  voiceEnabled: boolean
   lobbyMessage: string
   levelRange: { min: number; max: number }
   allowCharCreationInLobby: boolean

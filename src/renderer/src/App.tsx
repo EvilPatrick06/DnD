@@ -2,8 +2,9 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { DiceOverlay } from './components/game/dice3d'
 import { ErrorBoundary, ShortcutsOverlay, Spinner, ToastContainer } from './components/ui'
-import { addToast } from './hooks/useToast'
+import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
+import { logger } from './utils/logger'
 
 const ViewCharactersPage = lazy(() => import('./pages/ViewCharactersPage'))
 const JoinGamePage = lazy(() => import('./pages/JoinGamePage'))
@@ -53,7 +54,7 @@ function App(): JSX.Element {
   useEffect(() => {
     const handler = (e: PromiseRejectionEvent): void => {
       const msg = e.reason instanceof Error ? e.reason.message : String(e.reason)
-      console.error('[UnhandledRejection]', e.reason)
+      logger.error('[UnhandledRejection]', e.reason)
       addToast(`Unexpected error: ${msg}`, 'error')
     }
     window.addEventListener('unhandledrejection', handler)
@@ -76,18 +77,81 @@ function App(): JSX.Element {
           <Routes>
             <Route path="/" element={<MainMenuPage />} />
             <Route path="/characters" element={<ViewCharactersPage />} />
-            <Route path="/characters/create" element={<ErrorBoundary><CreateCharacterPage /></ErrorBoundary>} />
-            <Route path="/characters/5e/create" element={<ErrorBoundary><CreateCharacterPage /></ErrorBoundary>} />
-            <Route path="/characters/5e/edit/:id" element={<ErrorBoundary><CreateCharacterPage /></ErrorBoundary>} />
-            <Route path="/characters/5e/:id" element={<ErrorBoundary><CharacterSheet5ePage /></ErrorBoundary>} />
-            <Route path="/characters/5e/:id/levelup" element={<ErrorBoundary><LevelUp5ePage /></ErrorBoundary>} />
-            <Route path="/characters/edit/:id" element={<ErrorBoundary><CreateCharacterPage /></ErrorBoundary>} />
+            <Route
+              path="/characters/create"
+              element={
+                <ErrorBoundary>
+                  <CreateCharacterPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/characters/5e/create"
+              element={
+                <ErrorBoundary>
+                  <CreateCharacterPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/characters/5e/edit/:id"
+              element={
+                <ErrorBoundary>
+                  <CreateCharacterPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/characters/5e/:id"
+              element={
+                <ErrorBoundary>
+                  <CharacterSheet5ePage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/characters/5e/:id/levelup"
+              element={
+                <ErrorBoundary>
+                  <LevelUp5ePage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/characters/edit/:id"
+              element={
+                <ErrorBoundary>
+                  <CreateCharacterPage />
+                </ErrorBoundary>
+              }
+            />
             <Route path="/join" element={<JoinGamePage />} />
             <Route path="/make" element={<MakeGamePage />} />
-            <Route path="/campaign/:id" element={<ErrorBoundary><CampaignDetailPage /></ErrorBoundary>} />
+            <Route
+              path="/campaign/:id"
+              element={
+                <ErrorBoundary>
+                  <CampaignDetailPage />
+                </ErrorBoundary>
+              }
+            />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/lobby/:campaignId" element={<ErrorBoundary><LobbyPage /></ErrorBoundary>} />
-            <Route path="/game/:campaignId" element={<ErrorBoundary><InGamePage /></ErrorBoundary>} />
+            <Route
+              path="/lobby/:campaignId"
+              element={
+                <ErrorBoundary>
+                  <LobbyPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/game/:campaignId"
+              element={
+                <ErrorBoundary>
+                  <InGamePage />
+                </ErrorBoundary>
+              }
+            />
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/bastions" element={<BastionPage />} />
             <Route path="/calendar" element={<CalendarPage />} />

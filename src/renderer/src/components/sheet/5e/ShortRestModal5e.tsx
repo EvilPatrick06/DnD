@@ -5,21 +5,21 @@ import {
   rollShortRestDice,
   type ShortRestDiceRoll
 } from '../../../services/character/rest-service-5e'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import { is5eCharacter } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import { abilityModifier } from '../../../types/character-common'
 import Modal from '../../ui/Modal'
 
-interface ShortRestDialog5eProps {
+interface ShortRestModal5eProps {
   character: Character5e
   open: boolean
   onClose: () => void
 }
 
-export default function ShortRestDialog5e({ character, open, onClose }: ShortRestDialog5eProps): JSX.Element | null {
+export default function ShortRestModal5e({ character, open, onClose }: ShortRestModal5eProps): JSX.Element | null {
   const preview = getShortRestPreview(character)
   const isMulticlass = character.hitDice.length > 1
   const hitDie = character.hitDice[0]?.dieType ?? 8
@@ -115,7 +115,8 @@ export default function ShortRestDialog5e({ character, open, onClose }: ShortRes
           Hit Point Dice:{' '}
           {isMulticlass ? (
             <span className="text-amber-400 font-semibold">
-              {remaining}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)} ({character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})
+              {remaining}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)} (
+              {character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})
             </span>
           ) : (
             <span className="text-amber-400 font-semibold">

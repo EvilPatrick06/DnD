@@ -1,4 +1,4 @@
-import type { DisplayStatBlock } from '../../../utils/stat-block-converter'
+import type { DisplayStatBlock } from '../../utils/stat-block-converter'
 
 interface UnifiedStatBlockProps {
   statBlock: DisplayStatBlock
@@ -23,7 +23,13 @@ function SectionDivider(): JSX.Element {
   return <div className="border-t border-amber-800/30" />
 }
 
-function TraitBlock({ items, heading }: { items: { name: string; description: string }[]; heading: string }): JSX.Element | null {
+function TraitBlock({
+  items,
+  heading
+}: {
+  items: { name: string; description: string }[]
+  heading: string
+}): JSX.Element | null {
   if (!items || items.length === 0) return null
   return (
     <>

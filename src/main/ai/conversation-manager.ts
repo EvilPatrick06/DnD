@@ -69,14 +69,24 @@ export class ConversationManager {
   }> {
     await this.maybeSummarize()
 
-    const includesPlanarContent = contextBlock?.includes('planar') || contextBlock?.includes('Astral') ||
-      contextBlock?.includes('Ethereal') || contextBlock?.includes('Feywild') || contextBlock?.includes('Shadowfell') ||
-      contextBlock?.includes('Elemental Plane') || contextBlock?.includes('Outer Plane') || contextBlock?.includes('Abyss') ||
+    const includesPlanarContent =
+      contextBlock?.includes('planar') ||
+      contextBlock?.includes('Astral') ||
+      contextBlock?.includes('Ethereal') ||
+      contextBlock?.includes('Feywild') ||
+      contextBlock?.includes('Shadowfell') ||
+      contextBlock?.includes('Elemental Plane') ||
+      contextBlock?.includes('Outer Plane') ||
+      contextBlock?.includes('Abyss') ||
       contextBlock?.includes('Nine Hells')
-    const includesToolboxContent = contextBlock?.includes('ACTIVE EFFECTS') ||
-      contextBlock?.includes('active_disease') || contextBlock?.includes('active_curse') ||
-      contextBlock?.includes('placed_trap') || contextBlock?.includes('chase')
-    const systemPrompt = DM_SYSTEM_PROMPT +
+    const includesToolboxContent =
+      contextBlock?.includes('ACTIVE EFFECTS') ||
+      contextBlock?.includes('active_disease') ||
+      contextBlock?.includes('active_curse') ||
+      contextBlock?.includes('placed_trap') ||
+      contextBlock?.includes('chase')
+    const systemPrompt =
+      DM_SYSTEM_PROMPT +
       (includesPlanarContent ? PLANAR_RULES_CONTEXT : '') +
       (includesToolboxContent ? DM_TOOLBOX_CONTEXT : '') +
       (contextBlock ? `\n\n${contextBlock}` : '')
@@ -121,9 +131,7 @@ export class ConversationManager {
     const cleaned = ensureAlternating(apiMessages)
 
     // Track token usage and truncation for DM alerting
-    const totalTokens =
-      estimateTokens(systemPrompt) +
-      cleaned.reduce((sum, m) => sum + estimateTokens(m.content), 0)
+    const totalTokens = estimateTokens(systemPrompt) + cleaned.reduce((sum, m) => sum + estimateTokens(m.content), 0)
     this._lastTokenEstimate = totalTokens
     this._contextTruncated = tokenCount >= TOKEN_BUDGETS.conversationHistory
 
@@ -138,9 +146,7 @@ export class ConversationManager {
     if (!this.summarizeCallback) return null
     if (this.messages.length === 0) return null
 
-    const startIdx = this.summaries.length > 0
-      ? this.summaries[this.summaries.length - 1].coversUpTo + 1
-      : 0
+    const startIdx = this.summaries.length > 0 ? this.summaries[this.summaries.length - 1].coversUpTo + 1 : 0
     const recentMessages = this.messages.slice(startIdx)
     if (recentMessages.length === 0) return null
 

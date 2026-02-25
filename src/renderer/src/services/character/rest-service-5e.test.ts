@@ -296,7 +296,7 @@ describe('applyLongRest', () => {
     const char = makeCharacter({
       knownSpells: [
         { name: 'Burning Hands', level: 1, school: 'evocation', innateUses: { max: 1, remaining: 0 } }
-      ] as any
+      ] as unknown as import('../../types/character-common').SpellEntry[]
     })
     const result = applyLongRest(char)
     const spell = result.character.knownSpells?.find((s) => s.name === 'Burning Hands')
@@ -319,7 +319,7 @@ describe('applyLongRest', () => {
         fightingStyleId: null,
         selections: {}
       }
-    } as any)
+    } as unknown as Partial<Character5e>)
     const result = applyLongRest(char)
     expect(result.highElfCantripSwap).toBe(true)
   })

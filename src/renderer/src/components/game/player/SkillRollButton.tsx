@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SKILLS_5E } from '../../../data/skills'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import type { AbilityName } from '../../../types/character-common'
@@ -8,7 +8,7 @@ import { abilityModifier, formatMod } from '../../../types/character-common'
 
 interface SkillRollButtonProps {
   character: Character | null
-  playerName: string
+  playerName?: string
   onRoll: (result: { formula: string; total: number; rolls: number[] }) => void
 }
 
@@ -54,7 +54,7 @@ function rollD20(): number {
   return Math.floor(Math.random() * 20) + 1
 }
 
-export default function SkillRollButton({ character, playerName, onRoll }: SkillRollButtonProps): JSX.Element {
+export default function SkillRollButton({ character, onRoll }: SkillRollButtonProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'skills' | 'saves'>('skills')
   const [advantage, setAdvantage] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')

@@ -8,11 +8,16 @@
  * PHB 2024 Chapter 1 (Combat), Chapter 7 (Spellcasting)
  */
 
+import { useGameStore } from '../../stores/use-game-store'
+import type { EntityCondition, TurnState } from '../../types/game-state'
+import type { MapToken, WallSegment } from '../../types/map'
+import { type DiceRollOptions, type DiceRollResult, roll, rollD20, rollQuiet } from '../dice/dice-service'
 import {
   type AttackConditionContext,
   type ConditionEffectResult,
   getAttackConditionEffects
 } from './attack-condition-effects'
+import { broadcastCombatResult, logCombatEntry } from './combat-log'
 import {
   type CoverType,
   canGrappleOrShove,
@@ -20,25 +25,29 @@ import {
   getCoverACBonus,
   getCoverDexSaveBonus,
   getMasteryEffect,
-  gridDistanceFeet,
   isInMeleeRange,
   type MasteryEffectResult,
   unarmedStrikeDC
 } from './combat-rules'
 import { calculateCover } from './cover-calculator'
 import { type DamageApplication, type DamageResolutionSummary, resolveDamage } from './damage-resolver'
-import {
-  type DiceRollOptions,
-  type DiceRollResult,
-  roll,
-  rollD20,
-  rollQuiet
-} from '../dice/dice-service'
-import type { MapToken, WallSegment } from '../../types/map'
-import type { EntityCondition, TurnState } from '../../types/game-state'
-import { useGameStore } from '../../stores/useGameStore'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+
+// Re-export extracted modules for backwards compatibility
+export {
+  type DeathSaveResult,
+  type DeathSaveState,
+  deathSaveDamageAtZero,
+  resolveConcentrationCheck,
+  resolveDeathSave
+} from './death-mechanics'
+export { shouldTriggerLairAction, spendLegendaryAction, useLegendaryResistance } from './legendary-actions'
+export {
+  canCastAsRitual,
+  expendSpellSlot,
+  getCantripDiceCount,
+  type SpellSlotState,
+  scaleCantrip
+} from './spell-slot-manager'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -263,10 +272,7 @@ export function resolveAttack(
 
   // Check for enemies within 5ft of attacker (for ranged disadvantage)
   const enemyWithin5ft = allTokens.some(
-    (t) =>
-      t.id !== attackerToken.id &&
-      t.entityType !== attackerToken.entityType &&
-      isInMeleeRange(attackerToken, t)
+    (t) => t.id !== attackerToken.id && t.entityType !== attackerToken.entityType && isInMeleeRange(attackerToken, t)
   )
 
   const conditionContext: AttackConditionContext = {
@@ -367,7 +373,7 @@ export function resolveAttack(
   const targetAC = (targetToken.ac ?? 10) + coverACBonus
 
   // ── Determine advantage/disadvantage ──
-  let rollOptions: DiceRollOptions = {
+  const rollOptions: DiceRollOptions = {
     label: `${weaponName} Attack`,
     silent: true,
     secret: isSecretRoll
@@ -494,7 +500,7 @@ export function resolveAttack(
     sourceEntityName: attackerName,
     targetEntityId: targetToken.entityId,
     targetEntityName: targetName,
-    value: hit ? damage?.totalFinalDamage ?? 0 : grazeDamage,
+    value: hit ? (damage?.totalFinalDamage ?? 0) : grazeDamage,
     damageType: hit ? damageType : grazeDamage > 0 ? `${damageType} (graze)` : undefined,
     description: summary
   })
@@ -535,7 +541,7 @@ export function resolveSavingThrow(request: SavingThrowRequest): SavingThrowResu
     halfOnSuccess = false,
     failureEffect,
     sourceName,
-    abilityName,
+    abilityName: _abilityName,
     targetConditions = [],
     isSecretRoll = false,
     cover
@@ -749,359 +755,6 @@ export function resolveShove(request: ShoveRequest): ShoveResult {
   return { success, attackerRoll, targetRoll, dc, summary }
 }
 
-// ─── Concentration Check (PHB 2024 p.236) ─────────────────────
-
-/**
- * Perform a concentration check when a concentrating creature takes damage.
- * DC = max(10, floor(damage / 2)). CON save.
- * Returns true if concentration is maintained.
- */
-export function resolveConcentrationCheck(
-  entityId: string,
-  entityName: string,
-  damageTaken: number,
-  conSaveModifier: number,
-  hasWarCasterAdvantage: boolean = false
-): { maintained: boolean; roll: DiceRollResult; dc: number; summary: string } {
-  const dc = Math.max(10, Math.floor(damageTaken / 2))
-
-  const saveRoll = rollD20(conSaveModifier, {
-    label: 'Concentration',
-    silent: true,
-    advantage: hasWarCasterAdvantage
-  })
-
-  const maintained = saveRoll.total >= dc
-
-  const gameStore = useGameStore.getState()
-  const concentratingSpell = gameStore.turnStates[entityId]?.concentratingSpell
-
-  if (!maintained && concentratingSpell) {
-    // Drop concentration
-    gameStore.setConcentrating(entityId, undefined)
-  }
-
-  const summary = maintained
-    ? `${entityName} maintains concentration on ${concentratingSpell ?? 'spell'}. (CON save: ${saveRoll.total} vs DC ${dc})`
-    : `${entityName} loses concentration on ${concentratingSpell ?? 'spell'}! (CON save: ${saveRoll.total} vs DC ${dc})`
-
-  logCombatEntry({
-    type: 'save',
-    targetEntityId: entityId,
-    targetEntityName: entityName,
-    value: saveRoll.total,
-    description: summary
-  })
-
-  broadcastCombatResult(summary, false)
-
-  return { maintained, roll: saveRoll, dc, summary }
-}
-
-// ─── Death Save Mechanics (PHB 2024 p.230) ─────────────────────
-
-export interface DeathSaveState {
-  successes: number
-  failures: number
-}
-
-export interface DeathSaveResult {
-  roll: DiceRollResult
-  successes: number
-  failures: number
-  outcome: 'continue' | 'stabilized' | 'dead' | 'revived'
-  summary: string
-}
-
-/**
- * Roll a death saving throw at the start of a turn.
- * - Nat 20: regain 1 HP (revived).
- * - Nat 1: counts as 2 failures.
- * - >= 10: success. < 10: failure.
- * - 3 successes = stabilized. 3 failures = dead.
- */
-export function resolveDeathSave(
-  entityId: string,
-  entityName: string,
-  currentState: DeathSaveState
-): DeathSaveResult {
-  const saveRoll = rollD20(0, { label: 'Death Save', silent: true })
-
-  let { successes, failures } = currentState
-
-  if (saveRoll.natural20) {
-    // Nat 20: regain 1 HP
-    successes = 0
-    failures = 0
-    const summary = `${entityName} rolls a Natural 20 on their death save — they regain 1 HP!`
-
-    logCombatEntry({
-      type: 'death',
-      targetEntityId: entityId,
-      targetEntityName: entityName,
-      value: 1,
-      description: summary
-    })
-
-    broadcastCombatResult(summary, false)
-
-    return { roll: saveRoll, successes, failures, outcome: 'revived', summary }
-  }
-
-  if (saveRoll.natural1) {
-    failures += 2
-  } else if (saveRoll.total >= 10) {
-    successes += 1
-  } else {
-    failures += 1
-  }
-
-  let outcome: DeathSaveResult['outcome'] = 'continue'
-  let summary: string
-
-  if (successes >= 3) {
-    outcome = 'stabilized'
-    summary = `${entityName} is stabilized! (Death saves: ${successes} successes)`
-  } else if (failures >= 3) {
-    outcome = 'dead'
-    summary = `${entityName} has died! (Death saves: ${failures} failures)`
-  } else {
-    const rollDesc = saveRoll.natural1 ? 'Natural 1 (2 failures!)' : `${saveRoll.total}`
-    summary = `${entityName} death save: ${rollDesc} — Successes: ${successes}/3, Failures: ${failures}/3`
-  }
-
-  logCombatEntry({
-    type: 'death',
-    targetEntityId: entityId,
-    targetEntityName: entityName,
-    description: summary
-  })
-
-  broadcastCombatResult(summary, false)
-
-  return { roll: saveRoll, successes, failures, outcome, summary }
-}
-
-/**
- * Handle taking damage while at 0 HP (PHB 2024).
- * - Any damage = 1 death save failure.
- * - Critical hit = 2 death save failures.
- * - Damage >= maxHP remaining = instant death (massive damage).
- */
-export function deathSaveDamageAtZero(
-  entityId: string,
-  entityName: string,
-  currentState: DeathSaveState,
-  damageTaken: number,
-  isCritical: boolean,
-  maxHP: number
-): { failures: number; outcome: 'continue' | 'dead'; summary: string } {
-  // Massive damage: if damage at 0 HP >= max HP, instant death
-  if (damageTaken >= maxHP) {
-    const summary = `${entityName} takes ${damageTaken} damage at 0 HP (max HP: ${maxHP}) — Massive damage! Instant death!`
-    logCombatEntry({
-      type: 'death',
-      targetEntityId: entityId,
-      targetEntityName: entityName,
-      value: damageTaken,
-      description: summary
-    })
-    broadcastCombatResult(summary, false)
-    return { failures: 3, outcome: 'dead', summary }
-  }
-
-  const addedFailures = isCritical ? 2 : 1
-  const newFailures = currentState.failures + addedFailures
-
-  const outcome = newFailures >= 3 ? 'dead' : 'continue'
-  const summary =
-    outcome === 'dead'
-      ? `${entityName} takes damage at 0 HP${isCritical ? ' (critical!)' : ''} — ${addedFailures} death save failure(s). ${entityName} has died!`
-      : `${entityName} takes damage at 0 HP${isCritical ? ' (critical!)' : ''} — ${addedFailures} death save failure(s). Failures: ${newFailures}/3`
-
-  logCombatEntry({
-    type: 'death',
-    targetEntityId: entityId,
-    targetEntityName: entityName,
-    value: damageTaken,
-    description: summary
-  })
-
-  broadcastCombatResult(summary, false)
-
-  return { failures: newFailures, outcome, summary }
-}
-
-// ─── Spell Slot Mechanics (PHB 2024 Chapter 7) ────────────────
-
-export interface SpellSlotState {
-  spellSlotLevels: Record<number, { current: number; max: number }>
-  pactMagicSlotLevels?: Record<number, { current: number; max: number }>
-}
-
-/**
- * Attempt to spend a spell slot of the given level.
- * Returns true if successful, false if no slot available.
- */
-export function expendSpellSlot(
-  slots: SpellSlotState,
-  level: number,
-  usePactSlot: boolean = false
-): { success: boolean; updatedSlots: SpellSlotState; summary: string } {
-  if (level === 0) {
-    // Cantrips don't use slots
-    return { success: true, updatedSlots: slots, summary: 'Cantrip (no slot needed)' }
-  }
-
-  const slotPool = usePactSlot ? slots.pactMagicSlotLevels : slots.spellSlotLevels
-  if (!slotPool) {
-    return { success: false, updatedSlots: slots, summary: `No ${usePactSlot ? 'pact magic ' : ''}spell slots available.` }
-  }
-
-  const slot = slotPool[level]
-  if (!slot || slot.current <= 0) {
-    return {
-      success: false,
-      updatedSlots: slots,
-      summary: `No level ${level} ${usePactSlot ? 'pact magic ' : ''}spell slots remaining.`
-    }
-  }
-
-  const updatedPool = {
-    ...slotPool,
-    [level]: { ...slot, current: slot.current - 1 }
-  }
-
-  const updatedSlots: SpellSlotState = usePactSlot
-    ? { ...slots, pactMagicSlotLevels: updatedPool }
-    : { ...slots, spellSlotLevels: updatedPool }
-
-  return {
-    success: true,
-    updatedSlots,
-    summary: `Expended level ${level} ${usePactSlot ? 'pact magic ' : ''}spell slot. (${slot.current - 1}/${slot.max} remaining)`
-  }
-}
-
-/**
- * Check if a spell can be cast as a ritual (no slot cost, +10 min casting time).
- * Requires: spell has ritual tag, caster has Ritual Caster feat or class feature.
- */
-export function canCastAsRitual(spellLevel: number, isRitual: boolean, hasRitualCasting: boolean): boolean {
-  return isRitual && hasRitualCasting && spellLevel > 0
-}
-
-/**
- * Get cantrip damage scaling based on character level (PHB 2024 p.236).
- * Cantrips scale at levels 5, 11, and 17.
- */
-export function getCantripDiceCount(characterLevel: number): number {
-  if (characterLevel >= 17) return 4
-  if (characterLevel >= 11) return 3
-  if (characterLevel >= 5) return 2
-  return 1
-}
-
-/**
- * Scale a cantrip damage formula based on character level.
- * E.g., "1d10" at level 5 becomes "2d10", at level 11 becomes "3d10".
- */
-export function scaleCantrip(baseFormula: string, characterLevel: number): string {
-  const match = baseFormula.match(/^(\d*)d(\d+)(.*)$/)
-  if (!match) return baseFormula
-  const diceCount = getCantripDiceCount(characterLevel)
-  const sides = match[2]
-  const rest = match[3] || ''
-  return `${diceCount}d${sides}${rest}`
-}
-
-// ─── Legendary Actions & Lair Actions ──────────────────────────
-
-/**
- * Spend a legendary action. Returns remaining count.
- */
-export function spendLegendaryAction(
-  entryId: string,
-  cost: number = 1
-): { success: boolean; remaining: number; summary: string } {
-  const gameStore = useGameStore.getState()
-  const initiative = gameStore.initiative
-  if (!initiative) return { success: false, remaining: 0, summary: 'No active initiative.' }
-
-  const entry = initiative.entries.find((e) => e.id === entryId)
-  if (!entry?.legendaryResistances) {
-    return { success: false, remaining: 0, summary: 'This creature has no legendary actions.' }
-  }
-
-  // Using legendaryResistances to track legendary action budget as well
-  // In real usage, a separate field would be ideal, but we reuse the existing field
-  const remaining = entry.legendaryResistances.remaining
-  if (remaining < cost) {
-    return { success: false, remaining, summary: `Not enough legendary actions remaining (${remaining}/${entry.legendaryResistances.max}).` }
-  }
-
-  gameStore.updateInitiativeEntry(entryId, {
-    legendaryResistances: {
-      ...entry.legendaryResistances,
-      remaining: remaining - cost
-    }
-  })
-
-  return {
-    success: true,
-    remaining: remaining - cost,
-    summary: `Legendary action used (cost: ${cost}). Remaining: ${remaining - cost}/${entry.legendaryResistances.max}`
-  }
-}
-
-/**
- * Use a legendary resistance to auto-succeed a failed save.
- */
-export function useLegendaryResistance(
-  entryId: string,
-  entityName: string,
-  saveName: string
-): { success: boolean; remaining: number; summary: string } {
-  const gameStore = useGameStore.getState()
-  const initiative = gameStore.initiative
-  if (!initiative) return { success: false, remaining: 0, summary: 'No active initiative.' }
-
-  const entry = initiative.entries.find((e) => e.id === entryId)
-  if (!entry?.legendaryResistances || entry.legendaryResistances.remaining <= 0) {
-    return { success: false, remaining: 0, summary: `${entityName} has no legendary resistances remaining.` }
-  }
-
-  const newRemaining = entry.legendaryResistances.remaining - 1
-  gameStore.updateInitiativeEntry(entryId, {
-    legendaryResistances: {
-      ...entry.legendaryResistances,
-      remaining: newRemaining
-    }
-  })
-
-  const summary = `${entityName} uses Legendary Resistance to succeed on the ${saveName} save! (${newRemaining}/${entry.legendaryResistances.max} remaining)`
-
-  logCombatEntry({
-    type: 'save',
-    targetEntityName: entityName,
-    description: summary
-  })
-
-  broadcastCombatResult(summary, false)
-
-  return { success: true, remaining: newRemaining, summary }
-}
-
-/**
- * Trigger lair actions at initiative count 20 (losing ties).
- * Returns true if a lair action should trigger.
- */
-export function shouldTriggerLairAction(initiative: { entries: Array<{ inLair?: boolean }>, currentIndex: number }): boolean {
-  // Lair actions fire at initiative 20, after any creature with initiative 20+
-  // In practice: check if any entry with inLair flag is in the initiative
-  return initiative.entries.some((e) => e.inLair)
-}
-
 // ─── Helpers ──────────────────────────────────────────────────
 
 /**
@@ -1166,37 +819,6 @@ function applyDamageToToken(token: MapToken, damage: number): void {
   const currentHP = token.currentHP ?? 0
   const newHP = Math.max(0, currentHP - damage)
   gameStore.updateToken(map.id, token.id, { currentHP: newHP })
-}
-
-/** Add an entry to the combat log. */
-function logCombatEntry(
-  entry: Omit<import('../types/game-state').CombatLogEntry, 'id' | 'timestamp' | 'round'>
-): void {
-  const gameStore = useGameStore.getState()
-  gameStore.addCombatLogEntry({
-    ...entry,
-    id: crypto.randomUUID(),
-    timestamp: Date.now(),
-    round: gameStore.round
-  })
-}
-
-/** Broadcast a combat result as a system chat message and network message. */
-function broadcastCombatResult(summary: string, isSecret: boolean): void {
-  if (isSecret) return
-
-  const { addChatMessage } = useLobbyStore.getState()
-  addChatMessage({
-    id: `combat-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'system',
-    senderName: 'Combat',
-    content: summary,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-
-  const { sendMessage } = useNetworkStore.getState()
-  sendMessage('chat:message', { message: summary, isSystem: true })
 }
 
 /** Build a human-readable attack summary. */

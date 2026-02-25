@@ -4,6 +4,10 @@
     { "type": "bold_text", "pattern": "\\*\\*[^*]+\\*\\*", "flags": "g" },
     { "type": "bullet_list", "pattern": "^[\\s]*[-*]\\s+", "flags": "gm" },
     { "type": "numbered_list", "pattern": "^\\s*\\d+\\.\\s+", "flags": "gm" },
-    { "type": "meta_label", "pattern": "^(Scene Setting|Description|Overview|Read-aloud text|Summary|Introduction|Conclusion|Setting|Atmosphere|DM Note|Narration|Box Text)[:\\s]", "flags": "gim" }
+    {
+      "type": "meta_label",
+      "pattern": "^(Scene Setting|Description|Overview|Read-aloud text|Summary|Introduction|Conclusion|Setting|Atmosphere|DM Note|Narration|Box Text)[:\\s]",
+      "flags": "gim"
+    }
   ]
 }

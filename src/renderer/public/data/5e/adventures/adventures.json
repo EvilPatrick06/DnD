@@ -841,7 +841,9 @@
         "id": "animated-broom",
         "name": "Animated Broom",
         "description": "An animated broom attacks anyone who opens the broom closet on the upper floor.",
-        "monsters": [{ "monsterId": "animated-flying-sword", "count": 1, "notes": "Animated broom, use Flying Sword stats" }],
+        "monsters": [
+          { "monsterId": "animated-flying-sword", "count": 1, "notes": "Animated broom, use Flying Sword stats" }
+        ],
         "difficulty": "easy",
         "levelRange": { "min": 1, "max": 1 },
         "tactics": "The broom flies at the face of whoever opened the closet.",

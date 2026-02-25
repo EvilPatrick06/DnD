@@ -2,12 +2,10 @@ import type { StateCreator } from 'zustand'
 import { load5eClasses } from '../../../services/data-provider'
 import type { BuilderState, CharacterDetailsSliceState } from '../types'
 
-export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], CharacterDetailsSliceState> = (
-  set,
-  get
-) => ({
-  characterName: '',
-  iconType: 'letter',
+/** Default values for all character-details state fields. Shared with resetBuilder(). */
+export const DEFAULT_CHARACTER_DETAILS = {
+  characterName: '' as string,
+  iconType: 'letter' as 'letter' | 'preset' | 'custom',
   iconPreset: '',
   iconCustom: '',
   characterGender: '',
@@ -26,43 +24,52 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
   characterSkin: '',
   characterAppearance: '',
   characterAlignment: '',
-
-  // Derived from selections
-  speciesLanguages: [],
+  speciesLanguages: [] as string[],
   speciesExtraLangCount: 0,
   speciesExtraSkillCount: 0,
-  versatileFeatId: null,
-  heritageId: null,
-  derivedSpeciesTraits: [],
+  versatileFeatId: null as string | null,
+  heritageId: null as string | null,
+  derivedSpeciesTraits: [] as Array<{
+    name: string
+    description: string
+    spellGranted?: string | { list: string; count: number }
+  }>,
   bgLanguageCount: 0,
   classExtraLangCount: 0,
-  chosenLanguages: [],
-  speciesSize: 'Medium',
+  chosenLanguages: [] as string[],
+  speciesSize: 'Medium' as string,
   speciesSpeed: 30,
-  speciesTraits: [],
-  speciesProficiencies: [],
-  classEquipment: [],
-  bgEquipment: [],
+  speciesTraits: [] as Array<{ name: string; description: string }>,
+  speciesProficiencies: [] as string[],
+  classEquipment: [] as Array<{ name: string; quantity: number; source: string }>,
+  bgEquipment: [] as Array<{ name: string; quantity: number; source: string }>,
   currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
   higherLevelGoldBonus: 0,
-  selectedMagicItems: [],
-  pets: [],
-  currentHP: null,
+  selectedMagicItems: [] as Array<{ slotRarity: string; itemId: string; itemName: string }>,
+  pets: [] as Array<{ name: string; type: string }>,
+  currentHP: null as number | null,
   tempHP: 0,
-  conditions: [],
-  classSkillOptions: [],
-  classMandatorySkills: [],
-  selectedSkills: [],
+  conditions: [] as Array<{ name: string; type: 'condition' | 'buff'; isCustom: boolean }>,
+  classSkillOptions: [] as string[],
+  classMandatorySkills: [] as string[],
+  selectedSkills: [] as string[],
   maxSkills: 2,
-  customModal: null,
-  backgroundAbilityBonuses: {},
-  backgroundEquipmentChoice: null,
-  classEquipmentChoice: null,
-  selectedSpellIds: [],
-  speciesSpellcastingAbility: null,
-  keenSensesSkill: null,
-  blessedWarriorCantrips: [],
-  druidicWarriorCantrips: [],
+  customModal: null as 'ability-scores' | 'skills' | 'asi' | null,
+  backgroundAbilityBonuses: {} as Record<string, number>,
+  backgroundEquipmentChoice: null as 'equipment' | 'gold' | null,
+  classEquipmentChoice: null as string | null,
+  selectedSpellIds: [] as string[],
+  speciesSpellcastingAbility: null as 'intelligence' | 'wisdom' | 'charisma' | null,
+  keenSensesSkill: null as string | null,
+  blessedWarriorCantrips: [] as string[],
+  druidicWarriorCantrips: [] as string[]
+}
+
+export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], CharacterDetailsSliceState> = (
+  set,
+  get
+) => ({
+  ...DEFAULT_CHARACTER_DETAILS,
 
   setCharacterName: (name) => set({ characterName: name }),
   setSelectedSkills: (skills) => set({ selectedSkills: skills }),

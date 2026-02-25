@@ -1,4 +1,4 @@
-import { load5eConditions, type ConditionEntry } from '../services/data-provider'
+import { type ConditionEntry, load5eConditions } from '../services/data-provider'
 
 export interface ConditionDef {
   name: string
@@ -49,12 +49,14 @@ export const CONDITIONS_5E: ConditionDef[] = []
 export const BUFFS_5E: ConditionDef[] = []
 
 // Auto-populate synchronous exports
-ensureLoaded().then(() => {
-  CONDITIONS_5E.length = 0
-  CONDITIONS_5E.push(..._conditions!)
-  BUFFS_5E.length = 0
-  BUFFS_5E.push(..._buffs!)
-}).catch(() => {})
+ensureLoaded()
+  .then(() => {
+    CONDITIONS_5E.length = 0
+    CONDITIONS_5E.push(..._conditions!)
+    BUFFS_5E.length = 0
+    BUFFS_5E.push(..._buffs!)
+  })
+  .catch(() => {})
 
 export function getConditionsForSystem(): ConditionDef[] {
   return CONDITIONS_5E

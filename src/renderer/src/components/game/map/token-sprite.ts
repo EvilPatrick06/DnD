@@ -220,11 +220,7 @@ const SPEAKING_RING_LABEL = 'speaking-ring'
  * @param speaking - Whether the player owning this token is currently speaking
  * @param playerColor - Optional hex color for the ring (defaults to 0x22c55e / green)
  */
-export function setSpeaking(
-  container: Container,
-  speaking: boolean,
-  playerColor?: number
-): void {
+export function setSpeaking(container: Container, speaking: boolean, playerColor?: number): void {
   // Remove existing speaking ring if present
   const existing = container.children.find((c) => c.label === SPEAKING_RING_LABEL)
   if (existing) {

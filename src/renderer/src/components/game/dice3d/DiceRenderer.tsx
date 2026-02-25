@@ -1,22 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react'
-import type { DiceColors, DieDefinition, DieType } from './DiceMeshes'
-import {
-  CRIT_COLOR,
-  DEFAULT_DICE_COLORS,
-  createDie,
-  FUMBLE_COLOR,
-  readDieResult,
-  tintDie
-} from './DiceMeshes'
-import type { CreateDieOptions } from './DiceMeshes'
+import * as THREE from 'three'
+import type { CreateDieOptions, DiceColors, DieDefinition, DieType } from './dice-meshes'
+import { CRIT_COLOR, createDie, DEFAULT_DICE_COLORS, FUMBLE_COLOR, readDieResult, tintDie } from './dice-meshes'
 import {
   addDieToWorld,
   createPhysicsWorld,
   destroyPhysicsWorld,
   type PhysicsWorld,
   runSimulation
-} from './DicePhysics'
-import * as THREE from 'three'
+} from './dice-physics'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -119,7 +111,7 @@ export default function DiceRenderer({
       renderer.domElement.remove()
       scene.clear()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── Resize handler ──

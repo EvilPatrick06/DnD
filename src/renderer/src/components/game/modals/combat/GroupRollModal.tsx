@@ -5,7 +5,7 @@ import { rollSingle } from '../../../../services/dice/dice-service'
 interface GroupRollModalProps {
   onClose: () => void
   onBroadcastResult: (message: string) => void
-  isDM: boolean
+  isDM?: boolean
 }
 
 type CheckType = 'ability' | 'save' | 'skill'
@@ -48,7 +48,7 @@ const SKILLS = [
   'Survival'
 ]
 
-export default function GroupRollModal({ onClose, onBroadcastResult, isDM }: GroupRollModalProps) {
+export default function GroupRollModal({ onClose, onBroadcastResult }: GroupRollModalProps) {
   const [checkType, setCheckType] = useState<CheckType>('ability')
   const [ability, setAbility] = useState('strength')
   const [skill, setSkill] = useState('Perception')

@@ -7,8 +7,8 @@
  * 4. Last-roll tracking works for /reroll
  */
 import { trigger3dDice } from '../../components/game/dice3d'
-import { useLobbyStore } from '../../stores/useLobbyStore'
-import { useNetworkStore } from '../../stores/useNetworkStore'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useNetworkStore } from '../../stores/use-network-store'
 import { cryptoRandom } from '../../utils/crypto-random'
 
 // ─── Types ────────────────────────────────────────────────────
@@ -149,10 +149,7 @@ export function rollQuiet(formula: string): DiceRollResult {
  * Roll a d20 with modifier. Convenience for the most common roll type.
  * Broadcasts and triggers 3D animation by default.
  */
-export function rollD20(
-  modifier: number = 0,
-  options: DiceRollOptions = {}
-): DiceRollResult {
+export function rollD20(modifier: number = 0, options: DiceRollOptions = {}): DiceRollResult {
   const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`
   const formula = modifier !== 0 ? `1d20${modStr}` : '1d20'
   return roll(formula, options)
@@ -227,17 +224,15 @@ export function revealRoll(result: DiceRollResult, label?: string): void {
 function getLocalPlayerName(): string {
   const localPeerId = useNetworkStore.getState().localPeerId
   const players = useLobbyStore.getState().players
-  const localPlayer = localPeerId ? players.find((p) => p.peerId === localPeerId) : (players.length > 0 ? players[0] : undefined)
+  const localPlayer = localPeerId
+    ? players.find((p) => p.peerId === localPeerId)
+    : players.length > 0
+      ? players[0]
+      : undefined
   return localPlayer?.displayName || 'Player'
 }
 
-function broadcastResult(
-  formula: string,
-  rolls: number[],
-  total: number,
-  rollerName: string,
-  label?: string
-): void {
+function broadcastResult(formula: string, rolls: number[], total: number, rollerName: string, label?: string): void {
   const { sendMessage } = useNetworkStore.getState()
   const { addChatMessage } = useLobbyStore.getState()
   const localPeerId = useNetworkStore.getState().localPeerId

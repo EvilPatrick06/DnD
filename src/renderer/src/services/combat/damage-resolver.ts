@@ -219,12 +219,7 @@ export function resolveDamage(
       }
 
       // Step 4: Vulnerability — applied THIRD (double)
-      const vulnerableEntry = findMatchingEntry(
-        targetVulnerabilities,
-        damageType,
-        isMagical,
-        isSilvered
-      )
+      const vulnerableEntry = findMatchingEntry(targetVulnerabilities, damageType, isMagical, isSilvered)
       if (vulnerableEntry !== null) {
         finalDamage = finalDamage * 2
         if (modification === 'resistant') {

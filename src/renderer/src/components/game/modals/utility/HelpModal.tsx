@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { trigger3dDice } from '../../../../components/game/dice3d'
 import { rollSingle } from '../../../../services/dice/dice-service'
-import { useGameStore } from '../../../../stores/useGameStore'
+import { useGameStore } from '../../../../stores/use-game-store'
 import type { Character } from '../../../../types/character'
 import type { Character5e } from '../../../../types/character-5e'
 import { abilityModifier } from '../../../../types/character-common'
@@ -136,7 +136,11 @@ export default function HelpModal({
                   ? 'Assist Ability Check'
                   : 'Assist Attack Roll'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+            aria-label="Close"
+          >
             &times;
           </button>
         </div>

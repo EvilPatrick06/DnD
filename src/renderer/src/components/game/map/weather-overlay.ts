@@ -5,7 +5,7 @@
  * Each weather type has unique particle behaviour, color, count, and speed.
  */
 
-import { Application, Container, Graphics } from 'pixi.js'
+import { type Application, Container, Graphics } from 'pixi.js'
 
 // ─── Weather Type Definitions ────────────────────────────────
 

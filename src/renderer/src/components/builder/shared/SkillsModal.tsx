@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import skillsJson from '../../../../public/data/5e/mechanics/skills.json'
-import { useBuilderStore } from '../../../stores/useBuilderStore'
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'
 import { abilityModifier, formatMod } from '../../../types/character-common'
 
-const SKILLS_5E: Array<{ name: string; ability: AbilityName }> = (skillsJson as Array<{ name: string; ability: string }>).map(
-  (s) => ({ name: s.name, ability: s.ability as AbilityName })
-)
+const SKILLS_5E: Array<{ name: string; ability: AbilityName }> = (
+  skillsJson as Array<{ name: string; ability: string }>
+).map((s) => ({ name: s.name, ability: s.ability as AbilityName }))
 
 export default function SkillsModal(): JSX.Element {
   const abilityScores = useBuilderStore((s) => s.abilityScores)

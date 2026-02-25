@@ -54,21 +54,14 @@ export default function ResizeHandle({ direction, onResize, onDoubleClick }: Res
       onMouseDown={handleMouseDown}
       onDoubleClick={onDoubleClick}
       className={`group flex items-center justify-center shrink-0 ${
-        isH
-          ? 'w-2 cursor-col-resize hover:bg-blue-500/20'
-          : 'h-2 cursor-row-resize hover:bg-blue-500/20'
+        isH ? 'w-2 cursor-col-resize hover:bg-blue-500/20' : 'h-2 cursor-row-resize hover:bg-blue-500/20'
       } transition-colors`}
       title="Drag to resize, double-click to collapse/expand"
     >
       {/* Dotted grab indicator */}
-      <div
-        className={`flex ${isH ? 'flex-col' : 'flex-row'} gap-[3px]`}
-      >
+      <div className={`flex ${isH ? 'flex-col' : 'flex-row'} gap-[3px]`}>
         {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="w-1 h-1 rounded-full bg-gray-600 group-hover:bg-blue-400 transition-colors"
-          />
+          <div key={i} className="w-1 h-1 rounded-full bg-gray-600 group-hover:bg-blue-400 transition-colors" />
         ))}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { formatFileContent, hasFileReadTag, parseFileRead, stripFileRead } from './file-reader'
 import type { FileReadResult } from './file-reader'
+import { formatFileContent, hasFileReadTag, parseFileRead, stripFileRead } from './file-reader'
 
 describe('file-reader', () => {
   describe('hasFileReadTag', () => {

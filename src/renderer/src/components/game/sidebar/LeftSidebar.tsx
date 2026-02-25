@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { rollSingle } from '../../../services/dice/dice-service'
+import { addToast } from '../../../hooks/use-toast'
 import { load5eMonsterById } from '../../../services/data-provider'
+import { rollSingle } from '../../../services/dice/dice-service'
 import { exportEntities, importEntities, reIdItems } from '../../../services/io/entity-io'
-import { addToast } from '../../../hooks/useToast'
-import { useBastionStore } from '../../../stores/useBastionStore'
-import { useCampaignStore } from '../../../stores/useCampaignStore'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useBastionStore } from '../../../stores/use-bastion-store'
+import { useCampaignStore } from '../../../stores/use-campaign-store'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Campaign, NPC } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import type { InitiativeEntry, SidebarEntry, SidebarPanel as SidebarPanelType } from '../../../types/game-state'
 import { getSizeTokenDimensions } from '../../../types/monster'
 import { getCharacterSheetPath } from '../../../utils/character-routes'
 import { NPCManager } from '../dm'
-import VoiceAvatar from '../overlays/VoiceAvatar'
 import SidebarEntryList from './SidebarEntryList'
 
 type SectionId = 'characters' | 'bastions' | SidebarPanelType
@@ -58,24 +57,12 @@ export default function LeftSidebar({
   const addToInitiative = useGameStore((s) => s.addToInitiative)
   const activeMapId = useGameStore((s) => s.activeMapId)
 
-  // Voice state
   const players = useLobbyStore((s) => s.players)
   const remoteCharacters = useLobbyStore((s) => s.remoteCharacters)
-  const localMuted = useLobbyStore((s) => s.localMuted)
-  const localDeafened = useLobbyStore((s) => s.localDeafened)
-  const toggleMute = useLobbyStore((s) => s.toggleMute)
-  const toggleDeafen = useLobbyStore((s) => s.toggleDeafen)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
-  const sendMessage = useNetworkStore((s) => s.sendMessage)
   const characters = useCharacterStore((s) => s.characters)
   const bastions = useBastionStore((s) => s.bastions)
   const loadBastions = useBastionStore((s) => s.loadBastions)
-
-  const localPlayer = players.find((p) => p.peerId === localPeerId)
-  const isForceMuted = localPlayer?.isForceMuted ?? false
-  const isForceDeafened = localPlayer?.isForceDeafened ?? false
-  const muteDisabled = isForceMuted || isForceDeafened
-  const deafenDisabled = isForceDeafened
 
   const returnTo = `/game/${campaignId}`
 
@@ -87,26 +74,6 @@ export default function LeftSidebar({
   // Collect character IDs from lobby players to filter bastions
   const playerCharacterIds = new Set(players.map((p) => p.characterId).filter(Boolean) as string[])
   const gameBastions = bastions.filter((b) => playerCharacterIds.has(b.ownerId))
-
-  const handleToggleMute = (): void => {
-    if (muteDisabled) return
-    const wasMuted = localMuted
-    toggleMute()
-    sendMessage('voice:mute-toggle', { peerId: localPeerId, isMuted: !wasMuted })
-  }
-
-  const handleToggleDeafen = (): void => {
-    if (deafenDisabled) return
-    const wasDeafened = localDeafened
-    toggleDeafen()
-    const newDeafened = !wasDeafened
-    const newMuted = newDeafened ? true : localMuted
-    sendMessage('voice:mute-toggle', { peerId: localPeerId, isMuted: newMuted })
-    sendMessage('voice:deafen-toggle', { peerId: localPeerId, isDeafened: newDeafened })
-    if (localPeerId) {
-      useLobbyStore.getState().updatePlayer(localPeerId, { isDeafened: newDeafened })
-    }
-  }
 
   const toggleSection = (id: SectionId): void => {
     setExpandedSection(expandedSection === id ? null : id)
@@ -173,7 +140,9 @@ export default function LeftSidebar({
     try {
       const ok = await exportEntities('npc', campaign.npcs)
       if (ok) addToast(`Exported ${campaign.npcs.length} NPC(s)`, 'success')
-    } catch { addToast('NPC export failed', 'error') }
+    } catch {
+      addToast('NPC export failed', 'error')
+    }
   }
 
   // Place NPC on map as a token
@@ -274,7 +243,14 @@ export default function LeftSidebar({
           />
         )
       case 'places':
-        return <SidebarEntryList category="places" entries={places} isDM={isDM} onReadAloud={isDM ? onReadAloud : undefined} />
+        return (
+          <SidebarEntryList
+            category="places"
+            entries={places}
+            isDM={isDM}
+            onReadAloud={isDM ? onReadAloud : undefined}
+          />
+        )
       case 'bastions':
         return (
           <div className="space-y-1.5">
@@ -327,10 +303,9 @@ export default function LeftSidebar({
 
   return (
     <div className="w-56 h-full bg-gray-900/85 backdrop-blur-sm border-r border-gray-700/50 flex flex-col min-h-0">
-      {/* Voice section */}
+      {/* Sidebar header with collapse */}
       <div className="shrink-0 px-3 pt-2 pb-2 border-b border-gray-700/50">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Voice</span>
+        <div className="flex items-center justify-end">
           <button
             onClick={onToggleCollapse}
             title="Collapse sidebar"
@@ -342,63 +317,6 @@ export default function LeftSidebar({
                 d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z"
                 clipRule="evenodd"
               />
-            </svg>
-          </button>
-        </div>
-        <div className="space-y-1.5">
-          {players.map((player) => (
-            <VoiceAvatar
-              key={player.peerId}
-              name={player.displayName}
-              color={player.color}
-              isSpeaking={player.isSpeaking}
-              isMuted={player.isMuted || player.isForceMuted}
-              isDeafened={player.isDeafened || player.isForceDeafened}
-            />
-          ))}
-        </div>
-
-        {/* Mute/Deafen controls */}
-        <div className="flex items-center gap-1 pt-2 mt-2 border-t border-gray-700/50">
-          <button
-            onClick={handleToggleMute}
-            disabled={muteDisabled}
-            title={localMuted ? 'Unmute' : 'Mute'}
-            className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all cursor-pointer
-              ${
-                muteDisabled
-                  ? 'bg-red-900/20 text-red-400/60 cursor-not-allowed'
-                  : localMuted
-                    ? 'bg-red-900/40 text-red-400 hover:bg-red-900/60'
-                    : 'bg-gray-800/60 text-green-400 hover:bg-gray-700/60'
-              }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-              <path d="M8.25 4.5a3.75 3.75 0 1 1 7.5 0v8.25a3.75 3.75 0 1 1-7.5 0V4.5Z" />
-              <path d="M6 10.5a.75.75 0 0 1 .75.75v1.5a5.25 5.25 0 1 0 10.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a6.751 6.751 0 0 1-6 6.709v2.291h3a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1 0-1.5h3v-2.291a6.751 6.751 0 0 1-6-6.709v-1.5A.75.75 0 0 1 6 10.5Z" />
-              {(localMuted || isForceMuted) && (
-                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l18 18a.75.75 0 1 0 1.06-1.06l-18-18Z" />
-              )}
-            </svg>
-          </button>
-          <button
-            onClick={handleToggleDeafen}
-            disabled={deafenDisabled}
-            title={localDeafened ? 'Undeafen' : 'Deafen'}
-            className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all cursor-pointer
-              ${
-                deafenDisabled
-                  ? 'bg-red-900/20 text-red-400/60 cursor-not-allowed'
-                  : localDeafened
-                    ? 'bg-red-900/40 text-red-400 hover:bg-red-900/60'
-                    : 'bg-gray-800/60 text-gray-400 hover:bg-gray-700/60'
-              }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-              <path d="M12 3a9 9 0 0 0-9 9v3.75A2.25 2.25 0 0 0 5.25 18h.75a1.5 1.5 0 0 0 1.5-1.5v-4.5a1.5 1.5 0 0 0-1.5-1.5h-.75C5.25 7.31 8.31 4.25 12 4.25S18.75 7.31 18.75 10.5h-.75a1.5 1.5 0 0 0-1.5 1.5v4.5a1.5 1.5 0 0 0 1.5 1.5h.75A2.25 2.25 0 0 0 21 15.75V12a9 9 0 0 0-9-9Z" />
-              {(localDeafened || isForceDeafened) && (
-                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l18 18a.75.75 0 1 0 1.06-1.06l-18-18Z" />
-              )}
             </svg>
           </button>
         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { DiceColors } from './dice3d'
-import { DEFAULT_DICE_COLORS, DICE_COLOR_PRESETS } from './dice3d'
+import type { DiceColors } from '.'
+import { DEFAULT_DICE_COLORS, DICE_COLOR_PRESETS } from '.'
 
 interface DiceColorPickerProps {
   colors: DiceColors
@@ -30,9 +30,7 @@ export default function DiceColorPicker({ colors, onChange }: DiceColorPickerPro
                 setShowCustom(false)
               }}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors ${
-                isActive
-                  ? 'border-amber-500 bg-gray-700/50'
-                  : 'border-gray-600 hover:border-gray-500 bg-gray-800/50'
+                isActive ? 'border-amber-500 bg-gray-700/50' : 'border-gray-600 hover:border-gray-500 bg-gray-800/50'
               }`}
               title={preset.label}
             >
@@ -131,10 +129,7 @@ export default function DiceColorPicker({ colors, onChange }: DiceColorPickerPro
             </div>
           </div>
 
-          <button
-            onClick={() => onChange(DEFAULT_DICE_COLORS)}
-            className="text-xs text-gray-500 hover:text-gray-300"
-          >
+          <button onClick={() => onChange(DEFAULT_DICE_COLORS)} className="text-xs text-gray-500 hover:text-gray-300">
             Reset to default
           </button>
         </div>

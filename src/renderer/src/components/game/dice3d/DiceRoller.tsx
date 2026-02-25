@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import diceTypesJson from '../../../../public/data/5e/mechanics/dice-types.json'
 import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
 import { play, playDiceSound } from '../../../services/sound-manager'
 import type { GameSystem } from '../../../types/game-system'
 import DiceResult from './DiceResult'
-import diceTypesJson from '../../../../public/data/5e/mechanics/dice-types.json'
 
 interface DiceRollerProps {
   system: GameSystem
@@ -25,7 +25,12 @@ interface RollResult {
 
 const DICE = diceTypesJson
 
-export default function DiceRoller({ system, rollerName, onRoll, allowCritDoubling = true }: DiceRollerProps): JSX.Element {
+export default function DiceRoller({
+  system,
+  rollerName,
+  onRoll,
+  allowCritDoubling = true
+}: DiceRollerProps): JSX.Element {
   const [modifier, setModifier] = useState(0)
   const [customFormula, setCustomFormula] = useState('')
   const [advantage, setAdvantage] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')

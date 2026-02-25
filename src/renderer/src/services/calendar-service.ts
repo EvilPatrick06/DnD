@@ -498,20 +498,20 @@ export interface WeatherOverride {
  */
 function presetToCondition(preset: string): WeatherCondition {
   const map: Record<string, WeatherCondition> = {
-    'Clear': 'clear',
+    Clear: 'clear',
     'Partly Cloudy': 'clouds',
-    'Overcast': 'overcast',
+    Overcast: 'overcast',
     'Light Rain': 'rain',
     'Heavy Rain': 'heavy-rain',
-    'Thunderstorm': 'thunderstorm',
+    Thunderstorm: 'thunderstorm',
     'Light Snow': 'snow',
     'Heavy Snow': 'snow',
-    'Blizzard': 'blizzard',
-    'Fog': 'fog',
-    'Hail': 'heavy-rain',
+    Blizzard: 'blizzard',
+    Fog: 'fog',
+    Hail: 'heavy-rain',
     'Extreme Heat': 'clear',
     'Extreme Cold': 'clear',
-    'Sandstorm': 'wind',
+    Sandstorm: 'wind',
     'Volcanic Ash': 'fog'
   }
   return map[preset] ?? 'clear'
@@ -522,12 +522,12 @@ function presetToCondition(preset: string): WeatherCondition {
  */
 function normalizeWindSpeed(ws?: string): Weather['windSpeed'] {
   const map: Record<string, Weather['windSpeed']> = {
-    'Calm': 'calm',
+    Calm: 'calm',
     'Light Breeze': 'light',
-    'Moderate': 'moderate',
-    'Strong': 'strong',
-    'Gale': 'gale',
-    'Hurricane': 'gale'
+    Moderate: 'moderate',
+    Strong: 'strong',
+    Gale: 'gale',
+    Hurricane: 'gale'
   }
   return (ws && map[ws]) || 'calm'
 }
@@ -550,17 +550,18 @@ export function getWeatherWithOverride(
 
   let tempF = override.temperature ?? 70
   if (override.temperatureUnit === 'C' && override.temperature != null) {
-    tempF = Math.round(override.temperature * 9 / 5 + 32)
+    tempF = Math.round((override.temperature * 9) / 5 + 32)
   }
   const tempLabel = getTemperatureLabel(tempF)
   const tempUnit = override.temperatureUnit ?? 'F'
-  const displayTemp = tempUnit === 'C' ? override.temperature ?? Math.round((tempF - 32) * 5 / 9) : tempF
+  const displayTemp = tempUnit === 'C' ? (override.temperature ?? Math.round(((tempF - 32) * 5) / 9)) : tempF
   const temperature = `${tempLabel} (${displayTemp}\u00b0${tempUnit})`
 
   const description = override.description || buildDescription(condition, windSpeed, tempLabel)
-  const mechanicalEffects = override.mechanicalEffects && override.mechanicalEffects.length > 0
-    ? override.mechanicalEffects
-    : getMechanicalEffects(condition, windSpeed, tempF)
+  const mechanicalEffects =
+    override.mechanicalEffects && override.mechanicalEffects.length > 0
+      ? override.mechanicalEffects
+      : getMechanicalEffects(condition, windSpeed, tempF)
 
   return {
     condition,
@@ -577,10 +578,7 @@ export function getWeatherWithOverride(
  * @param override  Moon phase name override (e.g. "Full Moon"), or null for auto
  * @param totalDays Total elapsed days for auto calculation
  */
-export function getMoonPhaseWithOverride(
-  override: string | null | undefined,
-  totalDays: number
-): MoonPhase {
+export function getMoonPhaseWithOverride(override: string | null | undefined, totalDays: number): MoonPhase {
   if (!override) {
     return getMoonPhase(totalDays)
   }

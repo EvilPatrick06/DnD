@@ -1,5 +1,5 @@
 import type { Character5e, HitDiceEntry, HitPoints } from '../../types/character-5e'
-import { totalHitDiceRemaining, totalHitDiceMaximum } from '../../types/character-5e'
+import { totalHitDiceMaximum, totalHitDiceRemaining } from '../../types/character-5e'
 import type { ActiveCondition, ClassResource, SpellEntry } from '../../types/character-common'
 import { abilityModifier } from '../../types/character-common'
 import { cryptoRandom } from '../../utils/crypto-random'

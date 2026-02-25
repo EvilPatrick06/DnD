@@ -1,9 +1,9 @@
 import { trigger3dDice } from '../../components/game/dice3d'
 import { playConditionSound } from '../../services/sound-manager'
-import { rollSingle } from '../dice/dice-service'
-import { useCharacterStore } from '../../stores/useCharacterStore'
-import { useGameStore } from '../../stores/useGameStore'
+import { useCharacterStore } from '../../stores/use-character-store'
+import { useGameStore } from '../../stores/use-game-store'
 import type { MapToken } from '../../types/map'
+import { rollSingle } from '../dice/dice-service'
 import { getLatestCharacter } from './helpers'
 import type { ChatCommand } from './types'
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { InitiativeEntry } from '../../../types/game-state'
 import { InitiativeTracker } from '../dm'
 
@@ -19,11 +19,7 @@ function PortraitCircle({
   const px = size === 'sm' ? 'w-5 h-5 text-[9px]' : 'w-8 h-8 text-xs'
 
   const bgColor =
-    entry.entityType === 'player'
-      ? 'bg-blue-600'
-      : entry.entityType === 'enemy'
-        ? 'bg-red-600'
-        : 'bg-gray-500'
+    entry.entityType === 'player' ? 'bg-blue-600' : entry.entityType === 'enemy' ? 'bg-red-600' : 'bg-gray-500'
 
   const activeRing = entry.isActive ? 'ring-2 ring-amber-400 animate-pulse' : ''
 
@@ -34,11 +30,7 @@ function PortraitCircle({
         className={`${px} rounded-full flex-shrink-0 overflow-hidden ${activeRing} ${onClick ? 'cursor-pointer hover:brightness-125' : ''}`}
         title={`Center on ${entry.entityName}`}
       >
-        <img
-          src={entry.portraitUrl}
-          alt={entry.entityName}
-          className="w-full h-full object-cover"
-        />
+        <img src={entry.portraitUrl} alt={entry.entityName} className="w-full h-full object-cover" />
       </button>
     )
   }

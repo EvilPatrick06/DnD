@@ -258,7 +258,7 @@ export function generate5eLevelUpSlots(
 
   // Multiclass: generate slots based on per-level class choices
   const slots: BuildSlot[] = []
-  const classLvls = { ...(existingClassLevels ?? {}) }
+  const classLvls: Record<string, number> = { ...existingClassLevels }
 
   for (let charLvl = currentLevel + 1; charLvl <= targetLevel; charLvl++) {
     const levelClassId = classLevelChoices[charLvl] ?? classId ?? ''

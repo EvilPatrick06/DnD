@@ -1,5 +1,5 @@
-import type { MagicItemRarity5e } from '../types/character-common'
 import { load5eStartingEquipment } from '../services/data-provider'
+import type { MagicItemRarity5e } from '../types/character-common'
 
 export interface HigherLevelEquipment {
   baseGold: number
@@ -19,21 +19,23 @@ interface RawEntry {
 
 const HIGHER_LEVEL_TABLE: Array<{ minLevel: number; maxLevel: number; equipment: HigherLevelEquipment }> = []
 
-load5eStartingEquipment().then((data) => {
-  HIGHER_LEVEL_TABLE.length = 0
-  for (const entry of data as RawEntry[]) {
-    HIGHER_LEVEL_TABLE.push({
-      minLevel: entry.minLevel,
-      maxLevel: entry.maxLevel,
-      equipment: {
-        baseGold: entry.baseGold,
-        diceCount: entry.diceCount,
-        diceMultiplier: entry.diceMultiplier,
-        magicItems: entry.magicItems as Partial<Record<MagicItemRarity5e, number>>
-      }
-    })
-  }
-}).catch(() => {})
+load5eStartingEquipment()
+  .then((data) => {
+    HIGHER_LEVEL_TABLE.length = 0
+    for (const entry of data as RawEntry[]) {
+      HIGHER_LEVEL_TABLE.push({
+        minLevel: entry.minLevel,
+        maxLevel: entry.maxLevel,
+        equipment: {
+          baseGold: entry.baseGold,
+          diceCount: entry.diceCount,
+          diceMultiplier: entry.diceMultiplier,
+          magicItems: entry.magicItems as Partial<Record<MagicItemRarity5e, number>>
+        }
+      })
+    }
+  })
+  .catch(() => {})
 
 /**
  * Get the higher-level starting equipment for a given character level.

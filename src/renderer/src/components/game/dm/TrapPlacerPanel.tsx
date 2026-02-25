@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { load5eTraps } from '../../../services/data-provider'
-import { useGameStore } from '../../../stores/useGameStore'
+import { useGameStore } from '../../../stores/use-game-store'
 import type { PlacedTrap, Trap } from '../../../types/dm-toolbox'
 
 interface TrapPlacerPanelProps {
@@ -41,9 +41,7 @@ export default function TrapPlacerPanel({
     const q = search.toLowerCase().trim()
     return traps.filter(
       (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.trigger.toLowerCase().includes(q) ||
-        t.level.toLowerCase().includes(q)
+        t.name.toLowerCase().includes(q) || t.trigger.toLowerCase().includes(q) || t.level.toLowerCase().includes(q)
     )
   }, [traps, search])
 
@@ -112,16 +110,11 @@ export default function TrapPlacerPanel({
               const trapData = trapById.get(placed.trapId)
               const isExpanded = expandedPlacedId === placed.id
               return (
-                <div
-                  key={placed.id}
-                  className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2"
-                >
+                <div key={placed.id} className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span
-                        className={`shrink-0 w-2 h-2 rounded-full ${
-                          placed.armed ? 'bg-green-500' : 'bg-gray-500'
-                        }`}
+                        className={`shrink-0 w-2 h-2 rounded-full ${placed.armed ? 'bg-green-500' : 'bg-gray-500'}`}
                         title={placed.armed ? 'Armed' : 'Triggered'}
                       />
                       <span className="text-white text-sm font-medium truncate">{placed.name}</span>
@@ -188,8 +181,7 @@ export default function TrapPlacerPanel({
                       )}
                       {trapData.saveDC != null && (
                         <p>
-                          <span className="text-gray-500">Save:</span> DC {trapData.saveDC}{' '}
-                          {trapData.saveAbility ?? ''}
+                          <span className="text-gray-500">Save:</span> DC {trapData.saveDC} {trapData.saveAbility ?? ''}
                         </p>
                       )}
                     </div>
@@ -215,25 +207,18 @@ export default function TrapPlacerPanel({
           {filteredTraps.map((trap) => {
             const isExpanded = expandedTrapId === trap.id
             return (
-              <div
-                key={trap.id}
-                className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2"
-              >
+              <div key={trap.id} className="bg-gray-800/50 border border-gray-700 rounded px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span
                       className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                        trap.level === 'nuisance'
-                          ? 'bg-blue-600/80 text-blue-100'
-                          : 'bg-red-600/80 text-red-100'
+                        trap.level === 'nuisance' ? 'bg-blue-600/80 text-blue-100' : 'bg-red-600/80 text-red-100'
                       }`}
                     >
                       {trap.level}
                     </span>
                     <span className="text-white text-sm font-medium truncate">{trap.name}</span>
-                    <span className="shrink-0 text-[10px] text-gray-500 truncate max-w-[80px]">
-                      {trap.trigger}
-                    </span>
+                    <span className="shrink-0 text-[10px] text-gray-500 truncate max-w-[80px]">{trap.trigger}</span>
                   </div>
                   {onSelectTrapForPlacement && (
                     <button
@@ -268,8 +253,7 @@ export default function TrapPlacerPanel({
                     )}
                     {trap.saveDC != null && (
                       <p>
-                        <span className="text-gray-500">Save:</span> DC {trap.saveDC}{' '}
-                        {trap.saveAbility ?? ''}
+                        <span className="text-gray-500">Save:</span> DC {trap.saveDC} {trap.saveAbility ?? ''}
                       </p>
                     )}
                     <p className="leading-relaxed">{trap.description}</p>
@@ -281,9 +265,7 @@ export default function TrapPlacerPanel({
         </div>
       </div>
 
-      {filteredTraps.length === 0 && (
-        <div className="text-xs text-gray-500">No traps match your search.</div>
-      )}
+      {filteredTraps.length === 0 && <div className="text-xs text-gray-500">No traps match your search.</div>}
     </div>
   )
 }

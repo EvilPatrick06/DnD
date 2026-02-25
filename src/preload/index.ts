@@ -7,9 +7,9 @@ const api = {
   loadCharacters: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CHARACTERS),
   loadCharacter: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_CHARACTER, id),
   deleteCharacter: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_CHARACTER, id),
-  listCharacterVersions: (id: string) => ipcRenderer.invoke('storage:character-versions', id),
+  listCharacterVersions: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.CHARACTER_VERSIONS, id),
   restoreCharacterVersion: (id: string, fileName: string) =>
-    ipcRenderer.invoke('storage:character-restore-version', id, fileName),
+    ipcRenderer.invoke(IPC_CHANNELS.CHARACTER_RESTORE_VERSION, id, fileName),
 
   // Campaign storage
   saveCampaign: (campaign: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_CAMPAIGN, campaign),
@@ -32,11 +32,9 @@ const api = {
 
   // Homebrew storage
   saveHomebrew: (entry: Record<string, unknown>) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_HOMEBREW, entry),
-  loadHomebrewByCategory: (category: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.LOAD_HOMEBREW_BY_CATEGORY, category),
+  loadHomebrewByCategory: (category: string) => ipcRenderer.invoke(IPC_CHANNELS.LOAD_HOMEBREW_BY_CATEGORY, category),
   loadAllHomebrew: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_ALL_HOMEBREW),
-  deleteHomebrew: (category: string, id: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.DELETE_HOMEBREW, category, id),
+  deleteHomebrew: (category: string, id: string) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_HOMEBREW, category, id),
 
   // File dialogs
   showSaveDialog: (options: { title: string; filters: Array<{ name: string; extensions: string[] }> }) =>
@@ -99,12 +97,10 @@ const api = {
     previewTokenBudget: (campaignId: string, characterIds: string[]) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW, campaignId, characterIds),
     // Memory files
-    listMemoryFiles: (campaignId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_MEMORY_FILES, campaignId),
+    listMemoryFiles: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_MEMORY_FILES, campaignId),
     readMemoryFile: (campaignId: string, fileName: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_READ_MEMORY_FILE, campaignId, fileName),
-    clearMemory: (campaignId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.AI_CLEAR_MEMORY, campaignId),
+    clearMemory: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_CLEAR_MEMORY, campaignId),
     // Event listeners (main → renderer)
     onStreamChunk: (cb: (data: { streamId: string; text: string }) => void) => {
       ipcRenderer.on(IPC_CHANNELS.AI_STREAM_CHUNK, (_e, data) => cb(data))
@@ -174,25 +170,13 @@ const api = {
     buffer: ArrayBuffer,
     displayName: string,
     category: string
-  ) => ipcRenderer.invoke('audio:upload-custom', campaignId, fileName, buffer, displayName, category),
-  audioListCustom: (campaignId: string) => ipcRenderer.invoke('audio:list-custom', campaignId),
+  ) => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_UPLOAD_CUSTOM, campaignId, fileName, buffer, displayName, category),
+  audioListCustom: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_LIST_CUSTOM, campaignId),
   audioDeleteCustom: (campaignId: string, fileName: string) =>
-    ipcRenderer.invoke('audio:delete-custom', campaignId, fileName),
+    ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DELETE_CUSTOM, campaignId, fileName),
   audioGetCustomPath: (campaignId: string, fileName: string) =>
-    ipcRenderer.invoke('audio:get-custom-path', campaignId, fileName),
-  audioPickFile: () => ipcRenderer.invoke('audio:pick-file'),
-
-  // Voice chat
-  voiceGenerateToken: (options: {
-    roomName: string
-    participantName: string
-    participantId: string
-    mode: 'local' | 'cloud'
-    apiKey?: string
-    apiSecret?: string
-  }) => ipcRenderer.invoke(IPC_CHANNELS.VOICE_GENERATE_TOKEN, options),
-  voiceGetServerUrl: (mode: 'local' | 'cloud', serverUrl?: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.VOICE_GET_SERVER_URL, mode, serverUrl),
+    ipcRenderer.invoke(IPC_CHANNELS.AUDIO_GET_CUSTOM_PATH, campaignId, fileName),
+  audioPickFile: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_PICK_FILE),
 
   // App info
   getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_VERSION)
@@ -201,8 +185,8 @@ const api = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
-  } catch (error) {
-    console.error(error)
+  } catch (_error) {
+    /* console suppressed in preload */
   }
 } else {
   ;(window as unknown as Record<string, unknown>).api = api

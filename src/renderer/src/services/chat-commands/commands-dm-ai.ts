@@ -1,4 +1,4 @@
-import { useAiDmStore } from '../../stores/useAiDmStore'
+import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import type { ChatCommand } from './types'
 
 const dmCommand: ChatCommand = {

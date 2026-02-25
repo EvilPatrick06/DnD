@@ -1,43 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import AdventureWizard from '../components/campaign/AdventureWizard'
-import type { AdventureData } from '../components/campaign/AdventureWizard'
-import AiDmStep from '../components/campaign/AiDmStep'
-import AudioStep from '../components/campaign/AudioStep'
 import type { CustomAudioEntry } from '../components/campaign/AudioStep'
+import AudioStep from '../components/campaign/AudioStep'
 import CalendarStep from '../components/campaign/CalendarStep'
-import SessionZeroStep from '../components/campaign/SessionZeroStep'
+import OllamaSetupStep from '../components/campaign/OllamaSetupStep'
 import type { SessionZeroData } from '../components/campaign/SessionZeroStep'
-import VoiceChatStep from '../components/campaign/VoiceChatStep'
-import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
-import StatBlockEditor from '../components/game/dm/StatBlockEditor'
+import SessionZeroStep from '../components/campaign/SessionZeroStep'
 import { BackButton, Button, Card, ConfirmDialog, Modal } from '../components/ui'
-import { addToast } from '../hooks/useToast'
+import { addToast } from '../hooks/use-toast'
 import { exportCampaignToFile } from '../services/io/campaign-io'
-import { load5eMonsterById, loadAllStatBlocks, searchMonsters } from '../services/data-provider'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
-import { useCampaignStore } from '../stores/useCampaignStore'
-import { useNetworkStore } from '../stores/useNetworkStore'
-import type { AdventureEntry, CalendarConfig, Campaign, CustomRule, LoreEntry, NPC, TurnMode } from '../types/campaign'
+import { useCampaignStore } from '../stores/use-campaign-store'
+import { useNetworkStore } from '../stores/use-network-store'
+import type { CalendarConfig, Campaign, CustomRule, TurnMode } from '../types/campaign'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { GameMap } from '../types/map'
-import type { MonsterStatBlock } from '../types/monster'
-
-const CATEGORY_COLORS: Record<string, string> = {
-  combat: 'bg-red-900/40 text-red-300',
-  exploration: 'bg-green-900/40 text-green-300',
-  social: 'bg-blue-900/40 text-blue-300',
-  rest: 'bg-purple-900/40 text-purple-300',
-  other: 'bg-gray-800 text-gray-300'
-}
-
-const LORE_CATEGORY_COLORS: Record<string, string> = {
-  world: 'bg-blue-900/40 text-blue-300',
-  faction: 'bg-purple-900/40 text-purple-300',
-  location: 'bg-green-900/40 text-green-300',
-  item: 'bg-amber-900/40 text-amber-300',
-  other: 'bg-gray-800 text-gray-300'
-}
+import { logger } from '../utils/logger'
+import AdventureManager from './campaign-detail/AdventureManager'
+import LoreManager from './campaign-detail/LoreManager'
+import NPCManager from './campaign-detail/NPCManager'
+import RuleManager from './campaign-detail/RuleManager'
 
 export default function CampaignDetailPage(): JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -47,67 +29,14 @@ export default function CampaignDetailPage(): JSX.Element {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [starting, setStarting] = useState(false)
-  const [showAdventureWizard, setShowAdventureWizard] = useState(false)
-
-  // NPC state
-  const [showNPCModal, setShowNPCModal] = useState(false)
-  const [editingNPC, setEditingNPC] = useState<NPC | null>(null)
-  const [npcForm, setNpcForm] = useState<{
-    name: string
-    description: string
-    location: string
-    isVisible: boolean
-    notes: string
-    role: NPC['role']
-    personality: string
-    motivation: string
-    statBlockId: string
-    customStats: Partial<MonsterStatBlock> | undefined
-    statBlockMode: 'none' | 'link' | 'custom'
-  }>({
-    name: '',
-    description: '',
-    location: '',
-    isVisible: true,
-    notes: '',
-    role: undefined,
-    personality: '',
-    motivation: '',
-    statBlockId: '',
-    customStats: undefined,
-    statBlockMode: 'none'
-  })
-  const [monsterSearchQuery, setMonsterSearchQuery] = useState('')
-  const [monsterSearchResults, setMonsterSearchResults] = useState<MonsterStatBlock[]>([])
-  const [linkedMonsterPreview, setLinkedMonsterPreview] = useState<MonsterStatBlock | null>(null)
-  const [allMonsters, setAllMonsters] = useState<MonsterStatBlock[]>([])
-  const [npcStatBlocks, setNpcStatBlocks] = useState<Record<string, MonsterStatBlock>>({})
-  const [expandedNpcStatBlock, setExpandedNpcStatBlock] = useState<string | null>(null)
-
-  // Rule state
-  const [showRuleModal, setShowRuleModal] = useState(false)
-  const [editingRule, setEditingRule] = useState<CustomRule | null>(null)
-  const [ruleForm, setRuleForm] = useState({ name: '', description: '', category: 'other' as CustomRule['category'] })
-
-  // Lore state
-  const [showLoreModal, setShowLoreModal] = useState(false)
-  const [editingLore, setEditingLore] = useState<LoreEntry | null>(null)
-  const [loreForm, setLoreForm] = useState({
-    title: '',
-    content: '',
-    category: 'world' as LoreEntry['category'],
-    isVisibleToPlayers: false
-  })
 
   // AI DM config state
   const [showAiDmModal, setShowAiDmModal] = useState(false)
   const [aiDmConfig, setAiDmConfig] = useState<{
     enabled: boolean
-    provider: 'claude' | 'ollama'
-    model: 'opus' | 'sonnet' | 'haiku'
-    apiKey: string
     ollamaModel: string
-  }>({ enabled: false, provider: 'claude', model: 'sonnet', apiKey: '', ollamaModel: 'mistral' })
+    ollamaUrl: string
+  }>({ enabled: false, ollamaModel: 'llama3.1', ollamaUrl: 'http://localhost:11434' })
 
   // Map state
   const [showMapModal, setShowMapModal] = useState(false)
@@ -141,15 +70,6 @@ export default function CampaignDetailPage(): JSX.Element {
   const [showCalendarEdit, setShowCalendarEdit] = useState(false)
   const [editCalendar, setEditCalendar] = useState<CalendarConfig | null>(null)
 
-  // Voice chat edit state
-  const [showVoiceChatEdit, setShowVoiceChatEdit] = useState(false)
-  const [editVoiceChat, setEditVoiceChat] = useState({
-    mode: 'local' as 'local' | 'cloud',
-    apiKey: '',
-    apiSecret: '',
-    serverUrl: ''
-  })
-
   // Audio edit state
   const [showAudioAdd, setShowAudioAdd] = useState(false)
   const [newAudioEntries, setNewAudioEntries] = useState<CustomAudioEntry[]>([])
@@ -169,21 +89,6 @@ export default function CampaignDetailPage(): JSX.Element {
     gridOpacity: 0.4
   })
 
-  // Adventure edit state
-  const [editingAdventureId, setEditingAdventureId] = useState<string | null>(null)
-  const [adventureForm, setAdventureForm] = useState({
-    title: '',
-    levelTier: '1-4',
-    premise: '',
-    hook: '',
-    villain: '',
-    setting: '',
-    playerStakes: '',
-    encounters: '',
-    climax: '',
-    resolution: ''
-  })
-
   const campaign: Campaign | undefined = campaigns.find((c) => c.id === id)
 
   useEffect(() => {
@@ -191,24 +96,6 @@ export default function CampaignDetailPage(): JSX.Element {
       loadCampaigns()
     }
   }, [campaigns.length, loadCampaigns])
-
-  // Load stat blocks for NPCs that have statBlockId
-  useEffect(() => {
-    if (!campaign) return
-    const loadNpcStatBlocks = async (): Promise<void> => {
-      const loaded: Record<string, MonsterStatBlock> = {}
-      for (const npc of campaign.npcs) {
-        if (npc.statBlockId && !npcStatBlocks[npc.statBlockId]) {
-          const block = await load5eMonsterById(npc.statBlockId)
-          if (block) loaded[npc.statBlockId] = block
-        }
-      }
-      if (Object.keys(loaded).length > 0) {
-        setNpcStatBlocks((prev) => ({ ...prev, ...loaded }))
-      }
-    }
-    loadNpcStatBlocks()
-  }, [campaign?.npcs, campaign, npcStatBlocks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = async (): Promise<void> => {
     if (!id) return
@@ -228,7 +115,7 @@ export default function CampaignDetailPage(): JSX.Element {
       await hostGame('Dungeon Master', campaign.inviteCode)
       navigate(`/lobby/${campaign.id}`)
     } catch (error) {
-      console.error('Failed to start game:', error)
+      logger.error('Failed to start game:', error)
       setStarting(false)
     }
   }
@@ -249,124 +136,10 @@ export default function CampaignDetailPage(): JSX.Element {
       await exportCampaignToFile(campaign)
       addToast('Campaign exported', 'success')
     } catch (error) {
-      console.error('Failed to export campaign:', error)
+      logger.error('Failed to export campaign:', error)
       addToast('Failed to export campaign', 'error')
     } finally {
       setExporting(false)
-    }
-  }
-
-  // --- NPC handlers ---
-  const openAddNPC = (): void => {
-    setEditingNPC(null)
-    setNpcForm({
-      name: '',
-      description: '',
-      location: '',
-      isVisible: true,
-      notes: '',
-      role: undefined,
-      personality: '',
-      motivation: '',
-      statBlockId: '',
-      customStats: undefined,
-      statBlockMode: 'none'
-    })
-    setLinkedMonsterPreview(null)
-    setMonsterSearchQuery('')
-    setMonsterSearchResults([])
-    setShowNPCModal(true)
-  }
-  const openEditNPC = (npc: NPC): void => {
-    setEditingNPC(npc)
-    const mode = npc.customStats ? 'custom' : npc.statBlockId ? 'link' : 'none'
-    setNpcForm({
-      name: npc.name,
-      description: npc.description,
-      location: npc.location ?? '',
-      isVisible: npc.isVisible,
-      notes: npc.notes,
-      role: npc.role,
-      personality: npc.personality ?? '',
-      motivation: npc.motivation ?? '',
-      statBlockId: npc.statBlockId ?? '',
-      customStats: npc.customStats,
-      statBlockMode: mode
-    })
-    setLinkedMonsterPreview(null)
-    if (npc.statBlockId) {
-      load5eMonsterById(npc.statBlockId).then((m) => {
-        if (m) setLinkedMonsterPreview(m)
-      })
-    }
-    setShowNPCModal(true)
-  }
-  const handleSaveNPC = async (): Promise<void> => {
-    if (!campaign || !npcForm.name.trim()) return
-    const npcData: Omit<NPC, 'id'> = {
-      name: npcForm.name.trim(),
-      description: npcForm.description,
-      location: npcForm.location || undefined,
-      isVisible: npcForm.isVisible,
-      notes: npcForm.notes,
-      role: npcForm.role,
-      personality: npcForm.personality || undefined,
-      motivation: npcForm.motivation || undefined,
-      statBlockId: npcForm.statBlockMode === 'link' && npcForm.statBlockId ? npcForm.statBlockId : undefined,
-      customStats: npcForm.statBlockMode === 'custom' ? npcForm.customStats : undefined
-    }
-    let npcs: NPC[]
-    if (editingNPC) {
-      npcs = campaign.npcs.map((n) => (n.id === editingNPC.id ? { ...n, ...npcData } : n))
-    } else {
-      npcs = [...campaign.npcs, { id: crypto.randomUUID(), ...npcData }]
-    }
-    await saveCampaign({ ...campaign, npcs, updatedAt: new Date().toISOString() })
-    setShowNPCModal(false)
-  }
-  const handleMonsterSearch = (query: string): void => {
-    setMonsterSearchQuery(query)
-    if (query.length < 2) {
-      setMonsterSearchResults([])
-      return
-    }
-    if (allMonsters.length === 0) {
-      loadAllStatBlocks().then((all) => {
-        setAllMonsters(all)
-        setMonsterSearchResults(searchMonsters(all, query).slice(0, 10))
-      })
-    } else {
-      setMonsterSearchResults(searchMonsters(allMonsters, query).slice(0, 10))
-    }
-  }
-  const handleDeleteNPC = async (npcId: string): Promise<void> => {
-    if (!campaign) return
-    await saveCampaign({
-      ...campaign,
-      npcs: campaign.npcs.filter((n) => n.id !== npcId),
-      updatedAt: new Date().toISOString()
-    })
-  }
-
-  // --- NPC import/export ---
-  const handleExportNpcs = async (npcsToExport: NPC[]): Promise<void> => {
-    if (!npcsToExport.length) return
-    try {
-      const ok = await exportEntities('npc', npcsToExport)
-      if (ok) addToast(`Exported ${npcsToExport.length} NPC(s)`, 'success')
-    } catch { addToast('NPC export failed', 'error') }
-  }
-  const handleImportNpcs = async (): Promise<void> => {
-    if (!campaign) return
-    try {
-      const result = await importEntities<NPC>('npc')
-      if (!result) return
-      const items = reIdItems(result.items)
-      const npcs = [...campaign.npcs, ...items]
-      await saveCampaign({ ...campaign, npcs, updatedAt: new Date().toISOString() })
-      addToast(`Imported ${items.length} NPC(s)`, 'success')
-    } catch (err) {
-      addToast(err instanceof Error ? err.message : 'NPC import failed', 'error')
     }
   }
 
@@ -376,7 +149,9 @@ export default function CampaignDetailPage(): JSX.Element {
     try {
       const ok = await exportEntities('map', mapsToExport)
       if (ok) addToast(`Exported ${mapsToExport.length} map(s)`, 'success')
-    } catch { addToast('Map export failed', 'error') }
+    } catch {
+      addToast('Map export failed', 'error')
+    }
   }
   const handleImportMaps = async (): Promise<void> => {
     if (!campaign) return
@@ -392,35 +167,15 @@ export default function CampaignDetailPage(): JSX.Element {
     }
   }
 
-  // --- Lore import/export ---
-  const handleExportLore = async (loreToExport: LoreEntry[]): Promise<void> => {
-    if (!loreToExport.length) return
-    try {
-      const ok = await exportEntities('lore', loreToExport)
-      if (ok) addToast(`Exported ${loreToExport.length} lore entry(ies)`, 'success')
-    } catch { addToast('Lore export failed', 'error') }
-  }
-  const handleImportLore = async (): Promise<void> => {
-    if (!campaign) return
-    try {
-      const result = await importEntities<LoreEntry>('lore')
-      if (!result) return
-      const items = reIdItems(result.items)
-      const newLore = [...(campaign.lore ?? []), ...items]
-      await saveCampaign({ ...campaign, lore: newLore, updatedAt: new Date().toISOString() })
-      addToast(`Imported ${items.length} lore entry(ies)`, 'success')
-    } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Lore import failed', 'error')
-    }
-  }
-
   // --- Journal import/export ---
   const handleExportJournal = async (entries: import('../types/campaign').JournalEntry[]): Promise<void> => {
     if (!entries.length) return
     try {
       const ok = await exportEntities('journal', entries)
       if (ok) addToast(`Exported ${entries.length} journal entry(ies)`, 'success')
-    } catch { addToast('Journal export failed', 'error') }
+    } catch {
+      addToast('Journal export failed', 'error')
+    }
   }
   const handleImportJournal = async (): Promise<void> => {
     if (!campaign) return
@@ -434,86 +189,6 @@ export default function CampaignDetailPage(): JSX.Element {
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Journal import failed', 'error')
     }
-  }
-
-  // --- Rule handlers ---
-  const openAddRule = (): void => {
-    setEditingRule(null)
-    setRuleForm({ name: '', description: '', category: 'other' })
-    setShowRuleModal(true)
-  }
-  const openEditRule = (rule: CustomRule): void => {
-    setEditingRule(rule)
-    setRuleForm({ name: rule.name, description: rule.description, category: rule.category })
-    setShowRuleModal(true)
-  }
-  const handleSaveRule = async (): Promise<void> => {
-    if (!campaign || !ruleForm.name.trim()) return
-    let customRules: CustomRule[]
-    if (editingRule) {
-      customRules = campaign.customRules.map((r) =>
-        r.id === editingRule.id ? { ...r, ...ruleForm, name: ruleForm.name.trim() } : r
-      )
-    } else {
-      customRules = [...campaign.customRules, { id: crypto.randomUUID(), ...ruleForm, name: ruleForm.name.trim() }]
-    }
-    await saveCampaign({ ...campaign, customRules, updatedAt: new Date().toISOString() })
-    setShowRuleModal(false)
-  }
-  const handleDeleteRule = async (ruleId: string): Promise<void> => {
-    if (!campaign) return
-    await saveCampaign({
-      ...campaign,
-      customRules: campaign.customRules.filter((r) => r.id !== ruleId),
-      updatedAt: new Date().toISOString()
-    })
-  }
-
-  // --- Lore handlers ---
-  const openAddLore = (): void => {
-    setEditingLore(null)
-    setLoreForm({ title: '', content: '', category: 'world', isVisibleToPlayers: false })
-    setShowLoreModal(true)
-  }
-  const openEditLore = (entry: LoreEntry): void => {
-    setEditingLore(entry)
-    setLoreForm({
-      title: entry.title,
-      content: entry.content,
-      category: entry.category,
-      isVisibleToPlayers: entry.isVisibleToPlayers
-    })
-    setShowLoreModal(true)
-  }
-  const handleSaveLore = async (): Promise<void> => {
-    if (!campaign || !loreForm.title.trim()) return
-    const lore = campaign.lore ?? []
-    let newLore: LoreEntry[]
-    if (editingLore) {
-      newLore = lore.map((l) => (l.id === editingLore.id ? { ...l, ...loreForm, title: loreForm.title.trim() } : l))
-    } else {
-      newLore = [
-        ...lore,
-        { id: crypto.randomUUID(), ...loreForm, title: loreForm.title.trim(), createdAt: new Date().toISOString() }
-      ]
-    }
-    await saveCampaign({ ...campaign, lore: newLore, updatedAt: new Date().toISOString() })
-    setShowLoreModal(false)
-  }
-  const handleDeleteLore = async (loreId: string): Promise<void> => {
-    if (!campaign) return
-    await saveCampaign({
-      ...campaign,
-      lore: (campaign.lore ?? []).filter((l) => l.id !== loreId),
-      updatedAt: new Date().toISOString()
-    })
-  }
-  const handleToggleLoreVisibility = async (loreId: string): Promise<void> => {
-    if (!campaign) return
-    const lore = (campaign.lore ?? []).map((l) =>
-      l.id === loreId ? { ...l, isVisibleToPlayers: !l.isVisibleToPlayers } : l
-    )
-    await saveCampaign({ ...campaign, lore, updatedAt: new Date().toISOString() })
   }
 
   // --- Map handlers ---
@@ -637,33 +312,6 @@ export default function CampaignDetailPage(): JSX.Element {
     setShowCalendarEdit(false)
   }
 
-  // --- Voice chat edit handlers ---
-  const openVoiceChatEdit = (): void => {
-    if (!campaign) return
-    const vc = campaign.voiceChat
-    setEditVoiceChat({
-      mode: vc?.mode ?? 'local',
-      apiKey: vc?.apiKey ?? '',
-      apiSecret: vc?.apiSecret ?? '',
-      serverUrl: vc?.serverUrl ?? ''
-    })
-    setShowVoiceChatEdit(true)
-  }
-  const handleSaveVoiceChat = async (): Promise<void> => {
-    if (!campaign) return
-    await saveCampaign({
-      ...campaign,
-      voiceChat: {
-        mode: editVoiceChat.mode,
-        apiKey: editVoiceChat.apiKey || undefined,
-        apiSecret: editVoiceChat.apiSecret || undefined,
-        serverUrl: editVoiceChat.serverUrl || undefined
-      },
-      updatedAt: new Date().toISOString()
-    })
-    setShowVoiceChatEdit(false)
-  }
-
   // --- Audio handlers ---
   const openEditAudioEntry = (audio: {
     id: string
@@ -734,33 +382,6 @@ export default function CampaignDetailPage(): JSX.Element {
     setEditingMapId(null)
   }
 
-  // --- Adventure edit handlers ---
-  const openEditAdventure = (adv: AdventureEntry): void => {
-    setEditingAdventureId(adv.id)
-    setAdventureForm({
-      title: adv.title,
-      levelTier: adv.levelTier,
-      premise: adv.premise,
-      hook: adv.hook,
-      villain: adv.villain,
-      setting: adv.setting,
-      playerStakes: adv.playerStakes,
-      encounters: adv.encounters,
-      climax: adv.climax,
-      resolution: adv.resolution
-    })
-  }
-  const handleSaveAdventure = async (): Promise<void> => {
-    if (!campaign || !editingAdventureId) return
-    const adventures = (campaign.adventures ?? []).map((a) =>
-      a.id === editingAdventureId
-        ? { ...a, ...adventureForm, title: adventureForm.title.trim() || a.title }
-        : a
-    )
-    await saveCampaign({ ...campaign, adventures, updatedAt: new Date().toISOString() })
-    setEditingAdventureId(null)
-  }
-
   if (loading) {
     return (
       <div className="p-8 h-screen overflow-y-auto">
@@ -783,7 +404,6 @@ export default function CampaignDetailPage(): JSX.Element {
   }
 
   const systemConfig = GAME_SYSTEMS[campaign.system]
-  const lore = campaign.lore ?? []
 
   return (
     <div className="p-8 h-screen overflow-y-auto">
@@ -861,9 +481,19 @@ export default function CampaignDetailPage(): JSX.Element {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold">Maps ({campaign.maps.length})</h3>
             <div className="flex items-center gap-2">
-              <button onClick={handleImportMaps} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              <button
+                onClick={handleImportMaps}
+                className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer"
+              >
+                Import
+              </button>
               {campaign.maps.length > 0 && (
-                <button onClick={() => handleExportMaps(campaign.maps)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+                <button
+                  onClick={() => handleExportMaps(campaign.maps)}
+                  className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer"
+                >
+                  Export All
+                </button>
               )}
             </div>
           </div>
@@ -928,186 +558,11 @@ export default function CampaignDetailPage(): JSX.Element {
           </button>
         </Card>
 
-        {/* NPCs */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">NPCs ({campaign.npcs.length})</h3>
-            <div className="flex items-center gap-2">
-              <button onClick={handleImportNpcs} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
-              {campaign.npcs.length > 0 && (
-                <button onClick={() => handleExportNpcs(campaign.npcs)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
-              )}
-            </div>
-          </div>
-          {campaign.npcs.length === 0 ? (
-            <p className="text-gray-500 text-sm">No NPCs added yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {campaign.npcs.map((npc) => {
-                const npcLinkedBlock = npc.statBlockId ? npcStatBlocks[npc.statBlockId] : undefined
-                const npcBlock = npc.customStats ?? npcLinkedBlock
-                const isStatExpanded = expandedNpcStatBlock === npc.id
-                return (
-                  <div key={npc.id} className="bg-gray-800/50 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-sm">{npc.name}</span>
-                        {npc.role && <span className="text-[10px] text-gray-400 ml-2 capitalize">{npc.role}</span>}
-                        {npc.location && <span className="text-gray-500 text-xs ml-2">{npc.location}</span>}
-                        {npc.description && <p className="text-gray-500 text-xs mt-0.5 truncate">{npc.description}</p>}
-                      </div>
-                      <div className="flex items-center gap-2 ml-2">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            npc.isVisible ? 'bg-green-900/40 text-green-300' : 'bg-gray-800 text-gray-500'
-                          }`}
-                        >
-                          {npc.isVisible ? 'Visible' : 'Hidden'}
-                        </span>
-                        <button
-                          onClick={() => openEditNPC(npc)}
-                          className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteNPC(npc.id)}
-                          className="text-xs text-gray-400 hover:text-red-400 cursor-pointer"
-                        >
-                          Del
-                        </button>
-                      </div>
-                    </div>
-                    {/* Expandable stat block */}
-                    {npcBlock ? (
-                      <div className="mt-2">
-                        <button
-                          onClick={() => setExpandedNpcStatBlock(isStatExpanded ? null : npc.id)}
-                          className="text-[10px] text-amber-400 hover:text-amber-300 cursor-pointer"
-                        >
-                          {isStatExpanded ? 'Hide Stat Block' : `Show Stat Block (${npcBlock.name ?? npc.name})`}
-                        </button>
-                        {isStatExpanded && (
-                          <div className="mt-1 max-h-80 overflow-y-auto">
-                            <MonsterStatBlockView monster={npcBlock as MonsterStatBlock} />
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-1">
-                        <button
-                          onClick={() => openEditNPC(npc)}
-                          className="text-[10px] text-gray-500 hover:text-amber-400 cursor-pointer"
-                        >
-                          No stat block — click Edit to assign
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          <button onClick={openAddNPC} className="mt-3 text-xs text-amber-400 hover:text-amber-300 cursor-pointer">
-            + Add NPC
-          </button>
-        </Card>
+        <NPCManager campaign={campaign} saveCampaign={saveCampaign} />
 
-        {/* Custom Rules */}
-        <Card title={`Custom Rules (${campaign.customRules.length})`}>
-          {campaign.customRules.length === 0 ? (
-            <p className="text-gray-500 text-sm">No house rules configured.</p>
-          ) : (
-            <div className="space-y-2">
-              {campaign.customRules.map((rule) => (
-                <div key={rule.id} className="bg-gray-800/50 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{rule.name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${CATEGORY_COLORS[rule.category]}`}>
-                        {rule.category}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openEditRule(rule)}
-                        className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteRule(rule.id)}
-                        className="text-xs text-gray-400 hover:text-red-400 cursor-pointer"
-                      >
-                        Del
-                      </button>
-                    </div>
-                  </div>
-                  {rule.description && <p className="text-gray-400 text-xs">{rule.description}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-          <button onClick={openAddRule} className="mt-3 text-xs text-amber-400 hover:text-amber-300 cursor-pointer">
-            + Add Rule
-          </button>
-        </Card>
+        <RuleManager campaign={campaign} saveCampaign={saveCampaign} />
 
-        {/* Lore */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Lore ({lore.length})</h3>
-            <div className="flex items-center gap-2">
-              <button onClick={handleImportLore} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
-              {lore.length > 0 && (
-                <button onClick={() => handleExportLore(lore)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
-              )}
-            </div>
-          </div>
-          {lore.length === 0 ? (
-            <p className="text-gray-500 text-sm">No lore entries yet. Add world details, factions, and locations.</p>
-          ) : (
-            <div className="space-y-2">
-              {lore.map((entry) => (
-                <div key={entry.id} className="bg-gray-800/50 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{entry.title}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${LORE_CATEGORY_COLORS[entry.category]}`}>
-                        {entry.category}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleToggleLoreVisibility(entry.id)}
-                        className={`text-xs cursor-pointer ${entry.isVisibleToPlayers ? 'text-green-400 hover:text-green-300' : 'text-gray-500 hover:text-gray-400'}`}
-                        title={entry.isVisibleToPlayers ? 'Visible to players' : 'DM only'}
-                      >
-                        {entry.isVisibleToPlayers ? '\u{1F441}' : '\u{1F441}\u{FE0F}\u{200D}\u{1F5E8}\u{FE0F}'}
-                      </button>
-                      <button
-                        onClick={() => openEditLore(entry)}
-                        className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLore(entry.id)}
-                        className="text-xs text-gray-400 hover:text-red-400 cursor-pointer"
-                      >
-                        Del
-                      </button>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-xs line-clamp-2">{entry.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          <button onClick={openAddLore} className="mt-3 text-xs text-amber-400 hover:text-amber-300 cursor-pointer">
-            + Add Lore
-          </button>
-        </Card>
+        <LoreManager campaign={campaign} saveCampaign={saveCampaign} />
 
         {/* Players */}
         <Card title={`Previous Players (${campaign.players.length})`}>
@@ -1179,78 +634,7 @@ export default function CampaignDetailPage(): JSX.Element {
           </Card>
         )}
 
-        {/* Adventures */}
-        <Card title={`Adventures (${(campaign.adventures ?? []).length})`}>
-          {showAdventureWizard ? (
-            <AdventureWizard
-              onSave={(adventureData: AdventureData) => {
-                const entry = {
-                  id: crypto.randomUUID(),
-                  ...adventureData,
-                  createdAt: new Date().toISOString()
-                }
-                saveCampaign({
-                  ...campaign,
-                  adventures: [...(campaign.adventures ?? []), entry],
-                  updatedAt: new Date().toISOString()
-                })
-                setShowAdventureWizard(false)
-              }}
-              onCancel={() => setShowAdventureWizard(false)}
-            />
-          ) : (
-            <>
-              {(campaign.adventures ?? []).length === 0 ? (
-                <p className="text-gray-500 text-sm mb-3">
-                  No adventures planned yet. Use the DMG 4-step process to create one.
-                </p>
-              ) : (
-                <div className="space-y-2 mb-3">
-                  {(campaign.adventures ?? []).map((adv) => (
-                    <div key={adv.id} className="bg-gray-800/50 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold text-gray-200">{adv.title}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded">
-                            Lvl {adv.levelTier}
-                          </span>
-                          <button
-                            onClick={() => openEditAdventure(adv)}
-                            className="text-[10px] text-amber-400 hover:text-amber-300 cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              saveCampaign({
-                                ...campaign,
-                                adventures: (campaign.adventures ?? []).filter((a) => a.id !== adv.id),
-                                updatedAt: new Date().toISOString()
-                              })
-                            }}
-                            className="text-[10px] text-red-400 hover:text-red-300 cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-400 line-clamp-2">{adv.premise}</div>
-                      {adv.villain && (
-                        <div className="text-[10px] text-gray-500 mt-1">Antagonist: {adv.villain}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button
-                onClick={() => setShowAdventureWizard(true)}
-                className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
-              >
-                + Create Adventure
-              </button>
-            </>
-          )}
-        </Card>
+        <AdventureManager campaign={campaign} saveCampaign={saveCampaign} />
 
         {/* AI Dungeon Master */}
         <Card title="AI Dungeon Master">
@@ -1258,19 +642,15 @@ export default function CampaignDetailPage(): JSX.Element {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-300">Enabled</span>
-                <span className="text-xs text-gray-400 capitalize">{campaign.aiDm.provider}</span>
-                <span className="text-xs text-gray-500">
-                  {campaign.aiDm.provider === 'claude' ? campaign.aiDm.model : (campaign.aiDm.ollamaModel ?? 'default')}
-                </span>
+                <span className="text-xs text-gray-400">Ollama</span>
+                <span className="text-xs text-gray-500">{campaign.aiDm.ollamaModel ?? 'default'}</span>
               </div>
               <button
                 onClick={() => {
                   setAiDmConfig({
                     enabled: campaign.aiDm?.enabled ?? false,
-                    provider: campaign.aiDm?.provider ?? 'claude',
-                    model: campaign.aiDm?.model ?? 'sonnet',
-                    apiKey: '',
-                    ollamaModel: campaign.aiDm?.ollamaModel ?? 'mistral'
+                    ollamaModel: campaign.aiDm?.ollamaModel ?? 'llama3.1',
+                    ollamaUrl: campaign.aiDm?.ollamaUrl ?? 'http://localhost:11434'
                   })
                   setShowAiDmModal(true)
                 }}
@@ -1286,10 +666,8 @@ export default function CampaignDetailPage(): JSX.Element {
                 onClick={() => {
                   setAiDmConfig({
                     enabled: true,
-                    provider: 'claude',
-                    model: 'sonnet',
-                    apiKey: '',
-                    ollamaModel: 'mistral'
+                    ollamaModel: 'llama3.1',
+                    ollamaUrl: 'http://localhost:11434'
                   })
                   setShowAiDmModal(true)
                 }}
@@ -1325,7 +703,9 @@ export default function CampaignDetailPage(): JSX.Element {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-gray-500">Starting Year:</span>
-                <span className="text-gray-200">{campaign.calendar.startingYear} {campaign.calendar.yearLabel}</span>
+                <span className="text-gray-200">
+                  {campaign.calendar.startingYear} {campaign.calendar.yearLabel}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-gray-500">Hours per Day:</span>
@@ -1338,32 +718,6 @@ export default function CampaignDetailPage(): JSX.Element {
             </div>
           ) : (
             <p className="text-gray-500 text-sm">No calendar configured.</p>
-          )}
-        </Card>
-
-        {/* Voice Chat */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Voice Chat</h3>
-            <button onClick={openVoiceChatEdit} className="text-xs text-gray-400 hover:text-amber-400 cursor-pointer">
-              Edit
-            </button>
-          </div>
-          {campaign.voiceChat ? (
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-300">Configured</span>
-                <span className="text-gray-200 capitalize">{campaign.voiceChat.mode}</span>
-              </div>
-              {campaign.voiceChat.serverUrl && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Server:</span>
-                  <span className="text-gray-200 text-xs truncate">{campaign.voiceChat.serverUrl}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Voice chat not configured.</p>
           )}
         </Card>
 
@@ -1427,14 +781,26 @@ export default function CampaignDetailPage(): JSX.Element {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold">Session Journal ({campaign.journal.entries.length})</h3>
             <div className="flex items-center gap-2">
-              <button onClick={handleImportJournal} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Import</button>
+              <button
+                onClick={handleImportJournal}
+                className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer"
+              >
+                Import
+              </button>
               {campaign.journal.entries.length > 0 && (
-                <button onClick={() => handleExportJournal(campaign.journal.entries)} className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer">Export All</button>
+                <button
+                  onClick={() => handleExportJournal(campaign.journal.entries)}
+                  className="text-[10px] text-gray-400 hover:text-amber-400 cursor-pointer"
+                >
+                  Export All
+                </button>
               )}
             </div>
           </div>
           {campaign.journal.entries.length === 0 ? (
-            <p className="text-gray-500 text-sm">No journal entries yet. Entries are created during and after game sessions.</p>
+            <p className="text-gray-500 text-sm">
+              No journal entries yet. Entries are created during and after game sessions.
+            </p>
           ) : (
             <div className="space-y-2">
               {campaign.journal.entries
@@ -1467,345 +833,13 @@ export default function CampaignDetailPage(): JSX.Element {
         onCancel={() => setShowDeleteConfirm(false)}
       />
 
-      {/* NPC Modal */}
-      <Modal open={showNPCModal} onClose={() => setShowNPCModal(false)} title={editingNPC ? 'Edit NPC' : 'Add NPC'}>
-        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-          {/* Quick Add from Bestiary */}
-          <div className="border border-amber-800/30 rounded-lg overflow-hidden">
-            <div className="px-3 py-2 bg-amber-900/20">
-              <label className="block text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                Quick Add from Bestiary
-              </label>
-              <input
-                type="text"
-                value={monsterSearchQuery}
-                onChange={(e) => handleMonsterSearch(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="Search monsters by name, type, or tag..."
-              />
-            </div>
-            {monsterSearchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border-t border-gray-700">
-                {monsterSearchResults.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setNpcForm((f) => ({
-                        ...f,
-                        name: m.name,
-                        role: 'enemy',
-                        description: `${m.size} ${m.type}${m.subtype ? ` (${m.subtype})` : ''}, CR ${m.cr}`,
-                        statBlockId: m.id,
-                        statBlockMode: 'link'
-                      }))
-                      setLinkedMonsterPreview(m)
-                      setMonsterSearchQuery(m.name)
-                      setMonsterSearchResults([])
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-gray-700/50 cursor-pointer flex items-center justify-between border-b border-gray-700/30 last:border-b-0"
-                  >
-                    <span className="text-gray-200 font-medium">{m.name}</span>
-                    <div className="flex items-center gap-3 text-[10px]">
-                      <span className="text-gray-500">{m.size} {m.type}</span>
-                      <span className="text-amber-400 font-mono">CR {m.cr}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            {linkedMonsterPreview && npcForm.statBlockMode === 'link' && monsterSearchResults.length === 0 && (
-              <div className="border-t border-gray-700/50 p-2">
-                <MonsterStatBlockView monster={linkedMonsterPreview} compact />
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="block text-gray-400 text-xs mb-1">Name *</label>
-              <input
-                type="text"
-                value={npcForm.name}
-                onChange={(e) => setNpcForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="NPC name"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Role</label>
-              <select
-                value={npcForm.role ?? ''}
-                onChange={(e) =>
-                  setNpcForm((f) => ({ ...f, role: e.target.value ? (e.target.value as NPC['role']) : undefined }))
-                }
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-              >
-                <option value="">None</option>
-                <option value="ally">Ally</option>
-                <option value="enemy">Enemy</option>
-                <option value="neutral">Neutral</option>
-                <option value="patron">Patron</option>
-                <option value="shopkeeper">Shopkeeper</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Location</label>
-              <input
-                type="text"
-                value={npcForm.location}
-                onChange={(e) => setNpcForm((f) => ({ ...f, location: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="Where they can be found"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Description</label>
-            <textarea
-              value={npcForm.description}
-              onChange={(e) => setNpcForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-              placeholder="Brief description"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Personality</label>
-              <input
-                type="text"
-                value={npcForm.personality}
-                onChange={(e) => setNpcForm((f) => ({ ...f, personality: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="Gruff but kind-hearted"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Motivation</label>
-              <input
-                type="text"
-                value={npcForm.motivation}
-                onChange={(e) => setNpcForm((f) => ({ ...f, motivation: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="Protect the village"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Notes</label>
-            <textarea
-              value={npcForm.notes}
-              onChange={(e) => setNpcForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-              placeholder="DM notes"
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={npcForm.isVisible}
-              onChange={(e) => setNpcForm((f) => ({ ...f, isVisible: e.target.checked }))}
-              className="rounded"
-            />
-            Visible to players
-          </label>
-
-          {/* Stat Block Section */}
-          <div className="border-t border-gray-700 pt-3">
-            <label className="block text-gray-400 text-xs mb-2 font-semibold uppercase tracking-wider">
-              Stat Block
-            </label>
-            <div className="flex gap-2 mb-2">
-              {(['none', 'link', 'custom'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setNpcForm((f) => ({ ...f, statBlockMode: mode }))}
-                  className={`px-3 py-1 text-xs rounded-lg cursor-pointer ${
-                    npcForm.statBlockMode === mode
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                  }`}
-                >
-                  {mode === 'none' ? 'None' : mode === 'link' ? 'Link to Monster' : 'Custom'}
-                </button>
-              ))}
-            </div>
-
-            {npcForm.statBlockMode === 'link' && (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={monsterSearchQuery}
-                  onChange={(e) => handleMonsterSearch(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-                  placeholder="Search monsters..."
-                />
-                {monsterSearchResults.length > 0 && (
-                  <div className="bg-gray-800 border border-gray-700 rounded max-h-40 overflow-y-auto">
-                    {monsterSearchResults.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          setNpcForm((f) => ({ ...f, statBlockId: m.id }))
-                          setLinkedMonsterPreview(m)
-                          setMonsterSearchQuery(m.name)
-                          setMonsterSearchResults([])
-                        }}
-                        className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-700 cursor-pointer flex items-center justify-between ${
-                          npcForm.statBlockId === m.id ? 'text-amber-400' : 'text-gray-300'
-                        }`}
-                      >
-                        <span>{m.name}</span>
-                        <span className="text-gray-500">{m.type} &middot; CR {m.cr}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {linkedMonsterPreview && (
-                  <div className="mt-2">
-                    <MonsterStatBlockView monster={linkedMonsterPreview} compact />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {npcForm.statBlockMode === 'custom' && (
-              <StatBlockEditor
-                value={npcForm.customStats ?? { name: npcForm.name }}
-                onChange={(stats) => setNpcForm((f) => ({ ...f, customStats: stats }))}
-              />
-            )}
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setShowNPCModal(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveNPC} disabled={!npcForm.name.trim()}>
-            {editingNPC ? 'Save' : 'Add'}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Rule Modal */}
-      <Modal
-        open={showRuleModal}
-        onClose={() => setShowRuleModal(false)}
-        title={editingRule ? 'Edit Rule' : 'Add Rule'}
-      >
-        <div className="space-y-3">
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Rule Name *</label>
-            <input
-              type="text"
-              value={ruleForm.name}
-              onChange={(e) => setRuleForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-              placeholder="Rule name"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Category</label>
-            <select
-              value={ruleForm.category}
-              onChange={(e) => setRuleForm((f) => ({ ...f, category: e.target.value as CustomRule['category'] }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-            >
-              <option value="combat">Combat</option>
-              <option value="exploration">Exploration</option>
-              <option value="social">Social</option>
-              <option value="rest">Rest</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Description</label>
-            <textarea
-              value={ruleForm.description}
-              onChange={(e) => setRuleForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-20 resize-none"
-              placeholder="Rule description"
-            />
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setShowRuleModal(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveRule} disabled={!ruleForm.name.trim()}>
-            {editingRule ? 'Save' : 'Add'}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Lore Modal */}
-      <Modal
-        open={showLoreModal}
-        onClose={() => setShowLoreModal(false)}
-        title={editingLore ? 'Edit Lore' : 'Add Lore'}
-      >
-        <div className="space-y-3">
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Title *</label>
-            <input
-              type="text"
-              value={loreForm.title}
-              onChange={(e) => setLoreForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-              placeholder="Lore title"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Category</label>
-            <select
-              value={loreForm.category}
-              onChange={(e) => setLoreForm((f) => ({ ...f, category: e.target.value as LoreEntry['category'] }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-            >
-              <option value="world">World</option>
-              <option value="faction">Faction</option>
-              <option value="location">Location</option>
-              <option value="item">Item</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Content</label>
-            <textarea
-              value={loreForm.content}
-              onChange={(e) => setLoreForm((f) => ({ ...f, content: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-32 resize-none"
-              placeholder="Lore content"
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={loreForm.isVisibleToPlayers}
-              onChange={(e) => setLoreForm((f) => ({ ...f, isVisibleToPlayers: e.target.checked }))}
-              className="rounded"
-            />
-            Visible to players
-          </label>
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setShowLoreModal(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveLore} disabled={!loreForm.title.trim()}>
-            {editingLore ? 'Save' : 'Add'}
-          </Button>
-        </div>
-      </Modal>
-
       {/* AI DM Config Modal */}
       <Modal open={showAiDmModal} onClose={() => setShowAiDmModal(false)} title="Configure AI Dungeon Master">
         <div className="max-h-[60vh] overflow-y-auto">
-          <AiDmStep
+          <OllamaSetupStep
             enabled={aiDmConfig.enabled}
-            provider={aiDmConfig.provider}
-            model={aiDmConfig.model}
-            apiKey={aiDmConfig.apiKey}
             ollamaModel={aiDmConfig.ollamaModel}
+            ollamaUrl={aiDmConfig.ollamaUrl}
             onOllamaReady={() => {}}
             onChange={(data) => setAiDmConfig(data)}
           />
@@ -1819,17 +853,15 @@ export default function CampaignDetailPage(): JSX.Element {
               if (!campaign) return
               const aiDm = {
                 enabled: aiDmConfig.enabled,
-                provider: aiDmConfig.provider,
-                model: aiDmConfig.model,
-                ollamaModel: aiDmConfig.provider === 'ollama' ? aiDmConfig.ollamaModel : undefined
+                ollamaModel: aiDmConfig.ollamaModel,
+                ollamaUrl: aiDmConfig.ollamaUrl
               }
               await saveCampaign({ ...campaign, aiDm, updatedAt: new Date().toISOString() })
-              if (aiDmConfig.provider === 'claude' && aiDmConfig.apiKey) {
+              if (aiDmConfig.enabled) {
                 try {
                   await window.api.ai.configure({
-                    provider: 'claude',
-                    model: aiDmConfig.model,
-                    apiKey: aiDmConfig.apiKey
+                    ollamaModel: aiDmConfig.ollamaModel,
+                    ollamaUrl: aiDmConfig.ollamaUrl
                   })
                 } catch {
                   /* ignore configure errors */
@@ -1928,7 +960,10 @@ export default function CampaignDetailPage(): JSX.Element {
                 type="number"
                 value={overviewForm.maxPlayers}
                 onChange={(e) =>
-                  setOverviewForm((f) => ({ ...f, maxPlayers: Math.max(1, Math.min(8, parseInt(e.target.value, 10) || 1)) }))
+                  setOverviewForm((f) => ({
+                    ...f,
+                    maxPlayers: Math.max(1, Math.min(8, parseInt(e.target.value, 10) || 1))
+                  }))
                 }
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
                 min={1}
@@ -1953,7 +988,9 @@ export default function CampaignDetailPage(): JSX.Element {
               <input
                 type="number"
                 value={overviewForm.levelMin}
-                onChange={(e) => setOverviewForm((f) => ({ ...f, levelMin: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                onChange={(e) =>
+                  setOverviewForm((f) => ({ ...f, levelMin: Math.max(1, parseInt(e.target.value, 10) || 1) }))
+                }
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
                 min={1}
                 max={20}
@@ -1964,7 +1001,9 @@ export default function CampaignDetailPage(): JSX.Element {
               <input
                 type="number"
                 value={overviewForm.levelMax}
-                onChange={(e) => setOverviewForm((f) => ({ ...f, levelMax: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                onChange={(e) =>
+                  setOverviewForm((f) => ({ ...f, levelMax: Math.max(1, parseInt(e.target.value, 10) || 1) }))
+                }
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
                 min={1}
                 max={20}
@@ -2022,19 +1061,6 @@ export default function CampaignDetailPage(): JSX.Element {
         </div>
       </Modal>
 
-      {/* Voice Chat Edit Modal */}
-      <Modal open={showVoiceChatEdit} onClose={() => setShowVoiceChatEdit(false)} title="Edit Voice Chat">
-        <div className="max-h-[60vh] overflow-y-auto pr-1">
-          <VoiceChatStep config={editVoiceChat} onChange={setEditVoiceChat} />
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setShowVoiceChatEdit(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveVoiceChat}>Save</Button>
-        </div>
-      </Modal>
-
       {/* Add Audio Modal */}
       <Modal open={showAudioAdd} onClose={() => setShowAudioAdd(false)} title="Add Custom Audio">
         <div className="max-h-[60vh] overflow-y-auto pr-1">
@@ -2051,11 +1077,7 @@ export default function CampaignDetailPage(): JSX.Element {
       </Modal>
 
       {/* Audio Entry Edit Modal */}
-      <Modal
-        open={editingAudioId !== null}
-        onClose={() => setEditingAudioId(null)}
-        title="Edit Audio Entry"
-      >
+      <Modal open={editingAudioId !== null} onClose={() => setEditingAudioId(null)} title="Edit Audio Entry">
         <div className="space-y-3">
           <div>
             <label className="block text-gray-400 text-xs mb-1">Display Name</label>
@@ -2090,11 +1112,7 @@ export default function CampaignDetailPage(): JSX.Element {
       </Modal>
 
       {/* Map Edit Modal */}
-      <Modal
-        open={editingMapId !== null}
-        onClose={() => setEditingMapId(null)}
-        title="Edit Map"
-      >
+      <Modal open={editingMapId !== null} onClose={() => setEditingMapId(null)} title="Edit Map">
         <div className="space-y-3">
           <div>
             <label className="block text-gray-400 text-xs mb-1">Map Name *</label>
@@ -2155,114 +1173,6 @@ export default function CampaignDetailPage(): JSX.Element {
             Cancel
           </Button>
           <Button onClick={handleSaveMapEdit} disabled={!mapEditForm.name.trim()}>
-            Save
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Adventure Edit Modal */}
-      <Modal
-        open={editingAdventureId !== null}
-        onClose={() => setEditingAdventureId(null)}
-        title="Edit Adventure"
-      >
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Title *</label>
-            <input
-              type="text"
-              value={adventureForm.title}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Level Tier</label>
-            <select
-              value={adventureForm.levelTier}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, levelTier: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-            >
-              <option value="1-4">1-4 (Local Heroes)</option>
-              <option value="5-10">5-10 (Heroes of the Realm)</option>
-              <option value="11-16">11-16 (Masters of the Realm)</option>
-              <option value="17-20">17-20 (Masters of the World)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Premise</label>
-            <textarea
-              value={adventureForm.premise}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, premise: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Adventure Hook</label>
-            <textarea
-              value={adventureForm.hook}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, hook: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Villain / Antagonist</label>
-              <input
-                type="text"
-                value={adventureForm.villain}
-                onChange={(e) => setAdventureForm((f) => ({ ...f, villain: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs mb-1">Setting</label>
-              <input
-                type="text"
-                value={adventureForm.setting}
-                onChange={(e) => setAdventureForm((f) => ({ ...f, setting: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Player Stakes</label>
-            <textarea
-              value={adventureForm.playerStakes}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, playerStakes: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Encounters</label>
-            <textarea
-              value={adventureForm.encounters}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, encounters: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Climax</label>
-            <textarea
-              value={adventureForm.climax}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, climax: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-400 text-xs mb-1">Resolution</label>
-            <textarea
-              value={adventureForm.resolution}
-              onChange={(e) => setAdventureForm((f) => ({ ...f, resolution: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500 h-16 resize-none"
-            />
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setEditingAdventureId(null)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSaveAdventure} disabled={!adventureForm.title.trim()}>
             Save
           </Button>
         </div>

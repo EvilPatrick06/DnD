@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { logger } from '../../utils/logger'
 
 interface Props {
   children: ReactNode
@@ -23,8 +24,8 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     this.componentStack = info.componentStack ?? undefined
-    console.error('[ErrorBoundary] Uncaught error:', error)
-    console.error('[ErrorBoundary] Component stack:', info.componentStack)
+    logger.error('[ErrorBoundary] Uncaught error:', error)
+    logger.error('[ErrorBoundary] Component stack:', info.componentStack)
   }
 
   handleRetry = (): void => {
@@ -55,7 +56,9 @@ export default class ErrorBoundary extends Component<Props, State> {
         textarea.select()
         document.execCommand('copy')
         document.body.removeChild(textarea)
-      } catch { /* exhausted fallbacks */ }
+      } catch {
+        /* exhausted fallbacks */
+      }
     })
   }
 

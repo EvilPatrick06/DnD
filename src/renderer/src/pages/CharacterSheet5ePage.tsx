@@ -9,21 +9,21 @@ import CraftingSection5e from '../components/sheet/5e/CraftingSection5e'
 import DefenseSection5e from '../components/sheet/5e/DefenseSection5e'
 import EquipmentSection5e from '../components/sheet/5e/EquipmentSection5e'
 import FeaturesSection5e from '../components/sheet/5e/FeaturesSection5e'
-import HighElfCantripSwapDialog5e from '../components/sheet/5e/HighElfCantripSwapDialog5e'
+import HighElfCantripSwapModal5e from '../components/sheet/5e/HighElfCantripSwapModal5e'
 import NotesSection5e from '../components/sheet/5e/NotesSection5e'
 import OffenseSection5e from '../components/sheet/5e/OffenseSection5e'
 import SavingThrowsSection5e from '../components/sheet/5e/SavingThrowsSection5e'
 import SheetHeader5e from '../components/sheet/5e/SheetHeader5e'
-import ShortRestDialog5e from '../components/sheet/5e/ShortRestDialog5e'
+import ShortRestModal5e from '../components/sheet/5e/ShortRestModal5e'
 import SkillsSection5e from '../components/sheet/5e/SkillsSection5e'
 import SpellcastingSection5e from '../components/sheet/5e/SpellcastingSection5e'
 import Modal from '../components/ui/Modal'
 import { shouldLevelUp } from '../data/xp-thresholds'
 import { applyLongRest } from '../services/character/rest-service-5e'
-import { useBuilderStore } from '../stores/useBuilderStore'
-import { useCharacterStore } from '../stores/useCharacterStore'
-import { useLobbyStore } from '../stores/useLobbyStore'
-import { useNetworkStore } from '../stores/useNetworkStore'
+import { useBuilderStore } from '../stores/use-builder-store'
+import { useCharacterStore } from '../stores/use-character-store'
+import { useLobbyStore } from '../stores/use-lobby-store'
+import { useNetworkStore } from '../stores/use-network-store'
 import type { Character } from '../types/character'
 import { is5eCharacter } from '../types/character'
 import type { Character5e } from '../types/character-5e'
@@ -217,7 +217,9 @@ export default function CharacterSheet5ePage(): JSX.Element {
                 try {
                   const result = await window.api.listCharacterVersions(character.id)
                   if (result.success && result.data) setVersions(result.data)
-                } catch { /* non-fatal */ }
+                } catch {
+                  /* non-fatal */
+                }
                 setLoadingVersions(false)
               }}
               className="px-3 py-1.5 text-sm border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-gray-200 rounded transition-colors"
@@ -280,8 +282,8 @@ export default function CharacterSheet5ePage(): JSX.Element {
         </div>
       </div>
 
-      {/* Short Rest Dialog */}
-      <ShortRestDialog5e character={character} open={showShortRest} onClose={() => setShowShortRest(false)} />
+      {/* Short Rest Modal */}
+      <ShortRestModal5e character={character} open={showShortRest} onClose={() => setShowShortRest(false)} />
 
       {/* Long Rest Confirmation */}
       <Modal open={showLongRestConfirm} onClose={() => setShowLongRestConfirm(false)} title="Long Rest">
@@ -301,11 +303,13 @@ export default function CharacterSheet5ePage(): JSX.Element {
             </ul>
           </p>
           <div className="text-xs text-gray-500">
-            Hit Point Dice: {character.hitDice.reduce((s, h) => s + h.current, 0)}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)}
+            Hit Point Dice: {character.hitDice.reduce((s, h) => s + h.current, 0)}/
+            {character.hitDice.reduce((s, h) => s + h.maximum, 0)}
             {character.hitDice.length > 1 && (
               <span> ({character.hitDice.map((h) => `${h.current}/${h.maximum}d${h.dieType}`).join(' + ')})</span>
             )}{' '}
-            &rarr; {character.hitDice.reduce((s, h) => s + h.maximum, 0)}/{character.hitDice.reduce((s, h) => s + h.maximum, 0)}
+            &rarr; {character.hitDice.reduce((s, h) => s + h.maximum, 0)}/
+            {character.hitDice.reduce((s, h) => s + h.maximum, 0)}
           </div>
           <div className="flex gap-2 justify-end">
             <button
@@ -324,8 +328,8 @@ export default function CharacterSheet5ePage(): JSX.Element {
         </div>
       </Modal>
 
-      {/* High Elf Cantrip Swap Dialog (after Long Rest) */}
-      <HighElfCantripSwapDialog5e
+      {/* High Elf Cantrip Swap Modal (after Long Rest) */}
+      <HighElfCantripSwapModal5e
         character={character}
         open={showCantripSwap}
         onClose={() => setShowCantripSwap(false)}
@@ -359,13 +363,14 @@ export default function CharacterSheet5ePage(): JSX.Element {
                     <div>
                       <div className="text-xs text-gray-200">
                         {new Date(v.timestamp).toLocaleString(undefined, {
-                          month: 'short', day: 'numeric', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit'
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
                         })}
                       </div>
-                      <div className="text-[10px] text-gray-500">
-                        {(v.sizeBytes / 1024).toFixed(1)} KB
-                      </div>
+                      <div className="text-[10px] text-gray-500">{(v.sizeBytes / 1024).toFixed(1)} KB</div>
                     </div>
                     <button
                       onClick={async () => {
@@ -377,7 +382,9 @@ export default function CharacterSheet5ePage(): JSX.Element {
                             await useCharacterStore.getState().loadCharacters()
                             setShowVersionHistory(false)
                           }
-                        } catch { /* non-fatal */ }
+                        } catch {
+                          /* non-fatal */
+                        }
                         setRestoringVersion(null)
                       }}
                       disabled={restoringVersion !== null}

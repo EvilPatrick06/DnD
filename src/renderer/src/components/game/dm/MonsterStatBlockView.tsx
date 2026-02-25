@@ -1,6 +1,6 @@
+import { extractConditionsFromDescription } from '../../../services/combat/condition-extractor'
 import type { MonsterAction, MonsterStatBlock } from '../../../types/monster'
 import { abilityModifier } from '../../../types/monster'
-import { extractConditionsFromDescription } from '../../../services/combat/condition-extractor'
 
 interface MonsterStatBlockViewProps {
   monster: MonsterStatBlock
@@ -37,8 +37,8 @@ function ActionQuickRef({ action }: { action: MonsterAction }): JSX.Element {
       <span className="text-gray-300 truncate">{action.name}</span>
       <div className="flex items-center gap-1 ml-1 shrink-0">
         {conditions.length > 0 && (
-          <span className="text-red-400/80" title={conditions.map(c => c.condition).join(', ')}>
-            {conditions.map(c => c.condition.slice(0, 3)).join('/')}
+          <span className="text-red-400/80" title={conditions.map((c) => c.condition).join(', ')}>
+            {conditions.map((c) => c.condition.slice(0, 3)).join('/')}
           </span>
         )}
         {summary && <span className="text-amber-400/80">{summary}</span>}
@@ -49,11 +49,9 @@ function ActionQuickRef({ action }: { action: MonsterAction }): JSX.Element {
 
 export default function MonsterStatBlockView({ monster, compact = false }: MonsterStatBlockViewProps): JSX.Element {
   if (compact) {
-    const keyActions = [
-      ...monster.actions,
-      ...(monster.bonusActions || []),
-      ...(monster.reactions || [])
-    ].filter((a) => a.toHit !== undefined || a.saveDC !== undefined || a.damageDice)
+    const keyActions = [...monster.actions, ...(monster.bonusActions || []), ...(monster.reactions || [])].filter(
+      (a) => a.toHit !== undefined || a.saveDC !== undefined || a.damageDice
+    )
 
     return (
       <div className="bg-gray-800/80 border border-gray-700 rounded-lg p-2 space-y-1">
@@ -74,9 +72,7 @@ export default function MonsterStatBlockView({ monster, compact = false }: Monst
           </div>
         )}
         {monster.legendaryActions && (
-          <div className="text-[10px] text-purple-400">
-            {monster.legendaryActions.uses} legendary actions
-          </div>
+          <div className="text-[10px] text-purple-400">{monster.legendaryActions.uses} legendary actions</div>
         )}
       </div>
     )
@@ -263,21 +259,18 @@ export default function MonsterStatBlockView({ monster, compact = false }: Monst
               <div key={i} className="text-xs">
                 <span className="text-amber-400 font-semibold italic">
                   {action.name}
-                  {action.recharge ? ` (Recharge ${action.recharge})` : ''}
-                  .{' '}
+                  {action.recharge ? ` (Recharge ${action.recharge})` : ''}.{' '}
                 </span>
                 {(action.toHit !== undefined || action.saveDC) && (
                   <span className="text-cyan-400/70 text-[10px]">
                     [{action.toHit !== undefined ? `+${action.toHit}` : `DC ${action.saveDC}`}
                     {action.damageDice ? ` ${action.damageDice}` : ''}
-                    {action.damageType ? ` ${action.damageType}` : ''}]
-                    {' '}
+                    {action.damageType ? ` ${action.damageType}` : ''}]{' '}
                   </span>
                 )}
                 {conditions.length > 0 && (
                   <span className="text-red-400/80 text-[10px]">
-                    [{conditions.map(c => c.condition).join(', ')}]
-                    {' '}
+                    [{conditions.map((c) => c.condition).join(', ')}]{' '}
                   </span>
                 )}
                 <span className="text-gray-300">{action.description}</span>

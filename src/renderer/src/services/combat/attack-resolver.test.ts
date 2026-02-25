@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { findWeapon, resolveAttack, formatAttackResult } from './attack-resolver'
-import { rollSingle, rollMultiple } from '../dice/dice-service'
-import type { WeaponEntry } from '../../types/character-common'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Character5e } from '../../types/character-5e'
+import type { WeaponEntry } from '../../types/character-common'
 import type { MapToken } from '../../types/map'
+import { rollMultiple, rollSingle } from '../dice/dice-service'
+import { findWeapon, formatAttackResult, resolveAttack } from './attack-resolver'
 
 // ─── Mock dependencies ───────────────────────────────────────
 
@@ -200,7 +200,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 13, resistances: [], immunities: [], vulnerabilities: []
+      ac: 13,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -224,7 +227,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 25, resistances: [], immunities: [], vulnerabilities: []
+      ac: 25,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -246,7 +252,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 30, resistances: [], immunities: [], vulnerabilities: []
+      ac: 30,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -269,7 +278,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 1, resistances: [], immunities: [], vulnerabilities: []
+      ac: 1,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -289,7 +301,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 10, resistances: [], immunities: [], vulnerabilities: []
+      ac: 10,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -333,7 +348,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 20,
       gridY: 0, // 20 cells = 100ft → long range for shortbow
-      ac: 13, resistances: [], immunities: [], vulnerabilities: []
+      ac: 13,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -352,7 +370,10 @@ describe('resolveAttack', () => {
       label: 'Fire Elemental',
       gridX: 6,
       gridY: 5,
-      ac: 10, resistances: [], immunities: ['fire'], vulnerabilities: []
+      ac: 10,
+      resistances: [],
+      immunities: ['fire'],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -371,7 +392,10 @@ describe('resolveAttack', () => {
       label: 'Red Dragon',
       gridX: 6,
       gridY: 5,
-      ac: 10, resistances: ['fire'], immunities: [], vulnerabilities: []
+      ac: 10,
+      resistances: ['fire'],
+      immunities: [],
+      vulnerabilities: []
     })
 
     mockedRollMultiple.mockReturnValue([4, 4]) // 8 damage + 3 STR = 11
@@ -396,7 +420,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 25, resistances: [], immunities: [], vulnerabilities: []
+      ac: 25,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)
@@ -419,7 +446,10 @@ describe('resolveAttack', () => {
       label: 'Goblin',
       gridX: 6,
       gridY: 5,
-      ac: 10, resistances: [], immunities: [], vulnerabilities: []
+      ac: 10,
+      resistances: [],
+      immunities: [],
+      vulnerabilities: []
     })
 
     const result = resolveAttack(char, weapon, attacker, target)

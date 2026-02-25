@@ -1,4 +1,4 @@
-import { useGameStore } from '../../stores/useGameStore'
+import { useGameStore } from '../../stores/use-game-store'
 import { findTokenByName } from './helpers'
 import type { ChatCommand } from './types'
 

@@ -1,16 +1,16 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { memo, useEffect, useRef, useState } from 'react'
 import { type CommandContext, executeCommand } from '../../../services/chat-commands'
-import { useAiDmStore } from '../../../stores/useAiDmStore'
-import type { ChatMessage } from '../../../stores/useLobbyStore'
-import { useLobbyStore } from '../../../stores/useLobbyStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { useAiDmStore } from '../../../stores/use-ai-dm-store'
+import type { ChatMessage } from '../../../stores/use-lobby-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Campaign } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
-import DiceResult from '../dice3d/DiceResult'
 import { trigger3dDice } from '../dice3d'
+import DiceResult from '../dice3d/DiceResult'
 import SkillRollButton from '../player/SkillRollButton'
 import CommandAutocomplete from './CommandAutocomplete'
 
@@ -53,9 +53,7 @@ const BottomChatMessage = memo(function BottomChatMessage({
     )
   }
   if (msg.isSystem) {
-    return (
-      <div className="text-sm text-gray-400 text-center py-0.5 font-sans">{msg.content}</div>
-    )
+    return <div className="text-sm text-gray-400 text-center py-0.5 font-sans">{msg.content}</div>
   }
   return (
     <div className="py-0.5">
@@ -80,7 +78,7 @@ interface ChatPanelProps {
 export default function ChatPanel({
   isDM,
   playerName,
-  campaign,
+  campaign: _campaign,
   character,
   collapsed,
   onOpenModal,

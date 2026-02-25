@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import { Button } from '../ui'
 import { logger } from '../../utils/logger'
+import { Button } from '../ui'
 
 type AudioCategory = 'ambient' | 'effect' | 'music'
 
@@ -37,9 +37,7 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
   const handleFilesAdded = useCallback(
     (files: FileList | File[]) => {
       const fileArray = Array.from(files)
-      const audioFiles = fileArray.filter((f) =>
-        /\.(mp3|ogg|wav|webm|m4a)$/i.test(f.name)
-      )
+      const audioFiles = fileArray.filter((f) => /\.(mp3|ogg|wav|webm|m4a)$/i.test(f.name))
 
       for (const file of audioFiles) {
         const entry: CustomAudioEntry = {
@@ -105,18 +103,14 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
 
   const handleDisplayNameChange = useCallback(
     (id: string, newName: string) => {
-      onChange(
-        audioEntries.map((e) => (e.id === id ? { ...e, displayName: newName } : e))
-      )
+      onChange(audioEntries.map((e) => (e.id === id ? { ...e, displayName: newName } : e)))
     },
     [audioEntries, onChange]
   )
 
   const handleCategoryChange = useCallback(
     (id: string, newCategory: AudioCategory) => {
-      onChange(
-        audioEntries.map((e) => (e.id === id ? { ...e, category: newCategory } : e))
-      )
+      onChange(audioEntries.map((e) => (e.id === id ? { ...e, category: newCategory } : e)))
     },
     [audioEntries, onChange]
   )
@@ -147,8 +141,8 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
     <div>
       <h2 className="text-xl font-semibold mb-2">Custom Audio</h2>
       <p className="text-gray-400 text-sm mb-6">
-        Upload custom ambient tracks, sound effects, and music for your campaign. This step is
-        optional and you can add more later from the DM Audio Panel.
+        Upload custom ambient tracks, sound effects, and music for your campaign. This step is optional and you can add
+        more later from the DM Audio Panel.
       </p>
 
       <div className="max-w-2xl">
@@ -158,16 +152,12 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors mb-6 ${
-            isDragOver
-              ? 'border-amber-500 bg-amber-500/10'
-              : 'border-gray-700 hover:border-gray-600'
+            isDragOver ? 'border-amber-500 bg-amber-500/10' : 'border-gray-700 hover:border-gray-600'
           }`}
         >
           <div className="text-3xl text-gray-500 mb-2">{'\u266B'}</div>
           <p className="text-gray-300 mb-1">Drag and drop audio files here</p>
-          <p className="text-gray-500 text-sm mb-4">
-            Supported formats: MP3, OGG, WAV, WebM, M4A
-          </p>
+          <p className="text-gray-500 text-sm mb-4">Supported formats: MP3, OGG, WAV, WebM, M4A</p>
           <Button variant="secondary" onClick={handleBrowseClick}>
             Browse Files
           </Button>
@@ -213,9 +203,7 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
                 {/* Category dropdown */}
                 <select
                   value={entry.category}
-                  onChange={(e) =>
-                    handleCategoryChange(entry.id, e.target.value as AudioCategory)
-                  }
+                  onChange={(e) => handleCategoryChange(entry.id, e.target.value as AudioCategory)}
                   className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
                 >
                   {CATEGORIES.map((cat) => (
@@ -226,9 +214,7 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
                 </select>
 
                 {/* Category badge */}
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${CATEGORY_COLORS[entry.category]}`}
-                >
+                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${CATEGORY_COLORS[entry.category]}`}>
                   {entry.category}
                 </span>
 
@@ -247,8 +233,7 @@ export default function AudioStep({ audioEntries, onChange }: AudioStepProps): J
 
         {audioEntries.length === 0 && (
           <p className="text-gray-500 text-sm mt-2">
-            No custom audio files added. You can skip this step or add audio later from the DM
-            toolbar during gameplay.
+            No custom audio files added. You can skip this step or add audio later from the DM toolbar during gameplay.
           </p>
         )}
       </div>

@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import { rollSingle } from '../../../services/dice/dice-service'
 import type { ShopItem, ShopItemCategory } from '../../../network/types'
-import { useCharacterStore } from '../../../stores/useCharacterStore'
-import { useGameStore } from '../../../stores/useGameStore'
-import { useNetworkStore } from '../../../stores/useNetworkStore'
+import { rollSingle } from '../../../services/dice/dice-service'
+import { useCharacterStore } from '../../../stores/use-character-store'
+import { useGameStore } from '../../../stores/use-game-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
 
@@ -57,16 +57,14 @@ function cpToPrice(cp: number): ShopItem['price'] {
 function canAfford(character: Character, price: ShopItem['price']): boolean {
   const treasure = is5eCharacter(character) ? character.treasure : null
   if (!treasure) return false
-  const charTotal =
-    (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
+  const charTotal = (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
   return charTotal >= priceInCp(price)
 }
 
 function deductCurrency(character: Character, price: ShopItem['price']): Character {
   if (!is5eCharacter(character)) return character
   const treasure = { ...character.treasure }
-  let totalCp =
-    (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
+  let totalCp = (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
   totalCp -= priceInCp(price)
   treasure.pp = Math.floor(totalCp / 1000)
   totalCp %= 1000
@@ -81,8 +79,7 @@ function deductCurrency(character: Character, price: ShopItem['price']): Charact
 function addCurrency(character: Character, price: ShopItem['price']): Character {
   if (!is5eCharacter(character)) return character
   const treasure = { ...character.treasure }
-  let totalCp =
-    (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
+  let totalCp = (treasure.pp ?? 0) * 1000 + (treasure.gp ?? 0) * 100 + (treasure.sp ?? 0) * 10 + (treasure.cp ?? 0)
   totalCp += priceInCp(price)
   treasure.pp = Math.floor(totalCp / 1000)
   totalCp %= 1000
@@ -96,7 +93,12 @@ function addCurrency(character: Character, price: ShopItem['price']): Character 
 
 export default function ShopView(): JSX.Element | null {
   const { shopOpen, shopName, shopInventory, closeShop } = useGameStore(
-    useShallow((s) => ({ shopOpen: s.shopOpen, shopName: s.shopName, shopInventory: s.shopInventory, closeShop: s.closeShop }))
+    useShallow((s) => ({
+      shopOpen: s.shopOpen,
+      shopName: s.shopName,
+      shopInventory: s.shopInventory,
+      closeShop: s.closeShop
+    }))
   )
   const characters = useCharacterStore((s) => s.characters)
   const saveCharacter = useCharacterStore((s) => s.saveCharacter)
@@ -235,8 +237,7 @@ export default function ShopView(): JSX.Element | null {
       : 'N/A'
 
   // Sellable equipment from character
-  const sellableItems =
-    localChar && is5eCharacter(localChar) ? localChar.equipment.filter((e) => e.quantity > 0) : []
+  const sellableItems = localChar && is5eCharacter(localChar) ? localChar.equipment.filter((e) => e.quantity > 0) : []
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
@@ -302,10 +303,7 @@ export default function ShopView(): JSX.Element | null {
                 const isOutOfStock = item.stockRemaining !== undefined && item.stockRemaining <= 0
                 const canHaggle = !haggleDisabledItems.has(item.id) && hagglePending !== item.id
                 return (
-                  <div
-                    key={item.id}
-                    className="bg-gray-800/50 rounded px-2 py-1.5"
-                  >
+                  <div key={item.id} className="bg-gray-800/50 rounded px-2 py-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -314,9 +312,7 @@ export default function ShopView(): JSX.Element | null {
                             <span className="text-[9px] text-purple-400 shrink-0">({item.rarity})</span>
                           )}
                         </div>
-                        {item.description && (
-                          <p className="text-[10px] text-gray-500 truncate">{item.description}</p>
-                        )}
+                        {item.description && <p className="text-[10px] text-gray-500 truncate">{item.description}</p>}
                       </div>
                       <div className="flex items-center gap-1.5 ml-2 shrink-0">
                         <span className="text-xs text-amber-400">{formatPrice(item.price)}</span>
@@ -365,9 +361,7 @@ export default function ShopView(): JSX.Element | null {
             <p className="text-xs text-gray-500 text-center py-3">No items to sell</p>
           ) : (
             sellableItems.map((item, idx) => {
-              const shopRef = shopInventory.find(
-                (si) => si.name.toLowerCase() === item.name.toLowerCase()
-              )
+              const shopRef = shopInventory.find((si) => si.name.toLowerCase() === item.name.toLowerCase())
               const baseCp = shopRef ? priceInCp(shopRef.price) : 100
               const sellPrice = cpToPrice(Math.floor(baseCp * 0.5))
               return (
@@ -417,9 +411,7 @@ export default function ShopView(): JSX.Element | null {
                   </span>
                   <span className="text-xs text-gray-300">{tx.itemName}</span>
                 </div>
-                <div className="text-[10px] text-gray-500">
-                  {tx.result ?? formatPrice(tx.price)}
-                </div>
+                <div className="text-[10px] text-gray-500">{tx.result ?? formatPrice(tx.price)}</div>
               </div>
             ))
           )}

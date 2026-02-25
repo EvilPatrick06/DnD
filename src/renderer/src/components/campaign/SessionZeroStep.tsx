@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { CustomRule } from '../../types/campaign'
 import sessionZeroJson from '../../../public/data/5e/world/session-zero-config.json'
+import type { CustomRule } from '../../types/campaign'
 
 export interface SessionZeroData {
   contentLimits: string[]
@@ -35,7 +35,12 @@ interface SessionZeroStepProps {
   onRulesChange: (rules: CustomRule[]) => void
 }
 
-export default function SessionZeroStep({ data, onChange, customRules, onRulesChange }: SessionZeroStepProps): JSX.Element {
+export default function SessionZeroStep({
+  data,
+  onChange,
+  customRules,
+  onRulesChange
+}: SessionZeroStepProps): JSX.Element {
   const [customLimit, setCustomLimit] = useState('')
   const [showRuleForm, setShowRuleForm] = useState(false)
   const [newRuleName, setNewRuleName] = useState('')
@@ -115,9 +120,7 @@ export default function SessionZeroStep({ data, onChange, customRules, onRulesCh
       {/* Content Limits */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">Content Limits & Triggers</label>
-        <p className="text-xs text-gray-500 mb-2">
-          Select topics that should be avoided or handled carefully.
-        </p>
+        <p className="text-xs text-gray-500 mb-2">Select topics that should be avoided or handled carefully.</p>
         <div className="grid grid-cols-3 gap-1.5">
           {COMMON_LIMITS.map((limit) => (
             <label
@@ -219,9 +222,7 @@ export default function SessionZeroStep({ data, onChange, customRules, onRulesCh
       {/* House Rules */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">House Rules</label>
-        <p className="text-xs text-gray-500 mb-2">
-          Add custom house rules for your campaign. You can add more later.
-        </p>
+        <p className="text-xs text-gray-500 mb-2">Add custom house rules for your campaign. You can add more later.</p>
 
         {customRules.length > 0 && (
           <div className="space-y-2 mb-3">

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../../constants/app-constants'
-import { addToast } from '../../hooks/useToast'
+import { addToast } from '../../hooks/use-toast'
 import { exportCampaignToFile } from '../../services/io/campaign-io'
-import { useCampaignStore } from '../../stores/useCampaignStore'
+import { useCampaignStore } from '../../stores/use-campaign-store'
 import type { Campaign } from '../../types/campaign'
 import { ConfirmDialog } from '../ui'
 
@@ -80,9 +80,7 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
 
   const lastHostedCampaign =
     campaigns.length > 0
-      ? [...campaigns].sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )[0]
+      ? [...campaigns].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
       : null
 
   const lastHostedTime = lastHostedCampaign ? new Date(lastHostedCampaign.updatedAt).getTime() : 0
@@ -275,8 +273,7 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
                       {session.campaignName || 'Unknown Campaign'}
                     </span>
                     <div className="text-[10px] text-gray-500 mt-0.5">
-                      Code:{' '}
-                      <span className="font-mono text-gray-400">{maskInviteCode(session.inviteCode)}</span>
+                      Code: <span className="font-mono text-gray-400">{maskInviteCode(session.inviteCode)}</span>
                       <span className="mx-1.5">&middot;</span>
                       as {session.displayName}
                       <span className="mx-1.5">&middot;</span>
@@ -316,9 +313,7 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
       {showHosted && (
         <div className="border border-gray-700 rounded-xl overflow-hidden mb-6">
           {campaigns.length === 0 ? (
-            <div className="px-6 py-8 text-center text-gray-500 text-sm">
-              No hosted campaigns. Create one first!
-            </div>
+            <div className="px-6 py-8 text-center text-gray-500 text-sm">No hosted campaigns. Create one first!</div>
           ) : (
             <div>
               <div className="px-4 py-2 flex justify-end border-b border-gray-800">

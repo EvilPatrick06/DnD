@@ -70,7 +70,11 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
                 </button>
               </>
             )}
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer" aria-label="Close">
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
+              aria-label="Close"
+            >
               &times;
             </button>
           </div>
@@ -102,9 +106,7 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
             </div>
           ) : (
             <div className="p-4 overflow-y-auto h-full">
-              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
-                {handout.content}
-              </p>
+              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{handout.content}</p>
             </div>
           )}
         </div>

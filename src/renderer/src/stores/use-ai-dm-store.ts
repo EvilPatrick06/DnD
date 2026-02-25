@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
-import { useLobbyStore } from './useLobbyStore'
 import type { Campaign } from '../types/campaign'
+import { useLobbyStore } from './use-lobby-store'
 
 interface AiStatChange {
   type: string
@@ -31,7 +31,6 @@ interface PendingActionSet {
 interface AiDmState {
   // Config
   enabled: boolean
-  provider: 'claude' | 'ollama'
   paused: boolean
 
   // DM approval gating
@@ -95,7 +94,6 @@ interface AiDmState {
 
 export const useAiDmStore = create<AiDmState>((set, get) => ({
   enabled: false,
-  provider: 'claude',
   paused: false,
   dmApprovalRequired: false,
   pendingActions: null,
@@ -120,8 +118,8 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
   approvePendingActions: () => {
     const { pendingActions } = get()
     if (!pendingActions) return
-    // Execute the pending actions via dm-action-executor with bypassApproval
-    import('../services/dm-action-executor').then(({ executeDmActions }) => {
+    // Execute the pending actions via game-action-executor with bypassApproval
+    import('../services/game-action-executor').then(({ executeDmActions }) => {
       executeDmActions(pendingActions.actions, true)
     })
     set({ pendingActions: null })
@@ -153,7 +151,6 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
 
     set({
       enabled: true,
-      provider: aiDm.provider,
       paused: false,
       messages: [],
       // Preserve stream state if scene prep is active
@@ -283,7 +280,6 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     }
     set({
       enabled: false,
-      provider: 'claude',
       paused: false,
       messages: [],
       sceneStatus: 'idle',
