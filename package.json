@@ -1,6 +1,6 @@
 {
   "name": "dnd-vtt",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
   "main": "./out/main/index.js",
   "scripts": {
@@ -37,12 +37,18 @@
       "output": "dist"
     },
     "extraResources": [
-      { "from": "resources/icon.ico", "to": "icon.ico" },
-      { "from": "resources/icon.png", "to": "icon.png" },
-      { "from": "5.5e References/PHB2024/markdown", "to": "rulebooks/PHB" },
-      { "from": "5.5e References/DMG2024/markdown", "to": "rulebooks/DMG" },
-      { "from": "5.5e References/MM2025/Markdown", "to": "rulebooks/MM" },
-      { "from": "resources/chunk-index.json", "to": "chunk-index.json" }
+      {
+        "from": "resources/icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      },
+      {
+        "from": "resources/chunk-index.json",
+        "to": "chunk-index.json"
+      }
     ],
     "files": [
       "!**/.vscode/*",
@@ -75,7 +81,9 @@
       "legalTrademarks": "D&D Virtual Tabletop",
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": true,
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "nsis": {
       "artifactName": "${name}-${version}-setup.${ext}",
@@ -106,16 +114,24 @@
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
     "electron-vite": "^5.0.0",
-"rollup-plugin-visualizer": "^6.0.5",
+    "jscpd": "^4.0.8",
+    "knip": "^5.85.0",
+    "license-checker": "^25.0.1",
+    "lockfile-lint": "^5.0.0",
+    "madge": "^8.0.0",
+    "npm-check-updates": "^19.5.0",
+    "oxlint": "^1.50.0",
+    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
+    "ts-prune": "^0.10.3",
     "tsx": "^4.21.0",
+    "type-coverage": "^2.29.7",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.77.0",
-    "@livekit/components-react": "^2.9.19",
+    "@aws-sdk/client-s3": "^3.997.0",
     "@pixi/react": "^8.0.5",
     "@tanstack/react-virtual": "^3.13.18",
     "@tiptap/extension-image": "^3.20.0",
@@ -126,7 +142,6 @@
     "@tiptap/starter-kit": "^3.20.0",
     "cannon-es": "^0.20.0",
     "electron-updater": "^6.8.3",
-    "livekit-client": "^2.17.1",
     "peerjs": "^1.5.5",
     "pixi.js": "^8.16.0",
     "react": "^19.2.4",

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ConfirmDialog } from '../components/ui'
-import { addToast } from '../hooks/useToast'
+import { addToast } from '../hooks/use-toast'
 import { exportAllData, importAllData } from '../services/io/import-export'
 import { logger } from '../utils/logger'
 
@@ -14,8 +14,7 @@ const FEATURES = [
   'Initiative Tracker with surprise rules',
   '3D Dice with physics engine (Three.js + cannon-es)',
   'P2P Multiplayer via WebRTC',
-  'Voice Chat with spatial audio (LiveKit)',
-  'AI Dungeon Master (Claude API / Ollama)',
+  'AI Dungeon Master (Ollama)',
   'Bastion System (2024 DMG rules)',
   'Crafting System, Shop System',
   'NPC/Monster/Creature Management with stat blocks',
@@ -42,7 +41,6 @@ const TECH_STACK = [
   { name: 'PixiJS 8', detail: 'Map rendering' },
   { name: 'Three.js', detail: '3D dice physics' },
   { name: 'TipTap', detail: 'Rich text editor' },
-  { name: 'LiveKit', detail: 'Voice chat' },
   { name: 'Vitest', detail: 'Testing framework' },
   { name: 'electron-vite', detail: 'Build tooling' }
 ]
@@ -52,9 +50,7 @@ export default function AboutPage(): JSX.Element {
   const [updateStatus, setUpdateStatus] = useState<
     'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error'
   >('idle')
-  const [appVersion, setAppVersion] = useState(
-    typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'
-  )
+  const [appVersion, setAppVersion] = useState(typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0')
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [downloadPercent, setDownloadPercent] = useState(0)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -81,8 +77,7 @@ export default function AboutPage(): JSX.Element {
       } else if (status.state === 'error') {
         setUpdateStatus('error')
         if (status.message) setErrorMsg(status.message)
-      }
-      else if (status.state === 'checking') setUpdateStatus('checking')
+      } else if (status.state === 'checking') setUpdateStatus('checking')
     })
     return () => {
       window.api.update.removeStatusListener()
@@ -100,7 +95,7 @@ export default function AboutPage(): JSX.Element {
         )
       }
     } catch (err) {
-      console.error('Export all failed:', err)
+      logger.error('Export all failed:', err)
       addToast('Failed to export data', 'error')
     } finally {
       setExporting(false)
@@ -294,7 +289,7 @@ export default function AboutPage(): JSX.Element {
             </div>
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase mb-1">Built with</div>
-              <div className="text-sm text-gray-300">Claude Code by Anthropic</div>
+              <div className="text-sm text-gray-300">Developed with Cursor AI</div>
             </div>
           </div>
         </div>
