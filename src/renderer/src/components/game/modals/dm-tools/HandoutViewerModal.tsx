@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import type { Handout } from '../../../../types/game-state'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { Handout, HandoutPage } from '../../../../types/game-state'
 
 interface HandoutViewerModalProps {
   handout: Handout
@@ -10,8 +10,20 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
+  const [activePage, setActivePage] = useState(0)
   const dragStart = useRef({ x: 0, y: 0 })
   const offsetStart = useRef({ x: 0, y: 0 })
+
+  // Filter out dmOnly pages (DM strips them before sharing)
+  const visiblePages = useMemo<HandoutPage[]>(() => {
+    if (!handout.pages || handout.pages.length === 0) return []
+    return handout.pages.filter((p) => !p.dmOnly)
+  }, [handout.pages])
+
+  const hasPages = visiblePages.length > 0
+  const currentPage = hasPages ? visiblePages[Math.min(activePage, visiblePages.length - 1)] : null
+  const activeContentType = currentPage ? currentPage.contentType : handout.contentType
+  const activeContent = currentPage ? currentPage.content : handout.content
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.stopPropagation()
@@ -59,7 +71,7 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
         <div className="flex items-center justify-between mb-3 shrink-0">
           <h3 className="text-sm font-semibold text-gray-200 truncate">{handout.title}</h3>
           <div className="flex items-center gap-2">
-            {handout.contentType === 'image' && (
+            {activeContentType === 'image' && (
               <>
                 <span className="text-[10px] text-gray-500">{Math.round(scale * 100)}%</span>
                 <button
@@ -80,21 +92,43 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
           </div>
         </div>
 
+        {/* Page tabs */}
+        {hasPages && (
+          <div className="flex gap-0.5 mb-2 shrink-0 overflow-x-auto">
+            {visiblePages.map((page, idx) => (
+              <button
+                key={page.id}
+                onClick={() => {
+                  setActivePage(idx)
+                  resetView()
+                }}
+                className={`px-3 py-1 text-[10px] font-medium rounded-t-lg whitespace-nowrap cursor-pointer transition-colors ${
+                  activePage === idx
+                    ? 'bg-amber-600/25 border border-b-0 border-amber-500/50 text-amber-300'
+                    : 'bg-gray-800/40 border border-b-0 border-gray-700/30 text-gray-400 hover:bg-gray-700/40'
+                }`}
+              >
+                {page.label || `Page ${idx + 1}`}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Content */}
         <div
           className={`flex-1 overflow-hidden rounded-lg border border-gray-700/40 bg-gray-800/50 min-h-0 ${
-            handout.contentType === 'image' ? 'cursor-grab active:cursor-grabbing' : ''
+            activeContentType === 'image' ? 'cursor-grab active:cursor-grabbing' : ''
           }`}
-          onWheel={handout.contentType === 'image' ? handleWheel : undefined}
+          onWheel={activeContentType === 'image' ? handleWheel : undefined}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {handout.contentType === 'image' ? (
+          {activeContentType === 'image' ? (
             <div className="w-full h-full flex items-center justify-center overflow-hidden select-none">
               <img
-                src={handout.content}
+                src={activeContent}
                 alt={handout.title}
                 draggable={false}
                 className="max-w-none"
@@ -106,7 +140,7 @@ export default function HandoutViewerModal({ handout, onClose }: HandoutViewerMo
             </div>
           ) : (
             <div className="p-4 overflow-y-auto h-full">
-              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{handout.content}</p>
+              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{activeContent}</p>
             </div>
           )}
         </div>

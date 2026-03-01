@@ -17,48 +17,30 @@ import type { Character5e } from '../../types/character-5e'
 import type { WeaponEntry } from '../../types/character-common'
 import type { MapToken } from '../../types/map'
 import { rollMultiple, rollSingle } from '../dice/dice-service'
+import { pluginEventBus } from '../plugin-system/event-bus'
+import { getWeatherEffects, type WeatherType } from '../weather-mechanics'
 import { getAttackConditionEffects } from './attack-condition-effects'
-import type { CoverType, MasteryEffectResult } from './combat-rules'
+import { formatAttackResult } from './attack-formatter'
+import { applyDamageToToken, buildAttackSummary, doubleDiceInFormula, rollDamage } from './attack-helpers'
+import type { AttackOptions, AttackResult } from './attack-types'
+import type { MasteryEffectResult } from './combat-rules'
 import { checkRangedRange, getCoverACBonus, getMasteryEffect, isAdjacent, isInMeleeRange } from './combat-rules'
 import { calculateCover } from './cover-calculator'
 import type { DamageResolutionSummary } from './damage-resolver'
 import { resolveDamage } from './damage-resolver'
 import type { WeaponContext } from './effect-resolver-5e'
 import { resolveEffects } from './effect-resolver-5e'
+import { resolveUnarmedStrike as resolveUnarmedStrikeBase } from './unarmed-strike-resolver'
+
+// Re-export orphan utilities so consumers can access them through this module
+export { formatAttackResult, applyDamageToToken, buildAttackSummary, doubleDiceInFormula, rollDamage }
+
+// Re-export base unarmed strike resolver for consumers that do not need weather support
+export { resolveUnarmedStrikeBase }
 
 // ─── Types ────────────────────────────────────────────────────
 
-export interface AttackResult {
-  attackerName: string
-  targetName: string
-  weaponName: string
-  attackRoll: number
-  attackTotal: number
-  targetAC: number
-  coverType: CoverType
-  coverACBonus: number
-  isHit: boolean
-  isCrit: boolean
-  isFumble: boolean
-  rollMode: 'advantage' | 'disadvantage' | 'normal'
-  advantageSources: string[]
-  disadvantageSources: string[]
-  damageRolls: number[]
-  damageTotal: number
-  damageType: string
-  damageResolution: DamageResolutionSummary | null
-  masteryEffect: MasteryEffectResult | null
-  extraDamage: Array<{ dice: string; rolls: number[]; total: number; damageType: string }>
-  rangeCategory: 'melee' | 'normal' | 'long' | 'out-of-range'
-  exhaustionPenalty: number
-}
-
-export interface AttackOptions {
-  /** Override advantage (e.g., from Vex mastery carry-over) */
-  forceAdvantage?: boolean
-  /** Override disadvantage */
-  forceDisadvantage?: boolean
-}
+export type { AttackOptions, AttackResult } from './attack-types'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -148,6 +130,9 @@ function buildWeaponContext(weapon: WeaponEntry): WeaponContext {
 /**
  * Resolve an Unarmed Strike (damage option) per PHB 2024.
  *
+ * Extends the base implementation in unarmed-strike-resolver.ts with
+ * weather effect support (weatherDisadvantageRanged).
+ *
  * Attack roll: STR mod + proficiency bonus.
  * Damage: 1 + STR modifier (Bludgeoning).
  *
@@ -223,6 +208,9 @@ export function resolveUnarmedStrike(
   )
   const targetTurnState = gameState.turnStates[targetToken.entityId ?? targetToken.id]
 
+  const weatherPreset = gameState.weatherOverride?.preset as WeatherType | undefined
+  const weatherEffects = weatherPreset ? getWeatherEffects(weatherPreset) : null
+
   const conditionEffects = getAttackConditionEffects(attackerConditions, targetConditions, {
     isRanged: false,
     isWithin5ft: true,
@@ -231,7 +219,8 @@ export function resolveUnarmedStrike(
     targetEntityId: targetToken.entityId ?? targetToken.id,
     isUnderwater: gameState.underwaterCombat,
     weaponDamageType: 'bludgeoning',
-    attackerHasSwimSpeed: (character.speeds?.swim ?? 0) > 0
+    attackerHasSwimSpeed: (character.speeds?.swim ?? 0) > 0,
+    weatherDisadvantageRanged: weatherEffects?.disadvantageRanged ?? false
   })
 
   const advantageSources = [...conditionEffects.advantageSources]
@@ -423,6 +412,9 @@ export function resolveAttack(
 
   const targetTurnState = gameState.turnStates[targetToken.entityId ?? targetToken.id]
 
+  const weatherPresetMain = gameState.weatherOverride?.preset as WeatherType | undefined
+  const weatherEffectsMain = weatherPresetMain ? getWeatherEffects(weatherPresetMain) : null
+
   const conditionEffects = getAttackConditionEffects(attackerConditions, targetConditions, {
     isRanged: isRangedWeapon(weapon) && rangeCategory !== 'melee',
     isWithin5ft: adjacentToTarget,
@@ -431,7 +423,8 @@ export function resolveAttack(
     targetEntityId: targetToken.entityId ?? targetToken.id,
     isUnderwater: gameState.underwaterCombat,
     weaponDamageType: weapon.damageType,
-    attackerHasSwimSpeed: (character.speeds?.swim ?? 0) > 0
+    attackerHasSwimSpeed: (character.speeds?.swim ?? 0) > 0,
+    weatherDisadvantageRanged: weatherEffectsMain?.disadvantageRanged ?? false
   })
 
   // Add long range disadvantage
@@ -447,6 +440,18 @@ export function resolveAttack(
   }
   if (options.forceDisadvantage) {
     disadvantageSources.push('Forced disadvantage')
+  }
+
+  // Allow plugins to modify attack modifiers before the roll
+  if (pluginEventBus.hasSubscribers('combat:before-attack-roll')) {
+    pluginEventBus.emit('combat:before-attack-roll', {
+      attackerName: character.name,
+      targetName: targetToken.label,
+      weaponName: weapon.name,
+      totalAttackBonus,
+      advantageSources,
+      disadvantageSources
+    })
   }
 
   // Final roll mode
@@ -535,6 +540,25 @@ export function resolveAttack(
     )
   }
 
+  // Emit after-attack-roll event (read-only notification)
+  if (pluginEventBus.hasSubscribers('combat:after-attack-roll')) {
+    pluginEventBus.emit('combat:after-attack-roll', {
+      roll: attackRoll,
+      total: attackTotal,
+      hit: isHit,
+      crit: isCrit
+    })
+  }
+
+  // Emit after-damage event if damage was dealt
+  if (isHit && damageTotal > 0 && pluginEventBus.hasSubscribers('combat:after-damage')) {
+    pluginEventBus.emit('combat:after-damage', {
+      totalDamage: damageResolution?.totalFinalDamage ?? damageTotal,
+      damageType: weapon.damageType,
+      targetName: targetToken.label
+    })
+  }
+
   // ── 13. Apply weapon mastery ──
   let masteryEffect: MasteryEffectResult | null = null
   if (weapon.mastery) {
@@ -595,63 +619,4 @@ export function resolveAttack(
   }
 }
 
-/**
- * Format an AttackResult into a human-readable chat message.
- */
-export function formatAttackResult(result: AttackResult): string {
-  const lines: string[] = []
-
-  // Header
-  const critTag = result.isCrit ? ' **CRITICAL HIT!**' : ''
-  const fumbleTag = result.isFumble ? ' *Natural 1 — Miss!*' : ''
-  const hitMiss = result.isHit ? 'HIT' : 'MISS'
-
-  lines.push(`**${result.attackerName}** attacks **${result.targetName}** with **${result.weaponName}**`)
-
-  // Roll info
-  const rollModeTag = result.rollMode === 'advantage' ? ' (Adv)' : result.rollMode === 'disadvantage' ? ' (Dis)' : ''
-  lines.push(
-    `Attack: [${result.attackRoll}]${rollModeTag} + ${result.attackTotal - result.attackRoll} = **${result.attackTotal}** vs AC ${result.targetAC} — **${hitMiss}**${critTag}${fumbleTag}`
-  )
-
-  // Cover info
-  if (result.coverType !== 'none') {
-    lines.push(`Cover: ${result.coverType} (+${result.coverACBonus} AC)`)
-  }
-
-  // Damage
-  if (result.isHit || (result.masteryEffect?.grazeDamage !== undefined && result.damageTotal > 0)) {
-    const finalDmg = result.damageResolution?.totalFinalDamage ?? result.damageTotal
-    const dmgDetail = result.damageRolls.length > 0 ? ` [${result.damageRolls.join(', ')}]` : ''
-    lines.push(`Damage: **${finalDmg}** ${result.damageType}${dmgDetail}`)
-
-    // Extra damage from effects
-    for (const extra of result.extraDamage) {
-      lines.push(`  + ${extra.total} ${extra.damageType} [${extra.rolls.join(', ')}]`)
-    }
-
-    // Resistance/immunity/vulnerability notes
-    if (result.damageResolution) {
-      for (const r of result.damageResolution.results) {
-        if (r.reason) {
-          lines.push(`  (${r.reason})`)
-        }
-      }
-    }
-  }
-
-  // Weapon mastery
-  if (result.masteryEffect) {
-    lines.push(`Mastery (${result.masteryEffect.mastery}): ${result.masteryEffect.description}`)
-  }
-
-  // Advantage/disadvantage sources
-  if (result.advantageSources.length > 0) {
-    lines.push(`Advantage: ${result.advantageSources.join(', ')}`)
-  }
-  if (result.disadvantageSources.length > 0) {
-    lines.push(`Disadvantage: ${result.disadvantageSources.join(', ')}`)
-  }
-
-  return lines.join('\n')
-}
+// formatAttackResult is now imported from ./attack-formatter and re-exported above

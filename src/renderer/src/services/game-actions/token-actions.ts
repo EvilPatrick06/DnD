@@ -5,6 +5,7 @@
 import type { MapToken } from '../../types/map'
 import type { MonsterStatBlock } from '../../types/monster'
 import { getSizeTokenDimensions } from '../../types/monster'
+import { pluginEventBus } from '../plugin-system/event-bus'
 import { broadcastTokenSync } from './broadcast-helpers'
 import { resolveTokenByLabel } from './name-resolver'
 import type { ActiveMap, DmAction, GameStoreSnapshot, StoreAccessors } from './types'
@@ -59,6 +60,10 @@ export function executePlaceToken(
     gameStore.initTurnState(token.entityId, token.walkSpeed)
   }
   broadcastTokenSync(activeMap.id, stores)
+
+  if (pluginEventBus.hasSubscribers('map:token-placed')) {
+    pluginEventBus.emit('map:token-placed', { tokenId: token.id, label: token.label, gridX, gridY })
+  }
   return true
 }
 
@@ -77,6 +82,10 @@ export function executeMoveToken(
   gameStore.moveToken(activeMap.id, token.id, gridX, gridY)
   const sendMsg = stores.getNetworkStore().getState().sendMessage
   sendMsg('dm:token-move', { tokenId: token.id, gridX, gridY })
+
+  if (pluginEventBus.hasSubscribers('map:token-moved')) {
+    pluginEventBus.emit('map:token-moved', { tokenId: token.id, label: token.label, gridX, gridY })
+  }
   return true
 }
 
@@ -91,6 +100,10 @@ export function executeRemoveToken(
   if (!token) throw new Error(`Token not found: ${action.label}`)
   gameStore.removeToken(activeMap.id, token.id)
   broadcastTokenSync(activeMap.id, stores)
+
+  if (pluginEventBus.hasSubscribers('map:token-removed')) {
+    pluginEventBus.emit('map:token-removed', { tokenId: token.id, label: token.label })
+  }
   return true
 }
 
@@ -182,7 +195,8 @@ export function executePlaceCreature(
     resistances: creature.resistances,
     vulnerabilities: creature.vulnerabilities,
     immunities: creature.damageImmunities,
-    darkvision: !!(creature.senses.darkvision && creature.senses.darkvision > 0)
+    darkvision: !!(creature.senses.darkvision && creature.senses.darkvision > 0),
+    darkvisionRange: creature.senses.darkvision || undefined
   }
   gameStore.addToken(activeMap.id, token)
 

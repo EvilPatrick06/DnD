@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { logger } from '../utils/logger'
 
 /**
  * Generic hook for loading equipment data on mount.
@@ -13,7 +14,7 @@ export function useEquipmentData<T>(loader: () => Promise<T>, initial: T): T {
   useEffect(() => {
     loader()
       .then(setData)
-      .catch(() => {})
+      .catch((e) => logger.warn('[useEquipmentData] Failed to load equipment data', e))
   }, [])
   return data
 }

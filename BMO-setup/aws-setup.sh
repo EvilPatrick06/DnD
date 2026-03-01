@@ -95,7 +95,11 @@ python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
 pip install --upgrade pip setuptools wheel
-pip install -r "$APP_DIR/requirements.txt"
+if [ -f "$APP_DIR/requirements.txt" ]; then
+    pip install -r "$APP_DIR/requirements.txt"
+else
+    echo "  ⚠ requirements.txt not found — install deps after copying app files"
+fi
 
 echo "  ✓ Python venv ready"
 
@@ -166,7 +170,14 @@ systemctl daemon-reload
 systemctl enable ai-server
 systemctl start ai-server
 
-echo "  ✓ ai-server.service running"
+# Verify service started
+for i in {1..10}; do
+    if systemctl is-active ai-server &>/dev/null; then
+        echo "  ✓ ai-server.service running"; break
+    fi
+    sleep 1
+done
+systemctl is-active ai-server &>/dev/null || echo "  ⚠ ai-server may not have started — check: journalctl -u ai-server"
 
 # ── 8b. Log Rotation ────────────────────────────────────────────────────
 echo "→ [8b] Configuring logrotate for ai-server..."
@@ -187,6 +198,21 @@ cat > /etc/logrotate.d/ai-server << 'LOGROTATE'
 LOGROTATE
 
 echo "  ✓ logrotate configured (14-day retention, compressed)"
+
+# ── 8c. Visual Studio Code ────────────────────────────────────────────
+echo "→ [8c] Installing Visual Studio Code..."
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /tmp/ms.gpg
+install -o root -g root -m 644 /tmp/ms.gpg /usr/share/keyrings/microsoft-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/code stable main" | tee /etc/apt/sources.list.d/vscode.list
+apt-get update -qq && apt-get install -y -qq code
+rm -f /tmp/ms.gpg
+echo "  ✓ VS Code installed (use 'code tunnel' for remote access)"
+
+# ── 8d. DnD Project Directory ─────────────────────────────────────────
+echo "→ [8d] Setting up DnD project directory..."
+mkdir -p /opt/dnd-project
+chown $SUDO_USER:$SUDO_USER /opt/dnd-project 2>/dev/null || true
+echo "  ✓ /opt/dnd-project ready for initial file copy"
 
 # ── 9. Nginx + TLS ──────────────────────────────────────────────────────
 echo "→ [9/10] Configuring Nginx + Let's Encrypt TLS..."
@@ -300,23 +326,35 @@ echo "  ✓ Spot monitor running"
 cat > /opt/ai-server/user-data-template.sh << 'USERDATA'
 #!/bin/bash
 # EC2 User Data — runs on every spot instance boot
-# Reattaches persistent EBS volume and starts services
+# Finds EBS volume by tag (no hardcoded ID needed) and reattaches
 
-VOLUME_ID="vol-XXXXXXXXX"  # Replace with your EBS volume ID
 DEVICE="/dev/xvdf"
 MOUNT="/opt/ai-server"
-REGION="us-east-1"
 
-# Wait for instance metadata
-sleep 10
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+# Get instance metadata (IMDSv2)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/placement/availability-zone)
+REGION="${AZ%?}"  # Strip AZ letter to get region
+
+# Find volume by tag instead of hardcoded ID
+VOLUME_ID=$(aws ec2 describe-volumes \
+    --filters "Name=tag:Name,Values=bmo-ai-data" "Name=availability-zone,Values=$AZ" \
+    --query "Volumes[0].VolumeId" --output text --region "$REGION" 2>/dev/null)
+
+if [ -z "$VOLUME_ID" ] || [ "$VOLUME_ID" = "None" ]; then
+    echo "ERROR: No EBS volume with tag 'bmo-ai-data' found in $AZ"
+    exit 1
+fi
 
 # Attach EBS volume if not already attached
 if ! lsblk | grep -q xvdf; then
     aws ec2 attach-volume --volume-id "$VOLUME_ID" --instance-id "$INSTANCE_ID" \
         --device "$DEVICE" --region "$REGION"
 
-    # Wait for attachment
     for i in {1..30}; do
         if lsblk | grep -q xvdf; then break; fi
         sleep 5
@@ -352,11 +390,23 @@ echo "  Models:"
 nvidia-smi --query-gpu=gpu_name,memory.total --format=csv,noheader 2>/dev/null || echo "    (GPU info unavailable)"
 ollama list 2>/dev/null || echo "    (Ollama models loading)"
 echo ""
-echo "  Next steps:"
-echo "    1. Copy Modelfile + ai_server.py to $APP_DIR/"
-echo "    2. Copy BMO voice references to $DATA_DIR/voices/bmo/"
-echo "    3. Copy NPC voice references to $DATA_DIR/voices/npc/"
-echo "    4. Copy/build RAG indexes to $DATA_DIR/rag_data/"
-echo "    5. Run: ollama create bmo -f $APP_DIR/Modelfile"
-echo "    6. Restart: systemctl restart ai-server"
+echo "  Next steps (run from Windows Git Bash):"
+echo "    1. Deploy everything with one command:"
+echo "       cd /c/Users/evilp/dnd/BMO-setup && bash bmo.sh deploy aws"
+echo ""
+echo "    Or manually:"
+echo "    2. Copy Modelfile + ai_server.py to $APP_DIR/"
+echo "    3. Copy BMO voice references to $DATA_DIR/voices/bmo/"
+echo "    4. Copy NPC voice references to $DATA_DIR/voices/npc/"
+echo "    5. Copy/build RAG indexes to $DATA_DIR/rag_data/"
+echo "    6. Run: ollama create bmo -f $APP_DIR/Modelfile"
+echo "    7. Restart: systemctl restart ai-server"
+echo ""
+echo "    VS Code Remote-SSH setup:"
+echo "    8. Add to ~/.ssh/config on Pi and laptop:"
+echo "         Host aws-dev"
+echo "             HostName <ec2-ip>"
+echo "             User ubuntu"
+echo "             IdentityFile ~/.ssh/aws-key.pem"
+echo "    9. VS Code: Ctrl+Shift+P → Remote-SSH: Connect → aws-dev → /opt/dnd-project"
 echo "═══════════════════════════════════════════════════════"

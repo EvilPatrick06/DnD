@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand'
 import type { MapToken } from '../../types/map'
+import { logger } from '../../utils/logger'
 import type { GameStoreState, MapTokenSliceState } from './types'
 
 export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenSliceState> = (set, get) => ({
@@ -41,8 +42,12 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
   },
 
   updateToken: (mapId: string, tokenId: string, updates: Partial<MapToken>) => {
-    set((state) => ({
-      maps: state.maps.map((m) =>
+    const state = get()
+    const map = state.maps.find((m) => m.id === mapId)
+    const oldToken = map?.tokens.find((t) => t.id === tokenId)
+
+    set((s) => ({
+      maps: s.maps.map((m) =>
         m.id === mapId
           ? {
               ...m,
@@ -51,6 +56,61 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
           : m
       )
     }))
+
+    // Force-dismount rider when mount drops to 0 HP
+    if (
+      oldToken?.riderId &&
+      updates.currentHP !== undefined &&
+      updates.currentHP <= 0 &&
+      (oldToken.currentHP ?? 1) > 0
+    ) {
+      const riderId = oldToken.riderId
+      const riderToken = map?.tokens.find((t) => t.entityId === riderId)
+
+      // Clear riderId on mount
+      set((s) => ({
+        maps: s.maps.map((m) =>
+          m.id === mapId
+            ? { ...m, tokens: m.tokens.map((t) => (t.id === tokenId ? { ...t, riderId: undefined } : t)) }
+            : m
+        )
+      }))
+
+      // Clear mountedOn/mountType on rider's turn state
+      if (riderId) {
+        const ts = state.turnStates[riderId]
+        if (ts?.mountedOn) {
+          set((s) => ({
+            turnStates: {
+              ...s.turnStates,
+              [riderId]: { ...s.turnStates[riderId], mountedOn: undefined, mountType: undefined }
+            }
+          }))
+        }
+      }
+
+      // Log force-dismount (listeners can pick this up from state changes)
+      if (riderToken) {
+        logger.log(`[Mount] ${oldToken.label} drops to 0 HP! ${riderToken.label} is forcibly dismounted!`)
+      }
+    }
+
+    // Detect elevation drops >= 10 ft for auto-falling damage
+    if (
+      oldToken &&
+      updates.elevation !== undefined &&
+      oldToken.elevation !== undefined &&
+      oldToken.elevation - updates.elevation >= 10 &&
+      !(oldToken.flySpeed && oldToken.flySpeed > 0)
+    ) {
+      set({
+        pendingFallDamage: {
+          tokenId,
+          mapId,
+          height: oldToken.elevation - updates.elevation
+        }
+      })
+    }
   },
 
   // --- Bulk token actions ---
@@ -96,6 +156,9 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
   clearCenterRequest: () => set({ centerOnEntityId: null }),
 
   // --- Click-to-place token ---
+
+  pendingFallDamage: null,
+  setPendingFallDamage: (pending) => set({ pendingFallDamage: pending }),
 
   pendingPlacement: null,
   setPendingPlacement: (tokenData) => set({ pendingPlacement: tokenData ? { tokenData } : null }),

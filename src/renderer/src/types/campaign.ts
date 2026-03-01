@@ -40,6 +40,24 @@ export interface AiDmConfig {
   ollamaUrl?: string
 }
 
+export interface CampaignMetrics {
+  sessionsPlayed: number
+  totalPlaytimeSeconds: number
+  encountersCompleted: number
+  totalDamageDealt: number
+  totalHealingDone: number
+  lastSessionDate: string | null
+}
+
+export interface TimelineMilestone {
+  id: string
+  title: string
+  description?: string
+  date: string
+  category: 'story' | 'combat' | 'discovery' | 'achievement' | 'custom'
+  createdAt: string
+}
+
 export interface Campaign {
   id: string
   name: string
@@ -68,7 +86,21 @@ export interface Campaign {
     displayName: string
     category: 'ambient' | 'effect' | 'music'
   }>
+  discordInviteUrl?: string
+  metrics?: CampaignMetrics
+  milestones?: TimelineMilestone[]
+  downtimeProgress?: DowntimeProgressEntry[]
   aiDm?: AiDmConfig
+  customRollTables?: Array<{
+    id: string
+    name: string
+    diceFormula: string
+    entries: Array<{
+      min: number
+      max: number
+      text: string
+    }>
+  }>
   savedGameState?: SavedGameState
   createdAt: string
   updatedAt: string
@@ -205,6 +237,23 @@ export interface ActiveLightSource {
   sourceName: string
   durationSeconds: number
   startedAtSeconds: number
+}
+
+export interface DowntimeProgressEntry {
+  id: string
+  activityId: string
+  activityName: string
+  characterId: string
+  characterName: string
+  daysSpent: number
+  daysRequired: number
+  goldSpent: number
+  goldRequired: number
+  startedAt: string
+  details?: string
+  trainingTarget?: string
+  craftingRecipeId?: string
+  status: 'in-progress' | 'completed' | 'abandoned'
 }
 
 export type { GameMap } from './map'

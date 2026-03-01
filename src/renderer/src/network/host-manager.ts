@@ -80,13 +80,13 @@ function disconnectPeer(peerId: string, message: NetworkMessage): void {
   if (conn) {
     try {
       conn.send(JSON.stringify(message))
-    } catch (_e) {
+    } catch {
       // Ignore send errors during disconnect
     }
     setTimeout(() => {
       try {
         conn.close()
-      } catch (_e) {
+      } catch {
         // Ignore close errors
       }
     }, KICK_DELAY_MS)
@@ -199,7 +199,7 @@ export async function startHosting(hostDisplayName: string, existingInviteCode?:
       for (const [, conn] of connections) {
         try {
           if (conn.open) conn.send(JSON.stringify(msg))
-        } catch (_e) {
+        } catch {
           /* ignore */
         }
       }

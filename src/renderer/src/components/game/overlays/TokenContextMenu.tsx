@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getPluginContextMenuItems } from '../../../services/plugin-system/ui-extensions'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { SidebarEntry } from '../../../types/game-state'
 import type { MapToken } from '../../../types/map'
@@ -237,6 +238,37 @@ export default function TokenContextMenu({
       >
         {token.visibleToPlayers ? 'Hide from Players' : 'Show to Players'}
       </button>
+      <button
+        onClick={() => {
+          updateToken(mapId, token.id, { nameVisible: token.nameVisible === false })
+          onClose()
+        }}
+        className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
+      >
+        {token.nameVisible === false ? 'Show Name to Players' : 'Hide Name from Players'}
+      </button>
+      {/* Plugin context menu items */}
+      {(() => {
+        const pluginItems = getPluginContextMenuItems().filter((item) => !item.dmOnly || isDM)
+        if (pluginItems.length === 0) return null
+        return (
+          <>
+            <div className="border-t border-gray-800 my-1" />
+            {pluginItems.map((item) => (
+              <button
+                key={`${item.pluginId}-${item.label}`}
+                onClick={() => {
+                  item.onClick(token.id)
+                  onClose()
+                }}
+                className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
+              >
+                {item.label}
+              </button>
+            ))}
+          </>
+        )
+      })()}
       <div className="border-t border-gray-800 my-1" />
       <button
         onClick={handleRemoveToken}

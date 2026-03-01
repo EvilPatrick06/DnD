@@ -376,7 +376,7 @@ export async function apply5eLevelUp(
 
   // 15. Apply expertise
   const updatedSkills = character.skills.map((s) => ({ ...s }))
-  const mergedExpertiseChoices = { ...(character.buildChoices.expertiseChoices ?? {}) }
+  const mergedExpertiseChoices = { ...character.buildChoices.expertiseChoices }
   for (const [slotId, skillNames] of Object.entries(expertiseSelections)) {
     mergedExpertiseChoices[slotId] = skillNames
     for (const skillName of skillNames) {

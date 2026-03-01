@@ -1,11 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { PRESET_LABELS } from '../../../data/calendar-presets'
 import { addToast } from '../../../hooks/use-toast'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
 import { useGameStore } from '../../../stores/use-game-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Campaign } from '../../../types/campaign'
 import { formatInGameTime } from '../../../utils/calendar-utils'
 import { logger } from '../../../utils/logger'
+import { Tooltip } from '../../ui'
+import type { DiceColors } from '../dice3d'
+
+const DiceColorPicker = lazy(() => import('../dice3d/DiceColorPicker'))
 
 interface SettingsDropdownProps {
   campaign: Campaign
@@ -17,6 +23,7 @@ interface SettingsDropdownProps {
   onLeaveGame: (destination: string) => void
   onSaveCampaign?: () => Promise<void>
   onEndSession?: () => void
+  onCreateCharacter?: () => void
 }
 
 function SaveCampaignButton({ onSave }: { onSave: () => Promise<void> }): JSX.Element {
@@ -89,6 +96,7 @@ function AiDmSettingsSection(): JSX.Element {
         </span>
         <button
           onClick={() => setPaused(!aiPaused)}
+          aria-label={aiPaused ? 'Resume AI DM' : 'Pause AI DM'}
           className={`px-2 py-0.5 text-xs rounded transition-colors cursor-pointer ${
             aiPaused
               ? 'bg-green-600/30 text-green-400 hover:bg-green-600/50'
@@ -102,6 +110,38 @@ function AiDmSettingsSection(): JSX.Element {
   )
 }
 
+function DiceColorSection(): JSX.Element {
+  const [expanded, setExpanded] = useState(false)
+  const localPeerId = useNetworkStore((s) => s.localPeerId)
+  const diceColors = useLobbyStore((s) => s.getLocalDiceColors())
+  const setDiceColors = useLobbyStore((s) => s.setDiceColors)
+
+  const handleChange = (colors: DiceColors): void => {
+    if (localPeerId) setDiceColors(localPeerId, colors)
+  }
+
+  return (
+    <div className="px-4 py-2 border-b border-gray-800">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-400">Dice Colors</span>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="px-2 py-0.5 text-xs rounded transition-colors cursor-pointer bg-gray-800 text-gray-300 hover:text-gray-100 hover:bg-gray-700"
+        >
+          {expanded ? 'Close' : 'Edit'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-2">
+          <Suspense fallback={null}>
+            <DiceColorPicker colors={diceColors} onChange={handleChange} />
+          </Suspense>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function SettingsDropdown({
   campaign,
   isDM,
@@ -111,7 +151,8 @@ export default function SettingsDropdown({
   isFullscreen,
   onLeaveGame,
   onSaveCampaign,
-  onEndSession
+  onEndSession,
+  onCreateCharacter
 }: SettingsDropdownProps): JSX.Element {
   const turnMode = useGameStore((s) => s.turnMode)
   const isPaused = useGameStore((s) => s.isPaused)
@@ -134,14 +175,16 @@ export default function SettingsDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={onToggle}
-        className="w-9 h-9 bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl
-          flex items-center justify-center text-gray-400 hover:text-gray-200 cursor-pointer transition-colors text-lg"
-        title="Settings"
-      >
-        &#9881;
-      </button>
+      <Tooltip text="Game Settings">
+        <button
+          onClick={onToggle}
+          aria-label="Game settings"
+          className="w-9 h-9 bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl
+            flex items-center justify-center text-gray-400 hover:text-gray-200 cursor-pointer transition-colors text-lg"
+        >
+          &#9881;
+        </button>
+      </Tooltip>
 
       {isOpen && (
         <div className="absolute right-0 top-11 w-64 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-xl">
@@ -205,12 +248,16 @@ export default function SettingsDropdown({
           {/* Save Campaign (DM only) */}
           {isDM && onSaveCampaign && <SaveCampaignButton onSave={onSaveCampaign} />}
 
+          {/* Dice Colors */}
+          <DiceColorSection />
+
           {/* Fullscreen toggle */}
           <div className="px-4 py-2 border-b border-gray-800">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400">Fullscreen</span>
               <button
                 onClick={onToggleFullscreen}
+                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                 className="px-2 py-0.5 text-xs rounded transition-colors cursor-pointer bg-gray-800 text-gray-300 hover:text-gray-100 hover:bg-gray-700"
               >
                 {isFullscreen ? 'Exit (F11)' : 'Enter (F11)'}
@@ -220,6 +267,14 @@ export default function SettingsDropdown({
 
           {/* Navigation */}
           <div className="py-1">
+            {isDM && onCreateCharacter && (
+              <button
+                onClick={onCreateCharacter}
+                className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+              >
+                Create Character
+              </button>
+            )}
             <button
               onClick={() => onLeaveGame(`/lobby/${campaign.id}`)}
               className="w-full px-4 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"

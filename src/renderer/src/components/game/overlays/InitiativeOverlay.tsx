@@ -27,6 +27,7 @@ function PortraitCircle({
     return (
       <button
         onClick={onClick}
+        aria-label={`Center on ${entry.entityName}`}
         className={`${px} rounded-full flex-shrink-0 overflow-hidden ${activeRing} ${onClick ? 'cursor-pointer hover:brightness-125' : ''}`}
         title={`Center on ${entry.entityName}`}
       >
@@ -39,6 +40,7 @@ function PortraitCircle({
     <button
       onClick={onClick}
       className={`${px} rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white ${bgColor} ${activeRing} ${onClick ? 'cursor-pointer hover:brightness-125' : ''}`}
+      aria-label={`Center on ${entry.entityName}`}
       title={`Center on ${entry.entityName}`}
     >
       {entry.entityName.charAt(0).toUpperCase()}
@@ -73,6 +75,7 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
             <span className="text-xs text-amber-400 font-semibold">Round {initiative.round}</span>
             <button
               onClick={() => setExpanded(false)}
+              aria-label="Minimize initiative tracker"
               className="text-gray-500 hover:text-gray-300 text-xs cursor-pointer"
             >
               Minimize
@@ -133,6 +136,7 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
                   e.stopPropagation()
                   prevTurn()
                 }}
+                aria-label="Previous turn"
                 className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 text-xs cursor-pointer"
               >
                 &#9664;
@@ -142,6 +146,7 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
                   e.stopPropagation()
                   nextTurn()
                 }}
+                aria-label="Next turn"
                 className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 text-xs cursor-pointer"
               >
                 &#9654;
@@ -151,6 +156,7 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
                   e.stopPropagation()
                   endInitiative()
                 }}
+                aria-label="End combat"
                 className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-gray-700 text-[10px] cursor-pointer"
                 title="End Initiative"
               >

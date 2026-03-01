@@ -1,8 +1,21 @@
 import * as hostManager from '../../network/host-manager'
 import { broadcastExcluding } from '../../network/host-manager'
+import type {
+  InspectRequestPayload,
+  JournalAddPayload,
+  JournalDeletePayload,
+  JournalUpdatePayload,
+  TradeCancelPayload,
+  TradeRequestPayload,
+  TradeResponsePayload
+} from '../../network/message-types'
 import { getPeerId } from '../../network/peer-manager'
 import type { MessageType, NetworkMessage, ShopItem } from '../../network/types'
+import type { Character5e } from '../../types/character-5e'
 import type { NetworkState } from './index'
+
+// In-memory trade tracking
+const pendingTrades = new Map<string, TradeRequestPayload>()
 
 // Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
 function getGameStore() {
@@ -36,21 +49,6 @@ export function handleHostMessage(
         characterId: payload.characterId,
         characterName: payload.characterName
       })
-      broadcastExcluding(message, fromPeerId)
-      break
-    }
-
-    case 'voice:mute-toggle': {
-      const payload = message.payload as { peerId: string; isMuted: boolean }
-      get().updatePeer(fromPeerId, { isMuted: payload.isMuted })
-      broadcastExcluding(message, fromPeerId)
-      break
-    }
-
-    case 'voice:deafen-toggle': {
-      const payload = message.payload as { peerId: string; isDeafened: boolean }
-      get().updatePeer(fromPeerId, { isDeafened: payload.isDeafened })
-      getLobbyStore().getState().updatePlayer(fromPeerId, { isDeafened: payload.isDeafened })
       broadcastExcluding(message, fromPeerId)
       break
     }
@@ -176,10 +174,299 @@ export function handleHostMessage(
       break
     }
 
+    case 'player:turn-end': {
+      const turnEndPayload = message.payload as { entityId: string }
+      const gs = getGameStore().getState()
+      const { initiative } = gs
+      if (initiative) {
+        const currentEntry = initiative.entries[initiative.currentIndex]
+        if (currentEntry && currentEntry.entityId === turnEndPayload.entityId) {
+          gs.nextTurn()
+          hostManager.broadcastMessage({
+            type: 'game:turn-advance' as MessageType,
+            payload: {},
+            senderId: getPeerId() || '',
+            senderName: get().displayName,
+            timestamp: Date.now(),
+            sequence: 0
+          })
+        }
+      }
+      break
+    }
+
+    case 'combat:reaction-response': {
+      broadcastExcluding(message, fromPeerId)
+      break
+    }
+
+    case 'player:trade-request': {
+      const payload = message.payload as TradeRequestPayload
+      pendingTrades.set(payload.tradeId, payload)
+      // Forward to the target player
+      hostManager.sendToPeer(payload.toPeerId, message)
+      break
+    }
+
+    case 'player:trade-response': {
+      const payload = message.payload as TradeResponsePayload
+      const trade = pendingTrades.get(payload.tradeId)
+      if (!trade) break
+      pendingTrades.delete(payload.tradeId)
+
+      const lobby = getLobbyStore().getState()
+      const remoteChars = lobby.remoteCharacters
+      const fromChar = remoteChars[trade.fromPeerId]
+      const toChar = remoteChars[trade.toPeerId]
+
+      if (payload.accepted && fromChar && toChar) {
+        const result = validateAndExecuteTrade(trade, fromChar, toChar)
+        if (result.success && result.fromChar && result.toChar) {
+          // Update remote characters
+          lobby.setRemoteCharacter(trade.fromPeerId, result.fromChar as Character5e)
+          lobby.setRemoteCharacter(trade.toPeerId, result.toChar as Character5e)
+          // Notify both parties
+          const resultMsg = {
+            tradeId: trade.tradeId,
+            accepted: true,
+            fromPlayerName: trade.fromPlayerName,
+            toPlayerName: hostManager.getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
+            summary: result.summary
+          }
+          const tradeResultMessage: NetworkMessage = {
+            type: 'dm:trade-result' as MessageType,
+            payload: resultMsg,
+            senderId: getPeerId() || '',
+            senderName: get().displayName,
+            timestamp: Date.now(),
+            sequence: 0
+          }
+          hostManager.sendToPeer(trade.fromPeerId, tradeResultMessage)
+          hostManager.sendToPeer(trade.toPeerId, tradeResultMessage)
+          // Send updated character data back
+          hostManager.sendToPeer(trade.fromPeerId, {
+            type: 'dm:character-update' as MessageType,
+            payload: { characterId: (result.fromChar as Record<string, unknown>).id, characterData: result.fromChar },
+            senderId: getPeerId() || '',
+            senderName: get().displayName,
+            timestamp: Date.now(),
+            sequence: 0
+          })
+          hostManager.sendToPeer(trade.toPeerId, {
+            type: 'dm:character-update' as MessageType,
+            payload: { characterId: (result.toChar as Record<string, unknown>).id, characterData: result.toChar },
+            senderId: getPeerId() || '',
+            senderName: get().displayName,
+            timestamp: Date.now(),
+            sequence: 0
+          })
+        }
+      } else {
+        // Declined
+        const resultMsg = {
+          tradeId: trade.tradeId,
+          accepted: false,
+          fromPlayerName: trade.fromPlayerName,
+          toPlayerName: hostManager.getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
+          summary: 'Trade declined.'
+        }
+        const tradeResultMessage: NetworkMessage = {
+          type: 'dm:trade-result' as MessageType,
+          payload: resultMsg,
+          senderId: getPeerId() || '',
+          senderName: get().displayName,
+          timestamp: Date.now(),
+          sequence: 0
+        }
+        hostManager.sendToPeer(trade.fromPeerId, tradeResultMessage)
+        hostManager.sendToPeer(trade.toPeerId, tradeResultMessage)
+      }
+      break
+    }
+
+    case 'player:trade-cancel': {
+      const payload = message.payload as TradeCancelPayload
+      const trade = pendingTrades.get(payload.tradeId)
+      if (trade) {
+        pendingTrades.delete(payload.tradeId)
+        const counterpartId = fromPeerId === trade.fromPeerId ? trade.toPeerId : trade.fromPeerId
+        hostManager.sendToPeer(counterpartId, message)
+      }
+      break
+    }
+
+    case 'player:journal-add': {
+      const payload = message.payload as JournalAddPayload
+      getGameStore().getState().addJournalEntry(payload.entry)
+      broadcastExcluding(message, fromPeerId)
+      break
+    }
+
+    case 'player:journal-update': {
+      const payload = message.payload as JournalUpdatePayload
+      const updates: Record<string, unknown> = {}
+      if (payload.title !== undefined) updates.title = payload.title
+      if (payload.content !== undefined) updates.content = payload.content
+      if (payload.visibility !== undefined) updates.visibility = payload.visibility
+      getGameStore()
+        .getState()
+        .updateJournalEntry(
+          payload.entryId,
+          updates as Partial<
+            Pick<import('../../types/game-state').SharedJournalEntry, 'title' | 'content' | 'visibility'>
+          >
+        )
+      broadcastExcluding(message, fromPeerId)
+      break
+    }
+
+    case 'player:journal-delete': {
+      const payload = message.payload as JournalDeletePayload
+      getGameStore().getState().deleteJournalEntry(payload.entryId)
+      broadcastExcluding(message, fromPeerId)
+      break
+    }
+
+    case 'player:inspect-request': {
+      const payload = message.payload as InspectRequestPayload
+      const lobby = getLobbyStore().getState()
+      // Try to find the character from remote characters
+      let charData: unknown = null
+      for (const char of Object.values(lobby.remoteCharacters)) {
+        if (char.id === payload.characterId) {
+          charData = char
+          break
+        }
+      }
+      if (charData) {
+        hostManager.sendToPeer(payload.requesterPeerId, {
+          type: 'dm:inspect-response' as MessageType,
+          payload: {
+            characterId: payload.characterId,
+            characterData: charData,
+            targetPeerId: payload.requesterPeerId
+          },
+          senderId: getPeerId() || '',
+          senderName: get().displayName,
+          timestamp: Date.now(),
+          sequence: 0
+        })
+      }
+      break
+    }
+
     default: {
       // Other messages from clients get rebroadcast by default
       // The host can decide which to relay
       break
     }
   }
+}
+
+/** Validate items/gold and execute a trade between two characters */
+function validateAndExecuteTrade(
+  trade: TradeRequestPayload,
+  fromCharRaw: unknown,
+  toCharRaw: unknown
+): { success: boolean; fromChar?: unknown; toChar?: unknown; summary: string } {
+  const fromChar = structuredClone(fromCharRaw) as Record<string, unknown>
+  const toChar = structuredClone(toCharRaw) as Record<string, unknown>
+
+  const fromEquip = (fromChar.equipment ?? []) as Array<{ name: string; quantity?: number; description?: string }>
+  const toEquip = (toChar.equipment ?? []) as Array<{ name: string; quantity?: number; description?: string }>
+
+  // Validate offered items exist with sufficient quantity
+  for (const item of trade.offeredItems) {
+    const found = fromEquip.find((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (!found || (found.quantity ?? 1) < item.quantity) {
+      return { success: false, summary: `${trade.fromPlayerName} doesn't have enough ${item.name}.` }
+    }
+  }
+
+  // Validate requested items exist with sufficient quantity
+  for (const item of trade.requestedItems) {
+    const found = toEquip.find((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (!found || (found.quantity ?? 1) < item.quantity) {
+      return { success: false, summary: `Trade target doesn't have enough ${item.name}.` }
+    }
+  }
+
+  // Validate gold (use currency.cp or a flat currency object)
+  const fromCurrency = (fromChar.currency ?? { cp: 0, sp: 0, gp: 0, pp: 0 }) as Record<string, number>
+  const toCurrency = (toChar.currency ?? { cp: 0, sp: 0, gp: 0, pp: 0 }) as Record<string, number>
+  const fromTotalCp =
+    (fromCurrency.cp ?? 0) + (fromCurrency.sp ?? 0) * 10 + (fromCurrency.gp ?? 0) * 100 + (fromCurrency.pp ?? 0) * 1000
+  const toTotalCp =
+    (toCurrency.cp ?? 0) + (toCurrency.sp ?? 0) * 10 + (toCurrency.gp ?? 0) * 100 + (toCurrency.pp ?? 0) * 1000
+
+  if (trade.offeredGold > 0 && fromTotalCp < trade.offeredGold) {
+    return { success: false, summary: `${trade.fromPlayerName} doesn't have enough gold.` }
+  }
+  if (trade.requestedGold > 0 && toTotalCp < trade.requestedGold) {
+    return { success: false, summary: `Trade target doesn't have enough gold.` }
+  }
+
+  // Execute item transfers
+  for (const item of trade.offeredItems) {
+    const idx = fromEquip.findIndex((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (idx !== -1) {
+      const existing = fromEquip[idx]
+      if ((existing.quantity ?? 1) <= item.quantity) {
+        fromEquip.splice(idx, 1)
+      } else {
+        existing.quantity = (existing.quantity ?? 1) - item.quantity
+      }
+    }
+    const toIdx = toEquip.findIndex((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (toIdx !== -1) {
+      toEquip[toIdx].quantity = (toEquip[toIdx].quantity ?? 1) + item.quantity
+    } else {
+      toEquip.push({ name: item.name, quantity: item.quantity, description: item.description })
+    }
+  }
+
+  for (const item of trade.requestedItems) {
+    const idx = toEquip.findIndex((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (idx !== -1) {
+      const existing = toEquip[idx]
+      if ((existing.quantity ?? 1) <= item.quantity) {
+        toEquip.splice(idx, 1)
+      } else {
+        existing.quantity = (existing.quantity ?? 1) - item.quantity
+      }
+    }
+    const fromIdx = fromEquip.findIndex((e) => e.name.toLowerCase() === item.name.toLowerCase())
+    if (fromIdx !== -1) {
+      fromEquip[fromIdx].quantity = (fromEquip[fromIdx].quantity ?? 1) + item.quantity
+    } else {
+      fromEquip.push({ name: item.name, quantity: item.quantity })
+    }
+  }
+
+  // Execute gold transfers (in copper pieces)
+  if (trade.offeredGold > 0) {
+    fromCurrency.gp = (fromCurrency.gp ?? 0) - Math.floor(trade.offeredGold / 100)
+    fromCurrency.cp = (fromCurrency.cp ?? 0) - (trade.offeredGold % 100)
+    toCurrency.gp = (toCurrency.gp ?? 0) + Math.floor(trade.offeredGold / 100)
+    toCurrency.cp = (toCurrency.cp ?? 0) + (trade.offeredGold % 100)
+  }
+  if (trade.requestedGold > 0) {
+    toCurrency.gp = (toCurrency.gp ?? 0) - Math.floor(trade.requestedGold / 100)
+    toCurrency.cp = (toCurrency.cp ?? 0) - (trade.requestedGold % 100)
+    fromCurrency.gp = (fromCurrency.gp ?? 0) + Math.floor(trade.requestedGold / 100)
+    fromCurrency.cp = (fromCurrency.cp ?? 0) + (trade.requestedGold % 100)
+  }
+
+  fromChar.equipment = fromEquip
+  fromChar.currency = fromCurrency
+  toChar.equipment = toEquip
+  toChar.currency = toCurrency
+
+  const parts: string[] = []
+  if (trade.offeredItems.length > 0)
+    parts.push(`${trade.offeredItems.map((i) => `${i.quantity}x ${i.name}`).join(', ')}`)
+  if (trade.offeredGold > 0) parts.push(`${Math.floor(trade.offeredGold / 100)} gp`)
+  const summary = parts.length > 0 ? `Trade complete: ${parts.join(' + ')} exchanged.` : 'Trade complete.'
+
+  return { success: true, fromChar, toChar, summary }
 }

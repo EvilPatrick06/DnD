@@ -3,7 +3,7 @@
 // Uses the Web Notification API (available in the Electron renderer process).
 // ---------------------------------------------------------------------------
 
-import templatesJson from '../../public/data/5e/ui/notification-templates.json'
+import templatesJson from '../../public/data/ui/notification-templates.json'
 
 export type NotificationEvent =
   | 'your-turn'

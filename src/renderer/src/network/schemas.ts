@@ -110,26 +110,6 @@ const BanPayloadSchema = z.object({
   reason: z.string().optional()
 })
 
-const MuteTogglePayloadSchema = z.object({
-  peerId: z.string(),
-  isMuted: z.boolean()
-})
-
-const DeafenTogglePayloadSchema = z.object({
-  peerId: z.string(),
-  isDeafened: z.boolean()
-})
-
-const ForceMutePayloadSchema = z.object({
-  peerId: z.string(),
-  isForceMuted: z.boolean()
-})
-
-const ForceDeafenPayloadSchema = z.object({
-  peerId: z.string(),
-  isForceDeafened: z.boolean()
-})
-
 const CharacterUpdatePayloadSchema = z.object({
   characterId: z.string(),
   characterData: z.unknown(),
@@ -187,12 +167,7 @@ const GameStateFullPayloadSchema = z.object({
       characterId: z.string().nullable(),
       characterName: z.string().nullable(),
       isReady: z.boolean(),
-      isMuted: z.boolean(),
-      isDeafened: z.boolean(),
-      isSpeaking: z.boolean(),
       isHost: z.boolean(),
-      isForceMuted: z.boolean(),
-      isForceDeafened: z.boolean(),
       color: z.string().optional(),
       isCoDM: z.boolean().optional()
     })
@@ -358,6 +333,104 @@ const PlayAmbientPayloadSchema = z.object({
 
 const StopAmbientPayloadSchema = z.object({})
 
+const ReactionPromptPayloadSchema = z.object({
+  promptId: z.string(),
+  targetEntityId: z.string(),
+  targetPeerId: z.string(),
+  triggerType: z.enum(['shield', 'counterspell', 'absorb-elements', 'silvery-barbs']),
+  triggerContext: z.object({
+    attackRoll: z.number().optional(),
+    attackerName: z.string().optional(),
+    spellName: z.string().optional(),
+    spellLevel: z.number().optional(),
+    damageType: z.string().optional()
+  })
+})
+
+const ReactionResponsePayloadSchema = z.object({
+  promptId: z.string(),
+  accepted: z.boolean(),
+  spellSlotLevel: z.number().optional()
+})
+
+const TradeItemSchema = z.object({
+  name: z.string(),
+  quantity: z.number(),
+  description: z.string().optional()
+})
+
+const TradeRequestPayloadSchema = z.object({
+  tradeId: z.string(),
+  fromPeerId: z.string(),
+  fromPlayerName: z.string(),
+  toPeerId: z.string(),
+  offeredItems: z.array(TradeItemSchema),
+  offeredGold: z.number(),
+  requestedItems: z.array(z.object({ name: z.string(), quantity: z.number() })),
+  requestedGold: z.number()
+})
+
+const TradeResponsePayloadSchema = z.object({
+  tradeId: z.string(),
+  accepted: z.boolean(),
+  fromPeerId: z.string()
+})
+
+const TradeCancelPayloadSchema = z.object({
+  tradeId: z.string(),
+  reason: z.string().optional()
+})
+
+const TradeResultPayloadSchema = z.object({
+  tradeId: z.string(),
+  accepted: z.boolean(),
+  fromPlayerName: z.string(),
+  toPlayerName: z.string(),
+  summary: z.string()
+})
+
+const SharedJournalEntrySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  authorPeerId: z.string(),
+  authorName: z.string(),
+  visibility: z.enum(['public', 'private']),
+  createdAt: z.number(),
+  updatedAt: z.number()
+})
+
+const JournalAddPayloadSchema = z.object({
+  entry: SharedJournalEntrySchema
+})
+
+const JournalUpdatePayloadSchema = z.object({
+  entryId: z.string(),
+  title: z.string().optional(),
+  content: z.string().optional(),
+  visibility: z.enum(['public', 'private']).optional(),
+  updatedAt: z.number()
+})
+
+const JournalDeletePayloadSchema = z.object({
+  entryId: z.string()
+})
+
+const JournalSyncPayloadSchema = z.object({
+  entries: z.array(SharedJournalEntrySchema)
+})
+
+const InspectRequestPayloadSchema = z.object({
+  characterId: z.string(),
+  requesterPeerId: z.string()
+})
+
+const InspectResponsePayloadSchema = z.object({
+  characterId: z.string(),
+  characterData: z.unknown(),
+  targetPeerId: z.string()
+})
+
 // Generic passthrough for messages with no specific payload structure
 const AnyPayloadSchema = z.unknown()
 
@@ -389,8 +462,6 @@ const PAYLOAD_SCHEMAS: Partial<Record<MessageTypeString, z.ZodType>> = {
   'dm:condition-update': ConditionUpdatePayloadSchema,
   'dm:kick-player': KickPayloadSchema,
   'dm:ban-player': BanPayloadSchema,
-  'dm:force-mute': ForceMutePayloadSchema,
-  'dm:force-deafen': ForceDeafenPayloadSchema,
   'dm:chat-timeout': ChatTimeoutPayloadSchema,
   'dm:promote-codm': CoDMPayloadSchema,
   'dm:demote-codm': CoDMPayloadSchema,
@@ -414,8 +485,18 @@ const PAYLOAD_SCHEMAS: Partial<Record<MessageTypeString, z.ZodType>> = {
   'chat:file': ChatFilePayloadSchema,
   'chat:whisper': WhisperPayloadSchema,
   'chat:announcement': AnnouncementPayloadSchema,
-  'voice:mute-toggle': MuteTogglePayloadSchema,
-  'voice:deafen-toggle': DeafenTogglePayloadSchema
+  'combat:reaction-prompt': ReactionPromptPayloadSchema,
+  'combat:reaction-response': ReactionResponsePayloadSchema,
+  'player:trade-request': TradeRequestPayloadSchema,
+  'player:trade-response': TradeResponsePayloadSchema,
+  'player:trade-cancel': TradeCancelPayloadSchema,
+  'dm:trade-result': TradeResultPayloadSchema,
+  'player:journal-add': JournalAddPayloadSchema,
+  'player:journal-update': JournalUpdatePayloadSchema,
+  'player:journal-delete': JournalDeletePayloadSchema,
+  'dm:journal-sync': JournalSyncPayloadSchema,
+  'player:inspect-request': InspectRequestPayloadSchema,
+  'dm:inspect-response': InspectResponsePayloadSchema
 }
 
 // ── Validation Function ──

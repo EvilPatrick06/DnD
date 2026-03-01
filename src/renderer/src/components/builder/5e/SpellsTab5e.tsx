@@ -12,7 +12,7 @@ import { useBuilderStore } from '../../../stores/use-builder-store'
 import SectionBanner from '../shared/SectionBanner'
 import CantripPicker5e from './CantripPicker5e'
 import SpellPicker5e from './SpellPicker5e'
-import SpellSummary5e, { ordinal, SpellRow, type SpellData } from './SpellSummary5e'
+import SpellSummary5e, { ordinal, type SpellData, SpellRow } from './SpellSummary5e'
 
 export default function SpellsTab5e(): JSX.Element {
   const buildSlots = useBuilderStore((s) => s.buildSlots)
@@ -25,6 +25,7 @@ export default function SpellsTab5e(): JSX.Element {
   const selectedSpellIds = useBuilderStore((s) => s.selectedSpellIds)
   const setSelectedSpellIds = useBuilderStore((s) => s.setSelectedSpellIds)
   const [warning, setWarning] = useState<string | null>(null)
+  const [showAllSpells, setShowAllSpells] = useState(false)
 
   const subclassSlot = buildSlots.find((s) => s.id.includes('subclass'))
   const subclassId = subclassSlot?.selectedId ?? ''
@@ -88,18 +89,66 @@ export default function SpellsTab5e(): JSX.Element {
   const preparedMax = getPreparedSpellMax(classId, targetLevel)
 
   // Filter spells by class and max castable level
-  const availableSpells = useMemo(() => {
-    let filtered = allSpells
-    if (classId) {
-      filtered = filtered.filter((s) => s.classes?.includes(classId))
+  const maxSpellLevel = useMemo(
+    () =>
+      Object.keys(slotProgression)
+        .map(Number)
+        .filter((lvl) => (slotProgression[lvl] ?? 0) > 0)
+        .reduce((max, lvl) => Math.max(max, lvl), 0),
+    [slotProgression]
+  )
+
+  // Build list of all class IDs for multiclass spell list union
+  const allClassIds = useMemo(() => {
+    const ids = new Set<string>()
+    if (classId) ids.add(classId)
+    // When classLevelChoices exists (multiclass), add those classes too
+    const state = useBuilderStore.getState()
+    if ('classLevelChoices' in state) {
+      const choices = (state as unknown as Record<string, unknown>).classLevelChoices as
+        | Record<number, string>
+        | undefined
+      if (choices) {
+        for (const cid of Object.values(choices)) {
+          if (cid) ids.add(cid)
+        }
+      }
     }
-    const maxSpellLevel = Object.keys(slotProgression)
-      .map(Number)
-      .filter((lvl) => (slotProgression[lvl] ?? 0) > 0)
-      .reduce((max, lvl) => Math.max(max, lvl), 0)
-    filtered = filtered.filter((s) => s.level === 0 || s.level <= maxSpellLevel)
-    return filtered.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
-  }, [allSpells, classId, slotProgression])
+    return [...ids]
+  }, [classId])
+
+  const isMulticlass = allClassIds.length > 1
+
+  const availableSpells = useMemo(() => {
+    let filtered = allSpells.filter((s) => s.level === 0 || s.level <= maxSpellLevel)
+    if (!showAllSpells && allClassIds.length > 0) {
+      filtered = filtered.filter((s) => allClassIds.some((cid) => s.classes?.includes(cid)))
+    }
+    // When showing all spells, sort on-list before off-list
+    if (showAllSpells && allClassIds.length > 0) {
+      filtered.sort((a, b) => {
+        const aOnList = allClassIds.some((cid) => a.classes?.includes(cid)) ? 0 : 1
+        const bOnList = allClassIds.some((cid) => b.classes?.includes(cid)) ? 0 : 1
+        if (aOnList !== bOnList) return aOnList - bOnList
+        return a.level - b.level || a.name.localeCompare(b.name)
+      })
+    } else {
+      filtered.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
+    }
+    return filtered
+  }, [allSpells, allClassIds, maxSpellLevel, showAllSpells])
+
+  // Compute off-list spell IDs
+  const offListSpellIds = useMemo(() => {
+    if (!showAllSpells || allClassIds.length === 0) return new Set<string>()
+    const ids = new Set<string>()
+    for (const spell of availableSpells) {
+      if (!allClassIds.some((cid) => spell.classes?.includes(cid))) {
+        ids.add(spell.id)
+      }
+    }
+    return ids
+  }, [showAllSpells, allClassIds, availableSpells])
 
   // Always-prepared spell IDs
   const isRanger = classId === 'ranger'
@@ -255,7 +304,17 @@ export default function SpellsTab5e(): JSX.Element {
       <div className="px-4 py-3 border-b border-gray-800">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm text-gray-300">
-            <span className="text-amber-300 font-medium">{className}</span> spell list
+            {isMulticlass ? (
+              allClassIds.map((cid, i) => (
+                <span key={cid}>
+                  {i > 0 && ' / '}
+                  <span className="text-amber-300 font-medium capitalize">{cid}</span>
+                </span>
+              ))
+            ) : (
+              <span className="text-amber-300 font-medium">{className}</span>
+            )}{' '}
+            spell list
           </p>
           <span className="text-xs text-gray-500">Level {targetLevel}</span>
         </div>
@@ -321,6 +380,17 @@ export default function SpellsTab5e(): JSX.Element {
         )}
 
         {warning && <div className="text-xs text-red-400 bg-red-900/20 rounded px-2 py-1 mt-1">{warning}</div>}
+
+        <label className="flex items-center gap-2 text-xs text-gray-500 mt-1 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showAllSpells}
+            onChange={(e) => setShowAllSpells(e.target.checked)}
+            className="accent-amber-500"
+          />
+          Show All Spells
+          {showAllSpells && <span className="text-orange-400">(off-list spells marked)</span>}
+        </label>
       </div>
 
       {/* Blessed Warrior cantrip picker */}
@@ -410,6 +480,7 @@ export default function SpellsTab5e(): JSX.Element {
         availableSpells={availableSpells}
         selectedSpellIds={selectedSpellIds}
         toggleSpell={toggleSpell}
+        offListSpellIds={offListSpellIds}
       />
     </div>
   )

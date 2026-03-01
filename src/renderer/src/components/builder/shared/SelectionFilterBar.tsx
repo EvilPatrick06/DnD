@@ -1,4 +1,4 @@
-import rarityOptionsJson from '../../../../public/data/5e/ui/rarity-options.json'
+import rarityOptionsJson from '../../../../public/data/ui/rarity-options.json'
 import type { Rarity } from '../../../types/character-common'
 
 interface SelectionFilterBarProps {

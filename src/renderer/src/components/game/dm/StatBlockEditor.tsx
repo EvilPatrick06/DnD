@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import creatureTypesJson from '../../../../public/data/5e/creatures/creature-types.json'
+import creatureTypesJson from '../../../../public/data/5e/dm/npcs/creature-types.json'
 import type { CreatureSize, CreatureType, MonsterAction, MonsterStatBlock, MonsterTrait } from '../../../types/monster'
 
 interface StatBlockEditorProps {
@@ -437,7 +437,7 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
               <select
                 value={skill}
                 onChange={(e) => {
-                  const next = { ...(value.skills ?? {}) }
+                  const next = { ...value.skills }
                   const val = next[skill]
                   delete next[skill]
                   next[e.target.value] = val ?? 0
@@ -456,7 +456,7 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
                 value={bonus}
                 onChange={(e) =>
                   update('skills', {
-                    ...(value.skills ?? {}),
+                    ...value.skills,
                     [skill]: parseInt(e.target.value, 10) || 0
                   })
                 }
@@ -464,7 +464,7 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
               />
               <button
                 onClick={() => {
-                  const next = { ...(value.skills ?? {}) }
+                  const next = { ...value.skills }
                   delete next[skill]
                   onChange({
                     ...value,
@@ -482,7 +482,7 @@ export default function StatBlockEditor({ value, onChange }: StatBlockEditorProp
           onClick={() => {
             const used = new Set(Object.keys(value.skills ?? {}))
             const available = COMMON_SKILLS.find((s) => !used.has(s)) ?? 'Custom'
-            update('skills', { ...(value.skills ?? {}), [available]: 0 })
+            update('skills', { ...value.skills, [available]: 0 })
           }}
           className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer mt-1"
         >

@@ -11,6 +11,7 @@ Usage:
 import asyncio
 import json
 import os
+import secrets
 import threading
 import time
 
@@ -20,7 +21,7 @@ from flask_socketio import SocketIO
 # ── App Setup ────────────────────────────────────────────────────────
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["SECRET_KEY"] = "bmo-secret-key"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
 
 # ── Services (lazy-initialized) ─────────────────────────────────────

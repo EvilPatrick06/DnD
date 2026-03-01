@@ -4,7 +4,7 @@ import { join, relative, resolve } from 'node:path'
 import { app } from 'electron'
 import { listOllamaModels } from './ollama-client'
 
-const OLLAMA_BASE_URL = 'http://localhost:11434'
+export const OLLAMA_BASE_URL = 'http://localhost:11434'
 
 export interface OllamaStatus {
   installed: boolean
@@ -20,7 +20,18 @@ export interface CuratedModel {
   id: string
   name: string
   vramMB: number
+  contextSize: number
   desc: string
+}
+
+export type PerformanceTier = 'optimal' | 'good' | 'limited' | 'insufficient'
+
+export function getPerformanceTier(systemVramMb: number, modelVramMb: number): PerformanceTier {
+  const ratio = systemVramMb / modelVramMb
+  if (ratio >= 2) return 'optimal'
+  if (ratio >= 1.2) return 'good'
+  if (ratio >= 0.8) return 'limited'
+  return 'insufficient'
 }
 
 export interface InstalledModelInfo {
@@ -40,16 +51,40 @@ export interface OllamaVersionInfo {
 }
 
 export const CURATED_MODELS: CuratedModel[] = [
-  { id: 'llama3.2:3b', name: 'Llama 3.2 3B', vramMB: 2500, desc: 'Lightweight, great for weaker GPUs' },
-  { id: 'llama3.1:8b', name: 'Llama 3.1 8B', vramMB: 5000, desc: 'Good quality, runs on most GPUs' },
-  { id: 'mistral:7b', name: 'Mistral 7B', vramMB: 4500, desc: 'Fast and capable' },
-  { id: 'gemma2:9b', name: 'Gemma 2 9B', vramMB: 6000, desc: 'High quality from Google' },
-  { id: 'phi3:14b', name: 'Phi-3 14B', vramMB: 8000, desc: 'Strong reasoning from Microsoft' },
-  { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B', vramMB: 5000, desc: 'Versatile and capable' },
-  { id: 'deepseek-r1:8b', name: 'DeepSeek R1 8B', vramMB: 5000, desc: 'Excellent reasoning skills' },
-  { id: 'mixtral:8x7b', name: 'Mixtral 8x7B', vramMB: 26000, desc: 'Mixture of experts, great quality' },
-  { id: 'command-r:35b', name: 'Command R 35B', vramMB: 20000, desc: 'RAG-optimized, great for DM context' },
-  { id: 'llama3.1:70b', name: 'Llama 3.1 70B', vramMB: 40000, desc: 'Best quality, needs powerful GPU' }
+  {
+    id: 'llama3.2:3b',
+    name: 'Llama 3.2 3B',
+    vramMB: 2500,
+    contextSize: 8192,
+    desc: 'Lightweight, great for weaker GPUs'
+  },
+  { id: 'llama3.1:8b', name: 'Llama 3.1 8B', vramMB: 5000, contextSize: 8192, desc: 'Good quality, runs on most GPUs' },
+  { id: 'mistral:7b', name: 'Mistral 7B', vramMB: 4500, contextSize: 8192, desc: 'Fast and capable' },
+  { id: 'gemma2:9b', name: 'Gemma 2 9B', vramMB: 6000, contextSize: 8192, desc: 'High quality from Google' },
+  { id: 'phi3:14b', name: 'Phi-3 14B', vramMB: 8000, contextSize: 4096, desc: 'Strong reasoning from Microsoft' },
+  { id: 'qwen2.5:7b', name: 'Qwen 2.5 7B', vramMB: 5000, contextSize: 8192, desc: 'Versatile and capable' },
+  { id: 'deepseek-r1:8b', name: 'DeepSeek R1 8B', vramMB: 5000, contextSize: 8192, desc: 'Excellent reasoning skills' },
+  {
+    id: 'mixtral:8x7b',
+    name: 'Mixtral 8x7B',
+    vramMB: 26000,
+    contextSize: 4096,
+    desc: 'Mixture of experts, great quality'
+  },
+  {
+    id: 'command-r:35b',
+    name: 'Command R 35B',
+    vramMB: 20000,
+    contextSize: 4096,
+    desc: 'RAG-optimized, great for DM context'
+  },
+  {
+    id: 'llama3.1:70b',
+    name: 'Llama 3.1 70B',
+    vramMB: 40000,
+    contextSize: 4096,
+    desc: 'Best quality, needs powerful GPU'
+  }
 ]
 
 /**

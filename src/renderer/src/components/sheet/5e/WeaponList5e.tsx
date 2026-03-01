@@ -8,6 +8,36 @@ import type { Character5e } from '../../../types/character-5e'
 import type { WeaponEntry } from '../../../types/character-common'
 import { abilityModifier, formatMod } from '../../../types/character-common'
 
+// --- Weapon property abbreviations & tooltips (PHB 2024) ---
+
+const PROPERTY_ABBREVIATIONS: Record<string, string> = {
+  'Two-Handed': '2H',
+  Versatile: 'Vers',
+  Ammunition: 'Ammo'
+}
+
+const PROPERTY_TOOLTIPS: Record<string, string> = {
+  Ammunition: 'Requires ammunition to make a ranged attack; draws ammo as part of the attack',
+  Finesse: 'Use STR or DEX for attack and damage rolls',
+  Heavy: 'Small creatures have disadvantage on attack rolls',
+  Light: 'Can engage in two-weapon fighting with another Light weapon',
+  Loading: 'Only one attack per action regardless of extra attacks',
+  Range: 'Can make ranged attacks at the specified normal/long range',
+  Reach: 'Adds 5 feet to your melee attack reach',
+  Thrown: 'Can be thrown for a ranged attack using STR',
+  'Two-Handed': 'Requires two hands to attack with this weapon',
+  Versatile: 'Can be used with one or two hands (two-handed damage in parentheses)',
+  Nick: 'Extra attack as part of the Attack action, not a bonus action',
+  Push: 'On hit, push Large or smaller target 10 feet straight away',
+  Sap: 'On hit, target has disadvantage on next attack roll before your next turn',
+  Slow: 'On hit, target speed reduced by 10 feet until start of your next turn',
+  Topple: 'On hit, target must succeed on CON save or be knocked Prone',
+  Vex: 'On hit, gain advantage on next attack roll against this target before your next turn',
+  Graze: 'On miss, deal damage equal to ability modifier used for the attack',
+  Cleave: 'On hit, can make another attack against a different adjacent creature',
+  Special: 'This weapon has a special property described in its entry'
+}
+
 // --- Weapon data types ---
 
 export interface WeaponData5e {
@@ -154,6 +184,15 @@ export function WeaponRow({ weapon, onRemove, onSell, character, weaponDatabase 
               {weapon.mastery}
             </span>
           )}
+          {weapon.properties.map((prop) => (
+            <span
+              key={prop}
+              className="text-[10px] px-1 py-0.5 rounded bg-gray-700/50 text-gray-400 border border-gray-600"
+              title={PROPERTY_TOOLTIPS[prop] ?? prop}
+            >
+              {PROPERTY_ABBREVIATIONS[prop] ?? prop}
+            </span>
+          ))}
         </button>
         <div className="flex items-center gap-4 text-xs">
           <span className="text-amber-400 font-mono" title={attackTooltip}>

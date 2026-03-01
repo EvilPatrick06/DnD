@@ -75,6 +75,7 @@ export interface InitiativeEntry {
   legendaryActions?: { used: number; maximum: number }
   rechargeAbilities?: RechargeAbility[]
   inLair?: boolean
+  lairActions?: Array<{ name: string; description: string }>
   delayedUntil?: number
   surprised?: boolean
 }
@@ -220,6 +221,14 @@ export type SidebarCategory = 'allies' | 'enemies' | 'places'
 /** Sidebar panel includes NPCs (from campaign) plus the store-managed categories */
 export type SidebarPanel = 'npcs' | SidebarCategory
 
+export interface HandoutPage {
+  id: string
+  contentType: 'image' | 'text'
+  content: string
+  label?: string
+  dmOnly?: boolean
+}
+
 export interface Handout {
   id: string
   title: string
@@ -227,6 +236,18 @@ export interface Handout {
   content: string // base64 for images, plain text for text
   visibility: 'all' | 'dm-only'
   createdAt: number
+  pages?: HandoutPage[]
+}
+
+export interface SharedJournalEntry {
+  id: string
+  title: string
+  content: string
+  authorPeerId: string
+  authorName: string
+  visibility: 'public' | 'private'
+  createdAt: number
+  updatedAt: number
 }
 
 export interface HiddenDiceResult {

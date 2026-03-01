@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { load5eMonsters, searchMonsters } from '../../../services/data-provider'
 import type { MapToken } from '../../../types/map'
 import type { MonsterStatBlock } from '../../../types/monster'
+import { logger } from '../../../utils/logger'
 import MonsterStatBlockView from './MonsterStatBlockView'
 
 interface TokenPlacerProps {
@@ -42,7 +43,7 @@ export default function TokenPlacer({
   useEffect(() => {
     load5eMonsters()
       .then(setAllMonsters)
-      .catch(() => {})
+      .catch((e) => logger.warn('[TokenPlacer] Failed to load monsters', e))
   }, [])
 
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function TokenPlacer({
       monsterStatBlockId: selectedMonster?.id,
       initiativeModifier: selectedMonster?.initiative?.modifier,
       darkvision: selectedMonster?.senses.darkvision ? true : undefined,
+      darkvisionRange: selectedMonster?.senses.darkvision || undefined,
       resistances: selectedMonster?.resistances,
       vulnerabilities: selectedMonster?.vulnerabilities,
       immunities: selectedMonster?.damageImmunities,

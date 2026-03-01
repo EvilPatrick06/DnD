@@ -63,7 +63,10 @@ else:
     }
 
 # Paths BMO has explicit read access to
-DND_DATA_DIR = r"C:\Users\evilp\dnd\src\renderer\public\data\5e"
+if platform.system() == "Windows":
+    DND_DATA_DIR = os.environ.get("DND_DATA_DIR", r"C:\Users\evilp\dnd\src\renderer\public\data\5e")
+else:
+    DND_DATA_DIR = os.environ.get("DND_DATA_DIR", "/opt/dnd-project/src/renderer/public/data/5e")
 
 
 # ── GPU Server Routing ────────────────────────────────────────────────

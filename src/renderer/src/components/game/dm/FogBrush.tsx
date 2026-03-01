@@ -7,6 +7,8 @@ interface FogBrushProps {
   onBrushSizeChange: (size: number) => void
   onRevealAll: () => void
   onHideAll: () => void
+  dynamicFogEnabled?: boolean
+  onDynamicFogToggle?: (enabled: boolean) => void
 }
 
 export default function FogBrush({
@@ -15,7 +17,9 @@ export default function FogBrush({
   onToolChange,
   onBrushSizeChange,
   onRevealAll,
-  onHideAll
+  onHideAll,
+  dynamicFogEnabled,
+  onDynamicFogToggle
 }: FogBrushProps): JSX.Element {
   const isFogTool = activeTool === 'fog-reveal' || activeTool === 'fog-hide'
   const brushSizes = [1, 3, 5]
@@ -73,6 +77,18 @@ export default function FogBrush({
           Hide All
         </button>
       </div>
+
+      {onDynamicFogToggle && (
+        <label className="flex items-center gap-2 cursor-pointer mt-1">
+          <input
+            type="checkbox"
+            checked={dynamicFogEnabled ?? false}
+            onChange={(e) => onDynamicFogToggle(e.target.checked)}
+            className="accent-cyan-500 w-3.5 h-3.5 cursor-pointer"
+          />
+          <span className="text-xs text-gray-400">Dynamic Vision</span>
+        </label>
+      )}
 
       {isFogTool && (
         <p className="text-xs text-amber-400 text-center">

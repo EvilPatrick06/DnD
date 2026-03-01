@@ -6,12 +6,14 @@ interface SpellPickerProps {
   availableSpells: SpellData[]
   selectedSpellIds: string[]
   toggleSpell: (id: string) => void
+  offListSpellIds?: Set<string>
 }
 
 export default function SpellPicker5e({
   availableSpells,
   selectedSpellIds,
-  toggleSpell
+  toggleSpell,
+  offListSpellIds
 }: SpellPickerProps): JSX.Element {
   const [search, setSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState<number | 'all'>('all')
@@ -78,6 +80,7 @@ export default function SpellPicker5e({
                     spell={spell}
                     selected={selectedSpellIds.includes(spell.id)}
                     onToggle={() => toggleSpell(spell.id)}
+                    isOffList={offListSpellIds?.has(spell.id)}
                   />
                 ))}
               </div>

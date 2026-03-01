@@ -1,5 +1,15 @@
 import * as THREE from 'three'
-import diceColorsJson from '../../../../public/data/5e/ui/dice-colors.json'
+import diceColorsJson from '../../../../public/data/ui/dice-colors.json'
+import {
+  computeFaceNormalsFromGeo as genComputeFaceNormals,
+  createD4 as genD4,
+  createD6 as genD6,
+  createD8 as genD8,
+  createD10 as genD10,
+  createD12 as genD12,
+  createD20 as genD20
+} from './dice-generators'
+import { createFaceMaterials, createWireMaterial } from './dice-textures'
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -29,115 +39,10 @@ export interface DieDefinition {
 
 export type DieType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100'
 
-// ─── Canvas texture generator ─────────────────────────────────
-
-function createDieTexture(
-  faceText: string,
-  bgColor: string,
-  textColor: string,
-  size: number = 256
-): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-
-  // Background
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, size, size)
-
-  // Text
-  const fontSize = faceText.length > 2 ? size * 0.3 : faceText.length > 1 ? size * 0.38 : size * 0.5
-  ctx.fillStyle = textColor
-  ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(faceText, size / 2, size / 2)
-
-  // Underline 6 and 9 to distinguish them
-  if (faceText === '6' || faceText === '9') {
-    const metrics = ctx.measureText(faceText)
-    const underY = size / 2 + fontSize * 0.35
-    const hw = metrics.width / 2
-    ctx.strokeStyle = textColor
-    ctx.lineWidth = Math.max(2, fontSize * 0.06)
-    ctx.beginPath()
-    ctx.moveTo(size / 2 - hw, underY)
-    ctx.lineTo(size / 2 + hw, underY)
-    ctx.stroke()
-  }
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
-  return texture
-}
-
-/** Create a hidden die texture with '?' and glow effect */
-function createHiddenTexture(bgColor: string, size: number = 256): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, size, size)
-
-  // Glow effect
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size * 0.4)
-  gradient.addColorStop(0, 'rgba(138, 43, 226, 0.4)')
-  gradient.addColorStop(1, 'rgba(138, 43, 226, 0)')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, size, size)
-
-  const fontSize = size * 0.45
-  ctx.fillStyle = '#bb88ff'
-  ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('?', size / 2, size / 2)
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.colorSpace = THREE.SRGBColorSpace
-  return texture
-}
-
-// ─── Material factories ──────────────────────────────────────
-
-function createFaceMaterials(
-  faceLabels: string[],
-  colors: DiceColors,
-  isHidden: boolean = false
-): THREE.MeshStandardMaterial[] {
-  return faceLabels.map((label) => {
-    const texture = isHidden
-      ? createHiddenTexture(colors.bodyColor)
-      : createDieTexture(label, colors.bodyColor, colors.numberColor)
-    return new THREE.MeshStandardMaterial({
-      map: texture,
-      roughness: 0.35,
-      metalness: 0.15,
-      flatShading: false
-    })
-  })
-}
-
-function _createSolidMaterial(colors: DiceColors): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({
-    color: new THREE.Color(colors.bodyColor),
-    roughness: 0.35,
-    metalness: 0.15,
-    flatShading: false
-  })
-}
-
-function createWireMaterial(): THREE.LineBasicMaterial {
-  return new THREE.LineBasicMaterial({ color: 0x3a3a5e, linewidth: 1 })
-}
-
 // ─── D4 (Tetrahedron) ────────────────────────────────────────
 // D4 corner-number: each face shows the number at the TOP vertex
 
-function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
+function _createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.8 * DIE_SCALE
   const geo = new THREE.TetrahedronGeometry(radius)
   geo.computeVertexNormals()
@@ -182,7 +87,7 @@ function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
 
 // ─── D6 (Cube) ───────────────────────────────────────────────
 
-function createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
+function _createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
   const size = 0.7 * DIE_SCALE
   const geo = new THREE.BoxGeometry(size, size, size)
 
@@ -215,7 +120,7 @@ function createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
 
 // ─── D8 (Octahedron) ─────────────────────────────────────────
 
-function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
+function _createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.75 * DIE_SCALE
   const geo = new THREE.OctahedronGeometry(radius)
 
@@ -253,7 +158,7 @@ function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
 
 // ─── D10 (Pentagonal Trapezohedron) ──────────────────────────
 
-function createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean = false): DieDefinition {
+function _createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean = false): DieDefinition {
   const radius = 0.7 * DIE_SCALE
   const vertices: number[] = []
   const indices: number[] = []
@@ -350,7 +255,7 @@ function createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean 
 
 // ─── D12 (Dodecahedron) ──────────────────────────────────────
 
-function createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
+function _createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.75 * DIE_SCALE
   const geo = new THREE.DodecahedronGeometry(radius)
 
@@ -395,7 +300,7 @@ function createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
 
 // ─── D20 (Icosahedron) ───────────────────────────────────────
 
-function createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
+function _createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.8 * DIE_SCALE
   const geo = new THREE.IcosahedronGeometry(radius)
 
@@ -432,31 +337,9 @@ function createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
 
 // ─── Face normal extraction ──────────────────────────────────
 
+/** Delegates to dice-generators for face normal computation. */
 function computeFaceNormalsFromGeo(geo: THREE.BufferGeometry, faceCount: number): THREE.Vector3[] {
-  const pos = geo.getAttribute('position')
-  const normals: THREE.Vector3[] = []
-  const totalVerts = pos.count
-  const vertsPerFace = Math.floor(totalVerts / faceCount)
-
-  for (let f = 0; f < faceCount; f++) {
-    const normal = new THREE.Vector3()
-    const tris = Math.floor(vertsPerFace / 3)
-
-    for (let t = 0; t < tris; t++) {
-      const base = f * vertsPerFace + t * 3
-      if (base + 2 >= totalVerts) break
-      const a = new THREE.Vector3().fromBufferAttribute(pos, base)
-      const b = new THREE.Vector3().fromBufferAttribute(pos, base + 1)
-      const c = new THREE.Vector3().fromBufferAttribute(pos, base + 2)
-      const e1 = new THREE.Vector3().subVectors(b, a)
-      const e2 = new THREE.Vector3().subVectors(c, a)
-      normal.add(new THREE.Vector3().crossVectors(e1, e2))
-    }
-
-    normals.push(normal.normalize())
-  }
-
-  return normals
+  return genComputeFaceNormals(geo, faceCount)
 }
 
 // ─── Die creation API ────────────────────────────────────────
@@ -470,21 +353,22 @@ export function createDie(type: DieType, options: CreateDieOptions = {}): DieDef
   const colors = options.colors || DEFAULT_DICE_COLORS
   const isHidden = options.isHidden || false
 
+  // Delegate to dice-generators for geometry creation
   switch (type) {
     case 'd4':
-      return createD4(colors, isHidden)
+      return genD4(colors, isHidden)
     case 'd6':
-      return createD6(colors, isHidden)
+      return genD6(colors, isHidden)
     case 'd8':
-      return createD8(colors, isHidden)
+      return genD8(colors, isHidden)
     case 'd10':
-      return createD10(colors, isHidden, false)
+      return genD10(colors, isHidden, false)
     case 'd12':
-      return createD12(colors, isHidden)
+      return genD12(colors, isHidden)
     case 'd20':
-      return createD20(colors, isHidden)
+      return genD20(colors, isHidden)
     case 'd100':
-      return createD10(colors, isHidden, true)
+      return genD10(colors, isHidden, true)
   }
 }
 

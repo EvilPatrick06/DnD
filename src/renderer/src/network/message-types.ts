@@ -26,8 +26,6 @@ export const MESSAGE_TYPES = [
   'dm:kick-player',
   'dm:ban-player',
   'dm:unban-player',
-  'dm:force-mute',
-  'dm:force-deafen',
   'dm:chat-timeout',
   'dm:promote-codm',
   'dm:demote-codm',
@@ -51,6 +49,7 @@ export const MESSAGE_TYPES = [
   'dm:play-sound',
   'dm:play-ambient',
   'dm:stop-ambient',
+  'dm:vision-update',
   'chat:message',
   'chat:file',
   'chat:whisper',
@@ -61,9 +60,20 @@ export const MESSAGE_TYPES = [
   'player:roll-result',
   'player:move-declare',
   'player:typing',
-  'voice:mute-toggle',
-  'voice:deafen-toggle',
   'ai:typing',
+  'combat:reaction-prompt',
+  'combat:reaction-response',
+  'player:trade-request',
+  'player:trade-response',
+  'player:trade-cancel',
+  'dm:trade-result',
+  'player:journal-add',
+  'player:journal-update',
+  'player:journal-delete',
+  'dm:journal-sync',
+  'player:inspect-request',
+  'dm:inspect-response',
+  'dm:push-macros',
   'ping',
   'pong'
 ] as const
@@ -87,6 +97,8 @@ export interface JoinPayload {
   characterId: string | null
   characterName: string | null
   color?: string
+  /** Game system ID the client supports (e.g. 'dnd5e'). Host rejects mismatches. */
+  gameSystem?: string
 }
 
 export interface ChatPayload {
@@ -160,26 +172,6 @@ export interface ConditionUpdatePayload {
 export interface KickPayload {
   peerId: string
   reason?: string
-}
-
-export interface MuteTogglePayload {
-  peerId: string
-  isMuted: boolean
-}
-
-export interface DeafenTogglePayload {
-  peerId: string
-  isDeafened: boolean
-}
-
-export interface ForceMutePayload {
-  peerId: string
-  isForceMuted: boolean
-}
-
-export interface ForceDeafenPayload {
-  peerId: string
-  isForceDeafened: boolean
 }
 
 export interface CharacterUpdatePayload {
@@ -397,3 +389,88 @@ export interface PlayAmbientPayload {
 }
 
 export type StopAmbientPayload = Record<string, never>
+
+export interface ReactionPromptPayload {
+  promptId: string
+  targetEntityId: string
+  targetPeerId: string
+  triggerType: 'shield' | 'counterspell' | 'absorb-elements' | 'silvery-barbs'
+  triggerContext: {
+    attackRoll?: number
+    attackerName?: string
+    spellName?: string
+    spellLevel?: number
+    damageType?: string
+  }
+}
+
+export interface ReactionResponsePayload {
+  promptId: string
+  accepted: boolean
+  spellSlotLevel?: number
+}
+
+export interface TradeRequestPayload {
+  tradeId: string
+  fromPeerId: string
+  fromPlayerName: string
+  toPeerId: string
+  offeredItems: Array<{ name: string; quantity: number; description?: string }>
+  offeredGold: number
+  requestedItems: Array<{ name: string; quantity: number }>
+  requestedGold: number
+}
+
+export interface TradeResponsePayload {
+  tradeId: string
+  accepted: boolean
+  fromPeerId: string
+}
+
+export interface TradeCancelPayload {
+  tradeId: string
+  reason?: string
+}
+
+export interface TradeResultPayload {
+  tradeId: string
+  accepted: boolean
+  fromPlayerName: string
+  toPlayerName: string
+  summary: string
+}
+
+export interface JournalAddPayload {
+  entry: import('../types/game-state').SharedJournalEntry
+}
+
+export interface JournalUpdatePayload {
+  entryId: string
+  title?: string
+  content?: string
+  visibility?: 'public' | 'private'
+  updatedAt: number
+}
+
+export interface JournalDeletePayload {
+  entryId: string
+}
+
+export interface JournalSyncPayload {
+  entries: import('../types/game-state').SharedJournalEntry[]
+}
+
+export interface InspectRequestPayload {
+  characterId: string
+  requesterPeerId: string
+}
+
+export interface InspectResponsePayload {
+  characterId: string
+  characterData: unknown
+  targetPeerId: string
+}
+
+export interface MacroPushPayload {
+  macros: Array<{ id: string; name: string; command: string; icon?: string; color?: string }>
+}

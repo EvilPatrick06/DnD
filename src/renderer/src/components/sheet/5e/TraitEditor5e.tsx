@@ -100,9 +100,7 @@ export default function TraitEditor5e({
         ...latest.proficiencies,
         languages: [...latest.proficiencies.languages, lang]
       },
-      languageDescriptions: desc
-        ? { ...(latest.languageDescriptions ?? {}), [lang]: desc }
-        : (latest.languageDescriptions ?? {}),
+      languageDescriptions: desc ? { ...latest.languageDescriptions, [lang]: desc } : latest.languageDescriptions,
       updatedAt: new Date().toISOString()
     }
     saveAndBroadcast(updated)

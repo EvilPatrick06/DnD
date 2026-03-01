@@ -66,7 +66,7 @@ export default function ReviewStep({
             <span>{name}</span>
 
             <span className="text-gray-400">System</span>
-            <span>{GAME_SYSTEMS[system].name}</span>
+            <span>{GAME_SYSTEMS[system]?.name ?? system}</span>
 
             <span className="text-gray-400">Type</span>
             <span className="capitalize">

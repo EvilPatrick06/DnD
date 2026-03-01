@@ -64,11 +64,7 @@ export function useEquipmentDatabase(): EquipmentDatabase | null {
 export function lookupItem(
   db: EquipmentDatabase | null,
   name: string
-):
-  | { type: 'weapon'; data: WeaponData }
-  | { type: 'armor'; data: ArmorData }
-  | { type: 'gear'; data: GearData }
-  | null {
+): { type: 'weapon'; data: WeaponData } | { type: 'armor'; data: ArmorData } | { type: 'gear'; data: GearData } | null {
   if (!db) return null
   const lowerName = name.toLowerCase()
 

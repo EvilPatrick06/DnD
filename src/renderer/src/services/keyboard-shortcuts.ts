@@ -1,6 +1,7 @@
 // keyboard-shortcuts.ts — Global keyboard shortcut manager for the game view
 
-import shortcutsJson from '../../public/data/5e/ui/keyboard-shortcuts.json'
+import shortcutsJson from '../../public/data/ui/keyboard-shortcuts.json'
+import { type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
 
 export interface ShortcutDefinition {
   key: string // e.g., 'Space', 'Escape', 'd', '1'-'9'
@@ -34,7 +35,7 @@ function normalizeKey(key: string): string {
   return key.toLowerCase()
 }
 
-function matchesShortcut(e: KeyboardEvent, shortcut: ShortcutDefinition): boolean {
+export function matchesShortcut(e: KeyboardEvent, shortcut: ShortcutDefinition): boolean {
   const wantCtrl = shortcut.ctrl ?? false
   const wantShift = shortcut.shift ?? false
   const wantAlt = shortcut.alt ?? false
@@ -56,11 +57,49 @@ function matchesShortcut(e: KeyboardEvent, shortcut: ShortcutDefinition): boolea
   return pressedKey === shortcutKey
 }
 
+/** Returns the effective shortcuts list, merging defaults with custom overrides. */
+export function getEffectiveShortcuts(): ShortcutDefinition[] {
+  const custom = useAccessibilityStore.getState().customKeybindings
+  if (!custom) return DEFAULT_SHORTCUTS
+
+  return DEFAULT_SHORTCUTS.map((shortcut) => {
+    const override = custom[shortcut.action]
+    if (!override) return shortcut
+    return { ...shortcut, key: override.key, ctrl: override.ctrl, shift: override.shift, alt: override.alt }
+  })
+}
+
+/** Get the current binding for a specific action. */
+export function getShortcutForAction(action: string): ShortcutDefinition | undefined {
+  return getEffectiveShortcuts().find((s) => s.action === action)
+}
+
+/** Check if a key combo conflicts with any existing binding (excluding the given action). */
+export function hasConflict(
+  action: string,
+  combo: KeyCombo
+): { conflicting: boolean; conflictAction?: string; conflictDescription?: string } {
+  const effective = getEffectiveShortcuts()
+  for (const s of effective) {
+    if (s.action === action) continue
+    if (
+      normalizeKey(s.key) === normalizeKey(combo.key) &&
+      (s.ctrl ?? false) === (combo.ctrl ?? false) &&
+      (s.shift ?? false) === (combo.shift ?? false) &&
+      (s.alt ?? false) === (combo.alt ?? false)
+    ) {
+      return { conflicting: true, conflictAction: s.action, conflictDescription: s.description }
+    }
+  }
+  return { conflicting: false }
+}
+
 function handleKeyDown(e: KeyboardEvent): void {
   if (!enabled || !handler) return
   if (isEditableTarget(e.target)) return
 
-  for (const shortcut of DEFAULT_SHORTCUTS) {
+  const shortcuts = getEffectiveShortcuts()
+  for (const shortcut of shortcuts) {
     if (matchesShortcut(e, shortcut)) {
       e.preventDefault()
       e.stopPropagation()
@@ -103,15 +142,15 @@ export function setEnabled(e: boolean): void {
   enabled = e
 }
 
-/** Get all shortcut definitions (for the reference modal). */
+/** Get all shortcut definitions (with custom overrides applied). */
 export function getShortcuts(): ShortcutDefinition[] {
-  return DEFAULT_SHORTCUTS
+  return getEffectiveShortcuts()
 }
 
-/** Get shortcut definitions grouped by category. */
+/** Get shortcut definitions grouped by category (with custom overrides applied). */
 export function getShortcutsByCategory(): Record<string, ShortcutDefinition[]> {
   const grouped: Record<string, ShortcutDefinition[]> = {}
-  for (const shortcut of DEFAULT_SHORTCUTS) {
+  for (const shortcut of getEffectiveShortcuts()) {
     if (!grouped[shortcut.category]) {
       grouped[shortcut.category] = []
     }

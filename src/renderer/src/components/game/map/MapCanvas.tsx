@@ -1,11 +1,15 @@
 import 'pixi.js/unsafe-eval' // CSP-compatible PixiJS shaders (must be before any pixi usage)
 import { Application, Assets, type Container, type Graphics, Sprite } from 'pixi.js'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { LIGHT_SOURCES } from '../../../data/light-sources'
+import { buildVisionSet, getLightingAtPoint, isTokenInVisionSet } from '../../../services/map/vision-computation'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap, MapToken } from '../../../types/map'
 import { logger } from '../../../utils/logger'
 import type { AoEConfig } from './aoe-overlay'
+import { AudioEmitterLayer } from './audio-emitter-overlay'
+import { createCombatAnimationLayer } from './combat-animations'
 import { destroyFogAnimation } from './fog-overlay'
 import type { MapEventRefs } from './map-event-handlers'
 import { createWheelHandler, setupKeyboardPan, setupMouseHandlers } from './map-event-handlers'
@@ -20,6 +24,8 @@ import {
 import { clearMeasurement } from './measurement-tool'
 import { createTokenSprite } from './token-sprite'
 import type { WeatherOverlayLayer } from './weather-overlay'
+
+const FloorSelector = lazy(() => import('./FloorSelector'))
 
 interface MapCanvasProps {
   map: GameMap | null
@@ -39,6 +45,8 @@ interface MapCanvasProps {
   activeEntityId?: string | null
   /** Callback for right-click on a token (context menu) */
   onTokenContextMenu?: (x: number, y: number, token: MapToken, mapId: string) => void
+  /** Callback for right-click on an empty cell (DM only) */
+  onEmptyCellContextMenu?: (gridX: number, gridY: number, screenX: number, screenY: number) => void
 }
 
 export default function MapCanvas({
@@ -46,17 +54,18 @@ export default function MapCanvas({
   isHost,
   selectedTokenId,
   activeTool,
-  fogBrushSize,
+  fogBrushSize: _fogBrushSize,
   onTokenMove,
   onTokenSelect,
   onCellClick,
   onWallPlace,
-  onDoorToggle,
+  onDoorToggle: _onDoorToggle,
   turnState,
   isInitiativeMode,
   activeAoE,
   activeEntityId,
-  onTokenContextMenu
+  onTokenContextMenu,
+  onEmptyCellContextMenu
 }: MapCanvasProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
@@ -70,6 +79,8 @@ export default function MapCanvas({
   const aoeOverlayRef = useRef<Graphics | null>(null)
   const bgSpriteRef = useRef<Sprite | null>(null)
   const weatherOverlayRef = useRef<WeatherOverlayLayer | null>(null)
+  const combatAnimLayerRef = useRef<{ container: Container; destroy: () => void } | null>(null)
+  const audioEmitterLayerRef = useRef<AudioEmitterLayer | null>(null)
   const tokenSpriteMapRef = useRef(new Map<string, { sprite: Container; key: string }>())
 
   // Pan and zoom state
@@ -103,6 +114,7 @@ export default function MapCanvas({
   const [initError, setInitError] = useState<string | null>(null)
   const [_retryCount, setRetryCount] = useState(0)
   const [bgLoadError, setBgLoadError] = useState<string | null>(null)
+  const [currentFloor, setCurrentFloor] = useState<string>(map?.floors?.[0]?.id ?? 'default')
 
   const applyTransform = useCallback(() => {
     if (!worldRef.current) return
@@ -163,12 +175,22 @@ export default function MapCanvas({
       wallGraphicsRef.current = layers.wallGraphics
       measureGraphicsRef.current = layers.measureGraphics
       weatherOverlayRef.current = layers.weatherOverlay
+      const combatLayer = createCombatAnimationLayer(app)
+      layers.world.addChild(combatLayer.container)
+      combatAnimLayerRef.current = combatLayer
+      const audioEmitterLayer = new AudioEmitterLayer()
+      layers.world.addChild(audioEmitterLayer.getContainer())
+      audioEmitterLayerRef.current = audioEmitterLayer
       setInitialized(true)
       setInitError(null)
     }
     initApp()
     return () => {
       cancelled = true
+      combatAnimLayerRef.current?.destroy()
+      combatAnimLayerRef.current = null
+      audioEmitterLayerRef.current?.destroy()
+      audioEmitterLayerRef.current = null
       if (weatherOverlayRef.current) {
         weatherOverlayRef.current.destroy()
         weatherOverlayRef.current = null
@@ -271,6 +293,7 @@ export default function MapCanvas({
 
   // Render tokens (diff-based)
   const hpBarsVisibility = useGameStore((s) => s.hpBarsVisibility)
+  const partyVisionCells = useGameStore((s) => s.partyVisionCells)
 
   const renderTokens = useCallback(() => {
     if (!tokenContainerRef.current || !map) return
@@ -279,19 +302,48 @@ export default function MapCanvas({
     const showHpBar = hpBarsVisibility === 'all' || (hpBarsVisibility === 'dm-only' && isHost)
     const visibleTokenIds = new Set<string>()
 
+    // Build vision set for dynamic token visibility
+    const dynamicFogEnabled = map.fogOfWar.dynamicFogEnabled ?? false
+    const visionSet = dynamicFogEnabled && !isHost ? buildVisionSet(partyVisionCells) : null
+
+    // Build light sources for lighting condition computation
+    const ambientLight = useGameStore.getState().ambientLight
+    const activeLightSources = useGameStore.getState().activeLightSources
+    const tokens = map.tokens ?? []
+    const lightSourcesForBadge = activeLightSources.map((ls) => {
+      const t = tokens.find((tk) => tk.id === ls.entityId)
+      const def = LIGHT_SOURCES[ls.sourceName]
+      return {
+        x: t?.gridX ?? 0,
+        y: t?.gridY ?? 0,
+        brightRadius: def ? Math.ceil(def.brightRadius / 5) : 4,
+        dimRadius: def ? Math.ceil(def.dimRadius / 5) : 4
+      }
+    })
+
     for (const token of map.tokens) {
       if (!isHost && !token.visibleToPlayers) continue
+      // Dynamic vision: hide non-player tokens outside party vision
+      if (visionSet && token.entityType !== 'player' && !isTokenInVisionSet(token, visionSet)) continue
       visibleTokenIds.add(token.id)
       const isSelected = token.id === selectedTokenId
       const isActive = !!activeEntityId && token.entityId === activeEntityId
-      const key = `${token.gridX},${token.gridY},${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')}`
+
+      // Compute lighting condition at token center
+      const tokenCenter = {
+        x: (token.gridX + token.sizeX / 2) * map.grid.cellSize,
+        y: (token.gridY + token.sizeY / 2) * map.grid.cellSize
+      }
+      const lighting = getLightingAtPoint(tokenCenter, lightSourcesForBadge, ambientLight, map.grid.cellSize)
+
+      const key = `${token.gridX},${token.gridY},${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost}`
       const cached = cache.get(token.id)
       if (cached && cached.key === key) continue
       if (cached) {
         container.removeChild(cached.sprite)
         cached.sprite.destroy({ children: true })
       }
-      const sprite = createTokenSprite(token, map.grid.cellSize, isSelected, isActive, showHpBar)
+      const sprite = createTokenSprite(token, map.grid.cellSize, isSelected, isActive, showHpBar, lighting, isHost)
       sprite.label = `token-${token.id}`
       sprite.on('pointerdown', (e) => {
         if (activeTool !== 'select') return
@@ -327,7 +379,17 @@ export default function MapCanvas({
         cache.delete(tokenId)
       }
     }
-  }, [map, selectedTokenId, isHost, activeTool, onTokenSelect, activeEntityId, onTokenContextMenu, hpBarsVisibility])
+  }, [
+    map,
+    selectedTokenId,
+    isHost,
+    activeTool,
+    onTokenSelect,
+    activeEntityId,
+    onTokenContextMenu,
+    hpBarsVisibility,
+    partyVisionCells
+  ])
 
   useEffect(() => {
     if (initialized) renderTokens()
@@ -440,6 +502,52 @@ export default function MapCanvas({
     return () => window.removeEventListener('keydown', handler)
   }, [handleResetView])
 
+  // Right-click on empty cell handler (DM only)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || !isHost || !onEmptyCellContextMenu || !map) return
+    const handler = (e: MouseEvent): void => {
+      // Only process if right-click
+      if (e.button !== 2) return
+      e.preventDefault()
+
+      // Check if we clicked on a token — if so, let the token handler deal with it
+      const world = worldRef.current
+      if (!world) return
+      const canvas = el.querySelector('canvas')
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const canvasX = e.clientX - rect.left
+      const canvasY = e.clientY - rect.top
+
+      // Convert screen to world coordinates
+      const worldX = (canvasX - panRef.current.x) / zoomRef.current
+      const worldY = (canvasY - panRef.current.y) / zoomRef.current
+
+      // Check if any token contains this point
+      const cellSize = map.grid.cellSize
+      const hitToken = map.tokens.some((token) => {
+        const tokenSize = cellSize * Math.max(token.sizeX, token.sizeY)
+        const cx = token.gridX * cellSize + tokenSize / 2
+        const cy = token.gridY * cellSize + tokenSize / 2
+        const radius = (tokenSize - 4) / 2
+        const dx = worldX - cx
+        const dy = worldY - cy
+        return dx * dx + dy * dy <= radius * radius
+      })
+      if (hitToken) return
+
+      // Convert to grid cell
+      const gridX = Math.floor(worldX / cellSize)
+      const gridY = Math.floor(worldY / cellSize)
+      if (gridX < 0 || gridY < 0) return
+
+      onEmptyCellContextMenu(gridX, gridY, e.clientX, e.clientY)
+    }
+    el.addEventListener('contextmenu', handler)
+    return () => el.removeEventListener('contextmenu', handler)
+  }, [isHost, onEmptyCellContextMenu, map])
+
   return (
     <div
       className={`relative w-full h-full overflow-hidden bg-gray-900 ${pendingPlacement ? 'cursor-crosshair' : ''}`}
@@ -456,6 +564,11 @@ export default function MapCanvas({
         >
           Reset View
         </button>
+      )}
+      {map?.floors && map.floors.length > 1 && (
+        <Suspense fallback={null}>
+          <FloorSelector floors={map.floors} currentFloor={currentFloor} onFloorChange={setCurrentFloor} />
+        </Suspense>
       )}
       {pendingPlacement && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-gray-900/90 border border-cyan-500/60 rounded-lg px-4 py-2 text-xs text-cyan-300 pointer-events-none">

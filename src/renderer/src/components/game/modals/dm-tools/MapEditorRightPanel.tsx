@@ -129,6 +129,10 @@ export default function MapEditorRightPanel({
             onBrushSizeChange={setFogBrushSize}
             onRevealAll={handleRevealAll}
             onHideAll={handleHideAll}
+            dynamicFogEnabled={activeMap?.fogOfWar.dynamicFogEnabled}
+            onDynamicFogToggle={
+              activeMap ? (enabled) => gameStore.setDynamicFogEnabled(activeMap.id, enabled) : undefined
+            }
           />
         )}
         {rightPanel === 'terrain' && (

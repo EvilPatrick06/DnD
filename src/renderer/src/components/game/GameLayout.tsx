@@ -1,13 +1,17 @@
-import { lazy, Suspense, useCallback, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useGameEffects } from '../../hooks/use-game-effects'
 import { useGameHandlers } from '../../hooks/use-game-handlers'
 import { useGameNetwork } from '../../hooks/use-game-network'
+import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
+import { executeMacro } from '../../services/macro-engine'
+import { recomputeVision } from '../../services/map/vision-computation'
 import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useGameStore } from '../../stores/use-game-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
+import { useMacroStore } from '../../stores/use-macro-store'
 import { useNetworkStore } from '../../stores/use-network-store'
 import type { Campaign } from '../../types/campaign'
 import type { Character } from '../../types/character'
@@ -20,10 +24,16 @@ import { DiceOverlay } from './dice3d'
 import DiceTray from './dice3d/DiceTray'
 import type { ActiveModal } from './GameModalDispatcher'
 import GameModalDispatcher from './GameModalDispatcher'
+
+const CharacterInspectModal = lazy(() => import('./modals/utility/CharacterInspectModal'))
+
+import { getWeatherEffects, type WeatherType } from '../../services/weather-mechanics'
 import type { AoEConfig } from './map/aoe-overlay'
 import MapCanvas from './map/MapCanvas'
+import ActionEconomyBar from './overlays/ActionEconomyBar'
 import ClockOverlay from './overlays/ClockOverlay'
 import DmAlertTray from './overlays/DmAlertTray'
+import EmptyCellContextMenu from './overlays/EmptyCellContextMenu'
 import {
   type ConcCheckPromptState,
   ConcentrationCheckPrompt,
@@ -40,17 +50,28 @@ import {
   RestRequestToast,
   WallToolbar
 } from './overlays/GameToasts'
+import Hotbar from './overlays/Hotbar'
 import InitiativeOverlay from './overlays/InitiativeOverlay'
+import LairActionPrompt from './overlays/LairActionPrompt'
 import PlayerHUDOverlay from './overlays/PlayerHUDOverlay'
+import PortalPrompt from './overlays/PortalPrompt'
+import {
+  type CounterspellPromptState,
+  CounterspellReactionPrompt,
+  type ShieldPromptState,
+  ShieldReactionPrompt
+} from './overlays/ReactionPrompts'
 import RollRequestOverlay from './overlays/RollRequestOverlay'
 import SettingsDropdown from './overlays/SettingsDropdown'
 import TimerOverlay from './overlays/TimerOverlay'
 import TokenContextMenu from './overlays/TokenContextMenu'
+import TurnNotificationBanner from './overlays/TurnNotificationBanner'
 import ViewModeToggle from './overlays/ViewModeToggle'
 import ShopView from './player/ShopView'
 import ResizeHandle from './ResizeHandle'
 import LeftSidebar from './sidebar/LeftSidebar'
 
+const CharacterPickerOverlay = lazy(() => import('./overlays/CharacterPickerOverlay'))
 const DMMapEditor = lazy(() => import('./modals/dm-tools/DMMapEditor'))
 const RulingApprovalModal = lazy(() => import('./modals/utility/RulingApprovalModal'))
 const NarrationOverlay = lazy(() => import('./overlays/NarrationOverlay'))
@@ -60,6 +81,17 @@ interface GameLayoutProps {
   isDM: boolean
   character: Character | null
   playerName: string
+}
+
+function InspectModalRenderer(): JSX.Element | null {
+  const inspectedCharacterData = useGameStore((s) => s.inspectedCharacterData)
+  const clearInspectedCharacter = useGameStore((s) => s.clearInspectedCharacter)
+  if (!inspectedCharacterData) return null
+  return (
+    <Suspense fallback={null}>
+      <CharacterInspectModal characterData={inspectedCharacterData} onClose={clearInspectedCharacter} />
+    </Suspense>
+  )
 }
 
 export default function GameLayout({ campaign, isDM, character, playerName }: GameLayoutProps): JSX.Element {
@@ -124,22 +156,40 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   )
   const [disputeContext, setDisputeContext] = useState<{ ruling: string; citation: string } | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; token: MapToken; mapId: string } | null>(null)
+  const [emptyCellMenu, setEmptyCellMenu] = useState<{
+    gridX: number
+    gridY: number
+    screenX: number
+    screenY: number
+  } | null>(null)
   const [editingToken, setEditingToken] = useState<{ token: MapToken; mapId: string } | null>(null)
   const [viewingHandout, setViewingHandout] = useState<import('../../types/game-state').Handout | null>(null)
   const [narrationText, setNarrationText] = useState<string | null>(null)
   const [oaPrompt, setOaPrompt] = useState<OaPromptState | null>(null)
   const [stabilizePrompt, setStabilizePrompt] = useState<StabilizePromptState | null>(null)
   const [concCheckPrompt, setConcCheckPrompt] = useState<ConcCheckPromptState | null>(null)
+  const [turnBanner, setTurnBanner] = useState<{ entityName: string } | null>(null)
+  const [shieldPrompt, setShieldPrompt] = useState<ShieldPromptState | null>(null)
+  const [counterspellPrompt, setCounterspellPrompt] = useState<CounterspellPromptState | null>(null)
+  const [pendingPortal, setPendingPortal] = useState<PortalEntryInfo | null>(null)
+  const prevEntityIdRef = useRef<string | null>(null)
 
   const gameStore = useGameStore()
   const networkRole = useNetworkStore((s) => s.role)
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const addChatMessage = useLobbyStore((s) => s.addChatMessage)
-  const lobbyPeerId = useLobbyStore((s) => s.peerId)
-  const lobbyDisplayName = useLobbyStore((s) => s.displayName)
+  const lobbyPeerId = useNetworkStore((s) => s.localPeerId)
+  const lobbyDisplayName = useLobbyStore((s) => {
+    const localId = useNetworkStore.getState().localPeerId
+    return s.players.find((p) => p.peerId === localId)?.displayName ?? null
+  })
   const aiDmStore = useAiDmStore()
   const aiInitRef = useRef(false)
   const allCharacters = useCharacterStore((s) => s.characters)
+
+  const handleCreateCharacter = useCallback(() => {
+    navigate(getBuilderCreatePath())
+  }, [navigate])
 
   const handleBottomResize = useCallback((delta: number) => {
     setBottomBarHeight((h) => {
@@ -181,6 +231,114 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     if (!gameStore.initiative || !character) return false
     return gameStore.initiative.entries[gameStore.initiative.currentIndex]?.entityId === character.id
   })()
+
+  // Current active entity in initiative
+  const currentInitEntity = gameStore.initiative?.entries[gameStore.initiative?.currentIndex ?? -1] ?? null
+
+  // Detect turn changes and show banner
+  useEffect(() => {
+    if (!currentInitEntity) {
+      prevEntityIdRef.current = null
+      return
+    }
+    if (currentInitEntity.entityId === prevEntityIdRef.current) return
+    prevEntityIdRef.current = currentInitEntity.entityId
+
+    // Show banner for player's own character or DM's NPC/enemy
+    if (character && currentInitEntity.entityId === character.id) {
+      setTurnBanner({ entityName: character.name })
+    } else if (isDM && currentInitEntity.entityType !== 'player') {
+      setTurnBanner({ entityName: currentInitEntity.entityName })
+    }
+  }, [currentInitEntity, character, isDM])
+
+  const handleEndTurn = useCallback(() => {
+    if (!currentInitEntity) return
+    if (networkRole === 'client' && character) {
+      sendMessage('player:turn-end', { entityId: character.id })
+    } else {
+      gameStore.nextTurn()
+      if (networkRole === 'host') {
+        sendMessage('game:turn-advance', {})
+      }
+    }
+  }, [currentInitEntity, networkRole, character, sendMessage, gameStore])
+
+  // Load/save macros for current character
+  useEffect(() => {
+    if (character?.id) {
+      useMacroStore.getState().loadForCharacter(character.id)
+    }
+    return () => {
+      if (character?.id) useMacroStore.getState().saveForCharacter(character.id)
+    }
+  }, [character?.id])
+
+  const handleExecuteMacro = useCallback(
+    (macro: import('../../stores/use-macro-store').Macro) => {
+      const char5e = character && is5eCharacter(character) ? character : null
+      const addSysMsg = (content: string): void => {
+        addChatMessage({
+          id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+          senderId: 'system',
+          senderName: 'System',
+          content,
+          timestamp: Date.now(),
+          isSystem: true
+        })
+      }
+      const ctx = {
+        isDM: effectiveIsDM,
+        playerName,
+        character: char5e,
+        localPeerId: lobbyPeerId || 'local',
+        addSystemMessage: addSysMsg,
+        broadcastSystemMessage: (content: string) => {
+          addSysMsg(content)
+          sendMessage('chat:message', { message: content, isSystem: true })
+        },
+        addErrorMessage: (err: string) => addSysMsg(`Error: ${err}`)
+      }
+      // Use last selected token as target if available
+      const targetLabel = contextMenu?.token?.label
+      executeMacro(macro, ctx, char5e, targetLabel)
+    },
+    [character, effectiveIsDM, playerName, lobbyPeerId, addChatMessage, sendMessage, contextMenu]
+  )
+
+  // Convert pending reaction prompts from network into local UI state
+  const pendingReaction = useGameStore((s) => s.pendingReactionPrompt)
+  useEffect(() => {
+    if (!pendingReaction || !character) return
+    if (pendingReaction.targetEntityId !== character.id) return
+    if (pendingReaction.triggerType === 'shield') {
+      setShieldPrompt({
+        entityId: character.id,
+        entityName: character.name,
+        currentAC: 10, // base AC — caller should provide actual AC
+        attackRoll: pendingReaction.triggerContext.attackRoll ?? 0,
+        attackerName: pendingReaction.triggerContext.attackerName ?? 'Unknown'
+      })
+    } else if (pendingReaction.triggerType === 'counterspell') {
+      setCounterspellPrompt({
+        entityId: character.id,
+        entityName: character.name,
+        casterName: pendingReaction.triggerContext.attackerName ?? 'Unknown',
+        spellName: pendingReaction.triggerContext.spellName ?? 'Unknown Spell',
+        spellLevel: pendingReaction.triggerContext.spellLevel ?? 1,
+        highestSlotAvailable: 9
+      })
+    }
+    gameStore.setPendingReactionPrompt(null)
+  }, [pendingReaction, character, gameStore])
+
+  // Auto-open FallingDamageModal when pendingFallDamage is set
+  const pendingFallDamage = useGameStore((s) => s.pendingFallDamage)
+  useEffect(() => {
+    if (pendingFallDamage && effectiveIsDM) {
+      setActiveModal('falling')
+    }
+  }, [pendingFallDamage, effectiveIsDM])
 
   const handleViewModeToggle = (): void => {
     if (viewMode === 'player') {
@@ -237,12 +395,22 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     fogBrushSize
   })
 
+  const handlePortalEntry = useCallback(
+    (portal: PortalEntryInfo) => {
+      if (effectiveIsDM) {
+        setPendingPortal(portal)
+      }
+    },
+    [effectiveIsDM]
+  )
+
   const { handleTokenMoveWithOA, handleConcentrationLost } = useTokenMovement({
     activeMap,
     teleportMove,
     addChatMessage,
     setOaPrompt,
-    setConcCheckPrompt
+    setConcCheckPrompt,
+    onPortalEntry: handlePortalEntry
   })
 
   if (leaving)
@@ -285,11 +453,30 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           onDoorToggle={(wallId) => {
             if (!activeMap) return
             const wall = activeMap.wallSegments?.find((w) => w.id === wallId)
-            if (wall?.type === 'door') gameStore.updateWallSegment(activeMap.id, wallId, { isOpen: !wall.isOpen })
+            if (wall?.type === 'door') {
+              gameStore.updateWallSegment(activeMap.id, wallId, { isOpen: !wall.isOpen })
+              // Recompute vision when a door is toggled
+              if (activeMap.fogOfWar.dynamicFogEnabled) {
+                // Need to get the updated map state after the wall change
+                setTimeout(() => {
+                  const updatedMap = gameStore.maps.find((m) => m.id === activeMap.id)
+                  if (updatedMap) {
+                    const { visibleCells } = recomputeVision(updatedMap)
+                    gameStore.setPartyVisionCells(visibleCells)
+                    gameStore.addExploredCells(updatedMap.id, visibleCells)
+                  }
+                }, 0)
+              }
+            }
           }}
           activeAoE={activeAoE}
           activeEntityId={gameStore.initiative?.entries[gameStore.initiative.currentIndex]?.entityId ?? null}
           onTokenContextMenu={(x, y, token, mapId) => setContextMenu({ x, y, token, mapId })}
+          onEmptyCellContextMenu={
+            effectiveIsDM
+              ? (gridX, gridY, screenX, screenY) => setEmptyCellMenu({ gridX, gridY, screenX, screenY })
+              : undefined
+          }
         />
         {gameStore.ambientLight === 'dim' && (
           <div className="absolute inset-0 bg-amber-900/20 pointer-events-none z-[1]" />
@@ -298,6 +485,21 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           <div className="absolute inset-0 bg-gray-950/60 pointer-events-none z-[1]" />
         )}
         {gameStore.underwaterCombat && <div className="absolute inset-0 bg-blue-900/15 pointer-events-none z-[1]" />}
+        {(() => {
+          const preset = gameStore.weatherOverride?.preset as WeatherType | undefined
+          if (!preset || preset === 'clear') return null
+          const effects = getWeatherEffects(preset)
+          const mechanics: string[] = []
+          if (effects.disadvantageRanged) mechanics.push('Disadv. on ranged attacks')
+          if (effects.speedModifier < 1) mechanics.push(`Speed x${effects.speedModifier}`)
+          if (effects.disadvantagePerception) mechanics.push('Disadv. on Perception')
+          return (
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-[2] px-3 py-1.5 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-lg shadow-lg pointer-events-none max-w-md text-center">
+              <span className="text-xs font-semibold text-amber-300">{effects.description}</span>
+              {mechanics.length > 0 && <span className="text-[10px] text-gray-400 ml-2">{mechanics.join(' · ')}</span>}
+            </div>
+          )
+        })()}
         <DiceOverlay />
         <DiceTray />
       </div>
@@ -325,6 +527,20 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             onDoubleClick={handleSidebarDoubleClick}
           />
         )}
+      </div>
+
+      {/* Hotbar */}
+      <div
+        className="absolute z-10 flex justify-center pointer-events-none"
+        style={{
+          left: sidebarLeftPx,
+          right: 0,
+          bottom: (bottomCollapsed ? 40 : bottomBarHeight) + 4
+        }}
+      >
+        <div className="pointer-events-auto">
+          <Hotbar characterId={character?.id ?? null} onExecuteMacro={handleExecuteMacro} />
+        </div>
       </div>
 
       {/* Bottom bar */}
@@ -388,6 +604,9 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             onSpellRef={() => setActiveModal('spellRef')}
             onShortcutRef={() => setActiveModal('shortcutRef')}
             onWhisper={() => setActiveModal('whisper')}
+            onTrade={() => setActiveModal('itemTrade')}
+            onJournal={() => setActiveModal('sharedJournal')}
+            onCompendium={() => setActiveModal('compendium')}
             playerName={playerName}
             campaign={campaign}
             collapsed={bottomCollapsed}
@@ -413,7 +632,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
                 setPhaseChangeToast({ phase, suggestedLight })
                 if (phase === 'dawn') {
                   const charStore = useCharacterStore.getState()
-                  const campaignChars = charStore.characters.filter(
+                  const campaignChars = allCharacters.filter(
                     (c) => c.campaignId === campaign.id && c.gameSystem === 'dnd5e'
                   )
                   for (const ch of campaignChars) {
@@ -460,9 +679,24 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           onLeaveGame={handleLeaveGame}
           onSaveCampaign={effectiveIsDM ? handleSaveCampaign : undefined}
           onEndSession={effectiveIsDM ? handleEndSession : undefined}
+          onCreateCharacter={effectiveIsDM ? handleCreateCharacter : undefined}
         />
       </div>
       {gameStore.initiative && <InitiativeOverlay isDM={effectiveIsDM} />}
+      {gameStore.initiative &&
+        currentInitEntity &&
+        (isMyTurn || (effectiveIsDM && currentInitEntity.entityType !== 'player')) && (
+          <ActionEconomyBar
+            entityId={currentInitEntity.entityId}
+            entityName={currentInitEntity.entityName}
+            isDM={effectiveIsDM}
+            isMyTurn={isMyTurn || (effectiveIsDM && currentInitEntity.entityType !== 'player')}
+            onEndTurn={handleEndTurn}
+          />
+        )}
+      {turnBanner && (
+        <TurnNotificationBanner entityName={turnBanner.entityName} onDismiss={() => setTurnBanner(null)} />
+      )}
       {contextMenu && (
         <TokenContextMenu
           x={contextMenu.x}
@@ -492,6 +726,34 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             })
             setContextMenu(null)
           }}
+        />
+      )}
+      {effectiveIsDM && <LairActionPrompt />}
+      {pendingPortal && effectiveIsDM && (
+        <PortalPrompt
+          portal={pendingPortal}
+          onConfirm={() => {
+            gameStore.setActiveMap(pendingPortal.targetMapId)
+            gameStore.moveToken(
+              pendingPortal.targetMapId,
+              pendingPortal.tokenId,
+              pendingPortal.targetGridX,
+              pendingPortal.targetGridY
+            )
+            setPendingPortal(null)
+          }}
+          onCancel={() => setPendingPortal(null)}
+        />
+      )}
+      {emptyCellMenu && activeMap && (
+        <EmptyCellContextMenu
+          gridX={emptyCellMenu.gridX}
+          gridY={emptyCellMenu.gridY}
+          screenX={emptyCellMenu.screenX}
+          screenY={emptyCellMenu.screenY}
+          mapId={activeMap.id}
+          onClose={() => setEmptyCellMenu(null)}
+          onPlaceToken={() => setActiveModal('creatures')}
         />
       )}
       {!effectiveIsDM && <PlayerHUDOverlay character={character} conditions={playerConditions} />}
@@ -524,6 +786,10 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           fogBrushSize={fogBrushSize}
           onSetTool={setActiveTool}
           onSetBrushSize={setFogBrushSize}
+          dynamicFogEnabled={activeMap?.fogOfWar.dynamicFogEnabled}
+          onDynamicFogToggle={
+            activeMap ? (enabled) => gameStore.setDynamicFogEnabled(activeMap.id, enabled) : undefined
+          }
         />
       )}
       {effectiveIsDM && activeTool === 'wall' && (
@@ -534,58 +800,19 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
       {/* Character picker for DM player-view toggle */}
       {showCharacterPicker && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCharacterPicker(false)} />
-          <div className="relative bg-gray-900 border border-gray-700 rounded-xl p-5 w-96 shadow-2xl max-h-[70vh] flex flex-col">
-            <h3 className="text-sm font-semibold text-amber-400 mb-3">Select a Character</h3>
-            <p className="text-xs text-gray-400 mb-3">Choose a character to view the game as a player.</p>
-            <div className="flex-1 overflow-y-auto space-y-1 mb-3">
-              {allCharacters.length === 0 && (
-                <p className="text-xs text-gray-500 italic">No characters found. Create one first.</p>
-              )}
-              {allCharacters.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    useCharacterStore
-                      .getState()
-                      .saveCharacter({ ...c, campaignId: campaign.id, updatedAt: new Date().toISOString() })
-                    setShowCharacterPicker(false)
-                    setViewMode('player')
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer flex items-center gap-3"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-300">
-                    {c.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-200">{c.name}</div>
-                    <div className="text-xs text-gray-500">
-                      Level {c.level} {is5eCharacter(c) ? c.classes.map((cl) => cl.name).join(' / ') : ''}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setShowCharacterPicker(false)
-                  navigate(getBuilderCreatePath(), { state: { returnTo: `/game/${campaign.id}` } })
-                }}
-                className="flex-1 px-3 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-lg cursor-pointer"
-              >
-                Create New Character
-              </button>
-              <button
-                onClick={() => setShowCharacterPicker(false)}
-                className="px-3 py-2 text-xs font-semibold bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={null}>
+          <CharacterPickerOverlay
+            campaignId={campaign.id}
+            onSelect={(c) => {
+              useCharacterStore
+                .getState()
+                .saveCharacter({ ...c, campaignId: campaign.id, updatedAt: new Date().toISOString() })
+              setShowCharacterPicker(false)
+              setViewMode('player')
+            }}
+            onClose={() => setShowCharacterPicker(false)}
+          />
+        </Suspense>
       )}
 
       {/* Modals */}
@@ -613,7 +840,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         handleWildShapeTransform={handleWildShapeTransform}
         handleWildShapeRevert={handleWildShapeRevert}
         handleWildShapeUseAdjust={handleWildShapeUseAdjust}
+        localPeerId={lobbyPeerId ?? ''}
       />
+
+      {/* Character Inspect Modal (driven by store state, not activeModal) */}
+      <InspectModalRenderer />
 
       {/* Toast overlays */}
       {restRequestToast && isDM && (
@@ -653,6 +884,22 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           prompt={stabilizePrompt}
           character={character}
           onDismiss={() => setStabilizePrompt(null)}
+          addChatMessage={addChatMessage}
+          sendMessage={sendMessage}
+        />
+      )}
+      {shieldPrompt && (
+        <ShieldReactionPrompt
+          prompt={shieldPrompt}
+          onDismiss={() => setShieldPrompt(null)}
+          addChatMessage={addChatMessage}
+          sendMessage={sendMessage}
+        />
+      )}
+      {counterspellPrompt && (
+        <CounterspellReactionPrompt
+          prompt={counterspellPrompt}
+          onDismiss={() => setCounterspellPrompt(null)}
           addChatMessage={addChatMessage}
           sendMessage={sendMessage}
         />

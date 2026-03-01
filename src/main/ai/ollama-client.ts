@@ -1,6 +1,7 @@
+import { OLLAMA_BASE_URL } from './ollama-manager'
 import type { ChatMessage, StreamCallbacks } from './types'
 
-let ollamaBaseUrl = 'http://localhost:11434'
+let ollamaBaseUrl = OLLAMA_BASE_URL
 
 /** Set the Ollama base URL (e.g. for remote GPU servers). */
 export function setOllamaUrl(url: string): void {

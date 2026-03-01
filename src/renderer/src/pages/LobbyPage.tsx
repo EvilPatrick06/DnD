@@ -11,8 +11,6 @@ import type {
   ChatPayload,
   ChatTimeoutPayload,
   FileSharingPayload,
-  ForceDeafenPayload,
-  ForceMutePayload,
   SlowModePayload
 } from '../network/types'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
@@ -138,12 +136,7 @@ export default function LobbyPage(): JSX.Element {
         characterId: null,
         characterName: null,
         isReady: false,
-        isMuted: false,
-        isDeafened: false,
-        isSpeaking: false,
-        isHost,
-        isForceMuted: false,
-        isForceDeafened: false
+        isHost
       })
     }
 
@@ -174,12 +167,7 @@ export default function LobbyPage(): JSX.Element {
           characterId: peer.characterId,
           characterName: peer.characterName,
           isReady: peer.isReady,
-          isMuted: peer.isMuted,
-          isDeafened: peer.isDeafened,
-          isSpeaking: peer.isSpeaking,
           isHost: peer.isHost,
-          isForceMuted: peer.isForceMuted,
-          isForceDeafened: peer.isForceDeafened,
           color: peer.color,
           isCoDM: peer.isCoDM
         })
@@ -188,11 +176,6 @@ export default function LobbyPage(): JSX.Element {
           isReady: peer.isReady,
           characterId: peer.characterId,
           characterName: peer.characterName,
-          isMuted: peer.isMuted,
-          isDeafened: peer.isDeafened,
-          isSpeaking: peer.isSpeaking,
-          isForceMuted: peer.isForceMuted,
-          isForceDeafened: peer.isForceDeafened,
           color: peer.color,
           isCoDM: peer.isCoDM
         })
@@ -360,27 +343,6 @@ export default function LobbyPage(): JSX.Element {
 
     return unsub
   }, [role, localPeerId])
-
-  // --- Bridge: force-mute/deafen → explicitly update lobby store players ---
-  useEffect(() => {
-    if (role !== 'client') return
-
-    const unsub = onClientMessage((msg) => {
-      if (msg.type === 'dm:force-mute') {
-        const payload = msg.payload as ForceMutePayload
-        useLobbyStore.getState().updatePlayer(payload.peerId, { isForceMuted: payload.isForceMuted })
-      } else if (msg.type === 'dm:force-deafen') {
-        const payload = msg.payload as ForceDeafenPayload
-        const isForceMuted = !!payload.isForceDeafened
-        useLobbyStore.getState().updatePlayer(payload.peerId, {
-          isForceDeafened: payload.isForceDeafened,
-          isForceMuted
-        })
-      }
-    })
-
-    return unsub
-  }, [role])
 
   // --- Bridge: dm:slow-mode and dm:file-sharing → update lobby store ---
   useEffect(() => {

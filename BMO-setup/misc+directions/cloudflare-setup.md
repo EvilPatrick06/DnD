@@ -14,6 +14,12 @@ Prerequisites:
 
 The Tunnel lets you expose the Pi's local services (Flask app, PeerJS) to the internet without opening any ports on your home router. All traffic is encrypted and routed through Cloudflare's network.
 
+> **Automated option**: `post-setup-auth.sh` walks through tunnel setup interactively — it runs `cloudflared tunnel login`, creates the tunnel, generates `config.yml`, and sets up DNS routes automatically. Run on the Pi:
+> ```bash
+> bash ~/bmo/post-setup-auth.sh
+> ```
+> The manual steps below are for reference or if you prefer doing it by hand.
+
 ### 1.1 Authenticate cloudflared
 
 SSH into the Pi and run:

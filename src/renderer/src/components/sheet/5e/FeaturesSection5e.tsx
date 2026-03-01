@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getBonusFeatCount } from '../../../data/xp-thresholds'
 import { load5eInvocations, load5eMetamagic } from '../../../services/data-provider'
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 import { useNetworkStore } from '../../../stores/use-network-store'
-import type { Character5e } from '../../../types/character-5e'
+import type { Character5e, CustomFeature } from '../../../types/character-5e'
 import type { FeatData5e, InvocationData, MetamagicData } from '../../../types/data'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 import { FeatureRow } from './FeatureCard5e'
@@ -56,6 +56,55 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
     }
   }, [metamagicKnown.length])
 
+  // Custom Features (DM-granted)
+  const customFeatures = character.customFeatures ?? []
+  const [showGrantForm, setShowGrantForm] = useState(false)
+  const [grantName, setGrantName] = useState('')
+  const [grantSource, setGrantSource] = useState('DM Award')
+  const [grantDescription, setGrantDescription] = useState('')
+  const [grantTemporary, setGrantTemporary] = useState(false)
+
+  const saveCustomFeatureChange = useCallback(
+    (updatedFeatures: CustomFeature[]): void => {
+      const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
+      const updated: Character5e = {
+        ...(latest as Character5e),
+        customFeatures: updatedFeatures.length > 0 ? updatedFeatures : undefined,
+        updatedAt: new Date().toISOString()
+      }
+      useCharacterStore.getState().saveCharacter(updated)
+
+      const { role, sendMessage } = useNetworkStore.getState()
+      if (role === 'host' && updated.playerId !== 'local') {
+        sendMessage('dm:character-update', {
+          characterId: updated.id,
+          characterData: updated,
+          targetPeerId: updated.playerId
+        })
+        useLobbyStore.getState().setRemoteCharacter(updated.id, updated)
+      }
+    },
+    [character]
+  )
+
+  const handleGrantFeature = (): void => {
+    if (!grantName.trim()) return
+    const newFeature: CustomFeature = {
+      id: crypto.randomUUID(),
+      name: grantName.trim(),
+      source: grantSource.trim() || 'DM Award',
+      description: grantDescription.trim(),
+      grantedAt: new Date().toISOString(),
+      temporary: grantTemporary || undefined
+    }
+    saveCustomFeatureChange([...customFeatures, newFeature])
+    setGrantName('')
+    setGrantSource('DM Award')
+    setGrantDescription('')
+    setGrantTemporary(false)
+    setShowGrantForm(false)
+  }
+
   // Bonus feats after level 20 (PHB 2024 p.43)
   const bonusFeats = character.bonusFeats ?? []
   const bonusFeatSlots = character.levelingMode === 'xp' ? getBonusFeatCount(character.xp) : 0
@@ -69,7 +118,8 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
     invocationsKnown.length > 0 ||
     metamagicKnown.length > 0 ||
     bonusFeats.length > 0 ||
-    bonusFeatsAvailable > 0
+    bonusFeatsAvailable > 0 ||
+    customFeatures.length > 0
 
   const saveBonusFeatChange = (updatedBonusFeats: Array<{ id: string; name: string; description: string }>): void => {
     const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
@@ -271,6 +321,90 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
               }}
               onClose={() => setShowBonusFeatPicker(false)}
             />
+          )}
+        </div>
+      )}
+      {/* Custom Features (DM-granted) */}
+      {(customFeatures.length > 0 || !readonly) && (
+        <div className="mb-3">
+          <div className="text-xs text-cyan-400 uppercase tracking-wide mb-1">Custom Features</div>
+
+          {customFeatures.map((f) => (
+            <div key={f.id} className="flex items-start gap-2">
+              <div className="flex-1">
+                <FeatureRow
+                  feature={{
+                    name: `${f.name}${f.temporary ? ' (Temporary)' : ''}`,
+                    description: f.description,
+                    source: f.source
+                  }}
+                  onRemove={
+                    !readonly ? () => saveCustomFeatureChange(customFeatures.filter((cf) => cf.id !== f.id)) : undefined
+                  }
+                />
+              </div>
+            </div>
+          ))}
+
+          {!readonly && !showGrantForm && (
+            <button
+              onClick={() => setShowGrantForm(true)}
+              className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+            >
+              + Grant Feature
+            </button>
+          )}
+
+          {!readonly && showGrantForm && (
+            <div className="mt-2 bg-gray-800/50 rounded p-3 space-y-2">
+              <input
+                type="text"
+                placeholder="Feature name"
+                value={grantName}
+                onChange={(e) => setGrantName(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:border-cyan-500"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Source"
+                  value={grantSource}
+                  onChange={(e) => setGrantSource(e.target.value)}
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:border-cyan-500"
+                />
+                <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={grantTemporary}
+                    onChange={(e) => setGrantTemporary(e.target.checked)}
+                    className="rounded"
+                  />
+                  Temporary
+                </label>
+              </div>
+              <textarea
+                placeholder="Description (optional)"
+                value={grantDescription}
+                onChange={(e) => setGrantDescription(e.target.value)}
+                rows={2}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:border-cyan-500 resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowGrantForm(false)}
+                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGrantFeature}
+                  disabled={!grantName.trim()}
+                  className="px-3 py-1 text-xs bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 rounded text-white cursor-pointer"
+                >
+                  Grant
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

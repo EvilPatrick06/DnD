@@ -1,5 +1,5 @@
 import type { AbilityName, ClassFeatureEntry, Currency, SpellEntry } from '../types/character-common'
-import type { GameSystem } from '../types/game-system'
+import type { GameSystemConfig } from '../types/game-system'
 
 export interface SheetConfig {
   showInitiative: boolean
@@ -11,8 +11,20 @@ export interface SheetConfig {
   proficiencyStyle: 'dots' | 'teml'
 }
 
+export interface AbilityScoreConfig {
+  abilities: Array<{ id: AbilityName; name: string; shortName: string }>
+  defaultScores: number[]
+  pointBuyBudget?: number
+}
+
+export interface BuilderStepDef {
+  id: string
+  label: string
+  category: string
+}
+
 export interface GameSystemPlugin {
-  id: GameSystem
+  id: string
   name: string
 
   getSpellSlotProgression(className: string, level: number): Record<number, number>
@@ -25,4 +37,13 @@ export interface GameSystemPlugin {
   getSkillDefinitions(): Array<{ name: string; ability: AbilityName }>
 
   getSheetConfig(): SheetConfig
+
+  // Optional extension points for plugin-provided game systems
+  getConfig?(): GameSystemConfig
+  getAbilityScores?(): AbilityScoreConfig
+  getBuilderSteps?(): BuilderStepDef[]
+  getDataPaths?(): Partial<Record<string, string>>
+  calculateHP?(classId: string, level: number, conMod: number): number
+  calculateAC?(equipment: unknown[], dexMod: number): number
+  getProficiencyBonus?(level: number): number
 }

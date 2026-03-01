@@ -5,8 +5,10 @@ import {
   proneStandUpCost,
   triggersOpportunityAttack
 } from '../services/combat/combat-rules'
+import { recomputeVision } from '../services/map/vision-computation'
+import { getWeatherEffects, type WeatherType } from '../services/weather-mechanics'
 import { useGameStore } from '../stores/use-game-store'
-import type { GameMap } from '../types/map'
+import type { GameMap, TerrainCell } from '../types/map'
 
 interface OaPrompt {
   movingTokenLabel: string
@@ -23,6 +25,14 @@ interface ConcCheckPrompt {
   damage: number
 }
 
+export interface PortalEntryInfo {
+  tokenId: string
+  mapId: string
+  targetMapId: string
+  targetGridX: number
+  targetGridY: number
+}
+
 interface UseTokenMovementOptions {
   activeMap: GameMap | null
   teleportMove: boolean
@@ -36,6 +46,7 @@ interface UseTokenMovementOptions {
   }) => void
   setOaPrompt: (prompt: OaPrompt | null) => void
   setConcCheckPrompt: (prompt: ConcCheckPrompt | null) => void
+  onPortalEntry?: (portal: PortalEntryInfo) => void
 }
 
 interface UseTokenMovementReturn {
@@ -48,7 +59,8 @@ export function useTokenMovement({
   teleportMove,
   addChatMessage,
   setOaPrompt,
-  setConcCheckPrompt
+  setConcCheckPrompt: _setConcCheckPrompt,
+  onPortalEntry
 }: UseTokenMovementOptions): UseTokenMovementReturn {
   const gameStore = useGameStore()
 
@@ -150,9 +162,18 @@ export function useTokenMovement({
 
       // Deduct movement from turn state
       if (ts && moveType !== 'teleport') {
+        // Controlled mount speed override: effective speed is mount's walkSpeed
+        let effectiveSpeed = ts.movementMax
+        if (ts.mountedOn && ts.mountType === 'controlled') {
+          const mountTk = activeMap.tokens.find((t) => t.id === ts.mountedOn)
+          if (mountTk?.walkSpeed) {
+            effectiveSpeed = mountTk.walkSpeed
+          }
+        }
+
         const isProne = movingToken.conditions.some((c) => c.toLowerCase() === 'prone')
         if (isProne && ts.movementRemaining === ts.movementMax) {
-          const standCost = proneStandUpCost(ts.movementMax)
+          const standCost = proneStandUpCost(effectiveSpeed)
           gameStore.useMovement(movingToken.entityId, standCost)
           const updatedConditions = movingToken.conditions.filter((c) => c.toLowerCase() !== 'prone')
           gameStore.updateToken(activeMap.id, tokenId, { conditions: updatedConditions })
@@ -172,11 +193,86 @@ export function useTokenMovement({
 
         const terrain = activeMap.terrain ?? []
         const destTerrain = terrain.find((t) => t.x === gridX && t.y === gridY)
-        const actualCost = destTerrain ? dist * destTerrain.movementCost : dist
+        let actualCost = destTerrain ? dist * destTerrain.movementCost : dist
+
+        // Weather speed modifier: e.g., snow (0.5) makes movement cost 2x
+        const weatherPreset = gameStore.weatherOverride?.preset as WeatherType | undefined
+        if (weatherPreset) {
+          const weatherEffects = getWeatherEffects(weatherPreset)
+          if (weatherEffects.speedModifier < 1) {
+            actualCost = Math.ceil(actualCost / weatherEffects.speedModifier)
+          }
+        }
+
+        // Scale cost when using mount's speed (mount speed mapped to rider's budget)
+        if (effectiveSpeed !== ts.movementMax && effectiveSpeed > 0) {
+          actualCost = Math.round(actualCost * (ts.movementMax / effectiveSpeed))
+        }
+
         gameStore.useMovement(movingToken.entityId, actualCost)
       }
 
       gameStore.moveToken(activeMap.id, tokenId, gridX, gridY)
+
+      // Auto-reveal fog when dynamic fog is enabled
+      if (activeMap.fogOfWar.dynamicFogEnabled) {
+        // Build patched tokens with the moved token at its new position
+        const patchedTokens = activeMap.tokens.map((t) => (t.id === tokenId ? { ...t, gridX, gridY } : t))
+        const { visibleCells } = recomputeVision(activeMap, patchedTokens)
+        gameStore.setPartyVisionCells(visibleCells)
+        gameStore.addExploredCells(activeMap.id, visibleCells)
+      }
+
+      // Terrain hazard damage on entry
+      const destTerrain = (activeMap.terrain ?? []).find((t: TerrainCell) => t.x === gridX && t.y === gridY)
+      if (destTerrain?.type === 'hazard' && destTerrain.hazardDamage && destTerrain.hazardType) {
+        const hazardType = destTerrain.hazardType
+        let finalDamage = destTerrain.hazardDamage
+
+        if (movingToken.immunities?.some((i) => i.toLowerCase() === hazardType.toLowerCase())) {
+          // Immune — skip damage
+          finalDamage = 0
+        } else if (movingToken.resistances?.some((r) => r.toLowerCase() === hazardType.toLowerCase())) {
+          finalDamage = Math.floor(finalDamage / 2)
+        }
+
+        if (finalDamage > 0) {
+          gameStore.updateToken(activeMap.id, tokenId, {
+            currentHP: Math.max(0, (movingToken.currentHP ?? 0) - finalDamage)
+          })
+          addChatMessage({
+            id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+            senderId: 'system',
+            senderName: 'System',
+            content: `${movingToken.label} takes ${finalDamage} ${hazardType} damage from hazardous terrain!`,
+            timestamp: Date.now(),
+            isSystem: true
+          })
+        }
+      }
+
+      // Water terrain warning: no swim speed
+      if (destTerrain?.type === 'water' && !(movingToken.swimSpeed && movingToken.swimSpeed > 0)) {
+        addChatMessage({
+          id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+          senderId: 'system',
+          senderName: 'System',
+          content: `${movingToken.label} enters water without swim speed — Athletics check may be required!`,
+          timestamp: Date.now(),
+          isSystem: true
+        })
+      }
+
+      // Portal terrain detection
+      if (destTerrain?.type === 'portal' && destTerrain.portalTarget && onPortalEntry) {
+        onPortalEntry({
+          tokenId,
+          mapId: activeMap.id,
+          targetMapId: destTerrain.portalTarget.mapId,
+          targetGridX: destTerrain.portalTarget.gridX,
+          targetGridY: destTerrain.portalTarget.gridY
+        })
+      }
 
       // Mount/rider sync
       if (activeMap) {
@@ -196,7 +292,7 @@ export function useTokenMovement({
         }
       }
     },
-    [activeMap, gameStore, teleportMove, addChatMessage, setOaPrompt]
+    [activeMap, gameStore, teleportMove, addChatMessage, setOaPrompt, onPortalEntry]
   )
 
   return { handleTokenMoveWithOA, handleConcentrationLost }

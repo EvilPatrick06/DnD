@@ -4,15 +4,7 @@ import * as clientManager from '../../network/client-manager'
 import * as hostManager from '../../network/host-manager'
 import { sendToPeer, setGameStateProvider } from '../../network/host-manager'
 import { getPeerId } from '../../network/peer-manager'
-import type {
-  ConnectionState,
-  ForceDeafenPayload,
-  ForceMutePayload,
-  MessageType,
-  NetworkGameState,
-  NetworkMessage,
-  PeerInfo
-} from '../../network/types'
+import type { ConnectionState, MessageType, NetworkGameState, NetworkMessage, PeerInfo } from '../../network/types'
 import { handleClientMessage } from './client-handlers'
 import { handleHostMessage } from './host-handlers'
 
@@ -20,7 +12,7 @@ import { handleHostMessage } from './host-handlers'
 function getGameStore() {
   return (require('../use-game-store') as typeof import('../use-game-store')).useGameStore
 }
-function getLobbyStore() {
+function _getLobbyStore() {
   return (require('../use-lobby-store') as typeof import('../use-lobby-store')).useLobbyStore
 }
 
@@ -46,8 +38,6 @@ export interface NetworkState {
   hostGame: (displayName: string, existingInviteCode?: string) => Promise<string>
   stopHosting: () => void
   kickPlayer: (peerId: string) => void
-  forceMutePlayer: (peerId: string, isForceMuted: boolean) => void
-  forceDeafenPlayer: (peerId: string, isForceDeafened: boolean) => void
 
   // Client actions
   joinGame: (inviteCode: string, displayName: string) => Promise<void>
@@ -161,41 +151,6 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   kickPlayer: (peerId: string) => {
     hostManager.kickPeer(peerId)
     get().removePeer(peerId)
-  },
-
-  forceMutePlayer: (peerId: string, isForceMuted: boolean) => {
-    const { displayName } = get()
-    const message: NetworkMessage<ForceMutePayload> = {
-      type: 'dm:force-mute',
-      payload: { peerId, isForceMuted },
-      senderId: getPeerId() || '',
-      senderName: displayName,
-      timestamp: Date.now(),
-      sequence: 0
-    }
-    hostManager.broadcastMessage(message)
-    get().updatePeer(peerId, { isForceMuted })
-    getLobbyStore().getState().updatePlayer(peerId, { isForceMuted })
-  },
-
-  forceDeafenPlayer: (peerId: string, isForceDeafened: boolean) => {
-    const { displayName } = get()
-    const peerUpdates: Partial<PeerInfo> = { isForceDeafened }
-    if (isForceDeafened) {
-      peerUpdates.isForceMuted = true
-    }
-    // When un-deafening, preserve existing isForceMuted state
-    const message: NetworkMessage<ForceDeafenPayload> = {
-      type: 'dm:force-deafen',
-      payload: { peerId, isForceDeafened },
-      senderId: getPeerId() || '',
-      senderName: displayName,
-      timestamp: Date.now(),
-      sequence: 0
-    }
-    hostManager.broadcastMessage(message)
-    get().updatePeer(peerId, peerUpdates)
-    getLobbyStore().getState().updatePlayer(peerId, peerUpdates)
   },
 
   // --- Client actions ---

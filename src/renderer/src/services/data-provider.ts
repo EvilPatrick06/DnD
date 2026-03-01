@@ -1,4 +1,5 @@
 import { useDataStore } from '../stores/use-data-store'
+import { getSystem } from '../systems/registry'
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
 import type {
   AbilityScoreConfigFile,
@@ -59,115 +60,15 @@ import { GAME_SYSTEMS } from '../types/game-system'
 import type { MonsterStatBlock } from '../types/monster'
 import { logger } from '../utils/logger'
 
-const BASE = './data/5e'
-
-export const DATA_PATHS = {
-  // character/
-  species: `${BASE}/character/species.json`,
-  speciesTraits: `${BASE}/character/species-traits.json`,
-  classes: `${BASE}/character/classes.json`,
-  backgrounds: `${BASE}/character/backgrounds.json`,
-  classFeatures: `${BASE}/character/class-features.json`,
-  feats: `${BASE}/character/feats.json`,
-  subclasses: `${BASE}/character/subclasses.json`,
-  startingEquipment: `${BASE}/character/starting-equipment.json`,
-  // spells/
-  spells: `${BASE}/spells/spells.json`,
-  // equipment/
-  equipment: `${BASE}/equipment/equipment.json`,
-  lightSources: `${BASE}/equipment/light-sources.json`,
-  magicItems: `${BASE}/equipment/magic-items.json`,
-  mounts: `${BASE}/equipment/mounts.json`,
-  sentientItems: `${BASE}/equipment/sentient-items.json`,
-  supernaturalGifts: `${BASE}/hazards/supernatural-gifts.json`,
-  trinkets: `${BASE}/equipment/trinkets.json`,
-  variantItems: `${BASE}/equipment/variant-items.json`,
-  wearableItems: `${BASE}/equipment/wearable-items.json`,
-  // creatures/
-  creatures: `${BASE}/creatures/creatures.json`,
-  monsters: `${BASE}/creatures/monsters.json`,
-  npcs: `${BASE}/creatures/npcs.json`,
-  // npc/
-  alignmentDescriptions: `${BASE}/npc/alignment-descriptions.json`,
-  npcAppearance: `${BASE}/npc/npc-appearance.json`,
-  npcMannerisms: `${BASE}/npc/npc-mannerisms.json`,
-  npcNames: `${BASE}/npc/npc-names.json`,
-  personalityTables: `${BASE}/npc/personality-tables.json`,
-  // encounters/
-  chaseTables: `${BASE}/encounters/chase-tables.json`,
-  encounterBudgets: `${BASE}/encounters/encounter-budgets.json`,
-  encounterPresets: `${BASE}/encounters/encounter-presets.json`,
-  randomTables: `${BASE}/encounters/random-tables.json`,
-  // hazards/
-  conditions: `${BASE}/hazards/conditions.json`,
-  curses: `${BASE}/hazards/curses.json`,
-  diseases: `${BASE}/hazards/diseases.json`,
-  environmentalEffects: `${BASE}/hazards/environmental-effects.json`,
-  hazards: `${BASE}/hazards/hazards.json`,
-  poisons: `${BASE}/hazards/poisons.json`,
-  traps: `${BASE}/hazards/traps.json`,
-  // bastions/
-  bastionEvents: `${BASE}/bastions/bastion-events.json`,
-  bastionFacilities: `${BASE}/bastions/bastion-facilities.json`,
-  // world/
-  calendarPresets: `${BASE}/world/calendar-presets.json`,
-  crafting: `${BASE}/world/crafting.json`,
-  downtime: `${BASE}/world/downtime.json`,
-  settlements: `${BASE}/world/settlements.json`,
-  siegeEquipment: `${BASE}/world/siege-equipment.json`,
-  treasureTables: `${BASE}/world/treasure-tables.json`,
-  weatherGeneration: `${BASE}/world/weather-generation.json`,
-  // mechanics/
-  effectDefinitions: `${BASE}/mechanics/effect-definitions.json`,
-  fightingStyles: `${BASE}/mechanics/fighting-styles.json`,
-  invocations: `${BASE}/mechanics/invocations.json`,
-  languages: `${BASE}/mechanics/languages.json`,
-  metamagic: `${BASE}/mechanics/metamagic.json`,
-  skills: `${BASE}/mechanics/skills.json`,
-  spellSlots: `${BASE}/mechanics/spell-slots.json`,
-  weaponMastery: `${BASE}/mechanics/weapon-mastery.json`,
-  xpThresholds: `${BASE}/mechanics/xp-thresholds.json`,
-  // NEW externalized data (audio, character, mechanics, ui, etc.)
-  soundEvents: `${BASE}/audio/sound-events.json`,
-  speciesSpells: `${BASE}/character/species-spells.json`,
-  classResources: `${BASE}/mechanics/class-resources.json`,
-  speciesResources: `${BASE}/mechanics/species-resources.json`,
-  abilityScoreConfig: `${BASE}/character/ability-score-config.json`,
-  presetIcons: `${BASE}/character/preset-icons.json`,
-  keyboardShortcuts: `${BASE}/ui/keyboard-shortcuts.json`,
-  themes: `${BASE}/ui/themes.json`,
-  diceColors: `${BASE}/ui/dice-colors.json`,
-  dmTabs: `${BASE}/ui/dm-tabs.json`,
-  notificationTemplates: `${BASE}/ui/notification-templates.json`,
-  builtInMaps: `${BASE}/world/built-in-maps.json`,
-  sessionZeroConfig: `${BASE}/world/session-zero-config.json`,
-  diceTypes: `${BASE}/mechanics/dice-types.json`,
-  lightingTravel: `${BASE}/mechanics/lighting-travel.json`,
-  currencyConfig: `${BASE}/equipment/currency-config.json`,
-  moderation: `${BASE}/ai/moderation.json`,
-  // Round 2 externalized data
-  adventureSeeds: `${BASE}/world/adventure-seeds.json`,
-  creatureTypes: `${BASE}/creatures/creature-types.json`,
-  ambientTracks: `${BASE}/audio/ambient-tracks.json`,
-  languageD12Table: `${BASE}/character/language-d12-table.json`,
-  rarityOptions: `${BASE}/ui/rarity-options.json`
-} as const
+import { DATA_PATHS } from './data-paths'
+export { DATA_PATHS }
 
 const jsonCache = new Map<string, unknown>()
 
 export async function loadJson<T>(path: string): Promise<T> {
   const cached = jsonCache.get(path)
   if (cached !== undefined) return cached as T
-  const res = await fetch(path)
-  if (!res.ok) {
-    throw new Error(`Failed to load ${path}: ${res.status} ${res.statusText}`)
-  }
-  let data: T
-  try {
-    data = (await res.json()) as T
-  } catch (e) {
-    throw new Error(`Failed to parse JSON from ${path}: ${e}`)
-  }
+  const data = (await window.api.game.loadJson(path)) as T
   jsonCache.set(path, data)
   return data
 }
@@ -176,6 +77,26 @@ export async function loadJson<T>(path: string): Promise<T> {
 export function clearDataCache(): void {
   jsonCache.clear()
   useDataStore.getState().clearAll()
+}
+
+/**
+ * Resolve a data path key for a given game system.
+ * For 'dnd5e', returns the built-in DATA_PATHS value.
+ * For plugin-provided systems, checks the system plugin's getDataPaths() override first.
+ */
+export function resolveDataPath(system: GameSystem, pathKey: string): string | undefined {
+  if (system !== 'dnd5e') {
+    try {
+      const plugin = getSystem(system)
+      if (plugin.getDataPaths) {
+        const overrides = plugin.getDataPaths()
+        if (overrides[pathKey]) return overrides[pathKey]
+      }
+    } catch {
+      // System not registered — fall through
+    }
+  }
+  return (DATA_PATHS as Record<string, string>)[pathKey]
 }
 
 // === 5e Transformers ===
@@ -327,7 +248,8 @@ export async function getOptionsForSlot(
   category: BuildSlotCategory,
   context?: { slotId?: string; selectedClassId?: string }
 ): Promise<SelectableOption[]> {
-  const _basePath = GAME_SYSTEMS[system].dataPath
+  const systemConfig = GAME_SYSTEMS[system]
+  if (!systemConfig) return []
 
   if (system === 'dnd5e') {
     switch (category) {

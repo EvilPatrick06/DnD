@@ -1,4 +1,7 @@
+import { useCampaignStore } from '../../stores/use-campaign-store'
+import { useCharacterStore } from '../../stores/use-character-store'
 import { useGameStore } from '../../stores/use-game-store'
+import { advanceTrackedDowntime, getActiveDowntimeForCharacter, updateDowntimeProgress } from '../downtime-service'
 import type { ChatCommand } from './types'
 
 const timeCommand: ChatCommand = {
@@ -173,8 +176,110 @@ const shopCommand: ChatCommand = {
 const downtimeCommand: ChatCommand = {
   name: 'downtime',
   aliases: ['dt'],
-  description: 'Open the downtime activities panel',
-  usage: '/downtime',
+  description: 'Open the downtime panel or manage tracked activities',
+  usage: '/downtime [advance <character> [days] | complete <character> | abandon <character> | status]',
+  dmOnly: false,
+  category: 'dm',
+  execute: (args, ctx) => {
+    const parts = args.trim().split(/\s+/)
+    const sub = parts[0]?.toLowerCase()
+
+    // No subcommand — open the modal
+    if (!sub) {
+      ctx.openModal?.('downtime')
+      return
+    }
+
+    // /downtime status — show all active downtime
+    if (sub === 'status') {
+      const campaign = useCampaignStore.getState().getActiveCampaign()
+      if (!campaign) {
+        ctx.addSystemMessage('No active campaign.')
+        return
+      }
+      const active = (campaign.downtimeProgress ?? []).filter((e) => e.status === 'in-progress')
+      if (active.length === 0) {
+        ctx.addSystemMessage('No active downtime activities.')
+        return
+      }
+      const lines = active.map(
+        (e) => `- **${e.characterName}**: ${e.activityName} (${e.daysSpent}/${e.daysRequired} days)`
+      )
+      ctx.addSystemMessage(`**Active Downtime:**\n${lines.join('\n')}`)
+      return
+    }
+
+    // Subcommands that require a character name
+    const charName = parts.slice(1, sub === 'advance' ? -1 : undefined).join(' ') || parts[1]
+    if (!charName) {
+      ctx.addSystemMessage(`Usage: /downtime ${sub} <character name>${sub === 'advance' ? ' [days]' : ''}`)
+      return
+    }
+
+    const campaign = useCampaignStore.getState().getActiveCampaign()
+    if (!campaign) {
+      ctx.addSystemMessage('No active campaign.')
+      return
+    }
+
+    // Find character by name (case-insensitive)
+    const characters = useCharacterStore.getState().characters
+    const char = characters.find((c) => c.name.toLowerCase() === charName.toLowerCase())
+    if (!char) {
+      ctx.addSystemMessage(`Character "${charName}" not found.`)
+      return
+    }
+
+    const entries = getActiveDowntimeForCharacter(campaign, char.id)
+    if (entries.length === 0) {
+      ctx.addSystemMessage(`No active downtime for ${char.name}.`)
+      return
+    }
+    // Work on the first active entry
+    const entry = entries[0]
+
+    if (sub === 'advance') {
+      const daysStr = parts[parts.length - 1]
+      const days = parseInt(daysStr, 10)
+      const advDays = !Number.isNaN(days) && parts.length > 2 ? days : 1
+
+      const { campaign: updated, complete } = advanceTrackedDowntime(campaign, entry.id, advDays)
+      useCampaignStore.getState().saveCampaign(updated)
+      const updatedEntry = (updated.downtimeProgress ?? []).find((e) => e.id === entry.id)
+      if (complete) {
+        ctx.broadcastSystemMessage(`**${char.name}** completed: ${entry.activityName}!`)
+      } else if (updatedEntry) {
+        ctx.broadcastSystemMessage(
+          `**${char.name}** advanced ${entry.activityName}: ${updatedEntry.daysSpent}/${updatedEntry.daysRequired} days`
+        )
+      }
+      return
+    }
+
+    if (sub === 'complete') {
+      const updated = updateDowntimeProgress(campaign, entry.id, { status: 'completed' })
+      useCampaignStore.getState().saveCampaign(updated)
+      ctx.broadcastSystemMessage(`**${char.name}** completed: ${entry.activityName}!`)
+      return
+    }
+
+    if (sub === 'abandon') {
+      const updated = updateDowntimeProgress(campaign, entry.id, { status: 'abandoned' })
+      useCampaignStore.getState().saveCampaign(updated)
+      ctx.broadcastSystemMessage(`**${char.name}** abandoned: ${entry.activityName}.`)
+      return
+    }
+
+    // Unknown subcommand — just open modal
+    ctx.openModal?.('downtime')
+  }
+}
+
+const craftCommand: ChatCommand = {
+  name: 'craft',
+  aliases: [],
+  description: 'Open crafting browser for a character',
+  usage: '/craft',
   dmOnly: false,
   category: 'dm',
   execute: (_args, ctx) => {
@@ -253,4 +358,11 @@ const restCommand: ChatCommand = {
   }
 }
 
-export const commands: ChatCommand[] = [timeCommand, shopCommand, downtimeCommand, timeSetCommand, restCommand]
+export const commands: ChatCommand[] = [
+  timeCommand,
+  shopCommand,
+  downtimeCommand,
+  craftCommand,
+  timeSetCommand,
+  restCommand
+]

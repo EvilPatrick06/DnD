@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { generate5eBuildSlots } from '../../../services/character/build-tree-5e'
+import { generate5eBuildSlots, generate5eLevelUpSlots } from '../../../services/character/build-tree-5e'
 import type { BuilderState, CoreSliceState } from '../types'
 import { DEFAULT_SCORES } from '../types'
 import { DEFAULT_CHARACTER_DETAILS } from './character-details-slice'
@@ -11,6 +11,7 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
   activeTab: 'details',
   targetLevel: 1,
   editingCharacterId: null,
+  classLevelChoices: {},
 
   selectGameSystem: (system) => {
     const slots = generate5eBuildSlots(1)
@@ -32,6 +33,7 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
       activeTab: 'details',
       targetLevel: 1,
       editingCharacterId: null,
+      classLevelChoices: {},
       // Ability score slice defaults
       abilityScores: { ...DEFAULT_SCORES },
       abilityScoreMethod: 'standard',
@@ -50,10 +52,26 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
     }),
 
   setTargetLevel: (level) => {
-    const { gameSystem } = get()
+    const { gameSystem, classLevelChoices } = get()
     if (!gameSystem) return
     const currentSlots = get().buildSlots
-    const newSlots = generate5eBuildSlots(level)
+    const classSlot = currentSlots.find((s) => s.category === 'class')
+    const classId = classSlot?.selectedId ?? ''
+
+    let newSlots: import('../../../types/character-common').BuildSlot[]
+    const hasMulticlass =
+      Object.keys(classLevelChoices).length > 0 && Object.values(classLevelChoices).some((cid) => cid !== classId)
+
+    if (level > 1 && hasMulticlass) {
+      // Multiclass: foundation slots + level-up slots
+      const foundationSlots = generate5eBuildSlots(1, classId)
+      const levelUpSlots = generate5eLevelUpSlots(1, level, classId, classLevelChoices, {})
+      newSlots = [...foundationSlots, ...levelUpSlots]
+    } else {
+      newSlots = generate5eBuildSlots(level, classId)
+    }
+
+    // Preserve existing selections
     for (const newSlot of newSlots) {
       const existing = currentSlots.find((s) => s.id === newSlot.id)
       if (existing) {
@@ -61,8 +79,41 @@ export const createCoreSlice: StateCreator<BuilderState, [], [], CoreSliceState>
         newSlot.selectedName = existing.selectedName
       }
     }
-    set({ targetLevel: level, buildSlots: newSlots })
+
+    // Clean up classLevelChoices for levels beyond the new target
+    const cleanedChoices: Record<number, string> = {}
+    for (const [lvl, cid] of Object.entries(classLevelChoices)) {
+      if (Number(lvl) <= level) {
+        cleanedChoices[Number(lvl)] = cid
+      }
+    }
+
+    set({ targetLevel: level, buildSlots: newSlots, classLevelChoices: cleanedChoices })
   },
 
-  setActiveTab: (tab) => set({ activeTab: tab })
+  setActiveTab: (tab) => set({ activeTab: tab }),
+
+  setClassLevelChoice: (level, newClassId) => {
+    const { classLevelChoices, targetLevel, buildSlots } = get()
+    const classSlot = buildSlots.find((s) => s.category === 'class')
+    const primaryClassId = classSlot?.selectedId ?? ''
+
+    const updatedChoices = { ...classLevelChoices, [level]: newClassId }
+
+    // Regenerate level-up slots
+    const foundationSlots = generate5eBuildSlots(1, primaryClassId)
+    const levelUpSlots = generate5eLevelUpSlots(1, targetLevel, primaryClassId, updatedChoices, {})
+    const newSlots = [...foundationSlots, ...levelUpSlots]
+
+    // Preserve existing selections for slots that still exist
+    for (const newSlot of newSlots) {
+      const existing = buildSlots.find((s) => s.id === newSlot.id)
+      if (existing) {
+        newSlot.selectedId = existing.selectedId
+        newSlot.selectedName = existing.selectedName
+      }
+    }
+
+    set({ classLevelChoices: updatedChoices, buildSlots: newSlots })
+  }
 })

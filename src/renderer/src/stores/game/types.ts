@@ -1,3 +1,4 @@
+import type { TradeRequestPayload } from '../../network/message-types'
 import type { ShopItem } from '../../network/types'
 import type { ActiveLightSource, CombatTimerConfig } from '../../types/campaign'
 import type { ActiveCurse, ActiveDisease, ActiveEnvironmentalEffect, PlacedTrap } from '../../types/dm-toolbox'
@@ -13,6 +14,7 @@ import type {
   HiddenDiceResult,
   InGameTimeState,
   InitiativeEntry,
+  SharedJournalEntry,
   SidebarCategory,
   SidebarEntry,
   TurnState
@@ -103,12 +105,21 @@ export interface MapTokenSliceState {
   centerOnEntityId: string | null
   requestCenterOnEntity: (entityId: string) => void
   clearCenterRequest: () => void
+  pendingFallDamage: { tokenId: string; mapId: string; height: number } | null
+  setPendingFallDamage: (pending: { tokenId: string; mapId: string; height: number } | null) => void
   pendingPlacement: { tokenData: Omit<MapToken, 'id' | 'gridX' | 'gridY'> } | null
   setPendingPlacement: (tokenData: Omit<MapToken, 'id' | 'gridX' | 'gridY'> | null) => void
   commitPlacement: (mapId: string, gridX: number, gridY: number) => void
 }
 
+export interface PendingLairAction {
+  creatureName: string
+  lairActions: Array<{ name: string; description: string }>
+}
+
 export interface InitiativeSliceState {
+  pendingLairAction: PendingLairAction | null
+  setPendingLairAction: (action: PendingLairAction | null) => void
   startInitiative: (entries: InitiativeEntry[]) => void
   addToInitiative: (entry: InitiativeEntry) => void
   nextTurn: () => void
@@ -121,6 +132,7 @@ export interface InitiativeSliceState {
   useAction: (entityId: string) => void
   useBonusAction: (entityId: string) => void
   useReaction: (entityId: string) => void
+  useFreeInteraction: (entityId: string) => void
   useMovement: (entityId: string, feet: number) => void
   setDashing: (entityId: string) => void
   setDisengaging: (entityId: string) => void
@@ -257,6 +269,40 @@ export interface EffectsSliceState {
   updatePlacedTrap: (id: string, updates: Partial<PlacedTrap>) => void
 }
 
+export interface VisionSliceState {
+  /** Currently visible cells (host-computed, synced to clients) */
+  partyVisionCells: Array<{ x: number; y: number }>
+  /** Set currently visible cells */
+  setPartyVisionCells: (cells: Array<{ x: number; y: number }>) => void
+  /** Append auto-explored cells to a map's fogOfWar.exploredCells, deduplicating */
+  addExploredCells: (mapId: string, cells: Array<{ x: number; y: number }>) => void
+  /** Toggle dynamic fog on a map */
+  setDynamicFogEnabled: (mapId: string, enabled: boolean) => void
+}
+
+export interface JournalSliceState {
+  sharedJournal: SharedJournalEntry[]
+  addJournalEntry: (entry: SharedJournalEntry) => void
+  updateJournalEntry: (
+    id: string,
+    updates: Partial<Pick<SharedJournalEntry, 'title' | 'content' | 'visibility'>>
+  ) => void
+  deleteJournalEntry: (id: string) => void
+  setSharedJournal: (entries: SharedJournalEntry[]) => void
+}
+
+export interface TradeEphemeralState {
+  pendingTradeOffer: TradeRequestPayload | null
+  setPendingTradeOffer: (offer: TradeRequestPayload | null) => void
+  clearPendingTradeOffer: () => void
+  pendingTradeResult: { tradeId: string; accepted: boolean; summary: string } | null
+  setPendingTradeResult: (result: { tradeId: string; accepted: boolean; summary: string } | null) => void
+  clearPendingTradeResult: () => void
+  inspectedCharacterData: unknown
+  setInspectedCharacter: (data: unknown) => void
+  clearInspectedCharacter: () => void
+}
+
 // --- Game flow actions (on the combined store, not a separate slice) ---
 
 export interface GameFlowState {
@@ -280,6 +326,7 @@ export interface GameFlowState {
           savedWeatherPresets?: GameStoreState['savedWeatherPresets']
           handouts?: Handout[]
           combatTimer?: CombatTimerConfig | null
+          sharedJournal?: SharedJournalEntry[]
         })
       | Record<string, unknown>
   ) => void
@@ -292,6 +339,26 @@ export interface GameFlowState {
   setMarchingOrder: (order: string[]) => void
 }
 
+// --- Reaction prompt state ---
+
+export interface ReactionPromptState {
+  promptId: string
+  targetEntityId: string
+  triggerType: 'shield' | 'counterspell' | 'absorb-elements' | 'silvery-barbs'
+  triggerContext: {
+    attackRoll?: number
+    attackerName?: string
+    spellName?: string
+    spellLevel?: number
+    damageType?: string
+  }
+}
+
+export interface ReactionPromptSliceState {
+  pendingReactionPrompt: ReactionPromptState | null
+  setPendingReactionPrompt: (prompt: ReactionPromptState | null) => void
+}
+
 // --- Combined store type ---
 
 export type GameStoreState = GameState &
@@ -300,9 +367,13 @@ export type GameStoreState = GameState &
   InitiativeSliceState &
   ConditionsSliceState &
   FogSliceState &
+  VisionSliceState &
   SidebarSliceState &
   TimerSliceState &
   CombatLogSliceState &
   TimeSliceState &
   EffectsSliceState &
+  ReactionPromptSliceState &
+  JournalSliceState &
+  TradeEphemeralState &
   GameFlowState

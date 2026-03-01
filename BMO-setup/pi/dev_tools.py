@@ -136,7 +136,7 @@ def ssh_command(host: str, cmd: str, timeout: int = 30) -> dict:
             "reason": "Remote destructive command requires confirmation.",
         }
 
-    ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+    ssh_cmd = ["ssh", "-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10"]
     if os.path.exists(SSH_KEY_PATH):
         ssh_cmd.extend(["-i", SSH_KEY_PATH])
     ssh_cmd.extend([target, cmd])

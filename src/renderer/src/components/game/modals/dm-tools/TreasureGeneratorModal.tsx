@@ -1,71 +1,23 @@
 import { useEffect, useState } from 'react'
 import { load5eTreasureTables } from '../../../../services/data-provider'
 import { rollMultiple, rollSingle } from '../../../../services/dice/dice-service'
+import { logger } from '../../../../utils/logger'
+import type {
+  CoinResult,
+  CrTier,
+  HoardDetail,
+  MagicItemRarity,
+  MagicItemTableEntry,
+  TreasureHoardEntry,
+  TreasureIndividualEntry,
+  TreasureResult,
+  TreasureTableData,
+  TreasureType
+} from './treasure-generator-utils'
 
 interface TreasureGeneratorModalProps {
   onClose: () => void
   onBroadcastResult: (message: string) => void
-}
-
-type CrTier = '0-4' | '5-10' | '11-16' | '17+'
-type TreasureType = 'individual' | 'hoard'
-
-interface CoinResult {
-  cp: number
-  sp: number
-  ep: number
-  gp: number
-  pp: number
-}
-
-interface TreasureResult {
-  coins: CoinResult
-  gems: string[]
-  artObjects: string[]
-  magicItems: string[]
-}
-
-interface TreasureIndividualEntry {
-  crRange: string
-  amount: string
-  unit: string
-  average: number
-}
-
-interface TreasureHoardEntry {
-  crRange: string
-  coins: string
-  coinsUnit: string
-  coinsAverage: number
-  magicItems: string
-}
-
-interface MagicItemRarity {
-  d100Min: number
-  d100Max: number
-  rarity: string
-}
-
-interface MagicItemTableEntry {
-  d100Min: number
-  d100Max: number
-  itemName: string
-}
-
-interface HoardDetail {
-  gemTier: string
-  artTier: string
-  magicTable: string
-}
-
-interface TreasureTableData {
-  individual: TreasureIndividualEntry[]
-  hoard: TreasureHoardEntry[]
-  magicItemRarities: MagicItemRarity[]
-  gems: Record<string, string[]>
-  art: Record<string, string[]>
-  magicItemTables?: Record<string, MagicItemTableEntry[]>
-  hoardDetails?: Record<string, HoardDetail>
 }
 
 function rollDice(notation: string): number {
@@ -179,7 +131,7 @@ const FALLBACK_MAGIC: Record<string, string[]> = {
 function generateIndividual(tier: CrTier, tables: TreasureTableData | null): TreasureResult {
   const coins: CoinResult = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 }
 
-  const entry = tables?.individual?.find((e) => e.crRange === tier)
+  const entry: TreasureIndividualEntry | undefined = tables?.individual?.find((e) => e.crRange === tier)
   if (entry) {
     const amount = rollDice(entry.amount)
     if (entry.unit === 'pp') {
@@ -210,7 +162,9 @@ function generateIndividual(tier: CrTier, tables: TreasureTableData | null): Tre
 
 function rollMagicItemRarity(tables: TreasureTableData | null): string {
   const roll = rollD100()
-  const entry = tables?.magicItemRarities?.find((r) => roll >= r.d100Min && roll <= r.d100Max)
+  const entry: MagicItemRarity | undefined = tables?.magicItemRarities?.find(
+    (r) => roll >= r.d100Min && roll <= r.d100Max
+  )
   return entry?.rarity ?? 'Common'
 }
 
@@ -229,7 +183,7 @@ function rollOnMagicItemTable(tableKey: string, tables: TreasureTableData | null
     return `${rollMagicItemRarity(tables)} Magic Item`
   }
   const roll = rollD100()
-  const entry = table.find((e) => roll >= e.d100Min && roll <= e.d100Max)
+  const entry: MagicItemTableEntry | undefined = table.find((e) => roll >= e.d100Min && roll <= e.d100Max)
   return entry?.itemName ?? `${rollMagicItemRarity(tables)} Magic Item`
 }
 
@@ -240,7 +194,7 @@ function generateHoard(tier: CrTier, tables: TreasureTableData | null): Treasure
   const magicItems: string[] = []
 
   // DMG 2024 simplified hoard coins
-  const entry = tables?.hoard?.find((e) => e.crRange === tier)
+  const entry: TreasureHoardEntry | undefined = tables?.hoard?.find((e) => e.crRange === tier)
   if (entry) {
     const amount = rollDice(entry.coins)
     coins.gp = amount
@@ -262,7 +216,7 @@ function generateHoard(tier: CrTier, tables: TreasureTableData | null): Treasure
   }
 
   // Use hoardDetails for the correct gem/art/magic table per tier
-  const details = tables?.hoardDetails?.[tier]
+  const details: HoardDetail | undefined = tables?.hoardDetails?.[tier]
   const gemTier =
     details?.gemTier ?? (tier === '0-4' ? '50gp' : tier === '5-10' ? '100gp' : tier === '11-16' ? '500gp' : '1000gp')
   const artTier =
@@ -305,7 +259,7 @@ export default function TreasureGeneratorModal({
   useEffect(() => {
     load5eTreasureTables()
       .then((data) => setTreasureData(data as unknown as TreasureTableData))
-      .catch(() => {})
+      .catch((e) => logger.warn('[TreasureGenerator] Failed to load treasure tables', e))
   }, [])
 
   const handleGenerate = (): void => {

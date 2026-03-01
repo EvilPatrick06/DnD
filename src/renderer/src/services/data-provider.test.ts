@@ -2,38 +2,34 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MonsterStatBlock } from '../types/monster'
 import { clearDataCache, loadJson, searchMonsters } from './data-provider'
 
-// Mock fetch for loadJson tests
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+// Mock window.api.game.loadJson for loadJson tests
+const mockLoadJson = vi.fn()
+vi.stubGlobal('window', {
+  api: { game: { loadJson: mockLoadJson } }
+})
 
 beforeEach(() => {
-  mockFetch.mockReset()
+  mockLoadJson.mockReset()
   clearDataCache()
 })
 
 describe('loadJson', () => {
-  it('fetches and returns parsed JSON', async () => {
+  it('loads and returns parsed JSON via IPC', async () => {
     const testData = [{ id: 'test', name: 'Test' }]
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(testData)
-    })
+    mockLoadJson.mockResolvedValueOnce(testData)
     const result = await loadJson<typeof testData>('/test/unique-path-1.json')
     expect(result).toEqual(testData)
-    expect(mockFetch).toHaveBeenCalledWith('/test/unique-path-1.json')
+    expect(mockLoadJson).toHaveBeenCalledWith('/test/unique-path-1.json')
   })
 
   it('caches results for repeated calls', async () => {
     const testData = { cached: true }
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(testData)
-    })
+    mockLoadJson.mockResolvedValueOnce(testData)
     const path = '/test/cache-test.json'
     const first = await loadJson(path)
     const second = await loadJson(path)
     expect(first).toBe(second) // Same reference (cached)
-    expect(mockFetch).toHaveBeenCalledTimes(1) // Only one fetch
+    expect(mockLoadJson).toHaveBeenCalledTimes(1) // Only one IPC call
   })
 })
 

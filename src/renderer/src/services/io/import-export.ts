@@ -129,7 +129,7 @@ export async function importCampaign(): Promise<Record<string, unknown> | null> 
 // Full backup: Export / Import ALL data
 // ---------------------------------------------------------------------------
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 2
 const BACKUP_FILTER = [{ name: 'D&D VTT Backup', extensions: ['dndbackup'] }]
 
 const PREFERENCE_PREFIX = 'dnd-vtt-'
@@ -140,6 +140,8 @@ interface BackupPayload {
   characters: Record<string, unknown>[]
   campaigns: Record<string, unknown>[]
   bastions: Record<string, unknown>[]
+  customCreatures: Record<string, unknown>[]
+  homebrew: Record<string, unknown>[]
   appSettings: Record<string, unknown>
   preferences: Record<string, string>
 }
@@ -159,6 +161,8 @@ export interface BackupStats {
   characters: number
   campaigns: number
   bastions: number
+  customCreatures: number
+  homebrew: number
 }
 
 /**
@@ -166,10 +170,12 @@ export interface BackupStats {
  * and write it to a single .dndbackup file via a save dialog.
  */
 export async function exportAllData(): Promise<BackupStats | null> {
-  const [characters, campaigns, bastions, appSettings] = await Promise.all([
+  const [characters, campaigns, bastions, customCreatures, homebrew, appSettings] = await Promise.all([
     window.api.loadCharacters().catch(() => []),
     window.api.loadCampaigns().catch(() => []),
     window.api.loadBastions().catch(() => []),
+    window.api.loadCustomCreatures().catch(() => []),
+    window.api.loadAllHomebrew().catch(() => []),
     window.api.loadSettings().catch(() => ({}))
   ])
 
@@ -179,6 +185,8 @@ export async function exportAllData(): Promise<BackupStats | null> {
     characters: Array.isArray(characters) ? characters : [],
     campaigns: Array.isArray(campaigns) ? campaigns : [],
     bastions: Array.isArray(bastions) ? bastions : [],
+    customCreatures: Array.isArray(customCreatures) ? customCreatures : [],
+    homebrew: Array.isArray(homebrew) ? homebrew : [],
     appSettings: (appSettings ?? {}) as Record<string, unknown>,
     preferences: gatherLocalStoragePreferences()
   }
@@ -193,7 +201,9 @@ export async function exportAllData(): Promise<BackupStats | null> {
   return {
     characters: payload.characters.length,
     campaigns: payload.campaigns.length,
-    bastions: payload.bastions.length
+    bastions: payload.bastions.length,
+    customCreatures: payload.customCreatures.length,
+    homebrew: payload.homebrew.length
   }
 }
 
@@ -216,13 +226,16 @@ export async function importAllData(): Promise<BackupStats | null> {
     throw new Error('Invalid backup file: malformed JSON')
   }
 
-  if (!payload || typeof payload !== 'object' || payload.version !== BACKUP_VERSION) {
+  if (!payload || typeof payload !== 'object' || !payload.version || payload.version > BACKUP_VERSION) {
     throw new Error('Invalid or unsupported backup file version')
   }
 
   const chars = Array.isArray(payload.characters) ? payload.characters : []
   const camps = Array.isArray(payload.campaigns) ? payload.campaigns : []
   const basts = Array.isArray(payload.bastions) ? payload.bastions : []
+  // v1 backups don't have these fields
+  const creatures = Array.isArray(payload.customCreatures) ? payload.customCreatures : []
+  const hb = Array.isArray(payload.homebrew) ? payload.homebrew : []
 
   for (const c of chars) {
     await window.api.saveCharacter(c as Record<string, unknown>)
@@ -233,9 +246,17 @@ export async function importAllData(): Promise<BackupStats | null> {
   for (const b of basts) {
     await window.api.saveBastion(b as Record<string, unknown>)
   }
+  for (const cr of creatures) {
+    await window.api.saveCustomCreature(cr as Record<string, unknown>)
+  }
+  for (const h of hb) {
+    await window.api.saveHomebrew(h as Record<string, unknown>)
+  }
 
   if (payload.appSettings && typeof payload.appSettings === 'object') {
-    await window.api.saveSettings(payload.appSettings as Parameters<typeof window.api.saveSettings>[0]).catch(() => {})
+    await window.api
+      .saveSettings(payload.appSettings as Parameters<typeof window.api.saveSettings>[0])
+      .catch((e) => logger.warn('[Import] Failed to restore app settings', e))
   }
 
   if (payload.preferences && typeof payload.preferences === 'object') {
@@ -249,286 +270,11 @@ export async function importAllData(): Promise<BackupStats | null> {
   return {
     characters: chars.length,
     campaigns: camps.length,
-    bastions: basts.length
+    bastions: basts.length,
+    customCreatures: creatures.length,
+    homebrew: hb.length
   }
 }
 
-// ---------------------------------------------------------------------------
-// D&D Beyond import
-// ---------------------------------------------------------------------------
-
-/**
- * Map a D&D Beyond ability score block to our AbilityScoreSet.
- * DDB stores stats as an array of objects with id (1-6) and value.
- */
-function extractAbilityScores(stats: Array<{ id?: number; value?: number }> | undefined): Record<string, number> {
-  const idToName: Record<number, string> = {
-    1: 'strength',
-    2: 'dexterity',
-    3: 'constitution',
-    4: 'intelligence',
-    5: 'wisdom',
-    6: 'charisma'
-  }
-
-  const scores: Record<string, number> = {
-    strength: 10,
-    dexterity: 10,
-    constitution: 10,
-    intelligence: 10,
-    wisdom: 10,
-    charisma: 10
-  }
-
-  if (!Array.isArray(stats)) return scores
-
-  for (const stat of stats) {
-    const name = idToName[stat.id ?? 0]
-    if (name && typeof stat.value === 'number') {
-      scores[name] = stat.value
-    }
-  }
-
-  // Also add racial bonuses and other bonuses if present
-  return scores
-}
-
-/**
- * Sum bonus values from DDB modifiers that target ability scores.
- * DDB modifiers include racial, class, background, feat, item, etc.
- */
-function applyAbilityBonuses(
-  baseScores: Record<string, number>,
-  modifiers: Record<string, Array<{ type?: string; subType?: string; value?: number }>> | undefined
-): Record<string, number> {
-  const scores = { ...baseScores }
-  if (!modifiers || typeof modifiers !== 'object') return scores
-
-  const subTypeToAbility: Record<string, string> = {
-    'strength-score': 'strength',
-    'dexterity-score': 'dexterity',
-    'constitution-score': 'constitution',
-    'intelligence-score': 'intelligence',
-    'wisdom-score': 'wisdom',
-    'charisma-score': 'charisma'
-  }
-
-  const allModifiers = Object.values(modifiers).flat()
-  for (const mod of allModifiers) {
-    if (mod.type === 'bonus' && mod.subType && typeof mod.value === 'number') {
-      const ability = subTypeToAbility[mod.subType]
-      if (ability) {
-        scores[ability] += mod.value
-      }
-    }
-  }
-
-  return scores
-}
-
-/**
- * Import a D&D Beyond JSON character export and convert it to our Character5e format.
- * Performs a best-effort mapping of: name, level, classes, species, ability scores,
- * hit points, alignment, and background.
- *
- * Returns the converted character object or null if cancelled/invalid/error.
- */
-export async function importDndBeyondCharacter(): Promise<Record<string, unknown> | null> {
-  try {
-    const filePath = await window.api.showOpenDialog({
-      title: 'Import D&D Beyond Character',
-      filters: JSON_FILTER
-    })
-    if (!filePath) return null
-
-    const raw = await window.api.readFile(filePath)
-    const ddb = JSON.parse(raw)
-
-    // DDB exports sometimes wrap in a "data" property
-    const data = ddb.data ?? ddb
-
-    // Validate minimum DDB structure
-    if (!data || typeof data.name !== 'string') {
-      logger.error('Import DDB: not a valid D&D Beyond character export')
-      return null
-    }
-
-    // Extract ability scores with bonuses
-    const baseScores = extractAbilityScores(data.stats)
-    const abilityScores = applyAbilityBonuses(baseScores, data.modifiers)
-
-    // Extract classes
-    const ddbClasses: Array<{
-      definition?: { name?: string }
-      subclassDefinition?: { name?: string }
-      level?: number
-      isStartingClass?: boolean
-    }> = Array.isArray(data.classes) ? data.classes : []
-
-    const classes = ddbClasses.map((c) => ({
-      name: c.definition?.name ?? 'Unknown',
-      level: c.level ?? 1,
-      subclass: c.subclassDefinition?.name ?? undefined,
-      hitDie: getHitDie(c.definition?.name ?? '')
-    }))
-
-    const totalLevel = classes.reduce((sum, c) => sum + c.level, 0) || 1
-
-    // Extract species/race
-    const speciesName: string = data.race?.fullName ?? data.race?.baseName ?? data.race?.raceName ?? 'Human'
-
-    // Extract hit points
-    const baseHP = data.baseHitPoints ?? 10
-    const bonusHP = data.bonusHitPoints ?? 0
-    const removedHP = data.removedHitPoints ?? 0
-    const tempHP = data.temporaryHitPoints ?? 0
-    const maxHP = baseHP + bonusHP
-    const currentHP = maxHP - removedHP
-
-    // Extract alignment
-    const alignmentId = data.alignmentId
-    const alignmentMap: Record<number, string> = {
-      1: 'Lawful Good',
-      2: 'Neutral Good',
-      3: 'Chaotic Good',
-      4: 'Lawful Neutral',
-      5: 'True Neutral',
-      6: 'Chaotic Neutral',
-      7: 'Lawful Evil',
-      8: 'Neutral Evil',
-      9: 'Chaotic Evil'
-    }
-    const alignment = alignmentMap[alignmentId] ?? ''
-
-    // Extract background
-    const backgroundName: string = data.background?.definition?.name ?? data.background?.name ?? ''
-
-    // Build our Character5e-compatible object
-    const now = new Date().toISOString()
-    const character: Record<string, unknown> = {
-      id: crypto.randomUUID(),
-      gameSystem: 'dnd5e' as const,
-      campaignId: null,
-      playerId: '',
-
-      name: data.name,
-      species: speciesName,
-      classes,
-      level: totalLevel,
-      background: backgroundName,
-      alignment,
-      xp: data.currentXp ?? 0,
-      levelingMode: 'milestone' as const,
-
-      abilityScores,
-      hitPoints: {
-        current: currentHP,
-        maximum: maxHP,
-        temporary: tempHP
-      },
-      hitDice: classes.map((cls) => ({ current: cls.level, maximum: cls.level, dieType: cls.hitDie })),
-      armorClass: 10,
-      initiative: 0,
-      speed: 30,
-      speeds: { swim: 0, fly: 0, climb: 0, burrow: 0 },
-      senses: [],
-      resistances: [],
-      immunities: [],
-      vulnerabilities: [],
-
-      details: {
-        gender: data.gender ?? undefined,
-        age: data.age ? String(data.age) : undefined,
-        height: data.height ?? undefined,
-        weight: data.weight ? String(data.weight) : undefined,
-        eyes: data.eyes ?? undefined,
-        hair: data.hair ?? undefined,
-        skin: data.skin ?? undefined,
-        personality: data.traits?.personalityTraits ?? undefined,
-        ideals: data.traits?.ideals ?? undefined,
-        bonds: data.traits?.bonds ?? undefined,
-        flaws: data.traits?.flaws ?? undefined
-      },
-
-      proficiencies: {
-        weapons: [],
-        armor: [],
-        tools: [],
-        languages: [],
-        savingThrows: []
-      },
-      skills: [],
-
-      equipment: [],
-      treasure: { cp: 0, sp: 0, gp: 0, pp: 0, ep: 0 },
-      features: [],
-      knownSpells: [],
-      preparedSpellIds: [],
-      spellSlotLevels: {},
-      classFeatures: [],
-      weapons: [],
-      armor: [],
-      feats: [],
-
-      buildChoices: {
-        speciesId: speciesName.toLowerCase().replace(/\s+/g, '-'),
-        classId: (classes[0]?.name ?? 'fighter').toLowerCase(),
-        subclassId: classes[0]?.subclass?.toLowerCase().replace(/\s+/g, '-'),
-        backgroundId: backgroundName.toLowerCase().replace(/\s+/g, '-'),
-        selectedSkills: [],
-        abilityScoreMethod: 'custom' as const,
-        abilityScoreAssignments: {}
-      },
-
-      status: 'active' as const,
-      campaignHistory: [],
-      backstory: data.notes?.backstory ?? '',
-      notes: '',
-      pets: [],
-      deathSaves: { successes: 0, failures: 0 },
-      heroicInspiration: false,
-      attunement: [],
-      conditions: [],
-      languageDescriptions: {},
-      createdAt: now,
-      updatedAt: now
-    }
-
-    // Extract currencies from DDB inventory
-    if (data.currencies) {
-      character.treasure = {
-        cp: data.currencies.cp ?? 0,
-        sp: data.currencies.sp ?? 0,
-        gp: data.currencies.gp ?? 0,
-        pp: data.currencies.pp ?? 0,
-        ep: data.currencies.ep ?? 0
-      }
-    }
-
-    return character
-  } catch (err) {
-    logger.error('Import D&D Beyond character failed:', err)
-    return null
-  }
-}
-
-/**
- * Get the hit die size for a given class name.
- */
-function getHitDie(className: string): number {
-  const hitDice: Record<string, number> = {
-    barbarian: 12,
-    bard: 8,
-    cleric: 8,
-    druid: 8,
-    fighter: 10,
-    monk: 8,
-    paladin: 10,
-    ranger: 10,
-    rogue: 8,
-    sorcerer: 6,
-    warlock: 8,
-    wizard: 6
-  }
-  return hitDice[className.toLowerCase()] ?? 8
-}
+// Re-export D&D Beyond importer from dedicated module
+export { importDndBeyondCharacter } from './import-dnd-beyond'

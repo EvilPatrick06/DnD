@@ -28,13 +28,23 @@ load5eSentientItems()
   })
   .catch(() => {})
 
+// ---- Types ----------------------------------------------------------------
+
+export interface SentientItemProperties {
+  alignment: string
+  communication: { method: SentientCommunication; description: string }
+  senses: string
+  mentalScores: { intelligence: number; wisdom: number; charisma: number }
+  specialPurpose: { name: string; description: string }
+}
+
 // ---- Dice Helpers ----------------------------------------------------------
 
 function roll(sides: number): number {
   return Math.floor(Math.random() * sides) + 1
 }
 
-function _rollAbility(): number {
+function rollAbility(): number {
   const dice = [roll(6), roll(6), roll(6), roll(6)]
   dice.sort((a, b) => a - b)
   return dice[1] + dice[2] + dice[3]
@@ -42,25 +52,39 @@ function _rollAbility(): number {
 
 // ---- Generation Functions --------------------------------------------------
 
-function _rollAlignment(): string {
+function rollAlignment(): string {
   const r = roll(100)
   const entry = ALIGNMENT_TABLE.find((e) => r >= e.min && r <= e.max)
   return entry?.alignment ?? 'Neutral'
 }
 
-function _rollCommunication(): { method: SentientCommunication; description: string } {
+function rollCommunication(): { method: SentientCommunication; description: string } {
   const r = roll(10)
   const entry = COMMUNICATION_TABLE.find((e) => r >= e.min && r <= e.max)
   return entry ?? { method: 'empathy', description: '' }
 }
 
-function _rollSenses(): string {
+function rollSenses(): string {
   const r = roll(4)
   return SENSES_TABLE.find((e) => e.roll === r)?.senses ?? SENSES_TABLE[0]?.senses ?? ''
 }
 
-function _rollSpecialPurpose(): { name: string; description: string } {
+function rollSpecialPurpose(): { name: string; description: string } {
   const r = roll(10)
   const entry = SPECIAL_PURPOSES.find((e) => e.roll === r)
   return entry ?? SPECIAL_PURPOSES[0] ?? { name: '', description: '' }
+}
+
+export function generateSentientItem(): SentientItemProperties {
+  return {
+    alignment: rollAlignment(),
+    communication: rollCommunication(),
+    senses: rollSenses(),
+    mentalScores: {
+      intelligence: rollAbility(),
+      wisdom: rollAbility(),
+      charisma: rollAbility()
+    },
+    specialPurpose: rollSpecialPurpose()
+  }
 }

@@ -59,7 +59,7 @@ Cloudflare provides the networking glue: a Tunnel exposes the Pi's services to t
 |                     |  |  Ollama :11434      |
 |  PeerJS Server :9000|  |   - bmo (Llama 3.1  |
 |  Ollama (fallback)  |  |     70B Q4_K_M)     |
-|   - bmo (Gemma3:4b) |  |   - qwen2.5:32b    |
+|   - bmo (llama3.2:3b)|  |   - qwen2.5:32b    |
 |                     |  |                     |
 |  Chromium Kiosk     |  |  Fish Speech (TTS)  |
 |  OLED Face Display  |  |  Whisper Large-v3   |
@@ -99,7 +99,7 @@ Cloudflare provides the networking glue: a Tunnel exposes the Pi's services to t
 | PeerJS Signaling | Pi | 9000 | Node.js peer server | WebRTC signaling for VTT P2P |
 | Nginx Reverse Proxy | Pi | 80 | Nginx | Routes `/` to Flask, `/peerjs` to PeerJS |
 | Cloudflare Tunnel | Pi | -- | cloudflared | Exposes Pi services to internet |
-| Ollama (fallback) | Pi | 11434 | Ollama | Local LLM: Gemma3:4b (8K ctx, 1024 tokens) |
+| Ollama (fallback) | Pi | 11434 | Ollama | Local LLM: llama3.2:3b (8K ctx, 1024 tokens) |
 | OLED Stats Display | Pi | -- | Python + luma.oled | System stats on 128x64 OLED |
 | Chromium Kiosk | Pi | -- | Chromium | Fullscreen touchscreen UI |
 | AI Server | EC2 | 8000 | Flask + Gunicorn (2 workers, 4 threads) | LLM, TTS, STT, Vision, RAG endpoints |
@@ -147,7 +147,7 @@ Request arrives at Pi service
 | Route | Model | Context Window | Max Tokens | Latency |
 |-------|-------|---------------|------------|---------|
 | GPU (primary) | Llama 3.1 70B Q4_K_M | 32,768 | 2,048 | ~3-5s |
-| Local fallback | Gemma3:4b | 8,192 (Pi) / 32,768 (desktop) | 1,024 (Pi) / 2,048 (desktop) | ~8-15s on Pi |
+| Local fallback | llama3.2:3b | 8,192 (Pi) / 32,768 (desktop) | 1,024 (Pi) / 2,048 (desktop) | ~8-15s on Pi |
 
 The agent module (`agent.py`) routes via `_check_gpu_available()` which caches the result for 30 seconds. On failure mid-request, it catches the exception and retries with local Ollama.
 
@@ -214,7 +214,7 @@ Three-tier fallback:
              v
    +---------+---------+
    | Agent: Process     |  GPU: Llama 3.1 70B
-   | text, run tools    |  Local: Gemma3:4b
+   | text, run tools    |  Local: llama3.2:3b
    +---------+---------+
              |
              v
@@ -371,6 +371,37 @@ Additional vision capabilities:
 | `spot-monitor.service` | `/etc/systemd/system/spot-monitor.service` | EC2 spot interruption handler |
 | `ollama.service` | (installed by Ollama) | Primary LLM server |
 | `nginx.service` | (system) | TLS termination + reverse proxy |
+
+---
+
+## Deployment Scripts
+
+All operations go through a single entry point: `bmo.sh`. Two scripts run directly on their target machines.
+
+| Script | Run From | Purpose |
+|--------|----------|---------|
+| `bmo.sh` | Windows | Single entry point for all operations (see subcommands below) |
+| `lib.sh` | -- | Shared helpers (retry, logging, health checks, confirm) sourced by bmo.sh |
+| `pi-setup.sh` | Pi | One-time Pi OS/software setup (SCP'd and run by `bmo.sh setup pi`) |
+| `aws-setup.sh` | EC2 | One-time GPU server OS/software setup (runs as UserData) |
+| `pi/post-setup-auth.sh` | Pi | Interactive auth (SCP'd and run by `bmo.sh auth`) |
+
+### bmo.sh Subcommands
+
+| Command | Purpose |
+|---------|---------|
+| `bmo.sh setup pi` | SCP pi-setup.sh to Pi, run it, prompt reboot |
+| `bmo.sh setup aws [--launch]` | Create AWS infra + optional spot launch + auto-deploy |
+| `bmo.sh deploy pi` | Deploy BMO to Pi (files, deps, model, restart, health) |
+| `bmo.sh deploy aws` | Deploy AI server + DnD project to EC2 |
+| `bmo.sh deploy all` | Deploy to both Pi and AWS |
+| `bmo.sh auth` | Run interactive auth on Pi via SSH -t |
+| `bmo.sh cleanup pi [--force]` | Remove BMO from Pi |
+| `bmo.sh cleanup aws [--force]` | Remove BMO + AWS resources |
+| `bmo.sh cleanup all [--force]` | Remove both |
+| `bmo.sh status` | Health check both Pi + AWS |
+
+All commands read from a shared `.env` file (copy `.env.template`).
 
 ---
 

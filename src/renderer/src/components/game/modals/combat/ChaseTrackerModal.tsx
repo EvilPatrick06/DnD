@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { load5eChaseTables } from '../../../../services/data-provider'
+import { logger } from '../../../../utils/logger'
 import ChaseControls, { type Participant } from './ChaseControls'
 import ChaseMap from './ChaseMap'
 
@@ -73,7 +74,7 @@ export default function ChaseTrackerModal({ onClose, onBroadcastResult }: ChaseT
   useEffect(() => {
     load5eChaseTables()
       .then((data) => setChaseTables(data as unknown as ChaseTableData))
-      .catch(() => {})
+      .catch((e) => logger.warn('[ChaseTracker] Failed to load chase tables', e))
   }, [])
 
   const getComplications = (): string[] => {

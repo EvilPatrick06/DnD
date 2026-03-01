@@ -1,50 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { addToast } from '../../hooks/use-toast'
-
-interface InstalledModel {
-  name: string
-  size: number
-  modifiedAt: string
-  digest: string
-  parameterSize?: string
-  quantization?: string
-  family?: string
-}
-
-interface CuratedModel {
-  id: string
-  name: string
-  vramMB: number
-  desc: string
-}
+import {
+  type ActiveOp,
+  type CuratedModel,
+  formatBytes,
+  getPerformanceTier,
+  type InstalledModel,
+  TIER_STYLES,
+  timeAgo
+} from './OllamaModelList'
 
 interface VersionInfo {
   installed: string
   latest?: string
   updateAvailable: boolean
-}
-
-type ActiveOp =
-  | { type: 'pull'; model: string; percent: number }
-  | { type: 'ollama-update'; percent: number }
-  | { type: 'delete'; model: string }
-  | null
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
-
-function timeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
-  const days = Math.floor(diff / 86400000)
-  if (days < 1) return 'today'
-  if (days === 1) return '1 day ago'
-  if (days < 30) return `${days} days ago`
-  const months = Math.floor(days / 30)
-  if (months === 1) return '1 month ago'
-  return `${months} months ago`
 }
 
 export default function OllamaManagement(): JSX.Element {
@@ -221,6 +190,7 @@ export default function OllamaManagement(): JSX.Element {
   const availableModels = curatedModels.filter(
     (c) => !installedNames.has(c.id) && !installedNames.has(c.id.replace(/:latest$/, ''))
   )
+  const curatedLookup = new Map(curatedModels.map((c) => [c.id.replace(/:latest$/, ''), c]))
 
   const isBusy = activeOp !== null
 
@@ -299,12 +269,67 @@ export default function OllamaManagement(): JSX.Element {
         </div>
       )}
 
+      {/* VRAM Info */}
+      {vram > 0 && (
+        <div className="flex items-center gap-3 px-3 py-2 bg-gray-800/40 rounded-lg">
+          <span className="text-xs text-gray-400">GPU VRAM:</span>
+          <div className="flex-1 bg-gray-700 rounded-full h-1.5">
+            <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: '100%' }} />
+          </div>
+          <span className="text-xs text-gray-300 font-mono">{(vram / 1000).toFixed(1)} GB</span>
+        </div>
+      )}
+      {vram === 0 && ollamaStatus.running && (
+        <div className="text-xs text-gray-500 px-3 py-2 bg-gray-800/40 rounded-lg">
+          GPU VRAM not detected (no NVIDIA GPU found). Model performance estimates unavailable.
+        </div>
+      )}
+
       {!ollamaStatus.running && (
         <div className="text-xs text-gray-500">Ollama is installed but not running. Start it to manage models.</div>
       )}
 
       {ollamaStatus.running && (
         <>
+          {/* Recommended Models */}
+          {vram > 0 &&
+            (() => {
+              const recommended = curatedModels
+                .filter((m) => {
+                  const tier = getPerformanceTier(vram, m.vramMB)
+                  return tier === 'optimal' || tier === 'good'
+                })
+                .filter((m) => !installedNames.has(m.id) && !installedNames.has(m.id.replace(/:latest$/, '')))
+              if (recommended.length === 0) return null
+              return (
+                <div className="px-3 py-2.5 bg-green-900/10 border border-green-800/30 rounded-lg">
+                  <h4 className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-2">
+                    Recommended for Your GPU
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {recommended.map((m) => {
+                      const tier = getPerformanceTier(vram, m.vramMB)
+                      const style = TIER_STYLES[tier]
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => handlePullModel(m.id)}
+                          disabled={isBusy}
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs bg-gray-800/60 rounded-lg border border-gray-700 hover:border-green-600 hover:text-green-400 text-gray-300 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <span>{m.name}</span>
+                          <span className={`text-[10px] px-1 py-0.5 rounded ${style.className}`}>{style.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-1.5">
+                    These models should run well with your {(vram / 1000).toFixed(1)}GB VRAM.
+                  </p>
+                </div>
+              )
+            })()}
+
           {/* Installed Models */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -327,13 +352,16 @@ export default function OllamaManagement(): JSX.Element {
                 {installedModels.map((model) => {
                   const isPulling = activeOp?.type === 'pull' && activeOp.model === model.name
                   const isDeleting = activeOp?.type === 'delete' && activeOp.model === model.name
+                  const curated = curatedLookup.get(model.name.replace(/:latest$/, ''))
+                  const tier = vram > 0 && curated ? getPerformanceTier(vram, curated.vramMB) : null
+                  const tierStyle = tier ? TIER_STYLES[tier] : null
                   return (
                     <div
                       key={model.digest}
                       className="flex items-center justify-between py-2 px-3 bg-gray-800/40 rounded-lg"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm text-gray-200 font-medium truncate">{model.name}</span>
                           {model.parameterSize && (
                             <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
@@ -345,9 +373,21 @@ export default function OllamaManagement(): JSX.Element {
                               {model.quantization}
                             </span>
                           )}
+                          {model.family && (
+                            <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
+                              {model.family}
+                            </span>
+                          )}
+                          {tierStyle && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${tierStyle.className}`}>
+                              {tierStyle.label}
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-gray-500 mt-0.5">
-                          {formatBytes(model.size)} &middot; {timeAgo(model.modifiedAt)}
+                          {formatBytes(model.size)}
+                          {curated && <> &middot; ~{(curated.vramMB / 1000).toFixed(1)}GB VRAM</>} &middot;{' '}
+                          {timeAgo(model.modifiedAt)}
                         </div>
                       </div>
 
@@ -421,22 +461,26 @@ export default function OllamaManagement(): JSX.Element {
               <div className="space-y-1.5">
                 {availableModels.map((model) => {
                   const isPulling = activeOp?.type === 'pull' && activeOp.model === model.id
-                  const tooLarge = vram > 0 && model.vramMB > vram
+                  const tier = vram > 0 ? getPerformanceTier(vram, model.vramMB) : null
+                  const tierStyle = tier ? TIER_STYLES[tier] : null
                   return (
                     <div
                       key={model.id}
                       className="flex items-center justify-between py-2 px-3 bg-gray-800/40 rounded-lg"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm text-gray-300 font-medium">{model.name}</span>
-                          {tooLarge && (
-                            <span className="text-[10px] text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded">
-                              Needs {(model.vramMB / 1000).toFixed(0)}GB+ VRAM
+                          {tierStyle && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${tierStyle.className}`}>
+                              {tierStyle.label}
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">{model.desc}</div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          {model.desc} &middot; ~{(model.vramMB / 1000).toFixed(1)}GB VRAM &middot;{' '}
+                          {(model.contextSize / 1024).toFixed(0)}K ctx
+                        </div>
                       </div>
 
                       {isPulling ? (

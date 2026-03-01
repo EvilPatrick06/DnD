@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { DEFAULT_OLLAMA_URL } from '../../constants/app-constants'
 import { type Adventure, loadAdventures } from '../../services/adventure-loader'
 import { useCampaignStore } from '../../stores/use-campaign-store'
 import type { CalendarConfig, CampaignType, CustomRule, TurnMode } from '../../types/campaign'
@@ -54,7 +55,7 @@ export default function CampaignWizard(): JSX.Element {
   // AI DM config
   const [aiEnabled, setAiEnabled] = useState(false)
   const [aiOllamaModel, setAiOllamaModel] = useState('llama3.1')
-  const [aiOllamaUrl, setAiOllamaUrl] = useState('http://localhost:11434')
+  const [aiOllamaUrl, setAiOllamaUrl] = useState(DEFAULT_OLLAMA_URL)
   const [ollamaReady, setOllamaReady] = useState(false)
 
   // For review step: resolve adventure name

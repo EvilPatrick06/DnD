@@ -77,6 +77,12 @@ function checkSinglePrerequisite(character: Character5e, prereq: string): boolea
     return true
   }
 
+  // Level-based prerequisite: "Level 4 or higher", "4th level or higher", "Level 8+"
+  const levelMatch = lower.match(/^(?:level\s+)?(\d+)(?:th|st|nd|rd)?\s*(?:level\s+)?(?:or\s+higher|\+)$/i)
+  if (levelMatch) {
+    return character.level >= parseInt(levelMatch[1], 10)
+  }
+
   // Ability score checks with "13+" format: "Strength or Dexterity 13+"
   const plusMatch = lower.match(
     /^(strength|dexterity|constitution|intelligence|wisdom|charisma)(?:\s+or\s+(strength|dexterity|constitution|intelligence|wisdom|charisma))?\s+(\d+)\+$/

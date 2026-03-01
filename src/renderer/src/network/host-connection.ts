@@ -51,7 +51,7 @@ export function handleNewConnection(conn: DataConnection, state: HostStateAccess
     logger.debug('[HostManager] Rejected banned peer:', peerId)
     try {
       conn.close()
-    } catch (_e) {
+    } catch {
       // Ignore close errors
     }
     return
@@ -204,12 +204,7 @@ export function handleJoin(
     characterId,
     characterName,
     isReady: false,
-    isMuted: false,
-    isDeafened: false,
-    isSpeaking: false,
-    isHost: false,
-    isForceMuted: false,
-    isForceDeafened: false
+    isHost: false
   }
   state.peerInfoMap.set(peerId, peerInfo)
   state.lastHeartbeat.set(peerId, Date.now())
@@ -223,12 +218,7 @@ export function handleJoin(
     characterId: null,
     characterName: null,
     isReady: true,
-    isMuted: false,
-    isDeafened: false,
-    isSpeaking: false,
-    isHost: true,
-    isForceMuted: false,
-    isForceDeafened: false
+    isHost: true
   }
   const fullPayload: Record<string, unknown> = {
     peers: [hostPeer, ...allPeers],

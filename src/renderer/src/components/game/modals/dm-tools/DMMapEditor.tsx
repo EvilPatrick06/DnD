@@ -107,12 +107,13 @@ export default function DMMapEditor({ campaign, onClose }: DMMapEditorProps): JS
       cellSize: number
       gridType: 'square' | 'hex'
       backgroundColor: string
+      imageData?: string
     }) => {
       const newMap: GameMap = {
         id: crypto.randomUUID(),
         name: mapConfig.name || `Map ${gameStore.maps.length + 1}`,
         campaignId: campaign.id,
-        imagePath: '',
+        imagePath: mapConfig.imageData || '',
         width: mapConfig.width * mapConfig.cellSize,
         height: mapConfig.height * mapConfig.cellSize,
         grid: {

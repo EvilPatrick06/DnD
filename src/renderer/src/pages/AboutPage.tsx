@@ -90,7 +90,7 @@ export default function AboutPage(): JSX.Element {
       const stats = await exportAllData()
       if (stats) {
         addToast(
-          `Exported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}`,
+          `Exported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}, ${stats.customCreatures} creature${stats.customCreatures !== 1 ? 's' : ''}, ${stats.homebrew} homebrew`,
           'success'
         )
       }
@@ -108,7 +108,7 @@ export default function AboutPage(): JSX.Element {
       const stats = await importAllData()
       if (stats) {
         addToast(
-          `Imported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}`,
+          `Imported ${stats.characters} character${stats.characters !== 1 ? 's' : ''}, ${stats.campaigns} campaign${stats.campaigns !== 1 ? 's' : ''}, ${stats.bastions} bastion${stats.bastions !== 1 ? 's' : ''}, ${stats.customCreatures} creature${stats.customCreatures !== 1 ? 's' : ''}, ${stats.homebrew} homebrew`,
           'success'
         )
       }

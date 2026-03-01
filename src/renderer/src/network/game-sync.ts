@@ -62,8 +62,15 @@ export function startGameSync(sendMessage: SendMessageFn): void {
   let prevTurnMode = getGameStore().getState().turnMode
   let prevIsPaused = getGameStore().getState().isPaused
   let prevTurnStates = getGameStore().getState().turnStates
+  let prevPartyVisionCells = getGameStore().getState().partyVisionCells
 
   unsubscribe = getGameStore().subscribe((state) => {
+    // Sync party vision cells
+    if (state.partyVisionCells !== prevPartyVisionCells) {
+      prevPartyVisionCells = state.partyVisionCells
+      sendMessage('dm:vision-update', { partyVisionCells: state.partyVisionCells })
+    }
+
     if (state.activeMapId !== prevActiveMapId) {
       prevActiveMapId = state.activeMapId
       const map = state.maps.find((m) => m.id === state.activeMapId)
@@ -221,6 +228,8 @@ export async function buildFullGameStatePayload(): Promise<Record<string, unknow
     moonOverride: gs.moonOverride,
     showWeatherOverlay: gs.showWeatherOverlay,
     handouts: gs.handouts,
-    combatTimer: gs.combatTimer
+    combatTimer: gs.combatTimer,
+    partyVisionCells: gs.partyVisionCells,
+    sharedJournal: gs.sharedJournal
   }
 }

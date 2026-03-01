@@ -3,6 +3,8 @@ import * as path from 'path'
 import { formatCampaignForContext, loadCampaignById } from './campaign-context'
 import { formatCharacterAbbreviated, formatCharacterForContext, loadCharacterById } from './character-context'
 import { getMemoryManager } from './memory-manager'
+import { CHARACTER_RULES_PROMPT } from './prompt-sections/character-rules'
+import { COMBAT_RULES_PROMPT } from './prompt-sections/combat-rules'
 import type { SearchEngine } from './search-engine'
 import { detectAndLoadSrdData } from './srd-provider'
 import type { ContextTokenBreakdown } from './token-budget'
@@ -179,6 +181,18 @@ export async function buildContext(
       breakdown.characterData = estimateTokens(charBlock)
       parts.push(charBlock)
 
+      // Include character rules prompt alongside character data for enforcement
+      parts.push(`[CHARACTER RULES]\n${CHARACTER_RULES_PROMPT.trim()}`)
+      parts.push(`[COMBAT RULES]\n${COMBAT_RULES_PROMPT.trim()}`)
+
+      // Party composition analysis for AI tactical decisions
+      const partyComp = analyzePartyComposition(charParts)
+      if (partyComp) parts.push(partyComp)
+
+      // Encounter budget for dynamic encounter generation
+      const encounterBudget = calculateEncounterBudget(charParts)
+      if (encounterBudget) parts.push(encounterBudget)
+
       // Cache character context for persistence
       if (campaignId) {
         const memMgr = getMemoryManager(campaignId)
@@ -237,6 +251,60 @@ export async function buildContext(
   lastTokenBreakdown = breakdown
 
   return result
+}
+
+function analyzePartyComposition(characterParts: string[]): string | null {
+  const roles: string[] = []
+  for (const part of characterParts) {
+    const classMatch = part.match(/Class:\s*(.+)/i)
+    const nameMatch = part.match(/Name:\s*(.+)/i)
+    if (!classMatch || !nameMatch) continue
+    const cls = classMatch[1].toLowerCase()
+    const name = nameMatch[1].trim()
+    if (/cleric|druid|paladin/.test(cls)) roles.push(`${name}: healer/support`)
+    else if (/wizard|sorcerer|warlock|bard/.test(cls)) roles.push(`${name}: caster`)
+    else if (/fighter|barbarian/.test(cls)) roles.push(`${name}: front-line tank`)
+    else if (/rogue|ranger|monk/.test(cls)) roles.push(`${name}: mobile striker`)
+    else roles.push(`${name}: ${cls}`)
+  }
+  if (roles.length === 0) return null
+  return `[PARTY COMPOSITION]\n${roles.join('\n')}\nParty size: ${roles.length}\n[/PARTY COMPOSITION]`
+}
+
+function calculateEncounterBudget(characterParts: string[]): string | null {
+  const levels: number[] = []
+  for (const part of characterParts) {
+    const levelMatch = part.match(/Level:\s*(\d+)/i)
+    if (levelMatch) levels.push(parseInt(levelMatch[1], 10))
+  }
+  if (levels.length === 0) return null
+  const avgLevel = Math.round(levels.reduce((a, b) => a + b, 0) / levels.length)
+  // XP thresholds per character level (2024 DMG): [low, moderate, high]
+  const xpTable: Record<number, [number, number, number]> = {
+    1: [50, 75, 100],
+    2: [100, 150, 200],
+    3: [150, 225, 400],
+    4: [250, 375, 500],
+    5: [500, 750, 1100],
+    6: [600, 900, 1400],
+    7: [750, 1100, 1700],
+    8: [1000, 1400, 2100],
+    9: [1300, 1800, 2400],
+    10: [1600, 2100, 2800],
+    11: [1900, 2400, 3600],
+    12: [2200, 2800, 4500],
+    13: [2600, 3400, 5100],
+    14: [2900, 3800, 5700],
+    15: [3300, 4300, 6400],
+    16: [3800, 4800, 7200],
+    17: [4500, 5700, 8800],
+    18: [5000, 6300, 9500],
+    19: [5500, 6800, 10900],
+    20: [6800, 8500, 13500]
+  }
+  const thresholds = xpTable[Math.min(avgLevel, 20)] ?? xpTable[1]!
+  const partySize = levels.length
+  return `[ENCOUNTER BUDGET]\nParty: ${partySize} characters, avg level ${avgLevel}\nLow: ${thresholds[0] * partySize} XP | Moderate: ${thresholds[1] * partySize} XP | High: ${thresholds[2] * partySize} XP\n[/ENCOUNTER BUDGET]`
 }
 
 function formatChunks(chunks: ScoredChunk[]): string {

@@ -51,11 +51,13 @@ export interface CoreSliceState {
   activeTab: ContentTab
   targetLevel: number
   editingCharacterId: string | null
+  classLevelChoices: Record<number, string>
 
   selectGameSystem: (system: GameSystem) => void
   resetBuilder: () => void
   setTargetLevel: (level: number) => void
   setActiveTab: (tab: ContentTab) => void
+  setClassLevelChoice: (level: number, classId: string) => void
 }
 
 export interface AbilityScoreSliceState {
@@ -136,7 +138,10 @@ export interface CharacterDetailsSliceState {
   classMandatorySkills: string[]
   selectedSkills: string[]
   maxSkills: number
-  customModal: 'ability-scores' | 'skills' | 'asi' | null
+  customModal: 'ability-scores' | 'skills' | 'asi' | 'expertise' | null
+  builderExpertiseSelections: Record<string, string[]>
+  activeExpertiseSlotId: string | null
+  builderFeatSelections: Record<string, { id: string; name: string; description: string }>
   backgroundAbilityBonuses: Record<string, number>
   backgroundEquipmentChoice: 'equipment' | 'gold' | null
   classEquipmentChoice: string | null
@@ -176,7 +181,9 @@ export interface CharacterDetailsSliceState {
   setBlessedWarriorCantrips: (ids: string[]) => void
   setDruidicWarriorCantrips: (ids: string[]) => void
   setVersatileFeat: (featId: string | null) => void
-  openCustomModal: (modal: 'ability-scores' | 'skills' | 'asi') => void
+  setBuilderExpertiseSelections: (slotId: string, skills: string[]) => void
+  setBuilderFeatSelection: (slotId: string, feat: { id: string; name: string; description: string } | null) => void
+  openCustomModal: (modal: 'ability-scores' | 'skills' | 'asi' | 'expertise') => void
   closeCustomModal: () => void
 }
 
@@ -184,6 +191,7 @@ export interface BuildActionsSliceState {
   advanceToNextSlot: () => void
   confirmAbilityScores: () => void
   confirmSkills: () => void
+  confirmExpertise: (slotId: string) => void
 }
 
 export interface SaveSliceState {

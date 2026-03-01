@@ -8,7 +8,7 @@ import { addCurrency, computeSellPrice, deductWithConversion, parseCost, totalIn
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 
 import AttackCalculator5e from './AttackCalculator5e'
-import { WeaponRow, useWeaponDatabase, weaponDataToEntry } from './WeaponList5e'
+import { useWeaponDatabase, WeaponRow, weaponDataToEntry } from './WeaponList5e'
 
 interface OffenseSection5eProps {
   character: Character5e

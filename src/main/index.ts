@@ -4,6 +4,7 @@ import { app, BrowserWindow, nativeImage, shell } from 'electron'
 import { initFromSavedConfig } from './ai/ai-service'
 import { registerIpcHandlers } from './ipc'
 import { logToFile } from './log'
+import { registerPluginProtocol, registerPluginScheme } from './plugins/plugin-protocol'
 import { registerUpdateHandlers } from './updater'
 
 // ── Unhandled Error Handlers ──
@@ -17,6 +18,9 @@ process.on('unhandledRejection', (reason) => {
   const stack = reason instanceof Error ? reason.stack : undefined
   logToFile('ERROR', `Unhandled rejection: ${msg}`, stack)
 })
+
+// Register plugin:// scheme as privileged (must be before app.whenReady)
+registerPluginScheme()
 
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
@@ -66,7 +70,7 @@ function createWindow(): void {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self'; connect-src 'self' data: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'"
+          "default-src 'self' plugin:; script-src 'self' plugin:; worker-src 'self' blob:; style-src 'self' plugin:; connect-src 'self' data: plugin: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:"
         ]
       }
     })
@@ -115,6 +119,7 @@ app.on('second-instance', () => {
 app.whenReady().then(() => {
   app.setAppUserModelId('com.dnd-vtt.app')
 
+  registerPluginProtocol()
   registerIpcHandlers()
   registerUpdateHandlers()
   initFromSavedConfig()

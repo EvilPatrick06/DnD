@@ -3,7 +3,7 @@ import { logger } from '../utils/logger'
 
 // Client message type allowlist — only these prefixes are permitted from non-host peers.
 // dm: prefixed messages are host-only and must never be accepted from clients.
-const CLIENT_ALLOWED_PREFIXES = ['player:', 'chat:', 'voice:', 'game:dice-roll', 'game:token-move', 'ping']
+const CLIENT_ALLOWED_PREFIXES = ['player:', 'chat:', 'game:dice-roll', 'game:token-move', 'combat:', 'ping']
 
 export function isClientAllowedMessageType(type: string): boolean {
   return CLIENT_ALLOWED_PREFIXES.some((prefix) => type.startsWith(prefix))

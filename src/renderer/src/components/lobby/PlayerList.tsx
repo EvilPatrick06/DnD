@@ -14,8 +14,6 @@ export default function PlayerList(): JSX.Element {
   const updatePlayer = useLobbyStore((s) => s.updatePlayer)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
   const role = useNetworkStore((s) => s.role)
-  const forceMutePlayer = useNetworkStore((s) => s.forceMutePlayer)
-  const forceDeafenPlayer = useNetworkStore((s) => s.forceDeafenPlayer)
   const sendMessage = useNetworkStore((s) => s.sendMessage)
   const removePeer = useNetworkStore((s) => s.removePeer)
 
@@ -109,8 +107,6 @@ export default function PlayerList(): JSX.Element {
                 isLocallyMuted={locallyMutedPeers.includes(player.peerId)}
                 onToggleLocalMute={() => toggleLocalMutePlayer(player.peerId)}
                 isHostView={isHostView}
-                onForceMute={(force) => forceMutePlayer(player.peerId, force)}
-                onForceDeafen={(force) => forceDeafenPlayer(player.peerId, force)}
                 onViewCharacter={player.characterId ? () => handleViewCharacter(player.characterId) : undefined}
                 onKick={isHostView && !isLocal && !player.isHost ? () => handleKick(player.peerId) : undefined}
                 onBan={isHostView && !isLocal && !player.isHost ? () => handleBan(player.peerId) : undefined}

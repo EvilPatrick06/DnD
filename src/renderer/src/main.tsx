@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import App from './App'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import { setIceConfig } from './network/peer-manager'
+import { initPluginSystem } from './services/plugin-system'
 import { logger } from './utils/logger'
 import './styles/globals.css'
 
@@ -25,7 +26,7 @@ window.api
       logger.debug('[Settings] Loaded custom ICE servers:', settings.turnServers.length)
     }
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('[Init] Failed to load settings', e))
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -36,3 +37,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>
 )
+
+// Initialize plugin system after render
+initPluginSystem().catch((e) => logger.warn('[Init] Plugin system init failed', e))

@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import diceTypesJson from '../../../../public/data/5e/mechanics/dice-types.json'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import diceTypesJson from '../../../../public/data/5e/game/mechanics/dice-types.json'
 import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
 import { play, playDiceSound } from '../../../services/sound-manager'
 import type { GameSystem } from '../../../types/game-system'
 import DiceResult from './DiceResult'
+
+const DiceHistory = lazy(() => import('./DiceHistory'))
 
 interface DiceRollerProps {
   system: GameSystem
@@ -37,6 +39,7 @@ export default function DiceRoller({
   const [results, setResults] = useState<RollResult[]>([])
   const [animatingId, setAnimatingId] = useState<string | null>(null)
   const [lastRollWasCrit, setLastRollWasCrit] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const animatingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -130,6 +133,21 @@ export default function DiceRoller({
 
   return (
     <div className="space-y-3">
+      {/* History toggle */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowHistory((v) => !v)}
+          className="px-2 py-1 text-[10px] rounded transition-colors cursor-pointer bg-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-700"
+        >
+          {showHistory ? 'Hide History' : 'History'}
+        </button>
+      </div>
+      {showHistory && (
+        <Suspense fallback={null}>
+          <DiceHistory onClose={() => setShowHistory(false)} />
+        </Suspense>
+      )}
+
       {/* Quick roll buttons */}
       <div className="flex gap-1 flex-wrap">
         {DICE.map((die) => (

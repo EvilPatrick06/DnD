@@ -41,7 +41,7 @@ load5eSpellSlots()
     if (data.thirdCaster)
       THIRD_CASTER_SLOTS = parseSlotTable(data.thirdCaster as Record<string, Record<string, number>>)
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('[5eSystem] Failed to preload spell slots', e))
 
 const FULL_CASTERS = FULL_CASTERS_5E
 const HALF_CASTERS = HALF_CASTERS_5E

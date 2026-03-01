@@ -47,6 +47,7 @@ export function executeAttackRoll(opts: {
   cover: CoverType
   computedEffects: ConditionEffectResult | null
   conditionOverrides: Record<string, boolean>
+  critThreshold?: number
 }): { roll: AttackRollResult; isHit: boolean } {
   const { selectedWeapon, selectedTarget, character, attackMod, cover, computedEffects, conditionOverrides } = opts
 
@@ -81,8 +82,8 @@ export function executeAttackRoll(opts: {
     d20 = d20_1
   }
 
-  // Auto-crit from conditions (Paralyzed/Unconscious within 5ft)
-  const isCrit = d20 === 20 || (computedEffects?.autoCrit ?? false)
+  // Auto-crit from conditions (Paralyzed/Unconscious within 5ft) + Champion crit range
+  const isCrit = d20 >= (opts.critThreshold ?? 20) || (computedEffects?.autoCrit ?? false)
   const isFumble = d20 === 1
   const total = d20 + attackMod
 
