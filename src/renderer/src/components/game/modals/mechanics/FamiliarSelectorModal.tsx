@@ -4,6 +4,7 @@ import { load5eMonsters } from '../../../../services/data-provider'
 import type { Companion5e } from '../../../../types/companion'
 import type { MonsterStatBlock } from '../../../../types/monster'
 import MonsterStatBlockView from '../../dm/MonsterStatBlockView'
+import CompanionStatusBanner from '../shared/CompanionStatusBanner'
 
 interface FamiliarSelectorModalProps {
   onClose: () => void
@@ -65,40 +66,13 @@ export default function FamiliarSelectorModal({
 
         {/* Existing familiar status */}
         {existingFamiliar && (
-          <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-sm text-gray-200 font-medium">{existingFamiliar.name}</span>
-                <span
-                  className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full ${
-                    existingFamiliar.dismissed ? 'bg-gray-700 text-gray-400' : 'bg-green-900/50 text-green-400'
-                  }`}
-                >
-                  {existingFamiliar.dismissed ? 'Dismissed' : 'Active'}
-                </span>
-                <span className="ml-2 text-xs text-gray-500">
-                  HP {existingFamiliar.currentHP}/{existingFamiliar.maxHP}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                {existingFamiliar.dismissed ? (
-                  <button
-                    onClick={onResummon}
-                    className="px-3 py-1 text-xs bg-green-700 hover:bg-green-600 text-white rounded cursor-pointer"
-                  >
-                    Resummon
-                  </button>
-                ) : (
-                  <button
-                    onClick={onDismiss}
-                    className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <CompanionStatusBanner
+            companion={existingFamiliar}
+            activeColor="bg-green-900/50 text-green-400"
+            resummonColor="bg-green-700 hover:bg-green-600"
+            onDismiss={onDismiss}
+            onResummon={onResummon}
+          />
         )}
 
         <div className="flex-1 flex min-h-0 overflow-hidden">

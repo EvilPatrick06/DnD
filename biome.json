@@ -45,5 +45,21 @@
         "noUnusedImports": "warn"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/test-helpers.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          },
+          "complexity": {
+            "noBannedTypes": "off",
+            "useArrowFunction": "off"
+          }
+        }
+      }
+    }
+  ]
 }

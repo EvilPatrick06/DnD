@@ -16,6 +16,38 @@ interface RestModalProps {
   onApply: (restoredCharacterIds: string[]) => void
 }
 
+/** Shared preamble used by both rest handlers: resolves stores and the active map. */
+function getRestContext() {
+  const { saveCharacter } = useCharacterStore.getState()
+  const { role, sendMessage } = useNetworkStore.getState()
+  const { setRemoteCharacter } = useLobbyStore.getState()
+  const activeMap = useGameStore.getState().maps.find((m) => m.id === useGameStore.getState().activeMapId)
+  return { saveCharacter, role, sendMessage, setRemoteCharacter, activeMap }
+}
+
+/** After applying a rest result, syncs the token HP and broadcasts to remote players if needed. */
+function syncRestResult(
+  result: { character: Character5e },
+  tokenHpUpdate: { currentHP: number; maxHP?: number },
+  context: ReturnType<typeof getRestContext>
+): void {
+  const { role, sendMessage, setRemoteCharacter, activeMap } = context
+  if (activeMap) {
+    const token = activeMap.tokens.find((t) => t.entityId === result.character.id)
+    if (token) {
+      useGameStore.getState().updateToken(activeMap.id, token.id, tokenHpUpdate)
+    }
+  }
+  if (role === 'host' && result.character.playerId !== 'local') {
+    sendMessage('dm:character-update', {
+      characterId: result.character.id,
+      characterData: result.character,
+      targetPeerId: result.character.playerId
+    })
+    setRemoteCharacter(result.character.id, result.character)
+  }
+}
+
 export default function RestModal({ mode, campaignCharacterIds, onClose, onApply }: RestModalProps): JSX.Element {
   const characters = useCharacterStore((s) => s.characters)
   const remoteCharacters = useLobbyStore((s) => s.remoteCharacters)
@@ -37,10 +69,7 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
 
   const handleApplyShortRest = useCallback(() => {
     const restoredIds: string[] = []
-    const { saveCharacter } = useCharacterStore.getState()
-    const { role, sendMessage } = useNetworkStore.getState()
-    const { setRemoteCharacter } = useLobbyStore.getState()
-    const activeMap = useGameStore.getState().maps.find((m) => m.id === useGameStore.getState().activeMapId)
+    const context = getRestContext()
 
     for (const pc of pcs) {
       const state = shortRestStates[pc.id]
@@ -50,26 +79,9 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
       if (!is5eCharacter(latest)) continue
 
       const result = applyShortRest(latest, state.rolls, state.arcaneRecoverySlots)
-      saveCharacter(result.character)
+      context.saveCharacter(result.character)
       restoredIds.push(pc.id)
-
-      if (activeMap) {
-        const token = activeMap.tokens.find((t) => t.entityId === pc.id)
-        if (token) {
-          useGameStore.getState().updateToken(activeMap.id, token.id, {
-            currentHP: result.character.hitPoints.current
-          })
-        }
-      }
-
-      if (role === 'host' && result.character.playerId !== 'local') {
-        sendMessage('dm:character-update', {
-          characterId: result.character.id,
-          characterData: result.character,
-          targetPeerId: result.character.playerId
-        })
-        setRemoteCharacter(result.character.id, result.character)
-      }
+      syncRestResult(result, { currentHP: result.character.hitPoints.current }, context)
     }
 
     setApplied(true)
@@ -78,10 +90,7 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
 
   const handleApplyLongRest = useCallback(() => {
     const restoredIds: string[] = []
-    const { saveCharacter } = useCharacterStore.getState()
-    const { role, sendMessage } = useNetworkStore.getState()
-    const { setRemoteCharacter } = useLobbyStore.getState()
-    const activeMap = useGameStore.getState().maps.find((m) => m.id === useGameStore.getState().activeMapId)
+    const context = getRestContext()
 
     for (const pc of pcs) {
       if (!longRestStates[pc.id]?.selected) continue
@@ -90,27 +99,13 @@ export default function RestModal({ mode, campaignCharacterIds, onClose, onApply
       if (!is5eCharacter(latest)) continue
 
       const result = applyLongRest(latest)
-      saveCharacter(result.character)
+      context.saveCharacter(result.character)
       restoredIds.push(pc.id)
-
-      if (activeMap) {
-        const token = activeMap.tokens.find((t) => t.entityId === pc.id)
-        if (token) {
-          useGameStore.getState().updateToken(activeMap.id, token.id, {
-            currentHP: result.character.hitPoints.current,
-            maxHP: result.character.hitPoints.maximum
-          })
-        }
-      }
-
-      if (role === 'host' && result.character.playerId !== 'local') {
-        sendMessage('dm:character-update', {
-          characterId: result.character.id,
-          characterData: result.character,
-          targetPeerId: result.character.playerId
-        })
-        setRemoteCharacter(result.character.id, result.character)
-      }
+      syncRestResult(
+        result,
+        { currentHP: result.character.hitPoints.current, maxHP: result.character.hitPoints.maximum },
+        context
+      )
     }
 
     setApplied(true)

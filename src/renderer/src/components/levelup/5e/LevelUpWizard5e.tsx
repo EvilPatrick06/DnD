@@ -108,7 +108,9 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
                 level={level}
                 slots={slots}
                 classIdForLevel={selectedClassId}
-                hitDieForLevel={classInfo ? parseInt(classInfo.coreTraits.hitPointDie.replace(/\D/g, '')) || 8 : undefined}
+                hitDieForLevel={
+                  classInfo ? parseInt(classInfo.coreTraits.hitPointDie.replace(/\D/g, ''), 10) || 8 : undefined
+                }
               />
             </div>
           )

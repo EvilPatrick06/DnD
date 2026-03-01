@@ -39,30 +39,27 @@ export interface DieDefinition {
 
 export type DieType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100'
 
-// ─── D4 (Tetrahedron) ────────────────────────────────────────
-// D4 corner-number: each face shows the number at the TOP vertex
+// ─── Internal Mesh Helpers ────────────────────────────────────
 
-function _createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
-  const radius = 0.8 * DIE_SCALE
-  const geo = new THREE.TetrahedronGeometry(radius)
-  geo.computeVertexNormals()
-
-  // D4 uses a single material; we paint numbers at face centers via UV
-  // For simplicity, use per-face group materials
-  const faceLabels = ['1', '2', '3', '4']
-
-  // TetrahedronGeometry is non-indexed with 12 vertices (4 faces × 3 verts)
-  // Assign material groups: each face = 1 triangle = 3 vertices
-  const nonIndexedGeo = geo.toNonIndexed()
-  for (let i = 0; i < 4; i++) {
-    nonIndexedGeo.addGroup(i * 3, 3, i)
+/**
+ * Assigns per-face material groups on a non-indexed geometry where each face
+ * is made up of `vertsPerFace` consecutive vertices.
+ */
+function assignFaceGroups(geo: THREE.BufferGeometry, faceCount: number, vertsPerFace = 3): void {
+  for (let i = 0; i < faceCount; i++) {
+    geo.addGroup(i * vertsPerFace, vertsPerFace, i)
   }
+}
 
-  // Create UV coordinates for each face triangle - center the texture
-  const uvs = new Float32Array(12 * 2)
-  for (let f = 0; f < 4; f++) {
+/**
+ * Builds a flat UV array for `faceCount` triangular faces where each triangle
+ * uses the standard equilateral-triangle UV layout (top, bottom-left, bottom-right).
+ * Returns a Float32Array ready to be set as the 'uv' attribute.
+ */
+function buildTriangleFaceUVs(faceCount: number): Float32Array {
+  const uvs = new Float32Array(faceCount * 6)
+  for (let f = 0; f < faceCount; f++) {
     const base = f * 6
-    // Equilateral triangle UVs
     uvs[base] = 0.5
     uvs[base + 1] = 1.0 // top
     uvs[base + 2] = 0.0
@@ -70,19 +67,52 @@ function _createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
     uvs[base + 4] = 1.0
     uvs[base + 5] = 0.0 // bottom-right
   }
-  nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  return uvs
+}
+
+/**
+ * Creates a wireframe LineSegments overlay for a given geometry.
+ */
+function buildWireframe(geo: THREE.BufferGeometry): THREE.LineSegments {
+  return new THREE.LineSegments(new THREE.EdgesGeometry(geo), createWireMaterial())
+}
+
+/**
+ * Converts a geometry to non-indexed form, assigns face groups (one group per
+ * `faceCount` triangular faces), sets triangle UVs, creates materials and mesh,
+ * and builds a wireframe — all in one call for simple triangular-face dice.
+ */
+function buildTriangularFaceDie(
+  geo: THREE.BufferGeometry,
+  faceCount: number,
+  faceLabels: string[],
+  sides: number,
+  colors: DiceColors,
+  isHidden: boolean
+): DieDefinition {
+  const nonIndexedGeo = geo.toNonIndexed()
+  assignFaceGroups(nonIndexedGeo, faceCount)
+  nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(buildTriangleFaceUVs(faceCount), 2))
 
   const materials = createFaceMaterials(faceLabels, colors, isHidden)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
+  const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, faceCount)
+  const wireframe = buildWireframe(nonIndexedGeo)
+
+  return { sides, mesh, faceNormals, wireframe }
+}
+
+// ─── D4 (Tetrahedron) ────────────────────────────────────────
+// D4 corner-number: each face shows the number at the TOP vertex
+
+function _createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
+  const radius = 0.8 * DIE_SCALE
+  const geo = new THREE.TetrahedronGeometry(radius)
+  geo.computeVertexNormals()
   // D4: result = face pointing DOWN (resting face) — value on top vertex
-  const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, 4)
-
-  const wireGeo = new THREE.EdgesGeometry(nonIndexedGeo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 4, mesh, faceNormals, wireframe }
+  return buildTriangularFaceDie(geo, 4, ['1', '2', '3', '4'], 4, colors, isHidden)
 }
 
 // ─── D6 (Cube) ───────────────────────────────────────────────
@@ -92,9 +122,7 @@ function _createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
   const geo = new THREE.BoxGeometry(size, size, size)
 
   // BoxGeometry has 6 groups (one per face) by default
-  // Face order: +x, -x, +y, -y, +z, -z
-  // Standard die: opposite faces sum to 7
-  // Map group index to die number
+  // Face order: +x, -x, +y, -y, +z, -z — standard die opposite faces sum to 7
   const faceMap = [4, 3, 5, 2, 1, 6] // +x=4, -x=3, +y=5, -y=2, +z=1, -z=6
   const faceLabels = faceMap.map(String)
 
@@ -112,10 +140,7 @@ function _createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
     new THREE.Vector3(0, 0, -1) // 6 (back, -z)
   ]
 
-  const wireGeo = new THREE.EdgesGeometry(geo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 6, mesh, faceNormals, wireframe }
+  return { sides: 6, mesh, faceNormals, wireframe: buildWireframe(geo) }
 }
 
 // ─── D8 (Octahedron) ─────────────────────────────────────────
@@ -123,37 +148,7 @@ function _createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
 function _createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.75 * DIE_SCALE
   const geo = new THREE.OctahedronGeometry(radius)
-
-  const nonIndexedGeo = geo.toNonIndexed()
-  // 8 triangular faces → 24 vertices
-  for (let i = 0; i < 8; i++) {
-    nonIndexedGeo.addGroup(i * 3, 3, i)
-  }
-
-  // Set UVs for each face
-  const uvs = new Float32Array(24 * 2)
-  for (let f = 0; f < 8; f++) {
-    const base = f * 6
-    uvs[base] = 0.5
-    uvs[base + 1] = 1.0
-    uvs[base + 2] = 0.0
-    uvs[base + 3] = 0.0
-    uvs[base + 4] = 1.0
-    uvs[base + 5] = 0.0
-  }
-  nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-
-  const faceLabels = ['1', '2', '3', '4', '5', '6', '7', '8']
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
-  const mesh = new THREE.Mesh(nonIndexedGeo, materials)
-  mesh.castShadow = true
-
-  const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, 8)
-
-  const wireGeo = new THREE.EdgesGeometry(nonIndexedGeo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 8, mesh, faceNormals, wireframe }
+  return buildTriangularFaceDie(geo, 8, ['1', '2', '3', '4', '5', '6', '7', '8'], 8, colors, isHidden)
 }
 
 // ─── D10 (Pentagonal Trapezohedron) ──────────────────────────
@@ -247,10 +242,7 @@ function _createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean
 
   const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, 10)
 
-  const wireGeo = new THREE.EdgesGeometry(nonIndexedGeo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 10, mesh, faceNormals, wireframe }
+  return { sides: 10, mesh, faceNormals, wireframe: buildWireframe(nonIndexedGeo) }
 }
 
 // ─── D12 (Dodecahedron) ──────────────────────────────────────
@@ -265,11 +257,9 @@ function _createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
   const trisPerFace = totalVerts / (12 * 3) > 1 ? 3 : 1
   const vertsPerFace = trisPerFace * 3
 
-  for (let i = 0; i < 12; i++) {
-    nonIndexedGeo.addGroup(i * vertsPerFace, vertsPerFace, i)
-  }
+  assignFaceGroups(nonIndexedGeo, 12, vertsPerFace)
 
-  // UVs
+  // UVs — same triangle UV pattern tiled across all sub-triangles per face
   const uvCount = totalVerts
   const uvs = new Float32Array(uvCount * 2)
   for (let f = 0; f < 12; f++) {
@@ -292,10 +282,7 @@ function _createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
 
   const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, 12)
 
-  const wireGeo = new THREE.EdgesGeometry(nonIndexedGeo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 12, mesh, faceNormals, wireframe }
+  return { sides: 12, mesh, faceNormals, wireframe: buildWireframe(nonIndexedGeo) }
 }
 
 // ─── D20 (Icosahedron) ───────────────────────────────────────
@@ -303,36 +290,14 @@ function _createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
 function _createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
   const radius = 0.8 * DIE_SCALE
   const geo = new THREE.IcosahedronGeometry(radius)
-
-  const nonIndexedGeo = geo.toNonIndexed()
-  // 20 triangular faces → 60 vertices
-  for (let i = 0; i < 20; i++) {
-    nonIndexedGeo.addGroup(i * 3, 3, i)
-  }
-
-  const uvs = new Float32Array(60 * 2)
-  for (let f = 0; f < 20; f++) {
-    const base = f * 6
-    uvs[base] = 0.5
-    uvs[base + 1] = 1.0
-    uvs[base + 2] = 0.0
-    uvs[base + 3] = 0.0
-    uvs[base + 4] = 1.0
-    uvs[base + 5] = 0.0
-  }
-  nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-
-  const faceLabels = Array.from({ length: 20 }, (_, i) => String(i + 1))
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
-  const mesh = new THREE.Mesh(nonIndexedGeo, materials)
-  mesh.castShadow = true
-
-  const faceNormals = computeFaceNormalsFromGeo(nonIndexedGeo, 20)
-
-  const wireGeo = new THREE.EdgesGeometry(nonIndexedGeo)
-  const wireframe = new THREE.LineSegments(wireGeo, createWireMaterial())
-
-  return { sides: 20, mesh, faceNormals, wireframe }
+  return buildTriangularFaceDie(
+    geo,
+    20,
+    Array.from({ length: 20 }, (_, i) => String(i + 1)),
+    20,
+    colors,
+    isHidden
+  )
 }
 
 // ─── Face normal extraction ──────────────────────────────────

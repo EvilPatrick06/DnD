@@ -89,7 +89,12 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
         size: Array.isArray(speciesData.size) ? speciesData.size[0] : speciesData.size
       }
     : null
-  const classForCalc = classData ? { hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, '')) || 8, savingThrows: classData.coreTraits.savingThrowProficiencies } : null
+  const classForCalc = classData
+    ? {
+        hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, ''), 10) || 8,
+        savingThrows: classData.coreTraits.savingThrowProficiencies
+      }
+    : null
 
   const speciesBonuses =
     Object.keys(backgroundAbilityBonuses).length > 0
@@ -496,7 +501,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
           return {
             name: cd?.name ?? cid,
             level: lvlCount,
-            hitDie: parseInt(cd?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8'),
+            hitDie: parseInt(cd?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8', 10),
             subclass: subSlot?.selectedName ?? undefined
           }
         })
@@ -506,7 +511,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
             {
               name: classData.name,
               level: targetLevel,
-              hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, '')) || 8,
+              hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, ''), 10) || 8,
               subclass: subclassSlot?.selectedName ?? undefined
             }
           ]
@@ -524,7 +529,11 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       temporary: tempHP || existingChar5e?.hitPoints?.temporary || 0
     },
     hitDice: existingChar5e?.hitDice ?? [
-      { current: targetLevel, maximum: targetLevel, dieType: parseInt(classData?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8') }
+      {
+        current: targetLevel,
+        maximum: targetLevel,
+        dieType: parseInt(classData?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8', 10)
+      }
     ],
     armorClass: calculateArmorClass5e({
       dexMod: stats.abilityModifiers.dexterity,

@@ -1,5 +1,5 @@
 import { useGameStore } from '../../stores/use-game-store'
-import type { MapToken } from '../../types/map'
+import { requireActiveMap, requireTokenOnMap } from './helpers'
 import type { ChatCommand } from './types'
 
 export const fogCommand: ChatCommand = {
@@ -90,26 +90,13 @@ export const elevateCommand: ChatCommand = {
     }
 
     const tokenName = parts.slice(0, -1).join(' ')
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map.')
-      return
-    }
+    const activeMap = requireActiveMap(ctx)
+    if (!activeMap) return
 
-    const activeMap = gameState.maps.find((m) => m.id === activeMapId)
-    if (!activeMap) {
-      ctx.addSystemMessage('Active map not found.')
-      return
-    }
+    const token = requireTokenOnMap(activeMap.id, tokenName, ctx)
+    if (!token) return
 
-    const token = activeMap.tokens.find((t: MapToken) => t.label?.toLowerCase() === tokenName.toLowerCase())
-    if (!token) {
-      ctx.addSystemMessage(`Token not found: "${tokenName}"`)
-      return
-    }
-
-    gameState.updateToken(activeMapId, token.id, { elevation })
+    useGameStore.getState().updateToken(activeMap.id, token.id, { elevation })
 
     if (elevation === 0) {
       ctx.broadcastSystemMessage(`${token.label} lands on the ground.`)

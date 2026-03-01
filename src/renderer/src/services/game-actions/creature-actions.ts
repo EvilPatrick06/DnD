@@ -10,6 +10,25 @@ import { findTokensInArea, rollDiceFormula } from './dice-helpers'
 import { resolveTokenByLabel } from './name-resolver'
 import type { ActiveMap, DmAction, GameStoreSnapshot, StoreAccessors } from './types'
 
+// ── Internal Helpers ──
+
+/**
+ * Posts a chat message as the Dungeon Master and broadcasts it to all clients.
+ */
+function postDmChatMessage(stores: StoreAccessors, idPrefix: string, msg: string): void {
+  const addChat = stores.getLobbyStore().getState().addChatMessage
+  const sendMsg = stores.getNetworkStore().getState().sendMessage
+  addChat({
+    id: `${idPrefix}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+    senderId: 'ai-dm',
+    senderName: 'Dungeon Master',
+    content: msg,
+    timestamp: Date.now(),
+    isSystem: true
+  })
+  sendMsg('chat:message', { message: msg, isSystem: true })
+}
+
 // ── Initiative ──
 
 export function executeStartInitiative(
@@ -102,18 +121,8 @@ export function executeNextTurn(
         if (roll.total >= ability.rechargeOn) {
           ability.available = true
           anyRecharged = true
-          const addChat = stores.getLobbyStore().getState().addChatMessage
-          const sendMsg = stores.getNetworkStore().getState().sendMessage
           const msg = `${nextEntry.entityName}'s ${ability.name} has recharged! (rolled ${roll.total})`
-          addChat({
-            id: `ai-recharge-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-            senderId: 'ai-dm',
-            senderName: 'Dungeon Master',
-            content: msg,
-            timestamp: Date.now(),
-            isSystem: true
-          })
-          sendMsg('chat:message', { message: msg, isSystem: true })
+          postDmChatMessage(stores, 'ai-recharge', msg)
         }
       }
     }
@@ -326,19 +335,9 @@ export function executeUseLegendaryResistance(
     }
   })
 
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const remaining = entry.legendaryResistances.remaining - 1
   const msg = `${label} uses a Legendary Resistance! (${remaining}/${entry.legendaryResistances.max} remaining)`
-  addChat({
-    id: `ai-lr-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-lr', msg)
   broadcastInitiativeSync(stores)
   return true
 }
@@ -372,20 +371,10 @@ export function executeRechargeRoll(
   }
   gameStore.updateInitiativeEntry(entry.id, { rechargeAbilities: abilities })
 
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const resultText = recharged
     ? `${label}'s ${abilityName} has recharged! (rolled ${roll.total}, needed ${rechargeOn}+)`
     : `${label}'s ${abilityName} did not recharge. (rolled ${roll.total}, needed ${rechargeOn}+)`
-  addChat({
-    id: `ai-recharge-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: resultText,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: resultText, isSystem: true })
+  postDmChatMessage(stores, 'ai-recharge', resultText)
   broadcastInitiativeSync(stores)
   return true
 }
@@ -405,18 +394,8 @@ export function executeAwardXp(
   if (typeof amount !== 'number' || amount <= 0) throw new Error('Invalid XP amount')
 
   playSound('xp-gain')
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `${characterNames.join(', ')} gained ${amount} XP${reason ? ` (${reason})` : ''}!`
-  addChat({
-    id: `ai-xp-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-xp', msg)
   return true
 }
 
@@ -429,18 +408,8 @@ export function executeTriggerLevelUp(
   const characterName = action.characterName as string
   if (!characterName) throw new Error('Missing character name for trigger_level_up')
   playSound('level-up')
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `${characterName} has enough XP to level up! Open your character sheet to advance.`
-  addChat({
-    id: `ai-lvl-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-lvl', msg)
   return true
 }
 
@@ -465,21 +434,11 @@ export function executeShortRest(
     lastShortRestSeconds: totalSec
   })
 
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `Short rest completed for ${names.join(', ')}. Hit dice may be spent to recover HP. Warlock spell slots restored.`
-  addChat({
-    id: `ai-rest-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-rest', msg)
 
   const newTime = stores.getGameStore().getState().inGameTime
-  if (newTime) sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
+  if (newTime) stores.getNetworkStore().getState().sendMessage('dm:time-sync', { totalSeconds: newTime.totalSeconds })
   return true
 }
 
@@ -517,21 +476,11 @@ export function executeLongRest(
     }
   }
 
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `Long rest completed for ${names.join(', ')}. All HP restored, spell slots recovered, class resources reset, and all Exhaustion removed.`
-  addChat({
-    id: `ai-rest-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-rest', msg)
 
   const newTime = stores.getGameStore().getState().inGameTime
-  if (newTime) sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
+  if (newTime) stores.getNetworkStore().getState().sendMessage('dm:time-sync', { totalSeconds: newTime.totalSeconds })
 
   // Broadcast condition changes
   broadcastConditionSync(stores)
@@ -549,18 +498,7 @@ export function executeLoadEncounter(
   const encounterName = action.encounterName as string
   if (!encounterName) throw new Error('Missing encounter name')
 
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
-  const msg = `Loading encounter: "${encounterName}"...`
-  addChat({
-    id: `ai-enc-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-enc', `Loading encounter: "${encounterName}"...`)
   return true
 }
 

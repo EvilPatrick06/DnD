@@ -7,6 +7,54 @@ import { rollDiceFormula } from './dice-helpers'
 import { findBastionByOwnerName, resolveMapByName, resolvePlayerByName } from './name-resolver'
 import type { ActiveMap, DmAction, GameStoreSnapshot, StoreAccessors } from './types'
 
+// ── Internal Helpers ──
+
+/**
+ * Posts a chat message as the Dungeon Master and broadcasts it to all clients.
+ * Returns the resulting chat message id.
+ */
+function postDmChatMessage(
+  stores: StoreAccessors,
+  idPrefix: string,
+  msg: string,
+  senderId: 'ai-dm' | 'system' = 'ai-dm',
+  senderName = 'Dungeon Master'
+): void {
+  const addChat = stores.getLobbyStore().getState().addChatMessage
+  const sendMsg = stores.getNetworkStore().getState().sendMessage
+  addChat({
+    id: `${idPrefix}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+    senderId,
+    senderName,
+    content: msg,
+    timestamp: Date.now(),
+    isSystem: true
+  })
+  sendMsg('chat:message', { message: msg, isSystem: true })
+}
+
+/**
+ * Broadcasts the current in-game time to all clients.
+ */
+function broadcastTimeSync(stores: StoreAccessors): void {
+  const newTime = stores.getGameStore().getState().inGameTime
+  if (newTime) {
+    const sendMsg = stores.getNetworkStore().getState().sendMessage
+    sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
+  }
+}
+
+/**
+ * Loads the bastion store dynamically and calls the given callback with its state.
+ */
+function withBastionStore(
+  callback: (bastionStore: ReturnType<typeof import('../../stores/use-bastion-store').useBastionStore.getState>) => void
+): void {
+  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
+    callback(useBastionStore.getState())
+  })
+}
+
 // ── Time Management ──
 
 export function executeAdvanceTime(
@@ -27,8 +75,7 @@ export function executeAdvanceTime(
 
   // If advancing days, also advance bastions
   if (action.days && (action.days as number) > 0) {
-    import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-      const bastionStore = useBastionStore.getState()
+    withBastionStore((bastionStore) => {
       const campaignId = gameStore.campaignId
       const linked = bastionStore.bastions.filter((b: { campaignId: string | null }) => b.campaignId === campaignId)
       for (const bastion of linked) {
@@ -38,28 +85,14 @@ export function executeAdvanceTime(
   }
 
   // Broadcast time sync
-  const newTime = stores.getGameStore().getState().inGameTime
-  if (newTime) {
-    const sendMsg = stores.getNetworkStore().getState().sendMessage
-    sendMsg('dm:time-sync', { totalSeconds: newTime.totalSeconds })
-  }
+  broadcastTimeSync(stores)
 
   // Check expired light sources
   const expired = stores.getGameStore().getState().checkExpiredSources()
   if (expired.length > 0) {
-    const addChat = stores.getLobbyStore().getState().addChatMessage
-    const sendMsg2 = stores.getNetworkStore().getState().sendMessage
     for (const ls of expired) {
       const msg = `${ls.entityName}'s ${ls.sourceName} goes out.`
-      addChat({
-        id: `ai-light-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-        senderId: 'system',
-        senderName: 'System',
-        content: msg,
-        timestamp: Date.now(),
-        isSystem: true
-      })
-      sendMsg2('chat:message', { message: msg, isSystem: true })
+      postDmChatMessage(stores, 'ai-light', msg, 'system', 'System')
     }
   }
   return true
@@ -82,11 +115,7 @@ export function executeSetTime(
     gameStore.setInGameTime({ totalSeconds: daySeconds + hour * 3600 + minute * 60 })
   }
 
-  const newTime2 = stores.getGameStore().getState().inGameTime
-  if (newTime2) {
-    const sendMsg = stores.getNetworkStore().getState().sendMessage
-    sendMsg('dm:time-sync', { totalSeconds: newTime2.totalSeconds })
-  }
+  broadcastTimeSync(stores)
   return true
 }
 
@@ -99,24 +128,14 @@ export function executeShareTime(
   const time = gameStore.inGameTime
   if (!time) throw new Error('No in-game time set')
 
-  // Post as chat message
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const customMsg = action.message as string | undefined
 
   if (customMsg) {
-    addChat({
-      id: `ai-time-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-      senderId: 'ai-dm',
-      senderName: 'Dungeon Master',
-      content: customMsg,
-      timestamp: Date.now(),
-      isSystem: true
-    })
-    sendMsg('chat:message', { message: customMsg, isSystem: true })
+    postDmChatMessage(stores, 'ai-time', customMsg)
   }
 
   // Also broadcast dm:time-share for client UI
+  const sendMsg = stores.getNetworkStore().getState().sendMessage
   sendMsg('dm:time-share', { formattedTime: customMsg || `Time: ${time.totalSeconds}s` })
   return true
 }
@@ -307,20 +326,7 @@ export function executeSystemMessage(
   _activeMap: ActiveMap,
   stores: StoreAccessors
 ): boolean {
-  const addChatMessage = stores.getLobbyStore().getState().addChatMessage
-  addChatMessage({
-    id: `ai-sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'System',
-    content: action.message as string,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  const sendMessage = stores.getNetworkStore().getState().sendMessage
-  sendMessage('chat:message', {
-    message: action.message as string,
-    isSystem: true
-  })
+  postDmChatMessage(stores, 'ai-sys', action.message as string, 'ai-dm', 'System')
   return true
 }
 
@@ -341,8 +347,7 @@ export function executeBastionAdvanceTime(action: DmAction): boolean {
   const ownerName = action.bastionOwner as string
   if (typeof days !== 'number' || days <= 0) throw new Error('Invalid days for bastion_advance_time')
 
-  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-    const bastionStore = useBastionStore.getState()
+  withBastionStore((bastionStore) => {
     const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
     if (bastion) bastionStore.advanceTime(bastion.id, days)
   })
@@ -355,8 +360,7 @@ export function executeBastionIssueOrder(action: DmAction): boolean {
   const orderType = action.orderType as string
   if (!ownerName || !facilityName || !orderType) throw new Error('Missing bastion order params')
 
-  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-    const bastionStore = useBastionStore.getState()
+  withBastionStore((bastionStore) => {
     const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
     if (!bastion) return
     const allFacilities = [...bastion.basicFacilities, ...bastion.specialFacilities]
@@ -378,8 +382,7 @@ export function executeBastionDepositGold(action: DmAction): boolean {
   const amount = action.amount as number
   if (!ownerName || typeof amount !== 'number') throw new Error('Missing bastion deposit params')
 
-  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-    const bastionStore = useBastionStore.getState()
+  withBastionStore((bastionStore) => {
     const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
     if (bastion) bastionStore.depositGold(bastion.id, amount)
   })
@@ -391,8 +394,7 @@ export function executeBastionWithdrawGold(action: DmAction): boolean {
   const amount = action.amount as number
   if (!ownerName || typeof amount !== 'number') throw new Error('Missing bastion withdraw params')
 
-  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-    const bastionStore = useBastionStore.getState()
+  withBastionStore((bastionStore) => {
     const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
     if (bastion) bastionStore.withdrawGold(bastion.id, amount)
   })
@@ -405,18 +407,8 @@ export function executeBastionResolveEvent(
   _activeMap: ActiveMap,
   stores: StoreAccessors
 ): boolean {
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `Bastion event "${action.eventType}" resolved for ${action.bastionOwner}'s bastion.`
-  addChat({
-    id: `ai-bastion-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-bastion', msg)
   return true
 }
 
@@ -426,8 +418,7 @@ export function executeBastionRecruit(action: DmAction): boolean {
   const names = action.names as string[]
   if (!ownerName || !facilityName || !Array.isArray(names)) throw new Error('Missing bastion recruit params')
 
-  import('../../stores/use-bastion-store').then(({ useBastionStore }) => {
-    const bastionStore = useBastionStore.getState()
+  withBastionStore((bastionStore) => {
     const bastion = findBastionByOwnerName(bastionStore.bastions, ownerName)
     if (!bastion) return
     const allFacilities = [...bastion.basicFacilities, ...bastion.specialFacilities]
@@ -472,17 +463,7 @@ export function executeBastionAddCreature(
   _activeMap: ActiveMap,
   stores: StoreAccessors
 ): boolean {
-  const addChat = stores.getLobbyStore().getState().addChatMessage
-  const sendMsg = stores.getNetworkStore().getState().sendMessage
   const msg = `${action.creatureName} added to ${action.bastionOwner}'s ${action.facilityName}.`
-  addChat({
-    id: `ai-bastion-cr-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-    senderId: 'ai-dm',
-    senderName: 'Dungeon Master',
-    content: msg,
-    timestamp: Date.now(),
-    isSystem: true
-  })
-  sendMsg('chat:message', { message: msg, isSystem: true })
+  postDmChatMessage(stores, 'ai-bastion-cr', msg)
   return true
 }

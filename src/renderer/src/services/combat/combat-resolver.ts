@@ -12,8 +12,8 @@ import { useGameStore } from '../../stores/use-game-store'
 import type { Character5e } from '../../types/character-5e'
 import type { EntityCondition, TurnState } from '../../types/game-state'
 import type { MapToken, WallSegment } from '../../types/map'
-import { type DiceRollOptions, type DiceRollResult, roll, rollD20, rollQuiet } from '../dice/dice-service'
 import { getDamageTypeFeatEffects } from '../character/feat-mechanics-5e'
+import { type DiceRollOptions, type DiceRollResult, roll, rollD20, rollQuiet } from '../dice/dice-service'
 import {
   type AttackConditionContext,
   type ConditionEffectResult,
@@ -245,6 +245,57 @@ export interface ShoveRequest {
 
 export type ShoveResult = GrappleResult
 
+// ─── Internal Helpers ─────────────────────────────────────────
+
+/**
+ * Builds a failed/blocked AttackResult with a zero attack roll and no damage.
+ * Used for early-return cases: attacker blocked, out-of-range, or total cover.
+ */
+function makeFailedAttackResult(
+  summary: string,
+  targetAC: number,
+  cover: CoverType,
+  conditionEffects: ConditionEffectResult,
+  overrides?: {
+    attackerBlocked?: boolean
+    rangeCategory?: 'normal' | 'long' | 'out-of-range'
+  }
+): AttackResult {
+  return {
+    hit: false,
+    isCritical: false,
+    isCriticalMiss: false,
+    attackRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
+    targetAC,
+    cover,
+    conditionEffects,
+    damage: null,
+    rawDamageRoll: null,
+    masteryEffect: null,
+    grazeDamage: 0,
+    attackerBlocked: overrides?.attackerBlocked ?? false,
+    rangeCategory: overrides?.rangeCategory,
+    featEffects: [],
+    summary
+  }
+}
+
+/** The zero-roll sentinel shared by grapple/shove "too large" early-returns. */
+const ZERO_DICE_ROLL: GrappleResult['attackerRoll'] = {
+  formula: '—',
+  rolls: [0],
+  total: 0,
+  natural20: false,
+  natural1: false
+}
+
+/**
+ * Builds a failed GrappleResult / ShoveResult for the size-check early-exit.
+ */
+function makeGrappleShoveFailure(summary: string): GrappleResult {
+  return { success: false, attackerRoll: ZERO_DICE_ROLL, targetRoll: ZERO_DICE_ROLL, dc: 0, summary }
+}
+
 // ─── Combat Resolver Functions ────────────────────────────────
 
 /**
@@ -317,22 +368,13 @@ export function resolveAttack(
 
   // ── Check if attacker can act ──
   if (conditionEffects.attackerCannotAct) {
-    return {
-      hit: false,
-      isCritical: false,
-      isCriticalMiss: false,
-      attackRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      targetAC: targetToken.ac ?? 10,
-      cover: 'none',
+    return makeFailedAttackResult(
+      `${attackerName} cannot attack (incapacitated).`,
+      targetToken.ac ?? 10,
+      'none',
       conditionEffects,
-      damage: null,
-      rawDamageRoll: null,
-      masteryEffect: null,
-      grazeDamage: 0,
-      attackerBlocked: true,
-      featEffects: [],
-      summary: `${attackerName} cannot attack (incapacitated).`
-    }
+      { attackerBlocked: true }
+    )
   }
 
   // ── Check range ──
@@ -340,64 +382,34 @@ export function resolveAttack(
   if (isRanged && normalRange && longRange) {
     rangeCategory = checkRangedRange(attackerToken, targetToken, normalRange, longRange)
     if (rangeCategory === 'out-of-range') {
-      return {
-        hit: false,
-        isCritical: false,
-        isCriticalMiss: false,
-        attackRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-        targetAC: targetToken.ac ?? 10,
-        cover: 'none',
+      return makeFailedAttackResult(
+        `${attackerName}'s ${weaponName} attack is out of range!`,
+        targetToken.ac ?? 10,
+        'none',
         conditionEffects,
-        damage: null,
-        rawDamageRoll: null,
-        masteryEffect: null,
-        grazeDamage: 0,
-        attackerBlocked: false,
-        rangeCategory,
-        featEffects: [],
-        summary: `${attackerName}'s ${weaponName} attack is out of range!`
-      }
+        { rangeCategory }
+      )
     }
   } else if (!isRanged) {
     if (!isInMeleeRange(attackerToken, targetToken, reach)) {
-      return {
-        hit: false,
-        isCritical: false,
-        isCriticalMiss: false,
-        attackRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-        targetAC: targetToken.ac ?? 10,
-        cover: 'none',
-        conditionEffects,
-        damage: null,
-        rawDamageRoll: null,
-        masteryEffect: null,
-        grazeDamage: 0,
-        attackerBlocked: false,
-        featEffects: [],
-        summary: `${attackerName}'s ${weaponName} attack is out of melee range!`
-      }
+      return makeFailedAttackResult(
+        `${attackerName}'s ${weaponName} attack is out of melee range!`,
+        targetToken.ac ?? 10,
+        'none',
+        conditionEffects
+      )
     }
   }
 
   // ── Calculate cover ──
   const cover = calculateCover(attackerToken, targetToken, walls, cellSize, allTokens)
   if (cover === 'total') {
-    return {
-      hit: false,
-      isCritical: false,
-      isCriticalMiss: false,
-      attackRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      targetAC: targetToken.ac ?? 10,
+    return makeFailedAttackResult(
+      `${targetName} has total cover — ${attackerName} cannot target them.`,
+      targetToken.ac ?? 10,
       cover,
-      conditionEffects,
-      damage: null,
-      rawDamageRoll: null,
-      masteryEffect: null,
-      grazeDamage: 0,
-      attackerBlocked: false,
-      featEffects: [],
-      summary: `${targetName} has total cover — ${attackerName} cannot target them.`
-    }
+      conditionEffects
+    )
   }
 
   const coverACBonus = getCoverACBonus(cover)
@@ -708,13 +720,7 @@ export function resolveGrapple(request: GrappleRequest): GrappleResult {
 
   // Size check
   if (!canGrappleOrShove(attackerToken, targetToken)) {
-    return {
-      success: false,
-      attackerRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      targetRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      dc: 0,
-      summary: `${attackerName} cannot grapple ${targetName} — target is too large!`
-    }
+    return makeGrappleShoveFailure(`${attackerName} cannot grapple ${targetName} — target is too large!`)
   }
 
   const dc = unarmedStrikeDC(attackerStrScore, proficiencyBonus)
@@ -772,13 +778,7 @@ export function resolveShove(request: ShoveRequest): ShoveResult {
   } = request
 
   if (!canGrappleOrShove(attackerToken, targetToken)) {
-    return {
-      success: false,
-      attackerRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      targetRoll: { formula: '—', rolls: [0], total: 0, natural20: false, natural1: false },
-      dc: 0,
-      summary: `${attackerName} cannot shove ${targetName} — target is too large!`
-    }
+    return makeGrappleShoveFailure(`${attackerName} cannot shove ${targetName} — target is too large!`)
   }
 
   const dc = unarmedStrikeDC(attackerStrScore, proficiencyBonus)

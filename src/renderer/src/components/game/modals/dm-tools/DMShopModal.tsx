@@ -99,32 +99,27 @@ export default function DMShopModal({ onClose }: DMShopModalProps): JSX.Element 
     [equipmentData, magicItemsData, setShopInventory, addShopItem]
   )
 
-  // Broadcast
-  const handleBroadcast = (): void => {
-    const playerInventory = shopInventory
+  /** Build the player-facing inventory by stripping DM-only fields and applying markup. */
+  const buildPlayerInventory = (inventory: typeof shopInventory, markup: number) =>
+    inventory
       .filter((i) => !i.isHidden)
       .map((i) => ({
         ...i,
-        price: applyMarkup(i.price, shopMarkup),
+        price: applyMarkup(i.price, markup),
         dmNotes: undefined,
         hiddenFromPlayerIds: undefined,
         isHidden: undefined
       }))
-    sendMessage('dm:shop-update', { shopInventory: playerInventory, shopName })
+
+  // Broadcast
+  const handleBroadcast = (): void => {
+    sendMessage('dm:shop-update', { shopInventory: buildPlayerInventory(shopInventory, shopMarkup), shopName })
   }
 
   const handleOpenShop = (): void => {
-    openShop(shopNameInput || 'General Store')
-    const playerInventory = shopInventory
-      .filter((i) => !i.isHidden)
-      .map((i) => ({
-        ...i,
-        price: applyMarkup(i.price, shopMarkup),
-        dmNotes: undefined,
-        hiddenFromPlayerIds: undefined,
-        isHidden: undefined
-      }))
-    sendMessage('dm:shop-update', { shopInventory: playerInventory, shopName: shopNameInput || 'General Store' })
+    const name = shopNameInput || 'General Store'
+    openShop(name)
+    sendMessage('dm:shop-update', { shopInventory: buildPlayerInventory(shopInventory, shopMarkup), shopName: name })
   }
 
   const handleCloseShop = (): void => {

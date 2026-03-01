@@ -8,18 +8,18 @@
  */
 
 import soundEventsJson from '../../public/data/audio/sound-events.json'
-import {
-  playAmbient as playbackPlayAmbient,
-  stopAmbient as playbackStopAmbient,
-  getCurrentAmbient as playbackGetCurrentAmbient,
-  updateAmbientVolume as playbackUpdateAmbientVolume,
-  fadeAmbient as playbackFadeAmbient,
-  playCustomAudio as playbackPlayCustomAudio,
-  stopCustomAudio as playbackStopCustomAudio,
-  stopAllCustomAudio as playbackStopAllCustomAudio,
-  customOverrides as playbackCustomOverrides
-} from './sound-playback'
 import { logger } from '../utils/logger'
+import {
+  customOverrides as playbackCustomOverrides,
+  fadeAmbient as playbackFadeAmbient,
+  getCurrentAmbient as playbackGetCurrentAmbient,
+  playAmbient as playbackPlayAmbient,
+  playCustomAudio as playbackPlayCustomAudio,
+  stopAllCustomAudio as playbackStopAllCustomAudio,
+  stopAmbient as playbackStopAmbient,
+  stopCustomAudio as playbackStopCustomAudio,
+  updateAmbientVolume as playbackUpdateAmbientVolume
+} from './sound-playback'
 
 // -- Combat sounds (10) --
 // -- Spell school sounds (10) --
@@ -245,6 +245,7 @@ export function init(): void {
       audio.addEventListener(
         'error',
         () => {
+          logger.debug('Sound variant not found, falling back to base:', event, variantPath)
           audio.src = basePath
           audio.load()
         },
@@ -311,8 +312,8 @@ export function play(event: SoundEvent): void {
   // Reset to the start so it can replay even if still playing
   audio.currentTime = 0
   audio.volume = muted ? 0 : volume
-  audio.play().catch(() => {
-    // Ignore play errors (e.g. file not found, user interaction required)
+  audio.play().catch((err) => {
+    logger.debug('Sound play failed for event:', event, err)
   })
 
   poolIndex.set(event, (idx + 1) % POOL_SIZE)

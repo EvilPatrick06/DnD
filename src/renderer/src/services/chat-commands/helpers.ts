@@ -5,7 +5,9 @@ import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
 import { is5eCharacter } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
+import type { MapToken } from '../../types/map'
 import { parseFormula as parseFormulaSvc, rollMultiple, rollSingle as rollSingleSvc } from '../dice/dice-service'
+import type { CommandContext } from './types'
 
 // ─── Dice helpers (delegate to dice-service) ──────────────────
 
@@ -29,6 +31,16 @@ export function rollDiceFormula(formula: { count: number; sides: number; modifie
 
 export function rollSingle(sides: number): number {
   return rollSingleSvc(sides)
+}
+
+/**
+ * Roll a d20 and return both the roll value and a formatted crit/fumble tag.
+ * Returns `{ roll, tag }` where tag is ' **Natural 20!**', ' *Natural 1!*', or ''.
+ */
+export function rollD20WithTag(): { roll: number; tag: string } {
+  const roll = rollSingleSvc(20)
+  const tag = roll === 20 ? ' **Natural 20!**' : roll === 1 ? ' *Natural 1!*' : ''
+  return { roll, tag }
 }
 
 /** Track the last roll result for /reroll */
@@ -102,6 +114,21 @@ export function getLatestCharacter(id: string): Character5e | undefined {
   return char && is5eCharacter(char) ? (char as Character5e) : undefined
 }
 
+/**
+ * Guard that requires an active character loaded in context.
+ * Returns the latest Character5e if available, or null after emitting an error response.
+ * Usage: `const char = requireCharacter(ctx); if (!char) return { type: 'error', content: '' }`
+ * but since this emits via return value, use the two-value form:
+ *   `const char = requireLatestCharacter(ctx); if (!char) return`
+ *
+ * Returns the character or null. The caller is responsible for returning the error object.
+ */
+export function requireLatestCharacter(ctx: CommandContext): Character5e | null {
+  if (!ctx.character) return null
+  const char = getLatestCharacter(ctx.character.id)
+  return char ?? null
+}
+
 export function findTokenByName(targetName: string) {
   const { maps, activeMapId } = useGameStore.getState()
   const activeMap = maps.find((m) => m.id === activeMapId)
@@ -110,4 +137,114 @@ export function findTokenByName(targetName: string) {
 
 export function generateMessageId(): string {
   return `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+}
+
+// ─── Map helpers ────────────────────────────────────────────────
+
+/**
+ * Returns the active map ID if one is set, otherwise calls ctx.addSystemMessage with
+ * an appropriate error and returns null.
+ */
+export function requireActiveMapId(ctx: CommandContext): string | null {
+  const { activeMapId } = useGameStore.getState()
+  if (!activeMapId) {
+    ctx.addSystemMessage('No active map. Load a map first.')
+    return null
+  }
+  return activeMapId
+}
+
+/**
+ * Returns the active MapCanvas map object if one is set, otherwise calls
+ * ctx.addSystemMessage with an appropriate error and returns null.
+ */
+export function requireActiveMap(ctx: CommandContext): { id: string; tokens: MapToken[]; name?: string } | null {
+  const gameState = useGameStore.getState()
+  const activeMapId = gameState.activeMapId
+  if (!activeMapId) {
+    ctx.addSystemMessage('No active map. Load a map first.')
+    return null
+  }
+  const activeMap = gameState.maps.find((m) => m.id === activeMapId)
+  if (!activeMap) {
+    ctx.addSystemMessage('Active map not found.')
+    return null
+  }
+  return activeMap as { id: string; tokens: MapToken[]; name?: string }
+}
+
+/**
+ * Find a token on a map by label (case-insensitive exact match, then partial).
+ * If not found, calls ctx.addSystemMessage and returns null.
+ */
+export function requireTokenOnMap(mapId: string, name: string, ctx: CommandContext): MapToken | null {
+  const gameState = useGameStore.getState()
+  const map = gameState.maps.find((m) => m.id === mapId)
+  if (!map) {
+    ctx.addSystemMessage('Active map not found.')
+    return null
+  }
+  const q = name.toLowerCase()
+  const token =
+    (map.tokens as MapToken[]).find((t) => t.label?.toLowerCase() === q) ??
+    (map.tokens as MapToken[]).find((t) => t.label?.toLowerCase().includes(q))
+  if (!token) {
+    ctx.addSystemMessage(`Token not found: "${name}"`)
+    return null
+  }
+  return token
+}
+
+// ─── Condition helpers ──────────────────────────────────────────
+
+/**
+ * Add a permanent named condition to a character entity.
+ */
+export function addConditionOnCharacter(char: Character5e, conditionName: string): void {
+  const gameStore = useGameStore.getState()
+  gameStore.addCondition({
+    id: crypto.randomUUID(),
+    entityId: char.id,
+    entityName: char.name,
+    condition: conditionName,
+    duration: 'permanent',
+    source: 'command',
+    appliedRound: gameStore.round
+  })
+}
+
+/**
+ * Remove the first condition whose name starts with `prefix` for the given entity.
+ * Returns the removed condition, or undefined if none found.
+ */
+export function removeConditionByPrefix(
+  entityId: string,
+  prefix: string
+): ReturnType<typeof useGameStore.getState>['conditions'][number] | undefined {
+  const gameStore = useGameStore.getState()
+  const existing = gameStore.conditions.find(
+    (c) => c.entityId === entityId && c.condition.toLowerCase().startsWith(prefix.toLowerCase())
+  )
+  if (existing) {
+    gameStore.removeCondition(existing.id)
+  }
+  return existing
+}
+
+/**
+ * Remove a condition that includes the given substring in its name for the given entity.
+ * Returns the removed condition, or undefined if none found.
+ */
+export function removeConditionBySubstring(
+  entityId: string,
+  substring: string
+): ReturnType<typeof useGameStore.getState>['conditions'][number] | undefined {
+  const gameStore = useGameStore.getState()
+  const existing = gameStore.conditions.find(
+    (c) => c.entityId === entityId && c.condition.toLowerCase().includes(substring.toLowerCase())
+  )
+  if (existing) {
+    gameStore.removeCondition(existing.id)
+  }
+  return existing
 }

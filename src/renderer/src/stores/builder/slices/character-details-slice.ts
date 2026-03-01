@@ -119,10 +119,12 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
       if (!cls) return
       const equipment = cls.coreTraits.startingEquipment
       if (equipment && equipment.length > 0) {
+        const chosen = equipment.find((e: { label: string }) => e.label === choice) ?? equipment[0]
+        if (!chosen) return
         const shopItems = get().classEquipment.filter((e) => e.source === 'shop')
         set({
           classEquipment: [
-            ...equipment.map((e: { label: string; items: string[]; gp: number }) => ({ name: e.label, quantity: 1, source: cls.name })),
+            ...chosen.items.map((name: string) => ({ name, quantity: 1, source: cls.name })),
             ...shopItems
           ]
         })

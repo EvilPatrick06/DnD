@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useGameStore } from '../../../../stores/use-game-store'
 import { useNetworkStore } from '../../../../stores/use-network-store'
 import type { SharedJournalEntry } from '../../../../types/game-state'
+import ModalFormFooter from '../shared/ModalFormFooter'
 
 interface SharedJournalModalProps {
   isDM: boolean
@@ -130,36 +131,27 @@ export default function SharedJournalModal({
             rows={4}
             className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 outline-none focus:border-amber-500/50 resize-y"
           />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-500">Visibility:</span>
-              <select
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-                className="bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-[10px] text-gray-300 outline-none cursor-pointer"
-              >
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-              </select>
-            </div>
-            <div className="flex gap-1.5">
-              {editingId && (
-                <button
-                  onClick={resetForm}
-                  className="px-3 py-1 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded cursor-pointer"
+          <ModalFormFooter
+            isEditing={!!editingId}
+            isSaveDisabled={!title.trim() || !content.trim()}
+            saveLabel="Add Entry"
+            editingLabel="Update"
+            onCancel={resetForm}
+            onSave={handleSave}
+            leftSlot={
+              <>
+                <span className="text-[10px] text-gray-500">Visibility:</span>
+                <select
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+                  className="bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-[10px] text-gray-300 outline-none cursor-pointer"
                 >
-                  Cancel
-                </button>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={!title.trim() || !content.trim()}
-                className="px-3 py-1 text-[10px] bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded cursor-pointer"
-              >
-                {editingId ? 'Update' : 'Add Entry'}
-              </button>
-            </div>
-          </div>
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
+              </>
+            }
+          />
         </div>
 
         {/* Entries list */}

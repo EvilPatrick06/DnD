@@ -10,6 +10,7 @@ import {
   restoreCharacterVersion,
   saveCharacter
 } from '../storage/character-storage'
+import { CloudSync, type CloudSyncConfig } from '../storage/cloud-sync'
 import {
   deleteCustomCreature,
   loadCustomCreature,
@@ -27,7 +28,6 @@ import {
   loadHomebrewEntries,
   saveHomebrewEntry
 } from '../storage/homebrew-storage'
-import { CloudSync, type CloudSyncConfig } from '../storage/cloud-sync'
 import { type AppSettings, loadSettings, saveSettings } from '../storage/settings-storage'
 
 export function registerStorageHandlers(): void {
@@ -226,7 +226,13 @@ export function registerStorageHandlers(): void {
 
   ipcMain.handle(
     IPC_CHANNELS.CLOUD_SYNC_UPLOAD,
-    async (_event, config: CloudSyncConfig, type: 'character' | 'campaign', data: Record<string, unknown>, deviceKey: string) => {
+    async (
+      _event,
+      config: CloudSyncConfig,
+      type: 'character' | 'campaign',
+      data: Record<string, unknown>,
+      deviceKey: string
+    ) => {
       try {
         const sync = new CloudSync(config)
         if (type === 'character') {

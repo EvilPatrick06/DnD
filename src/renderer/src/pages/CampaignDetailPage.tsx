@@ -247,11 +247,7 @@ export default function CampaignDetailPage(): JSX.Element {
         {/* Monster Linker */}
         <Card title="Monster Linker">
           <Suspense fallback={null}>
-            <MonsterLinker
-              onSelect={setLinkedMonster}
-              selectedId={linkedMonster?.id}
-              showPreview
-            />
+            <MonsterLinker onSelect={setLinkedMonster} selectedId={linkedMonster?.id} showPreview />
           </Suspense>
         </Card>
 

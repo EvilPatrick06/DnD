@@ -1,6 +1,11 @@
 import { useGameStore } from '../../stores/use-game-store'
 import type { MapToken } from '../../types/map'
-import { getLatestCharacter } from './helpers'
+import {
+  addConditionOnCharacter,
+  removeConditionByPrefix,
+  removeConditionBySubstring,
+  requireLatestCharacter
+} from './helpers'
 import type { ChatCommand } from './types'
 
 export const commands: ChatCommand[] = [
@@ -13,7 +18,7 @@ export const commands: ChatCommand[] = [
     usage: '/wildshape <beast-name> or /wildshape off',
     execute: (_args, context) => {
       if (!context.character) return { type: 'error', content: 'No active character.' }
-      const char = getLatestCharacter(context.character.id)
+      const char = requireLatestCharacter(context)
       if (!char) return { type: 'error', content: 'No active character.' }
 
       const rawArgs = _args.trim()
@@ -21,37 +26,18 @@ export const commands: ChatCommand[] = [
         return { type: 'error', content: 'Usage: /wildshape <beast-name> or /wildshape off' }
       }
 
-      const gameState = useGameStore.getState()
-
       if (rawArgs.toLowerCase() === 'off' || rawArgs.toLowerCase() === 'revert') {
-        const existing = (gameState.conditions ?? []).find(
-          (c) => c.entityId === char.id && c.condition.toLowerCase().startsWith('wild shape')
-        )
-        if (existing) {
-          gameState.removeCondition(existing.id)
+        const removed = removeConditionByPrefix(char.id, 'wild shape')
+        if (removed) {
           return { type: 'broadcast', content: `${char.name} reverts from wild shape.` }
         }
         return { type: 'system', content: 'Not currently in wild shape.' }
       }
 
       // Drop existing wild shape first
-      const existing = (gameState.conditions ?? []).find(
-        (c) => c.entityId === char.id && c.condition.toLowerCase().startsWith('wild shape')
-      )
-      if (existing) {
-        gameState.removeCondition(existing.id)
-      }
+      removeConditionByPrefix(char.id, 'wild shape')
 
-      const conditionName = `Wild Shape: ${rawArgs}`
-      gameState.addCondition({
-        id: crypto.randomUUID(),
-        entityId: char.id,
-        entityName: char.name,
-        condition: conditionName,
-        duration: 'permanent',
-        source: 'command',
-        appliedRound: gameState.round
-      })
+      addConditionOnCharacter(char, `Wild Shape: ${rawArgs}`)
 
       return { type: 'broadcast', content: `${char.name} wild shapes into a ${rawArgs}!` }
     }
@@ -65,7 +51,7 @@ export const commands: ChatCommand[] = [
     usage: '/familiar <type> or /familiar dismiss',
     execute: (_args, context) => {
       if (!context.character) return { type: 'error', content: 'No active character.' }
-      const char = getLatestCharacter(context.character.id)
+      const char = requireLatestCharacter(context)
       if (!char) return { type: 'error', content: 'No active character.' }
 
       const rawArgs = _args.trim()
@@ -73,37 +59,18 @@ export const commands: ChatCommand[] = [
         return { type: 'error', content: 'Usage: /familiar <type> or /familiar dismiss' }
       }
 
-      const gameState = useGameStore.getState()
-
       if (rawArgs.toLowerCase() === 'dismiss') {
-        const existing = (gameState.conditions ?? []).find(
-          (c) => c.entityId === char.id && c.condition.toLowerCase().startsWith('familiar')
-        )
-        if (existing) {
-          gameState.removeCondition(existing.id)
+        const removed = removeConditionByPrefix(char.id, 'familiar')
+        if (removed) {
           return { type: 'broadcast', content: `${char.name} dismisses their familiar.` }
         }
         return { type: 'system', content: 'No familiar to dismiss.' }
       }
 
       // Drop existing familiar first
-      const existing = (gameState.conditions ?? []).find(
-        (c) => c.entityId === char.id && c.condition.toLowerCase().startsWith('familiar')
-      )
-      if (existing) {
-        gameState.removeCondition(existing.id)
-      }
+      removeConditionByPrefix(char.id, 'familiar')
 
-      const conditionName = `Familiar: ${rawArgs}`
-      gameState.addCondition({
-        id: crypto.randomUUID(),
-        entityId: char.id,
-        entityName: char.name,
-        condition: conditionName,
-        duration: 'permanent',
-        source: 'command',
-        appliedRound: gameState.round
-      })
+      addConditionOnCharacter(char, `Familiar: ${rawArgs}`)
 
       return { type: 'broadcast', content: `${char.name} summons a ${rawArgs} familiar!` }
     }
@@ -117,41 +84,23 @@ export const commands: ChatCommand[] = [
     usage: '/steed or /steed dismiss',
     execute: (_args, context) => {
       if (!context.character) return { type: 'error', content: 'No active character.' }
-      const char = getLatestCharacter(context.character.id)
+      const char = requireLatestCharacter(context)
       if (!char) return { type: 'error', content: 'No active character.' }
 
       const rawArgs = _args.trim()
-      const gameState = useGameStore.getState()
 
       if (rawArgs.toLowerCase() === 'dismiss') {
-        const existing = (gameState.conditions ?? []).find(
-          (c) => c.entityId === char.id && c.condition.toLowerCase().includes('steed')
-        )
-        if (existing) {
-          gameState.removeCondition(existing.id)
+        const removed = removeConditionBySubstring(char.id, 'steed')
+        if (removed) {
           return { type: 'broadcast', content: `${char.name} dismisses their steed.` }
         }
         return { type: 'system', content: 'No steed to dismiss.' }
       }
 
       // Drop existing steed first
-      const existing = (gameState.conditions ?? []).find(
-        (c) => c.entityId === char.id && c.condition.toLowerCase().includes('steed')
-      )
-      if (existing) {
-        gameState.removeCondition(existing.id)
-      }
+      removeConditionBySubstring(char.id, 'steed')
 
-      const conditionName = 'Phantom Steed'
-      gameState.addCondition({
-        id: crypto.randomUUID(),
-        entityId: char.id,
-        entityName: char.name,
-        condition: conditionName,
-        duration: 'permanent',
-        source: 'command',
-        appliedRound: gameState.round
-      })
+      addConditionOnCharacter(char, 'Phantom Steed')
 
       return { type: 'broadcast', content: `${char.name} summons a spectral steed!` }
     }
@@ -165,7 +114,7 @@ export const commands: ChatCommand[] = [
     usage: '/companions',
     execute: (_args, context) => {
       if (!context.character) return { type: 'error', content: 'No active character.' }
-      const char = getLatestCharacter(context.character.id)
+      const char = requireLatestCharacter(context)
       if (!char) return { type: 'error', content: 'No active companions on the map.' }
 
       const gameState = useGameStore.getState()

@@ -323,4 +323,3 @@ export interface SpeciesResourceEntry {
 export interface SpeciesResourcesFile {
   species: Record<string, SpeciesResourceEntry>
 }
-

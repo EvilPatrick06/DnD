@@ -4,6 +4,55 @@ import type { TerrainCell, WallSegment } from '../../../../types/map'
 
 type ActiveTool = 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill'
 
+// ---------------------------------------------------------------------------
+// Private helpers — shared across exported handlers
+// ---------------------------------------------------------------------------
+
+/** Floor grid coordinates to integer cell indices. */
+function floorGrid(gridX: number, gridY: number): { fx: number; fy: number } {
+  return { fx: Math.floor(gridX), fy: Math.floor(gridY) }
+}
+
+/**
+ * Write a new terrain array into the game store for the given map.
+ * Does NOT push to the undo stack — call `pushTerrainUndo` for that.
+ */
+function applyTerrainToMap(mapId: string, newTerrain: TerrainCell[]): void {
+  const gs = useGameStore.getState()
+  const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m))
+  gs.loadGameState({ maps })
+}
+
+/**
+ * Push a reversible terrain operation onto the undo stack and trigger a
+ * re-render.  Both `undo` and `redo` callbacks simply call `applyTerrainToMap`
+ * with the appropriate snapshot.
+ */
+function pushTerrainUndo(
+  mapId: string,
+  type: string,
+  description: string,
+  oldTerrain: TerrainCell[],
+  newTerrain: TerrainCell[],
+  triggerRerender: () => void
+): void {
+  UndoManager.push({
+    type,
+    description,
+    undo: () => {
+      applyTerrainToMap(mapId, oldTerrain)
+    },
+    redo: () => {
+      applyTerrainToMap(mapId, newTerrain)
+    }
+  })
+  triggerRerender()
+}
+
+// ---------------------------------------------------------------------------
+// Exported handlers
+// ---------------------------------------------------------------------------
+
 /**
  * Handle a cell click for terrain painting or removal.
  * Returns true if the click was handled by terrain logic.
@@ -16,8 +65,7 @@ export function handleTerrainCellClick(
   terrainPaintType: TerrainCell['type'],
   triggerRerender: () => void
 ): boolean {
-  const fx = Math.floor(gridX)
-  const fy = Math.floor(gridY)
+  const { fx, fy } = floorGrid(gridX, gridY)
   const existing = terrain.findIndex((t) => t.x === fx && t.y === fy)
   const oldTerrain = [...terrain]
   const newTerrain =
@@ -25,23 +73,8 @@ export function handleTerrainCellClick(
       ? terrain.filter((_, i) => i !== existing)
       : [...terrain, { x: fx, y: fy, type: terrainPaintType, movementCost: terrainPaintType === 'hazard' ? 1 : 2 }]
 
-  const gs = useGameStore.getState()
-  const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m))
-  gs.loadGameState({ maps })
-
-  UndoManager.push({
-    type: 'terrain-paint',
-    description: `Paint terrain at (${fx}, ${fy})`,
-    undo: () => {
-      const s = useGameStore.getState()
-      s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: oldTerrain } : m)) })
-    },
-    redo: () => {
-      const s = useGameStore.getState()
-      s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m)) })
-    }
-  })
-  triggerRerender()
+  applyTerrainToMap(mapId, newTerrain)
+  pushTerrainUndo(mapId, 'terrain-paint', `Paint terrain at (${fx}, ${fy})`, oldTerrain, newTerrain, triggerRerender)
   return true
 }
 
@@ -60,8 +93,7 @@ export function handleFillCellClick(
   terrainPaintType: TerrainCell['type'],
   triggerRerender: () => void
 ): boolean {
-  const fx = Math.floor(gridX)
-  const fy = Math.floor(gridY)
+  const { fx, fy } = floorGrid(gridX, gridY)
   const terrainSet = new Set(terrain.map((t) => `${t.x},${t.y}`))
 
   // If clicking on existing terrain, remove the flood-fill group
@@ -87,22 +119,15 @@ export function handleFillCellClick(
     }
     const oldTerrain = [...terrain]
     const newTerrain = terrain.filter((t) => !toRemove.has(`${t.x},${t.y}`))
-    const gs = useGameStore.getState()
-    const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m))
-    gs.loadGameState({ maps })
-    UndoManager.push({
-      type: 'terrain-fill-remove',
-      description: `Remove fill at (${fx}, ${fy})`,
-      undo: () => {
-        const s = useGameStore.getState()
-        s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: oldTerrain } : m)) })
-      },
-      redo: () => {
-        const s = useGameStore.getState()
-        s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m)) })
-      }
-    })
-    triggerRerender()
+    applyTerrainToMap(mapId, newTerrain)
+    pushTerrainUndo(
+      mapId,
+      'terrain-fill-remove',
+      `Remove fill at (${fx}, ${fy})`,
+      oldTerrain,
+      newTerrain,
+      triggerRerender
+    )
     return true
   }
 
@@ -138,22 +163,15 @@ export function handleFillCellClick(
 
   const oldTerrain = [...terrain]
   const newTerrain = [...terrain, ...filled]
-  const gs = useGameStore.getState()
-  const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m))
-  gs.loadGameState({ maps })
-  UndoManager.push({
-    type: 'terrain-fill',
-    description: `Fill ${filled.length} cells at (${fx}, ${fy})`,
-    undo: () => {
-      const s = useGameStore.getState()
-      s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: oldTerrain } : m)) })
-    },
-    redo: () => {
-      const s = useGameStore.getState()
-      s.loadGameState({ maps: s.maps.map((m) => (m.id === mapId ? { ...m, terrain: newTerrain } : m)) })
-    }
-  })
-  triggerRerender()
+  applyTerrainToMap(mapId, newTerrain)
+  pushTerrainUndo(
+    mapId,
+    'terrain-fill',
+    `Fill ${filled.length} cells at (${fx}, ${fy})`,
+    oldTerrain,
+    newTerrain,
+    triggerRerender
+  )
   return true
 }
 

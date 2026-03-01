@@ -2,19 +2,17 @@
 // Barrel re-export for all 5e data types
 // ============================================================================
 
-// Shared enums / literal unions
-export * from './shared-enums'
-
+export type { BastionFacilitiesData } from '../bastion'
+// Re-exports from sibling type files
+export type { MonsterAction, MonsterSpeed, MonsterSpellcasting, MonsterStatBlock, MonsterTrait } from '../monster'
 // Domain-specific type files
 export * from './character-data-types'
 export * from './creature-data-types'
 export * from './equipment-data-types'
+// Shared enums / literal unions
+export * from './shared-enums'
 export * from './spell-data-types'
 export * from './world-data-types'
-
-// Re-exports from sibling type files
-export type { MonsterAction, MonsterSpeed, MonsterSpellcasting, MonsterStatBlock, MonsterTrait } from '../monster'
-export type { BastionFacilitiesData } from '../bastion'
 
 // === Types unique to this barrel (not in individual domain files) ===
 

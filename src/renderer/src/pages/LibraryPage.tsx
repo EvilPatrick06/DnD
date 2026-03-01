@@ -3,16 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router'
 import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
 import { BackButton, Button, Spinner } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
-import LibraryFilters from './library/LibraryFilters'
-import type { Tab, SortField } from './library/library-constants'
-import { sizeOrder } from './library/library-constants'
-import { load5eCreatures, load5eMonsters, load5eNpcs, searchMonsters } from '../services/data-provider'
-import { loadCategoryItems } from '../services/library-service'
+import { searchMonsters } from '../services/data-provider'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
+import { loadCategoryItems } from '../services/library-service'
 import { useLibraryStore } from '../stores/use-library-store'
 import type { MonsterStatBlock } from '../types/monster'
 import { crToNumber } from '../types/monster'
 import { logger } from '../utils/logger'
+import LibraryFilters from './library/LibraryFilters'
+import type { SortField, Tab } from './library/library-constants'
+import { sizeOrder } from './library/library-constants'
 
 export default function LibraryPage(): JSX.Element {
   const _navigate = useNavigate()
@@ -42,10 +42,14 @@ export default function LibraryPage(): JSX.Element {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [m, c, n] = await Promise.all([load5eMonsters(), load5eCreatures(), load5eNpcs()])
-      setMonsters(m)
-      setCreatures(c)
-      setNpcs(n)
+      const [mItems, cItems, nItems] = await Promise.all([
+        loadCategoryItems('monsters', []),
+        loadCategoryItems('creatures', []),
+        loadCategoryItems('npcs', [])
+      ])
+      setMonsters(mItems.map((i) => i.data as unknown as MonsterStatBlock))
+      setCreatures(cItems.map((i) => i.data as unknown as MonsterStatBlock))
+      setNpcs(nItems.map((i) => i.data as unknown as MonsterStatBlock))
 
       try {
         const raw = await window.api.loadCustomCreatures()
@@ -378,4 +382,3 @@ export default function LibraryPage(): JSX.Element {
     </div>
   )
 }
-

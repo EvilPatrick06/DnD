@@ -272,6 +272,11 @@ export let THIRD_CASTER_SUBCLASSES: Record<string, string[]> = {
 }
 
 // Load from JSON and overwrite defaults
+
+/**
+ * Converts a `Record<string, Record<string, number>>` (string keys from JSON)
+ * to `Record<number, Record<number, number>>` (numeric keys for runtime use).
+ */
 function parseSlotTable(raw: Record<string, Record<string, number>>): Record<number, Record<number, number>> {
   const result: Record<number, Record<number, number>> = {}
   for (const [levelStr, slots] of Object.entries(raw)) {
@@ -284,6 +289,22 @@ function parseSlotTable(raw: Record<string, Record<string, number>>): Record<num
   return result
 }
 
+/**
+ * Converts a `Record<string, Record<string, number>>` keyed by class name
+ * and string level to `Record<string, Record<number, number>>` with numeric levels.
+ * Used for cantripsKnown and preparedSpells tables.
+ */
+function parseClassLevelTable(raw: Record<string, Record<string, number>>): Record<string, Record<number, number>> {
+  const parsed: Record<string, Record<number, number>> = {}
+  for (const [cls, table] of Object.entries(raw)) {
+    parsed[cls] = {}
+    for (const [lvl, count] of Object.entries(table)) {
+      parsed[cls][Number(lvl)] = count
+    }
+  }
+  return parsed
+}
+
 load5eSpellSlots()
   .then((raw) => {
     const data = raw as Record<string, unknown>
@@ -294,27 +315,11 @@ load5eSpellSlots()
     if (data.warlock) WARLOCK_PACT_SLOTS = parseSlotTable(data.warlock as Record<string, Record<string, number>>)
 
     if (data.cantripsKnown) {
-      const raw = data.cantripsKnown as Record<string, Record<string, number>>
-      const parsed: Record<string, Record<number, number>> = {}
-      for (const [cls, table] of Object.entries(raw)) {
-        parsed[cls] = {}
-        for (const [lvl, count] of Object.entries(table)) {
-          parsed[cls][Number(lvl)] = count
-        }
-      }
-      CANTRIPS_KNOWN = parsed
+      CANTRIPS_KNOWN = parseClassLevelTable(data.cantripsKnown as Record<string, Record<string, number>>)
     }
 
     if (data.preparedSpells) {
-      const raw = data.preparedSpells as Record<string, Record<string, number>>
-      const parsed: Record<string, Record<number, number>> = {}
-      for (const [cls, table] of Object.entries(raw)) {
-        parsed[cls] = {}
-        for (const [lvl, count] of Object.entries(table)) {
-          parsed[cls][Number(lvl)] = count
-        }
-      }
-      PREPARED_SPELLS = parsed
+      PREPARED_SPELLS = parseClassLevelTable(data.preparedSpells as Record<string, Record<string, number>>)
     }
 
     if (data.thirdCasterSubclasses) {

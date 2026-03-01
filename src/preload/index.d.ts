@@ -453,7 +453,11 @@ interface CloudSyncAPI {
   list: (
     config: Record<string, unknown>,
     deviceKey: string
-  ) => Promise<{ success: boolean; data?: Array<{ key: string; name: string; type: string; lastModified: string; size: number }>; error?: string }>
+  ) => Promise<{
+    success: boolean
+    data?: Array<{ key: string; name: string; type: string; lastModified: string; size: number }>
+    error?: string
+  }>
 }
 
 interface PluginScanResult {

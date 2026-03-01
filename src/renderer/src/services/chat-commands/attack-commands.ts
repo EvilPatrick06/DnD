@@ -3,8 +3,8 @@ import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../data/light-sources'
 import { useGameStore } from '../../stores/use-game-store'
 import { formatAttackResult } from '../combat/attack-formatter'
 import { findWeapon, resolveAttack } from '../combat/attack-resolver'
-import { rollMultiple, rollSingle } from '../dice/dice-service'
-import { findTokenByName } from './helpers'
+import { rollMultiple } from '../dice/dice-service'
+import { findTokenByName, rollD20WithTag } from './helpers'
 import type { ChatCommand } from './types'
 
 export const offhandAttackCommand: ChatCommand = {
@@ -19,9 +19,8 @@ export const offhandAttackCommand: ChatCommand = {
     const parts = args.trim().split(/\s+/)
     const target = parts[0] || 'a creature'
     const damageDice = parts[1] || '1d6'
-    const attackRoll = rollSingle(20)
+    const { roll: attackRoll, tag } = rollD20WithTag()
     const isCrit = attackRoll === 20
-    const tag = isCrit ? ' **Natural 20!**' : attackRoll === 1 ? ' *Natural 1!*' : ''
 
     let damageTotal = 0
     let damageRolls: number[] = []
@@ -63,9 +62,8 @@ export const unarmedAttackCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const target = args.trim() || 'a creature'
-    const attackRoll = rollSingle(20)
+    const { roll: attackRoll, tag } = rollD20WithTag()
     const isCrit = attackRoll === 20
-    const tag = isCrit ? ' **Natural 20!**' : attackRoll === 1 ? ' *Natural 1!*' : ''
     const strMod = ctx.character ? Math.floor((ctx.character.abilityScores.strength - 10) / 2) : 0
     const damage = Math.max(1, 1 + strMod) * (isCrit ? 2 : 1)
 

@@ -64,7 +64,9 @@ export default function DetailsTab5e(): JSX.Element {
   const classSlot = buildSlots.find((s) => s.category === 'class')
   const classId = classSlot?.selectedId ?? null
   const [classEquipmentOptions, setClassEquipmentOptions] = useState<Array<{
-    label: string; items: string[]; gp: number
+    label: string
+    items: string[]
+    gp: number
   }> | null>(null)
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function DetailsTab5e(): JSX.Element {
       setClassEquipmentOptions(entries.length > 1 ? entries : null)
       // Auto-satisfy validation for classes with no equipment options (e.g. Barbarian)
       if (entries.length <= 1) {
-        useBuilderStore.getState().setClassEquipmentChoice('default')
+        useBuilderStore.getState().setClassEquipmentChoice(entries[0]?.label ?? null)
       }
     })
   }, [classId])
@@ -224,7 +226,9 @@ export default function DetailsTab5e(): JSX.Element {
                   }`}
                 >
                   <div className="font-semibold">Option {option.label}</div>
-                  <div className="text-xs mt-0.5 opacity-75">{option.items.length > 0 ? option.items.join(', ') : `${option.gp} GP`}</div>
+                  <div className="text-xs mt-0.5 opacity-75">
+                    {option.items.length > 0 ? option.items.join(', ') : `${option.gp} GP`}
+                  </div>
                 </button>
               ))}
             </div>

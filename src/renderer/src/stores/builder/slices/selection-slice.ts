@@ -276,10 +276,15 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
           if (cls) {
             // Use starting equipment from coreTraits
             const equipment = cls.coreTraits.startingEquipment
+            // Don't pre-populate with labels — wait for user choice or auto-select single option
+            const autoItems =
+              equipment.length === 1
+                ? equipment[0].items.map((name: string) => ({ name, quantity: 1, source: cls.name }))
+                : []
             set({
-              classEquipment: equipment.map((e: { label: string; items: string[]; gp: number }) => ({ name: e.label, quantity: 1, source: cls.name })),
+              classEquipment: autoItems,
               classSkillOptions: cls.coreTraits.skillProficiencies.from,
-              classEquipmentChoice: null, // reset when class changes — user must choose
+              classEquipmentChoice: equipment.length === 1 ? equipment[0].label : null, // reset when class changes — user must choose
               classExtraLangCount: optionId === 'rogue' ? 1 : optionId === 'ranger' ? 2 : 0,
               chosenLanguages: [] // reset when class changes (language grants may differ)
             })

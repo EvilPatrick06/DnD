@@ -74,7 +74,8 @@ export function ClassLevelSelector({
       >
         {eligibleClasses.map((cls) => (
           <option key={cls.id ?? cls.name.toLowerCase()} value={cls.id ?? cls.name.toLowerCase()}>
-            {cls.name} ({cls.coreTraits.hitPointDie}){!currentClassIds.has(cls.id ?? cls.name.toLowerCase()) ? ' [NEW]' : ''}
+            {cls.name} ({cls.coreTraits.hitPointDie})
+            {!currentClassIds.has(cls.id ?? cls.name.toLowerCase()) ? ' [NEW]' : ''}
           </option>
         ))}
       </select>

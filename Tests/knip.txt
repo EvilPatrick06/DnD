@@ -1,944 +1,397 @@
-Unused files (459)
-electron.vite.config.ts                                                    
-Tests/electron-security.js                                                 
-Tests/rename-to-kebab.js                                                   
-Tests/replace-console-logs.js                                              
-Tests/run-audit.js                                                         
-src/main/index.ts                                                          
-src/main/updater.ts                                                        
-src/preload/index.d.ts                                                     
-src/preload/index.ts                                                       
-src/shared/ipc-channels.ts                                                 
-src/shared/ipc-schemas.ts                                                  
-src/main/ai/ai-service.ts                                                  
-src/main/ai/chunk-builder.ts                                               
-src/main/ai/conversation-manager.ts                                        
-src/main/ai/dm-actions.ts                                                  
-src/main/ai/dm-system-prompt.ts                                            
-src/main/ai/ollama-client.ts                                               
-src/main/ai/ollama-manager.ts                                              
-src/main/ai/stat-mutations.ts                                              
-src/main/ai/web-search.ts                                                  
-src/main/ipc/ai-handlers.ts                                                
-src/main/ipc/audio-handlers.ts                                             
-src/main/ipc/index.ts                                                      
-src/main/storage/ai-conversation-storage.ts                                
-src/main/storage/bastion-storage.ts                                        
-src/main/storage/cloud-sync.ts                                             
-src/main/storage/custom-creature-storage.ts                                
-src/main/storage/game-state-storage.ts                                     
-src/main/storage/homebrew-storage.ts                                       
-src/main/storage/settings-storage.ts                                       
-src/renderer/src/App.tsx                                                   
-src/renderer/src/env.d.ts                                                  
-src/renderer/src/global.d.ts                                               
-src/renderer/src/main.tsx                                                  
-BMO-setup/pi/static/css/bmo.css                                            
-BMO-setup/pi/static/js/alpine.min.js                                       
-BMO-setup/pi/static/js/bmo.js                                              
-BMO-setup/pi/static/js/socket.io.min.js                                    
-BMO-setup/pi/static/js/tailwind.js                                         
-src/renderer/src/constants/index.ts                                        
-src/renderer/src/constants/spell-schools.ts                                
-src/renderer/src/data/alignment-descriptions.ts                            
-src/renderer/src/data/bastion-events.ts                                    
-src/renderer/src/data/calendar-presets.ts                                  
-src/renderer/src/data/class-resources.ts                                   
-src/renderer/src/data/language-descriptions.ts                             
-src/renderer/src/data/light-sources.ts                                     
-src/renderer/src/data/npc-appearance.ts                                    
-src/renderer/src/data/npc-mannerisms.ts                                    
-src/renderer/src/data/personality-tables.ts                                
-src/renderer/src/data/sentient-items.ts                                    
-src/renderer/src/data/skills.ts                                            
-src/renderer/src/data/species-resources.ts                                 
-src/renderer/src/data/starting-equipment-table.ts                          
-src/renderer/src/data/variant-items.ts                                     
-src/renderer/src/data/weapon-mastery.ts                                    
-src/renderer/src/data/wearable-items.ts                                    
-src/renderer/src/data/weather-tables.ts                                    
-src/renderer/src/hooks/use-auto-save.ts                                    
-src/renderer/src/hooks/use-character-editor.ts                             
-src/renderer/src/hooks/use-equipment-data.ts                               
-src/renderer/src/hooks/use-game-effects.ts                                 
-src/renderer/src/hooks/use-game-handlers.ts                                
-src/renderer/src/hooks/use-game-network.ts                                 
-src/renderer/src/hooks/use-toast.ts                                        
-src/renderer/src/hooks/use-token-movement.ts                               
-src/renderer/src/network/index.ts                                          
-src/renderer/src/services/adventure-loader.ts                              
-src/renderer/src/services/ai-renderer-actions.ts                           
-src/renderer/src/services/calendar-service.ts                              
-src/renderer/src/services/cdn-provider.ts                                  
-src/renderer/src/services/chat-commands.ts                                 
-src/renderer/src/services/downtime-service.ts                              
-src/renderer/src/services/game-action-executor.ts                          
-src/renderer/src/services/keyboard-shortcuts.ts                            
-src/renderer/src/services/library-service.ts                               
-src/renderer/src/services/notification-service.ts                          
-src/renderer/src/services/sound-manager.ts                                 
-src/renderer/src/services/theme-manager.ts                                 
-src/renderer/src/services/undo-manager.ts                                  
-src/renderer/src/stores/use-ai-dm-store.ts                                 
-src/renderer/src/stores/use-bastion-store.ts                               
-src/renderer/src/stores/use-builder-store.ts                               
-src/renderer/src/stores/use-campaign-store.ts                              
-src/renderer/src/stores/use-character-store.ts                             
-src/renderer/src/stores/use-level-up-store.ts                              
-src/renderer/src/stores/use-library-store.ts                               
-src/renderer/src/pages/AboutPage.tsx                                       
-src/renderer/src/pages/BastionPage.tsx                                     
-src/renderer/src/pages/CalendarPage.tsx                                    
-src/renderer/src/pages/CampaignDetailPage.tsx                              
-src/renderer/src/pages/CharacterSheet5ePage.tsx                            
-src/renderer/src/pages/CreateCharacterPage.tsx                             
-src/renderer/src/pages/InGamePage.tsx                                      
-src/renderer/src/pages/JoinGamePage.tsx                                    
-src/renderer/src/pages/LevelUp5ePage.tsx                                   
-src/renderer/src/pages/LibraryPage.tsx                                     
-src/renderer/src/pages/LobbyPage.tsx                                       
-src/renderer/src/pages/MainMenuPage.tsx                                    
-src/renderer/src/pages/MakeGamePage.tsx                                    
-src/renderer/src/pages/NotFoundPage.tsx                                    
-src/renderer/src/pages/SettingsPage.tsx                                    
-src/renderer/src/pages/ViewCharactersPage.tsx                              
-src/renderer/src/systems/init.ts                                           
-src/renderer/src/systems/registry.ts                                       
-src/renderer/src/systems/types.ts                                          
-src/renderer/src/types/builder.ts                                          
-src/renderer/src/types/index.ts                                            
-src/renderer/src/types/library.ts                                          
-src/renderer/src/types/user.ts                                             
-src/renderer/src/utils/ac-calculator.ts                                    
-src/renderer/src/utils/bastion-prerequisites.ts                            
-src/renderer/src/utils/calendar-utils.ts                                   
-src/renderer/src/utils/character-routes.ts                                 
-src/renderer/src/utils/clipboard.ts                                        
-src/renderer/src/utils/creature-mutations.ts                               
-src/renderer/src/utils/currency.ts                                         
-src/renderer/src/utils/damage.ts                                           
-src/renderer/src/utils/dice-utils.ts                                       
-src/renderer/src/utils/stat-block-converter.ts                             
-src/renderer/src/utils/weight-calculator.ts                                
-src/renderer/src/styles/globals.css                                        
-src/renderer/src/components/campaign/AdventureSelector.tsx                 
-src/renderer/src/components/campaign/AdventureWizard.tsx                   
-src/renderer/src/components/campaign/AudioStep.tsx                         
-src/renderer/src/components/campaign/CalendarStep.tsx                      
-src/renderer/src/components/campaign/CampaignWizard.tsx                    
-src/renderer/src/components/campaign/DetailsStep.tsx                       
-src/renderer/src/components/campaign/index.ts                              
-src/renderer/src/components/campaign/MagicItemTracker.tsx                  
-src/renderer/src/components/campaign/MapConfigStep.tsx                     
-src/renderer/src/components/campaign/OllamaSetupStep.tsx                   
-src/renderer/src/components/campaign/ReviewStep.tsx                        
-src/renderer/src/components/campaign/RulesStep.tsx                         
-src/renderer/src/components/campaign/SessionZeroStep.tsx                   
-src/renderer/src/components/campaign/StartStep.tsx                         
-src/renderer/src/components/campaign/SystemStep.tsx                        
-src/renderer/src/components/game/GameLayout.tsx                            
-src/renderer/src/components/game/GameModalDispatcher.tsx                   
-src/renderer/src/components/game/ResizeHandle.tsx                          
-src/renderer/src/components/game/UnifiedStatBlock.tsx                      
-src/renderer/src/components/library/HomebrewCreateModal.tsx                
-src/renderer/src/components/library/index.ts                               
-src/renderer/src/components/library/LibraryCategoryGrid.tsx                
-src/renderer/src/components/library/LibraryDetailModal.tsx                 
-src/renderer/src/components/library/LibraryItemList.tsx                    
-src/renderer/src/components/library/LibrarySidebar.tsx                     
-src/renderer/src/components/lobby/CharacterSelector.tsx                    
-src/renderer/src/components/lobby/ChatInput.tsx                            
-src/renderer/src/components/lobby/ChatPanel.tsx                            
-src/renderer/src/components/lobby/index.ts                                 
-src/renderer/src/components/lobby/LobbyLayout.tsx                          
-src/renderer/src/components/lobby/PlayerCard.tsx                           
-src/renderer/src/components/lobby/PlayerList.tsx                           
-src/renderer/src/components/lobby/ReadyButton.tsx                          
-src/renderer/src/components/ui/BackButton.tsx                              
-src/renderer/src/components/ui/Button.tsx                                  
-src/renderer/src/components/ui/Card.tsx                                    
-src/renderer/src/components/ui/CharacterCard.tsx                           
-src/renderer/src/components/ui/ConfirmDialog.tsx                           
-src/renderer/src/components/ui/EmptyState.tsx                              
-src/renderer/src/components/ui/ErrorBoundary.tsx                           
-src/renderer/src/components/ui/index.ts                                    
-src/renderer/src/components/ui/Input.tsx                                   
-src/renderer/src/components/ui/Modal.tsx                                   
-src/renderer/src/components/ui/OllamaManagement.tsx                        
-src/renderer/src/components/ui/ShortcutsOverlay.tsx                        
-src/renderer/src/components/ui/Skeleton.tsx                                
-src/renderer/src/components/ui/Spinner.tsx                                 
-src/renderer/src/components/ui/Toast.tsx                                   
-src/renderer/src/services/character/auto-populate-5e.ts                    
-src/renderer/src/services/character/companion-service.ts                   
-src/renderer/src/services/character/feat-mechanics-5e.ts                   
-src/renderer/src/services/chat-commands/commands-condition-shortcuts.ts    
-src/renderer/src/services/chat-commands/commands-dice.ts                   
-src/renderer/src/services/chat-commands/commands-dm-ai.ts                  
-src/renderer/src/services/chat-commands/commands-dm-bastion.ts             
-src/renderer/src/services/chat-commands/commands-dm-campaign.ts            
-src/renderer/src/services/chat-commands/commands-dm-combat.ts              
-src/renderer/src/services/chat-commands/commands-dm-economy.ts             
-src/renderer/src/services/chat-commands/commands-dm-map.ts                 
-src/renderer/src/services/chat-commands/commands-dm-monsters.ts            
-src/renderer/src/services/chat-commands/commands-dm-narrative.ts           
-src/renderer/src/services/chat-commands/commands-dm-sound.ts               
-src/renderer/src/services/chat-commands/commands-dm-time.ts                
-src/renderer/src/services/chat-commands/commands-player-checks.ts          
-src/renderer/src/services/chat-commands/commands-player-combat.ts          
-src/renderer/src/services/chat-commands/commands-player-companions.ts      
-src/renderer/src/services/chat-commands/commands-player-conditions.ts      
-src/renderer/src/services/chat-commands/commands-player-currency.ts        
-src/renderer/src/services/chat-commands/commands-player-hp.ts              
-src/renderer/src/services/chat-commands/commands-player-inventory.ts       
-src/renderer/src/services/chat-commands/commands-player-mount.ts           
-src/renderer/src/services/chat-commands/commands-player-movement.ts        
-src/renderer/src/services/chat-commands/commands-player-resources.ts       
-src/renderer/src/services/chat-commands/commands-player-spells.ts          
-src/renderer/src/services/chat-commands/commands-player-utility.ts         
-src/renderer/src/services/chat-commands/commands-social.ts                 
-src/renderer/src/services/chat-commands/commands-utility.ts                
-src/renderer/src/services/chat-commands/helpers.ts                         
-src/renderer/src/services/chat-commands/index.ts                           
-src/renderer/src/services/chat-commands/types.ts                           
-src/renderer/src/services/combat/multi-attack-tracker.ts                   
-src/renderer/src/services/combat/reaction-tracker.ts                       
-src/renderer/src/services/game-actions/broadcast-helpers.ts                
-src/renderer/src/services/game-actions/creature-actions.ts                 
-src/renderer/src/services/game-actions/dice-helpers.ts                     
-src/renderer/src/services/game-actions/effect-actions.ts                   
-src/renderer/src/services/game-actions/name-resolver.ts                    
-src/renderer/src/services/game-actions/state-snapshot.ts                   
-src/renderer/src/services/game-actions/token-actions.ts                    
-src/renderer/src/services/game-actions/types.ts                            
-src/renderer/src/services/game-actions/visibility-actions.ts               
-src/renderer/src/services/io/auto-save.ts                                  
-src/renderer/src/services/io/entity-io.ts                                  
-src/renderer/src/services/io/game-auto-save.ts                             
-src/renderer/src/services/io/game-state-saver.ts                           
-src/renderer/src/services/io/import-export.ts                              
-src/renderer/src/services/map/map-utils.ts                                 
-src/renderer/src/services/map/raycast-visibility.ts                        
-src/renderer/src/stores/bastion-store/event-slice.ts                       
-src/renderer/src/stores/bastion-store/facility-slice.ts                    
-src/renderer/src/stores/bastion-store/index.ts                             
-src/renderer/src/stores/bastion-store/types.ts                             
-src/renderer/src/stores/builder/index.ts                                   
-src/renderer/src/stores/builder/types.ts                                   
-src/renderer/src/stores/level-up/apply-level-up.ts                         
-src/renderer/src/stores/level-up/feature-selection-slice.ts                
-src/renderer/src/stores/level-up/hp-slice.ts                               
-src/renderer/src/stores/level-up/index.ts                                  
-src/renderer/src/stores/level-up/level-up-spells.ts                        
-src/renderer/src/stores/level-up/spell-slot-slice.ts                       
-src/renderer/src/stores/level-up/types.ts                                  
-src/renderer/src/pages/bastion/bastion-constants.ts                        
-src/renderer/src/pages/bastion/BastionModals.tsx                           
-src/renderer/src/pages/bastion/BastionTabs.tsx                             
-src/renderer/src/pages/campaign-detail/AdventureManager.tsx                
-src/renderer/src/pages/campaign-detail/LoreManager.tsx                     
-src/renderer/src/pages/campaign-detail/MonsterLinker.tsx                   
-src/renderer/src/pages/campaign-detail/NPCManager.tsx                      
-src/renderer/src/pages/campaign-detail/RuleManager.tsx                     
-src/renderer/src/systems/dnd5e/index.ts                                    
-src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx              
-src/renderer/src/components/builder/5e/CharacterSummaryBar5e.tsx           
-src/renderer/src/components/builder/5e/ContentTabs5e.tsx                   
-src/renderer/src/components/builder/5e/DetailsTab5e.tsx                    
-src/renderer/src/components/builder/5e/GearTab5e.tsx                       
-src/renderer/src/components/builder/5e/LanguagesTab5e.tsx                  
-src/renderer/src/components/builder/5e/MainContentArea5e.tsx               
-src/renderer/src/components/builder/5e/SpecialAbilitiesTab5e.tsx           
-src/renderer/src/components/builder/5e/SpellsTab5e.tsx                     
-src/renderer/src/components/builder/shared/AbilityScoreModal.tsx           
-src/renderer/src/components/builder/shared/AsiModal.tsx                    
-src/renderer/src/components/builder/shared/BuildLevelGroup.tsx             
-src/renderer/src/components/builder/shared/BuildSidebar.tsx                
-src/renderer/src/components/builder/shared/BuildSlotItem.tsx               
-src/renderer/src/components/builder/shared/IconPicker.tsx                  
-src/renderer/src/components/builder/shared/SectionBanner.tsx               
-src/renderer/src/components/builder/shared/SelectionDetailPanel.tsx        
-src/renderer/src/components/builder/shared/SelectionFilterBar.tsx          
-src/renderer/src/components/builder/shared/SelectionModal.tsx              
-src/renderer/src/components/builder/shared/SelectionOptionList.tsx         
-src/renderer/src/components/builder/shared/SkillsModal.tsx                 
-src/renderer/src/components/game/bottom/AiContextPanel.tsx                 
-src/renderer/src/components/game/bottom/ChatPanel.tsx                      
-src/renderer/src/components/game/bottom/CommandAutocomplete.tsx            
-src/renderer/src/components/game/bottom/DMAudioPanel.tsx                   
-src/renderer/src/components/game/bottom/DMBottomBar.tsx                    
-src/renderer/src/components/game/bottom/DMTabPanel.tsx                     
-src/renderer/src/components/game/bottom/PlayerBottomBar.tsx                
-src/renderer/src/components/game/dice3d/DiceColorPicker.tsx                
-src/renderer/src/components/game/dice3d/DiceHistory.tsx                    
-src/renderer/src/components/game/dice3d/DiceResult.tsx                     
-src/renderer/src/components/game/dice3d/DiceRoller.tsx                     
-src/renderer/src/components/game/dice3d/DiceTray.tsx                       
-src/renderer/src/components/game/map/aoe-overlay.ts                        
-src/renderer/src/components/game/map/audio-emitter-overlay.ts              
-src/renderer/src/components/game/map/combat-animations.ts                  
-src/renderer/src/components/game/map/fog-overlay.ts                        
-src/renderer/src/components/game/map/grid-layer.ts                         
-src/renderer/src/components/game/map/lighting-overlay.ts                   
-src/renderer/src/components/game/map/map-event-handlers.ts                 
-src/renderer/src/components/game/map/map-overlay-effects.ts                
-src/renderer/src/components/game/map/map-pixi-setup.ts                     
-src/renderer/src/components/game/map/MapCanvas.tsx                         
-src/renderer/src/components/game/map/measurement-tool.ts                   
-src/renderer/src/components/game/map/movement-overlay.ts                   
-src/renderer/src/components/game/map/token-sprite.ts                       
-src/renderer/src/components/game/map/wall-layer.ts                         
-src/renderer/src/components/game/map/weather-overlay.ts                    
-src/renderer/src/components/game/modal-groups/combat-modals.tsx            
-src/renderer/src/components/game/modal-groups/dm-modals.tsx                
-src/renderer/src/components/game/modal-groups/mechanics-modals.tsx         
-src/renderer/src/components/game/modal-groups/utility-modals.tsx           
-src/renderer/src/components/game/dm/DiseaseCurseTracker.tsx                
-src/renderer/src/components/game/dm/DMNotepad.tsx                          
-src/renderer/src/components/game/dm/DMToolbar.tsx                          
-src/renderer/src/components/game/dm/EnvironmentalEffectsPanel.tsx          
-src/renderer/src/components/game/dm/FogBrush.tsx                           
-src/renderer/src/components/game/dm/GridControlPanel.tsx                   
-src/renderer/src/components/game/dm/index.ts                               
-src/renderer/src/components/game/dm/InitiativeControls.tsx                 
-src/renderer/src/components/game/dm/InitiativeEntry.tsx                    
-src/renderer/src/components/game/dm/InitiativeSetupForm.tsx                
-src/renderer/src/components/game/dm/InitiativeTracker.tsx                  
-src/renderer/src/components/game/dm/MapSelector.tsx                        
-src/renderer/src/components/game/dm/MonsterStatBlockView.tsx               
-src/renderer/src/components/game/dm/NPCManager.tsx                         
-src/renderer/src/components/game/dm/ShopPanel.tsx                          
-src/renderer/src/components/game/dm/StatBlockEditor.tsx                    
-src/renderer/src/components/game/dm/TokenPlacer.tsx                        
-src/renderer/src/components/game/dm/TrapPlacerPanel.tsx                    
-src/renderer/src/components/game/overlays/ClockOverlay.tsx                 
-src/renderer/src/components/game/overlays/GamePrompts.tsx                  
-src/renderer/src/components/game/overlays/GameToasts.tsx                   
-src/renderer/src/components/game/overlays/InitiativeOverlay.tsx            
-src/renderer/src/components/game/overlays/NarrationOverlay.tsx             
-src/renderer/src/components/game/overlays/PlayerHUDActions.tsx             
-src/renderer/src/components/game/overlays/PlayerHUDEffects.tsx             
-src/renderer/src/components/game/overlays/PlayerHUDOverlay.tsx             
-src/renderer/src/components/game/overlays/PlayerHUDStats.tsx               
-src/renderer/src/components/game/overlays/RollRequestOverlay.tsx           
-src/renderer/src/components/game/overlays/SettingsDropdown.tsx             
-src/renderer/src/components/game/overlays/ThemeSelector.tsx                
-src/renderer/src/components/game/overlays/TimerOverlay.tsx                 
-src/renderer/src/components/game/overlays/TokenContextMenu.tsx             
-src/renderer/src/components/game/overlays/ViewModeToggle.tsx               
-src/renderer/src/components/game/sidebar/AddEntryForm.tsx                  
-src/renderer/src/components/game/sidebar/CombatLogPanel.tsx                
-src/renderer/src/components/game/sidebar/CreatureSearchModal.tsx           
-src/renderer/src/components/game/sidebar/EntryCard.tsx                     
-src/renderer/src/components/game/sidebar/JournalPanel.tsx                  
-src/renderer/src/components/game/sidebar/LeftSidebar.tsx                   
-src/renderer/src/components/game/sidebar/npc-templates.ts                  
-src/renderer/src/components/game/sidebar/PlacesTree.tsx                    
-src/renderer/src/components/game/sidebar/QuickReferencePanel.tsx           
-src/renderer/src/components/game/sidebar/RandomNpcGenerator.tsx            
-src/renderer/src/components/game/sidebar/SidebarEntryList.tsx              
-src/renderer/src/components/game/sidebar/StatBlockForm.tsx                 
-src/renderer/src/components/game/player/ActionBar.tsx                      
-src/renderer/src/components/game/player/CharacterMiniSheet.tsx             
-src/renderer/src/components/game/player/ConditionTracker.tsx               
-src/renderer/src/components/game/player/index.ts                           
-src/renderer/src/components/game/player/MacroBar.tsx                       
-src/renderer/src/components/game/player/PlayerHUD.tsx                      
-src/renderer/src/components/game/player/ShopView.tsx                       
-src/renderer/src/components/game/player/SkillRollButton.tsx                
-src/renderer/src/components/game/player/SpellSlotTracker.tsx               
-src/renderer/src/components/levelup/5e/HpRollSection5e.tsx                 
-src/renderer/src/components/levelup/5e/LevelSection5e.tsx                  
-src/renderer/src/components/levelup/5e/LevelSelectors5e.tsx                
-src/renderer/src/components/levelup/5e/LevelUpWizard5e.tsx                 
-src/renderer/src/components/levelup/5e/SpellSelectionSection5e.tsx         
-src/renderer/src/components/sheet/5e/AbilityScoresGrid5e.tsx               
-src/renderer/src/components/sheet/5e/CharacterTraitsPanel5e.tsx            
-src/renderer/src/components/sheet/5e/ClassResourcesSection5e.tsx           
-src/renderer/src/components/sheet/5e/CoinBadge5e.tsx                       
-src/renderer/src/components/sheet/5e/CombatStatsBar5e.tsx                  
-src/renderer/src/components/sheet/5e/CompanionsSection5e.tsx               
-src/renderer/src/components/sheet/5e/ConditionsSection5e.tsx               
-src/renderer/src/components/sheet/5e/CraftingSection5e.tsx                 
-src/renderer/src/components/sheet/5e/defense-utils.ts                      
-src/renderer/src/components/sheet/5e/DefenseSection5e.tsx                  
-src/renderer/src/components/sheet/5e/equipment-utils.ts                    
-src/renderer/src/components/sheet/5e/EquipmentListPanel5e.tsx              
-src/renderer/src/components/sheet/5e/EquipmentSection5e.tsx                
-src/renderer/src/components/sheet/5e/FeaturesSection5e.tsx                 
-src/renderer/src/components/sheet/5e/HighElfCantripSwapModal5e.tsx         
-src/renderer/src/components/sheet/5e/MagicItemsPanel5e.tsx                 
-src/renderer/src/components/sheet/5e/NotesSection5e.tsx                    
-src/renderer/src/components/sheet/5e/OffenseSection5e.tsx                  
-src/renderer/src/components/sheet/5e/ProficiencyIndicator5e.tsx            
-src/renderer/src/components/sheet/5e/SavingThrowsSection5e.tsx             
-src/renderer/src/components/sheet/5e/SheetHeader5e.tsx                     
-src/renderer/src/components/sheet/5e/ShortRestModal5e.tsx                  
-src/renderer/src/components/sheet/5e/SkillsSection5e.tsx                   
-src/renderer/src/components/sheet/5e/SpellcastingSection5e.tsx             
-src/renderer/src/components/sheet/5e/SpellSlotGrid5e.tsx                   
-src/renderer/src/components/sheet/shared/PrintSheet.tsx                    
-src/renderer/src/components/sheet/shared/SheetSectionWrapper.tsx           
-src/renderer/src/stores/builder/slices/ability-score-slice.ts              
-src/renderer/src/stores/builder/slices/build-actions-slice.ts              
-src/renderer/src/stores/builder/slices/build-character-5e.ts               
-src/renderer/src/stores/builder/slices/builder-spells.ts                   
-src/renderer/src/stores/builder/slices/character-details-slice.ts          
-src/renderer/src/stores/builder/slices/character-species-helpers.ts        
-src/renderer/src/stores/builder/slices/core-slice.ts                       
-src/renderer/src/stores/builder/slices/load-character-5e.ts                
-src/renderer/src/stores/builder/slices/save-slice-5e.ts                    
-src/renderer/src/stores/builder/slices/save-slice.ts                       
-src/renderer/src/stores/builder/slices/selection-slice.ts                  
-src/renderer/src/components/game/modals/combat/ActionModal.tsx             
-src/renderer/src/components/game/modals/combat/attack-computations.ts      
-src/renderer/src/components/game/modals/combat/attack-utils.ts             
-src/renderer/src/components/game/modals/combat/AttackModal.tsx             
-src/renderer/src/components/game/modals/combat/AttackModalSteps.tsx        
-src/renderer/src/components/game/modals/combat/AttackResultStep.tsx        
-src/renderer/src/components/game/modals/combat/AttackRollStep.tsx          
-src/renderer/src/components/game/modals/combat/ChaseControls.tsx           
-src/renderer/src/components/game/modals/combat/ChaseMap.tsx                
-src/renderer/src/components/game/modals/combat/ChaseTrackerModal.tsx       
-src/renderer/src/components/game/modals/combat/CustomEffectModal.tsx       
-src/renderer/src/components/game/modals/combat/DamageResultStep.tsx        
-src/renderer/src/components/game/modals/combat/FallingDamageModal.tsx      
-src/renderer/src/components/game/modals/combat/GroupRollModal.tsx          
-src/renderer/src/components/game/modals/combat/HiddenDiceModal.tsx         
-src/renderer/src/components/game/modals/combat/InitiativeModal.tsx         
-src/renderer/src/components/game/modals/combat/JumpModal.tsx               
-src/renderer/src/components/game/modals/combat/MobCalculatorModal.tsx      
-src/renderer/src/components/game/modals/combat/QuickConditionModal.tsx     
-src/renderer/src/components/game/modals/combat/TargetSelectionStep.tsx     
-src/renderer/src/components/game/modals/combat/WeaponSelectionStep.tsx     
-src/renderer/src/components/game/modals/mechanics/AoETemplateModal.tsx     
-src/renderer/src/components/game/modals/mechanics/DowntimeModal.tsx        
-src/renderer/src/components/game/modals/mechanics/FamiliarSelectorModal.tsx
-src/renderer/src/components/game/modals/mechanics/InfluenceModal.tsx       
-src/renderer/src/components/game/modals/mechanics/ItemModal.tsx            
-src/renderer/src/components/game/modals/mechanics/LightSourceModal.tsx     
-src/renderer/src/components/game/modals/mechanics/LongRestPanel.tsx        
-src/renderer/src/components/game/modals/mechanics/MagicItemTrackerModal.tsx
-src/renderer/src/components/game/modals/mechanics/MountModal.tsx           
-src/renderer/src/components/game/modals/mechanics/RestModal.tsx            
-src/renderer/src/components/game/modals/mechanics/ShortRestPanel.tsx       
-src/renderer/src/components/game/modals/mechanics/SpellReferenceModal.tsx  
-src/renderer/src/components/game/modals/mechanics/SteedSelectorModal.tsx   
-src/renderer/src/components/game/modals/mechanics/StudyActionModal.tsx     
-src/renderer/src/components/game/modals/mechanics/WildShapeBrowserModal.tsx
-src/renderer/src/components/game/modals/dm-tools/CreateMapModal.tsx        
-src/renderer/src/components/game/modals/dm-tools/CreatureModal.tsx         
-src/renderer/src/components/game/modals/dm-tools/DMMapEditor.tsx           
-src/renderer/src/components/game/modals/dm-tools/DMNotesModal.tsx          
-src/renderer/src/components/game/modals/dm-tools/DMRollerModal.tsx         
-src/renderer/src/components/game/modals/dm-tools/DMShopModal.tsx           
-src/renderer/src/components/game/modals/dm-tools/EncounterBuilderModal.tsx 
-src/renderer/src/components/game/modals/dm-tools/GridSettingsModal.tsx     
-src/renderer/src/components/game/modals/dm-tools/HandoutModal.tsx          
-src/renderer/src/components/game/modals/dm-tools/HandoutViewerModal.tsx    
-src/renderer/src/components/game/modals/dm-tools/map-editor-handlers.ts    
-src/renderer/src/components/game/modals/dm-tools/MapEditorRightPanel.tsx   
-src/renderer/src/components/game/modals/dm-tools/NPCGeneratorModal.tsx     
-src/renderer/src/components/game/modals/dm-tools/RollerEntityBlock.tsx     
-src/renderer/src/components/game/modals/dm-tools/RollerQuickDice.tsx       
-src/renderer/src/components/game/modals/dm-tools/shop-utils.ts             
-src/renderer/src/components/game/modals/dm-tools/ShopCustomItemForm.tsx    
-src/renderer/src/components/game/modals/dm-tools/ShopImportModal.tsx       
-src/renderer/src/components/game/modals/dm-tools/ShopInventoryTable.tsx    
-src/renderer/src/components/game/modals/dm-tools/TokenEditorModal.tsx      
-src/renderer/src/components/game/modals/dm-tools/TreasureGeneratorModal.tsx
-src/renderer/src/components/game/modals/utility/CommandReferenceModal.tsx  
-src/renderer/src/components/game/modals/utility/DisputeModal.tsx           
-src/renderer/src/components/game/modals/utility/HelpModal.tsx              
-src/renderer/src/components/game/modals/utility/InGameCalendarModal.tsx    
-src/renderer/src/components/game/modals/utility/NetworkSettingsModal.tsx   
-src/renderer/src/components/game/modals/utility/RulingApprovalModal.tsx    
-src/renderer/src/components/game/modals/utility/ShortcutReferenceModal.tsx 
-src/renderer/src/components/game/modals/utility/TimeEditModal.tsx          
-src/renderer/src/components/game/modals/utility/TimerModal.tsx             
-src/renderer/src/components/game/modals/utility/TravelPaceModal.tsx        
-src/renderer/src/components/game/modals/utility/WhisperModal.tsx           
-Unused dependencies (13)
-@aws-sdk/client-s3             package.json:134:6
-@pixi/react                    package.json:135:6
-@tanstack/react-virtual        package.json:136:6
-@tiptap/extension-image        package.json:137:6
-@tiptap/extension-link         package.json:138:6
-@tiptap/extension-placeholder  package.json:139:6
-@tiptap/pm                     package.json:140:6
-@tiptap/react                  package.json:141:6
-@tiptap/starter-kit            package.json:142:6
-electron-updater               package.json:144:6
-pixi.js                        package.json:146:6
-react-router                   package.json:149:6
-uuid                           package.json:151:6
-Unused devDependencies (16)
-@electron-toolkit/preload  package.json:104:6
-@electron-toolkit/utils    package.json:105:6
-@tailwindcss/vite          package.json:106:6
-@types/uuid                package.json:111:6
-@vitejs/plugin-react       package.json:112:6
-jscpd                      package.json:117:6
-license-checker            package.json:119:6
-lockfile-lint              package.json:120:6
-madge                      package.json:121:6
-npm-check-updates          package.json:122:6
-oxlint                     package.json:123:6
-rollup-plugin-visualizer   package.json:124:6
-tailwindcss                package.json:125:6
-ts-prune                   package.json:126:6
-tsx                        package.json:127:6
-type-coverage              package.json:128:6
-Unused exports (208)
-getSearchEngine                              function  src/main/ai/context-builder.ts:100:17                           
-readRequestedFile                            function  src/main/ai/file-reader.ts:57:23                                
-FILE_READ_MAX_DEPTH                                    src/main/ai/file-reader.ts:112:23                               
-STANDARD_LANGUAGES_5E                                  src/renderer/src/types/character-common.ts:57:14                
-RARE_LANGUAGES_5E                                      src/renderer/src/types/character-common.ts:70:14                
-PRIMORDIAL_DIALECTS                                    src/renderer/src/types/character-common.ts:82:14                
-ALL_LANGUAGES_5E                                       src/renderer/src/types/character-common.ts:84:14                
-formatMod                                    function  src/renderer/src/types/character-common.ts:115:17               
-getBuffs5e                                   function  src/renderer/src/data/conditions.ts:41:23                       
-CONDITIONS_5E                                          src/renderer/src/data/conditions.ts:48:14                       
-BUFFS_5E                                               src/renderer/src/data/conditions.ts:49:14                       
-getConditionsForSystem                       function  src/renderer/src/data/conditions.ts:61:17                       
-getSizeTokenDimensions                       function  src/renderer/src/types/monster.ts:142:17                        
-crToNumber                                   function  src/renderer/src/types/monster.ts:160:17                        
-abilityModifier                              function  src/renderer/src/types/monster.ts:169:17                        
-DATA_PATHS                                             src/renderer/src/services/data-provider.ts:64:14                
-getOptionsForSlot                            function  src/renderer/src/services/data-provider.ts:325:23               
-load5eSpecies                                function  src/renderer/src/services/data-provider.ts:501:23               
-load5eClasses                                function  src/renderer/src/services/data-provider.ts:511:23               
-load5eBackgrounds                            function  src/renderer/src/services/data-provider.ts:515:23               
-load5eSubclasses                             function  src/renderer/src/services/data-provider.ts:519:23               
-load5eFeats                                  function  src/renderer/src/services/data-provider.ts:523:23               
-load5eClassFeatures                          function  src/renderer/src/services/data-provider.ts:533:23               
-load5eEquipment                              function  src/renderer/src/services/data-provider.ts:537:23               
-load5eCrafting                               function  src/renderer/src/services/data-provider.ts:541:23               
-load5eDiseases                               function  src/renderer/src/services/data-provider.ts:545:23               
-load5eEncounterBudgets                       function  src/renderer/src/services/data-provider.ts:549:23               
-load5eTreasureTables                         function  src/renderer/src/services/data-provider.ts:553:23               
-load5eRandomTables                           function  src/renderer/src/services/data-provider.ts:557:23               
-load5eChaseTables                            function  src/renderer/src/services/data-provider.ts:561:23               
-load5eEncounterPresets                       function  src/renderer/src/services/data-provider.ts:565:23               
-load5eNpcNames                               function  src/renderer/src/services/data-provider.ts:569:23               
-load5eInvocations                            function  src/renderer/src/services/data-provider.ts:573:23               
-load5eMetamagic                              function  src/renderer/src/services/data-provider.ts:577:23               
-load5eBastionFacilities                      function  src/renderer/src/services/data-provider.ts:581:23               
-load5eMagicItems                             function  src/renderer/src/services/data-provider.ts:587:23               
-getHeritageOptions5e                         function  src/renderer/src/services/data-provider.ts:593:23               
-load5eMonsters                               function  src/renderer/src/services/data-provider.ts:621:23               
-load5eMonsterById                            function  src/renderer/src/services/data-provider.ts:625:23               
-load5eNpcs                                   function  src/renderer/src/services/data-provider.ts:645:23               
-load5eCreatures                              function  src/renderer/src/services/data-provider.ts:649:23               
-loadAllStatBlocks                            function  src/renderer/src/services/data-provider.ts:653:23               
-loadStatBlockById                            function  src/renderer/src/services/data-provider.ts:658:23               
-load5eTraps                                  function  src/renderer/src/services/data-provider.ts:665:23               
-load5eHazards                                function  src/renderer/src/services/data-provider.ts:669:23               
-load5ePoisons                                function  src/renderer/src/services/data-provider.ts:673:23               
-load5eEnvironmentalEffects                   function  src/renderer/src/services/data-provider.ts:677:23               
-load5eCurses                                 function  src/renderer/src/services/data-provider.ts:681:23               
-load5eSupernaturalGifts                      function  src/renderer/src/services/data-provider.ts:685:23               
-load5eSiegeEquipment                         function  src/renderer/src/services/data-provider.ts:689:23               
-load5eSettlements                            function  src/renderer/src/services/data-provider.ts:693:23               
-load5eMounts                                 function  src/renderer/src/services/data-provider.ts:700:23               
-load5eVehicles                               function  src/renderer/src/services/data-provider.ts:707:23               
-load5eLanguages                              function  src/renderer/src/services/data-provider.ts:741:23               
-load5eWeaponMastery                          function  src/renderer/src/services/data-provider.ts:752:23               
-load5eSkills                                 function  src/renderer/src/services/data-provider.ts:766:23               
-load5eVariantItems                           function  src/renderer/src/services/data-provider.ts:775:23               
-load5eLightSources                           function  src/renderer/src/services/data-provider.ts:786:23               
-load5eNpcAppearance                          function  src/renderer/src/services/data-provider.ts:790:23               
-load5eNpcMannerisms                          function  src/renderer/src/services/data-provider.ts:794:23               
-load5eAlignmentDescriptions                  function  src/renderer/src/services/data-provider.ts:798:23               
-load5eWearableItems                          function  src/renderer/src/services/data-provider.ts:802:23               
-load5ePersonalityTables                      function  src/renderer/src/services/data-provider.ts:806:23               
-load5eStartingEquipment                      function  src/renderer/src/services/data-provider.ts:821:23               
-load5eBastionEvents                          function  src/renderer/src/services/data-provider.ts:845:23               
-load5eSentientItems                          function  src/renderer/src/services/data-provider.ts:849:23               
-load5eWeatherGeneration                      function  src/renderer/src/services/data-provider.ts:853:23               
-load5eCalendarPresets                        function  src/renderer/src/services/data-provider.ts:857:23               
-load5eFightingStyles                         function  src/renderer/src/services/data-provider.ts:869:23               
-load5eDowntime                               function  src/renderer/src/services/data-provider.ts:873:23               
-load5eTrinkets                               function  src/renderer/src/services/data-provider.ts:877:23               
-load5eSounds                                 function  src/renderer/src/services/data-provider.ts:881:23               
-load5eSoundEvents                            function  src/renderer/src/services/data-provider.ts:886:23               
-load5eSpeciesSpells                          function  src/renderer/src/services/data-provider.ts:890:23               
-load5eClassResources                         function  src/renderer/src/services/data-provider.ts:894:23               
-load5eSpeciesResources                       function  src/renderer/src/services/data-provider.ts:898:23               
-load5eAbilityScoreConfig                     function  src/renderer/src/services/data-provider.ts:902:23               
-load5ePresetIcons                            function  src/renderer/src/services/data-provider.ts:906:23               
-load5eKeyboardShortcuts                      function  src/renderer/src/services/data-provider.ts:910:23               
-load5eThemes                                 function  src/renderer/src/services/data-provider.ts:914:23               
-load5eDiceColors                             function  src/renderer/src/services/data-provider.ts:918:23               
-load5eDmTabs                                 function  src/renderer/src/services/data-provider.ts:922:23               
-load5eNotificationTemplates                  function  src/renderer/src/services/data-provider.ts:926:23               
-load5eBuiltInMaps                            function  src/renderer/src/services/data-provider.ts:930:23               
-load5eSessionZeroConfig                      function  src/renderer/src/services/data-provider.ts:934:23               
-load5eDiceTypes                              function  src/renderer/src/services/data-provider.ts:938:23               
-load5eLightingTravel                         function  src/renderer/src/services/data-provider.ts:942:23               
-load5eCurrencyConfig                         function  src/renderer/src/services/data-provider.ts:946:23               
-load5eModeration                             function  src/renderer/src/services/data-provider.ts:950:23               
-load5eAdventureSeeds                         function  src/renderer/src/services/data-provider.ts:956:23               
-load5eCreatureTypes                          function  src/renderer/src/services/data-provider.ts:960:23               
-load5eAmbientTracks                          function  src/renderer/src/services/data-provider.ts:964:23               
-load5eLanguageD12Table                       function  src/renderer/src/services/data-provider.ts:968:23               
-load5eRarityOptions                          function  src/renderer/src/services/data-provider.ts:972:23               
-NetworkMessageEnvelopeSchema                           src/renderer/src/network/schemas.ts:459:10                      
-PAYLOAD_SCHEMAS                                        src/renderer/src/network/schemas.ts:459:40                      
-AnyPayloadSchema                                       src/renderer/src/network/schemas.ts:459:57                      
-SPELLCASTING_ABILITY_MAP                               src/renderer/src/services/character/spell-data.ts:10:14         
-WARLOCK_PACT_SLOTS                                     src/renderer/src/services/character/spell-data.ts:28:12         
-FULL_CASTER_SLOTS                                      src/renderer/src/services/character/spell-data.ts:51:12         
-CANTRIPS_KNOWN                                         src/renderer/src/services/character/spell-data.ts:75:12         
-PREPARED_SPELLS                                        src/renderer/src/services/character/spell-data.ts:88:12         
-THIRD_CASTER_SUBCLASSES                                src/renderer/src/services/character/spell-data.ts:268:12        
-getSpellcastingAbility                       function  src/renderer/src/services/character/spell-data.ts:336:17        
-getWarlockMaxSpellLevel                      function  src/renderer/src/services/character/spell-data.ts:388:17        
-hasAnySpellcasting                           function  src/renderer/src/services/character/spell-data.ts:475:17        
-loadSpells                                   function  src/renderer/src/services/character/spell-data.ts:482:23        
-LIFESTYLE_COSTS                                        src/renderer/src/services/character/stat-calculator-5e.ts:179:14
-TOOL_SKILL_INTERACTIONS                                src/renderer/src/services/character/stat-calculator-5e.ts:209:14
-DARKVISION_SPECIES                                     src/renderer/src/types/map.ts:41:14                             
-getLastRoll                                  function  src/renderer/src/services/dice/dice-service.ts:43:17            
-setLastRoll                                  function  src/renderer/src/services/dice/dice-service.ts:46:17            
-parseFormula                                 function  src/renderer/src/services/dice/dice-service.ts:67:17            
-rollDamage                                   function  src/renderer/src/services/dice/dice-service.ts:161:17           
-rollForDm                                    function  src/renderer/src/services/dice/dice-service.ts:178:17           
-revealRoll                                   function  src/renderer/src/services/dice/dice-service.ts:208:17           
-resolveUnarmedStrike                         function  src/renderer/src/services/combat/attack-resolver.ts:156:17      
-shouldTriggerLairAction                                src/renderer/src/services/combat/combat-resolver.ts:43:10       
-spendLegendaryAction                                   src/renderer/src/services/combat/combat-resolver.ts:43:35       
-useLegendaryResistance                                 src/renderer/src/services/combat/combat-resolver.ts:43:57       
-resolveAttack                                function  src/renderer/src/services/combat/combat-resolver.ts:226:17      
-resolveSavingThrow                           function  src/renderer/src/services/combat/combat-resolver.ts:532:17      
-resolveGrapple                               function  src/renderer/src/services/combat/combat-resolver.ts:633:17      
-resolveShove                                 function  src/renderer/src/services/combat/combat-resolver.ts:697:17      
-canMoveToPosition                            function  src/renderer/src/services/combat/combat-rules.ts:97:17          
-triggersOpportunityAttack                    function  src/renderer/src/services/combat/combat-rules.ts:230:17         
-getEffectiveSpeed                            function  src/renderer/src/services/combat/combat-rules.ts:256:17         
-proneStandUpCost                             function  src/renderer/src/services/combat/combat-rules.ts:284:17         
-getTokenSizeCategory                         function  src/renderer/src/services/combat/combat-rules.ts:359:17         
-isMoveBlockedByFear                          function  src/renderer/src/services/combat/combat-rules.ts:382:17         
-DEFAULT_OPTIONAL_RULES                                 src/renderer/src/types/campaign.ts:82:14                        
-exportCampaignToFile                         function  src/renderer/src/services/io/campaign-io.ts:54:23               
-importCampaignFromFile                       function  src/renderer/src/services/io/campaign-io.ts:71:23               
-exportCharacterToFile                        function  src/renderer/src/services/io/character-io.ts:45:23              
-importCharacterFromFile                      function  src/renderer/src/services/io/character-io.ts:62:23              
-saveCampaign                                 function  src/main/storage/campaign-storage.ts:36:23                      
-loadCampaigns                                function  src/main/storage/campaign-storage.ts:54:23                      
-deleteCampaign                               function  src/main/storage/campaign-storage.ts:94:23                      
-saveCharacter                                function  src/main/storage/character-storage.ts:43:23                     
-listCharacterVersions                        function  src/main/storage/character-storage.ts:87:23                     
-restoreCharacterVersion                      function  src/main/storage/character-storage.ts:120:23                    
-loadCharacters                               function  src/main/storage/character-storage.ts:147:23                    
-deleteCharacter                              function  src/main/storage/character-storage.ts:187:23                    
-MemoryManager                                class     src/main/ai/memory-manager.ts:61:14                             
-RECONNECT_DELAY_MS                                     src/renderer/src/constants/app-constants.ts:3:14                
-MAX_READ_FILE_SIZE                                     src/renderer/src/constants/app-constants.ts:25:14               
-MAX_WRITE_CONTENT_SIZE                                 src/renderer/src/constants/app-constants.ts:26:14               
-LOADING_GRACE_PERIOD_MS                                src/renderer/src/constants/app-constants.ts:29:14               
-LOBBY_COPY_TIMEOUT_MS                                  src/renderer/src/constants/app-constants.ts:30:14               
-JOINED_SESSIONS_KEY                                    src/renderer/src/constants/app-constants.ts:38:14               
-AUTO_REJOIN_KEY                                        src/renderer/src/constants/app-constants.ts:39:14               
-DAMAGE_TYPES                                           src/renderer/src/constants/damage-types.ts:4:14                 
-DAMAGE_TYPE_LABELS                                     src/renderer/src/constants/damage-types.ts:24:14                
-getConsumableEffects                         function  src/renderer/src/data/effect-definitions.ts:46:17               
-getAllEffectDefinitions                      function  src/renderer/src/data/effect-definitions.ts:55:17               
-DEFAULT_BLOCKED_WORDS                                  src/renderer/src/data/moderation.ts:3:14                        
-filterMessage                                function  src/renderer/src/data/moderation.ts:5:17                        
-setSignalingServer                           function  src/renderer/src/network/peer-manager.ts:39:17                  
-resetSignalingServer                         function  src/renderer/src/network/peer-manager.ts:49:17                  
-setIceConfig                                 function  src/renderer/src/network/peer-manager.ts:62:17                  
-getIceConfig                                 function  src/renderer/src/network/peer-manager.ts:69:17                  
-resetIceConfig                               function  src/renderer/src/network/peer-manager.ts:76:17                  
-isConnected                   clientManager  function  src/renderer/src/network/client-manager.ts:175:17               
-setCharacterInfo              clientManager  function  src/renderer/src/network/client-manager.ts:183:17               
-startGameSync                                function  src/renderer/src/network/game-sync.ts:54:17                     
-stopGameSync                                 function  src/renderer/src/network/game-sync.ts:174:17                    
-handleJoin                                   function  src/renderer/src/network/host-connection.ts:178:17              
-clearDmAlerts                                function  src/renderer/src/components/game/overlays/DmAlertTray.tsx:24:17 
-default                                      function  src/renderer/src/components/game/overlays/DmAlertTray.tsx:44:25 
-getConnectedPeers             hostManager    function  src/renderer/src/network/host-manager.ts:327:17                 
-isHosting                     hostManager    function  src/renderer/src/network/host-manager.ts:356:17                 
-getInviteCode                 hostManager    function  src/renderer/src/network/host-manager.ts:361:17                 
-setCampaignId                 hostManager    function  src/renderer/src/network/host-manager.ts:366:23                 
-getCampaignId                 hostManager    function  src/renderer/src/network/host-manager.ts:372:17                 
-banPeer                       hostManager    function  src/renderer/src/network/host-manager.ts:377:17                 
-unbanPeer                     hostManager    function  src/renderer/src/network/host-manager.ts:390:17                 
-unbanName                     hostManager    function  src/renderer/src/network/host-manager.ts:397:17                 
-getBannedPeers                hostManager    function  src/renderer/src/network/host-manager.ts:404:17                 
-getBannedNames                hostManager    function  src/renderer/src/network/host-manager.ts:409:17                 
-chatMutePeer                  hostManager    function  src/renderer/src/network/host-manager.ts:414:17                 
-isChatMuted                   hostManager    function  src/renderer/src/network/host-manager.ts:423:17                 
-setModerationEnabled          hostManager    function  src/renderer/src/network/host-manager.ts:434:17                 
-setCustomBlockedWords         hostManager    function  src/renderer/src/network/host-manager.ts:439:17                 
-isModerationEnabled           hostManager    function  src/renderer/src/network/host-manager.ts:444:17                 
-FACILITY_SPACE_SQUARES                                 src/renderer/src/types/bastion.ts:255:14                        
-BASIC_FACILITY_COSTS                                   src/renderer/src/types/bastion.ts:261:14                        
-ENLARGE_COSTS                                          src/renderer/src/types/bastion.ts:267:14                        
-SPECIAL_FACILITY_COSTS                                 src/renderer/src/types/bastion.ts:272:14                        
-getMaxSpecialFacilities                      function  src/renderer/src/types/bastion.ts:281:17                        
-getAvailableFacilityLevel                    function  src/renderer/src/types/bastion.ts:289:17                        
-createDefaultBastion                         function  src/renderer/src/types/bastion.ts:297:17                        
-migrateBastion                               function  src/renderer/src/types/bastion.ts:355:17                        
-DiceOverlay                                            src/renderer/src/components/game/dice3d/index.ts:2:21           
-onDiceTrayUpdate                                       src/renderer/src/components/game/dice3d/index.ts:2:34           
-DICE_COLOR_PRESETS                                     src/renderer/src/components/game/dice3d/index.ts:4:31           
-parseDiceFormula                             function  src/renderer/src/services/dice/dice-engine.ts:15:17             
-rollDice                                     function  src/renderer/src/services/dice/dice-engine.ts:25:17             
-is5eCharacter                                function  src/renderer/src/types/character.ts:5:17                        
-STANDARD_FAMILIAR_FORMS                                src/renderer/src/types/companion.ts:18:14                       
-CHAIN_PACT_FAMILIAR_FORMS                              src/renderer/src/types/companion.ts:34:14                       
-STEED_FORMS                                            src/renderer/src/types/companion.ts:43:14                       
-WILD_SHAPE_TIERS                                       src/renderer/src/types/companion.ts:52:14                       
-spendLegendaryAction                         function  src/renderer/src/services/combat/legendary-actions.ts:13:17     
-useLegendaryResistance                       function  src/renderer/src/services/combat/legendary-actions.ts:54:17     
-shouldTriggerLairAction                      function  src/renderer/src/services/combat/legendary-actions.ts:93:17     
-DICE_COLOR_PRESETS                                     src/renderer/src/components/game/dice3d/dice-meshes.ts:17:14    
-onDiceTrayUpdate                             function  src/renderer/src/components/game/dice3d/DiceOverlay.tsx:43:17   
-default                                      function  src/renderer/src/components/game/dice3d/DiceOverlay.tsx:91:25   
-Unused exported types (242)
-FileReadRequest          interface  src/main/ai/file-reader.ts:15:18                                
-LanguageEntry            interface  src/renderer/src/services/data-provider.ts:731:18               
-WeaponMasteryEntry       interface  src/renderer/src/services/data-provider.ts:745:18               
-SkillEntry               interface  src/renderer/src/services/data-provider.ts:756:18               
-VariantItemEntry         interface  src/renderer/src/services/data-provider.ts:770:18               
-LightSourceEntry         interface  src/renderer/src/services/data-provider.ts:779:18               
-ValidationResult         type       src/renderer/src/network/schemas.ts:423:13                      
-MulticlassEntry          interface  src/renderer/src/types/character-5e.ts:122:18                   
-SentientCommunication    type       src/renderer/src/types/character-5e.ts:218:13                   
-SentientItemTraits       interface  src/renderer/src/types/character-5e.ts:220:18                   
-ExpertiseGrant           interface  src/renderer/src/services/character/build-tree-5e.ts:29:18      
-HitDiePool               interface  src/renderer/src/services/character/rest-service-5e.ts:9:18     
-RestorableResource       interface  src/renderer/src/services/character/rest-service-5e.ts:16:18    
-ShortRestPreview         interface  src/renderer/src/services/character/rest-service-5e.ts:23:18    
-ShortRestDiceRoll        interface  src/renderer/src/services/character/rest-service-5e.ts:38:18    
-ShortRestResult          interface  src/renderer/src/services/character/rest-service-5e.ts:45:18    
-LongRestPreview          interface  src/renderer/src/services/character/rest-service-5e.ts:53:18    
-LongRestResult           interface  src/renderer/src/services/character/rest-service-5e.ts:70:18    
-DerivedStats5e           interface  src/renderer/src/services/character/stat-calculator-5e.ts:16:18 
-EncumbranceResult        interface  src/renderer/src/services/character/stat-calculator-5e.ts:44:18 
-LifestyleLevel           type       src/renderer/src/services/character/stat-calculator-5e.ts:177:13
-ToolSkillInteraction     interface  src/renderer/src/services/character/stat-calculator-5e.ts:199:18
-ArmorForAC               interface  src/renderer/src/services/character/stat-calculator-5e.ts:337:18
-ArmorClassOptions        interface  src/renderer/src/services/character/stat-calculator-5e.ts:345:18
-AoETargetResult          interface  src/renderer/src/services/combat/aoe-targeting.ts:29:18         
-AttackResult             interface  src/renderer/src/services/combat/attack-resolver.ts:31:18       
-AttackOptions            interface  src/renderer/src/services/combat/attack-resolver.ts:56:18       
-DeathSaveResult          type       src/renderer/src/services/combat/combat-resolver.ts:37:8        
-DeathSaveState           type       src/renderer/src/services/combat/combat-resolver.ts:38:8        
-AttackType               type       src/renderer/src/services/combat/combat-resolver.ts:54:13       
-AttackRequest            interface  src/renderer/src/services/combat/combat-resolver.ts:56:18       
-AttackResult             interface  src/renderer/src/services/combat/combat-resolver.ts:100:18      
-SavingThrowRequest       interface  src/renderer/src/services/combat/combat-resolver.ts:131:18      
-SavingThrowResult        interface  src/renderer/src/services/combat/combat-resolver.ts:161:18      
-GrappleRequest           interface  src/renderer/src/services/combat/combat-resolver.ts:176:18      
-GrappleResult            interface  src/renderer/src/services/combat/combat-resolver.ts:191:18      
-ShoveRequest             interface  src/renderer/src/services/combat/combat-resolver.ts:202:18      
-ShoveResult              type       src/renderer/src/services/combat/combat-resolver.ts:219:13      
-MovementType             type       src/renderer/src/services/combat/combat-rules.ts:224:13         
-ExtractedCondition       interface  src/renderer/src/services/combat/condition-extractor.ts:6:18    
-CalendarPresetId         type       src/renderer/src/types/campaign.ts:10:13                        
-CalendarMonth            interface  src/renderer/src/types/campaign.ts:12:18                        
-OptionalRules            interface  src/renderer/src/types/campaign.ts:77:18                        
-JournalEntry             interface  src/renderer/src/types/campaign.ts:161:18                       
-PathResult               interface  src/renderer/src/services/map/pathfinder.ts:23:18               
-CharacterVersion         interface  src/main/storage/character-storage.ts:81:18                     
-AiConfig                 interface  src/main/ai/types.ts:3:18                                       
-AiChatRequest            interface  src/main/ai/types.ts:17:18                                      
-AiStreamChunk            interface  src/main/ai/types.ts:26:18                                      
-AiStreamDone             interface  src/main/ai/types.ts:31:18                                      
-DmActionData             interface  src/main/ai/types.ts:39:18                                      
-AiStreamError            interface  src/main/ai/types.ts:44:18                                      
-AiIndexProgress          interface  src/main/ai/types.ts:49:18                                      
-ProviderStatus           interface  src/main/ai/types.ts:54:18                                      
-MutationResult           interface  src/main/ai/types.ts:59:18                                      
-ConversationMessage      interface  src/main/ai/types.ts:97:18                                      
-ConversationSummary      interface  src/main/ai/types.ts:104:18                                     
-ConversationData         interface  src/main/ai/types.ts:109:18                                     
-ChatMessage              interface  src/main/ai/types.ts:117:18                                     
-StreamCallbacks          interface  src/main/ai/types.ts:122:18                                     
-StatChange               type       src/main/ai/types.ts:130:13                                     
-AbilityName              type       src/renderer/src/types/data/index.ts:9:13                       
-CreatureSize             type       src/renderer/src/types/data/index.ts:40:13                      
-WeaponCategory           type       src/renderer/src/types/data/index.ts:42:13                      
-ClassFeature             interface  src/renderer/src/types/data/index.ts:180:18                     
-MonsterAction            type       src/renderer/src/types/data/index.ts:318:15                     
-MonsterSpeed             type       src/renderer/src/types/data/index.ts:318:30                     
-MonsterSpellcasting      type       src/renderer/src/types/data/index.ts:318:44                     
-MonsterStatBlock         type       src/renderer/src/types/data/index.ts:318:65                     
-MonsterTrait             type       src/renderer/src/types/data/index.ts:318:83                     
-BastionFacilitiesData    type       src/renderer/src/types/data/index.ts:337:15                     
-TrapData                 interface  src/renderer/src/types/data/index.ts:341:18                     
-HazardData               interface  src/renderer/src/types/data/index.ts:358:18                     
-PoisonData               interface  src/renderer/src/types/data/index.ts:373:18                     
-CurseData                interface  src/renderer/src/types/data/index.ts:387:18                     
-EnvironmentalEffectData  interface  src/renderer/src/types/data/index.ts:415:18                     
-SupernaturalGiftData     interface  src/renderer/src/types/data/index.ts:428:18                     
-TrinketsFile             type       src/renderer/src/types/data/index.ts:555:13                     
-WeaponMasteryProperty    type       src/renderer/src/types/data/index.ts:559:13                     
-DowntimeActivity         interface  src/renderer/src/types/data/index.ts:563:18                     
-MountData                interface  src/renderer/src/types/data/index.ts:576:18                     
-MountsFile               interface  src/renderer/src/types/data/index.ts:594:18                     
-ResourceScaling          interface  src/renderer/src/types/data/index.ts:600:18                     
-ThemesFile               type       src/renderer/src/types/data/index.ts:693:13                     
-SpellList                type       src/renderer/src/types/data/index.ts:812:13                     
-ClassFeatureEntry        type       src/renderer/src/types/data/index.ts:813:13                     
-ClassFeaturesMap         type       src/renderer/src/types/data/index.ts:814:13                     
-CraftingToolGroup        type       src/renderer/src/types/data/index.ts:815:13                     
-CraftingData             type       src/renderer/src/types/data/index.ts:816:13                     
-Disease                  type       src/renderer/src/types/data/index.ts:817:13                     
-EncounterBudgets         type       src/renderer/src/types/data/index.ts:818:13                     
-TreasureTables           type       src/renderer/src/types/data/index.ts:819:13                     
-IndividualTreasureEntry  type       src/renderer/src/types/data/index.ts:820:13                     
-HoardTreasureEntry       type       src/renderer/src/types/data/index.ts:821:13                     
-RandomTables             type       src/renderer/src/types/data/index.ts:822:13                     
-ChaseTables              type       src/renderer/src/types/data/index.ts:823:13                     
-NpcNames                 type       src/renderer/src/types/data/index.ts:824:13                     
-NpcNameSet               type       src/renderer/src/types/data/index.ts:825:13                     
-SoundAsset               type       src/renderer/src/types/data/index.ts:826:13                     
-SoundCategory            type       src/renderer/src/types/data/index.ts:827:13                     
-FeatData5e               type       src/renderer/src/types/data/index.ts:828:13                     
-EncounterPresetMonster   type       src/renderer/src/types/data/index.ts:829:13                     
-NpcTraitTables           type       src/renderer/src/types/data/index.ts:830:13                     
-SpellSlotTable           type       src/renderer/src/types/data/index.ts:831:13                     
-AnnouncementPayload      type       src/renderer/src/network/types.ts:3:3                           
-BanPayload               type       src/renderer/src/network/types.ts:4:3                           
-BuyItemPayload           type       src/renderer/src/network/types.ts:5:3                           
-CharacterSelectPayload   type       src/renderer/src/network/types.ts:6:3                           
-CharacterUpdatePayload   type       src/renderer/src/network/types.ts:7:3                           
-ChatFilePayload          type       src/renderer/src/network/types.ts:8:3                           
-ChatPayload              type       src/renderer/src/network/types.ts:9:3                           
-ChatTimeoutPayload       type       src/renderer/src/network/types.ts:10:3                          
-CoDMPayload              type       src/renderer/src/network/types.ts:11:3                          
-ColorChangePayload       type       src/renderer/src/network/types.ts:12:3                          
-DeafenTogglePayload      type       src/renderer/src/network/types.ts:14:3                          
-DiceResultPayload        type       src/renderer/src/network/types.ts:15:3                          
-DiceRevealPayload        type       src/renderer/src/network/types.ts:16:3                          
-DiceRoll3dPayload        type       src/renderer/src/network/types.ts:17:3                          
-DiceRollHiddenPayload    type       src/renderer/src/network/types.ts:18:3                          
-DiceRollPayload          type       src/renderer/src/network/types.ts:19:3                          
-HaggleRequestPayload     type       src/renderer/src/network/types.ts:24:3                          
-HaggleResponsePayload    type       src/renderer/src/network/types.ts:25:3                          
-HandoutPayload           type       src/renderer/src/network/types.ts:26:3                          
-HandoutSharePayload      type       src/renderer/src/network/types.ts:27:3                          
-InitiativeUpdatePayload  type       src/renderer/src/network/types.ts:28:3                          
-KickPayload              type       src/renderer/src/network/types.ts:30:3                          
-LootAwardPayload         type       src/renderer/src/network/types.ts:31:3                          
-MapPingPayload           type       src/renderer/src/network/types.ts:33:3                          
-MoveDeclarePayload       type       src/renderer/src/network/types.ts:35:3                          
-MuteTogglePayload        type       src/renderer/src/network/types.ts:36:3                          
-NarrationPayload         type       src/renderer/src/network/types.ts:37:3                          
-PlayAmbientPayload       type       src/renderer/src/network/types.ts:39:3                          
-PlaySoundPayload         type       src/renderer/src/network/types.ts:40:3                          
-RollRequestPayload       type       src/renderer/src/network/types.ts:41:3                          
-RollResultPayload        type       src/renderer/src/network/types.ts:42:3                          
-SellItemPayload          type       src/renderer/src/network/types.ts:43:3                          
-ShopUpdatePayload        type       src/renderer/src/network/types.ts:44:3                          
-StateUpdatePayload       type       src/renderer/src/network/types.ts:46:3                          
-StopAmbientPayload       type       src/renderer/src/network/types.ts:47:3                          
-TimeRequestPayload       type       src/renderer/src/network/types.ts:48:3                          
-TimerStartPayload        type       src/renderer/src/network/types.ts:49:3                          
-TimeSharePayload         type       src/renderer/src/network/types.ts:50:3                          
-TimeSyncPayload          type       src/renderer/src/network/types.ts:51:3                          
-TurnEndPayload           type       src/renderer/src/network/types.ts:53:3                          
-TypingPayload            type       src/renderer/src/network/types.ts:54:3                          
-WhisperPayload           type       src/renderer/src/network/types.ts:55:3                          
-WhisperPlayerPayload     type       src/renderer/src/network/types.ts:56:3                          
-XpAwardPayload           type       src/renderer/src/network/types.ts:57:3                          
-NetworkMap               type       src/renderer/src/network/types.ts:65:3                          
-ShopItemCategory         type       src/renderer/src/network/types.ts:68:3                          
-ShopItemRarity           type       src/renderer/src/network/types.ts:69:3                          
-SidebarPanel             type       src/renderer/src/types/game-state.ts:221:13                     
-SessionLogEntry          type       src/renderer/src/stores/use-game-store.ts:3:15                  
-DmAlert                  interface  src/renderer/src/components/game/overlays/DmAlertTray.tsx:3:18  
-SyncStateAccessors       interface  src/renderer/src/network/host-state-sync.ts:14:18               
-ChatPayload              interface  src/renderer/src/network/message-types.ts:92:18                 
-WhisperPayload           interface  src/renderer/src/network/message-types.ts:99:18                 
-DiceRollPayload          interface  src/renderer/src/network/message-types.ts:105:18                
-DiceResultPayload        interface  src/renderer/src/network/message-types.ts:110:18                
-StateUpdatePayload       interface  src/renderer/src/network/message-types.ts:120:18                
-CharacterSelectPayload   interface  src/renderer/src/network/message-types.ts:143:18                
-InitiativeUpdatePayload  interface  src/renderer/src/network/message-types.ts:149:18                
-KickPayload              interface  src/renderer/src/network/message-types.ts:160:18                
-MuteTogglePayload        interface  src/renderer/src/network/message-types.ts:165:18                
-DeafenTogglePayload      interface  src/renderer/src/network/message-types.ts:170:18                
-CharacterUpdatePayload   interface  src/renderer/src/network/message-types.ts:185:18                
-ShopUpdatePayload        interface  src/renderer/src/network/message-types.ts:191:18                
-BuyItemPayload           interface  src/renderer/src/network/message-types.ts:196:18                
-SellItemPayload          interface  src/renderer/src/network/message-types.ts:202:18                
-BanPayload               interface  src/renderer/src/network/message-types.ts:207:18                
-ChatTimeoutPayload       interface  src/renderer/src/network/message-types.ts:212:18                
-CoDMPayload              interface  src/renderer/src/network/message-types.ts:217:18                
-ColorChangePayload       interface  src/renderer/src/network/message-types.ts:222:18                
-ChatFilePayload          interface  src/renderer/src/network/message-types.ts:226:18                
-TimerStartPayload        interface  src/renderer/src/network/message-types.ts:243:18                
-WhisperPlayerPayload     interface  src/renderer/src/network/message-types.ts:248:18                
-TimeRequestPayload       interface  src/renderer/src/network/message-types.ts:254:18                
-TimeSharePayload         interface  src/renderer/src/network/message-types.ts:259:18                
-TimeSyncPayload          interface  src/renderer/src/network/message-types.ts:265:18                
-RollRequestPayload       interface  src/renderer/src/network/message-types.ts:269:18                
-RollResultPayload        interface  src/renderer/src/network/message-types.ts:280:18                
-LootAwardPayload         interface  src/renderer/src/network/message-types.ts:290:18                
-XpAwardPayload           interface  src/renderer/src/network/message-types.ts:296:18                
-HandoutPayload           interface  src/renderer/src/network/message-types.ts:302:18                
-HandoutSharePayload      interface  src/renderer/src/network/message-types.ts:310:18                
-AnnouncementPayload      interface  src/renderer/src/network/message-types.ts:314:18                
-NarrationPayload         interface  src/renderer/src/network/message-types.ts:319:18                
-MapPingPayload           interface  src/renderer/src/network/message-types.ts:324:18                
-DiceRoll3dPayload        interface  src/renderer/src/network/message-types.ts:331:18                
-DiceRollHiddenPayload    interface  src/renderer/src/network/message-types.ts:341:18                
-DiceRevealPayload        interface  src/renderer/src/network/message-types.ts:348:18                
-TurnEndPayload           interface  src/renderer/src/network/message-types.ts:356:18                
-MoveDeclarePayload       interface  src/renderer/src/network/message-types.ts:360:18                
-TypingPayload            interface  src/renderer/src/network/message-types.ts:369:18                
-HaggleRequestPayload     interface  src/renderer/src/network/message-types.ts:373:18                
-HaggleResponsePayload    interface  src/renderer/src/network/message-types.ts:382:18                
-PlaySoundPayload         interface  src/renderer/src/network/message-types.ts:390:18                
-PlayAmbientPayload       interface  src/renderer/src/network/message-types.ts:394:18                
-StopAmbientPayload       type       src/renderer/src/network/message-types.ts:399:13                
-Disease                  interface  src/renderer/src/types/dm-toolbox.ts:76:18                      
-Settlement               interface  src/renderer/src/types/dm-toolbox.ts:106:18                     
-GameSystemConfig         interface  src/renderer/src/types/game-system.ts:3:18                      
-BastionOrderType         type       src/renderer/src/types/bastion.ts:5:13                          
-FacilitySpace            type       src/renderer/src/types/bastion.ts:6:13                          
-BasicFacilityType        type       src/renderer/src/types/bastion.ts:7:13                          
-SpecialFacilityType      type       src/renderer/src/types/bastion.ts:10:13                         
-PrerequisiteType         type       src/renderer/src/types/bastion.ts:61:13                         
-FacilityPrerequisite     interface  src/renderer/src/types/bastion.ts:74:18                         
-BasicFacility            interface  src/renderer/src/types/bastion.ts:83:18                         
-SpecialFacility          interface  src/renderer/src/types/bastion.ts:91:18                         
-MenagerieCreature        interface  src/renderer/src/types/bastion.ts:112:18                        
-BastionDefender          interface  src/renderer/src/types/bastion.ts:121:18                        
-BastionTurn              interface  src/renderer/src/types/bastion.ts:131:18                        
-TurnOrder                interface  src/renderer/src/types/bastion.ts:143:18                        
-ConstructionProject      interface  src/renderer/src/types/bastion.ts:157:18                        
-DefensiveWalls           interface  src/renderer/src/types/bastion.ts:174:18                        
-InGameTime               interface  src/renderer/src/types/bastion.ts:181:18                        
-Bastion                  interface  src/renderer/src/types/bastion.ts:189:18                        
-BasicFacilityDef         interface  src/renderer/src/types/bastion.ts:209:18                        
-FacilityOrderOption      interface  src/renderer/src/types/bastion.ts:215:18                        
-FacilityCharm            interface  src/renderer/src/types/bastion.ts:224:18                        
-SpecialFacilityDef       interface  src/renderer/src/types/bastion.ts:230:18                        
-BastionFacilitiesData    interface  src/renderer/src/types/bastion.ts:248:18                        
-MountStatBlock           interface  src/renderer/src/types/mount.ts:3:18                            
-VehicleStatBlock         interface  src/renderer/src/types/mount.ts:29:18                           
-MountedCombatState       interface  src/renderer/src/types/mount.ts:54:18                           
-GameStoreState           type       src/renderer/src/stores/game/index.ts:148:15                    
-SessionLogEntry          type       src/renderer/src/stores/game/index.ts:148:31                    
-Dice3dRollEvent          type       src/renderer/src/components/game/dice3d/index.ts:1:15           
-DiceTrayEntry            type       src/renderer/src/components/game/dice3d/index.ts:1:32           
-CreateDieOptions         type       src/renderer/src/components/game/dice3d/index.ts:3:15           
-DiceParsed               interface  src/renderer/src/services/dice/dice-engine.ts:3:18              
-DiceRollResult           interface  src/renderer/src/services/dice/dice-engine.ts:9:18              
-NetworkState             type       src/renderer/src/stores/use-network-store.ts:3:15               
-LobbyPlayer              interface  src/renderer/src/stores/use-lobby-store.ts:14:18                
-ChatMessage              interface  src/renderer/src/stores/use-lobby-store.ts:31:18                
-WildShapeTier            interface  src/renderer/src/types/companion.ts:45:18                       
-DeathSaveState           interface  src/renderer/src/services/combat/death-mechanics.ts:63:18       
-DeathSaveResult          interface  src/renderer/src/services/combat/death-mechanics.ts:68:18       
-SimulationCallbacks      interface  src/renderer/src/components/game/dice3d/dice-physics.ts:35:18   
-Dice3dRollEvent          interface  src/renderer/src/components/game/dice3d/DiceOverlay.tsx:8:18    
-DiceTrayEntry            interface  src/renderer/src/components/game/dice3d/DiceOverlay.tsx:18:18   
-Configuration hints (1)
+Unused files (10)
+src/renderer/src/constants/index.ts                        
+src/renderer/src/network/index.ts                          
+src/renderer/src/types/index.ts                            
+src/renderer/src/types/user.ts                             
+src/renderer/src/components/library/HomebrewCreateModal.tsx
+src/renderer/src/components/library/index.ts               
+src/renderer/src/components/library/LibraryCategoryGrid.tsx
+src/renderer/src/components/library/LibraryDetailModal.tsx 
+src/renderer/src/components/library/LibraryItemList.tsx    
+src/renderer/src/components/library/LibrarySidebar.tsx     
+Unused exports (138)
+generateSessionSummary     aiService          function  src/main/ai/ai-service.ts:617:23                                
+describeChange             aiService                    src/main/ai/ai-service.ts:653:26                                
+isNegativeChange           aiService                    src/main/ai/ai-service.ts:653:42                                
+getSearchEngine                               function  src/main/ai/context-builder.ts:102:17                           
+ALL_IS_WELL_FLAVORS                                     src/renderer/src/data/bastion-events.ts:108:12                  
+GUEST_TABLE                                             src/renderer/src/data/bastion-events.ts:109:12                  
+TREASURE_TABLE                                          src/renderer/src/data/bastion-events.ts:110:12                  
+BASTION_EVENTS_TABLE                                    src/renderer/src/data/bastion-events.ts:111:12                  
+GAMING_HALL_WINNINGS                                    src/renderer/src/data/bastion-events.ts:112:12                  
+MENAGERIE_CREATURES                                     src/renderer/src/data/bastion-events.ts:113:12                  
+CREATURE_COSTS_BY_CR                                    src/renderer/src/data/bastion-events.ts:114:12                  
+EXPERT_TRAINERS                                         src/renderer/src/data/bastion-events.ts:115:12                  
+PUB_SPECIALS                                            src/renderer/src/data/bastion-events.ts:116:12                  
+SAMPLE_GUILDS                                           src/renderer/src/data/bastion-events.ts:117:12                  
+EMERALD_ENCLAVE_CREATURES                               src/renderer/src/data/bastion-events.ts:118:12                  
+FORGE_CONSTRUCTS                                        src/renderer/src/data/bastion-events.ts:119:12                  
+PRIMORDIAL_DIALECTS                                     src/renderer/src/types/character-common.ts:82:14                
+getBuffs5e                                    function  src/renderer/src/data/conditions.ts:41:23                       
+setSignalingServer                            function  src/renderer/src/network/peer-manager.ts:39:17                  
+resetSignalingServer                          function  src/renderer/src/network/peer-manager.ts:49:17                  
+NetworkMessageEnvelopeSc…                               src/renderer/src/network/schemas.ts:540:10                      
+PAYLOAD_SCHEMAS                                         src/renderer/src/network/schemas.ts:540:40                      
+AnyPayloadSchema                                        src/renderer/src/network/schemas.ts:540:57                      
+unregisterSystem                              function  src/renderer/src/systems/registry.ts:14:17                      
+getAllSystems                                 function  src/renderer/src/systems/registry.ts:26:17                      
+FACILITY_SPACE_SQUARES                                  src/renderer/src/types/bastion.ts:255:14                        
+ENLARGE_COSTS                                           src/renderer/src/types/bastion.ts:267:14                        
+DEFAULT_OPTIONAL_RULES                                  src/renderer/src/types/campaign.ts:114:14                       
+DARKVISION_SPECIES                                      src/renderer/src/types/map.ts:48:14                             
+cdnProvider                                             src/renderer/src/services/data-provider.ts:68:10                
+resolveDataPath                               function  src/renderer/src/services/data-provider.ts:91:17                
+getHeritageOptions5e                          function  src/renderer/src/services/data-provider.ts:527:23               
+load5eSoundEvents                             function  src/renderer/src/services/data-provider.ts:820:23               
+load5eSpeciesSpells                           function  src/renderer/src/services/data-provider.ts:824:23               
+load5eClassResources                          function  src/renderer/src/services/data-provider.ts:828:23               
+load5eSpeciesResources                        function  src/renderer/src/services/data-provider.ts:832:23               
+load5eAbilityScoreConfig                      function  src/renderer/src/services/data-provider.ts:836:23               
+load5ePresetIcons                             function  src/renderer/src/services/data-provider.ts:840:23               
+load5eKeyboardShortcuts                       function  src/renderer/src/services/data-provider.ts:844:23               
+load5eThemes                                  function  src/renderer/src/services/data-provider.ts:848:23               
+load5eDiceColors                              function  src/renderer/src/services/data-provider.ts:852:23               
+load5eDmTabs                                  function  src/renderer/src/services/data-provider.ts:856:23               
+load5eNotificationTempla…                     function  src/renderer/src/services/data-provider.ts:860:23               
+load5eBuiltInMaps                             function  src/renderer/src/services/data-provider.ts:864:23               
+load5eSessionZeroConfig                       function  src/renderer/src/services/data-provider.ts:868:23               
+load5eDiceTypes                               function  src/renderer/src/services/data-provider.ts:872:23               
+load5eLightingTravel                          function  src/renderer/src/services/data-provider.ts:876:23               
+load5eCurrencyConfig                          function  src/renderer/src/services/data-provider.ts:880:23               
+load5eModeration                              function  src/renderer/src/services/data-provider.ts:884:23               
+load5eAdventureSeeds                          function  src/renderer/src/services/data-provider.ts:890:23               
+load5eCreatureTypes                           function  src/renderer/src/services/data-provider.ts:894:23               
+load5eAmbientTracks                           function  src/renderer/src/services/data-provider.ts:898:23               
+load5eLanguageD12Table                        function  src/renderer/src/services/data-provider.ts:902:23               
+load5eRarityOptions                           function  src/renderer/src/services/data-provider.ts:906:23               
+getEffectiveShortcuts                         function  src/renderer/src/services/keyboard-shortcuts.ts:61:17           
+loadSavedTheme                                function  src/renderer/src/services/theme-manager.ts:74:17                
+SummaryCard                                             src/renderer/src/pages/bastion/BastionTabs.tsx:3:23             
+LIFESTYLE_COSTS                                         src/renderer/src/services/character/stat-calculator-5e.ts:25:3  
+TOOL_SKILL_INTERACTIONS                                 src/renderer/src/services/character/stat-calculator-5e.ts:27:3  
+SPELLCASTING_ABILITY_MAP                                src/renderer/src/services/character/spell-data.ts:11:14         
+CANTRIPS_KNOWN                                          src/renderer/src/services/character/spell-data.ts:76:12         
+getSpellcastingAbility                        function  src/renderer/src/services/character/spell-data.ts:342:17        
+getWarlockMaxSpellLevel                       function  src/renderer/src/services/character/spell-data.ts:394:17        
+applyDamageToToken                                      src/renderer/src/services/combat/attack-resolver.ts:36:30       
+buildAttackSummary                                      src/renderer/src/services/combat/attack-resolver.ts:36:50       
+doubleDiceInFormula                                     src/renderer/src/services/combat/attack-resolver.ts:36:70       
+rollDamage                                              src/renderer/src/services/combat/attack-resolver.ts:36:91       
+resolveUnarmedStrikeBase                                src/renderer/src/services/combat/attack-resolver.ts:39:10       
+resolveUnarmedStrike                          function  src/renderer/src/services/combat/attack-resolver.ts:141:17      
+rollForDm                                     function  src/renderer/src/services/dice/dice-service.ts:178:17           
+revealRoll                                    function  src/renderer/src/services/dice/dice-service.ts:208:17           
+shouldTriggerLairAction                                 src/renderer/src/services/combat/combat-resolver.ts:47:10       
+spendLegendaryAction                                    src/renderer/src/services/combat/combat-resolver.ts:47:35       
+useLegendaryResistance                                  src/renderer/src/services/combat/combat-resolver.ts:47:57       
+resolveAttack                                 function  src/renderer/src/services/combat/combat-resolver.ts:304:17      
+resolveSavingThrow                            function  src/renderer/src/services/combat/combat-resolver.ts:593:17      
+resolveGrapple                                function  src/renderer/src/services/combat/combat-resolver.ts:710:17      
+resolveShove                                  function  src/renderer/src/services/combat/combat-resolver.ts:768:17      
+getEffectiveSpeed                             function  src/renderer/src/services/combat/combat-rules.ts:256:17         
+onDiceTrayUpdate                                        src/renderer/src/components/game/dice3d/index.ts:2:34           
+registerCustomSound                           function  src/renderer/src/services/sound-manager.ts:270:17               
+removeCustomSound                             function  src/renderer/src/services/sound-manager.ts:277:17               
+getCustomSounds                               function  src/renderer/src/services/sound-manager.ts:284:17               
+reinit                                        function  src/renderer/src/services/sound-manager.ts:291:17               
+playSpellSound                                function  src/renderer/src/services/sound-manager.ts:346:17               
+getAllSoundEvents                             function  src/renderer/src/services/sound-manager.ts:479:17               
+preloadEssential                              function  src/renderer/src/services/sound-manager.ts:495:17               
+stopAllCustomAudio                            function  src/renderer/src/services/sound-manager.ts:532:17               
+importDndBeyondCharacter                                src/renderer/src/services/io/import-export.ts:280:10            
+_createSolidMaterial                          function  src/renderer/src/components/game/dice3d/dice-textures.ts:96:17  
+clearDmAlerts                                 function  src/renderer/src/components/game/overlays/DmAlertTray.tsx:24:17 
+SpellcastingSection                           function  …er/src/components/game/sidebar/StatBlockFormSections.tsx:122:17
+EmptyState                                              src/renderer/src/components/ui/index.ts:6:21                    
+Skeleton                                                src/renderer/src/components/ui/index.ts:11:21                   
+announce                                      function  src/renderer/src/components/ui/ScreenReaderAnnouncer.tsx:18:17  
+notify                     NotificationServ…  function  src/renderer/src/services/notification-service.ts:102:17        
+setEventEnabled            NotificationServ…  function  src/renderer/src/services/notification-service.ts:137:17        
+setSoundEnabled            NotificationServ…  function  src/renderer/src/services/notification-service.ts:153:17        
+setOnlyWhenBlurred         NotificationServ…  function  src/renderer/src/services/notification-service.ts:159:17        
+isSupported                NotificationServ…  function  src/renderer/src/services/notification-service.ts:165:17        
+RECONNECT_DELAY_MS                                      src/renderer/src/constants/app-constants.ts:3:14                
+MAX_READ_FILE_SIZE                                      src/renderer/src/constants/app-constants.ts:25:14               
+MAX_WRITE_CONTENT_SIZE                                  src/renderer/src/constants/app-constants.ts:26:14               
+CharacterSelector                                       src/renderer/src/components/lobby/index.ts:1:21                 
+ChatInput                                               src/renderer/src/components/lobby/index.ts:2:21                 
+ChatPanel                                               src/renderer/src/components/lobby/index.ts:3:21                 
+PlayerCard                                              src/renderer/src/components/lobby/index.ts:5:21                 
+PlayerList                                              src/renderer/src/components/lobby/index.ts:6:21                 
+ReadyButton                                             src/renderer/src/components/lobby/index.ts:7:21                 
+AdventureSelector                                       src/renderer/src/components/campaign/index.ts:1:21              
+AudioStep                                               src/renderer/src/components/campaign/index.ts:2:21              
+DetailsStep                                             src/renderer/src/components/campaign/index.ts:4:21              
+MapConfigStep                                           src/renderer/src/components/campaign/index.ts:5:21              
+ReviewStep                                              src/renderer/src/components/campaign/index.ts:6:21              
+RulesStep                                               src/renderer/src/components/campaign/index.ts:7:21              
+SystemStep                                              src/renderer/src/components/campaign/index.ts:8:21              
+registerPluginDmAction                        function  src/renderer/src/services/game-action-executor.ts:114:17        
+unregisterPluginDmAction                      function  src/renderer/src/services/game-action-executor.ts:121:17        
+LIBRARY_GROUPS                                          src/renderer/src/types/library.ts:91:14                         
+getCategoryDef                                function  src/renderer/src/types/library.ts:202:17                        
+getAllCategories                              function  src/renderer/src/types/library.ts:210:17                        
+default                                       function  src/renderer/src/components/campaign/ReviewStep.tsx:39:25       
+default                                       function  src/renderer/src/components/campaign/RulesStep.tsx:28:25        
+default                                       function  src/renderer/src/components/ui/EmptyState.tsx:7:25              
+default                                       function  src/renderer/src/components/ui/Skeleton.tsx:6:25                
+InstalledModelList                            function  src/renderer/src/components/ui/OllamaModelList.tsx:70:17        
+AvailableModelList                            function  src/renderer/src/components/ui/OllamaModelList.tsx:214:17       
+MonsterStatBlockView                                    src/renderer/src/components/game/dm/index.ts:6:21               
+GeneralFeatPicker                             function  src/renderer/src/components/levelup/5e/AsiSelector5e.tsx:74:17  
+AsiAbilityPicker5e                            function  src/renderer/src/components/levelup/5e/AsiSelector5e.tsx:211:17 
+AsiSelector5e                                           src/renderer/src/components/levelup/5e/LevelSelectors5e.tsx:5:32
+GeneralFeatPicker                                       src/renderer/src/components/levelup/5e/LevelSelectors5e.tsx:5:68
+meetsPrerequisites                            function  src/renderer/src/components/levelup/5e/LevelUpConfirm5e.tsx:7:17
+CharacterMiniSheet                                      src/renderer/src/components/game/player/index.ts:2:21           
+ConditionTracker                                        src/renderer/src/components/game/player/index.ts:3:21           
+PlayerHUD                                               src/renderer/src/components/game/player/index.ts:4:21           
+ShopView                                                src/renderer/src/components/game/player/index.ts:5:21           
+SpellSlotTracker                                        src/renderer/src/components/game/player/index.ts:6:21           
+Unused exported types (246)
+ValidatedAiConfig                           type       src/shared/ipc-schemas.ts:26:13                                  
+ValidatedAiChatRequest                      type       src/shared/ipc-schemas.ts:27:13                                  
+FinalizedResponse                           interface  src/main/ai/ai-response-parser.ts:26:18                          
+AiStreamChunk                               interface  src/main/ai/types.ts:26:18                                       
+AiStreamDone                                interface  src/main/ai/types.ts:37:18                                       
+AiStreamError                               interface  src/main/ai/types.ts:51:18                                       
+AiIndexProgress                             interface  src/main/ai/types.ts:56:18                                       
+WebSearchRequest                            interface  src/main/ai/web-search.ts:11:18                                  
+WebSearchResult                             interface  src/main/ai/web-search.ts:15:18                                  
+AiConnectionStatus       aiService          type       src/main/ai/ai-service.ts:63:13                                  
+StreamResult             aiService          interface  src/main/ai/ai-service.ts:250:18                                 
+PendingWebSearchApprov…                     interface  src/main/ai/ai-stream-handler.ts:19:18                           
+FileReadRequest                             interface  src/main/ai/file-reader.ts:15:18                                 
+CharacterVersion                            interface  src/main/storage/character-storage.ts:81:18                      
+DmAction                                    type       src/main/ai/dm-actions.ts:8:13                                   
+OllamaStatus                                interface  src/main/ai/ollama-manager.ts:9:18                               
+VramInfo                                    interface  src/main/ai/ollama-manager.ts:15:18                              
+CuratedModel                                interface  src/main/ai/ollama-manager.ts:19:18                              
+PerformanceTier                             type       src/main/ai/ollama-manager.ts:27:13                              
+InstalledModelInfo                          interface  src/main/ai/ollama-manager.ts:37:18                              
+OllamaVersionInfo                           interface  src/main/ai/ollama-manager.ts:47:18                              
+BackupEntry                                 interface  src/main/storage/cloud-sync.ts:18:18                             
+SyncResult                                  interface  src/main/storage/cloud-sync.ts:26:18                             
+BastionEventResult                          interface  src/renderer/src/data/bastion-events.ts:32:18                    
+AttackEventResult                           interface  src/renderer/src/data/bastion-events.ts:39:18                    
+GamblingResult                              interface  src/renderer/src/data/bastion-events.ts:46:18                    
+TreasureResult                              interface  src/renderer/src/data/bastion-events.ts:53:18                    
+MenagerieCreatureEntry                      interface  src/renderer/src/data/bastion-events.ts:59:18                    
+ExpertTrainerEntry                          interface  src/renderer/src/data/bastion-events.ts:67:18                    
+PubSpecialEntry                             interface  src/renderer/src/data/bastion-events.ts:74:18                    
+GuildEntry                                  interface  src/renderer/src/data/bastion-events.ts:80:18                    
+EnclaveCreatureEntry                        interface  src/renderer/src/data/bastion-events.ts:85:18                    
+ForgeConstructEntry                         interface  src/renderer/src/data/bastion-events.ts:91:18                    
+HigherLevelEquipment                        interface  src/renderer/src/data/starting-equipment-table.ts:4:18           
+MasteryProperty                             interface  src/renderer/src/data/weapon-mastery.ts:3:18                     
+AnnouncementPayload                         type       src/renderer/src/network/types.ts:3:3                            
+BanPayload                                  type       src/renderer/src/network/types.ts:4:3                            
+BuyItemPayload                              type       src/renderer/src/network/types.ts:5:3                            
+ChatFilePayload                             type       src/renderer/src/network/types.ts:8:3                            
+CoDMPayload                                 type       src/renderer/src/network/types.ts:11:3                           
+ColorChangePayload                          type       src/renderer/src/network/types.ts:12:3                           
+DiceResultPayload                           type       src/renderer/src/network/types.ts:14:3                           
+DiceRevealPayload                           type       src/renderer/src/network/types.ts:15:3                           
+DiceRoll3dPayload                           type       src/renderer/src/network/types.ts:16:3                           
+DiceRollHiddenPayload                       type       src/renderer/src/network/types.ts:17:3                           
+DiceRollPayload                             type       src/renderer/src/network/types.ts:18:3                           
+HaggleRequestPayload                        type       src/renderer/src/network/types.ts:21:3                           
+HaggleResponsePayload                       type       src/renderer/src/network/types.ts:22:3                           
+HandoutPayload                              type       src/renderer/src/network/types.ts:23:3                           
+HandoutSharePayload                         type       src/renderer/src/network/types.ts:24:3                           
+InitiativeUpdatePayload                     type       src/renderer/src/network/types.ts:25:3                           
+KickPayload                                 type       src/renderer/src/network/types.ts:27:3                           
+LootAwardPayload                            type       src/renderer/src/network/types.ts:28:3                           
+MapPingPayload                              type       src/renderer/src/network/types.ts:30:3                           
+MoveDeclarePayload                          type       src/renderer/src/network/types.ts:32:3                           
+RollRequestPayload                          type       src/renderer/src/network/types.ts:37:3                           
+RollResultPayload                           type       src/renderer/src/network/types.ts:38:3                           
+SellItemPayload                             type       src/renderer/src/network/types.ts:39:3                           
+StateUpdatePayload                          type       src/renderer/src/network/types.ts:42:3                           
+StopAmbientPayload                          type       src/renderer/src/network/types.ts:43:3                           
+TurnEndPayload                              type       src/renderer/src/network/types.ts:49:3                           
+TypingPayload                               type       src/renderer/src/network/types.ts:50:3                           
+WhisperPayload                              type       src/renderer/src/network/types.ts:51:3                           
+XpAwardPayload                              type       src/renderer/src/network/types.ts:53:3                           
+NetworkMap                                  type       src/renderer/src/network/types.ts:61:3                           
+WhisperPayload                              interface  src/renderer/src/network/message-types.ts:111:18                 
+DiceRollPayload                             interface  src/renderer/src/network/message-types.ts:117:18                 
+DiceResultPayload                           interface  src/renderer/src/network/message-types.ts:122:18                 
+StateUpdatePayload                          interface  src/renderer/src/network/message-types.ts:132:18                 
+InitiativeUpdatePayload                     interface  src/renderer/src/network/message-types.ts:161:18                 
+KickPayload                                 interface  src/renderer/src/network/message-types.ts:172:18                 
+BuyItemPayload                              interface  src/renderer/src/network/message-types.ts:188:18                 
+SellItemPayload                             interface  src/renderer/src/network/message-types.ts:194:18                 
+BanPayload                                  interface  src/renderer/src/network/message-types.ts:199:18                 
+CoDMPayload                                 interface  src/renderer/src/network/message-types.ts:209:18                 
+ColorChangePayload                          interface  src/renderer/src/network/message-types.ts:214:18                 
+ChatFilePayload                             interface  src/renderer/src/network/message-types.ts:218:18                 
+RollRequestPayload                          interface  src/renderer/src/network/message-types.ts:261:18                 
+RollResultPayload                           interface  src/renderer/src/network/message-types.ts:272:18                 
+LootAwardPayload                            interface  src/renderer/src/network/message-types.ts:282:18                 
+XpAwardPayload                              interface  src/renderer/src/network/message-types.ts:288:18                 
+HandoutPayload                              interface  src/renderer/src/network/message-types.ts:294:18                 
+HandoutSharePayload                         interface  src/renderer/src/network/message-types.ts:302:18                 
+AnnouncementPayload                         interface  src/renderer/src/network/message-types.ts:306:18                 
+MapPingPayload                              interface  src/renderer/src/network/message-types.ts:316:18                 
+DiceRoll3dPayload                           interface  src/renderer/src/network/message-types.ts:323:18                 
+DiceRollHiddenPayload                       interface  src/renderer/src/network/message-types.ts:333:18                 
+DiceRevealPayload                           interface  src/renderer/src/network/message-types.ts:340:18                 
+TurnEndPayload                              interface  src/renderer/src/network/message-types.ts:348:18                 
+MoveDeclarePayload                          interface  src/renderer/src/network/message-types.ts:352:18                 
+TypingPayload                               interface  src/renderer/src/network/message-types.ts:361:18                 
+HaggleRequestPayload                        interface  src/renderer/src/network/message-types.ts:365:18                 
+HaggleResponsePayload                       interface  src/renderer/src/network/message-types.ts:374:18                 
+StopAmbientPayload                          type       src/renderer/src/network/message-types.ts:391:13                 
+ReactionPromptPayload                       interface  src/renderer/src/network/message-types.ts:393:18                 
+ReactionResponsePayload                     interface  src/renderer/src/network/message-types.ts:407:18                 
+ValidationResult                            type       src/renderer/src/network/schemas.ts:504:13                       
+Toast                                       interface  src/renderer/src/hooks/use-toast.ts:5:18                         
+BastionState                                type       src/renderer/src/stores/use-bastion-store.ts:3:15                
+HpChoice                                    type       src/renderer/src/stores/use-level-up-store.ts:2:15               
+NetworkState                                type       src/renderer/src/stores/use-network-store.ts:3:15                
+BastionFacilitiesData                       interface  src/renderer/src/types/bastion.ts:248:18                         
+OptionalRules                               interface  src/renderer/src/types/campaign.ts:109:18                        
+DateParts                                   interface  src/renderer/src/utils/calendar-utils.ts:5:18                    
+CarryingCapacity                            interface  src/renderer/src/utils/weight-calculator.ts:3:18                 
+EncumbranceStatus                           type       src/renderer/src/utils/weight-calculator.ts:8:13                 
+AiRendererAction                            type       src/renderer/src/services/ai-renderer-actions.ts:14:13           
+SunPosition                                 interface  src/renderer/src/services/calendar-service.ts:11:18              
+TimeBreakdown                               interface  src/renderer/src/services/calendar-service.ts:46:18              
+WeatherOverride                             interface  src/renderer/src/services/calendar-service.ts:487:18             
+Weather                                     interface  src/renderer/src/services/calendar-types.ts:16:18                
+SunPosition                                 type       src/renderer/src/services/calendar-weather.ts:7:15               
+MoonPhase                                   type       src/renderer/src/services/calendar-weather.ts:7:28               
+TimeBreakdown                               type       src/renderer/src/services/calendar-weather.ts:7:39               
+WeaponMasteryEntry                          interface  src/renderer/src/services/data-provider.ts:679:18                
+VariantItemEntry                            interface  src/renderer/src/services/data-provider.ts:704:18                
+LightSourceEntry                            interface  src/renderer/src/services/data-provider.ts:713:18                
+ChatCommand                                 type       src/renderer/src/services/chat-commands.ts:6:15                  
+CommandResult                               type       src/renderer/src/services/chat-commands.ts:6:44                  
+ComplicationEntry                           interface  src/renderer/src/services/downtime-service.ts:76:18              
+ComplicationTables                          interface  src/renderer/src/services/downtime-service.ts:82:18              
+ChatCommand                                 type       src/renderer/src/services/chat-commands/index.ts:228:15          
+CommandContext                              type       src/renderer/src/services/chat-commands/index.ts:228:28          
+CommandResult                               type       src/renderer/src/services/chat-commands/index.ts:228:44          
+TimelineItemType                            type       src/renderer/src/services/timeline-builder.ts:3:13               
+TimelineItem                                interface  src/renderer/src/services/timeline-builder.ts:5:18               
+WeatherEffect                               interface  src/renderer/src/services/weather-mechanics.ts:3:18              
+BastionModalsProps                          type       src/renderer/src/pages/bastion/BastionModals.tsx:4:15            
+BastionState                                type       src/renderer/src/stores/bastion-store/index.ts:89:15             
+GameStoreState                              type       src/renderer/src/stores/game/index.ts:176:15                     
+ReactionPromptState                         interface  src/renderer/src/stores/game/types.ts:344:18                     
+HpChoice                                    type       src/renderer/src/stores/level-up/index.ts:14:15                  
+BuilderState                                type       src/renderer/src/stores/builder/index.ts:20:35                   
+NetworkState                                interface  src/renderer/src/stores/network-store/types.ts:3:18              
+EncumbranceResult                           type       src/renderer/src/services/character/stat-calculator-5e.ts:29:15  
+LifestyleLevel                              type       src/renderer/src/services/character/stat-calculator-5e.ts:29:34  
+ToolSkillInteraction                        type       src/renderer/src/services/character/stat-calculator-5e.ts:29:50  
+DerivedStats5e                              interface  src/renderer/src/services/character/stat-calculator-5e.ts:42:18  
+ExpertiseGrant                              interface  src/renderer/src/services/character/build-tree-5e.ts:29:18       
+WildShapeTier                               interface  src/renderer/src/types/companion.ts:45:18                        
+MulticlassEligibility                       interface  src/renderer/src/services/character/multiclass-advisor.ts:10:18  
+MulticlassAdvice                            interface  src/renderer/src/services/character/multiclass-advisor.ts:16:18  
+ShortRestResult                             interface  src/renderer/src/services/character/rest-service-5e.ts:45:18     
+LongRestPreview                             interface  src/renderer/src/services/character/rest-service-5e.ts:53:18     
+LongRestResult                              interface  src/renderer/src/services/character/rest-service-5e.ts:70:18     
+SpellDiversityResult                        interface  …nderer/src/services/character/spell-preparation-analyzer.ts:1:18
+ConcentrationConflict                       interface  …nderer/src/services/character/spell-preparation-analyzer.ts:7:18
+RitualSuggestion                            interface  …derer/src/services/character/spell-preparation-analyzer.ts:12:18
+SpellPrepAnalysis                           interface  …derer/src/services/character/spell-preparation-analyzer.ts:18:18
+AttackOptions                               type       src/renderer/src/services/combat/attack-resolver.ts:43:15        
+AttackResult                                type       src/renderer/src/services/combat/attack-resolver.ts:43:30        
+AoETargetResult                             interface  src/renderer/src/services/combat/aoe-targeting.ts:29:18          
+DeathSaveResult                             type       src/renderer/src/services/combat/combat-resolver.ts:41:8         
+DeathSaveState                              type       src/renderer/src/services/combat/combat-resolver.ts:42:8         
+AttackType                                  type       src/renderer/src/services/combat/combat-resolver.ts:58:13        
+AttackRequest                               interface  src/renderer/src/services/combat/combat-resolver.ts:60:18        
+AttackResult                                interface  src/renderer/src/services/combat/combat-resolver.ts:108:18       
+SavingThrowRequest                          interface  src/renderer/src/services/combat/combat-resolver.ts:143:18       
+SavingThrowResult                           interface  src/renderer/src/services/combat/combat-resolver.ts:186:18       
+GrappleRequest                              interface  src/renderer/src/services/combat/combat-resolver.ts:203:18       
+GrappleResult                               interface  src/renderer/src/services/combat/combat-resolver.ts:218:18       
+ShoveRequest                                interface  src/renderer/src/services/combat/combat-resolver.ts:229:18       
+ShoveResult                                 type       src/renderer/src/services/combat/combat-resolver.ts:246:13       
+ExtractedCondition                          interface  src/renderer/src/services/combat/condition-extractor.ts:6:18     
+DeathSaveState                              interface  src/renderer/src/services/combat/death-mechanics.ts:63:18        
+DeathSaveResult                             interface  src/renderer/src/services/combat/death-mechanics.ts:68:18        
+GrappleResult                               interface  src/renderer/src/services/combat/grapple-shove-resolver.ts:20:18 
+ShoveResult                                 type       src/renderer/src/services/combat/grapple-shove-resolver.ts:40:13 
+DiceParsed                                  interface  src/renderer/src/services/dice/dice-engine.ts:3:18               
+DiceRollResult                              interface  src/renderer/src/services/dice/dice-engine.ts:9:18               
+Dice3dRollEvent                             type       src/renderer/src/components/game/dice3d/index.ts:1:15            
+DiceTrayEntry                               type       src/renderer/src/components/game/dice3d/index.ts:1:32            
+CreateDieOptions                            type       src/renderer/src/components/game/dice3d/index.ts:3:15            
+AutoSaveConfig           AutoSave           interface  src/renderer/src/services/io/auto-save.ts:10:18                  
+SaveVersion              AutoSave           interface  src/renderer/src/services/io/auto-save.ts:16:18                  
+EntityType                                  type       src/renderer/src/services/io/entity-io.ts:16:13                  
+ExportEnvelope                              interface  src/renderer/src/services/io/entity-io.ts:30:18                  
+ImportResult                                interface  src/renderer/src/services/io/entity-io.ts:128:18                 
+BackupStats                                 interface  src/renderer/src/services/io/import-export.ts:160:18             
+LoadedPlugin                                interface  src/renderer/src/services/plugin-system/plugin-registry.ts:11:18 
+PluginContextMenuAction                     interface  src/renderer/src/services/plugin-system/ui-extensions.ts:8:18    
+PluginBottomBarWidget                       interface  src/renderer/src/services/plugin-system/ui-extensions.ts:16:18   
+MapPing                                     interface  src/renderer/src/services/map/map-utils.ts:98:18                 
+PathResult                                  interface  src/renderer/src/services/map/pathfinder.ts:23:18                
+LitArea                                     interface  src/renderer/src/services/map/raycast-visibility.ts:190:18       
+PartyVisionResult                           interface  src/renderer/src/services/map/vision-computation.ts:21:18        
+Point                                       type       src/renderer/src/services/map/vision-computation.ts:178:28       
+Segment                                     type       src/renderer/src/services/map/vision-computation.ts:178:35       
+VisibilityPolygon                           type       src/renderer/src/services/map/vision-computation.ts:178:44       
+SimulationCallbacks                         interface  src/renderer/src/components/game/dice3d/dice-physics.ts:35:18    
+Dice3dRollEvent                             interface  src/renderer/src/components/game/dice3d/DiceOverlay.tsx:8:18     
+DmAlert                                     interface  src/renderer/src/components/game/overlays/DmAlertTray.tsx:3:18   
+BuilderSpellsInput                          interface  src/renderer/src/stores/builder/slices/builder-spells.ts:52:18   
+BastionFacilitiesData                       type       src/renderer/src/types/data/index.ts:5:15                        
+MonsterAction                               type       src/renderer/src/types/data/index.ts:7:15                        
+MonsterSpeed                                type       src/renderer/src/types/data/index.ts:7:30                        
+MonsterSpellcasting                         type       src/renderer/src/types/data/index.ts:7:44                        
+MonsterStatBlock                            type       src/renderer/src/types/data/index.ts:7:65                        
+MonsterTrait                                type       src/renderer/src/types/data/index.ts:7:83                        
+TrinketsFile                                type       src/renderer/src/types/data/index.ts:41:13                       
+ThemesFile                                  type       src/renderer/src/types/data/index.ts:57:13                       
+PresetDef                                   interface  …renderer/src/components/game/modals/dm-tools/shop-utils.ts:80:18
+NotificationEvent        NotificationServ…  type       src/renderer/src/services/notification-service.ts:8:13           
+DmAction                                    type       src/renderer/src/services/game-action-executor.ts:10:15          
+ExecutionFailure                            type       src/renderer/src/services/game-action-executor.ts:10:25          
+ExecutionResult                             type       src/renderer/src/services/game-action-executor.ts:10:43          
+GameStoreSnapshot                           type       src/renderer/src/services/game-action-executor.ts:10:60          
+Settlement                                  interface  src/renderer/src/types/dm-toolbox.ts:106:18                      
+MountStatBlock                              interface  src/renderer/src/types/mount.ts:3:18                             
+VehicleStatBlock                            interface  src/renderer/src/types/mount.ts:29:18                            
+MountedCombatState                          interface  src/renderer/src/types/mount.ts:54:18                            
+LibraryGroup                                type       src/renderer/src/types/library.ts:47:13                          
+LibraryGroupDef                             interface  src/renderer/src/types/library.ts:58:18                          
+LibraryCategoryDef                          interface  src/renderer/src/types/library.ts:64:18                          
+PerformanceTier                             type       src/renderer/src/components/ui/OllamaModelList.tsx:19:13         
+AbilityName                                 type       src/renderer/src/types/data/shared-enums.ts:6:13                 
+CreatureSize                                type       src/renderer/src/types/data/shared-enums.ts:37:13                
+WeaponMasteryProperty                       type       src/renderer/src/types/data/shared-enums.ts:45:13                
+ClassProficiencies                          interface  src/renderer/src/types/data/character-data-types.ts:67:18        
+ClassArmorTraining                          interface  src/renderer/src/types/data/character-data-types.ts:74:18        
+ClassWeaponProficiency                      interface  src/renderer/src/types/data/character-data-types.ts:78:18        
+ClassSkillProficiencies                     interface  src/renderer/src/types/data/character-data-types.ts:82:18        
+FeatureUsesPerRest                          interface  src/renderer/src/types/data/character-data-types.ts:122:18       
+FeatureSavingThrow                          interface  src/renderer/src/types/data/character-data-types.ts:128:18       
+FeatureGrantedSpell                         interface  src/renderer/src/types/data/character-data-types.ts:133:18       
+ClassFeature                                interface  src/renderer/src/types/data/character-data-types.ts:224:18       
+MountData                                   interface  src/renderer/src/types/data/equipment-data-types.ts:87:18        
+MountsFile                                  interface  src/renderer/src/types/data/equipment-data-types.ts:105:18       
+SpellAction                                 interface  src/renderer/src/types/data/spell-data-types.ts:41:18            
+SpellRange                                  interface  src/renderer/src/types/data/spell-data-types.ts:46:18            
+SpellComponents                             interface  src/renderer/src/types/data/spell-data-types.ts:54:18            
+SpellDuration                               interface  src/renderer/src/types/data/spell-data-types.ts:63:18            
+SpellDamageData                             interface  src/renderer/src/types/data/spell-data-types.ts:70:18            
+SpellHealingData                            interface  src/renderer/src/types/data/spell-data-types.ts:80:18            
+SpellD20Modifier                            interface  src/renderer/src/types/data/spell-data-types.ts:89:18            
+HigherLevelScalingEntry                     interface  src/renderer/src/types/data/spell-data-types.ts:96:18            
+HigherLevelCasting                          interface  src/renderer/src/types/data/spell-data-types.ts:105:18           
+TrapData                                    interface  src/renderer/src/types/data/world-data-types.ts:10:18            
+HazardData                                  interface  src/renderer/src/types/data/world-data-types.ts:27:18            
+PoisonData                                  interface  src/renderer/src/types/data/world-data-types.ts:42:18            
+CurseData                                   interface  src/renderer/src/types/data/world-data-types.ts:56:18            
+EnvironmentalEffectData                     interface  src/renderer/src/types/data/world-data-types.ts:84:18            
+SupernaturalGiftData                        interface  src/renderer/src/types/data/world-data-types.ts:97:18            
+DowntimeActivity                            interface  src/renderer/src/types/data/world-data-types.ts:108:18           
+ArmorData5e                                 interface  src/renderer/src/components/sheet/5e/defense-utils.ts:16:18      
+ToolData                                    interface  src/renderer/src/components/sheet/5e/defense-utils.ts:111:18     

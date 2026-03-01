@@ -95,6 +95,7 @@ export class CloudSync {
       )
     } catch (err) {
       logToFile('ERROR', `[CloudSync] Failed to upload character ${character.id}:`, String(err))
+      throw err
     }
   }
 
@@ -131,6 +132,7 @@ export class CloudSync {
       )
     } catch (err) {
       logToFile('ERROR', `[CloudSync] Failed to upload campaign ${campaign.id}:`, String(err))
+      throw err
     }
   }
 

@@ -2,8 +2,8 @@ import { trigger3dDice } from '../../components/game/dice3d'
 import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../data/light-sources'
 import { useGameStore } from '../../stores/use-game-store'
 import { findWeapon, formatAttackResult, resolveAttack } from '../combat/attack-resolver'
-import { rollMultiple, rollSingle } from '../dice/dice-service'
-import { findTokenByName } from './helpers'
+import { rollMultiple } from '../dice/dice-service'
+import { findTokenByName, rollD20WithTag } from './helpers'
 import type { ChatCommand } from './types'
 
 const grappleCommand: ChatCommand = {
@@ -15,10 +15,7 @@ const grappleCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const target = args.trim() || 'a creature'
-    const roll = rollSingle(20)
-    const isCrit = roll === 20
-    const isFumble = roll === 1
-    const tag = isCrit ? ' **Natural 20!**' : isFumble ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',
@@ -38,10 +35,7 @@ const shoveCommand: ChatCommand = {
     const parts = args.trim().split(/\s+/)
     const direction = parts[0]?.toLowerCase() === 'away' ? 'away' : 'prone'
     const target = parts.slice(direction === parts[0]?.toLowerCase() ? 1 : 0).join(' ') || 'a creature'
-    const roll = rollSingle(20)
-    const isCrit = roll === 20
-    const isFumble = roll === 1
-    const tag = isCrit ? ' **Natural 20!**' : isFumble ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     const effect = direction === 'away' ? '5 feet away' : 'Prone'
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
@@ -209,8 +203,7 @@ const hideCommand: ChatCommand = {
   dmOnly: false,
   category: 'player',
   execute: (_args, ctx) => {
-    const roll = rollSingle(20)
-    const tag = roll === 20 ? ' **Natural 20!**' : roll === 1 ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',
@@ -228,8 +221,7 @@ const searchCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const skill = args.trim().toLowerCase() === 'investigation' ? 'Investigation' : 'Perception'
-    const roll = rollSingle(20)
-    const tag = roll === 20 ? ' **Natural 20!**' : roll === 1 ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',
@@ -250,9 +242,8 @@ const offhandAttackCommand: ChatCommand = {
     const parts = args.trim().split(/\s+/)
     const target = parts[0] || 'a creature'
     const damageDice = parts[1] || '1d6'
-    const attackRoll = rollSingle(20)
+    const { roll: attackRoll, tag } = rollD20WithTag()
     const isCrit = attackRoll === 20
-    const tag = isCrit ? ' **Natural 20!**' : attackRoll === 1 ? ' *Natural 1!*' : ''
 
     let damageTotal = 0
     let damageRolls: number[] = []
@@ -295,9 +286,8 @@ const unarmedAttackCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const target = args.trim() || 'a creature'
-    const attackRoll = rollSingle(20)
+    const { roll: attackRoll, tag } = rollD20WithTag()
     const isCrit = attackRoll === 20
-    const tag = isCrit ? ' **Natural 20!**' : attackRoll === 1 ? ' *Natural 1!*' : ''
     const strMod = ctx.character ? Math.floor((ctx.character.abilityScores.strength - 10) / 2) : 0
     const damage = Math.max(1, 1 + strMod) * (isCrit ? 2 : 1)
 

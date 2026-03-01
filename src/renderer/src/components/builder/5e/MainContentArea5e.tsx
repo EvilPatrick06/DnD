@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import AbilityScoreModal from '../shared/AbilityScoreModal'
 import AsiModal from '../shared/AsiModal'

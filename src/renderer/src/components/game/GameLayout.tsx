@@ -6,7 +6,6 @@ import { useGameNetwork } from '../../hooks/use-game-network'
 import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
 import { executeMacro } from '../../services/macro-engine'
-import { processDawnRecharge } from '../../utils/dawn-recharge'
 import { recomputeVision } from '../../services/map/vision-computation'
 import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import { useCharacterStore } from '../../stores/use-character-store'
@@ -19,6 +18,7 @@ import type { Character } from '../../types/character'
 import { is5eCharacter } from '../../types/character'
 import type { MapToken } from '../../types/map'
 import { getBuilderCreatePath } from '../../utils/character-routes'
+import { processDawnRecharge } from '../../utils/dawn-recharge'
 import DMBottomBar from './bottom/DMBottomBar'
 import PlayerBottomBar from './bottom/PlayerBottomBar'
 import { DiceOverlay } from './dice3d'
@@ -774,9 +774,12 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           <CharacterPickerOverlay
             campaignId={campaign.id}
             onSelect={(c) => {
+              // Prefer latest data from the store over potentially stale picker data
+              const fresh = allCharacters.find((ch) => ch.id === c.id)
+              const charToSave = fresh ?? c
               useCharacterStore
                 .getState()
-                .saveCharacter({ ...c, campaignId: campaign.id, updatedAt: new Date().toISOString() })
+                .saveCharacter({ ...charToSave, campaignId: campaign.id, updatedAt: new Date().toISOString() })
               setShowCharacterPicker(false)
               setViewMode('player')
             }}

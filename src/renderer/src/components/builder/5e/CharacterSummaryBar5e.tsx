@@ -194,7 +194,10 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const speciesSlotId = speciesSlot?.selectedId ?? null
 
   const stats5e = useMemo(() => {
-    const cls = classHitDie != null ? { hitDie: parseInt(classHitDie.replace(/\D/g, '')) || 8, savingThrows: classSaves } : null
+    const cls =
+      classHitDie != null
+        ? { hitDie: parseInt(classHitDie.replace(/\D/g, ''), 10) || 8, savingThrows: classSaves }
+        : null
     const speciesBonuses =
       backgroundAbilityBonuses && Object.keys(backgroundAbilityBonuses).length > 0
         ? (backgroundAbilityBonuses as Partial<Record<string, number>>)

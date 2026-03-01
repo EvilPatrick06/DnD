@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import AbilityScoresGrid5e from '../components/sheet/5e/AbilityScoresGrid5e'
 import ClassResourcesSection5e from '../components/sheet/5e/ClassResourcesSection5e'
@@ -20,6 +20,7 @@ import SpellcastingSection5e from '../components/sheet/5e/SpellcastingSection5e'
 import Modal from '../components/ui/Modal'
 
 const PrintSheet = lazy(() => import('../components/sheet/shared/PrintSheet'))
+
 import { shouldLevelUp } from '../data/xp-thresholds'
 import { applyLongRest } from '../services/character/rest-service-5e'
 import { useBuilderStore } from '../stores/use-builder-store'

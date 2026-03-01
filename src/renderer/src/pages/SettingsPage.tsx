@@ -4,7 +4,6 @@ import OllamaManagement from '../components/ui/OllamaManagement'
 import { addToast } from '../hooks/use-toast'
 import * as AutoSave from '../services/io/auto-save'
 import { exportEntities, importEntities } from '../services/io/entity-io'
-import * as NotificationService from '../services/notification-service'
 import {
   DEFAULT_SHORTCUTS,
   formatKeyCombo,
@@ -12,6 +11,7 @@ import {
   hasConflict,
   type ShortcutDefinition
 } from '../services/keyboard-shortcuts'
+import * as NotificationService from '../services/notification-service'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 import { type ColorblindMode, type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
 import { useDataStore } from '../stores/use-data-store'

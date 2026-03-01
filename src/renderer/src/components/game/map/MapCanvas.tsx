@@ -2,6 +2,8 @@ import 'pixi.js/unsafe-eval' // CSP-compatible PixiJS shaders (must be before an
 import { Application, Assets, type Container, type Graphics, Sprite } from 'pixi.js'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
+// Map utilities: calculateZoomToFit for fitting all tokens in view, getGridLabel for A1-style grid labels
+import { calculateZoomToFit, getGridLabel } from '../../../services/map/map-utils'
 import { buildVisionSet, getLightingAtPoint, isTokenInVisionSet } from '../../../services/map/vision-computation'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
@@ -21,12 +23,11 @@ import {
   type MapLayers,
   waitForContainerDimensions
 } from './map-pixi-setup'
-// Map utilities: calculateZoomToFit for fitting all tokens in view, getGridLabel for A1-style grid labels
-import { calculateZoomToFit, getGridLabel } from '../../../services/map/map-utils'
 import { clearMeasurement } from './measurement-tool'
 
 // Re-export map-utils functions so they are available to map subsystem consumers
 export { calculateZoomToFit, getGridLabel }
+
 import { createTokenSprite } from './token-sprite'
 import type { WeatherOverlayLayer } from './weather-overlay'
 

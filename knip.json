@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/main/index.ts",
+    "src/preload/index.ts",
+    "src/renderer/src/main.tsx",
+    "electron.vite.config.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "src/renderer/src/test-helpers.ts",
+    "**/*.d.ts"
+  ],
+  "ignoreDependencies": [
+    "ajv",
+    "diff",
+    "fast-levenshtein",
+    "jscpd",
+    "license-checker",
+    "lockfile-lint",
+    "madge",
+    "npm-check-updates",
+    "oxlint",
+    "ts-prune",
+    "type-coverage",
+    "@anthropic-ai/sdk",
+    "@langchain/anthropic",
+    "@langchain/core",
+    "@langchain/langgraph",
+    "@pixi/react",
+    "@tiptap/extension-image",
+    "dotenv",
+    "uuid",
+    "@electron-toolkit/preload",
+    "tailwindcss"
+  ],
+  "paths": {
+    "@renderer/*": ["src/renderer/src/*"]
+  },
+  "rules": {
+    "unlisted": "off"
+  }
+}

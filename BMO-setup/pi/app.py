@@ -30,12 +30,17 @@ def _get_secret_key() -> str:
         return env
     key_path = os.path.join(os.path.expanduser("~"), ".bmo_secret_key")
     try:
-        return open(key_path).read().strip()
+        with open(key_path, "r") as f:
+            key = f.read().strip()
+        if key:
+            return key
     except FileNotFoundError:
-        key = secrets.token_hex(32)
-        with open(key_path, "w") as f:
-            f.write(key)
-        return key
+        pass
+    key = secrets.token_hex(32)
+    with open(key_path, "w") as f:
+        f.write(key)
+    os.chmod(key_path, 0o600)
+    return key
 
 
 app.config["SECRET_KEY"] = _get_secret_key()

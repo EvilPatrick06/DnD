@@ -1,47 +1,47 @@
 # Project Audit Report
-Generated: 2026-03-01T02:43:33.341Z
+Generated: 2026-03-01T21:04:37.895Z
 
 ## Summary Dashboard
 | # | Check | Category | Status | Issues | Time |
 |---|-------|----------|--------|--------|------|
-| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 1.7s |
-| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 7.1s |
-| 3 | Biome format check | Core Quality | ✅ PASS | 0 | 3.2s |
-| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 4.8s |
-| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 5.9s |
-| 6 | Production build | Core Quality | ✅ PASS | 0 | 18.1s |
-| 7 | OxLint | Core Quality | ✅ PASS | 0 | 0.7s |
-| 8 | npm audit | Security | ✅ PASS | 0 | 1.9s |
-| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.0s |
+| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 3.3s |
+| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 11.1s |
+| 3 | Biome format check | Core Quality | ✅ PASS | 0 | 3.4s |
+| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 48.0s |
+| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 59.2s |
+| 6 | Production build | Core Quality | ✅ PASS | 0 | 22.8s |
+| 7 | OxLint | Core Quality | ✅ PASS | 0 | 1.0s |
+| 8 | npm audit | Security | ✅ PASS | 0 | 2.3s |
+| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.2s |
 | 10 | Electron security scan | Security | ✅ PASS | 0 | 0.0s |
-| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.1s |
+| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.2s |
 | 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.1s |
 | 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.1s |
-| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 7.3s |
-| 15 | Dead code (knip) | Dependencies | ℹ️ INFO | 1188 | 2.5s |
-| 16 | Outdated packages | Dependencies | ℹ️ INFO | 6 | 1.7s |
+| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 1.1s |
+| 15 | Dead code (knip) | Dependencies | ℹ️ INFO | 397 | 6.1s |
+| 16 | Outdated packages | Dependencies | ✅ PASS | 0 | 2.3s |
 | 17 | License compliance | Dependencies | ✅ PASS | 0 | 2.1s |
-| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.3s |
-| 19 | Duplicate packages | Dependencies | ⚠️ WARN | 61 | 1.2s |
+| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 2.2s |
+| 19 | Duplicate packages | Dependencies | ✅ PASS | 50 | 2.0s |
 | 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 0.8s |
 | 21 | Missing export default on lazy components | React & Hooks | ✅ PASS | 0 | 0.0s |
 | 22 | Missing key prop in .map() | React & Hooks | ✅ PASS | 0 | 0.1s |
 | 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.1s |
-| 24 | console.log leaks | Code Quality | ✅ PASS | 0 | 0.1s |
-| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.1s |
-| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 2 | 0.1s |
+| 24 | console.log leaks | Code Quality | ✅ PASS | 0 | 0.2s |
+| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.2s |
+| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 2 | 0.2s |
 | 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.1s |
 | 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.1s |
-| 29 | Functions >200 lines | Code Quality | ✅ PASS | 40 | 0.2s |
-| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 35 | 17.6s |
+| 29 | Functions >200 lines | Code Quality | ✅ PASS | 41 | 0.2s |
+| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 646 | 29.2s |
 | 31 | Regex safety (ReDoS) | Code Quality | ✅ PASS | 0 | 0.2s |
-| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 1 | 0.2s |
+| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 627 | 0.1s |
 | 33 | File naming conventions | Project Hygiene | ✅ PASS | 0 | 0.1s |
-| 34 | Missing test files | Project Hygiene | ℹ️ INFO | 284 | 0.1s |
-| 35 | Orphan files (not imported) | Project Hygiene | ⚠️ WARN | 23 | 8.7s |
-| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 35.6s |
+| 34 | Missing test files | Project Hygiene | ✅ PASS | 6 | 0.2s |
+| 35 | Orphan files (not imported) | Project Hygiene | ✅ PASS | 0 | 1.5s |
+| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 53.4s |
 
-**Total: 0 errors, 2 warnings, 4 informational**
+**Total: 0 errors, 0 warnings, 2 informational**
 
 ---
 
@@ -78,7 +78,28 @@ All files formatted
 **Issues**: 0
 
 ```
-42 passed, 0 failed
+603 passed, 0 failed
+2m[32m 25[2mms[22m[39m
+ [32m✓[39m src/renderer/src/services/chat-commands/commands-player-conditions.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/renderer/src/services/combat/crit-range.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/renderer/src/data/alignment-descriptions.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/main/storage/migrations.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/renderer/src/components/game/modals/dm-tools/DMMapEditor.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/renderer/src/stores/game/fog-slice.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/renderer/src/services/notification-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/renderer/src/network/peer-manager.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/renderer/src/pages/CreateCharacterPage.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/renderer/src/stores/use-character-store.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/renderer/src/pages/InGamePage.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m src/renderer/src/pages/CharacterSheet5ePage.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m src/renderer/src/components/game/GameLayout.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m603 passed[39m[22m[90m (603)[39m
+[2m      Tests [22m [1m[32m5401 passed[39m[22m[90m (5401)[39m
+[2m     Errors [22m [1m[31m2 errors[39m[22m
+[2m   Start at [22m 14:00:42
+[2m   Duration [22m 46.02s[2m (transform 203.93s, setup 0ms, import 164.66s, tests 280.11s, environment 335ms)[22m
+
 
 ```
 
@@ -87,27 +108,27 @@ All files formatted
 **Issues**: 0
 
 ```
-Statement coverage: 15.98%
+Statement coverage: 64.41%
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   15.98 |    13.92 |   16.68 |   15.62 |                   
- data              |    8.65 |     4.68 |   10.92 |    8.59 |                   
-  ...scriptions.ts |       0 |      100 |       0 |       0 | 3-7               
-  ...ion-events.ts |       0 |        0 |       0 |       0 | 13-287            
-  ...ar-presets.ts |       0 |        0 |       0 |       0 | 11-52             
-  ...-resources.ts |       0 |        0 |       0 |       0 | 8-101             
-  conditions.ts    |      88 |     87.5 |      70 |   86.36 | 42-43,62          
-  ...efinitions.ts |   18.51 |        0 |   14.28 |   21.73 | 12-56             
-  ...scriptions.ts |       0 |        0 |       0 |       0 | 3-9               
-  light-sources.ts |       0 |        0 |       0 |       0 | 9-20              
-  moderation.ts    |       0 |      100 |       0 |       0 | 3-11              
+All files          |   64.41 |    54.06 |   63.61 |   65.35 |                   
+ data              |   82.47 |     62.2 |   90.75 |   84.72 |                   
+  ...scriptions.ts |     100 |      100 |     100 |     100 |                   
+  ...ion-events.ts |   58.46 |    41.79 |   57.89 |   56.07 | 148-154,177-253   
+  ...ar-presets.ts |     100 |       80 |     100 |     100 | 28-35             
+  ...-resources.ts |   97.43 |    73.68 |     100 |   96.96 | 19                
+  conditions.ts    |      88 |     87.5 |      80 |   86.36 | 42-43,62          
+  ...efinitions.ts |   85.18 |       50 |     100 |     100 | 18-50             
+  ...scriptions.ts |     100 |      100 |     100 |     100 |                   
+  light-sources.ts |     100 |      100 |     100 |     100 |                   
+  moderation.ts    |     100 |      100 |     100 |     100 |                   
   ...requisites.ts |     100 |      100 |     100 |     100 |                   
-  ...appearance.ts |       0 |        0 |       0 |       0 | 3-17              
-  ...mannerisms.ts |       0 |        0 |       0 |       0 | 3-9               
-  ...ity-tables.ts |       0 |        0 |       0 |       0 | 4-62              
-  ...ient-items.ts |       0 |        0 |       0 |       0 | 7-79              
-  skills.ts        |       0 |        0 |       0 |       0 | 11-40             
+  ...appearance.ts |     100 |       50 |     100 |     100 | 12-17             
+  ...mannerisms.ts |     100 |       50 |     100 |     100 | 8-9               
+  ...ity-tables.ts |     100 |    85.71 |     100 |     100 | 36,55             
+  ...ient-items.ts |     100 |    54.16 |     100 |     100 | 23-27,58,64-75    
+  skills.ts        |     100 |       75 |     100 |     100 | 23                
 ```
 
 #### 6. Production build
@@ -124,7 +145,7 @@ Build succeeded
 
 ```
 Found 0 warnings and 0 errors.
-Finished in 60ms on 755 files with 93 rules using 22 threads.
+Finished in 169ms on 1322 files with 93 rules using 22 threads.
 
 ```
 
@@ -259,75 +280,57 @@ No circular dependencies (barrel + lazy-require false positives excluded)
 
 #### 15. Dead code (knip)
 **Status**: ℹ️ INFO  
-**Issues**: 1188
+**Issues**: 397
 
 ```
-[93m[4mUnused files[24m[39m (636)
-scripts/build-blank-jsons.ts                                                
-scripts/build-data-architecture.ts                                          
-scripts/check-batch.ts                                                      
-scripts/comprehensive-audit.ts                                              
-scripts/data-audit-full.ts                                                  
-scripts/data-audit.ts                                                       
-scripts/debug-batch.ts                                                      
-scripts/deep-verify.ts                                                      
-scripts/extract-5e-data.ts                                                  
-scripts/extract-animals.ts                                                  
-scripts/extract-armor.ts                                                    
-scripts/extract-dmg-content.ts                                              
-scripts/extract-dmg-toolbox.ts                                              
-scripts/extract-feats.ts                                                    
-scripts/extract-gear.ts                                                     
-scripts/extract-magic-items.ts                                              
-scripts/extract-monsters.ts                                                 
-scripts/extract-origins.ts                                                  
-scripts/extract-phb-creatures.ts                                            
-scripts/extract-rules-glossary.ts                                           
-scripts/extract-subclasses-to-batch.ts                                      
-scripts/extract-tools.ts                                                    
-scripts/extract-traps-langs-misc.ts                                         
-scripts/extract-treasure-tables.ts                                          
-scripts/extract-weapons.ts                                                  
-scripts/find-data.js                                                        
-scripts/fix-data-placements.ts                                              
-scripts/fix-monster-enums.ts                                                
-scripts/generate-bestiary-schema.ts                                         
-scripts/generate-domain-schemas.ts                                          
-scripts/generate-extended-schemas.ts                                        
-scripts/generate-indexes.ts                                                 
-scripts/generate-mass-batch.ts                                              
-scripts/generate-mega-batch.ts                                              
-scripts/generate-missing-data-batch.ts                                      
-scripts/generate-phase4-batch.ts                                            
-scripts/generate-phase5-batch.ts                                            
-scripts/monitor-mass-batch.ts                                               
-scripts/monitor-phase4-batch.ts                                             
-scripts/phase4-discovery.ts                                                 
-scripts/reorganize-data.ts                                                  
-scripts/resume-batch.ts                                                     
-scripts/retry-failed.ts                                                     
-scripts/submit-integration-batch.ts                                         
-scripts/submit-mass-batch.ts                                                
-scripts/submit-missing-data-batch.ts                                        
-scripts/submit-phase4-batch.ts                                              
-scripts/submit-phase5-batch.ts                                              
-scripts/submit-subclass-batch.ts                                            
-scripts/test-batch-connection.ts                                            
-scripts/test-models.ts                                                      
-scripts/ultimate-audit-v2.ts       
+[93m[4mUnused files[24m[39m (10)
+src/renderer/src/network/index.ts                          
+src/renderer/src/constants/index.ts                        
+src/renderer/src/types/index.ts                            
+src/renderer/src/types/user.ts                             
+src/renderer/src/components/library/HomebrewCreateModal.tsx
+src/renderer/src/components/library/index.ts               
+src/renderer/src/components/library/LibraryCategoryGrid.tsx
+src/renderer/src/components/library/LibraryDetailModal.tsx 
+src/renderer/src/components/library/LibraryItemList.tsx    
+src/renderer/src/components/library/LibrarySidebar.tsx     
+[93m[4mUnused exports[24m[39m (138)
+generateSessionSummary     aiService          function  src/main/ai/ai-service.ts:617:23                                
+describeChange             aiService                    src/main/ai/ai-service.ts:653:26                                
+isNegativeChange           aiService                    src/main/ai/ai-service.ts:653:42                                
+getSearchEngine                               function  src/main/ai/context-builder.ts:102:17                           
+ALL_IS_WELL_FLAVORS                                     src/renderer/src/data/bastion-events.ts:108:12                  
+GUEST_TABLE                                             src/renderer/src/data/bastion-events.ts:109:12                  
+TREASURE_TABLE                                          src/renderer/src/data/bastion-events.ts:110:12                  
+BASTION_EVENTS_TABLE                                    src/renderer/src/data/bastion-events.ts:111:12                  
+GAMING_HALL_WINNINGS                                    src/renderer/src/data/bastion-events.ts:112:12                  
+MENAGERIE_CREATURES                                     src/renderer/src/data/bastion-events.ts:113:12                  
+CREATURE_COSTS_BY_CR                                    src/renderer/src/data/bastion-events.ts:114:12                  
+EXPERT_TRAINERS                                         src/renderer/src/data/bastion-events.ts:115:12                  
+PUB_SPECIALS                                            src/renderer/src/data/bastion-events.ts:116:12                  
+SAMPLE_GUILDS                                           src/renderer/src/data/bastion-events.ts:117:12                  
+EMERALD_ENCLAVE_CREATURES                               src/renderer/src/data/bastion-events.ts:118:12                  
+FORGE_CONSTRUCTS                                        src/renderer/src/data/bastion-events.ts:119:12                  
+PRIMORDIAL_DIALECTS                                     src/renderer/src/types/character-common.ts:82:14                
+getBuffs5e                                    function  src/renderer/src/data/conditions.ts:41:23                       
+unregisterSystem                              function  src/renderer/src/systems/registry.ts:14:17                      
+getAllSystems                                 function  src/renderer/src/systems/registry.ts:26:17                      
+cdnProvider                                             src/renderer/src/services/data-provider.ts:68:10                
+resolveDataPath                               function  src/renderer/src/services/data-provider.ts:91:17                
+getHeritageOptions5e                          function  src/renderer/src/services/data-provider.ts:527:23               
+load5eSoundEvents                             function  src/renderer/src/services/data-provider.ts:820:23               
+load5eSpeciesSpells                           function  src/renderer/src/services/data-provider.ts:824:23               
+load5eClassResources                          function  src/renderer/src/services/data-provider.ts:828:23               
+load5eSpeciesResources                        function  src/renderer/src/services/data-provider.ts:832:23               
+load5eAbilityScoreConfig                      function  
 ```
 
 #### 16. Outdated packages
-**Status**: ℹ️ INFO  
-**Issues**: 6
+**Status**: ✅ PASS  
+**Issues**: 0
 
 ```
- @aws-sdk/client-s3  ^3.998.0  →  ^3.1000.0
- @types/node          ^25.3.0  →    ^25.3.3
- @types/uuid          ^10.0.0  →    ^11.0.0
- ajv                  ^6.14.0  →    ^8.18.0
- npm-check-updates    ^19.5.0  →    ^19.6.3
- three               ^0.183.1  →   ^0.183.2
+All packages up to date
 ```
 
 #### 17. License compliance
@@ -347,27 +350,22 @@ No unused exports
 ```
 
 #### 19. Duplicate packages
-**Status**: ⚠️ WARN  
-**Issues**: 61
+**Status**: ✅ PASS  
+**Issues**: 50
 
 ```
-61 packages with multiple versions installed
+50 packages with multiple versions installed
 @anthropic-ai/sdk: 0.78.0, 0.74.0
 tslib: 2.8.1, 1.14.1
 @smithy/util-utf8: 2.3.0, 4.2.1
 @smithy/util-buffer-from: 2.2.0, 4.2.1
 @smithy/is-array-buffer: 2.2.0, 4.2.1
-ansi-styles: 5.2.0, 4.3.0, 6.2.3, 3.2.1
-chalk: 5.6.2, 4.1.2, 2.4.2
+ansi-styles: 5.2.0, 4.3.0, 6.2.3
 p-queue: 6.6.2, 9.1.0
-semver: 7.7.4, 6.3.1, 5.7.2
 uuid: 10.0.0, 11.1.0, 13.0.0
 eventemitter3: 4.0.7, 5.0.4
 p-timeout: 3.2.0, 7.0.1
-scheduler: 0.25.0, 0.27.0
 argparse: 2.0.1, 1.0.10
-entities: 4.5.0, 7.0.1
-escape-string-regexp: 4.0.0, 1.0.5
 @types/node: 25.3.3, 24.11.0
 undici-types: 7.18.2, 7.16.0
 js-tokens: 4.0.0, 10.0.0
@@ -375,13 +373,18 @@ lru-cache: 5.1.1, 10.4.3, 6.0.0
 yallist: 3.1.1, 4.0.0, 5.0.0
 debug: 4.4.3, 3.2.7
 estree-walker: 3.0.3, 2.0.2
-supports-color: 7.2.0, 5.5.0
-has-flag: 4.0.0, 3.0.0
+ajv: 8.18.0, 6.14.0
+json-schema-traverse: 1.0.0, 0.4.1
 dotenv: 17.3.1, 16.6.1
-commander: 5.1.0, 9.5.0, 7.2.0, 12.1.0, 6.2.1
 glob: 7.2.3, 10.5.0
-fs-extra: 9.1.0, 8.1.0, 10.1.0, 11.3.3, 7.0.1
-jsonfile: 6.2.0, 4.0.0
+@electron/get: 3.1.0, 2.0.3
+isbinaryfile: 4.0.10, 5.0.7
+minipass: 7.1.3, 3.3.6
+signal-exit: 4.1.0, 3.0.7
+emoji-regex: 8.0.0, 9.2.2, 10.6.0
+strip-ansi: 6.0.1, 7.2.0
+string-width: 5.1.2, 4.2.3, 7.2.0
+ansi-regex: 5.0.1, 6.2.2
 ```
 
 ### React & Hooks
@@ -392,7 +395,7 @@ jsonfile: 6.2.0, 4.0.0
 
 ```
 Found 0 warnings and 0 errors.
-Finished in 67ms on 755 files with 93 rules using 22 threads.
+Finished in 104ms on 1322 files with 93 rules using 22 threads.
 
 ```
 
@@ -465,17 +468,17 @@ No empty catch blocks
 
 #### 29. Functions >200 lines
 **Status**: ✅ PASS  
-**Issues**: 40
+**Issues**: 41
 
 ```
-src/renderer/src/stores/builder/slices/build-character-5e.ts:38 — buildCharacter5e (611 lines)
+src/renderer/src/stores/builder/slices/build-character-5e.ts:38 — buildCharacter5e (619 lines)
 src/renderer/src/components/ui/OllamaManagement.tsx:19 — OllamaManagement (529 lines)
-src/renderer/src/pages/LobbyPage.tsx:25 — LobbyPage (525 lines)
 src/renderer/src/components/builder/5e/SpellsTab5e.tsx:17 — SpellsTab5e (471 lines)
-src/renderer/src/pages/LibraryPage.tsx:80 — LibraryPage (422 lines)
+src/renderer/src/pages/SettingsPage.tsx:387 — SettingsPage (397 lines)
+src/renderer/src/pages/CharacterSheet5ePage.tsx:34 — CharacterSheet5ePage (388 lines)
 src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx:18 — CharacterBuilder5e (382 lines)
-src/renderer/src/pages/CharacterSheet5ePage.tsx:31 — CharacterSheet5ePage (374 lines)
 src/renderer/src/stores/network-store/client-handlers.ts:88 — handleClientMessage (370 lines)
+src/renderer/src/pages/LibraryPage.tsx:17 — LibraryPage (368 lines)
 src/renderer/src/pages/BastionPage.tsx:17 — BastionPage (365 lines)
 src/renderer/src/components/game/bottom/DMAudioPanel.tsx:35 — DMAudioPanel (352 lines)
 src/renderer/src/components/builder/shared/AsiModal.tsx:10 — AsiModal (351 lines)
@@ -484,22 +487,23 @@ src/main/ipc/ai-handlers.ts:26 — registerAiHandlers (345 lines)
 src/renderer/src/components/builder/5e/SpecialAbilitiesTab5e.tsx:32 — SpecialAbilitiesTab5e (340 lines)
 src/renderer/src/components/campaign/CampaignWizard.tsx:23 — CampaignWizard (339 lines)
 src/renderer/src/stores/network-store/host-handlers.ts:32 — handleHostMessage (333 lines)
-src/renderer/src/pages/SettingsPage.tsx:385 — SettingsPage (332 lines)
 src/renderer/src/components/game/player/ShopView.tsx:94 — ShopView (329 lines)
 src/renderer/src/pages/AboutPage.tsx:48 — AboutPage (324 lines)
-src/renderer/src/components/builder/5e/DetailsTab5e.tsx:10 — DetailsTab5e (309 lines)
+src/renderer/src/components/builder/5e/DetailsTab5e.tsx:10 — DetailsTab5e (310 lines)
 src/renderer/src/components/game/modals/utility/WeatherOverridePanel.tsx:50 — WeatherOverridePanel (307 lines)
-src/renderer/src/services/combat/combat-resolver.ts:226 — resolveAttack (302 lines)
 src/renderer/src/components/builder/shared/AbilityScoreModal.tsx:16 — AbilityScoreModal (300 lines)
 src/renderer/src/components/lobby/ChatInput.tsx:14 — ChatInput (300 lines)
 src/renderer/src/pages/ViewCharactersPage.tsx:15 — ViewCharactersPage (298 lines)
 src/renderer/src/stores/builder/slices/load-character-5e.ts:11 — loadCharacterForEdit5e (292 lines)
 src/renderer/src/stores/use-ai-dm-store.ts:106 — useAiDmStore (288 lines)
-src/renderer/src/pages/CampaignDetailPage.tsx:26 — CampaignDetailPage (277 lines)
+src/renderer/src/pages/LobbyPage.tsx:17 — LobbyPage (287 lines)
+src/renderer/src/pages/CampaignDetailPage.tsx:28 — CampaignDetailPage (285 lines)
+src/renderer/src/services/combat/combat-resolver.ts:304 — resolveAttack (285 lines)
 src/renderer/src/pages/CalendarPage.tsx:53 — CalendarPage (276 lines)
 src/renderer/src/stores/level-up/feature-selection-slice.ts:10 — createFeatureSelectionSlice (266 lines)
 src/renderer/src/stores/network-store/index.ts:57 — useNetworkStore (247 lines)
 src/renderer/src/stores/use-lobby-store.ts:79 — useLobbyStore (246 lines)
+src/main/ipc/storage-handlers.ts:33 — registerStorageHandlers (243 lines)
 src/renderer/src/services/library-service.ts:148 — loadCategoryItems (239 lines)
 src/main/ai/campaign-context.ts:11 — formatCampaignForContext (236 lines)
 src/renderer/src/services/combat/effect-resolver-5e.ts:103 — resolveEffects (236 lines)
@@ -512,78 +516,29 @@ src/renderer/src/components/game/map/map-event-handlers.ts:162 — setupMouseHan
 
 #### 30. Code duplication (jscpd)
 **Status**: ✅ PASS  
-**Issues**: 35
+**Issues**: 646
 
 ```
-Clone found (typescript):
- - [1m[32msrc\renderer\src\components\sheet\5e\defense-utils.ts[39m[22m [128:1 - 153:2] (25 lines, 243 tokens)
-   [1m[32msrc\renderer\src\components\sheet\5e\equipment-utils.ts[39m[22m [43:1 - 68:2]
+5]
 
-Clone found (typescript):
- - [1m[32msrc\renderer\src\components\game\dice3d\dice-generators.ts[39m[22m [105:3 - 130:7] (25 lines, 318 tokens)
-   [1m[32msrc\renderer\src\components\game\dice3d\dice-meshes.ts[39m[22m [134:3 - 159:65]
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 705            [90m│[39m 120758      [90m│[39m 1170248      [90m│[39m 505          [90m│[39m 7511 (6.22%)     [90m│[39m 79416 (6.79%)     [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m javascript [90m│[39m 335            [90m│[39m 36811       [90m│[39m 324588       [90m│[39m 6            [90m│[39m 181 (0.49%)      [90m│[39m 1479 (0.46%)      [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m tsx        [90m│[39m 612            [90m│[39m 71050       [90m│[39m 664167       [90m│[39m 135          [90m│[39m 1449 (2.04%)     [90m│[39m 14946 (2.25%)     [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m css        [90m│[39m 1              [90m│[39m 61          [90m│[39m 290          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m json       [90m│[39m 3              [90m│[39m 161         [90m│[39m 755          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 1656           [90m│[39m 228841      [90m│[39m 2160048      [90m│[39m 646          [90m│[39m 9141 (3.99%)     [90m│[39m 95841 (4.44%)     [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 646 clones.[39m
+[3m[90mDetection time:[39m[23m: 26.930s
 
-Clone found (typescript):
- - [1m[32msrc\renderer\src\components\game\dice3d\dice-generators.ts[39m[22m [224:3 - 252:7] (28 lines, 382 tokens)
-   [1m[32msrc\renderer\src\components\game\dice3d\dice-meshes.ts[39m[22m [273:3 - 301:65]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\components\game\dice3d\dice-generators.ts[39m[22m [257:3 - 284:2] (27 lines, 371 tokens)
-   [1m[32msrc\renderer\src\components\game\dice3d\dice-meshes.ts[39m[22m [309:3 - 336:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\types\data\index.ts[39m[22m [8:1 - 48:24] (40 lines, 330 tokens)
-   [1m[32msrc\renderer\src\types\data\shared-enums.ts[39m[22m [5:1 - 45:7]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\types\data\index.ts[39m[22m [339:1 - 437:34] (98 lines, 539 tokens)
-   [1m[32msrc\renderer\src\types\data\world-data-types.ts[39m[22m [8:1 - 106:25]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\types\data\creature-data-types.ts[39m[22m [3:1 - 109:48] (106 lines, 576 tokens)
-   [1m[32msrc\renderer\src\types\data\index.ts[39m[22m [437:1 - 543:78]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\stores\bastion-store\event-slice.ts[39m[22m [29:7 - 58:2] (29 lines, 294 tokens)
-   [1m[32msrc\renderer\src\stores\bastion-store\facility-slice.ts[39m[22m [197:5 - 227:6]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\game-actions\creature-actions.ts[39m[22m [9:2 - 157:27] (148 lines, 1449 tokens)
-   [1m[32msrc\renderer\src\services\game-actions\creature-initiative.ts[39m[22m [8:2 - 156:41]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\game-actions\creature-actions.ts[39m[22m [207:3 - 280:2] (73 lines, 720 tokens)
-   [1m[32msrc\renderer\src\services\game-actions\creature-conditions.ts[39m[22m [73:3 - 146:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\game-actions\creature-actions.ts[39m[22m [278:23 - 391:2] (113 lines, 1287 tokens)
-   [1m[32msrc\renderer\src\services\game-actions\creature-initiative.ts[39m[22m [152:24 - 265:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\combat\combat-resolver.ts[39m[22m [697:1 - 756:2] (59 lines, 591 tokens)
-   [1m[32msrc\renderer\src\services\combat\grapple-shove-resolver.ts[39m[22m [102:1 - 161:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\combat\attack-resolver.ts[39m[22m [141:1 - 211:14] (70 lines, 807 tokens)
-   [1m[32msrc\renderer\src\services\combat\unarmed-strike-resolver.ts[39m[22m [28:1 - 98:17]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\combat\attack-resolver.ts[39m[22m [224:3 - 320:2] (96 lines, 844 tokens)
-   [1m[32msrc\renderer\src\services\combat\unarmed-strike-resolver.ts[39m[22m [107:3 - 203:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\combat\attack-helpers.ts[39m[22m [11:2 - 52:4] (41 lines, 310 tokens)
-   [1m[32msrc\renderer\src\services\combat\combat-resolver.ts[39m[22m [763:1 - 804:4]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\combat\attack-helpers.ts[39m[22m [73:2 - 133:2] (60 lines, 566 tokens)
-   [1m[32msrc\renderer\src\services\combat\combat-resolver.ts[39m[22m [825:1 - 885:2]
-
-Clone found (typescript):
- - [1m[32msrc\renderer\src\services\chat-commands\commands-dm-map.ts[39m[22m [6:1 - 35:6] (29 lines, 263 tokens)
-   [1m[32msrc\renderer\src\services\chat-commands\map-environment-commands.ts[39m[22m [5:2 - 34:7]
-
-Clone found (typescript)
 ```
 
 #### 31. Regex safety (ReDoS)
@@ -598,10 +553,39 @@ No ReDoS-prone patterns found
 
 #### 32. Git status (uncommitted changes)
 **Status**: ℹ️ INFO  
-**Issues**: 1
+**Issues**: 627
 
 ```
- D data-audit-report.md
+ D .cursor/commands/plan.md
+ M BMO-setup/pi/app.py
+ M CLAUDE.md
+ M Tests/TestAudit.md
+ M Tests/knip.txt
+ M Tests/run-audit.js
+ M biome.json
+ D extracted-entities.json
+ D source-books-inventory.md
+ M src/main/ipc/storage-handlers.ts
+ M src/main/storage/cloud-sync.ts
+ M src/preload/index.d.ts
+ M src/renderer/src/App.tsx
+ M src/renderer/src/components/builder/5e/CharacterSummaryBar5e.tsx
+ M src/renderer/src/components/builder/5e/DetailsTab5e.tsx
+ M src/renderer/src/components/builder/5e/MainContentArea5e.tsx
+ M src/renderer/src/components/game/GameLayout.tsx
+ M src/renderer/src/components/game/dice3d/dice-meshes.ts
+ M src/renderer/src/components/game/map/MapCanvas.tsx
+ M src/renderer/src/components/game/modals/combat/FallingDamageModal.tsx
+ M src/renderer/src/components/game/modals/combat/JumpModal.tsx
+ M src/renderer/src/components/game/modals/dm-tools/DMShopModal.tsx
+ M src/renderer/src/components/game/modals/dm-tools/HandoutModal.tsx
+ M src/renderer/src/components/game/modals/dm-tools/map-editor-handlers.ts
+ M src/renderer/src/components/game/modals/mechanics/FamiliarSelectorModal.tsx
+ M src/renderer/src/components/game/modals/mechanics/RestModal.tsx
+ M src/renderer/src/components/game/modals/mechanics/SteedSelectorModal.tsx
+ M src/renderer/src/components/game/modals/utility/SharedJournalModal.tsx
+ M src/renderer/src/components/levelup/5e/LevelUpConfirm5e.tsx
+ M src/renderer/src/components/levelup/5e/LevelUpSummary5e.tsx
 ```
 
 #### 33. File naming conventions
@@ -613,71 +597,25 @@ All files follow naming conventions
 ```
 
 #### 34. Missing test files
-**Status**: ℹ️ INFO  
-**Issues**: 284
+**Status**: ✅ PASS  
+**Issues**: 6
 
 ```
-284 source files without test counterpart
-src/main/ai/ai-response-parser.ts
-src/main/ai/ai-service.ts
-src/main/ai/ai-stream-handler.ts
-src/main/ai/campaign-context.ts
-src/main/ai/character-context.ts
-src/main/ai/chunk-builder.ts
-src/main/ai/conversation-manager.ts
-src/main/ai/dm-actions.ts
-src/main/ai/dm-system-prompt.ts
-src/main/ai/dnd-terms.ts
-src/main/ai/keyword-extractor.ts
-src/main/ai/memory-manager.ts
-src/main/ai/ollama-client.ts
-src/main/ai/ollama-manager.ts
-src/main/ai/prompt-sections/character-rules.ts
-src/main/ai/prompt-sections/combat-rules.ts
-src/main/ai/prompt-sections/combat-tactics.ts
-src/main/ai/search-engine.ts
-src/main/ai/srd-provider.ts
-src/main/ai/stat-mutations.ts
-src/main/ai/types.ts
-src/main/ai/web-search.ts
-src/main/ipc/audio-handlers.ts
-src/main/ipc/game-data-handlers.ts
-src/main/ipc/plugin-handlers.ts
-src/main/ipc/storage-handlers.ts
-src/main/log.ts
-src/main/plugins/content-pack-loader.ts
-src/main/plugins/plugin-config.ts
-src/main/plugins/plugin-installer.ts
+6 source files without test counterpart
+src/renderer/src/components/sheet/5e/defense-utils.ts
+src/renderer/src/components/sheet/5e/equipment-utils.ts
+src/renderer/src/pages/bastion/bastion-constants.ts
+src/renderer/src/pages/bastion/bastion-modal-types.ts
+src/renderer/src/pages/library/library-constants.ts
+src/renderer/src/test-helpers.ts
 ```
 
 #### 35. Orphan files (not imported)
-**Status**: ⚠️ WARN  
-**Issues**: 23
+**Status**: ✅ PASS  
+**Issues**: 0
 
 ```
-main/storage/cloud-sync.ts
-renderer/src/components/builder/5e/GearTab5e.tsx
-renderer/src/components/game/dice3d/DiceRoller.tsx
-renderer/src/components/sheet/shared/PrintSheet.tsx
-renderer/src/pages/campaign-detail/MonsterLinker.tsx
-renderer/src/pages/library/LibraryFilters.tsx
-renderer/src/pages/lobby/use-lobby-bridges.ts
-renderer/src/services/cdn-provider.ts
-renderer/src/services/character/feat-mechanics-5e.ts
-renderer/src/services/combat/multi-attack-tracker.ts
-renderer/src/services/combat/reaction-tracker.ts
-renderer/src/services/io/auto-save.ts
-renderer/src/services/library-service.ts
-renderer/src/services/map/map-utils.ts
-renderer/src/services/notification-service.ts
-renderer/src/services/sound-playback.ts
-renderer/src/stores/use-library-store.ts
-renderer/src/systems/init.ts
-renderer/src/types/data/character-data-types.ts
-renderer/src/types/data/creature-data-types.ts
-renderer/src/types/data/equipment-data-types.ts
-renderer/src/types/data/world-data-types.ts
-renderer/src/utils/dawn-recharge.ts
+No orphan files
 ```
 
 #### 36. Type coverage %
@@ -685,8 +623,8 @@ renderer/src/utils/dawn-recharge.ts
 **Issues**: 0
 
 ```
-Type coverage: 99.68%
-(217981 / 218666) 99.68%
+Type coverage: 99.26%
+(287763 / 289890) 99.26%
 type-coverage success.
 
 ```
@@ -695,12 +633,8 @@ type-coverage success.
 
 ## Recommendations
 
-1. **[LOW]** Consider: Dead code (knip) (1188 items)
-1. **[LOW]** Consider: Outdated packages (6 items)
-1. **[HIGH]** Review: Duplicate packages (61 issues)
-1. **[LOW]** Consider: Git status (uncommitted changes) (1 items)
-1. **[LOW]** Consider: Missing test files (284 items)
-1. **[HIGH]** Review: Orphan files (not imported) (23 issues)
+1. **[LOW]** Consider: Dead code (knip) (397 items)
+1. **[LOW]** Consider: Git status (uncommitted changes) (627 items)
 
 ---
 
@@ -710,6 +644,87 @@ type-coverage success.
 ---
 
 ## Dead Code Verdict
+
+**Knip baseline**: ~394 items (10 unused files, 138 unused exports, 246 unused exported types)
+**After triage**: ~80% are PLANNED public API surface or cross-process types; ~15% are dead barrel re-exports; ~5% are genuinely dead code.
+
+### Unused Files (10)
+
+| File | Verdict | Reason |
+|------|---------|--------|
+| `constants/index.ts` | DEAD | Barrel file — all imports go directly to subfiles |
+| `network/index.ts` | DEAD | Barrel file — all imports go directly to subfiles |
+| `types/index.ts` | DEAD | Barrel file — all imports go directly to subfiles |
+| `types/user.ts` | DEAD | UserProfile interface never used anywhere |
+| `components/library/index.ts` | WIP | Barrel for library sub-component redesign |
+| `components/library/HomebrewCreateModal.tsx` | WIP | Homebrew content creator, awaiting library page integration |
+| `components/library/LibraryCategoryGrid.tsx` | WIP | Category grid view, awaiting library page integration |
+| `components/library/LibraryDetailModal.tsx` | WIP | Detail viewer, awaiting library page integration |
+| `components/library/LibraryItemList.tsx` | WIP | Item list component, awaiting library page integration |
+| `components/library/LibrarySidebar.tsx` | WIP | Sidebar navigation, awaiting library page integration |
+
+### Unused Exports — PLANNED: Public API Surface (98 items)
+
+Exported functions/constants that form module public APIs, consumed via dynamic dispatch, or planned for future consumers.
+
+| Category | Count | Examples |
+|----------|-------|---------|
+| Data provider loaders (`load5e*`) | 21 | `load5eSoundEvents`, `load5eThemes`, `load5eBuiltInMaps` |
+| Bastion event data tables | 12 | `ALL_IS_WELL_FLAVORS`, `GAMING_HALL_WINNINGS`, `FORGE_CONSTRUCTS` |
+| Sound manager functions | 8 | `registerCustomSound`, `playSpellSound`, `preloadEssential` |
+| Combat resolver functions | 7 | `resolveAttack`, `resolveGrapple`, `resolveShove` |
+| Notification service functions | 5 | `notify`, `setEventEnabled`, `setSoundEnabled` |
+| AI service functions | 4 | `generateSessionSummary`, `describeChange`, `getSearchEngine` |
+| Character/spell data | 6 | `SPELLCASTING_ABILITY_MAP`, `getSpellcastingAbility` |
+| Other (network, plugin, theme, dice, IO) | 35 | `rollForDm`, `importDndBeyondCharacter`, `announce` |
+
+### Unused Exports — DEAD: Barrel Re-exports (28 items)
+
+Re-exports from barrel `index.ts` files that nothing imports from:
+
+| Barrel File | Dead Re-exports |
+|-------------|----------------|
+| `lobby/index.ts` | CharacterSelector, ChatInput, ChatPanel, PlayerCard, PlayerList, ReadyButton (6) |
+| `campaign/index.ts` | AdventureSelector, AudioStep, DetailsStep, MapConfigStep, ReviewStep, RulesStep, SystemStep (7) |
+| `game/player/index.ts` | CharacterMiniSheet, ConditionTracker, PlayerHUD, ShopView, SpellSlotTracker (5) |
+| `game/dm/index.ts` | MonsterStatBlockView (1) |
+| `ui/index.ts` | EmptyState, Skeleton (2) |
+| Other barrels | AsiSelector5e, GeneralFeatPicker, ReviewStep default, RulesStep default, etc. (7) |
+
+### Unused Exports — DEAD: Genuinely Unused Code (12 items)
+
+| Export | File | Reason |
+|--------|------|--------|
+| `_createSolidMaterial` | dice-textures.ts | Internal helper never called |
+| `RECONNECT_DELAY_MS` | app-constants.ts | Constant defined but never referenced |
+| `MAX_READ_FILE_SIZE` | app-constants.ts | Constant defined but never referenced |
+| `MAX_WRITE_CONTENT_SIZE` | app-constants.ts | Constant defined but never referenced |
+| `LIFESTYLE_COSTS` | stat-calculator-5e.ts | Data constant, never referenced |
+| `TOOL_SKILL_INTERACTIONS` | stat-calculator-5e.ts | Data constant, never referenced |
+| `resolveDataPath` | data-provider.ts | Helper function, superseded |
+| `cdnProvider` | data-provider.ts | CDN provider object, not yet wired |
+| `meetsPrerequisites` | LevelUpConfirm5e.tsx | Helper function, not imported elsewhere |
+| `SummaryCard` | BastionTabs.tsx | Sub-component re-export, not consumed |
+| `GeneralFeatPicker` | AsiSelector5e.tsx | Sub-component, only via unused barrel |
+| `AsiAbilityPicker5e` | AsiSelector5e.tsx | Sub-component, only via unused barrel |
+
+### Unused Exported Types (246 items) — PLANNED
+
+Public API type definitions following standard TypeScript export patterns:
+
+| Category | Count | Verdict |
+|----------|-------|---------|
+| Network payload types (`types.ts` + `message-types.ts`) | 62 | PLANNED — consumed via switch/case dispatch |
+| Data schema types (character, spell, equipment, world) | 45 | PLANNED — JSON data file shape definitions |
+| Combat/game mechanic types | 30 | PLANNED — public API contracts |
+| Cross-process IPC types (main/renderer) | 18 | PLANNED — invisible to knip across Electron processes |
+| Service/store state types | 25 | PLANNED — Zustand store shape exports |
+| Calendar/weather/map types | 15 | PLANNED — service contracts |
+| IO/plugin/dice types | 15 | PLANNED — module contracts |
+| Barrel re-export types (`data/index.ts`, etc.) | 20 | DEAD — from unused barrel files |
+| Bastion event + misc types | 16 | PLANNED — bastion event system + misc |
+
+### Previously Triaged (from orphan analysis)
 
 | File | Status | Verdict | Reason |
 |------|--------|---------|--------|
@@ -742,7 +757,7 @@ All scripts are modular and export reusable functions for programmatic use.
 Items are automatically removed from this list when their completion criteria are met.
 
 ### 7a. Split GameLayout.tsx
-Current size: 928 lines
+Current size: 901 lines
 Extract from `src/renderer/src/components/game/GameLayout.tsx`:
 1. `GameModalDispatcher.tsx` — all lazy modal imports + render logic
 2. `hooks/use-game-network.ts` — host/client network message handlers
@@ -755,12 +770,6 @@ Apply the same extraction pattern to these files:
 | File | Lines | Suggested Split |
 |------|-------|----------------|
 | DowntimeModal.tsx | 1101 | Extract sub-components / helpers |
-
-### New WIP features (found untracked)
-These files were found as new untracked/WIP code and need integration:
-- `src/main/storage/cloud-sync.ts` — Cloud save/sync backend (S3-based)
-- `src/renderer/src/services/cdn-provider.ts` — CDN asset provider
-- `src/renderer/src/data/sentient-items.ts` — Sentient item data for DM tools
 
 
 

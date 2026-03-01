@@ -5,7 +5,6 @@ import { Button, Modal } from '../components/ui'
 import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../constants/app-constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
 import { setCampaignId as setHostCampaignId } from '../network/host-manager'
-import { useLobbyBridges } from './lobby/use-lobby-bridges'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
 import { useCampaignStore } from '../stores/use-campaign-store'
 import { useCharacterStore } from '../stores/use-character-store'
@@ -13,6 +12,7 @@ import { useLobbyStore } from '../stores/use-lobby-store'
 import { useNetworkStore } from '../stores/use-network-store'
 import type { Campaign } from '../types/campaign'
 import { logger } from '../utils/logger'
+import { useLobbyBridges } from './lobby/use-lobby-bridges'
 
 export default function LobbyPage(): JSX.Element {
   const navigate = useNavigate()
@@ -39,9 +39,12 @@ export default function LobbyPage(): JSX.Element {
     // Initialize store from campaign config
     aiDmStore.initFromCampaign(campaign)
 
-    // Collect any available character IDs
+    // Collect any available character IDs + names for richer AI context
     const players = useLobbyStore.getState().players
     const characterIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
+    const characters = useCharacterStore.getState().characters
+    const campaignCharNames = characters.filter((c) => characterIds.includes(c.id)).map((c) => c.name)
+    logger.info('AI DM scene prep:', campaignCharNames.length, 'characters:', campaignCharNames.join(', '))
 
     // Trigger scene preparation immediately
     aiDmStore.prepareScene(campaign.id, characterIds)
@@ -62,6 +65,7 @@ export default function LobbyPage(): JSX.Element {
 
   useEffect(() => {
     if (connectionState === 'disconnected' && error) {
+      logger.warn('Lobby disconnected with error:', error)
       resetLobby()
       navigate('/', { replace: true })
     }
@@ -83,8 +87,8 @@ export default function LobbyPage(): JSX.Element {
         session.campaignName = campaign.name
         localStorage.setItem(LAST_SESSION_KEY, JSON.stringify(session))
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      logger.warn('Failed to parse LAST_SESSION_KEY from localStorage', e)
     }
 
     try {
@@ -101,8 +105,8 @@ export default function LobbyPage(): JSX.Element {
       if (changed) {
         localStorage.setItem(JOINED_SESSIONS_KEY, JSON.stringify(sessions))
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      logger.warn('Failed to parse JOINED_SESSIONS_KEY from localStorage', e)
     }
   }, [role, campaign?.name, campaignId])
 
@@ -146,6 +150,7 @@ export default function LobbyPage(): JSX.Element {
     const unsub = onClientMessage((msg: { type: string; payload: unknown }) => {
       if (msg.type === 'dm:game-start') {
         const payload = msg.payload as { campaignId?: string; campaign?: Campaign }
+        logger.info('Game start received, navigating to game:', payload.campaign?.id ?? campaignId)
         if (payload.campaign) {
           useCampaignStore.getState().addCampaignToState(payload.campaign)
           navigate(`/game/${payload.campaign.id}`)
@@ -185,6 +190,7 @@ export default function LobbyPage(): JSX.Element {
   }
 
   const confirmLeave = (): void => {
+    logger.info('Player leaving lobby, role:', role)
     disconnect()
     resetLobby()
     navigate('/')

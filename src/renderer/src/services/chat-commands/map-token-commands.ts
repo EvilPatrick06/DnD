@@ -7,15 +7,8 @@ import { useGameStore } from '../../stores/use-game-store'
 import type { MapToken } from '../../types/map'
 import type { MonsterStatBlock } from '../../types/monster'
 import { load5eMonsters } from '../data-provider'
+import { requireActiveMapId, requireTokenOnMap } from './helpers'
 import type { ChatCommand } from './types'
-
-function getTokenByName(mapId: string, name: string): MapToken | undefined {
-  const state = useGameStore.getState()
-  const map = state.maps.find((m) => m.id === mapId)
-  if (!map) return undefined
-  const q = name.toLowerCase()
-  return map.tokens.find((t) => t.label.toLowerCase() === q)
-}
 
 async function getMonsterByName(name: string): Promise<{ name: string; hp: number; ac: number; size: string } | null> {
   const monsters = await load5eMonsters()
@@ -46,12 +39,8 @@ export const tokenCommand: ChatCommand = {
       return
     }
 
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map. Load a map first.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
     if (action === 'add') {
       const name = parts[1]
@@ -84,11 +73,8 @@ export const tokenCommand: ChatCommand = {
         return
       }
 
-      const token = getTokenByName(activeMapId, name)
-      if (!token) {
-        ctx.addSystemMessage(`Token not found: "${name}"`)
-        return
-      }
+      const token = requireTokenOnMap(activeMapId, name, ctx)
+      if (!token) return
 
       useGameStore.getState().removeToken(activeMapId, token.id)
       ctx.broadcastSystemMessage(`Token "${token.label}" removed.`)
@@ -133,12 +119,8 @@ export const summonCommand: ChatCommand = {
       return
     }
 
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map. Load a map first.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
     const sizeValue = monster.size === 'Large' ? 2 : monster.size === 'Huge' ? 3 : monster.size === 'Gargantuan' ? 4 : 1
 
@@ -183,18 +165,11 @@ export const tokenCloneCommand: ChatCommand = {
     const name = hasCount ? parts.slice(0, -1).join(' ') : parts.join(' ')
     const cloneCount = hasCount ? count : 1
 
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
-    const original = getTokenByName(activeMapId, name)
-    if (!original) {
-      ctx.addSystemMessage(`Token not found: "${name}"`)
-      return
-    }
+    const original = requireTokenOnMap(activeMapId, name, ctx)
+    if (!original) return
 
     for (let i = 0; i < cloneCount; i++) {
       const cloneToken: MapToken = {
@@ -225,18 +200,11 @@ export const tokenHideCommand: ChatCommand = {
       return
     }
 
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
-    const token = getTokenByName(activeMapId, name)
-    if (!token) {
-      ctx.addSystemMessage(`Token not found: "${name}"`)
-      return
-    }
+    const token = requireTokenOnMap(activeMapId, name, ctx)
+    if (!token) return
 
     useGameStore.getState().updateToken(activeMapId, token.id, { visibleToPlayers: false })
     ctx.addSystemMessage(`${token.label} is now hidden from players.`)
@@ -257,18 +225,11 @@ export const tokenShowCommand: ChatCommand = {
       return
     }
 
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
-    const token = getTokenByName(activeMapId, name)
-    if (!token) {
-      ctx.addSystemMessage(`Token not found: "${name}"`)
-      return
-    }
+    const token = requireTokenOnMap(activeMapId, name, ctx)
+    if (!token) return
 
     useGameStore.getState().updateToken(activeMapId, token.id, { visibleToPlayers: true })
     ctx.broadcastSystemMessage(`${token.label} appears!`)
@@ -297,18 +258,11 @@ export const moveTokenCommand: ChatCommand = {
     }
 
     const name = parts.slice(0, -2).join(' ')
-    const gameState = useGameStore.getState()
-    const activeMapId = gameState.activeMapId
-    if (!activeMapId) {
-      ctx.addSystemMessage('No active map.')
-      return
-    }
+    const activeMapId = requireActiveMapId(ctx)
+    if (!activeMapId) return
 
-    const token = getTokenByName(activeMapId, name)
-    if (!token) {
-      ctx.addSystemMessage(`Token not found: "${name}"`)
-      return
-    }
+    const token = requireTokenOnMap(activeMapId, name, ctx)
+    if (!token) return
 
     useGameStore.getState().updateToken(activeMapId, token.id, { gridX: x, gridY: y })
     ctx.broadcastSystemMessage(`${token.label} moved to (${x}, ${y}).`)

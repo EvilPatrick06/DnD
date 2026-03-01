@@ -1,7 +1,11 @@
-import { useGameStore } from '../../stores/use-game-store'
 import { is5eCharacter } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
-import { getLatestCharacter, saveAndBroadcastCharacter } from './helpers'
+import {
+  addConditionOnCharacter,
+  removeConditionByPrefix,
+  requireLatestCharacter,
+  saveAndBroadcastCharacter
+} from './helpers'
 import type { ChatCommand, CommandContext, CommandResult } from './types'
 
 // /spell - Expend or restore spell slot
@@ -16,7 +20,7 @@ const spellCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -68,7 +72,7 @@ const channelCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -91,7 +95,7 @@ const kiCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -120,34 +124,18 @@ const rageCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
 
     const name = char.name || 'Character'
-    const gameStore = useGameStore.getState()
-    const entityId = char.id
 
-    // Check if already raging by looking at conditions
-    const rageCond = gameStore.conditions.find((c) => c.entityId === entityId && c.condition === 'Raging')
-    const isRaging = !!rageCond
-
-    if (isRaging) {
-      // Remove Raging condition
-      gameStore.removeCondition(rageCond.id)
+    const removed = removeConditionByPrefix(char.id, 'Raging')
+    if (removed) {
       ctx.broadcastSystemMessage(`${name}'s rage ends.`)
     } else {
-      // Add Raging condition
-      gameStore.addCondition({
-        id: crypto.randomUUID(),
-        entityId,
-        entityName: name,
-        condition: 'Raging',
-        duration: 'permanent',
-        source: 'command',
-        appliedRound: gameStore.round
-      })
+      addConditionOnCharacter(char, 'Raging')
       ctx.broadcastSystemMessage(`${name} enters a RAGE!`)
     }
 
@@ -167,7 +155,7 @@ const bardicCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -191,7 +179,7 @@ const inspirationCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -226,7 +214,7 @@ const deathsaveCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }
@@ -326,7 +314,7 @@ const secondWindCommand: ChatCommand = {
     if (!ctx.character) {
       return { handled: true, error: 'No active character.' }
     }
-    const char = getLatestCharacter(ctx.character.id)
+    const char = requireLatestCharacter(ctx)
     if (!char || !is5eCharacter(char)) {
       return { handled: true, error: 'No active 5e character found.' }
     }

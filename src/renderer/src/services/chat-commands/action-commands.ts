@@ -1,5 +1,6 @@
 import { trigger3dDice } from '../../components/game/dice3d'
-import { rollMultiple, rollSingle } from '../dice/dice-service'
+import { rollMultiple } from '../dice/dice-service'
+import { rollD20WithTag } from './helpers'
 import type { ChatCommand } from './types'
 
 export const grappleCommand: ChatCommand = {
@@ -11,10 +12,7 @@ export const grappleCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const target = args.trim() || 'a creature'
-    const roll = rollSingle(20)
-    const isCrit = roll === 20
-    const isFumble = roll === 1
-    const tag = isCrit ? ' **Natural 20!**' : isFumble ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',
@@ -34,10 +32,7 @@ export const shoveCommand: ChatCommand = {
     const parts = args.trim().split(/\s+/)
     const direction = parts[0]?.toLowerCase() === 'away' ? 'away' : 'prone'
     const target = parts.slice(direction === parts[0]?.toLowerCase() ? 1 : 0).join(' ') || 'a creature'
-    const roll = rollSingle(20)
-    const isCrit = roll === 20
-    const isFumble = roll === 1
-    const tag = isCrit ? ' **Natural 20!**' : isFumble ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     const effect = direction === 'away' ? '5 feet away' : 'Prone'
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
@@ -205,8 +200,7 @@ export const hideCommand: ChatCommand = {
   dmOnly: false,
   category: 'player',
   execute: (_args, ctx) => {
-    const roll = rollSingle(20)
-    const tag = roll === 20 ? ' **Natural 20!**' : roll === 1 ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',
@@ -224,8 +218,7 @@ export const searchCommand: ChatCommand = {
   category: 'player',
   execute: (args, ctx) => {
     const skill = args.trim().toLowerCase() === 'investigation' ? 'Investigation' : 'Perception'
-    const roll = rollSingle(20)
-    const tag = roll === 20 ? ' **Natural 20!**' : roll === 1 ? ' *Natural 1!*' : ''
+    const { roll, tag } = rollD20WithTag()
     trigger3dDice({ formula: '1d20', rolls: [roll], total: roll, rollerName: ctx.playerName })
     return {
       type: 'broadcast',

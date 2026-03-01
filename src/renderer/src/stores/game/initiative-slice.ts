@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { createAttackTracker, getExtraAttackCount } from '../../services/combat/multi-attack-tracker'
+import { createAttackTracker } from '../../services/combat/multi-attack-tracker'
 import { pluginEventBus } from '../../services/plugin-system/event-bus'
 import type { EntityCondition, InitiativeEntry } from '../../types/game-state'
 import { useLobbyStore } from '../use-lobby-store'
@@ -101,7 +101,8 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     const newInGameTime = nextIndex === 0 && inGameTime ? { totalSeconds: inGameTime.totalSeconds + 6 } : inGameTime
 
     // Initialize attack tracker for the next entity's turn
-    const maxAttacks = getExtraAttackCount(nextEntity.entityName, 5) // Default level 5; caller may override
+    // Default to 1 (single attack) — actual extra attacks are resolved by combat-resolver
+    const maxAttacks = 1
     const tracker = createAttackTracker(nextEntity.entityId, maxAttacks)
 
     set({

@@ -1,5 +1,5 @@
 // CDN provider available as an optional fallback for map images and remote game data
-import cdnProvider from './cdn-provider'
+
 import { useDataStore } from '../stores/use-data-store'
 import { getSystem } from '../systems/registry'
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
@@ -61,6 +61,7 @@ import type { GameSystem } from '../types/game-system'
 import { GAME_SYSTEMS } from '../types/game-system'
 import type { MonsterStatBlock } from '../types/monster'
 import { logger } from '../utils/logger'
+import cdnProvider from './cdn-provider'
 
 import { DATA_PATHS } from './data-paths'
 export { DATA_PATHS }
@@ -141,7 +142,14 @@ function classToOption(cls: ClassData): SelectableOption {
     { label: 'Primary Ability', value: ct.primaryAbility.join(', ') },
     { label: 'Saving Throws', value: ct.savingThrowProficiencies.join(', ') },
     { label: 'Armor Training', value: ct.armorTraining.join(', ') || 'None' },
-    { label: 'Weapon Proficiencies', value: ct.weaponProficiencies.map((w) => w.category ?? '').filter(Boolean).join(', ') || 'None' },
+    {
+      label: 'Weapon Proficiencies',
+      value:
+        ct.weaponProficiencies
+          .map((w) => w.category ?? '')
+          .filter(Boolean)
+          .join(', ') || 'None'
+    },
     {
       label: 'Skills',
       value: `Choose ${ct.skillProficiencies.count} from: ${ct.skillProficiencies.from.join(', ')}`
@@ -281,7 +289,7 @@ export async function getOptionsForSlot(
         try {
           const subclasses = await load5eSubclasses()
           const filtered = context?.selectedClassId
-            ? subclasses.filter((sc) => sc.className === context.selectedClassId)
+            ? subclasses.filter((sc) => sc.className?.toLowerCase() === context.selectedClassId)
             : subclasses
           return filtered.map(subclassToOption)
         } catch (error) {

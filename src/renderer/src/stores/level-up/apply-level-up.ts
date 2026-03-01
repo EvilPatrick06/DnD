@@ -47,7 +47,11 @@ export async function apply5eLevelUp(
     {
       name: string
       hitDie: number
-      multiclassing?: { hitPointDie?: boolean; weaponProficiencies?: Array<{ category?: string }>; armorTraining?: string[] }
+      multiclassing?: {
+        hitPointDie?: boolean
+        weaponProficiencies?: Array<{ category?: string }>
+        armorTraining?: string[]
+      }
     }
   > = {}
   try {
@@ -288,7 +292,12 @@ export async function apply5eLevelUp(
       updatedProficiencies = {
         ...updatedProficiencies,
         armor: [...new Set([...updatedProficiencies.armor, ...(mcProfs.armorTraining ?? [])])],
-        weapons: [...new Set([...updatedProficiencies.weapons, ...(mcProfs.weaponProficiencies ?? []).map((w) => w.category ?? '').filter(Boolean)])]
+        weapons: [
+          ...new Set([
+            ...updatedProficiencies.weapons,
+            ...(mcProfs.weaponProficiencies ?? []).map((w) => w.category ?? '').filter(Boolean)
+          ])
+        ]
       }
     }
   }
