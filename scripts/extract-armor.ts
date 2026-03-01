@@ -19,29 +19,29 @@ interface Armor {
 
 const src = { book: '2024 Players Handbook', chapter: 'Chapter 6', section: 'Armor' }
 
-const armorData: { category: string; donTime: string; doffTime: string; dir: string; items: [string, string, string, boolean, string, string][] }[] = [
+const armorData: { category: string; donTime: string; doffTime: string; dir: string; items: [string, string, string | null, boolean, string, string][] }[] = [
     {
         category: 'Light', donTime: '1 Minute', doffTime: '1 Minute', dir: 'light',
         items: [
-            ['Padded Armor', '11 + Dex modifier', null as any, true, '8 lb.', '5 GP'],
-            ['Leather Armor', '11 + Dex modifier', null as any, false, '10 lb.', '10 GP'],
-            ['Studded Leather Armor', '12 + Dex modifier', null as any, false, '13 lb.', '45 GP'],
+            ['Padded Armor', '11 + Dex modifier', null, true, '8 lb.', '5 GP'],
+            ['Leather Armor', '11 + Dex modifier', null, false, '10 lb.', '10 GP'],
+            ['Studded Leather Armor', '12 + Dex modifier', null, false, '13 lb.', '45 GP'],
         ]
     },
     {
         category: 'Medium', donTime: '5 Minutes', doffTime: '1 Minute', dir: 'medium',
         items: [
-            ['Hide Armor', '12 + Dex modifier (max 2)', null as any, false, '12 lb.', '10 GP'],
-            ['Chain Shirt', '13 + Dex modifier (max 2)', null as any, false, '20 lb.', '50 GP'],
-            ['Scale Mail', '14 + Dex modifier (max 2)', null as any, true, '45 lb.', '50 GP'],
-            ['Breastplate', '14 + Dex modifier (max 2)', null as any, false, '20 lb.', '400 GP'],
-            ['Half Plate Armor', '15 + Dex modifier (max 2)', null as any, true, '40 lb.', '750 GP'],
+            ['Hide Armor', '12 + Dex modifier (max 2)', null, false, '12 lb.', '10 GP'],
+            ['Chain Shirt', '13 + Dex modifier (max 2)', null, false, '20 lb.', '50 GP'],
+            ['Scale Mail', '14 + Dex modifier (max 2)', null, true, '45 lb.', '50 GP'],
+            ['Breastplate', '14 + Dex modifier (max 2)', null, false, '20 lb.', '400 GP'],
+            ['Half Plate Armor', '15 + Dex modifier (max 2)', null, true, '40 lb.', '750 GP'],
         ]
     },
     {
         category: 'Heavy', donTime: '10 Minutes', doffTime: '5 Minutes', dir: 'heavy',
         items: [
-            ['Ring Mail', '14', null as any, false, '40 lb.', '30 GP'],
+            ['Ring Mail', '14', null, false, '40 lb.', '30 GP'],
             ['Chain Mail', '16', 'Str 13', true, '55 lb.', '75 GP'],
             ['Splint Armor', '17', 'Str 15', true, '60 lb.', '200 GP'],
             ['Plate Armor', '18', 'Str 15', true, '65 lb.', '1,500 GP'],
@@ -50,7 +50,7 @@ const armorData: { category: string; donTime: string; doffTime: string; dir: str
     {
         category: 'Shield', donTime: '1 Action', doffTime: '1 Action', dir: 'shields',
         items: [
-            ['Shield', '+2', null as any, false, '6 lb.', '10 GP'],
+            ['Shield', '+2', null, false, '6 lb.', '10 GP'],
         ]
     },
 ]

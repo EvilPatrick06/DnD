@@ -15,7 +15,7 @@ const lines = fs.readFileSync(path.join(process.cwd(), '5.5e References/PHB2024/
 const phb4 = { book: '2024 Players Handbook', chapter: 'Chapter 4', section: '' }
 
 // ── BACKGROUNDS ──
-const bgDir = path.join(ROOT, 'character/backgrounds')
+const bgDir = path.join(ROOT, 'origins/backgrounds')
 ensureDir(bgDir)
 
 const bgNames = ['Acolyte', 'Artisan', 'Charlatan', 'Criminal', 'Entertainer', 'Farmer', 'Guard', 'Guide', 'Hermit', 'Merchant', 'Noble', 'Sage', 'Sailor', 'Scribe', 'Soldier', 'Wayfarer']
@@ -51,7 +51,7 @@ for (const name of bgNames) {
 }
 
 // ── SPECIES ──
-const spDir = path.join(ROOT, 'character/species')
+const spDir = path.join(ROOT, 'origins/species')
 ensureDir(spDir)
 
 const speciesNames = ['Aasimar', 'Dragonborn', 'Dwarf', 'Elf', 'Gnome', 'Goliath', 'Halfling', 'Human', 'Orc', 'Tiefling']

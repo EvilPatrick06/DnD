@@ -21,7 +21,24 @@ from flask_socketio import SocketIO
 # ── App Setup ────────────────────────────────────────────────────────
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+
+def _get_secret_key() -> str:
+    """Return a stable SECRET_KEY: env var > persisted file > generate + persist."""
+    env = os.environ.get("SECRET_KEY")
+    if env:
+        return env
+    key_path = os.path.join(os.path.expanduser("~"), ".bmo_secret_key")
+    try:
+        return open(key_path).read().strip()
+    except FileNotFoundError:
+        key = secrets.token_hex(32)
+        with open(key_path, "w") as f:
+            f.write(key)
+        return key
+
+
+app.config["SECRET_KEY"] = _get_secret_key()
 socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
 
 # ── Services (lazy-initialized) ─────────────────────────────────────

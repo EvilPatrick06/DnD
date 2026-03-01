@@ -7,8 +7,11 @@ const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
 });
 
+const batchId = process.argv[2] || process.env.BATCH_ID;
+if (!batchId) { console.error('Usage: npx tsx scripts/debug-batch.ts <batch-id>'); process.exit(1); }
+
 async function debug() {
-    const results = await anthropic.messages.batches.results('msgbatch_01RUK7ppD2JWZUJXv5hzpcxU');
+    const results = await anthropic.messages.batches.results(batchId);
     const out = [];
     for await (const result of results) {
         if (result.result.type === 'succeeded') {
