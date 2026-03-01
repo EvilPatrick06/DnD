@@ -217,6 +217,15 @@ export default function PlayerBottomBar({
                   <button
                     onClick={() => {
                       setToolsOpen(false)
+                      onOpenModal?.('diceRoller')
+                    }}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                  >
+                    Dice Roller
+                  </button>
+                  <button
+                    onClick={() => {
+                      setToolsOpen(false)
                       onJump?.()
                     }}
                     className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"

@@ -1,7 +1,8 @@
 import fs from 'fs';
+import path from 'path';
 
-const PHB_CLASSES_FILE = 'c:\\Users\\evilp\\dnd\\5.5e References\\PHB2024\\markdown\\03-character-classes.md';
-const OUTPUT_FILE = 'c:\\Users\\evilp\\dnd\\batch-subclasses.jsonl';
+const PHB_CLASSES_FILE = path.join(process.cwd(), '5.5e References/PHB2024/markdown/03-character-classes.md');
+const OUTPUT_FILE = path.join(process.cwd(), 'batch-subclasses.jsonl');
 
 const tsSchema = `
 export interface SubclassFeature {

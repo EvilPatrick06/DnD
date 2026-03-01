@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import OllamaManagement from '../components/ui/OllamaManagement'
 import { addToast } from '../hooks/use-toast'
+import * as AutoSave from '../services/io/auto-save'
 import { exportEntities, importEntities } from '../services/io/entity-io'
+import * as NotificationService from '../services/notification-service'
 import {
   DEFAULT_SHORTCUTS,
   formatKeyCombo,
@@ -396,6 +398,13 @@ export default function SettingsPage(): JSX.Element {
     return (localStorage.getItem('dnd-vtt-dice-mode') as '3d' | '2d') ?? '3d'
   })
 
+  // Notification settings
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => NotificationService.getConfig().enabled)
+
+  // Auto-save settings
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => AutoSave.getConfig().enabled)
+  const [autoSaveInterval, setAutoSaveInterval] = useState(() => AutoSave.getConfig().intervalMs / 60000)
+
   // Accessibility store
   const uiScale = useAccessibilityStore((s) => s.uiScale)
   const setUiScale = useAccessibilityStore((s) => s.setUiScale)
@@ -636,6 +645,64 @@ export default function SettingsPage(): JSX.Element {
                   {mode === '3d' ? '3D Dice' : '2D Quick Roll'}
                 </button>
               ))}
+            </div>
+          </div>
+        </Section>
+
+        {/* Notifications */}
+        <Section title="Notifications">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <span className="text-sm text-gray-300">Enable Notifications</span>
+              <p className="text-[10px] text-gray-500">Show desktop notifications for game events</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={notificationsEnabled}
+              onChange={(e) => {
+                const val = e.target.checked
+                setNotificationsEnabled(val)
+                NotificationService.setEnabled(val)
+              }}
+              className="w-4 h-4 accent-amber-500 cursor-pointer"
+            />
+          </label>
+        </Section>
+
+        {/* Auto-Save */}
+        <Section title="Auto-Save">
+          <div className="space-y-4">
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <span className="text-sm text-gray-300">Enable Auto-Save</span>
+                <p className="text-[10px] text-gray-500">Periodically save game state during sessions</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={autoSaveEnabled}
+                onChange={(e) => {
+                  const val = e.target.checked
+                  setAutoSaveEnabled(val)
+                  AutoSave.setConfig({ enabled: val })
+                }}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </label>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-300">Interval (minutes)</span>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={autoSaveInterval}
+                onChange={(e) => {
+                  const val = Math.max(1, Math.min(60, Number(e.target.value)))
+                  setAutoSaveInterval(val)
+                  AutoSave.setConfig({ intervalMs: val * 60000 })
+                }}
+                disabled={!autoSaveEnabled}
+                className="w-20 px-2 py-1 text-sm bg-gray-900 border border-gray-700 rounded text-gray-300 disabled:opacity-50"
+              />
             </div>
           </div>
         </Section>

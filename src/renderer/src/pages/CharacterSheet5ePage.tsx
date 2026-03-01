@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import AbilityScoresGrid5e from '../components/sheet/5e/AbilityScoresGrid5e'
 import ClassResourcesSection5e from '../components/sheet/5e/ClassResourcesSection5e'
@@ -18,6 +18,8 @@ import ShortRestModal5e from '../components/sheet/5e/ShortRestModal5e'
 import SkillsSection5e from '../components/sheet/5e/SkillsSection5e'
 import SpellcastingSection5e from '../components/sheet/5e/SpellcastingSection5e'
 import Modal from '../components/ui/Modal'
+
+const PrintSheet = lazy(() => import('../components/sheet/shared/PrintSheet'))
 import { shouldLevelUp } from '../data/xp-thresholds'
 import { applyLongRest } from '../services/character/rest-service-5e'
 import { useBuilderStore } from '../stores/use-builder-store'
@@ -50,6 +52,7 @@ export default function CharacterSheet5ePage(): JSX.Element {
   const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
   const [showLevelUpBanner, setShowLevelUpBanner] = useState(false)
   const [showCantripSwap, setShowCantripSwap] = useState(false)
+  const [showPrint, setShowPrint] = useState(false)
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [versions, setVersions] = useState<Array<{ fileName: string; timestamp: string; sizeBytes: number }>>([])
   const [loadingVersions, setLoadingVersions] = useState(false)
@@ -211,6 +214,12 @@ export default function CharacterSheet5ePage(): JSX.Element {
               Level Up
             </button>
             <button
+              onClick={() => setShowPrint(true)}
+              className="px-3 py-1.5 text-sm border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-gray-200 rounded transition-colors"
+            >
+              Print
+            </button>
+            <button
               onClick={async () => {
                 setShowVersionHistory(true)
                 setLoadingVersions(true)
@@ -334,6 +343,13 @@ export default function CharacterSheet5ePage(): JSX.Element {
         open={showCantripSwap}
         onClose={() => setShowCantripSwap(false)}
       />
+
+      {/* Print Sheet */}
+      {showPrint && (
+        <Suspense fallback={null}>
+          <PrintSheet character={character} onClose={() => setShowPrint(false)} />
+        </Suspense>
+      )}
 
       {/* Version History Modal */}
       {showVersionHistory && (

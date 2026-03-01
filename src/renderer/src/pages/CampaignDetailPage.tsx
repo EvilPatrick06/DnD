@@ -8,6 +8,7 @@ import { useCampaignStore } from '../stores/use-campaign-store'
 import { useNetworkStore } from '../stores/use-network-store'
 import type { Campaign } from '../types/campaign'
 import { GAME_SYSTEMS } from '../types/game-system'
+import type { MonsterStatBlock } from '../types/monster'
 import { logger } from '../utils/logger'
 import AdventureManager from './campaign-detail/AdventureManager'
 import LoreManager from './campaign-detail/LoreManager'
@@ -16,6 +17,7 @@ import RuleManager from './campaign-detail/RuleManager'
 
 const AiDmCard = lazy(() => import('./campaign-detail/AiDmCard'))
 const AudioManager = lazy(() => import('./campaign-detail/AudioManager'))
+const MonsterLinker = lazy(() => import('./campaign-detail/MonsterLinker'))
 const CalendarCard = lazy(() => import('./campaign-detail/CalendarCard'))
 const MapManager = lazy(() => import('./campaign-detail/MapManager'))
 const MetricsCard = lazy(() => import('./campaign-detail/MetricsCard'))
@@ -31,6 +33,7 @@ export default function CampaignDetailPage(): JSX.Element {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [linkedMonster, setLinkedMonster] = useState<MonsterStatBlock | null>(null)
 
   const campaign: Campaign | undefined = campaigns.find((c) => c.id === id)
 
@@ -240,6 +243,17 @@ export default function CampaignDetailPage(): JSX.Element {
         <Suspense fallback={null}>
           <AudioManager campaign={campaign} saveCampaign={saveCampaign} />
         </Suspense>
+
+        {/* Monster Linker */}
+        <Card title="Monster Linker">
+          <Suspense fallback={null}>
+            <MonsterLinker
+              onSelect={setLinkedMonster}
+              selectedId={linkedMonster?.id}
+              showPreview
+            />
+          </Suspense>
+        </Card>
 
         {/* Journal */}
         <Card>

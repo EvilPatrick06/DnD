@@ -3,79 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router'
 import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
 import { BackButton, Button, Spinner } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
+import LibraryFilters from './library/LibraryFilters'
+import type { Tab, SortField } from './library/library-constants'
+import { sizeOrder } from './library/library-constants'
 import { load5eCreatures, load5eMonsters, load5eNpcs, searchMonsters } from '../services/data-provider'
+import { loadCategoryItems } from '../services/library-service'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
+import { useLibraryStore } from '../stores/use-library-store'
 import type { MonsterStatBlock } from '../types/monster'
 import { crToNumber } from '../types/monster'
 import { logger } from '../utils/logger'
-
-type Tab = 'monsters' | 'creatures' | 'npcs' | 'custom'
-type SortField = 'name' | 'cr' | 'type' | 'size'
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'monsters', label: 'Monsters' },
-  { id: 'creatures', label: 'Creatures' },
-  { id: 'npcs', label: 'NPCs' },
-  { id: 'custom', label: 'Custom' }
-]
-
-const CR_OPTIONS = [
-  'Any',
-  '0',
-  '1/8',
-  '1/4',
-  '1/2',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '10',
-  '11',
-  '12',
-  '13',
-  '14',
-  '15',
-  '16',
-  '17',
-  '18',
-  '19',
-  '20',
-  '21',
-  '22',
-  '23',
-  '24',
-  '25',
-  '26',
-  '27',
-  '28',
-  '29',
-  '30'
-]
-
-const TYPE_OPTIONS = [
-  'Any',
-  'Aberration',
-  'Beast',
-  'Celestial',
-  'Construct',
-  'Dragon',
-  'Elemental',
-  'Fey',
-  'Fiend',
-  'Giant',
-  'Humanoid',
-  'Monstrosity',
-  'Ooze',
-  'Plant',
-  'Undead'
-]
-
-const SIZE_OPTIONS = ['Any', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 
 export default function LibraryPage(): JSX.Element {
   const _navigate = useNavigate()
@@ -89,7 +26,7 @@ export default function LibraryPage(): JSX.Element {
   const [npcs, setNpcs] = useState<MonsterStatBlock[]>([])
   const [custom, setCustom] = useState<MonsterStatBlock[]>([])
 
-  const [search, setSearch] = useState('')
+  const { searchQuery: search, setSearchQuery: setSearch } = useLibraryStore()
   const [crFilter, setCrFilter] = useState('Any')
   const [typeFilter, setTypeFilter] = useState('Any')
   const [sizeFilter, setSizeFilter] = useState('Any')
@@ -327,81 +264,23 @@ export default function LibraryPage(): JSX.Element {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setTab(t.id)
-              setSelected(new Set())
-              setPreviewId(null)
-            }}
-            className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer transition-colors ${
-              tab === t.id
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
-            }`}
-          >
-            {t.label}
-            <span className="ml-1.5 text-xs opacity-70">
-              (
-              {t.id === 'monsters'
-                ? monsters.length
-                : t.id === 'creatures'
-                  ? creatures.length
-                  : t.id === 'npcs'
-                    ? npcs.length
-                    : custom.length}
-              )
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-3 mb-4 flex-wrap">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, type, or tag..."
-          className="flex-1 min-w-48 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-        />
-        <select
-          value={crFilter}
-          onChange={(e) => setCrFilter(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-        >
-          {CR_OPTIONS.map((cr) => (
-            <option key={cr} value={cr}>
-              {cr === 'Any' ? 'CR: Any' : `CR ${cr}`}
-            </option>
-          ))}
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-        >
-          {TYPE_OPTIONS.map((t) => (
-            <option key={t} value={t}>
-              {t === 'Any' ? 'Type: Any' : t}
-            </option>
-          ))}
-        </select>
-        <select
-          value={sizeFilter}
-          onChange={(e) => setSizeFilter(e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-        >
-          {SIZE_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s === 'Any' ? 'Size: Any' : s}
-            </option>
-          ))}
-        </select>
-      </div>
+      <LibraryFilters
+        tab={tab}
+        setTab={setTab}
+        counts={{ monsters: monsters.length, creatures: creatures.length, npcs: npcs.length, custom: custom.length }}
+        search={search}
+        setSearch={setSearch}
+        crFilter={crFilter}
+        setCrFilter={setCrFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        sizeFilter={sizeFilter}
+        setSizeFilter={setSizeFilter}
+        onTabChange={() => {
+          setSelected(new Set())
+          setPreviewId(null)
+        }}
+      />
 
       {/* Content */}
       <div className="flex gap-4 flex-1 min-h-0">
@@ -500,7 +379,3 @@ export default function LibraryPage(): JSX.Element {
   )
 }
 
-function sizeOrder(size: string): number {
-  const order: Record<string, number> = { Tiny: 0, Small: 1, Medium: 2, Large: 3, Huge: 4, Gargantuan: 5 }
-  return order[size] ?? 3
-}

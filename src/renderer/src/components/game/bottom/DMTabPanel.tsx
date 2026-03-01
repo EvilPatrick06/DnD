@@ -268,6 +268,9 @@ export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap
       case 'dice':
         return (
           <div className="flex flex-wrap gap-1.5">
+            <button className={btnClass} onClick={() => onOpenModal('diceRoller')}>
+              Dice Roller
+            </button>
             <button className={btnClass} onClick={() => onOpenModal('dmRoller')}>
               DM Roller
             </button>

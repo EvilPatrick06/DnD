@@ -52,6 +52,8 @@ export interface TurnState {
   mountedOn?: string
   /** Whether the mount is controlled or independent (Phase 4 - mounted combat) */
   mountType?: 'controlled' | 'independent'
+  /** Multi-attack tracking for Attack action and bonus attacks */
+  attackTracker?: { attacksUsed: number; maxAttacks: number; bonusAttacksUsed: number; maxBonusAttacks: number }
 }
 
 export interface InitiativeState {

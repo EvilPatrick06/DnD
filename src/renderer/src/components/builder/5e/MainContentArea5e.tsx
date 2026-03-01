@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import AbilityScoreModal from '../shared/AbilityScoreModal'
 import AsiModal from '../shared/AsiModal'
@@ -9,6 +10,8 @@ import DetailsTab5e from './DetailsTab5e'
 import LanguagesTab5e from './LanguagesTab5e'
 import SpecialAbilitiesTab5e from './SpecialAbilitiesTab5e'
 import SpellsTab5e from './SpellsTab5e'
+
+const GearTab5e = lazy(() => import('./GearTab5e'))
 
 function ActiveTabContent(): JSX.Element {
   const activeTab = useBuilderStore((s) => s.activeTab)
@@ -22,6 +25,12 @@ function ActiveTabContent(): JSX.Element {
       return <LanguagesTab5e />
     case 'spells':
       return <SpellsTab5e />
+    case 'gear':
+      return (
+        <Suspense fallback={<div className="p-4 text-gray-500 text-sm">Loading...</div>}>
+          <GearTab5e />
+        </Suspense>
+      )
     default:
       return <DetailsTab5e />
   }

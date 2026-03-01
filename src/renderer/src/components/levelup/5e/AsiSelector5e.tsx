@@ -3,7 +3,7 @@ import { load5eFeats } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
 import type { AbilityName, BuildSlot } from '../../../types/character-common'
 import { ABILITY_NAMES } from '../../../types/character-common'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
 
 /** ASI/Feat toggle: choose either ASI or a General feat at ASI levels */
@@ -82,7 +82,7 @@ export function GeneralFeatPicker({
     feat: { id: string; name: string; description: string; choices?: Record<string, string | string[]> } | null
   ) => void
 }): JSX.Element {
-  const [feats, setFeats] = useState<FeatData5e[]>([])
+  const [feats, setFeats] = useState<FeatData[]>([])
   const [expanded, setExpanded] = useState(false)
   const [search, setSearch] = useState('')
   const [pendingChoices, setPendingChoices] = useState<Record<string, string>>({})

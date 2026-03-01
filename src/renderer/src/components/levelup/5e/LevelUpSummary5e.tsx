@@ -33,7 +33,7 @@ export function calculateSummary5e(
   for (let lvl = currentLevel + 1; lvl <= targetLevel; lvl++) {
     const levelClassId = classLevelChoices[lvl] ?? character.buildChoices.classId
     const classInfo = allClasses.find((c) => c.id === levelClassId)
-    const hitDie = classInfo?.hitDie ?? character.classes[0]?.hitDie ?? 8
+    const hitDie = (classInfo ? parseInt(classInfo.coreTraits.hitPointDie.replace(/\D/g, '')) : null) || (character.classes[0]?.hitDie ?? 8)
 
     let dieResult: number
     if (hpChoices[lvl] === 'roll' && hpRolls[lvl] !== undefined) {

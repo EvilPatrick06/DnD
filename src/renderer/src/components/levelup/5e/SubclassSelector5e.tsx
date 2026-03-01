@@ -11,7 +11,7 @@ export function SubclassSelector5e({ slot, classId }: { slot: BuildSlot; classId
   useEffect(() => {
     load5eSubclasses()
       .then((all) => {
-        setSubclasses(all.filter((sc) => sc.class === classId))
+        setSubclasses(all.filter((sc) => sc.className === classId).map((sc) => ({ id: sc.id ?? sc.name.toLowerCase().replace(/\s+/g, '-'), name: sc.name, description: sc.description })))
       })
       .catch(() => setSubclasses([]))
   }, [classId])

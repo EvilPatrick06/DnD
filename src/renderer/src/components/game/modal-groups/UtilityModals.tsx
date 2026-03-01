@@ -18,6 +18,7 @@ const ThemeSelector = lazy(() => import('../overlays/ThemeSelector'))
 const ItemTradeModal = lazy(() => import('../modals/utility/ItemTradeModal'))
 const SharedJournalModal = lazy(() => import('../modals/utility/SharedJournalModal'))
 const CompendiumModal = lazy(() => import('../modals/utility/CompendiumModal'))
+const DiceRoller = lazy(() => import('../dice3d/DiceRoller'))
 
 interface UtilityModalsProps {
   activeModal: ActiveModal
@@ -126,6 +127,21 @@ export default function UtilityModals({
       )}
 
       {activeModal === 'compendium' && <CompendiumModal onClose={close} />}
+
+      {activeModal === 'diceRoller' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 w-96 max-h-[80vh] overflow-y-auto relative">
+            <button
+              onClick={close}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-200 cursor-pointer text-sm"
+            >
+              Close
+            </button>
+            <h2 className="text-lg font-bold text-amber-400 mb-3">Dice Roller</h2>
+            <DiceRoller system="dnd5e" rollerName={playerName} />
+          </div>
+        </div>
+      )}
     </Suspense>
   )
 }

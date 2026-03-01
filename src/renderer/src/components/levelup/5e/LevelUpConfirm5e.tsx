@@ -55,8 +55,9 @@ export function ClassLevelSelector({
 
   // Check prerequisites for new classes
   const eligibleClasses = allClasses.filter((cls) => {
-    if (currentClassIds.has(cls.id)) return true
-    return meetsPrerequisites(character, cls.multiclassPrerequisites)
+    const cid = cls.id ?? cls.name.toLowerCase()
+    if (currentClassIds.has(cid)) return true
+    return meetsPrerequisites(character, cls.coreTraits.primaryAbility.join(' or '))
   })
 
   const isMulticlass = selectedClassId !== character.buildChoices.classId
@@ -72,8 +73,8 @@ export function ClassLevelSelector({
         className="bg-gray-800 border border-gray-600 rounded px-2 py-0.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
       >
         {eligibleClasses.map((cls) => (
-          <option key={cls.id} value={cls.id}>
-            {cls.name} (d{cls.hitDie}){!currentClassIds.has(cls.id) ? ' [NEW]' : ''}
+          <option key={cls.id ?? cls.name.toLowerCase()} value={cls.id ?? cls.name.toLowerCase()}>
+            {cls.name} ({cls.coreTraits.hitPointDie}){!currentClassIds.has(cls.id ?? cls.name.toLowerCase()) ? ' [NEW]' : ''}
           </option>
         ))}
       </select>

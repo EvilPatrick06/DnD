@@ -89,7 +89,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
         size: Array.isArray(speciesData.size) ? speciesData.size[0] : speciesData.size
       }
     : null
-  const classForCalc = classData ? { hitDie: classData.hitDie, savingThrows: classData.savingThrows } : null
+  const classForCalc = classData ? { hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, '')) || 8, savingThrows: classData.coreTraits.savingThrowProficiencies } : null
 
   const speciesBonuses =
     Object.keys(backgroundAbilityBonuses).length > 0
@@ -150,11 +150,10 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
 
   // Gather all equipment
   const classEquipmentChoice = state.classEquipmentChoice || 'A'
-  const classEqOptions = classData?.startingEquipmentOptions
-  const startingEquipment = classEqOptions?.[classEquipmentChoice]
-    ? classEqOptions[classEquipmentChoice].equipment
-    : (classData?.startingEquipment ?? [])
-  const classOptionGold = classEqOptions?.[classEquipmentChoice] ? classEqOptions[classEquipmentChoice].gold : 0
+  const classEqEntries = classData?.coreTraits.startingEquipment ?? []
+  const chosenEntry = classEqEntries.find((e) => e.label === classEquipmentChoice) ?? classEqEntries[0]
+  const startingEquipment = (chosenEntry?.items ?? []).map((name) => ({ name, quantity: 1 }))
+  const classOptionGold = chosenEntry?.gp ?? 0
   const bgEquipmentChoice = state.backgroundEquipmentChoice ?? 'equipment'
   const storeBgEquipment = state.bgEquipment
   const bgEquipment =
@@ -261,14 +260,14 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
   const isWarden = primalOrderSlot?.selectedId === 'warden'
   const isProtector = divineOrderSlot?.selectedId === 'protector'
   const weaponProfs = (() => {
-    const r = [...(classData?.proficiencies.weapons ?? [])]
-    if ((isWarden || isProtector) && !r.includes('Martial weapons')) r.push('Martial weapons')
+    const r = (classData?.coreTraits.weaponProficiencies ?? []).map((w) => w.category ?? '').filter(Boolean)
+    if ((isWarden || isProtector) && !r.includes('Martial')) r.push('Martial')
     return r
   })()
   const armorProfs = (() => {
-    const r = [...(classData?.proficiencies.armor ?? [])]
-    if (isWarden && !r.includes('Medium armor')) r.push('Medium armor')
-    if (isProtector && !r.includes('Heavy armor')) r.push('Heavy armor')
+    const r = [...(classData?.coreTraits.armorTraining ?? [])]
+    if (isWarden && !r.includes('Medium')) r.push('Medium')
+    if (isProtector && !r.includes('Heavy')) r.push('Heavy')
     return r
   })()
   const toolProfs = (() => {
@@ -280,7 +279,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       )
       return matchedBgItem ? matchedBgItem.name : tool
     })
-    const all = [...(classData?.proficiencies.tools ?? []), ...bgToolsMapped]
+    const all = [...bgToolsMapped]
     const seen = new Set<string>()
     return all.filter((t) => {
       const key = t.toLowerCase()
@@ -497,7 +496,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
           return {
             name: cd?.name ?? cid,
             level: lvlCount,
-            hitDie: cd?.hitDie ?? 8,
+            hitDie: parseInt(cd?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8'),
             subclass: subSlot?.selectedName ?? undefined
           }
         })
@@ -507,7 +506,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
             {
               name: classData.name,
               level: targetLevel,
-              hitDie: classData.hitDie,
+              hitDie: parseInt(classData.coreTraits.hitPointDie.replace(/\D/g, '')) || 8,
               subclass: subclassSlot?.selectedName ?? undefined
             }
           ]
@@ -525,7 +524,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       temporary: tempHP || existingChar5e?.hitPoints?.temporary || 0
     },
     hitDice: existingChar5e?.hitDice ?? [
-      { current: targetLevel, maximum: targetLevel, dieType: classData?.hitDie ?? 8 }
+      { current: targetLevel, maximum: targetLevel, dieType: parseInt(classData?.coreTraits.hitPointDie.replace(/\D/g, '') ?? '8') }
     ],
     armorClass: calculateArmorClass5e({
       dexMod: stats.abilityModifiers.dexterity,
@@ -550,7 +549,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       armor: armorProfs,
       tools: toolProfs,
       languages: langProfs,
-      savingThrows: (classData?.savingThrows ?? []).map((s) => s.toLowerCase() as AbilityName)
+      savingThrows: (classData?.coreTraits.savingThrowProficiencies ?? []).map((s) => s.toLowerCase() as AbilityName)
     },
     skills: computedSkills,
     equipment: filteredEquipment,

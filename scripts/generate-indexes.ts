@@ -134,8 +134,8 @@ generateIndex('feats', 'feats/index.json', (data, p) => {
     return {
         name: data.name,
         category: data.category || (p.split('/')[1] || 'general'),
-        level: data.levelRequirement || data.level || 1,
-        prerequisites: !!data.prerequisite ? data.prerequisite : false
+        level: data.prerequisites?.level ?? data.levelRequirement ?? data.level ?? 1,
+        prerequisites: !!(data.prerequisites || data.prerequisite)
     }
 })
 

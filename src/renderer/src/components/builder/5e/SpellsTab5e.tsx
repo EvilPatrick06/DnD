@@ -48,7 +48,7 @@ export default function SpellsTab5e(): JSX.Element {
     }
     load5eSubclasses()
       .then((subclasses) => {
-        const sc = subclasses.find((s) => s.id === subclassId)
+        const sc = subclasses.find((s) => (s.id ?? s.name.toLowerCase().replace(/\s+/g, '-')) === subclassId)
         if (!sc?.alwaysPreparedSpells) {
           setSubclassAlwaysPreparedNames([])
           return

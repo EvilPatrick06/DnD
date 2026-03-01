@@ -47,16 +47,16 @@ export async function apply5eLevelUp(
     {
       name: string
       hitDie: number
-      multiclassProficiencies?: Partial<{ armor: string[]; weapons: string[]; tools: string[] }>
+      multiclassing?: { hitPointDie?: boolean; weaponProficiencies?: Array<{ category?: string }>; armorTraining?: string[] }
     }
   > = {}
   try {
     const classes = await load5eClasses()
     for (const cls of classes) {
-      classDataMap[cls.id] = {
+      classDataMap[cls.id ?? cls.name.toLowerCase()] = {
         name: cls.name,
-        hitDie: cls.hitDie,
-        multiclassProficiencies: cls.multiclassProficiencies
+        hitDie: parseInt(cls.coreTraits.hitPointDie.replace(/\D/g, ''), 10),
+        multiclassing: cls.multiclassing
       }
     }
   } catch {
@@ -283,13 +283,12 @@ export async function apply5eLevelUp(
   // 12. Add multiclass proficiencies
   let updatedProficiencies = { ...character.proficiencies }
   for (const newClassId of newClassesAdded) {
-    const mcProfs = classDataMap[newClassId]?.multiclassProficiencies
+    const mcProfs = classDataMap[newClassId]?.multiclassing
     if (mcProfs) {
       updatedProficiencies = {
         ...updatedProficiencies,
-        armor: [...new Set([...updatedProficiencies.armor, ...(mcProfs.armor ?? [])])],
-        weapons: [...new Set([...updatedProficiencies.weapons, ...(mcProfs.weapons ?? [])])],
-        tools: [...new Set([...updatedProficiencies.tools, ...(mcProfs.tools ?? [])])]
+        armor: [...new Set([...updatedProficiencies.armor, ...(mcProfs.armorTraining ?? [])])],
+        weapons: [...new Set([...updatedProficiencies.weapons, ...(mcProfs.weaponProficiencies ?? []).map((w) => w.category ?? '').filter(Boolean)])]
       }
     }
   }

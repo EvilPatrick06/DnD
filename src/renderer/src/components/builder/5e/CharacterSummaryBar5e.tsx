@@ -130,7 +130,7 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const classEquipment = useBuilderStore((s) => s.classEquipment)
 
   // Load SRD class/species data for accurate stat calculation
-  const [classHitDie, setClassHitDie] = useState<number | null>(null)
+  const [classHitDie, setClassHitDie] = useState<string | null>(null)
   const [classSaves, setClassSaves] = useState<string[]>([])
   const [className, setClassName] = useState<string | null>(null)
   const [speciesData, setSpeciesData] = useState<{
@@ -147,8 +147,8 @@ export default function CharacterSummaryBar5e(): JSX.Element {
       load5eClasses().then((classes) => {
         const cls = classes.find((c) => c.id === classId)
         if (cls) {
-          setClassHitDie(cls.hitDie)
-          setClassSaves(cls.savingThrows)
+          setClassHitDie(cls.coreTraits.hitPointDie)
+          setClassSaves(cls.coreTraits.savingThrowProficiencies)
           setClassName(cls.name)
         }
       })
@@ -194,7 +194,7 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const speciesSlotId = speciesSlot?.selectedId ?? null
 
   const stats5e = useMemo(() => {
-    const cls = classHitDie != null ? { hitDie: classHitDie, savingThrows: classSaves } : null
+    const cls = classHitDie != null ? { hitDie: parseInt(classHitDie.replace(/\D/g, '')) || 8, savingThrows: classSaves } : null
     const speciesBonuses =
       backgroundAbilityBonuses && Object.keys(backgroundAbilityBonuses).length > 0
         ? (backgroundAbilityBonuses as Partial<Record<string, number>>)

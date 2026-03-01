@@ -52,4 +52,5 @@ export type ActiveModal =
   | 'compendium'
   | 'dm-screen'
   | 'roll-table'
+  | 'diceRoller'
   | null

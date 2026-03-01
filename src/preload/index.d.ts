@@ -437,6 +437,25 @@ interface GameDataAPI {
   loadModeration: () => Promise<Record<string, unknown>>
 }
 
+interface CloudSyncAPI {
+  upload: (
+    config: Record<string, unknown>,
+    type: string,
+    data: Record<string, unknown>,
+    deviceKey: string
+  ) => Promise<{ success: boolean; error?: string }>
+  download: (
+    config: Record<string, unknown>,
+    type: string,
+    id: string,
+    deviceKey: string
+  ) => Promise<{ success: boolean; data?: Record<string, unknown> | null; error?: string }>
+  list: (
+    config: Record<string, unknown>,
+    deviceKey: string
+  ) => Promise<{ success: boolean; data?: Array<{ key: string; name: string; type: string; lastModified: string; size: number }>; error?: string }>
+}
+
 interface PluginScanResult {
   success: boolean
   data?: Array<{
@@ -484,6 +503,7 @@ declare global {
       AudioAPI & {
         ai: AiAPI
         update: UpdateAPI
+        cloudSync: CloudSyncAPI
         game: GameDataAPI
         plugins: PluginAPI
         getVersion: () => Promise<string>

@@ -274,13 +274,11 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
         load5eClasses().then((classes) => {
           const cls = classes.find((c) => c.id === optionId)
           if (cls) {
-            // Use equipment option A if available, else fall back to startingEquipment
-            const choice = get().classEquipmentChoice || 'A'
-            const options = cls.startingEquipmentOptions
-            const equipment = options?.[choice] ? options[choice].equipment : cls.startingEquipment
+            // Use starting equipment from coreTraits
+            const equipment = cls.coreTraits.startingEquipment
             set({
-              classEquipment: equipment.map((e: { name: string; quantity: number }) => ({ ...e, source: cls.name })),
-              classSkillOptions: cls.proficiencies.skills.options,
+              classEquipment: equipment.map((e: { label: string; items: string[]; gp: number }) => ({ name: e.label, quantity: 1, source: cls.name })),
+              classSkillOptions: cls.coreTraits.skillProficiencies.from,
               classEquipmentChoice: null, // reset when class changes — user must choose
               classExtraLangCount: optionId === 'rogue' ? 1 : optionId === 'ranger' ? 2 : 0,
               chosenLanguages: [] // reset when class changes (language grants may differ)

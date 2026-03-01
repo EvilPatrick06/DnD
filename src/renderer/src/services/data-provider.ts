@@ -1,3 +1,5 @@
+// CDN provider available as an optional fallback for map images and remote game data
+import cdnProvider from './cdn-provider'
 import { useDataStore } from '../stores/use-data-store'
 import { getSystem } from '../systems/registry'
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
@@ -62,6 +64,7 @@ import { logger } from '../utils/logger'
 
 import { DATA_PATHS } from './data-paths'
 export { DATA_PATHS }
+export { cdnProvider }
 
 const jsonCache = new Map<string, unknown>()
 
@@ -132,30 +135,31 @@ function speciesToOption(species: SpeciesData): SelectableOption {
 }
 
 function classToOption(cls: ClassData): SelectableOption {
+  const ct = cls.coreTraits
   const details: DetailField[] = [
-    { label: 'Hit Point Die', value: `d${cls.hitDie}` },
-    { label: 'Primary Ability', value: cls.primaryAbility },
-    { label: 'Saving Throws', value: cls.savingThrows.join(', ') },
-    { label: 'Armor Proficiencies', value: cls.proficiencies.armor.join(', ') || 'None' },
-    { label: 'Weapon Proficiencies', value: cls.proficiencies.weapons.join(', ') || 'None' },
+    { label: 'Hit Point Die', value: ct.hitPointDie },
+    { label: 'Primary Ability', value: ct.primaryAbility.join(', ') },
+    { label: 'Saving Throws', value: ct.savingThrowProficiencies.join(', ') },
+    { label: 'Armor Training', value: ct.armorTraining.join(', ') || 'None' },
+    { label: 'Weapon Proficiencies', value: ct.weaponProficiencies.map((w) => w.category ?? '').filter(Boolean).join(', ') || 'None' },
     {
       label: 'Skills',
-      value: `Choose ${cls.proficiencies.skills.numToChoose} from: ${cls.proficiencies.skills.options.join(', ')}`
+      value: `Choose ${ct.skillProficiencies.count} from: ${ct.skillProficiencies.from.join(', ')}`
     }
   ]
 
-  if (cls.startingEquipment.length > 0) {
+  if (ct.startingEquipment.length > 0) {
     details.push({
       label: 'Starting Equipment',
-      value: cls.startingEquipment.map((e) => `${e.name} x${e.quantity}`).join(', ')
+      value: ct.startingEquipment.map((e) => `${e.label}: ${e.items.join(', ')} (${e.gp} gp)`).join(' | ')
     })
   }
 
   return {
-    id: cls.id,
+    id: cls.id ?? cls.name.toLowerCase(),
     name: cls.name,
     rarity: 'common',
-    description: `Hit Point Die: d${cls.hitDie} | Primary: ${cls.primaryAbility}`,
+    description: `${ct.hitPointDie} | Primary: ${ct.primaryAbility.join(', ')}`,
     traits: [],
     source: 'SRD',
     detailFields: details
@@ -224,14 +228,14 @@ function feat5eToOption(feat: FeatData): SelectableOption {
 
 function subclassToOption(sc: SubclassData): SelectableOption {
   const details: DetailField[] = [
-    { label: 'Class', value: sc.class.charAt(0).toUpperCase() + sc.class.slice(1) },
-    { label: 'Level', value: `${sc.level}` }
+    { label: 'Class', value: sc.className ?? '' },
+    { label: 'Level', value: `${sc.level ?? ''}` }
   ]
   for (const feat of sc.features) {
     details.push({ label: feat.name, value: feat.description })
   }
   return {
-    id: sc.id,
+    id: sc.id ?? sc.name.toLowerCase().replace(/\s+/g, '-'),
     name: sc.name,
     rarity: 'common',
     description: sc.description,
@@ -277,7 +281,7 @@ export async function getOptionsForSlot(
         try {
           const subclasses = await load5eSubclasses()
           const filtered = context?.selectedClassId
-            ? subclasses.filter((sc) => sc.class === context.selectedClassId)
+            ? subclasses.filter((sc) => sc.className === context.selectedClassId)
             : subclasses
           return filtered.map(subclassToOption)
         } catch (error) {

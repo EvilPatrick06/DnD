@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const DATA_ROOT = 'c:\\Users\\evilp\\dnd\\src\\renderer\\public\\data\\5e';
+const DATA_ROOT = path.join(process.cwd(), 'src/renderer/public/data/5e');
 const MONSTERS_DIR = path.join(DATA_ROOT, 'dm/npcs/monsters');
 
 function walkDir(dir: string, fileList: string[] = []): string[] {

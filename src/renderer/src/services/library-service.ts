@@ -49,9 +49,9 @@ function summarizeItem(item: Record<string, unknown>, category: LibraryCategory)
     case 'spells':
       return `Level ${item.level ?? '?'} ${item.school ?? ''} - ${(item.lists as string[])?.join(', ') ?? ''}`
     case 'classes':
-      return `Hit Die: d${item.hitDie ?? '?'} | ${item.primaryAbility ?? ''}`
+      return `${(item.coreTraits as Record<string, unknown>)?.hitPointDie ?? '?'} | ${((item.coreTraits as Record<string, unknown>)?.primaryAbility as string[])?.join(', ') ?? ''}`
     case 'subclasses':
-      return `${((item.class as string) ?? '').charAt(0).toUpperCase() + ((item.class as string) ?? '').slice(1)} - Level ${item.level ?? '?'}`
+      return `${((item.className as string) ?? '').charAt(0).toUpperCase() + ((item.className as string) ?? '').slice(1)} - Level ${item.level ?? '?'}`
     case 'species':
       return `Speed: ${item.speed ?? '?'} ft. | Size: ${Array.isArray(item.size) ? (item.size as string[]).join('/') : (item.size ?? '?')}`
     case 'backgrounds':

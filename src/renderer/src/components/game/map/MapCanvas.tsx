@@ -21,7 +21,12 @@ import {
   type MapLayers,
   waitForContainerDimensions
 } from './map-pixi-setup'
+// Map utilities: calculateZoomToFit for fitting all tokens in view, getGridLabel for A1-style grid labels
+import { calculateZoomToFit, getGridLabel } from '../../../services/map/map-utils'
 import { clearMeasurement } from './measurement-tool'
+
+// Re-export map-utils functions so they are available to map subsystem consumers
+export { calculateZoomToFit, getGridLabel }
 import { createTokenSprite } from './token-sprite'
 import type { WeatherOverlayLayer } from './weather-overlay'
 

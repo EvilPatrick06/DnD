@@ -5,7 +5,7 @@ import { useCharacterStore } from '../../../stores/use-character-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Character5e, CustomFeature } from '../../../types/character-5e'
-import type { FeatData5e, InvocationData, MetamagicData } from '../../../types/data'
+import type { FeatData, InvocationData, MetamagicData } from '../../../types/data'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 import { FeatureRow } from './FeatureCard5e'
 import { BonusFeatPicker, FeatPicker } from './FeatureFilter5e'
@@ -168,7 +168,7 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
     saveFeatChange(feats.filter((f) => f.id !== featId))
   }
 
-  const handleAddFeat = (feat: FeatData5e): void => {
+  const handleAddFeat = (feat: FeatData): void => {
     const newFeat = { id: feat.id, name: feat.name, description: feat.description }
     saveFeatChange([...feats, newFeat])
     setShowPicker(false)

@@ -329,6 +329,16 @@ const api = {
     loadModeration: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/ai/moderation.json')
   },
 
+  // Cloud Sync
+  cloudSync: {
+    upload: (config: Record<string, unknown>, type: string, data: Record<string, unknown>, deviceKey: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_UPLOAD, config, type, data, deviceKey),
+    download: (config: Record<string, unknown>, type: string, id: string, deviceKey: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_DOWNLOAD, config, type, id, deviceKey),
+    list: (config: Record<string, unknown>, deviceKey: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_LIST, config, deviceKey)
+  },
+
   // Plugins
   plugins: {
     scan: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_SCAN),

@@ -5,7 +5,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const ROOT = path.join(process.cwd(), 'src/renderer/public/data/5e/monsters')
+const ROOT = path.join(process.cwd(), 'src/renderer/public/data/5e/dm/npcs/monsters')
 const BESTIARY = path.join(process.cwd(), '5.5e References/MM2025/markdown/Bestiary')
 const NPCS = path.join(process.cwd(), '5.5e References/MM2025/markdown/NPC\'s/NPCs.md')
 function ensureDir(d: string) { fs.mkdirSync(d, { recursive: true }) }

@@ -1,45 +1,45 @@
 # Project Audit Report
-Generated: 2026-03-01T02:17:40.696Z
+Generated: 2026-03-01T02:43:33.341Z
 
 ## Summary Dashboard
 | # | Check | Category | Status | Issues | Time |
 |---|-------|----------|--------|--------|------|
-| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 5.8s |
-| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 3.8s |
-| 3 | Biome format check | Core Quality | ✅ PASS | 0 | 2.9s |
-| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 4.5s |
-| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 5.6s |
-| 6 | Production build | Core Quality | ✅ PASS | 0 | 19.7s |
-| 7 | OxLint | Core Quality | ✅ PASS | 0 | 0.9s |
-| 8 | npm audit | Security | ✅ PASS | 0 | 2.1s |
-| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.1s |
+| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 1.7s |
+| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 7.1s |
+| 3 | Biome format check | Core Quality | ✅ PASS | 0 | 3.2s |
+| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 4.8s |
+| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 5.9s |
+| 6 | Production build | Core Quality | ✅ PASS | 0 | 18.1s |
+| 7 | OxLint | Core Quality | ✅ PASS | 0 | 0.7s |
+| 8 | npm audit | Security | ✅ PASS | 0 | 1.9s |
+| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.0s |
 | 10 | Electron security scan | Security | ✅ PASS | 0 | 0.0s |
-| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.2s |
+| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.1s |
 | 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.1s |
 | 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.1s |
-| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 7.8s |
-| 15 | Dead code (knip) | Dependencies | ℹ️ INFO | 1188 | 3.5s |
-| 16 | Outdated packages | Dependencies | ℹ️ INFO | 6 | 1.9s |
+| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 7.3s |
+| 15 | Dead code (knip) | Dependencies | ℹ️ INFO | 1188 | 2.5s |
+| 16 | Outdated packages | Dependencies | ℹ️ INFO | 6 | 1.7s |
 | 17 | License compliance | Dependencies | ✅ PASS | 0 | 2.1s |
-| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.2s |
-| 19 | Duplicate packages | Dependencies | ⚠️ WARN | 61 | 1.4s |
-| 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 0.9s |
+| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.3s |
+| 19 | Duplicate packages | Dependencies | ⚠️ WARN | 61 | 1.2s |
+| 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 0.8s |
 | 21 | Missing export default on lazy components | React & Hooks | ✅ PASS | 0 | 0.0s |
 | 22 | Missing key prop in .map() | React & Hooks | ✅ PASS | 0 | 0.1s |
 | 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.1s |
 | 24 | console.log leaks | Code Quality | ✅ PASS | 0 | 0.1s |
 | 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.1s |
 | 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 2 | 0.1s |
-| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.2s |
-| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.2s |
+| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.1s |
+| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.1s |
 | 29 | Functions >200 lines | Code Quality | ✅ PASS | 40 | 0.2s |
-| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 35 | 18.9s |
+| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 35 | 17.6s |
 | 31 | Regex safety (ReDoS) | Code Quality | ✅ PASS | 0 | 0.2s |
-| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 443 | 0.1s |
+| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 1 | 0.2s |
 | 33 | File naming conventions | Project Hygiene | ✅ PASS | 0 | 0.1s |
-| 34 | Missing test files | Project Hygiene | ℹ️ INFO | 284 | 0.2s |
-| 35 | Orphan files (not imported) | Project Hygiene | ⚠️ WARN | 23 | 8.1s |
-| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 47.6s |
+| 34 | Missing test files | Project Hygiene | ℹ️ INFO | 284 | 0.1s |
+| 35 | Orphan files (not imported) | Project Hygiene | ⚠️ WARN | 23 | 8.7s |
+| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 35.6s |
 
 **Total: 0 errors, 2 warnings, 4 informational**
 
@@ -124,7 +124,7 @@ Build succeeded
 
 ```
 Found 0 warnings and 0 errors.
-Finished in 49ms on 755 files with 93 rules using 22 threads.
+Finished in 60ms on 755 files with 93 rules using 22 threads.
 
 ```
 
@@ -598,39 +598,10 @@ No ReDoS-prone patterns found
 
 #### 32. Git status (uncommitted changes)
 **Status**: ℹ️ INFO  
-**Issues**: 443
+**Issues**: 1
 
 ```
- M .gitignore
- M BMO-setup/BMO-SETUP-GUIDE.md
- M BMO-setup/aws-setup.sh
- D BMO-setup/deploy.sh
- M BMO-setup/misc+directions/architecture.md
- M BMO-setup/misc+directions/aws-services-reference.md
- M BMO-setup/misc+directions/cloudflare-setup.md
- M BMO-setup/misc+directions/troubleshooting.md
- M BMO-setup/pi-setup.sh
- M BMO-setup/pi/agent.py
- M BMO-setup/pi/app.py
- D BMO-setup/pi/deploy-pi.sh
- M BMO-setup/pi/dev_tools.py
- M Tests/TestAudit.md
- M Tests/run-audit.js
- M biome.json
- M package-lock.json
- M package.json
- M src/main/ai/ai-service.ts
- M src/main/ai/context-builder.ts
- M src/main/ai/conversation-manager.ts
- M src/main/ai/dm-actions.ts
- M src/main/ai/dm-system-prompt.ts
- M src/main/ai/memory-manager.ts
- M src/main/ai/ollama-client.ts
- M src/main/ai/ollama-manager.ts
- M src/main/ai/types.ts
- M src/main/index.ts
- M src/main/ipc/ai-handlers.ts
- M src/main/ipc/index.ts
+ D data-audit-report.md
 ```
 
 #### 33. File naming conventions
@@ -727,7 +698,7 @@ type-coverage success.
 1. **[LOW]** Consider: Dead code (knip) (1188 items)
 1. **[LOW]** Consider: Outdated packages (6 items)
 1. **[HIGH]** Review: Duplicate packages (61 issues)
-1. **[LOW]** Consider: Git status (uncommitted changes) (443 items)
+1. **[LOW]** Consider: Git status (uncommitted changes) (1 items)
 1. **[LOW]** Consider: Missing test files (284 items)
 1. **[HIGH]** Review: Orphan files (not imported) (23 issues)
 

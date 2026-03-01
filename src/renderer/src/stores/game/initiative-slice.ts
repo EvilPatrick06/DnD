@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand'
+import { createAttackTracker, getExtraAttackCount } from '../../services/combat/multi-attack-tracker'
 import { pluginEventBus } from '../../services/plugin-system/event-bus'
 import type { EntityCondition, InitiativeEntry } from '../../types/game-state'
 import { useLobbyStore } from '../use-lobby-store'
@@ -99,6 +100,10 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     // Auto-advance 6 seconds when a new round begins (5e: 1 round = 6 seconds)
     const newInGameTime = nextIndex === 0 && inGameTime ? { totalSeconds: inGameTime.totalSeconds + 6 } : inGameTime
 
+    // Initialize attack tracker for the next entity's turn
+    const maxAttacks = getExtraAttackCount(nextEntity.entityName, 5) // Default level 5; caller may override
+    const tracker = createAttackTracker(nextEntity.entityId, maxAttacks)
+
     set({
       initiative: {
         ...initiative,
@@ -111,7 +116,13 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
         ...turnStates,
         [nextEntity.entityId]: {
           ...createTurnState(nextEntity.entityId, speed),
-          concentratingSpell: existingTs?.concentratingSpell
+          concentratingSpell: existingTs?.concentratingSpell,
+          attackTracker: {
+            attacksUsed: tracker.attacksUsed,
+            maxAttacks: tracker.maxAttacks,
+            bonusAttacksUsed: tracker.bonusAttacksUsed,
+            maxBonusAttacks: tracker.bonusAttacks
+          }
         }
       },
       inGameTime: newInGameTime
