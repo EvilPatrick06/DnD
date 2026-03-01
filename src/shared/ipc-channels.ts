@@ -160,7 +160,12 @@ export const IPC_CHANNELS = {
   // === Plugin Storage (per-plugin key-value) ===
   PLUGIN_STORAGE_GET: 'plugin:storage-get',
   PLUGIN_STORAGE_SET: 'plugin:storage-set',
-  PLUGIN_STORAGE_DELETE: 'plugin:storage-delete'
+  PLUGIN_STORAGE_DELETE: 'plugin:storage-delete',
+
+  // === Cloud Sync ===
+  CLOUD_SYNC_UPLOAD: 'storage:cloud-sync-upload',
+  CLOUD_SYNC_DOWNLOAD: 'storage:cloud-sync-download',
+  CLOUD_SYNC_LIST: 'storage:cloud-sync-list'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

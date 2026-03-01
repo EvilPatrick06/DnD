@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { load5eBackgrounds, load5eClasses, load5eFeats } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import SectionBanner from '../shared/SectionBanner'
 import AppearanceEditor5e from './AppearanceEditor5e'
 import BackstoryEditor5e, { VariantChoicesSection } from './BackstoryEditor5e'
@@ -49,7 +49,7 @@ export default function DetailsTab5e(): JSX.Element {
   const isHuman = speciesSlot?.selectedId === 'human'
 
   // Load Origin feats for Versatile feat picker
-  const [originFeats, setOriginFeats] = useState<FeatData5e[]>([])
+  const [originFeats, setOriginFeats] = useState<FeatData[]>([])
   useEffect(() => {
     if (!isHuman) {
       setOriginFeats([])
@@ -63,10 +63,9 @@ export default function DetailsTab5e(): JSX.Element {
   // Load class equipment options for A/B/C selector
   const classSlot = buildSlots.find((s) => s.category === 'class')
   const classId = classSlot?.selectedId ?? null
-  const [classEquipmentOptions, setClassEquipmentOptions] = useState<Record<
-    string,
-    { label: string; equipment: Array<{ name: string; quantity: number }>; gold: number }
-  > | null>(null)
+  const [classEquipmentOptions, setClassEquipmentOptions] = useState<Array<{
+    label: string; items: string[]; gp: number
+  }> | null>(null)
 
   useEffect(() => {
     if (!classId) {
@@ -75,10 +74,10 @@ export default function DetailsTab5e(): JSX.Element {
     }
     load5eClasses().then((classes) => {
       const cls = classes.find((c) => c.id === classId)
-      const options = cls?.startingEquipmentOptions ?? null
-      setClassEquipmentOptions(options)
+      const entries = cls?.coreTraits.startingEquipment ?? []
+      setClassEquipmentOptions(entries.length > 1 ? entries : null)
       // Auto-satisfy validation for classes with no equipment options (e.g. Barbarian)
-      if (!options) {
+      if (entries.length <= 1) {
         useBuilderStore.getState().setClassEquipmentChoice('default')
       }
     })
@@ -212,46 +211,44 @@ export default function DetailsTab5e(): JSX.Element {
               )}
             </p>
             <div className="flex gap-2">
-              {Object.entries(classEquipmentOptions).map(([key, option]) => (
+              {classEquipmentOptions.map((option) => (
                 <button
-                  key={key}
-                  onClick={() => useBuilderStore.getState().setClassEquipmentChoice(key)}
+                  key={option.label}
+                  onClick={() => useBuilderStore.getState().setClassEquipmentChoice(option.label)}
                   className={`flex-1 px-3 py-2 rounded text-sm font-medium border transition-colors ${
-                    classEquipmentChoice === key
+                    classEquipmentChoice === option.label
                       ? 'bg-amber-900/50 text-amber-300 border-amber-700'
                       : classEquipmentChoice === null
                         ? 'bg-gray-800 text-gray-400 border-amber-700/50 hover:border-amber-600'
                         : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600'
                   }`}
                 >
-                  <div className="font-semibold">Option {key}</div>
-                  <div className="text-xs mt-0.5 opacity-75">{option.label}</div>
+                  <div className="font-semibold">Option {option.label}</div>
+                  <div className="text-xs mt-0.5 opacity-75">{option.items.length > 0 ? option.items.join(', ') : `${option.gp} GP`}</div>
                 </button>
               ))}
             </div>
             {classEquipmentChoice === null && (
               <p className="text-xs text-amber-400 mt-2">Choose one of the options above to continue.</p>
             )}
-            {classEquipmentChoice !== null && classEquipmentOptions[classEquipmentChoice] && (
-              <div className="mt-2 bg-gray-800/60 border border-gray-700 rounded px-3 py-2">
-                <div className="text-xs text-gray-400 space-y-0.5">
-                  {classEquipmentOptions[classEquipmentChoice].equipment.length > 0 ? (
-                    classEquipmentOptions[classEquipmentChoice].equipment.map((item, i) => (
-                      <div key={i}>
-                        {item.name}
-                        {item.quantity > 1 ? ` (x${item.quantity})` : ''}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-amber-400">{classEquipmentOptions[classEquipmentChoice].gold} GP</div>
-                  )}
-                  {classEquipmentOptions[classEquipmentChoice].equipment.length > 0 &&
-                    classEquipmentOptions[classEquipmentChoice].gold > 0 && (
-                      <div className="text-amber-400 mt-1">+ {classEquipmentOptions[classEquipmentChoice].gold} GP</div>
+            {(() => {
+              const chosen = classEquipmentOptions.find((o) => o.label === classEquipmentChoice)
+              if (!classEquipmentChoice || !chosen) return null
+              return (
+                <div className="mt-2 bg-gray-800/60 border border-gray-700 rounded px-3 py-2">
+                  <div className="text-xs text-gray-400 space-y-0.5">
+                    {chosen.items.length > 0 ? (
+                      chosen.items.map((item, i) => <div key={i}>{item}</div>)
+                    ) : (
+                      <div className="text-amber-400">{chosen.gp} GP</div>
                     )}
+                    {chosen.items.length > 0 && chosen.gp > 0 && (
+                      <div className="text-amber-400 mt-1">+ {chosen.gp} GP</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         </>
       )}

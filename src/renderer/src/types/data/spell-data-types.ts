@@ -1,5 +1,43 @@
 import type { SpellListName, SpellSchool } from './shared-enums'
 
+// === spells.json (current flat format) ===
+
+export interface SpellData {
+  id: string
+  name: string
+  level: number
+  school: SpellSchool
+  castingTime: string
+  range: string
+  duration: string
+  concentration: boolean
+  ritual: boolean
+  components: string
+  description: string
+  higherLevels?: string
+  classes: string[]
+  spellList: SpellListName[]
+}
+
+// === Spell index entries (spell-index.json) ===
+
+export interface SpellIndexEntry {
+  id: string
+  name: string
+  school: string
+  level?: number
+  classes: string[]
+  ritual?: boolean
+  components: {
+    verbal?: boolean
+    somatic?: boolean
+    material?: boolean
+  }
+  path: string
+}
+
+// === Structured spell types (for future migration) ===
+
 export interface SpellAction {
   type: 'Action' | 'BonusAction' | 'Reaction' | 'Minute' | 'Hour' | string
   ritual?: boolean
@@ -67,41 +105,4 @@ export interface HigherLevelScalingEntry {
 export interface HigherLevelCasting {
   scaling?: HigherLevelScalingEntry[]
   overrides?: Array<{ minSlotLevel: number; maxSlotLevel: number; description: string }>
-}
-
-export interface SpellData {
-  id?: string
-  name: string
-  level: number
-  school: SpellSchool | string
-  classes: (SpellListName | string)[]
-  ritual: boolean
-  castingTime: SpellAction
-  range: SpellRange
-  components: SpellComponents
-  duration: SpellDuration
-  description: string
-  targetCount?: number
-  targetType?: string
-  mustSeeTarget?: boolean
-  d20Modifiers?: SpellD20Modifier[]
-  damage?: SpellDamageData[]
-  healing?: SpellHealingData[]
-  higherLevelCasting?: HigherLevelCasting
-  tags?: string[]
-}
-
-export interface SpellIndexEntry {
-  id: string
-  name: string
-  school: string
-  level?: number
-  classes: string[]
-  ritual?: boolean
-  components: {
-    verbal?: boolean
-    somatic?: boolean
-    material?: boolean
-  }
-  path: string
 }

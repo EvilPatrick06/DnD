@@ -2,7 +2,7 @@ import type { Rarity, SelectableOption } from './character-common'
 
 export type BuilderPhase = 'system-select' | 'building' | 'complete'
 
-export type ContentTab = 'details' | 'special-abilities' | 'languages' | 'spells'
+export type ContentTab = 'details' | 'special-abilities' | 'languages' | 'spells' | 'gear'
 
 export interface SelectionModalState {
   slotId: string

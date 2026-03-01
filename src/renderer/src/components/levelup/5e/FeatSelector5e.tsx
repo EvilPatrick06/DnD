@@ -3,7 +3,7 @@ import { load5eFeats, load5eSpells } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { BuildSlot } from '../../../types/character-common'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
 
 export function EpicBoonSelector5e({
@@ -17,7 +17,7 @@ export function EpicBoonSelector5e({
   onSelect: (sel: { id: string; name: string; description: string } | null) => void
   character: Character5e
 }): JSX.Element {
-  const [feats, setFeats] = useState<FeatData5e[]>([])
+  const [feats, setFeats] = useState<FeatData[]>([])
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
@@ -235,7 +235,7 @@ export function FightingStyleSelector5e({
   selection: { id: string; name: string; description: string } | null
   onSelect: (sel: { id: string; name: string; description: string } | null) => void
 }): JSX.Element {
-  const [feats, setFeats] = useState<FeatData5e[]>([])
+  const [feats, setFeats] = useState<FeatData[]>([])
   const [expanded, setExpanded] = useState(false)
 
   const isRanger = character.buildChoices.classId === 'ranger' || character.classes[0]?.name.toLowerCase() === 'ranger'

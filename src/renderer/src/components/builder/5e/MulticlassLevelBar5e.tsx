@@ -25,7 +25,7 @@ export default function MulticlassLevelBar5e(): JSX.Element {
 
   useEffect(() => {
     load5eClasses()
-      .then((classes) => setAllClasses(classes.map((c) => ({ id: c.id, name: c.name }))))
+      .then((classes) => setAllClasses(classes.map((c) => ({ id: c.id ?? c.name.toLowerCase(), name: c.name }))))
       .catch(() => setAllClasses([]))
   }, [])
 

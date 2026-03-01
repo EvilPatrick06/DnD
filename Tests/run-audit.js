@@ -727,7 +727,7 @@ addCheck(34, 'Missing test files', 'Project Hygiene', () => {
 })
 
 addCheck(35, 'Orphan files (not imported)', 'Project Hygiene', () => {
-  const r = run('npx madge --orphans --extensions ts,tsx src/', { timeout: 180_000 })
+  const r = run('npx madge --orphans --extensions ts,tsx --ts-config tsconfig.web.json src/', { timeout: 180_000 })
   const rawOrphans = (r.stdout || '').split('\n').filter(l => l.trim() && !l.includes('Processed'))
 
   // Build comprehensive import set from ALL source files — catches static, dynamic, and re-exports
@@ -735,16 +735,54 @@ addCheck(35, 'Orphan files (not imported)', 'Project Hygiene', () => {
   const allSrcFiles = getAllFiles('src', ['.ts', '.tsx'])
   for (const f of allSrcFiles) {
     const content = fs.readFileSync(f, 'utf-8')
+    const importingDir = path.dirname(relPath(f))
     // Static: import ... from '...' or export ... from '...' or require('...')
     for (const m of content.matchAll(/(?:from|require\()\s*['"]([^'"]+)['"]/g)) {
-      const base = path.basename(m[1])
+      const spec = m[1]
+      // Resolve @renderer alias
+      if (spec.startsWith('@renderer/')) {
+        const aliased = 'src/renderer/src/' + spec.slice('@renderer/'.length)
+        imported.add(aliased)
+        imported.add(aliased + '.ts')
+        imported.add(aliased + '.tsx')
+        imported.add(aliased + '/index.ts')
+        imported.add(aliased + '/index.tsx')
+      }
+      // Resolve relative paths to full project-relative paths
+      if (spec.startsWith('.')) {
+        const resolved = path.normalize(path.join(importingDir, spec)).replace(/\\/g, '/')
+        imported.add(resolved)
+        imported.add(resolved + '.ts')
+        imported.add(resolved + '.tsx')
+        imported.add(resolved + '/index.ts')
+        imported.add(resolved + '/index.tsx')
+      }
+      // Keep basename matching as fallback for external/bare specifiers
+      const base = path.basename(spec)
       imported.add(base)
       imported.add(base + '.ts')
       imported.add(base + '.tsx')
     }
     // Dynamic: import('...')
     for (const m of content.matchAll(/import\(\s*['"]([^'"]+)['"]\s*\)/g)) {
-      const base = path.basename(m[1])
+      const spec = m[1]
+      if (spec.startsWith('@renderer/')) {
+        const aliased = 'src/renderer/src/' + spec.slice('@renderer/'.length)
+        imported.add(aliased)
+        imported.add(aliased + '.ts')
+        imported.add(aliased + '.tsx')
+        imported.add(aliased + '/index.ts')
+        imported.add(aliased + '/index.tsx')
+      }
+      if (spec.startsWith('.')) {
+        const resolved = path.normalize(path.join(importingDir, spec)).replace(/\\/g, '/')
+        imported.add(resolved)
+        imported.add(resolved + '.ts')
+        imported.add(resolved + '.tsx')
+        imported.add(resolved + '/index.ts')
+        imported.add(resolved + '/index.tsx')
+      }
+      const base = path.basename(spec)
       imported.add(base)
       imported.add(base + '.ts')
       imported.add(base + '.tsx')
@@ -759,7 +797,13 @@ addCheck(35, 'Orphan files (not imported)', 'Project Hygiene', () => {
     if (name.endsWith('.d.ts')) return false
     if (name === 'main.tsx') return false
     if (name === 'index.ts' || name === 'index.tsx') return false
-    // Exclude files found in any import/export/require across the codebase
+    // Check full relative path match (madge outputs paths relative to src/)
+    const fullRel = 'src/' + trimmed.replace(/\\/g, '/')
+    if (imported.has(fullRel)) return false
+    // Strip extension for extensionless import matching
+    const noExt = fullRel.replace(/\.(ts|tsx)$/, '')
+    if (imported.has(noExt)) return false
+    // Fallback: basename match
     if (imported.has(name)) return false
     return true
   })

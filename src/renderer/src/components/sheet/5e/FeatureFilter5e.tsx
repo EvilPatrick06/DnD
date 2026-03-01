@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
 import { load5eFeats } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
 import { FeatPickerRow } from './FeatureCard5e'
 
 interface FeatPickerProps {
   character: Character5e
   takenFeatIds: Set<string>
-  onSelect: (feat: FeatData5e) => void
+  onSelect: (feat: FeatData) => void
   onClose: () => void
 }
 
 export function FeatPicker({ character, takenFeatIds, onSelect, onClose }: FeatPickerProps): JSX.Element {
-  const [allFeats, setAllFeats] = useState<FeatData5e[]>([])
+  const [allFeats, setAllFeats] = useState<FeatData[]>([])
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
 
@@ -84,12 +84,12 @@ export function FeatPicker({ character, takenFeatIds, onSelect, onClose }: FeatP
 interface BonusFeatPickerProps {
   character: Character5e
   bonusFeats: Array<{ id: string; name: string; description: string }>
-  onSelect: (feat: FeatData5e) => void
+  onSelect: (feat: FeatData) => void
   onClose: () => void
 }
 
 export function BonusFeatPicker({ character, bonusFeats, onSelect, onClose }: BonusFeatPickerProps): JSX.Element {
-  const [allFeats, setAllFeats] = useState<FeatData5e[]>([])
+  const [allFeats, setAllFeats] = useState<FeatData[]>([])
   const [bonusFeatCategory, setBonusFeatCategory] = useState<string>('all')
   const [bonusFeatSearch, setBonusFeatSearch] = useState('')
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Character5e } from '../../../types/character-5e'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
 
 interface FeatureRowProps {
@@ -52,9 +52,9 @@ export function FeatureRow({ feature, onRemove }: FeatureRowProps): JSX.Element 
 }
 
 interface FeatPickerRowProps {
-  feat: FeatData5e
+  feat: FeatData
   character: Character5e
-  onSelect: (feat: FeatData5e) => void
+  onSelect: (feat: FeatData) => void
 }
 
 export function FeatPickerRow({ feat, character, onSelect }: FeatPickerRowProps): JSX.Element {

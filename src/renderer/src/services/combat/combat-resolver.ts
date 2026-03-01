@@ -9,9 +9,11 @@
  */
 
 import { useGameStore } from '../../stores/use-game-store'
+import type { Character5e } from '../../types/character-5e'
 import type { EntityCondition, TurnState } from '../../types/game-state'
 import type { MapToken, WallSegment } from '../../types/map'
 import { type DiceRollOptions, type DiceRollResult, roll, rollD20, rollQuiet } from '../dice/dice-service'
+import { getDamageTypeFeatEffects } from '../character/feat-mechanics-5e'
 import {
   type AttackConditionContext,
   type ConditionEffectResult,
@@ -31,6 +33,8 @@ import {
 } from './combat-rules'
 import { calculateCover } from './cover-calculator'
 import { type DamageApplication, type DamageResolutionSummary, resolveDamage } from './damage-resolver'
+import { type AttackTracker, useAttack } from './multi-attack-tracker'
+import { checkCounterspell, type ReactionPrompt } from './reaction-tracker'
 
 // Re-export extracted modules for backwards compatibility
 export {
@@ -63,6 +67,10 @@ export interface AttackRequest {
   damageFormula: string
   /** Damage type (e.g. "slashing") */
   damageType: string
+  /** Full attacker character (for feat mechanics), optional */
+  attackerCharacter?: Character5e
+  /** Multi-attack tracker for this turn, optional */
+  attackTracker?: AttackTracker
   /** Whether the weapon/attack is magical */
   isMagical?: boolean
   /** Whether the weapon is silvered */
@@ -124,6 +132,10 @@ export interface AttackResult {
   attackerBlocked: boolean
   /** Range category for ranged attacks */
   rangeCategory?: 'normal' | 'long' | 'out-of-range'
+  /** Feat effects triggered by this attack (Crusher/Piercer/Slasher) */
+  featEffects: Array<{ feat: string; effect: string }>
+  /** Updated attack tracker after this attack (if tracking multi-attacks) */
+  updatedAttackTracker?: AttackTracker
   /** Human-readable summary for chat */
   summary: string
 }
@@ -156,6 +168,19 @@ export interface SavingThrowRequest {
   isSecretRoll?: boolean
   /** Cover type for DEX saves (provides bonus) */
   cover?: CoverType
+  /** Caster's token (for counterspell range checking) */
+  casterToken?: MapToken
+  /** Nearby enemies who might counterspell (for reaction checks) */
+  nearbyCounterspellers?: Array<{
+    entityId: string
+    entityName: string
+    x: number
+    y: number
+    hasCounterspell: boolean
+    hasSpellSlots: boolean
+  }>
+  /** Grid cell size in pixels (for distance calculation) */
+  cellSizeFt?: number
 }
 
 export interface SavingThrowResult {
@@ -169,6 +194,8 @@ export interface SavingThrowResult {
   dc: number
   /** Damage dealt (0 if save succeeded with no half-damage) */
   damage: DamageResolutionSummary | null
+  /** Counterspell reaction prompts triggered by this spell cast */
+  counterspellPrompts: ReactionPrompt[]
   /** Summary for chat */
   summary: string
 }
@@ -303,6 +330,7 @@ export function resolveAttack(
       masteryEffect: null,
       grazeDamage: 0,
       attackerBlocked: true,
+      featEffects: [],
       summary: `${attackerName} cannot attack (incapacitated).`
     }
   }
@@ -326,6 +354,7 @@ export function resolveAttack(
         grazeDamage: 0,
         attackerBlocked: false,
         rangeCategory,
+        featEffects: [],
         summary: `${attackerName}'s ${weaponName} attack is out of range!`
       }
     }
@@ -344,6 +373,7 @@ export function resolveAttack(
         masteryEffect: null,
         grazeDamage: 0,
         attackerBlocked: false,
+        featEffects: [],
         summary: `${attackerName}'s ${weaponName} attack is out of melee range!`
       }
     }
@@ -365,6 +395,7 @@ export function resolveAttack(
       masteryEffect: null,
       grazeDamage: 0,
       attackerBlocked: false,
+      featEffects: [],
       summary: `${targetName} has total cover — ${attackerName} cannot target them.`
     }
   }
@@ -469,6 +500,18 @@ export function resolveAttack(
     }
   }
 
+  // ── Feat effects (Crusher/Piercer/Slasher) ──
+  let featEffects: Array<{ feat: string; effect: string }> = []
+  if (hit && request.attackerCharacter) {
+    featEffects = getDamageTypeFeatEffects(request.attackerCharacter, damageType, effectiveCrit)
+  }
+
+  // ── Track multi-attack usage ──
+  let updatedAttackTracker: AttackTracker | undefined
+  if (request.attackTracker) {
+    updatedAttackTracker = useAttack(request.attackTracker)
+  }
+
   // ── Build summary ──
   const summary = buildAttackSummary(
     attackerName,
@@ -486,6 +529,10 @@ export function resolveAttack(
     masteryEffect
   )
 
+  // Append feat effect descriptions to summary
+  const featSuffix = featEffects.map((fe) => `[${fe.feat}: ${fe.effect}]`).join(' ')
+  const fullSummary = featSuffix ? `${summary} ${featSuffix}` : summary
+
   // ── Apply damage to token HP ──
   if (hit && damage) {
     applyDamageToToken(targetToken, damage.totalFinalDamage)
@@ -502,11 +549,11 @@ export function resolveAttack(
     targetEntityName: targetName,
     value: hit ? (damage?.totalFinalDamage ?? 0) : grazeDamage,
     damageType: hit ? damageType : grazeDamage > 0 ? `${damageType} (graze)` : undefined,
-    description: summary
+    description: fullSummary
   })
 
   // ── Broadcast result ──
-  broadcastCombatResult(summary, isSecretRoll)
+  broadcastCombatResult(fullSummary, isSecretRoll)
 
   return {
     hit,
@@ -522,7 +569,9 @@ export function resolveAttack(
     grazeDamage,
     attackerBlocked: false,
     rangeCategory,
-    summary
+    featEffects,
+    updatedAttackTracker,
+    summary: fullSummary
   }
 }
 
@@ -544,8 +593,24 @@ export function resolveSavingThrow(request: SavingThrowRequest): SavingThrowResu
     abilityName: _abilityName,
     targetConditions = [],
     isSecretRoll = false,
-    cover
+    cover,
+    casterToken,
+    nearbyCounterspellers,
+    cellSizeFt = 5
   } = request
+
+  // ── Check for counterspell reactions ──
+  let counterspellPrompts: ReactionPrompt[] = []
+  if (casterToken && nearbyCounterspellers && nearbyCounterspellers.length > 0) {
+    counterspellPrompts = checkCounterspell(
+      casterToken.entityId,
+      sourceName,
+      casterToken.gridX,
+      casterToken.gridY,
+      nearbyCounterspellers,
+      cellSizeFt
+    )
+  }
 
   // DEX save cover bonus
   let totalModifier = saveModifier
@@ -622,7 +687,7 @@ export function resolveSavingThrow(request: SavingThrowRequest): SavingThrowResu
 
   broadcastCombatResult(summary, isSecretRoll)
 
-  return { success, saveRoll, total, dc, damage, summary }
+  return { success, saveRoll, total, dc, damage, counterspellPrompts, summary }
 }
 
 /**

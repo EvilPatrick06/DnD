@@ -6,6 +6,7 @@ import { useGameNetwork } from '../../hooks/use-game-network'
 import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
 import { executeMacro } from '../../services/macro-engine'
+import { processDawnRecharge } from '../../utils/dawn-recharge'
 import { recomputeVision } from '../../services/map/vision-computation'
 import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import { useCharacterStore } from '../../stores/use-character-store'
@@ -631,38 +632,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
               if (isDM) {
                 setPhaseChangeToast({ phase, suggestedLight })
                 if (phase === 'dawn') {
-                  const charStore = useCharacterStore.getState()
-                  const campaignChars = allCharacters.filter(
-                    (c) => c.campaignId === campaign.id && c.gameSystem === 'dnd5e'
-                  )
-                  for (const ch of campaignChars) {
-                    const items5e = (ch as import('../../types/character-5e').Character5e).equipment ?? []
-                    let changed = false
-                    for (const item of items5e) {
-                      if (item.magicItemId && item.maxCharges && item.rechargeType === 'dawn') {
-                        const formula = item.rechargeFormula ?? `1d${item.maxCharges}`
-                        const match = formula.match(/^(\d+)?d(\d+)([+-]\d+)?$/)
-                        let rechargeAmount: number
-                        if (match) {
-                          const count = parseInt(match[1] || '1', 10)
-                          const sides = parseInt(match[2], 10)
-                          const mod = parseInt(match[3] || '0', 10)
-                          rechargeAmount = 0
-                          for (let i = 0; i < count; i++) rechargeAmount += Math.floor(Math.random() * sides) + 1
-                          rechargeAmount += mod
-                        } else {
-                          rechargeAmount = parseInt(formula, 10) || 1
-                        }
-                        item.currentCharges = Math.min((item.currentCharges ?? 0) + rechargeAmount, item.maxCharges)
-                        changed = true
-                      }
-                    }
-                    if (changed)
-                      charStore.saveCharacter({
-                        ...ch,
-                        equipment: items5e
-                      } as import('../../types/character-5e').Character5e)
-                  }
+                  processDawnRecharge(campaign.id)
                 }
               }
             }}

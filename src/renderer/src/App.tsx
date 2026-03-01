@@ -8,6 +8,8 @@ import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
 import { applyColorblindFilter } from './services/theme-manager'
 import { useAccessibilityStore } from './stores/use-accessibility-store'
+import * as NotificationService from './services/notification-service'
+import { initGameSystems } from './systems/init'
 import { logger } from './utils/logger'
 
 const ViewCharactersPage = lazy(() => import('./pages/ViewCharactersPage'))
@@ -30,6 +32,12 @@ function App(): JSX.Element {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const uiScale = useAccessibilityStore((s) => s.uiScale)
   const colorblindMode = useAccessibilityStore((s) => s.colorblindMode)
+
+  // Initialize game system registry and notification service
+  useEffect(() => {
+    initGameSystems()
+    NotificationService.init()
+  }, [])
 
   // Apply UI scale to root font-size (rem-based Tailwind scales with this)
   useEffect(() => {

@@ -8,6 +8,17 @@
  */
 
 import soundEventsJson from '../../public/data/audio/sound-events.json'
+import {
+  playAmbient as playbackPlayAmbient,
+  stopAmbient as playbackStopAmbient,
+  getCurrentAmbient as playbackGetCurrentAmbient,
+  updateAmbientVolume as playbackUpdateAmbientVolume,
+  fadeAmbient as playbackFadeAmbient,
+  playCustomAudio as playbackPlayCustomAudio,
+  stopCustomAudio as playbackStopCustomAudio,
+  stopAllCustomAudio as playbackStopAllCustomAudio,
+  customOverrides as playbackCustomOverrides
+} from './sound-playback'
 import { logger } from '../utils/logger'
 
 // -- Combat sounds (10) --
@@ -206,12 +217,8 @@ const poolIndex: Map<SoundEvent, number> = new Map()
 /** Tier 2: DM custom audio overrides (event → custom file path) */
 const customOverrides: Map<string, string> = new Map()
 
-/** Currently playing ambient loop */
-let currentAmbient: HTMLAudioElement | null = null
+/** Currently playing ambient name (actual audio element managed by sound-playback) */
 let currentAmbientName: AmbientSound | null = null
-
-/** Custom audio tracks (file path -> Audio element) */
-const customAudioTracks: Map<string, HTMLAudioElement> = new Map()
 
 // --- Exported functions ---
 
@@ -369,39 +376,31 @@ export function playDiceSound(sides: number): void {
 
 /**
  * Start playing an ambient sound loop.
- * Stops any currently playing ambient sound.
+ * Delegates to sound-playback module.
  */
 export function playAmbient(ambient: AmbientSound): void {
-  stopAmbient()
-
-  const customPath = customOverrides.get(ambient)
-  const path = customPath ?? getDefaultPath(ambient)
-  const audio = new Audio(path)
-  audio.loop = true
-  audio.volume = muted ? 0 : ambientVolume
-  audio.play().catch(() => {})
-
-  currentAmbient = audio
+  // Sync custom overrides to playback module
+  for (const [key, value] of customOverrides) {
+    playbackCustomOverrides.set(key, value)
+  }
+  playbackPlayAmbient(ambient, muted, ambientVolume)
   currentAmbientName = ambient
 }
 
 /**
  * Stop the currently playing ambient sound.
+ * Delegates to sound-playback module.
  */
 export function stopAmbient(): void {
-  if (currentAmbient) {
-    currentAmbient.pause()
-    currentAmbient.currentTime = 0
-    currentAmbient = null
-    currentAmbientName = null
-  }
+  playbackStopAmbient()
+  currentAmbientName = null
 }
 
 /**
  * Get the name of the currently playing ambient sound, if any.
  */
 export function getCurrentAmbient(): AmbientSound | null {
-  return currentAmbientName
+  return currentAmbientName ?? playbackGetCurrentAmbient()
 }
 
 /**
@@ -420,44 +419,18 @@ export function getVolume(): number {
 
 /**
  * Smoothly fade the ambient volume to a target level over a duration.
- * Uses requestAnimationFrame for smooth interpolation.
+ * Delegates to sound-playback module.
  * @param targetVolume Target volume level (0-1).
  * @param durationMs Duration of the fade in milliseconds.
  * @returns A promise that resolves when the fade is complete.
  */
 export function fadeAmbient(targetVolume: number, durationMs: number): Promise<void> {
-  return new Promise<void>((resolve) => {
-    const target = Math.max(0, Math.min(1, targetVolume))
-    const startVolume = ambientVolume
-    const delta = target - startVolume
-
-    if (durationMs <= 0 || Math.abs(delta) < 0.001) {
-      setAmbientVolume(target)
-      resolve()
-      return
-    }
-
-    const startTime = performance.now()
-
-    function step(now: number): void {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / durationMs, 1)
-
-      // Ease-in-out for smoother perception
-      const eased = progress < 0.5 ? 2 * progress * progress : 1 - (-2 * progress + 2) ** 2 / 2
-
-      setAmbientVolume(startVolume + delta * eased)
-
-      if (progress < 1) {
-        requestAnimationFrame(step)
-      } else {
-        setAmbientVolume(target)
-        resolve()
-      }
-    }
-
-    requestAnimationFrame(step)
-  })
+  return playbackFadeAmbient(
+    targetVolume,
+    durationMs,
+    () => ambientVolume,
+    (v: number) => setAmbientVolume(v)
+  )
 }
 
 /**
@@ -478,9 +451,7 @@ export function setVolume(v: number): void {
  */
 export function setAmbientVolume(v: number): void {
   ambientVolume = Math.max(0, Math.min(1, v))
-  if (currentAmbient && !muted) {
-    currentAmbient.volume = ambientVolume
-  }
+  playbackUpdateAmbientVolume(muted, ambientVolume)
 }
 
 /**
@@ -489,9 +460,7 @@ export function setAmbientVolume(v: number): void {
 export function setMuted(m: boolean): void {
   muted = m
   applyVolumeToAll(muted ? 0 : volume)
-  if (currentAmbient) {
-    currentAmbient.volume = muted ? 0 : ambientVolume
-  }
+  playbackUpdateAmbientVolume(muted, ambientVolume)
 }
 
 /**
@@ -538,50 +507,29 @@ export function preloadEssential(): void {
 
 /**
  * Play a custom audio file from an absolute file path.
- * Supports loop and volume options. Tracks the audio element for later stopping.
+ * Delegates to sound-playback module.
  * @param filePath Absolute path to the audio file on disk.
  * @param options Playback options (loop, volume).
  */
 export function playCustomAudio(filePath: string, options?: { loop?: boolean; volume?: number }): void {
-  if (!enabled) return
-
-  // Stop any existing playback of this file
-  stopCustomAudio(filePath)
-
-  // Convert file path to file:// URL for Audio element
-  const fileUrl = filePath.startsWith('file://') ? filePath : `file:///${filePath.replace(/\\/g, '/')}`
-  const audio = new Audio(fileUrl)
-  audio.loop = options?.loop ?? false
-  audio.volume = muted ? 0 : Math.max(0, Math.min(1, options?.volume ?? 1))
-  audio.play().catch((err) => {
-    logger.warn('[SoundManager] Failed to play custom audio:', filePath, err)
-  })
-
-  customAudioTracks.set(filePath, audio)
+  playbackPlayCustomAudio(filePath, options, enabled, muted)
 }
 
 /**
  * Stop a custom audio file that is currently playing.
+ * Delegates to sound-playback module.
  * @param filePath The file path used when starting playback.
  */
 export function stopCustomAudio(filePath: string): void {
-  const audio = customAudioTracks.get(filePath)
-  if (audio) {
-    audio.pause()
-    audio.currentTime = 0
-    customAudioTracks.delete(filePath)
-  }
+  playbackStopCustomAudio(filePath)
 }
 
 /**
  * Stop all currently playing custom audio tracks.
+ * Delegates to sound-playback module.
  */
 export function stopAllCustomAudio(): void {
-  for (const [key, audio] of customAudioTracks) {
-    audio.pause()
-    audio.currentTime = 0
-    customAudioTracks.delete(key)
-  }
+  playbackStopAllCustomAudio()
 }
 
 // --- Internal helpers ---

@@ -4,7 +4,7 @@ import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { AbilityName } from '../../../types/character-common'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
-import type { FeatData5e } from '../../../types/data'
+import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
 
 export default function AsiModal(): JSX.Element {
@@ -24,9 +24,9 @@ export default function AsiModal(): JSX.Element {
   const [selected, setSelected] = useState<AbilityName[]>([])
 
   // Feat state
-  const [allFeats, setAllFeats] = useState<FeatData5e[]>([])
+  const [allFeats, setAllFeats] = useState<FeatData[]>([])
   const [featSearch, setFeatSearch] = useState('')
-  const [chosenFeat, setChosenFeat] = useState<FeatData5e | null>(null)
+  const [chosenFeat, setChosenFeat] = useState<FeatData | null>(null)
 
   const asiSlot = buildSlots.find((s) => s.id === activeAsiSlotId)
   const isAlreadyConfirmed = asiSlot?.selectedId === 'confirmed'

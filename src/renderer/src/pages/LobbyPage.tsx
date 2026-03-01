@@ -4,22 +4,14 @@ import { LobbyLayout } from '../components/lobby'
 import { Button, Modal } from '../components/ui'
 import { JOINED_SESSIONS_KEY, LAST_SESSION_KEY, LOBBY_COPY_TIMEOUT_MS } from '../constants/app-constants'
 import { onMessage as onClientMessage } from '../network/client-manager'
-import { onMessage as onHostMessage, setCampaignId as setHostCampaignId } from '../network/host-manager'
-import type {
-  CharacterSelectPayload,
-  CharacterUpdatePayload,
-  ChatPayload,
-  ChatTimeoutPayload,
-  FileSharingPayload,
-  SlowModePayload
-} from '../network/types'
+import { setCampaignId as setHostCampaignId } from '../network/host-manager'
+import { useLobbyBridges } from './lobby/use-lobby-bridges'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
 import { useCampaignStore } from '../stores/use-campaign-store'
 import { useCharacterStore } from '../stores/use-character-store'
 import { useLobbyStore } from '../stores/use-lobby-store'
 import { useNetworkStore } from '../stores/use-network-store'
 import type { Campaign } from '../types/campaign'
-import type { Character } from '../types/character'
 import { logger } from '../utils/logger'
 
 export default function LobbyPage(): JSX.Element {
@@ -145,269 +137,25 @@ export default function LobbyPage(): JSX.Element {
     }
   }, [campaignId, localPeerId, displayName, isHost, setCampaignId, setIsHost, addPlayer])
 
-  // --- Bridge: sync networkStore.peers → lobbyStore.players ---
-  const peers = useNetworkStore((s) => s.peers)
+  // Bridge network messages to lobby store (peer sync, chat, character updates, moderation)
+  useLobbyBridges(role, localPeerId)
 
-  useEffect(() => {
-    // Don't sync until localPeerId is known, to avoid double-adding the local player
-    if (!localPeerId) return
-
-    const lobby = useLobbyStore.getState()
-    const currentPlayers = lobby.players
-    const peerIds = new Set(peers.map((p) => p.peerId))
-
-    // Add or update remote peers in lobby
-    for (const peer of peers) {
-      if (peer.peerId === localPeerId) continue // Skip self (already added)
-      const existing = currentPlayers.find((p) => p.peerId === peer.peerId)
-      if (!existing) {
-        lobby.addPlayer({
-          peerId: peer.peerId,
-          displayName: peer.displayName,
-          characterId: peer.characterId,
-          characterName: peer.characterName,
-          isReady: peer.isReady,
-          isHost: peer.isHost,
-          color: peer.color,
-          isCoDM: peer.isCoDM
-        })
-      } else {
-        lobby.updatePlayer(peer.peerId, {
-          isReady: peer.isReady,
-          characterId: peer.characterId,
-          characterName: peer.characterName,
-          color: peer.color,
-          isCoDM: peer.isCoDM
-        })
-      }
-    }
-
-    // Remove players that left (but not self)
-    for (const player of currentPlayers) {
-      if (player.peerId === localPeerId) continue
-      if (!peerIds.has(player.peerId)) {
-        lobby.removePlayer(player.peerId)
-      }
-    }
-  }, [peers, localPeerId])
-
-  // --- Client: listen for dm:game-start → inject campaign + navigate to game ---
+  // Client: listen for dm:game-start → inject campaign + navigate to game
   useEffect(() => {
     if (role !== 'client') return
-
-    const unsub = onClientMessage((msg) => {
+    const unsub = onClientMessage((msg: { type: string; payload: unknown }) => {
       if (msg.type === 'dm:game-start') {
         const payload = msg.payload as { campaignId?: string; campaign?: Campaign }
         if (payload.campaign) {
-          // Add the DM's campaign data to local store (in-memory only)
           useCampaignStore.getState().addCampaignToState(payload.campaign)
-          // Navigate using the real campaign UUID from the payload
           navigate(`/game/${payload.campaign.id}`)
         } else {
           navigate(`/game/${campaignId}`)
         }
       }
     })
-
     return unsub
   }, [role, campaignId, navigate])
-
-  // --- Bridge: incoming character-select messages → store remote character data ---
-  useEffect(() => {
-    const handleCharacterSelect = (msg: { type: string; senderId: string; payload: unknown }): void => {
-      if (msg.type !== 'player:character-select') return
-      if (msg.senderId === localPeerId) return
-
-      const payload = msg.payload as CharacterSelectPayload
-      if (payload.characterId && payload.characterData) {
-        useLobbyStore.getState().setRemoteCharacter(payload.characterId, payload.characterData as Character)
-      }
-    }
-
-    if (role === 'host') {
-      const unsub = onHostMessage(handleCharacterSelect)
-      return unsub
-    } else if (role === 'client') {
-      const unsub = onClientMessage(handleCharacterSelect)
-      return unsub
-    }
-  }, [role, localPeerId])
-
-  // --- Bridge: incoming network chat messages → lobby chat ---
-  const msgIdRef = useRef(0)
-  const generateMsgId = (): string => `net-${Date.now()}-${++msgIdRef.current}`
-
-  useEffect(() => {
-    const handleChat = (senderId: string, senderName: string, payload: ChatPayload, timestamp: number): void => {
-      // Skip own messages (already added locally by sendChat)
-      if (senderId === localPeerId) return
-      const senderPlayer = useLobbyStore.getState().players.find((p) => p.peerId === senderId)
-      useLobbyStore.getState().addChatMessage({
-        id: generateMsgId(),
-        senderId,
-        senderName,
-        content: payload.message,
-        timestamp,
-        isSystem: payload.isSystem ?? false,
-        isDiceRoll: payload.isDiceRoll,
-        diceResult: payload.diceResult,
-        senderColor: senderPlayer?.color
-      })
-    }
-
-    const handleFile = (msg: {
-      type: string
-      senderId: string
-      senderName: string
-      timestamp: number
-      payload: unknown
-    }): void => {
-      if (msg.type !== 'chat:file') return
-      if (msg.senderId === localPeerId) return
-      const payload = msg.payload as { fileName: string; fileType: string; fileData: string; mimeType: string }
-      const senderPlayer = useLobbyStore.getState().players.find((p) => p.peerId === msg.senderId)
-      useLobbyStore.getState().addChatMessage({
-        id: generateMsgId(),
-        senderId: msg.senderId,
-        senderName: msg.senderName,
-        content: `shared a file: ${payload.fileName}`,
-        timestamp: msg.timestamp,
-        isSystem: false,
-        senderColor: senderPlayer?.color,
-        isFile: true,
-        fileName: payload.fileName,
-        fileType: payload.fileType,
-        fileData: payload.fileData,
-        mimeType: payload.mimeType
-      })
-    }
-
-    if (role === 'host') {
-      // Host: listen for client chat and file messages
-      const unsub = onHostMessage((msg) => {
-        if (msg.type === 'chat:message') {
-          handleChat(msg.senderId, msg.senderName, msg.payload as ChatPayload, msg.timestamp)
-        } else if (msg.type === 'chat:file') {
-          handleFile(msg)
-        }
-      })
-      return unsub
-    } else if (role === 'client') {
-      // Client: listen for chat and file messages relayed by host
-      const unsub = onClientMessage((msg) => {
-        if (msg.type === 'chat:message') {
-          handleChat(msg.senderId, msg.senderName, msg.payload as ChatPayload, msg.timestamp)
-        } else if (msg.type === 'chat:file') {
-          handleFile(msg)
-        }
-      })
-      return unsub
-    }
-  }, [role, localPeerId, generateMsgId])
-
-  // --- Bridge: DM character updates → client saves locally ---
-  useEffect(() => {
-    if (role !== 'client') return
-
-    const unsub = onClientMessage((msg) => {
-      if (msg.type === 'dm:character-update') {
-        const payload = msg.payload as CharacterUpdatePayload
-        if (payload.characterId && payload.characterData) {
-          const character = payload.characterData as Character
-
-          // Always update the remote character view (in-memory only, safe for all clients)
-          useLobbyStore.getState().setRemoteCharacter(payload.characterId, character)
-
-          // Only persist to disk if this update targets the local player (via targetPeerId)
-          const isTargetedAtMe = payload.targetPeerId === localPeerId
-          if (isTargetedAtMe) {
-            const localCharacters = useCharacterStore.getState().characters
-            const existsLocally = localCharacters.some((c) => c.id === payload.characterId)
-            if (existsLocally) {
-              useCharacterStore
-                .getState()
-                .saveCharacter(character)
-                .then(() => {
-                  logger.debug('[LobbyPage] DM character update saved:', payload.characterId)
-                  // Reload characters to ensure store is in sync
-                  useCharacterStore.getState().loadCharacters()
-                })
-                .catch((err) => {
-                  logger.error('[LobbyPage] Failed to save DM character update:', err)
-                })
-            }
-          }
-        }
-      }
-    })
-
-    return unsub
-  }, [role, localPeerId])
-
-  // --- Bridge: dm:slow-mode and dm:file-sharing → update lobby store ---
-  useEffect(() => {
-    if (role !== 'client') return
-
-    const unsub = onClientMessage((msg) => {
-      if (msg.type === 'dm:slow-mode') {
-        const payload = msg.payload as SlowModePayload
-        useLobbyStore.getState().setSlowMode(payload.seconds)
-        useLobbyStore.getState().addChatMessage({
-          id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-          senderId: 'system',
-          senderName: 'System',
-          content: payload.seconds === 0 ? 'Slow mode disabled.' : `Slow mode enabled: ${payload.seconds} seconds.`,
-          timestamp: Date.now(),
-          isSystem: true
-        })
-      } else if (msg.type === 'dm:file-sharing') {
-        const payload = msg.payload as FileSharingPayload
-        useLobbyStore.getState().setFileSharingEnabled(payload.enabled)
-        useLobbyStore.getState().addChatMessage({
-          id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-          senderId: 'system',
-          senderName: 'System',
-          content: payload.enabled ? 'File sharing enabled.' : 'File sharing disabled.',
-          timestamp: Date.now(),
-          isSystem: true
-        })
-      }
-    })
-
-    return unsub
-  }, [role])
-
-  // --- Bridge: dm:chat-timeout → set muted state for local player ---
-  useEffect(() => {
-    const handleTimeout = (msg: { type: string; payload: unknown }): void => {
-      if (msg.type !== 'dm:chat-timeout') return
-      const payload = msg.payload as ChatTimeoutPayload
-      const myPeerId = useNetworkStore.getState().localPeerId
-      if (payload.peerId === myPeerId) {
-        const mutedUntil = Date.now() + payload.duration * 1000
-        useLobbyStore.getState().setChatMutedUntil(mutedUntil)
-      }
-      // Add a system message so all players see the timeout
-      const targetPlayer = useLobbyStore.getState().players.find((p) => p.peerId === payload.peerId)
-      const targetName = targetPlayer?.displayName || 'A player'
-      useLobbyStore.getState().addChatMessage({
-        id: `sys-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-        senderId: 'system',
-        senderName: 'System',
-        content: `${targetName} has been muted for ${payload.duration} seconds.`,
-        timestamp: Date.now(),
-        isSystem: true
-      })
-    }
-
-    if (role === 'host') {
-      const unsub = onHostMessage(handleTimeout)
-      return unsub
-    } else if (role === 'client') {
-      const unsub = onClientMessage(handleTimeout)
-      return unsub
-    }
-  }, [role])
 
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 

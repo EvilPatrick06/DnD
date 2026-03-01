@@ -117,12 +117,12 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
     load5eClasses().then((classes) => {
       const cls = classes.find((c) => c.id === classSlot.selectedId)
       if (!cls) return
-      const options = cls.startingEquipmentOptions
-      if (options?.[choice]) {
+      const equipment = cls.coreTraits.startingEquipment
+      if (equipment && equipment.length > 0) {
         const shopItems = get().classEquipment.filter((e) => e.source === 'shop')
         set({
           classEquipment: [
-            ...options[choice].equipment.map((e: { name: string; quantity: number }) => ({ ...e, source: cls.name })),
+            ...equipment.map((e: { label: string; items: string[]; gp: number }) => ({ name: e.label, quantity: 1, source: cls.name })),
             ...shopItems
           ]
         })

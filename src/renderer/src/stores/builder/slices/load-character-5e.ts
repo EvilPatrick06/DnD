@@ -277,19 +277,19 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
       if (cls) {
         const current = get().classEquipment
         const shopItems = current.filter((e: { source?: string }) => e.source === 'shop' || e.source === 'existing')
-        const startingNames = new Set(cls.startingEquipment.map((e: { name: string }) => e.name))
+        const startingNames = new Set(cls.coreTraits.startingEquipment.map((e: { label: string }) => e.label))
         const keptShop = shopItems
           .filter((e: { name: string }) => !startingNames.has(e.name))
           .map((e: { name: string; quantity: number }) => ({ ...e, source: 'shop' }))
         updates.classEquipment = [
-          ...cls.startingEquipment.map((e: { name: string; quantity: number }) => ({ ...e, source: cls.name })),
+          ...cls.coreTraits.startingEquipment.map((e: { label: string; items: string[]; gp: number }) => ({ name: e.label, quantity: 1, source: cls.name })),
           ...keptShop
         ]
         // Re-derive maxSkills from class + custom background bonus + species extra skill
         const speciesExtraSkills =
           speciesData?.traits.filter((t: { name: string }) => t.name === 'Skillful').length ?? 0
         updates.maxSkills =
-          cls.proficiencies.skills.numToChoose +
+          cls.coreTraits.skillProficiencies.count +
           (character.buildChoices.backgroundId === 'custom' ? 2 : 0) +
           speciesExtraSkills
       }

@@ -5,7 +5,8 @@ const TABS: Array<{ id: ContentTab; label: string }> = [
   { id: 'details', label: 'About' },
   { id: 'special-abilities', label: 'Specials' },
   { id: 'languages', label: 'Languages' },
-  { id: 'spells', label: 'Spells' }
+  { id: 'spells', label: 'Spells' },
+  { id: 'gear', label: 'Gear' }
 ]
 
 export default function ContentTabs5e(): JSX.Element {

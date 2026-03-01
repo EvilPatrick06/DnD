@@ -79,11 +79,16 @@ export interface ClassWeaponProficiency {
   category?: string
 }
 
+export interface ClassSkillProficiencies {
+  count: number
+  from: string[]
+}
+
 export interface ClassCoreTraits {
   primaryAbility: string[]
   hitPointDie: string
   savingThrowProficiencies: string[]
-  skillProficiencies: ClassProficiencies
+  skillProficiencies: ClassSkillProficiencies
   weaponProficiencies: ClassWeaponProficiency[]
   armorTraining: string[]
   startingEquipment: Array<{
@@ -160,10 +165,14 @@ export interface SubclassFeatureEntry {
 }
 
 export interface SubclassData {
+  id?: string
   name: string
+  className?: string
+  level?: number
   description: string
-  featureLevels: number[]
+  featureLevels?: number[]
   features: SubclassFeatureEntry[]
+  alwaysPreparedSpells?: Record<string, string[]>
 }
 
 export interface ClassData {
@@ -314,3 +323,4 @@ export interface SpeciesResourceEntry {
 export interface SpeciesResourcesFile {
   species: Record<string, SpeciesResourceEntry>
 }
+

@@ -5,6 +5,7 @@ import {
   proneStandUpCost,
   triggersOpportunityAttack
 } from '../services/combat/combat-rules'
+import { checkOpportunityAttack } from '../services/combat/reaction-tracker'
 import { recomputeVision } from '../services/map/vision-computation'
 import { getWeatherEffects, type WeatherType } from '../services/weather-mechanics'
 import { useGameStore } from '../stores/use-game-store'
@@ -144,6 +145,29 @@ export function useTokenMovement({
       if (gameStore.initiative && !isDisengaging) {
         const enemies = activeMap.tokens.filter((t) => t.id !== tokenId && t.entityType !== movingToken.entityType)
 
+        // Use reaction-tracker for richer OA prompts with feature awareness
+        const cellSizeFt = 5
+        const nearbyEnemies = enemies.map((enemy) => ({
+          entityId: enemy.entityId,
+          entityName: enemy.label,
+          x: enemy.gridX,
+          y: enemy.gridY,
+          reach: 1, // 1 cell = 5ft default reach
+          features: enemy.conditions ?? [], // Token conditions as feature stand-in
+          isDisengaging: isDisengaging
+        }))
+
+        const reactionPrompts = checkOpportunityAttack(
+          movingToken.entityId,
+          movingToken.gridX,
+          movingToken.gridY,
+          gridX,
+          gridY,
+          nearbyEnemies,
+          cellSizeFt
+        )
+
+        // Also use existing per-token check for the UI prompt
         for (const enemy of enemies) {
           if (triggersOpportunityAttack(movingToken, enemy, gridX, gridY, moveType)) {
             const enemyTs = gameStore.turnStates[enemy.entityId]
@@ -157,6 +181,18 @@ export function useTokenMovement({
             }
             break
           }
+        }
+
+        // Log any additional reaction prompts from reaction-tracker
+        for (const prompt of reactionPrompts) {
+          addChatMessage({
+            id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+            senderId: 'system',
+            senderName: 'Combat',
+            content: `${prompt.entityName}: ${prompt.triggerDescription} (${prompt.availableReactions.join(', ')})`,
+            timestamp: Date.now(),
+            isSystem: true
+          })
         }
       }
 
