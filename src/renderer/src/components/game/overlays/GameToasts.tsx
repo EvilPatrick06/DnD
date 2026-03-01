@@ -124,9 +124,18 @@ interface FogToolbarProps {
   fogBrushSize: number
   onSetTool: (tool: 'select' | 'fog-reveal' | 'fog-hide') => void
   onSetBrushSize: (size: number) => void
+  dynamicFogEnabled?: boolean
+  onDynamicFogToggle?: (enabled: boolean) => void
 }
 
-export function FogToolbar({ activeTool, fogBrushSize, onSetTool, onSetBrushSize }: FogToolbarProps): JSX.Element {
+export function FogToolbar({
+  activeTool,
+  fogBrushSize,
+  onSetTool,
+  onSetBrushSize,
+  dynamicFogEnabled,
+  onDynamicFogToggle
+}: FogToolbarProps): JSX.Element {
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 rounded-xl px-3 py-2">
       <button
@@ -152,6 +161,20 @@ export function FogToolbar({ activeTool, fogBrushSize, onSetTool, onSetBrushSize
           {size}
         </button>
       ))}
+      {onDynamicFogToggle && (
+        <>
+          <div className="border-l border-gray-700 h-5 mx-1" />
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={dynamicFogEnabled ?? false}
+              onChange={(e) => onDynamicFogToggle(e.target.checked)}
+              className="accent-cyan-500 w-3 h-3 cursor-pointer"
+            />
+            <span className="text-[10px] text-gray-400">Dynamic Vision</span>
+          </label>
+        </>
+      )}
       <div className="border-l border-gray-700 h-5 mx-1" />
       <button
         onClick={() => onSetTool('select')}

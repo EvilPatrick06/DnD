@@ -26,7 +26,7 @@ interface CustomAudioEntry {
   volume: number
 }
 
-import ambientTracksJson from '../../../../public/data/5e/audio/ambient-tracks.json'
+import ambientTracksJson from '../../../../public/data/audio/ambient-tracks.json'
 import { logger } from '../../../utils/logger'
 
 const AMBIENT_TRACKS = ambientTracksJson.ambientTracks as Array<{ id: AmbientSound; label: string; icon: string }>

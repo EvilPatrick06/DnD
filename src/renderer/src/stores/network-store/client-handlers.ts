@@ -1,9 +1,18 @@
 import type {
+  InspectResponsePayload,
+  JournalAddPayload,
+  JournalDeletePayload,
+  JournalSyncPayload,
+  JournalUpdatePayload,
+  MacroPushPayload,
+  TradeCancelPayload,
+  TradeRequestPayload,
+  TradeResultPayload
+} from '../../network/message-types'
+import type {
   ConditionUpdatePayload,
   FileSharingPayload,
   FogRevealPayload,
-  ForceDeafenPayload,
-  ForceMutePayload,
   GameStateFullPayload,
   MapChangePayload,
   NetworkGameState,
@@ -116,12 +125,7 @@ export function handleClientMessage(
         characterId: payload.characterId || null,
         characterName: payload.characterName || null,
         isReady: false,
-        isMuted: false,
-        isDeafened: false,
-        isSpeaking: false,
-        isHost: false,
-        isForceMuted: false,
-        isForceDeafened: false
+        isHost: false
       }
       get().addPeer(newPeer)
       break
@@ -145,35 +149,6 @@ export function handleClientMessage(
       get().updatePeer(message.senderId, {
         characterId: payload.characterId,
         characterName: payload.characterName
-      })
-      break
-    }
-
-    case 'voice:mute-toggle': {
-      const payload = message.payload as { peerId: string; isMuted: boolean }
-      get().updatePeer(payload.peerId, { isMuted: payload.isMuted })
-      break
-    }
-
-    case 'voice:deafen-toggle': {
-      const payload = message.payload as { peerId: string; isDeafened: boolean }
-      get().updatePeer(payload.peerId, { isDeafened: payload.isDeafened })
-      getLobbyStore().getState().updatePlayer(payload.peerId, { isDeafened: payload.isDeafened })
-      break
-    }
-
-    case 'dm:force-mute': {
-      const payload = message.payload as ForceMutePayload
-      get().updatePeer(payload.peerId, { isForceMuted: payload.isForceMuted })
-      break
-    }
-
-    case 'dm:force-deafen': {
-      const payload = message.payload as ForceDeafenPayload
-      const isForceMuted = !!payload.isForceDeafened
-      get().updatePeer(payload.peerId, {
-        isForceDeafened: payload.isForceDeafened,
-        isForceMuted
       })
       break
     }
@@ -349,12 +324,129 @@ export function handleClientMessage(
       break
     }
 
+    case 'dm:vision-update': {
+      const payload = message.payload as { partyVisionCells: Array<{ x: number; y: number }> }
+      getGameStore().getState().setPartyVisionCells(payload.partyVisionCells)
+      break
+    }
+
+    case 'combat:reaction-prompt': {
+      const payload = message.payload as {
+        promptId: string
+        targetEntityId: string
+        targetPeerId: string
+        triggerType: 'shield' | 'counterspell' | 'absorb-elements' | 'silvery-barbs'
+        triggerContext: {
+          attackRoll?: number
+          attackerName?: string
+          spellName?: string
+          spellLevel?: number
+          damageType?: string
+        }
+      }
+      getGameStore().getState().setPendingReactionPrompt({
+        promptId: payload.promptId,
+        targetEntityId: payload.targetEntityId,
+        triggerType: payload.triggerType,
+        triggerContext: payload.triggerContext
+      })
+      break
+    }
+
     case 'pong': {
       const payload = message.payload as { timestamp?: number }
       if (payload.timestamp) {
         const rtt = Date.now() - payload.timestamp
         set({ latencyMs: rtt })
       }
+      break
+    }
+
+    // --- Trade messages ---
+    case 'player:trade-request': {
+      const payload = message.payload as TradeRequestPayload
+      getGameStore().getState().setPendingTradeOffer(payload)
+      break
+    }
+
+    case 'player:trade-cancel': {
+      const _payload = message.payload as TradeCancelPayload
+      getGameStore().getState().clearPendingTradeOffer()
+      break
+    }
+
+    case 'dm:trade-result': {
+      const payload = message.payload as TradeResultPayload
+      getGameStore().getState().setPendingTradeResult({
+        tradeId: payload.tradeId,
+        accepted: payload.accepted,
+        summary: payload.summary
+      })
+      getGameStore().getState().clearPendingTradeOffer()
+      break
+    }
+
+    // --- Journal messages ---
+    case 'player:journal-add': {
+      const payload = message.payload as JournalAddPayload
+      getGameStore().getState().addJournalEntry(payload.entry)
+      break
+    }
+
+    case 'player:journal-update': {
+      const payload = message.payload as JournalUpdatePayload
+      const updates: Record<string, unknown> = {}
+      if (payload.title !== undefined) updates.title = payload.title
+      if (payload.content !== undefined) updates.content = payload.content
+      if (payload.visibility !== undefined) updates.visibility = payload.visibility
+      getGameStore()
+        .getState()
+        .updateJournalEntry(
+          payload.entryId,
+          updates as Partial<
+            Pick<import('../../types/game-state').SharedJournalEntry, 'title' | 'content' | 'visibility'>
+          >
+        )
+      break
+    }
+
+    case 'player:journal-delete': {
+      const payload = message.payload as JournalDeletePayload
+      getGameStore().getState().deleteJournalEntry(payload.entryId)
+      break
+    }
+
+    case 'dm:journal-sync': {
+      const payload = message.payload as JournalSyncPayload
+      getGameStore().getState().setSharedJournal(payload.entries)
+      break
+    }
+
+    // --- Inspect messages ---
+    case 'dm:inspect-response': {
+      const payload = message.payload as InspectResponsePayload
+      const localId = get().localPeerId
+      if (payload.targetPeerId === localId) {
+        getGameStore().getState().setInspectedCharacter(payload.characterData)
+      }
+      break
+    }
+
+    // --- Macro sharing ---
+    case 'dm:push-macros': {
+      const payload = message.payload as MacroPushPayload
+      const { useMacroStore } = require('../use-macro-store') as typeof import('../use-macro-store')
+      useMacroStore.getState().importMacros(payload.macros)
+      getLobbyStore()
+        .getState()
+        .addChatMessage({
+          id: `sys-macros-${Date.now()}`,
+          senderId: 'system',
+          senderName: 'System',
+          content: `DM shared ${payload.macros.length} macro${payload.macros.length === 1 ? '' : 's'} with the party!`,
+          timestamp: Date.now(),
+          isSystem: true
+        })
       break
     }
 

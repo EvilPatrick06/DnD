@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import skillsJson from '../../../../public/data/5e/mechanics/skills.json'
+import skillsJson from '../../../../public/data/5e/game/mechanics/skills.json'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'
 import { abilityModifier, formatMod } from '../../../types/character-common'

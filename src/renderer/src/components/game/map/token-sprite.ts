@@ -46,7 +46,9 @@ export function createTokenSprite(
   cellSize: number,
   isSelected: boolean,
   isActiveTurn = false,
-  showHpBar = true
+  showHpBar = true,
+  lightingCondition?: 'bright' | 'dim' | 'darkness',
+  isDM = true
 ): Container {
   const container = new Container()
   container.label = `token-${token.id}`
@@ -85,16 +87,22 @@ export function createTokenSprite(
   circle.stroke({ width: 2, color: 0x1f2937, alpha: 1 })
   container.addChild(circle)
 
-  // Label (first letter of name)
-  const letter = token.label.charAt(0).toUpperCase()
+  // Label — show full name for DM or when nameVisible is true, otherwise first letter
+  const showFullName = isDM || token.nameVisible !== false
+  const labelText = showFullName
+    ? token.label.length > 8
+      ? `${token.label.slice(0, 7)}\u2026`
+      : token.label
+    : token.label.charAt(0).toUpperCase()
+  const labelFontSize = showFullName ? Math.max(9, radius * 0.55) : Math.max(12, radius * 0.9)
   const style = new TextStyle({
     fontFamily: 'Arial, sans-serif',
-    fontSize: Math.max(12, radius * 0.9),
+    fontSize: labelFontSize,
     fontWeight: 'bold',
     fill: 0xffffff,
     align: 'center'
   })
-  const text = new Text({ text: letter, style })
+  const text = new Text({ text: labelText, style })
   text.anchor.set(0.5, 0.5)
   text.x = cx
   text.y = cy
@@ -187,6 +195,32 @@ export function createTokenSprite(
     elevText.x = badgeX
     elevText.y = badgeY
     container.addChild(elevText)
+  }
+
+  // Lighting condition badge (bottom-left, shown for dim/darkness)
+  if (lightingCondition && lightingCondition !== 'bright') {
+    const badgeRadius = Math.max(5, radius * 0.25)
+    const badgeX = cx - radius * 0.6
+    const badgeY = cy + radius * 0.6
+
+    const badgeBg = new Graphics()
+    const badgeColor = lightingCondition === 'dim' ? 0x6366f1 : 0x1e1b4b // indigo for dim, dark indigo for darkness
+    badgeBg.circle(badgeX, badgeY, badgeRadius + 1)
+    badgeBg.fill({ color: badgeColor, alpha: 0.9 })
+    container.addChild(badgeBg)
+
+    // Half-moon for dim, filled circle for darkness
+    const icon = new Graphics()
+    if (lightingCondition === 'dim') {
+      // Half-moon: draw circle then cut left half
+      icon.arc(badgeX, badgeY, badgeRadius - 1, -Math.PI / 2, Math.PI / 2, false)
+      icon.fill({ color: 0xfbbf24, alpha: 0.9 })
+    } else {
+      // Filled circle for darkness
+      icon.circle(badgeX, badgeY, badgeRadius - 1)
+      icon.fill({ color: 0x4b5563, alpha: 0.9 })
+    }
+    container.addChild(icon)
   }
 
   // Position on grid

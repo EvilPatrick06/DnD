@@ -23,6 +23,7 @@ function toSpellEntry(
     traditions?: string[]
     traits?: string[]
     heightened?: Record<string, string>
+    higherLevels?: string
   },
   extra?: { source?: 'species' | 'class' | 'feat'; prepared?: boolean }
 ): SpellEntry {
@@ -41,6 +42,7 @@ function toSpellEntry(
     traditions: raw.traditions,
     traits: raw.traits,
     heightened: raw.heightened,
+    higherLevels: raw.higherLevels,
     classes: raw.classes,
     ...(extra?.source ? { source: extra.source } : {}),
     ...(extra?.prepared ? { prepared: true } : {})

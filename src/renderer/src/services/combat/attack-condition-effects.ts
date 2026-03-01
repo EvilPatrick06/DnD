@@ -27,6 +27,8 @@ export interface AttackConditionContext {
   attackerHasSwimSpeed?: boolean
   /** Name of flanking ally if flanking is detected (DMG optional rule) */
   flankingAlly?: string | null
+  /** Whether heavy weather imposes disadvantage on ranged attacks */
+  weatherDisadvantageRanged?: boolean
 }
 
 export interface ConditionEffectResult {
@@ -187,6 +189,11 @@ export function getAttackConditionEffects(
   // ── Flanking (DMG optional rule) ──
   if (context.flankingAlly && !context.isRanged) {
     advantageSources.push(`Flanking (with ${context.flankingAlly})`)
+  }
+
+  // ── Weather: heavy weather disadvantage on ranged ──
+  if (context.weatherDisadvantageRanged && context.isRanged) {
+    disadvantageSources.push('Heavy weather (ranged)')
   }
 
   // ── Advantage/Disadvantage cancellation (PHB rule) ──

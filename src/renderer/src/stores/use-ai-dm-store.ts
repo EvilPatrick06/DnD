@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
+import { parseRendererActions, stripActionTags } from '../services/ai-renderer-actions'
 import type { Campaign } from '../types/campaign'
 import { useLobbyStore } from './use-lobby-store'
 
@@ -13,12 +14,19 @@ interface AiDmAction {
   [key: string]: unknown
 }
 
+interface AiRuleCitation {
+  source: string
+  rule: string
+  text: string
+}
+
 interface AiMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
   statChanges?: AiStatChange[]
   dmActions?: AiDmAction[]
+  ruleCitations?: AiRuleCitation[]
 }
 
 interface PendingActionSet {
@@ -50,6 +58,9 @@ interface AiDmState {
 
   // DM actions from last response
   lastDmActions: AiDmAction[]
+
+  // Rule citations from last response
+  lastRuleCitations: AiRuleCitation[]
 
   // Scene preparation
   sceneStatus: 'idle' | 'preparing' | 'ready' | 'error'
@@ -107,6 +118,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
   sceneStatus: 'idle',
   lastStatChanges: [],
   lastDmActions: [],
+  lastRuleCitations: [],
   fileReadStatus: null,
   webSearchStatus: null,
   lastError: null,
@@ -159,6 +171,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       isTyping: currentSceneStatus === 'preparing',
       lastStatChanges: [],
       lastDmActions: [],
+      lastRuleCitations: [],
       lastError: null
       // sceneStatus NOT reset — preserved from lobby
     })
@@ -288,6 +301,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       isTyping: false,
       lastStatChanges: [],
       lastDmActions: [],
+      lastRuleCitations: [],
       lastError: null
     })
   },
@@ -306,16 +320,24 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       displayText: string
       statChanges: AiStatChange[]
       dmActions: AiDmAction[]
+      ruleCitations?: AiRuleCitation[]
     }): void => {
       const state = get()
       if (data.streamId === state.activeStreamId) {
         const dmActions = data.dmActions ?? []
+        const ruleCitations = data.ruleCitations ?? []
+
+        // Parse and strip renderer action tags from display text
+        const rendererActions = parseRendererActions(data.displayText)
+        const cleanDisplayText = rendererActions.length > 0 ? stripActionTags(data.displayText) : data.displayText
+
         const newMessage: AiMessage = {
           role: 'assistant',
-          content: data.displayText,
+          content: cleanDisplayText,
           timestamp: Date.now(),
           statChanges: data.statChanges.length > 0 ? data.statChanges : undefined,
-          dmActions: dmActions.length > 0 ? dmActions : undefined
+          dmActions: dmActions.length > 0 ? dmActions : undefined,
+          ruleCitations: ruleCitations.length > 0 ? ruleCitations : undefined
         }
 
         set({
@@ -324,6 +346,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
           streamingText: '',
           lastStatChanges: data.statChanges,
           lastDmActions: dmActions,
+          lastRuleCitations: ruleCitations,
           messages: [...state.messages, newMessage]
         })
       }

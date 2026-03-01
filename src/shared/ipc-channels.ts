@@ -40,6 +40,7 @@ export const IPC_CHANNELS = {
   // === File I/O ===
   FS_READ: 'fs:read-file',
   FS_WRITE: 'fs:write-file',
+  FS_WRITE_BINARY: 'fs:write-file-binary',
 
   // === Window Control ===
   TOGGLE_FULLSCREEN: 'window:toggle-fullscreen',
@@ -88,6 +89,10 @@ export const IPC_CHANNELS = {
   AI_LIST_MEMORY_FILES: 'ai:list-memory-files',
   AI_READ_MEMORY_FILE: 'ai:read-memory-file',
   AI_CLEAR_MEMORY: 'ai:clear-memory',
+
+  // === AI DM: NPC Relationship Tracking ===
+  AI_LOG_NPC_INTERACTION: 'ai:log-npc-interaction',
+  AI_SET_NPC_RELATIONSHIP: 'ai:set-npc-relationship',
 
   // === AI DM: Connection Status ===
   AI_CONNECTION_STATUS: 'ai:connection-status',
@@ -138,7 +143,24 @@ export const IPC_CHANNELS = {
   CHARACTER_RESTORE_VERSION: 'storage:character-restore-version',
 
   // === App Info ===
-  APP_VERSION: 'app:version'
+  APP_VERSION: 'app:version',
+
+  // === Game Data ===
+  GAME_LOAD_JSON: 'game:load-json',
+
+  // === Plugins ===
+  PLUGIN_SCAN: 'plugin:scan',
+  PLUGIN_ENABLE: 'plugin:enable',
+  PLUGIN_DISABLE: 'plugin:disable',
+  PLUGIN_LOAD_CONTENT: 'plugin:load-content',
+  PLUGIN_GET_ENABLED: 'plugin:get-enabled',
+  PLUGIN_INSTALL: 'plugin:install',
+  PLUGIN_UNINSTALL: 'plugin:uninstall',
+
+  // === Plugin Storage (per-plugin key-value) ===
+  PLUGIN_STORAGE_GET: 'plugin:storage-get',
+  PLUGIN_STORAGE_SET: 'plugin:storage-set',
+  PLUGIN_STORAGE_DELETE: 'plugin:storage-delete'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

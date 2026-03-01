@@ -209,7 +209,7 @@ export function GeneralFeatPicker({
 }
 
 export function AsiAbilityPicker5e({
-  slot,
+  slot: _slot,
   character,
   selection,
   onSelect

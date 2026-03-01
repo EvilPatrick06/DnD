@@ -6,12 +6,7 @@ export interface PeerInfo {
   characterId: string | null
   characterName: string | null
   isReady: boolean
-  isMuted: boolean
-  isDeafened: boolean
-  isSpeaking: boolean
   isHost: boolean
-  isForceMuted: boolean
-  isForceDeafened: boolean
   color?: string
   isCoDM?: boolean
 }

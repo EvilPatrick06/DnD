@@ -1,6 +1,7 @@
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import AbilityScoreModal from '../shared/AbilityScoreModal'
 import AsiModal from '../shared/AsiModal'
+import ExpertiseModal from '../shared/ExpertiseModal'
 import SelectionModal from '../shared/SelectionModal'
 import SkillsModal from '../shared/SkillsModal'
 import ContentTabs5e from './ContentTabs5e'
@@ -44,6 +45,7 @@ export default function MainContentArea5e(): JSX.Element {
       {customModal === 'ability-scores' && <AbilityScoreModal />}
       {customModal === 'skills' && <SkillsModal />}
       {customModal === 'asi' && <AsiModal />}
+      {customModal === 'expertise' && <ExpertiseModal />}
     </div>
   )
 }

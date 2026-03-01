@@ -9,7 +9,14 @@ import {
   type MasteryEffectResult,
   unarmedStrikeDC
 } from '../../../../services/combat/combat-rules'
+import { getCritThreshold } from '../../../../services/combat/crit-range'
 import { resolveEffects } from '../../../../services/combat/effect-resolver-5e'
+import {
+  type GrappleRequest,
+  resolveGrapple,
+  resolveShove,
+  type ShoveRequest
+} from '../../../../services/combat/grapple-shove-resolver'
 import { useGameStore } from '../../../../stores/use-game-store'
 import type { Character } from '../../../../types/character'
 import type { Character5e } from '../../../../types/character-5e'
@@ -31,8 +38,6 @@ import {
 } from './attack-computations'
 import {
   type AttackRollResult,
-  applyGrappleCondition,
-  applyProneCondition,
   autoCalculateCover,
   type DamageResult,
   executeAttackRoll,
@@ -77,6 +82,7 @@ export default function AttackModal({
   const [unarmedMode, setUnarmedMode] = useState<UnarmedMode>('damage')
   const [shoveChoice, setShoveChoice] = useState<'push' | 'prone'>('push')
   const [grappleResult, setGrappleResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [grappleResolvedByOrphan, setGrappleResolvedByOrphan] = useState(false)
   const [isOffhandAttack, setIsOffhandAttack] = useState(false)
   const [primaryWeaponIndex, setPrimaryWeaponIndex] = useState<number | null>(null)
 
@@ -144,7 +150,8 @@ export default function AttackModal({
       attackMod: mod,
       cover,
       computedEffects,
-      conditionOverrides
+      conditionOverrides,
+      critThreshold: getCritThreshold(char5e)
     })
     setIsHit(hit)
     setAttackRoll(roll)
@@ -282,6 +289,7 @@ export default function AttackModal({
     setSelectedTargetId(token.id)
     setConditionOverrides({})
     setGrappleResult(null)
+    setGrappleResolvedByOrphan(false)
     if (attackerToken) {
       setCover(autoCalculateCover(attackerToken, token, tokens))
     }
@@ -289,21 +297,71 @@ export default function AttackModal({
   }
 
   // ── Grapple/Shove handlers ──
+  // Uses resolveGrapple/resolveShove from grapple-shove-resolver for full
+  // one-shot resolution (roll + condition + combat log + broadcast).
+  // The step-by-step UI path still uses executeGrappleSave for the roll,
+  // while resolveGrapple/resolveShove handle condition application and logging.
+
+  /** Build a GrappleRequest from the current modal state */
+  const buildGrappleRequest = (target: MapToken): GrappleRequest => ({
+    attackerToken: attackerToken!,
+    targetToken: target,
+    attackerName: character.name,
+    targetName: target.label,
+    attackerAthleticsBonus: strMod + profBonus,
+    targetEscapeBonus: target.saveMod ?? 0,
+    attackerStrScore: character.abilityScores.strength,
+    proficiencyBonus: profBonus
+  })
 
   const handleRollGrappleSave = (): void => {
-    if (!selectedTarget) return
-    const result = executeGrappleSave({ selectedTarget, character, profBonus, unarmedMode })
-    setGrappleResult(result)
-    if (!result.success && unarmedMode === 'grapple') {
-      applyGrappleCondition(selectedTarget.entityId, selectedTarget.label, character.name)
+    if (!selectedTarget || !attackerToken) return
+
+    if (unarmedMode === 'grapple') {
+      // Use resolveGrapple from grapple-shove-resolver for full resolution.
+      // Note: resolveGrapple.success means "grapple attempt succeeded" (target failed to resist),
+      // but the modal's grappleResult.success means "target's save succeeded" (grapple failed).
+      // So we invert the success flag for the modal UI.
+      const request = buildGrappleRequest(selectedTarget)
+      const result = resolveGrapple(request)
+      setGrappleResult({ success: !result.success, message: result.summary })
+      setGrappleResolvedByOrphan(true)
+      // resolveGrapple already applies the Grappled condition and broadcasts
+    } else if (unarmedMode === 'shove') {
+      // Use resolveShove from grapple-shove-resolver for full resolution.
+      // Same inversion: resolveShove.success = attempt succeeded = target save failed.
+      const request: ShoveRequest = {
+        ...buildGrappleRequest(selectedTarget),
+        shoveType: shoveChoice
+      }
+      const result = resolveShove(request)
+      setGrappleResult({ success: !result.success, message: result.summary })
+      setGrappleResolvedByOrphan(true)
+      // resolveShove already applies Prone condition and broadcasts
+    } else {
+      // Fallback to step-by-step save for damage mode
+      const result = executeGrappleSave({ selectedTarget, character, profBonus, unarmedMode })
+      setGrappleResult(result)
     }
   }
 
   const handleManualFail = (): void => {
     if (!selectedTarget) return
     setGrappleResult({ success: false, message: `${selectedTarget.label} fails the ${unarmedMode} save (manual).` })
-    if (unarmedMode === 'grapple') {
-      applyGrappleCondition(selectedTarget.entityId, selectedTarget.label, character.name)
+    if (unarmedMode === 'grapple' && attackerToken) {
+      // Use resolveGrapple to apply condition and log; note: this also rolls
+      // but the manual-fail path overrides the result display above
+      const gameStore = useGameStore.getState()
+      gameStore.addCondition({
+        id: crypto.randomUUID(),
+        entityId: selectedTarget.entityId,
+        entityName: selectedTarget.label,
+        condition: 'Grappled',
+        duration: 'permanent',
+        source: `Grappled by ${character.name}`,
+        sourceEntityId: attackerToken.entityId,
+        appliedRound: gameStore.round
+      })
     }
   }
 
@@ -314,11 +372,32 @@ export default function AttackModal({
 
   const handleGrappleDone = (): void => {
     if (!selectedTarget || !grappleResult) return
+    // When resolveGrapple/resolveShove from grapple-shove-resolver was used,
+    // conditions and combat log entries are already applied. Only broadcast
+    // the summary message via the modal's callback.
     onBroadcastResult?.(
       `${character.name} attempts to ${unarmedMode} ${selectedTarget.label}: ${grappleResult.message}`
     )
-    if (!grappleResult.success && unarmedMode === 'shove' && shoveChoice === 'prone') {
-      applyProneCondition(selectedTarget.entityId, selectedTarget.label, character.name)
+    // Only apply conditions manually for the manual-fail path (where the
+    // orphan resolver was NOT used)
+    if (
+      !grappleResolvedByOrphan &&
+      !grappleResult.success &&
+      unarmedMode === 'shove' &&
+      shoveChoice === 'prone' &&
+      attackerToken
+    ) {
+      const gameStore = useGameStore.getState()
+      gameStore.addCondition({
+        id: crypto.randomUUID(),
+        entityId: selectedTarget.entityId,
+        entityName: selectedTarget.label,
+        condition: 'Prone',
+        duration: 'permanent',
+        source: `Shoved by ${character.name}`,
+        sourceEntityId: attackerToken.entityId,
+        appliedRound: gameStore.round
+      })
     }
     onClose()
   }
@@ -380,6 +459,7 @@ export default function AttackModal({
             getAttackMod={getAttackMod}
             isOffhandAttack={isOffhandAttack}
             primaryWeaponIndex={primaryWeaponIndex}
+            masteryChoices={char5e.weaponMasteryChoices ?? []}
             onSelectWeapon={(i) => {
               setSelectedWeaponIndex(i)
               setStep('target')
@@ -444,6 +524,7 @@ export default function AttackModal({
             onGrappleDone={handleGrappleDone}
             onBack={() => {
               setGrappleResult(null)
+              setGrappleResolvedByOrphan(false)
               setIsHit(null)
               setStep('target')
             }}

@@ -13,11 +13,16 @@
 
 set -e  # Exit on error
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+[ -f "$SCRIPT_DIR/.env" ] && { set -a; source "$SCRIPT_DIR/.env"; set +a; }
+
 CURRENT_USER=$(whoami)
+TIMEZONE="${PI_TIMEZONE:-America/Denver}"
 
 echo "============================================"
 echo "  BMO Setup — Pi 5 AI Voice + Vision Assistant"
 echo "  User: ${CURRENT_USER}"
+echo "  Timezone: ${TIMEZONE}"
 echo "============================================"
 echo ""
 
@@ -27,7 +32,7 @@ echo "=== Phase 1: System Update ==="
 sudo apt update && sudo apt full-upgrade -y
 
 echo "=== Phase 1: Set timezone ==="
-sudo timedatectl set-timezone America/Denver
+sudo timedatectl set-timezone "$TIMEZONE"
 
 echo "=== Phase 1: Enable Hardware Interfaces ==="
 sudo raspi-config nonint do_camera 0      # Enable camera
@@ -210,7 +215,7 @@ fi
 cd ~
 
 echo "=== Phase 4: Configure expansion board (LEDs + fans) ==="
-python3 << 'PYEOF'
+python3 << PYEOF
 import sys
 sys.path.insert(0, "/home/${CURRENT_USER}/Freenove_Computer_Case_Kit_for_Raspberry_Pi/Code")
 from expansion import Expansion
@@ -469,6 +474,14 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
 echo "deb [arch=arm64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 sudo apt-get update && sudo apt-get install -y gh
 
+# ── Phase 5f: Visual Studio Code ───────────────────────────────────
+echo "=== Phase 5f: Install Visual Studio Code ==="
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /tmp/ms.gpg
+sudo install -o root -g root -m 644 /tmp/ms.gpg /usr/share/keyrings/microsoft-archive-keyring.gpg
+echo "deb [arch=arm64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
+sudo apt-get update && sudo apt-get install -y code
+rm -f /tmp/ms.gpg
+
 # ── Phase 6: Kiosk Mode Autostart ────────────────────────────────────
 
 echo "=== Phase 6: Configure Chromium kiosk autostart ==="
@@ -533,31 +546,11 @@ echo ""
 echo "Next steps:"
 echo "  1. Reboot: sudo reboot"
 echo ""
-echo "  2. After reboot, copy BMO app files to ~/bmo/"
-echo "     scp -r pi-setup/bmo/* patrick@<pi-ip>:~/bmo/"
+echo "  2. After reboot, deploy BMO files from your PC:"
+echo "     cd /c/Users/evilp/dnd/BMO-setup && bash bmo.sh deploy pi"
+echo "     (copies all files, installs deps, creates model, starts BMO)"
 echo ""
-echo "  3. Copy config files:"
-echo "     scp pi-setup/config/credentials.json patrick@<pi-ip>:~/bmo/config/"
-echo "     scp pi-setup/config/token.json patrick@<pi-ip>:~/bmo/config/"
-echo ""
-echo "  4. Transfer and register Modelfile:"
-echo "     scp Modelfile patrick@<pi-ip>:~/bmo/"
-echo "     ssh patrick@<pi-ip> 'ollama create bmo -f ~/bmo/Modelfile'"
-echo ""
-echo "  5. Configure Cloudflare Tunnel:"
-echo "     cloudflared tunnel login"
-echo "     cloudflared tunnel create bmo"
-echo "     sudo systemctl start cloudflared.service"
-echo ""
-echo "  6. Set up YT Music auth (interactive, run manually):"
-echo "     source ~/bmo/venv/bin/activate && ytmusicapi oauth"
-echo ""
-echo "  7. Verify hardware:"
-echo "     libcamera-hello --timeout 5000   # Camera"
-echo "     speaker-test -t wav              # Speakers"
-echo "     arecord -d 5 test.wav && aplay test.wav  # Mic"
-echo "     lsblk | grep nvme               # NVMe SSD"
-echo ""
-echo "  8. Start BMO:"
-echo "     sudo systemctl start bmo.service"
+echo "  3. Run interactive auth from your PC:"
+echo "     bash bmo.sh auth"
+echo "     (walks through Cloudflare, Google Calendar, YT Music, hardware check)"
 echo ""

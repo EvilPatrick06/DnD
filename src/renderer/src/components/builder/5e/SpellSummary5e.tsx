@@ -27,11 +27,13 @@ export function ordinal(n: number): string {
 export function SpellRow({
   spell,
   selected,
-  onToggle
+  onToggle,
+  isOffList
 }: {
   spell: SpellData
   selected: boolean
   onToggle: () => void
+  isOffList?: boolean
 }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
   return (
@@ -46,7 +48,12 @@ export function SpellRow({
           {selected && '\u2713'}
         </button>
         <button onClick={() => setExpanded(!expanded)} className="flex-1 flex items-center justify-between text-left">
-          <span className={`text-sm ${selected ? 'text-gray-200' : 'text-gray-400'}`}>{spell.name}</span>
+          <span className={`text-sm ${selected ? 'text-gray-200' : 'text-gray-400'} flex items-center gap-1.5`}>
+            {spell.name}
+            {isOffList && (
+              <span className="text-[10px] text-orange-400 border border-orange-700 rounded px-1">Off-List</span>
+            )}
+          </span>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {spell.concentration && <span className="text-yellow-600">C</span>}
             {spell.ritual && <span className="text-blue-500">R</span>}

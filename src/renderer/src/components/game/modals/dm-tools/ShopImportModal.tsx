@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ShopItem } from '../../../../network/types'
 import { load5eEquipment, load5eMagicItems } from '../../../../services/data-provider'
 import type { EquipmentFile, MagicItemData } from '../../../../types/data'
+import { logger } from '../../../../utils/logger'
 
 import {
   armorToImportable,
@@ -31,12 +32,12 @@ export default function ShopImportModal({ importMode, onClose, onImport }: ShopI
     if (importMode === 'equipment' && !equipmentData) {
       load5eEquipment()
         .then(setEquipmentData)
-        .catch(() => {})
+        .catch((e) => logger.warn('[ShopImport] Failed to load equipment', e))
     }
     if (importMode === 'magic' && magicItemsData.length === 0) {
       load5eMagicItems()
         .then(setMagicItemsData)
-        .catch(() => {})
+        .catch((e) => logger.warn('[ShopImport] Failed to load magic items', e))
     }
   }, [importMode, equipmentData, magicItemsData.length])
 

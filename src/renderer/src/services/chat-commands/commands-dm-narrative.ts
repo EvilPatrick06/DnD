@@ -1,4 +1,7 @@
 import { load5eNpcNames, load5eRandomTables } from '../../services/data-provider'
+import { useLobbyStore } from '../../stores/use-lobby-store'
+import type { Character5e, CustomFeature } from '../../types/character-5e'
+import { getLatestCharacter, saveAndBroadcastCharacter } from './helpers'
 import type { ChatCommand } from './types'
 
 const npcCommand: ChatCommand = {
@@ -184,6 +187,105 @@ const npcMoodCommand: ChatCommand = {
   }
 }
 
+const grantFeatureCommand: ChatCommand = {
+  name: 'grant-feature',
+  aliases: ['grantfeature'],
+  description: 'Grant a custom feature to a character',
+  usage: '/grant-feature <character> <name> [description]',
+  dmOnly: true,
+  category: 'dm',
+  execute: (args, ctx) => {
+    // Parse: first word is character, rest is "name | description" or just "name"
+    const firstSpace = args.indexOf(' ')
+    if (firstSpace < 0) {
+      ctx.addSystemMessage('Usage: /grant-feature <character> <name> [| description]')
+      return
+    }
+    const charQuery = args.slice(0, firstSpace)
+    const rest = args.slice(firstSpace + 1)
+
+    const lobbyState = useLobbyStore.getState()
+    const player = lobbyState.players?.find((p) => p.displayName?.toLowerCase().startsWith(charQuery.toLowerCase()))
+    if (!player?.characterId) {
+      ctx.addSystemMessage(`Character not found: "${charQuery}"`)
+      return
+    }
+    const character = getLatestCharacter(player.characterId)
+    if (!character) {
+      ctx.addSystemMessage(`Character data not found for "${charQuery}"`)
+      return
+    }
+
+    // Split on pipe for optional description
+    const parts = rest.split('|').map((s) => s.trim())
+    const featureName = parts[0]
+    const description = parts[1] ?? ''
+
+    const newFeature: CustomFeature = {
+      id: crypto.randomUUID(),
+      name: featureName,
+      source: 'DM Award',
+      description,
+      grantedAt: new Date().toISOString()
+    }
+    const updated: Character5e = {
+      ...character,
+      customFeatures: [...(character.customFeatures ?? []), newFeature],
+      updatedAt: new Date().toISOString()
+    }
+    saveAndBroadcastCharacter(updated)
+    ctx.broadcastSystemMessage(`**${ctx.playerName}** granted **${featureName}** to ${character.name}.`)
+  }
+}
+
+const revokeFeatureCommand: ChatCommand = {
+  name: 'revoke-feature',
+  aliases: ['revokefeature'],
+  description: 'Remove a custom feature from a character',
+  usage: '/revoke-feature <character> <feature name>',
+  dmOnly: true,
+  category: 'dm',
+  execute: (args, ctx) => {
+    const firstSpace = args.indexOf(' ')
+    if (firstSpace < 0) {
+      ctx.addSystemMessage('Usage: /revoke-feature <character> <feature name>')
+      return
+    }
+    const charQuery = args.slice(0, firstSpace)
+    const featureQuery = args
+      .slice(firstSpace + 1)
+      .trim()
+      .toLowerCase()
+
+    const lobbyState = useLobbyStore.getState()
+    const player = lobbyState.players?.find((p) => p.displayName?.toLowerCase().startsWith(charQuery.toLowerCase()))
+    if (!player?.characterId) {
+      ctx.addSystemMessage(`Character not found: "${charQuery}"`)
+      return
+    }
+    const character = getLatestCharacter(player.characterId)
+    if (!character) {
+      ctx.addSystemMessage(`Character data not found for "${charQuery}"`)
+      return
+    }
+
+    const features = character.customFeatures ?? []
+    const idx = features.findIndex((f) => f.name.toLowerCase().includes(featureQuery))
+    if (idx < 0) {
+      ctx.addSystemMessage(`No custom feature matching "${featureQuery}" found on ${character.name}.`)
+      return
+    }
+    const removedName = features[idx].name
+    const updated: Character5e = {
+      ...character,
+      customFeatures: features.filter((_, i) => i !== idx),
+      updatedAt: new Date().toISOString()
+    }
+    saveAndBroadcastCharacter(updated)
+    ctx.broadcastSystemMessage(`**${ctx.playerName}** revoked **${removedName}** from ${character.name}.`)
+  }
+}
+
 export const commands: ChatCommand[] = [
   npcCommand,
   announceCommand,
@@ -191,5 +293,7 @@ export const commands: ChatCommand[] = [
   noteCommand,
   nameCommand,
   randomCommand,
-  npcMoodCommand
+  npcMoodCommand,
+  grantFeatureCommand,
+  revokeFeatureCommand
 ]

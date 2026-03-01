@@ -47,7 +47,6 @@ export type {
   KickPayload,
   MapChangePayload,
   MessageType,
-  MuteTogglePayload,
   NetworkMessage,
   PeerInfo,
   StateUpdatePayload,

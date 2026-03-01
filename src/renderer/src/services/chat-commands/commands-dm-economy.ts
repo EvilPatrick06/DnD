@@ -218,6 +218,50 @@ const shopRemoveCommand: ChatCommand = {
   }
 }
 
+const identifyCommand: ChatCommand = {
+  name: 'identify',
+  aliases: [],
+  description: 'Identify a magic item on a character',
+  usage: '/identify <character> <item name>',
+  dmOnly: true,
+  category: 'dm',
+  execute: (args, ctx) => {
+    const match = args.match(/^(\S+)\s+(.+)$/)
+    if (!match) {
+      ctx.addSystemMessage('Usage: /identify <character> <item name>')
+      return
+    }
+    const [, charQuery, itemQuery] = match
+    const lobbyState = useLobbyStore.getState()
+    const player = lobbyState.players?.find((p) => p.displayName?.toLowerCase().startsWith(charQuery.toLowerCase()))
+    if (!player?.characterId) {
+      ctx.addSystemMessage(`Character not found: "${charQuery}"`)
+      return
+    }
+    const character = getLatestCharacter(player.characterId)
+    if (!character) {
+      ctx.addSystemMessage(`Character data not found for "${charQuery}"`)
+      return
+    }
+    const itemIndex = (character.magicItems ?? []).findIndex(
+      (mi) => mi.name.toLowerCase().includes(itemQuery.toLowerCase()) && mi.identified === false
+    )
+    if (itemIndex < 0) {
+      ctx.addSystemMessage(`No unidentified magic item matching "${itemQuery}" found on ${character.name}.`)
+      return
+    }
+    const updated: Character5e = {
+      ...character,
+      magicItems: (character.magicItems ?? []).map((mi, idx) => (idx === itemIndex ? { ...mi, identified: true } : mi)),
+      updatedAt: new Date().toISOString()
+    }
+    saveAndBroadcastCharacter(updated)
+    ctx.broadcastSystemMessage(
+      `**${ctx.playerName}** identified **${character.magicItems![itemIndex].name}** for ${character.name}!`
+    )
+  }
+}
+
 export const commands: ChatCommand[] = [
   dmgoldCommand,
   xpCommand,
@@ -225,5 +269,6 @@ export const commands: ChatCommand[] = [
   lootCommand,
   encounterCommand,
   shopAddCommand,
-  shopRemoveCommand
+  shopRemoveCommand,
+  identifyCommand
 ]

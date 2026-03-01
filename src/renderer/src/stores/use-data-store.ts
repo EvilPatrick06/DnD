@@ -92,8 +92,11 @@ interface DataStoreState {
   cache: Map<DataCategory, CacheEntry>
   homebrewByCategory: Map<string, Record<string, unknown>[]>
   homebrewLoaded: boolean
+  pluginDataByCategory: Map<string, Record<string, unknown>[]>
+  pluginsLoaded: boolean
 
   loadHomebrew: () => Promise<void>
+  loadPluginContent: () => Promise<void>
   get: <T>(category: DataCategory, loader: () => Promise<T>) => Promise<T>
   refresh: (category: DataCategory) => void
   clearAll: () => void
@@ -103,6 +106,8 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
   cache: new Map(),
   homebrewByCategory: new Map(),
   homebrewLoaded: false,
+  pluginDataByCategory: new Map(),
+  pluginsLoaded: false,
 
   loadHomebrew: async () => {
     if (get().homebrewLoaded) return
@@ -120,6 +125,35 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
       }
     } catch {
       set({ homebrewLoaded: true })
+    }
+  },
+
+  loadPluginContent: async () => {
+    if (get().pluginsLoaded) return
+    try {
+      const scanResult = await window.api.plugins.scan()
+      if (!scanResult.success || !scanResult.data) {
+        set({ pluginsLoaded: true })
+        return
+      }
+
+      const enabledPlugins = scanResult.data.filter((p) => p.enabled && !p.error)
+      const byCategory = new Map<string, Record<string, unknown>[]>()
+
+      for (const plugin of enabledPlugins) {
+        const contentResult = await window.api.plugins.loadContent(plugin.id, plugin.manifest)
+        if (contentResult.success && contentResult.data) {
+          for (const [category, items] of Object.entries(contentResult.data)) {
+            const existing = byCategory.get(category) || []
+            existing.push(...(items as Record<string, unknown>[]))
+            byCategory.set(category, existing)
+          }
+        }
+      }
+
+      set({ pluginDataByCategory: byCategory, pluginsLoaded: true })
+    } catch {
+      set({ pluginsLoaded: true })
     }
   },
 
@@ -156,7 +190,12 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
         await state.loadHomebrew()
       }
 
-      const merged = mergeHomebrew(category, data, get().homebrewByCategory)
+      if (!get().pluginsLoaded) {
+        await get().loadPluginContent()
+      }
+
+      let merged = mergeHomebrew(category, data, get().homebrewByCategory)
+      merged = mergePluginData(category, merged, get().pluginDataByCategory)
 
       const finalCache = new Map(get().cache)
       finalCache.set(category, { data: merged, timestamp: Date.now(), loading: false })
@@ -178,7 +217,13 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
   },
 
   clearAll: () => {
-    set({ cache: new Map(), homebrewByCategory: new Map(), homebrewLoaded: false })
+    set({
+      cache: new Map(),
+      homebrewByCategory: new Map(),
+      homebrewLoaded: false,
+      pluginDataByCategory: new Map(),
+      pluginsLoaded: false
+    })
   }
 }))
 
@@ -200,6 +245,23 @@ function mergeHomebrew<T>(
     result.push(entryWithSource as (typeof result)[number])
   }
 
+  return result as unknown as T
+}
+
+function mergePluginData<T>(
+  category: DataCategory,
+  baseData: T,
+  pluginDataByCategory: Map<string, Record<string, unknown>[]>
+): T {
+  const pluginEntries = pluginDataByCategory.get(category)
+  if (!pluginEntries || pluginEntries.length === 0) return baseData
+
+  if (!Array.isArray(baseData)) return baseData
+
+  const result = [...baseData]
+  for (const entry of pluginEntries) {
+    result.push(entry as (typeof result)[number])
+  }
   return result as unknown as T
 }
 

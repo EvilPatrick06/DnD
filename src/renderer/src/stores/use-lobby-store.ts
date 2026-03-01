@@ -17,12 +17,7 @@ export interface LobbyPlayer {
   characterId: string | null
   characterName: string | null
   isReady: boolean
-  isMuted: boolean
-  isDeafened: boolean
-  isSpeaking: boolean
   isHost: boolean
-  isForceMuted: boolean
-  isForceDeafened: boolean
   color?: string
   isCoDM?: boolean
   diceColors?: DiceColors
@@ -49,8 +44,6 @@ interface LobbyState {
   campaignId: string | null
   players: LobbyPlayer[]
   chatMessages: ChatMessage[]
-  localMuted: boolean
-  localDeafened: boolean
   isHost: boolean
   locallyMutedPeers: string[]
   remoteCharacters: Record<string, Character>
@@ -65,13 +58,9 @@ interface LobbyState {
   setPlayerReady: (peerId: string, ready: boolean) => void
   addChatMessage: (msg: ChatMessage) => void
   sendChat: (content: string) => void
-  toggleMute: () => void
-  toggleDeafen: () => void
   setIsHost: (isHost: boolean) => void
   allPlayersReady: () => boolean
   toggleLocalMutePlayer: (peerId: string) => void
-  forceMutePlayer: (peerId: string, force: boolean) => void
-  forceDeafenPlayer: (peerId: string, force: boolean) => void
   setRemoteCharacter: (characterId: string, character: Character) => void
   setSlowMode: (seconds: number) => void
   setFileSharingEnabled: (enabled: boolean) => void
@@ -91,8 +80,6 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   campaignId: null,
   players: [],
   chatMessages: [],
-  localMuted: false,
-  localDeafened: false,
   isHost: false,
   locallyMutedPeers: [],
   remoteCharacters: {},
@@ -279,19 +266,6 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     }
   },
 
-  toggleMute: () => {
-    const newMuted = !get().localMuted
-    set({ localMuted: newMuted })
-  },
-
-  toggleDeafen: () => {
-    const newDeafened = !get().localDeafened
-    set({
-      localDeafened: newDeafened,
-      localMuted: newDeafened ? true : get().localMuted
-    })
-  },
-
   setIsHost: (isHost) => set({ isHost }),
 
   allPlayersReady: () => {
@@ -309,20 +283,6 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
           : [...state.locallyMutedPeers, peerId]
       }
     })
-  },
-
-  forceMutePlayer: (peerId: string, force: boolean) => {
-    set((state) => ({
-      players: state.players.map((p) => (p.peerId === peerId ? { ...p, isForceMuted: force } : p))
-    }))
-  },
-
-  forceDeafenPlayer: (peerId: string, force: boolean) => {
-    set((state) => ({
-      players: state.players.map((p) =>
-        p.peerId === peerId ? { ...p, isForceDeafened: force, isForceMuted: force ? true : p.isForceMuted } : p
-      )
-    }))
   },
 
   setRemoteCharacter: (characterId: string, character: Character) => {
@@ -354,8 +314,6 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       campaignId: null,
       players: [],
       chatMessages: [],
-      localMuted: false,
-      localDeafened: false,
       isHost: false,
       locallyMutedPeers: [],
       remoteCharacters: {},

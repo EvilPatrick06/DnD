@@ -3,7 +3,7 @@
  * Applies CSS custom properties to :root and persists the selection to localStorage.
  */
 
-import themesJson from '../../public/data/5e/ui/themes.json'
+import themesJson from '../../public/data/ui/themes.json'
 
 export type ThemeName = 'dark' | 'parchment' | 'high-contrast' | 'royal-purple'
 
@@ -82,4 +82,17 @@ export function loadSavedTheme(): void {
   const names = getThemeNames()
   const theme: ThemeName = saved && names.includes(saved as ThemeName) ? (saved as ThemeName) : 'dark'
   setTheme(theme)
+}
+
+/**
+ * Applies a CSS filter on :root for colorblind simulation.
+ * Requires corresponding SVG <filter> elements to be rendered (see ColorblindFilters.tsx).
+ */
+export function applyColorblindFilter(mode: 'none' | 'deuteranopia' | 'protanopia' | 'tritanopia'): void {
+  const style = document.documentElement.style
+  if (mode === 'none') {
+    style.removeProperty('filter')
+  } else {
+    style.setProperty('filter', `url(#${mode}-filter)`)
+  }
 }

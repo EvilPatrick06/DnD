@@ -188,6 +188,21 @@ export type DmAction =
   // NPC Attitude
   | { action: 'set_npc_attitude'; npcName: string; attitude: 'friendly' | 'indifferent' | 'hostile'; reason?: string }
 
+  // NPC Relationship Tracking
+  | {
+      action: 'log_npc_interaction'
+      npcName: string
+      summary: string
+      attitudeAfter: 'friendly' | 'neutral' | 'hostile'
+    }
+  | {
+      action: 'set_npc_relationship'
+      npcName: string
+      targetNpcName: string
+      relationship: string
+      disposition: 'friendly' | 'neutral' | 'hostile'
+    }
+
 /** Extract DM actions JSON from AI response text. */
 export function parseDmActions(response: string): DmAction[] {
   const match = response.match(DM_ACTIONS_RE)

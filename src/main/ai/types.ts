@@ -28,11 +28,18 @@ export interface AiStreamChunk {
   text: string
 }
 
+export interface RuleCitation {
+  source: string // 'PHB', 'DMG', 'MM'
+  rule: string // Rule name
+  text: string // Citation text
+}
+
 export interface AiStreamDone {
   streamId: string
   fullText: string
   statChanges: StatChange[]
   dmActions: DmActionData[]
+  ruleCitations: RuleCitation[]
 }
 
 /** Serializable DM action data passed through IPC (mirrors DmAction from dm-actions.ts) */
@@ -59,6 +66,43 @@ export interface ProviderStatus {
 export interface MutationResult {
   applied: StatChange[]
   rejected: Array<{ change: StatChange; reason: string }>
+}
+
+// ── NPC Personality & World State ──
+
+export interface NPCRelationship {
+  targetNpcId: string
+  targetName: string
+  relationship: string // e.g., "employer", "rival", "spouse", "ally"
+  disposition: 'friendly' | 'neutral' | 'hostile'
+}
+
+export interface NPCConversationLog {
+  timestamp: string
+  summary: string // 1-2 sentence summary of interaction
+  attitudeAfter: 'friendly' | 'neutral' | 'hostile'
+}
+
+export interface NPCPersonality {
+  npcId: string
+  name: string
+  personality: string
+  voiceNotes?: string
+  lastInteractionSummary?: string
+  relationships?: NPCRelationship[]
+  conversationLog?: NPCConversationLog[]
+  faction?: string // e.g., "Thieves Guild", "City Guard"
+  location?: string // Current known location
+  secretMotivation?: string // DM-only hidden motivation
+}
+
+export interface WorldStateSummary {
+  currentLocation: string
+  timeOfDay: string
+  weather?: string
+  activeQuests: string[]
+  recentEvents: string[]
+  lastUpdated: string
 }
 
 // ── Chunk index types ──

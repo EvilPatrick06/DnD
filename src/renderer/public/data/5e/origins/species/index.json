@@ -1,0 +1,172 @@
+[
+  {
+    "id": "aasimar",
+    "name": "Aasimar",
+    "size": "Medium (about 4–7 feet tall) or Small (about 2–4 feet tall), chosen when you select this species",
+    "speed": "30 feet",
+    "path": "origins/species/aasimar/aasimar.json"
+  },
+  {
+    "id": "aasimar",
+    "name": "Aasimar",
+    "size": {
+      "type": "choice",
+      "options": ["Medium", "Small"]
+    },
+    "speed": 30,
+    "path": "origins/species/aasimar.json"
+  },
+  {
+    "id": "dragonborn",
+    "name": "Dragonborn",
+    "size": "Medium (about 5–7 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/dragonborn/dragonborn.json"
+  },
+  {
+    "id": "dragonborn",
+    "name": "Dragonborn",
+    "size": {
+      "type": "fixed",
+      "value": "Medium"
+    },
+    "speed": 30,
+    "path": "origins/species/dragonborn.json"
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "size": "Medium (about 4–5 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/dwarf/dwarf.json"
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "size": {
+      "type": "fixed",
+      "value": "Medium"
+    },
+    "speed": 30,
+    "path": "origins/species/dwarf.json"
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "size": "Medium (about 5–6 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/elf/elf.json"
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "size": {
+      "type": "fixed",
+      "value": "Medium"
+    },
+    "speed": 30,
+    "path": "origins/species/elf.json"
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "size": "Small (about 3–4 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/gnome/gnome.json"
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "size": {
+      "type": "fixed",
+      "value": "Small"
+    },
+    "speed": 30,
+    "path": "origins/species/gnome.json"
+  },
+  {
+    "id": "goliath",
+    "name": "Goliath",
+    "size": "Medium (about 7–8 feet tall)",
+    "speed": "35 feet",
+    "path": "origins/species/goliath/goliath.json"
+  },
+  {
+    "id": "goliath",
+    "name": "Goliath",
+    "size": {
+      "type": "fixed",
+      "value": "Medium"
+    },
+    "speed": 35,
+    "path": "origins/species/goliath.json"
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "size": "Small (about 2–3 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/halfling/halfling.json"
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "size": {
+      "type": "fixed",
+      "value": "Small"
+    },
+    "speed": 30,
+    "path": "origins/species/halfling.json"
+  },
+  {
+    "id": "human",
+    "name": "Human",
+    "size": "Medium (about 4–7 feet tall) or Small (about 2–4 feet tall), chosen when you select this species",
+    "speed": "30 feet",
+    "path": "origins/species/human/human.json"
+  },
+  {
+    "id": "human",
+    "name": "Human",
+    "size": {
+      "type": "choice",
+      "options": ["Small", "Medium"]
+    },
+    "speed": 30,
+    "path": "origins/species/human.json"
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "size": "Medium (about 6–7 feet tall)",
+    "speed": "30 feet",
+    "path": "origins/species/orc/orc.json"
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "size": {
+      "type": "fixed",
+      "value": "Medium"
+    },
+    "speed": 30,
+    "path": "origins/species/orc.json"
+  },
+  {
+    "id": "tiefling",
+    "name": "Tiefling",
+    "size": "Medium (about 4–7 feet tall) or Small (about 3–4 feet tall), chosen when you select this species",
+    "speed": "30 feet",
+    "path": "origins/species/tiefling/tiefling.json"
+  },
+  {
+    "id": "tiefling",
+    "name": "Tiefling",
+    "size": {
+      "type": "choice",
+      "options": ["Small", "Medium"]
+    },
+    "speed": 30,
+    "path": "origins/species/tiefling.json"
+  }
+]

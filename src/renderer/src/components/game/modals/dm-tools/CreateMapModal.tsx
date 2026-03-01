@@ -9,6 +9,7 @@ interface CreateMapConfig {
   cellSize: number
   gridType: 'square' | 'hex'
   backgroundColor: string
+  imageData?: string
 }
 
 interface CreateMapModalProps {
@@ -135,7 +136,8 @@ export default function CreateMapModal({ onCreateMap, onClose }: CreateMapModalP
       height: clamp(height, 10, 100),
       cellSize: clamp(cellSize, 20, 100),
       gridType,
-      backgroundColor
+      backgroundColor,
+      imageData: uploadedImage ?? undefined
     })
   }
 

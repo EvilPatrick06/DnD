@@ -88,6 +88,7 @@ export function createCompanionToken(
     vulnerabilities: statBlock.vulnerabilities,
     immunities: statBlock.damageImmunities,
     darkvision: !!(statBlock.senses.darkvision && statBlock.senses.darkvision > 0),
+    darkvisionRange: statBlock.senses.darkvision || undefined,
     specialSenses: [
       ...(statBlock.senses.blindsight ? [{ type: 'blindsight' as const, range: statBlock.senses.blindsight }] : []),
       ...(statBlock.senses.tremorsense ? [{ type: 'tremorsense' as const, range: statBlock.senses.tremorsense }] : []),

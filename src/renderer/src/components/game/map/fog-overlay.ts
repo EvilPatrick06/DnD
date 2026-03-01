@@ -9,11 +9,15 @@ interface FogAnimState {
   prevUnrevealed: Set<string>
   /** Per-cell alpha values (key → current alpha, 0 = fully revealed, 0.75 = fully hidden) */
   cellAlphas: Map<string, number>
+  /** Per-cell target alpha values (supports three-state fog: 0, EXPLORED_ALPHA, FOG_TARGET_ALPHA) */
+  cellTargetAlphas?: Map<string, number>
   /** Ticker cleanup function */
   cleanup: (() => void) | null
 }
 
 const FOG_TARGET_ALPHA = 0.75
+/** Alpha for explored-but-not-currently-visible cells */
+const EXPLORED_ALPHA = 0.4
 /** Duration in ms for fog to fade out (reveal) */
 const REVEAL_DURATION_MS = 500
 /** Duration in ms for fog to fade in (hide) */
@@ -50,8 +54,9 @@ export function initFogAnimation(
     let needsRedraw = false
 
     for (const [key, alpha] of cellAlphas.entries()) {
-      // Target depends on whether cell is in current unrevealed set
-      const target = fogAnimState.prevUnrevealed.has(key) ? FOG_TARGET_ALPHA : 0
+      // Target comes from per-cell target map (three-state), fallback to binary
+      const target =
+        fogAnimState.cellTargetAlphas?.get(key) ?? (fogAnimState.prevUnrevealed.has(key) ? FOG_TARGET_ALPHA : 0)
 
       if (Math.abs(alpha - target) < 0.005) {
         // Close enough — snap to target
@@ -102,7 +107,8 @@ export function drawFogOfWar(
   fog: FogOfWarData,
   gridSettings: GridSettings,
   mapWidth: number,
-  mapHeight: number
+  mapHeight: number,
+  partyVisionCells?: Array<{ x: number; y: number }>
 ): void {
   graphics.clear()
 
@@ -110,8 +116,10 @@ export function drawFogOfWar(
 
   const { cellSize, offsetX, offsetY } = gridSettings
 
-  // Build a set of revealed cell keys for fast lookup
+  // Build sets for fast lookup
   const revealedSet = new Set<string>(fog.revealedCells.map((c) => `${c.x},${c.y}`))
+  const exploredSet = new Set<string>((fog.exploredCells ?? []).map((c) => `${c.x},${c.y}`))
+  const visionSet = partyVisionCells ? new Set<string>(partyVisionCells.map((c) => `${c.x},${c.y}`)) : null
 
   // Calculate grid bounds
   const cols = Math.ceil((mapWidth - (offsetX % cellSize)) / cellSize) + 1
@@ -119,19 +127,34 @@ export function drawFogOfWar(
   const startCol = -Math.ceil((offsetX % cellSize) / cellSize)
   const startRow = -Math.ceil((offsetY % cellSize) / cellSize)
 
-  // Build current unrevealed set
-  const currentUnrevealed = new Set<string>()
+  // Build per-cell target alpha map for three-state fog
+  // - Currently visible (in visionSet OR revealedSet): alpha 0
+  // - Explored (in exploredSet but NOT currently visible): alpha EXPLORED_ALPHA (0.4)
+  // - Unexplored (neither): alpha FOG_TARGET_ALPHA (0.75)
+  const cellTargets = new Map<string, number>()
   for (let col = startCol; col < cols; col++) {
     for (let row = startRow; row < rows; row++) {
       const key = `${col},${row}`
-      if (revealedSet.has(key)) continue
 
       const x = (offsetX % cellSize) + col * cellSize
       const y = (offsetY % cellSize) + row * cellSize
       if (x + cellSize < 0 || y + cellSize < 0) continue
       if (x > mapWidth || y > mapHeight) continue
 
-      currentUnrevealed.add(key)
+      // DM-revealed cells are always clear
+      if (revealedSet.has(key)) continue
+
+      // Currently visible via party vision = clear
+      if (visionSet?.has(key)) continue
+
+      // Explored but not currently visible = dimmed
+      if (exploredSet.has(key)) {
+        cellTargets.set(key, EXPLORED_ALPHA)
+        continue
+      }
+
+      // Unexplored = full fog
+      cellTargets.set(key, FOG_TARGET_ALPHA)
     }
   }
 
@@ -139,58 +162,77 @@ export function drawFogOfWar(
   if (fogAnimState) {
     const { prevUnrevealed, cellAlphas } = fogAnimState
 
-    // Cells that were unrevealed but are now revealed — start fade out
+    // Build current unrevealed set (any cell with non-zero target)
+    const currentUnrevealed = new Set<string>(cellTargets.keys())
+
+    // Cells that were unrevealed but are now clear — start fade out
     for (const key of prevUnrevealed) {
       if (!currentUnrevealed.has(key)) {
-        // Start fading out (if not already tracked, start at full)
         if (!cellAlphas.has(key)) {
           cellAlphas.set(key, FOG_TARGET_ALPHA)
         }
       }
     }
 
-    // Cells that are newly unrevealed — start fade in
-    for (const key of currentUnrevealed) {
+    // Update targets for all cells
+    for (const [key, target] of cellTargets) {
       if (!prevUnrevealed.has(key)) {
-        // New fog cell — start fading in from 0
+        // Newly fogged cell — start from 0
         cellAlphas.set(key, 0)
       } else if (!cellAlphas.has(key)) {
-        // Already unrevealed and at full alpha
-        cellAlphas.set(key, FOG_TARGET_ALPHA)
+        cellAlphas.set(key, target)
       }
     }
 
-    // Ensure all current unrevealed cells have entries
-    for (const key of currentUnrevealed) {
-      if (!cellAlphas.has(key)) {
-        cellAlphas.set(key, FOG_TARGET_ALPHA)
-      }
-    }
-
-    // Update the previous set
+    // Store target alphas for the ticker to interpolate towards
     fogAnimState.prevUnrevealed = currentUnrevealed
+    if (!fogAnimState.cellTargetAlphas) {
+      fogAnimState.cellTargetAlphas = new Map()
+    }
+    fogAnimState.cellTargetAlphas.clear()
+    for (const [key, target] of cellTargets) {
+      fogAnimState.cellTargetAlphas.set(key, target)
+    }
 
-    // Do an immediate draw with current alphas
     redrawFogFromAlphas(graphics, cellAlphas, gridSettings, mapWidth, mapHeight)
     return
   }
 
   // No animation — static draw (fallback)
-  for (let col = startCol; col < cols; col++) {
-    for (let row = startRow; row < rows; row++) {
-      if (revealedSet.has(`${col},${row}`)) continue
+  // Group by alpha for efficient batched drawing
+  const fullFogCells: Array<{ col: number; row: number }> = []
+  const exploredFogCells: Array<{ col: number; row: number }> = []
 
-      const x = (offsetX % cellSize) + col * cellSize
-      const y = (offsetY % cellSize) + row * cellSize
-
-      if (x + cellSize < 0 || y + cellSize < 0) continue
-      if (x > mapWidth || y > mapHeight) continue
-
-      graphics.rect(x, y, cellSize, cellSize)
+  for (const [key, alpha] of cellTargets) {
+    const parts = key.split(',')
+    const col = parseInt(parts[0], 10)
+    const row = parseInt(parts[1], 10)
+    if (alpha >= FOG_TARGET_ALPHA - 0.01) {
+      fullFogCells.push({ col, row })
+    } else {
+      exploredFogCells.push({ col, row })
     }
   }
 
-  graphics.fill({ color: 0x000000, alpha: FOG_TARGET_ALPHA })
+  // Draw full fog cells
+  for (const { col, row } of fullFogCells) {
+    const x = (offsetX % cellSize) + col * cellSize
+    const y = (offsetY % cellSize) + row * cellSize
+    graphics.rect(x, y, cellSize, cellSize)
+  }
+  if (fullFogCells.length > 0) {
+    graphics.fill({ color: 0x000000, alpha: FOG_TARGET_ALPHA })
+  }
+
+  // Draw explored fog cells
+  for (const { col, row } of exploredFogCells) {
+    const x = (offsetX % cellSize) + col * cellSize
+    const y = (offsetY % cellSize) + row * cellSize
+    graphics.rect(x, y, cellSize, cellSize)
+  }
+  if (exploredFogCells.length > 0) {
+    graphics.fill({ color: 0x000000, alpha: EXPLORED_ALPHA })
+  }
 }
 
 /**

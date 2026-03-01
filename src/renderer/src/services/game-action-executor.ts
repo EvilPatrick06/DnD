@@ -4,6 +4,7 @@
  */
 
 import type { ActiveMap, DmAction, ExecutionResult, GameStoreSnapshot, StoreAccessors } from './game-actions/types'
+import { pluginEventBus } from './plugin-system/event-bus'
 
 // Re-export types for external consumers
 export type { DmAction, ExecutionFailure, ExecutionResult, GameStoreSnapshot } from './game-actions/types'
@@ -24,24 +25,30 @@ const stores: StoreAccessors = { getGameStore, getLobbyStore, getNetworkStore }
 
 // ── Creature / Combat Actions ──
 import {
-  executeAddEntityCondition,
-  executeAddToInitiative,
-  executeApplyAreaEffect,
   executeAwardXp,
-  executeEndInitiative,
   executeLoadEncounter,
   executeLongRest,
-  executeNextTurn,
-  executeRechargeRoll,
-  executeRemoveEntityCondition,
-  executeRemoveFromInitiative,
   executeSetNpcAttitude,
   executeShortRest,
+  executeTriggerLevelUp
+} from './game-actions/creature-actions'
+// ── Entity Conditions & Area Effects ──
+import {
+  executeAddEntityCondition,
+  executeApplyAreaEffect,
+  executeRemoveEntityCondition
+} from './game-actions/creature-conditions'
+// ── Initiative & Legendary Actions ──
+import {
+  executeAddToInitiative,
+  executeEndInitiative,
+  executeNextTurn,
+  executeRechargeRoll,
+  executeRemoveFromInitiative,
   executeStartInitiative,
-  executeTriggerLevelUp,
   executeUseLegendaryAction,
   executeUseLegendaryResistance
-} from './game-actions/creature-actions'
+} from './game-actions/creature-initiative'
 // ── Effect / State Actions ──
 import {
   executeAddJournalEntry,
@@ -57,9 +64,11 @@ import {
   executeBastionWithdrawGold,
   executeCloseShop,
   executeHiddenDiceRoll,
+  executeLogNpcInteraction,
   executeOpenShop,
   executeRemoveShopItem,
   executeRemoveSidebarEntry,
+  executeSetNpcRelationship,
   executeSetTime,
   executeShareTime,
   executeStartTimer,
@@ -96,6 +105,22 @@ import {
 } from './game-actions/visibility-actions'
 
 const MAX_ACTIONS_PER_BATCH = 50
+
+// ── Plugin action handlers (only accept 'plugin:*' prefixed types) ──
+
+type PluginActionHandler = (action: DmAction, gameStore: GameStoreSnapshot, activeMap: ActiveMap) => boolean
+const pluginActionHandlers = new Map<string, PluginActionHandler>()
+
+export function registerPluginDmAction(actionType: string, handler: PluginActionHandler): void {
+  if (!actionType.startsWith('plugin:')) {
+    throw new Error(`Plugin action types must be prefixed with 'plugin:' — got '${actionType}'`)
+  }
+  pluginActionHandlers.set(actionType, handler)
+}
+
+export function unregisterPluginDmAction(actionType: string): void {
+  pluginActionHandlers.delete(actionType)
+}
 
 // ── Main Executor ──
 
@@ -138,9 +163,19 @@ export function executeDmActions(actions: DmAction[], bypassApproval = false): E
 
   for (const action of actions) {
     try {
+      // Emit before-action hook
+      if (pluginEventBus.hasSubscribers('dm:before-action')) {
+        pluginEventBus.emit('dm:before-action', { action: action.action, payload: action })
+      }
+
       const success = executeOne(action, gameStore, activeMap)
       if (success) {
         result.executed.push(action)
+
+        // Emit after-action hook
+        if (pluginEventBus.hasSubscribers('dm:after-action')) {
+          pluginEventBus.emit('dm:after-action', { action: action.action, payload: action, success: true })
+        }
       } else {
         result.failed.push({ action, reason: 'Action returned false' })
       }
@@ -301,6 +336,12 @@ function executeOne(action: DmAction, gameStore: GameStoreSnapshot, activeMap: A
     case 'set_npc_attitude':
       return executeSetNpcAttitude(action, gameStore)
 
+    // ── NPC Relationship Tracking ──
+    case 'log_npc_interaction':
+      return executeLogNpcInteraction(action, gameStore)
+    case 'set_npc_relationship':
+      return executeSetNpcRelationship(action, gameStore)
+
     // ── Resting ──
     case 'short_rest':
       return executeShortRest(action, gameStore, activeMap, stores)
@@ -321,8 +362,14 @@ function executeOne(action: DmAction, gameStore: GameStoreSnapshot, activeMap: A
     case 'recharge_roll':
       return executeRechargeRoll(action, gameStore, activeMap, stores)
 
-    default:
+    default: {
+      // Check plugin-registered action handlers
+      const pluginHandler = pluginActionHandlers.get(action.action)
+      if (pluginHandler) {
+        return pluginHandler(action, gameStore, activeMap)
+      }
       throw new Error(`Unknown DM action: ${action.action}`)
+    }
   }
 }
 

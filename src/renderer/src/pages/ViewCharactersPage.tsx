@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { CharacterCard, ConfirmDialog, Spinner } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
 import { exportCharacterToFile, importCharacterFromFile } from '../services/io/character-io'
+import { importDndBeyondCharacter } from '../services/io/import-dnd-beyond'
+import { importFoundryCharacter } from '../services/io/import-foundry'
+import { exportCharacterToPdf } from '../services/io/pdf-export'
 import { useCharacterStore } from '../stores/use-character-store'
 import { getCharacterSheetPath } from '../utils/character-routes'
 import { logger } from '../utils/logger'
@@ -17,10 +20,23 @@ export default function ViewCharactersPage(): JSX.Element {
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showImportMenu, setShowImportMenu] = useState(false)
+  const importMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadCharacters()
   }, [loadCharacters])
+
+  useEffect(() => {
+    if (!showImportMenu) return
+    const handleClickOutside = (e: MouseEvent): void => {
+      if (importMenuRef.current && !importMenuRef.current.contains(e.target as Node)) {
+        setShowImportMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showImportMenu])
 
   const handleDelete = async (id: string): Promise<void> => {
     await deleteCharacter(id)
@@ -47,6 +63,7 @@ export default function ViewCharactersPage(): JSX.Element {
   }
 
   const handleImport = async (): Promise<void> => {
+    setShowImportMenu(false)
     try {
       const character = await importCharacterFromFile()
       if (character) {
@@ -57,6 +74,48 @@ export default function ViewCharactersPage(): JSX.Element {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to import character'
       addToast(message, 'error')
+    }
+  }
+
+  const handleImportDdb = async (): Promise<void> => {
+    setShowImportMenu(false)
+    try {
+      const character = await importDndBeyondCharacter()
+      if (character) {
+        await saveCharacter(character)
+        await loadCharacters()
+        addToast(`Imported "${character.name}" from D&D Beyond`, 'success')
+      }
+    } catch (err) {
+      logger.error('DDB import failed:', err)
+      addToast('Failed to import D&D Beyond character', 'error')
+    }
+  }
+
+  const handleImportFoundry = async (): Promise<void> => {
+    setShowImportMenu(false)
+    try {
+      const character = await importFoundryCharacter()
+      if (character) {
+        await saveCharacter(character)
+        await loadCharacters()
+        addToast(`Imported "${character.name}" from Foundry VTT`, 'success')
+      }
+    } catch (err) {
+      logger.error('Foundry import failed:', err)
+      addToast('Failed to import Foundry VTT character', 'error')
+    }
+  }
+
+  const handleExportPdf = async (characterId: string): Promise<void> => {
+    const character = characters.find((c) => c.id === characterId)
+    if (!character) return
+    try {
+      const success = await exportCharacterToPdf(character)
+      if (success) addToast('Character exported to PDF', 'success')
+    } catch (err) {
+      logger.error('PDF export failed:', err)
+      addToast('Failed to export PDF', 'error')
     }
   }
 
@@ -101,14 +160,39 @@ export default function ViewCharactersPage(): JSX.Element {
               Delete All
             </button>
           )}
-          <button
-            onClick={handleImport}
-            className="px-4 py-2 border border-gray-600 hover:border-amber-600 hover:bg-gray-800
-                       text-gray-300 hover:text-amber-400 rounded-lg font-semibold text-sm
-                       transition-colors cursor-pointer"
-          >
-            Import
-          </button>
+          <div className="relative" ref={importMenuRef}>
+            <button
+              onClick={() => setShowImportMenu(!showImportMenu)}
+              className="px-4 py-2 border border-gray-600 hover:border-amber-600 hover:bg-gray-800
+                         text-gray-300 hover:text-amber-400 rounded-lg font-semibold text-sm
+                         transition-colors cursor-pointer flex items-center gap-1"
+            >
+              Import
+              <span className="text-[10px]">{showImportMenu ? '\u25B2' : '\u25BC'}</span>
+            </button>
+            {showImportMenu && (
+              <div className="absolute right-0 top-full mt-1 w-52 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                <button
+                  onClick={handleImport}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-amber-400 cursor-pointer"
+                >
+                  From File (.dndchar)
+                </button>
+                <button
+                  onClick={handleImportDdb}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-amber-400 cursor-pointer"
+                >
+                  D&D Beyond JSON
+                </button>
+                <button
+                  onClick={handleImportFoundry}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-amber-400 cursor-pointer"
+                >
+                  Foundry VTT JSON
+                </button>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => navigate('/characters/create')}
             className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg
@@ -198,6 +282,7 @@ export default function ViewCharactersPage(): JSX.Element {
               onClick={() => navigate(getCharacterSheetPath(char))}
               onDelete={() => setShowDeleteConfirm(char.id)}
               onExport={() => handleExport(char.id)}
+              onExportPdf={() => handleExportPdf(char.id)}
             />
           ))}
         </div>

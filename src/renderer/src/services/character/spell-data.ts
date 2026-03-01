@@ -1,6 +1,7 @@
-import type { SpellcastingInfo5e } from '../../types/character-5e'
+import type { MagicItemEntry5e, SpellcastingInfo5e } from '../../types/character-5e'
 import type { AbilityName, AbilityScoreSet, SpellEntry } from '../../types/character-common'
 import { abilityModifier } from '../../types/character-common'
+import { logger } from '../../utils/logger'
 import { load5eSpellSlots, load5eSpells } from '../data-provider'
 
 // Module-level caches (populated from spell-slots.json)
@@ -328,7 +329,7 @@ load5eSpellSlots()
       Object.assign(THIRD_CASTER_ABILITY_MAP, data.thirdCasterAbilityMap)
     }
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('[SpellData] Failed to preload spell slots', e))
 
 /**
  * Returns the spellcasting ability for a class (or subclass for third-casters).
@@ -493,6 +494,35 @@ export async function loadSpells(): Promise<SpellEntry[]> {
     description: String(s.description ?? ''),
     classes: Array.isArray(s.classes) ? (s.classes as string[]) : [],
     concentration: Boolean(s.concentration),
-    ritual: Boolean(s.ritual)
+    ritual: Boolean(s.ritual),
+    higherLevels: typeof s.higherLevels === 'string' ? s.higherLevels : undefined
   }))
+}
+
+/**
+ * Returns SpellEntry[] for spells granted by attuned magic items.
+ */
+export function getItemGrantedSpells(magicItems: MagicItemEntry5e[], knownSpells: SpellEntry[]): SpellEntry[] {
+  const result: SpellEntry[] = []
+  for (const item of magicItems) {
+    if (!item.attuned && item.attunement) continue
+    if (!item.grantedSpells?.length) continue
+    for (const grant of item.grantedSpells) {
+      // Check if already known
+      const existing = knownSpells.find((s) => s.name === grant.spellName)
+      if (existing) continue
+      result.push({
+        id: `item-${item.id}-${grant.spellId}`,
+        name: grant.spellName,
+        level: 0,
+        description: `Granted by ${item.name}.`,
+        castingTime: '',
+        range: '',
+        duration: '',
+        components: '',
+        source: 'item'
+      })
+    }
+  }
+  return result
 }

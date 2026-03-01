@@ -1,3 +1,4 @@
+import { getMasteryDescription } from '../../../../data/weapon-mastery'
 import { formatMod } from '../../../../types/character-common'
 import type { AttackWeapon, UnarmedMode } from './attack-utils'
 
@@ -11,6 +12,7 @@ interface WeaponSelectionStepProps {
   getAttackMod: () => number
   isOffhandAttack: boolean
   primaryWeaponIndex: number | null
+  masteryChoices?: string[]
   onSelectWeapon: (index: number) => void
   onSelectUnarmed: (index: number) => void
 }
@@ -23,6 +25,7 @@ export function WeaponSelectionStep({
   getAttackMod,
   isOffhandAttack,
   primaryWeaponIndex,
+  masteryChoices,
   onSelectWeapon,
   onSelectUnarmed
 }: WeaponSelectionStepProps): JSX.Element {
@@ -76,6 +79,11 @@ export function WeaponSelectionStep({
                 </>
               )}
             </div>
+            {w.mastery && masteryChoices?.includes(w.mastery) && (
+              <div className="text-[10px] text-purple-300 mt-0.5">
+                Mastery: {w.mastery} — {getMasteryDescription(w.mastery)}
+              </div>
+            )}
           </button>
         )
       })}

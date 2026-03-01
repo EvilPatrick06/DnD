@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useBuilderStore } from '../../../stores/use-builder-store'
+import MulticlassLevelBar5e from '../5e/MulticlassLevelBar5e'
 import BuildLevelGroup from './BuildLevelGroup'
 import IconPicker from './IconPicker'
 
@@ -48,6 +49,7 @@ export default function BuildSidebar(): JSX.Element {
           />
         </div>
         <IconPicker />
+        <MulticlassLevelBar5e />
       </div>
 
       {/* Build tree */}
@@ -66,6 +68,8 @@ export default function BuildSidebar(): JSX.Element {
                 useBuilderStore.setState({ customModal: 'asi', activeAsiSlotId: slotId })
               } else if (slot.category === 'skill-choice') {
                 useBuilderStore.setState({ customModal: 'skills', activeAsiSlotId: null })
+              } else if (slot.category === 'expertise') {
+                useBuilderStore.setState({ customModal: 'expertise', activeExpertiseSlotId: slotId })
               } else {
                 useBuilderStore.setState({ activeAsiSlotId: null })
                 openSelectionModal(slotId)

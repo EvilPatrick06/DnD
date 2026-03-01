@@ -54,7 +54,10 @@ export const DEFAULT_CHARACTER_DETAILS = {
   classMandatorySkills: [] as string[],
   selectedSkills: [] as string[],
   maxSkills: 2,
-  customModal: null as 'ability-scores' | 'skills' | 'asi' | null,
+  customModal: null as 'ability-scores' | 'skills' | 'asi' | 'expertise' | null,
+  builderExpertiseSelections: {} as Record<string, string[]>,
+  activeExpertiseSlotId: null as string | null,
+  builderFeatSelections: {} as Record<string, { id: string; name: string; description: string }>,
   backgroundAbilityBonuses: {} as Record<string, number>,
   backgroundEquipmentChoice: null as 'equipment' | 'gold' | null,
   classEquipmentChoice: null as string | null,
@@ -135,6 +138,17 @@ export const createCharacterDetailsSlice: StateCreator<BuilderState, [], [], Cha
   setBlessedWarriorCantrips: (ids) => set({ blessedWarriorCantrips: ids }),
   setDruidicWarriorCantrips: (ids) => set({ druidicWarriorCantrips: ids }),
   setVersatileFeat: (featId) => set({ versatileFeatId: featId }),
+  setBuilderExpertiseSelections: (slotId, skills) =>
+    set({ builderExpertiseSelections: { ...get().builderExpertiseSelections, [slotId]: skills } }),
+  setBuilderFeatSelection: (slotId, feat) => {
+    const prev = { ...get().builderFeatSelections }
+    if (feat) {
+      prev[slotId] = feat
+    } else {
+      delete prev[slotId]
+    }
+    set({ builderFeatSelections: prev })
+  },
   openCustomModal: (modal) => set({ customModal: modal }),
-  closeCustomModal: () => set({ customModal: null, activeAsiSlotId: null })
+  closeCustomModal: () => set({ customModal: null, activeAsiSlotId: null, activeExpertiseSlotId: null })
 })

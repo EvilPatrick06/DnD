@@ -5,6 +5,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { AiChatRequestSchema, AiConfigSchema } from '../../shared/ipc-schemas'
 import * as aiService from '../ai/ai-service'
 import { buildContext, getLastTokenBreakdown } from '../ai/context-builder'
+import { getMemoryManager } from '../ai/memory-manager'
 import {
   CURATED_MODELS,
   checkOllamaUpdate,
@@ -89,8 +90,15 @@ export function registerAiHandlers(): void {
         win.webContents.send(IPC_CHANNELS.AI_STREAM_CHUNK, { streamId, text })
       },
       // onDone
-      (fullText, displayText, statChanges, dmActions) => {
-        win.webContents.send(IPC_CHANNELS.AI_STREAM_DONE, { streamId, fullText, displayText, statChanges, dmActions })
+      (fullText, displayText, statChanges, dmActions, ruleCitations) => {
+        win.webContents.send(IPC_CHANNELS.AI_STREAM_DONE, {
+          streamId,
+          fullText,
+          displayText,
+          statChanges,
+          dmActions,
+          ruleCitations
+        })
       },
       // onError
       (error) => {
@@ -231,6 +239,38 @@ export function registerAiHandlers(): void {
       // Directory may not exist — that's fine
     }
   })
+
+  // ── NPC Relationship Tracking ──
+
+  ipcMain.handle(
+    IPC_CHANNELS.AI_LOG_NPC_INTERACTION,
+    async (_event, campaignId: string, npcName: string, summary: string, attitudeAfter: string) => {
+      const memMgr = getMemoryManager(campaignId)
+      await memMgr.logNpcInteraction(npcName, summary, attitudeAfter as 'friendly' | 'neutral' | 'hostile')
+      return { success: true }
+    }
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.AI_SET_NPC_RELATIONSHIP,
+    async (
+      _event,
+      campaignId: string,
+      npcName: string,
+      targetNpcName: string,
+      relationship: string,
+      disposition: string
+    ) => {
+      const memMgr = getMemoryManager(campaignId)
+      await memMgr.addNpcRelationship(
+        npcName,
+        targetNpcName,
+        relationship,
+        disposition as 'friendly' | 'neutral' | 'hostile'
+      )
+      return { success: true }
+    }
+  )
 
   // ── Ollama Management ──
 

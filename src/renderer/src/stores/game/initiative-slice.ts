@@ -1,10 +1,14 @@
 import type { StateCreator } from 'zustand'
+import { pluginEventBus } from '../../services/plugin-system/event-bus'
 import type { EntityCondition, InitiativeEntry } from '../../types/game-state'
 import { useLobbyStore } from '../use-lobby-store'
 import { createTurnState, type GameStoreState, type InitiativeSliceState } from './types'
 
 export const createInitiativeSlice: StateCreator<GameStoreState, [], [], InitiativeSliceState> = (set, get) => ({
   // --- Initiative ---
+
+  pendingLairAction: null,
+  setPendingLairAction: (action) => set({ pendingLairAction: action }),
 
   startInitiative: (entries: InitiativeEntry[]) => {
     const sorted = [...entries].sort((a, b) => b.total - a.total)
@@ -21,16 +25,30 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
       round: 1,
       turnMode: 'initiative'
     })
+
+    if (pluginEventBus.hasSubscribers('game:initiative-start')) {
+      pluginEventBus.emit('game:initiative-start', { entries: sorted, round: 1 })
+    }
   },
 
   addToInitiative: (entry: InitiativeEntry) => {
+    // Auto-populate lair actions from sidebar stat blocks when inLair is true
+    let enrichedEntry = entry
+    if (entry.inLair && !entry.lairActions) {
+      const allSidebar = [...get().allies, ...get().enemies]
+      const sidebarMatch = allSidebar.find((s) => s.sourceId === entry.id || s.name === entry.entityName)
+      if (sidebarMatch?.statBlock?.lairActions?.length) {
+        enrichedEntry = { ...entry, lairActions: sidebarMatch.statBlock.lairActions }
+      }
+    }
+
     const { initiative } = get()
     if (!initiative) {
-      get().startInitiative([entry])
+      get().startInitiative([enrichedEntry])
       return
     }
 
-    const newEntries = [...initiative.entries, entry].sort((a, b) => b.total - a.total)
+    const newEntries = [...initiative.entries, enrichedEntry].sort((a, b) => b.total - a.total)
     const newCurrentIndex = newEntries.findIndex((e) => e.id === initiative.entries[initiative.currentIndex]?.id)
 
     const updated = newEntries.map((e, i) => ({
@@ -54,6 +72,18 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     const { entries, currentIndex } = initiative
     const nextIndex = (currentIndex + 1) % entries.length
     const newRound = nextIndex === 0 ? initiative.round + 1 : initiative.round
+
+    // Emit turn-end for current entity
+    if (pluginEventBus.hasSubscribers('game:turn-end')) {
+      const currentEntry = entries[currentIndex]
+      if (currentEntry) {
+        pluginEventBus.emit('game:turn-end', {
+          entityId: currentEntry.entityId,
+          entityName: currentEntry.entityName,
+          round: initiative.round
+        })
+      }
+    }
 
     const updatedEntries = entries.map((e, i) => ({
       ...e,
@@ -89,6 +119,34 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
 
     // Check for expired custom effects after round/time update
     get().checkExpiredEffects()
+
+    // Emit plugin hooks for turn start and round end
+    if (pluginEventBus.hasSubscribers('game:turn-start')) {
+      const nextEntry = entries[nextIndex]
+      if (nextEntry) {
+        pluginEventBus.emit('game:turn-start', {
+          entityId: nextEntry.entityId,
+          entityName: nextEntry.entityName,
+          round: newRound
+        })
+      }
+    }
+    if (nextIndex === 0 && pluginEventBus.hasSubscribers('game:round-end')) {
+      pluginEventBus.emit('game:round-end', { round: newRound - 1 })
+    }
+
+    // Trigger lair action prompt at the start of a new round
+    if (nextIndex === 0) {
+      const lairEntry = entries.find((e) => e.inLair && e.lairActions && e.lairActions.length > 0)
+      if (lairEntry) {
+        set({
+          pendingLairAction: {
+            creatureName: lairEntry.entityName,
+            lairActions: lairEntry.lairActions!
+          }
+        })
+      }
+    }
 
     // Auto-countdown round-based conditions
     if (nextIndex === 0) {
@@ -149,6 +207,10 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
       turnMode: 'free',
       round: 0
     })
+
+    if (pluginEventBus.hasSubscribers('game:initiative-end')) {
+      pluginEventBus.emit('game:initiative-end', {})
+    }
   },
 
   updateInitiativeEntry: (entryId: string, updates: Partial<InitiativeEntry>) => {
@@ -247,6 +309,17 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
         ...state.turnStates,
         [entityId]: state.turnStates[entityId]
           ? { ...state.turnStates[entityId], reactionUsed: true }
+          : createTurnState(entityId, 30)
+      }
+    }))
+  },
+
+  useFreeInteraction: (entityId: string) => {
+    set((state) => ({
+      turnStates: {
+        ...state.turnStates,
+        [entityId]: state.turnStates[entityId]
+          ? { ...state.turnStates[entityId], freeInteractionUsed: true }
           : createTurnState(entityId, 30)
       }
     }))

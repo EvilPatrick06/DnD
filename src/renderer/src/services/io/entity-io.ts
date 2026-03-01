@@ -25,6 +25,7 @@ export type EntityType =
   | 'journal'
   | 'ai'
   | 'settings'
+  | 'adventure'
 
 export interface ExportEnvelope<T = unknown> {
   version: 1
@@ -55,7 +56,8 @@ const ENTITY_CONFIGS: Record<EntityType, EntityConfig> = {
   mount: { extension: 'dndmount', label: 'Mount', requiredFields: ['id', 'name'] },
   journal: { extension: 'dndjournal', label: 'Journal Entry', requiredFields: ['id', 'title'] },
   ai: { extension: 'dndai', label: 'AI Conversation', requiredFields: [] },
-  settings: { extension: 'dndsettings', label: 'Settings', requiredFields: [] }
+  settings: { extension: 'dndsettings', label: 'Settings', requiredFields: [] },
+  adventure: { extension: 'dndadv', label: 'Adventure Module', requiredFields: ['adventure'] }
 }
 
 // ---------------------------------------------------------------------------

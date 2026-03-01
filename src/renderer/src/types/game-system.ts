@@ -1,7 +1,7 @@
-export type GameSystem = 'dnd5e'
+export type GameSystem = 'dnd5e' | (string & {})
 
 export interface GameSystemConfig {
-  id: GameSystem
+  id: string
   name: string
   shortName: string
   maxLevel: number
@@ -9,7 +9,7 @@ export interface GameSystemConfig {
   referenceLabel: string
 }
 
-export const GAME_SYSTEMS: Record<GameSystem, GameSystemConfig> = {
+const _gameSystems: Record<string, GameSystemConfig> = {
   dnd5e: {
     id: 'dnd5e',
     name: 'D&D 5th Edition',
@@ -18,4 +18,15 @@ export const GAME_SYSTEMS: Record<GameSystem, GameSystemConfig> = {
     dataPath: './data/5e',
     referenceLabel: 'SRD'
   }
+}
+
+export const GAME_SYSTEMS: Record<string, GameSystemConfig> = _gameSystems
+
+export function registerGameSystem(config: GameSystemConfig): void {
+  _gameSystems[config.id] = config
+}
+
+export function unregisterGameSystem(id: string): void {
+  if (id === 'dnd5e') return // Cannot remove built-in system
+  delete _gameSystems[id]
 }

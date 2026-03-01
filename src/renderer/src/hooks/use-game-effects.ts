@@ -170,19 +170,26 @@ export function useGameEffects({
     const alreadyPosted = chatMessages.some((cm) => cm.senderId === 'ai-dm' && cm.timestamp === lastMsg.timestamp)
     if (alreadyPosted) return
 
+    // Build message content with optional rule citations
+    let messageContent = lastMsg.content
+    if (lastMsg.ruleCitations?.length) {
+      const citeList = lastMsg.ruleCitations.map((c) => `${c.source}: ${c.rule}`).join(', ')
+      messageContent += `\n\n\u{1F4D6} ${citeList}`
+    }
+
     // Add to chat
     addChatMessage({
       id: `ai-dm-${lastMsg.timestamp}`,
       senderId: 'ai-dm',
       senderName: 'Dungeon Master',
-      content: lastMsg.content,
+      content: messageContent,
       timestamp: lastMsg.timestamp,
       isSystem: true
     })
 
     // Broadcast to clients
     sendMessage('chat:message', {
-      message: lastMsg.content,
+      message: messageContent,
       isSystem: true
     })
 

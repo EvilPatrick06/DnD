@@ -111,6 +111,34 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
   // Restore selected spell IDs from knownSpells (excluding species spells which have 'species-' prefix)
   const restoredSpellIds = (character.knownSpells ?? []).filter((s) => !s.id.startsWith('species-')).map((s) => s.id)
 
+  // Restore expertise selections
+  const restoredExpertiseSelections: Record<string, string[]> = character.buildChoices.expertiseChoices ?? {}
+
+  // Restore feat selections from generalFeatChoices (slotId → featId)
+  const restoredFeatSelections: Record<string, { id: string; name: string; description: string }> = {}
+  if (character.buildChoices.generalFeatChoices) {
+    for (const [slotId, featId] of Object.entries(character.buildChoices.generalFeatChoices)) {
+      const feat = (character.feats ?? []).find((f) => f.id === featId)
+      if (feat) {
+        restoredFeatSelections[slotId] = { id: feat.id, name: feat.name, description: feat.description }
+        // Also mark the ASI slot as confirmed with feat name
+        const asiSlot = slots.find((s) => s.id === slotId)
+        if (asiSlot) {
+          asiSlot.selectedId = 'confirmed'
+          asiSlot.selectedName = `Feat: ${feat.name}`
+        }
+      }
+    }
+  }
+
+  // Restore multiclass level choices from multiclassEntries
+  const restoredClassLevelChoices: Record<number, string> = {}
+  if (character.buildChoices.multiclassEntries) {
+    for (const entry of character.buildChoices.multiclassEntries) {
+      restoredClassLevelChoices[entry.levelTaken] = entry.classId
+    }
+  }
+
   set({
     phase: 'building',
     gameSystem: 'dnd5e',
@@ -124,6 +152,9 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
     selectedSkills: character.buildChoices.selectedSkills,
     editingCharacterId: character.id,
     asiSelections: restoredAsiSelections,
+    builderExpertiseSelections: restoredExpertiseSelections,
+    builderFeatSelections: restoredFeatSelections,
+    classLevelChoices: restoredClassLevelChoices,
     backgroundAbilityBonuses: character.buildChoices.backgroundAbilityBonuses ?? {},
     backgroundEquipmentChoice: character.buildChoices.backgroundEquipmentChoice ?? 'equipment',
     classEquipmentChoice: character.buildChoices.classEquipmentChoice ?? 'A',

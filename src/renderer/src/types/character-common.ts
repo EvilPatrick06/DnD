@@ -141,9 +141,10 @@ export interface SpellEntry {
   traditions?: string[]
   traits?: string[]
   heightened?: Record<string, string>
+  higherLevels?: string
   classes?: string[]
   prepared?: boolean
-  source?: 'species' | 'class' | 'feat'
+  source?: 'species' | 'class' | 'feat' | 'item'
   innateUses?: { max: number; remaining: number }
 }
 

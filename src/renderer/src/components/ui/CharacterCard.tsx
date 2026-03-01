@@ -8,13 +8,15 @@ interface CharacterCardProps {
   onClick: () => void
   onDelete: () => void
   onExport?: () => void
+  onExportPdf?: () => void
 }
 
 export default memo(function CharacterCard({
   character,
   onClick,
   onDelete,
-  onExport
+  onExport,
+  onExportPdf
 }: CharacterCardProps): JSX.Element {
   const className = character.classes.map((c) => c.name).join(' / ') || 'Unknown Class'
   const speciesName = character.species
@@ -57,6 +59,18 @@ export default memo(function CharacterCard({
             >
               {character.status.charAt(0).toUpperCase() + character.status.slice(1)}
             </span>
+          )}
+          {onExportPdf && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onExportPdf()
+              }}
+              className="text-gray-600 hover:text-amber-400 transition-colors text-[10px] cursor-pointer px-1.5 py-1 font-medium"
+              title="Export to PDF"
+            >
+              PDF
+            </button>
           )}
           {onExport && (
             <button

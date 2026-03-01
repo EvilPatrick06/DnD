@@ -3,9 +3,9 @@ import { useBuilderStore } from '../../../stores/use-builder-store'
 import { deductWithConversion, parseCost, totalInCopper } from '../../../utils/currency'
 import SectionBanner from '../shared/SectionBanner'
 import EquipmentShop5e from './EquipmentShop5e'
-import HigherLevelEquipment5e from './HigherLevelEquipment5e'
 import type { EquipmentDatabase } from './gear-tab-types'
 import { CURRENCY_CONFIG, lookupItem, useEquipmentDatabase } from './gear-tab-types'
+import HigherLevelEquipment5e from './HigherLevelEquipment5e'
 
 function EditableCurrencyCircle({
   config,

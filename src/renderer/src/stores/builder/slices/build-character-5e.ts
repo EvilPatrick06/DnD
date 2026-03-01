@@ -302,6 +302,10 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       ? ["Thieves' Cant"]
       : [])
   ]
+  const mergedExpertiseChoices = {
+    ...existingChar5e?.buildChoices?.expertiseChoices,
+    ...state.builderExpertiseSelections
+  }
   const computedSkills = (() => {
     const skills = populateSkills5e([
       ...new Set([
@@ -311,13 +315,10 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
         ...(keenSensesSkill ? [keenSensesSkill] : [])
       ])
     ])
-    const expertiseChoices = existingChar5e?.buildChoices?.expertiseChoices
-    if (expertiseChoices) {
-      for (const skillNames of Object.values(expertiseChoices)) {
-        for (const skillName of skillNames) {
-          const skill = skills.find((s) => s.name === skillName)
-          if (skill) skill.expertise = true
-        }
+    for (const skillNames of Object.values(mergedExpertiseChoices)) {
+      for (const skillName of skillNames) {
+        const skill = skills.find((s) => s.name === skillName)
+        if (skill) skill.expertise = true
       }
     }
     return skills
@@ -357,6 +358,12 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       result = fsFeat
         ? [...result, { id: fsFeat.id, name: fsFeat.name, description: fsFeat.description }]
         : [...result, { id: fsSlot.selectedId!, name: fsSlot.selectedName ?? 'Fighting Style', description: '' }]
+    }
+    // Merge builder feat selections (from ASI-or-Feat choices)
+    for (const feat of Object.values(state.builderFeatSelections)) {
+      if (!result.some((f) => f.id === feat.id)) {
+        result.push(feat)
+      }
     }
     return result
   })()
@@ -473,16 +480,39 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     name: characterName || 'Unnamed Character',
     species: speciesData?.name ?? 'Unknown',
     subspecies: computedSubspecies,
-    classes: classData
-      ? [
-          {
-            name: classData.name,
-            level: targetLevel,
-            hitDie: classData.hitDie,
-            subclass: subclassSlot?.selectedName ?? undefined
+    classes: (() => {
+      const clc = state.classLevelChoices
+      const hasMulticlass = Object.keys(clc).length > 0 && Object.values(clc).some((cid) => cid !== classId)
+      if (hasMulticlass && classData) {
+        // Count levels per class (level 1 is always primary class)
+        const levelCounts: Record<string, number> = { [classId]: 1 }
+        for (const cid of Object.values(clc)) {
+          levelCounts[cid] = (levelCounts[cid] ?? 0) + 1
+        }
+        return Object.entries(levelCounts).map(([cid, lvlCount]) => {
+          const cd = classes.find((c) => c.id === cid)
+          const subSlot = buildSlots.find(
+            (s) => s.id.includes('subclass') && (s.id.includes(cid) || (cid === classId && !s.id.includes('-')))
+          )
+          return {
+            name: cd?.name ?? cid,
+            level: lvlCount,
+            hitDie: cd?.hitDie ?? 8,
+            subclass: subSlot?.selectedName ?? undefined
           }
-        ]
-      : [],
+        })
+      }
+      return classData
+        ? [
+            {
+              name: classData.name,
+              level: targetLevel,
+              hitDie: classData.hitDie,
+              subclass: subclassSlot?.selectedName ?? undefined
+            }
+          ]
+        : []
+    })(),
     level: targetLevel,
     background: bgData?.name ?? 'Unknown',
     alignment: characterAlignment || existingChar5e?.alignment || '',
@@ -560,7 +590,10 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
         Object.keys(backgroundAbilityBonuses).length > 0 ? { ...backgroundAbilityBonuses } : undefined,
       versatileFeatId: versatileFeatId ?? undefined,
       epicBoonId: buildSlots.find((s) => s.category === 'epic-boon' && s.selectedId)?.selectedId ?? undefined,
-      generalFeatChoices: existingChar5e?.buildChoices?.generalFeatChoices,
+      generalFeatChoices:
+        Object.keys(state.builderFeatSelections).length > 0
+          ? Object.fromEntries(Object.entries(state.builderFeatSelections).map(([slotId, feat]) => [slotId, feat.id]))
+          : existingChar5e?.buildChoices?.generalFeatChoices,
       fightingStyleId:
         buildSlots.find((s) => s.category === 'fighting-style' && s.selectedId)?.selectedId ??
         existingChar5e?.buildChoices?.fightingStyleId,
@@ -573,8 +606,14 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       keenSensesSkill: keenSensesSkill ?? undefined,
       blessedWarriorCantrips: blessedWarriorCantrips.length > 0 ? blessedWarriorCantrips : undefined,
       druidicWarriorCantrips: druidicWarriorCantrips.length > 0 ? druidicWarriorCantrips : undefined,
-      expertiseChoices: existingChar5e?.buildChoices?.expertiseChoices,
-      multiclassEntries: existingChar5e?.buildChoices?.multiclassEntries
+      expertiseChoices: Object.keys(mergedExpertiseChoices).length > 0 ? mergedExpertiseChoices : undefined,
+      multiclassEntries:
+        Object.keys(state.classLevelChoices).length > 0
+          ? Object.entries(state.classLevelChoices).map(([lvl, cid]) => ({
+              classId: cid,
+              levelTaken: Number(lvl)
+            }))
+          : existingChar5e?.buildChoices?.multiclassEntries
     },
     status: existingChar5e?.status ?? 'active',
     campaignHistory: existingChar5e?.campaignHistory ?? [],

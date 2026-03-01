@@ -1,4 +1,5 @@
 import { DM_SYSTEM_PROMPT, DM_TOOLBOX_CONTEXT, PLANAR_RULES_CONTEXT } from './dm-system-prompt'
+import { COMBAT_TACTICS_PROMPT } from './prompt-sections/combat-tactics'
 import { estimateTokens, TOKEN_BUDGETS } from './token-budget'
 import type { ChatMessage, ConversationData, ConversationMessage, ConversationSummary } from './types'
 
@@ -85,8 +86,10 @@ export class ConversationManager {
       contextBlock?.includes('active_curse') ||
       contextBlock?.includes('placed_trap') ||
       contextBlock?.includes('chase')
+    const hasCombat = contextBlock?.includes('Initiative:')
     const systemPrompt =
       DM_SYSTEM_PROMPT +
+      (hasCombat ? COMBAT_TACTICS_PROMPT : '') +
       (includesPlanarContent ? PLANAR_RULES_CONTEXT : '') +
       (includesToolboxContent ? DM_TOOLBOX_CONTEXT : '') +
       (contextBlock ? `\n\n${contextBlock}` : '')

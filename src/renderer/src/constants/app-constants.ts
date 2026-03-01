@@ -42,3 +42,6 @@ export const AUTO_REJOIN_KEY = 'dnd-vtt-auto-rejoin'
 export const HEARTBEAT_INTERVAL_MS = 15_000
 export const HEARTBEAT_TIMEOUT_MS = 45_000
 export const HEARTBEAT_REMOVE_MS = 120_000
+
+// AI / Ollama
+export const DEFAULT_OLLAMA_URL = 'http://localhost:11434'

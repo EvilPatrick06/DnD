@@ -8,7 +8,7 @@ import { type Application, Container, Graphics, Text } from 'pixi.js'
 
 // ---- Public types ---------------------------------------------------------
 
-export type CombatAnimationType = 'slash' | 'projectile' | 'spell-burst' | 'kill' | 'heal'
+export type CombatAnimationType = 'slash' | 'projectile' | 'spell-burst' | 'kill' | 'heal' | 'floating-text'
 
 export interface CombatAnimationEvent {
   type: CombatAnimationType
@@ -17,6 +17,8 @@ export interface CombatAnimationEvent {
   toX: number
   toY: number
   color?: number // hex color override
+  text?: string // text to display (for floating-text type)
+  textColor?: number // text color override (for floating-text type)
 }
 
 // ---- Global event bus (singleton callback) --------------------------------
@@ -328,6 +330,43 @@ export function createCombatAnimationLayer(app: Application): {
     }
   }
 
+  function spawnFloatingText(event: CombatAnimationEvent): void {
+    const duration = 1.0
+    const cx = event.toX
+    const cy = event.toY
+    const color = event.textColor ?? event.color ?? 0xff4444
+
+    const label = new Text({
+      text: event.text ?? '',
+      style: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        fill: color,
+        stroke: { color: 0x000000, width: 3 }
+      }
+    })
+    label.anchor.set(0.5, 1)
+    label.x = cx
+    label.y = cy
+
+    addParticle({
+      gfx: label as unknown as Graphics,
+      elapsed: 0,
+      duration,
+      update(dt, p) {
+        p.elapsed += dt
+        const t = clamp01(p.elapsed / p.duration)
+
+        label.y = cy - 40 * t
+        label.alpha = 1 - t * 0.8
+        const s = 1 + t * 0.15
+        label.scale.set(s, s)
+
+        return t < 1
+      }
+    })
+  }
+
   // --- Event handler -------------------------------------------------------
 
   function handleEvent(event: CombatAnimationEvent): void {
@@ -346,6 +385,9 @@ export function createCombatAnimationLayer(app: Application): {
         break
       case 'heal':
         spawnHeal(event)
+        break
+      case 'floating-text':
+        spawnFloatingText(event)
         break
     }
   }

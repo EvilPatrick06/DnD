@@ -3,6 +3,7 @@ import { useCharacterEditor } from '../../../hooks/use-character-editor'
 import { load5eMagicItems } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
 import type { MagicItemRarity5e } from '../../../types/character-common'
+import { logger } from '../../../utils/logger'
 import AttunementTracker5e from './AttunementTracker5e'
 import MagicItemCard5e from './MagicItemCard5e'
 
@@ -26,6 +27,7 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
     attunement: boolean
     description: string
   }>({ name: '', rarity: 'common', attunement: false, description: '' })
+  const [giveUnidentified, setGiveUnidentified] = useState(false)
   const [buyWarning, setBuyWarning] = useState<string | null>(null)
 
   const getLatestTyped = (): Character5e | undefined => {
@@ -140,6 +142,15 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
                           />
                           Attunement
                         </label>
+                        <label className="flex items-center gap-1 text-xs text-yellow-500 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={giveUnidentified}
+                            onChange={(e) => setGiveUnidentified(e.target.checked)}
+                            className="rounded"
+                          />
+                          Unidentified
+                        </label>
                       </div>
                       <input
                         type="text"
@@ -160,7 +171,8 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
                               rarity: manualMagicItem.rarity,
                               type: 'wondrous',
                               attunement: manualMagicItem.attunement,
-                              description: manualMagicItem.description.trim()
+                              description: manualMagicItem.description.trim(),
+                              ...(giveUnidentified ? { identified: false as const } : {})
                             }
                             const updated = {
                               ...latest,
@@ -200,6 +212,15 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
                           <option value="legendary">Legendary</option>
                           <option value="artifact">Artifact</option>
                         </select>
+                        <label className="flex items-center gap-1 text-xs text-yellow-500 cursor-pointer shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={giveUnidentified}
+                            onChange={(e) => setGiveUnidentified(e.target.checked)}
+                            className="rounded"
+                          />
+                          Unidentified
+                        </label>
                       </div>
                       <div className="max-h-48 overflow-y-auto space-y-0.5">
                         {magicItems
@@ -230,7 +251,8 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
                                     rarity: item.rarity,
                                     type: item.type || 'wondrous',
                                     attunement: item.attunement,
-                                    description: item.description || ''
+                                    description: item.description || '',
+                                    ...(giveUnidentified ? { identified: false as const } : {})
                                   }
                                   const updated = {
                                     ...latest,
@@ -267,7 +289,7 @@ export default function MagicItemsPanel5e({ character, readonly }: MagicItemsPan
                     if (magicItems.length === 0) {
                       load5eMagicItems()
                         .then((items) => setMagicItems(items))
-                        .catch(() => {})
+                        .catch((e) => logger.warn('[MagicItems] Failed to load magic items', e))
                     }
                   }}
                   className="text-xs text-purple-400 hover:text-purple-300 cursor-pointer"

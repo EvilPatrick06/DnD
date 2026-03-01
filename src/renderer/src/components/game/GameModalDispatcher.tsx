@@ -9,59 +9,14 @@ import type { Handout } from '../../types/game-state'
 import type { MapToken } from '../../types/map'
 import type { MonsterStatBlock } from '../../types/monster'
 import type { AoEConfig } from './map/aoe-overlay'
-import CombatModals from './modal-groups/combat-modals'
-import DmModals from './modal-groups/dm-modals'
-import MechanicsModals from './modal-groups/mechanics-modals'
-import UtilityModals from './modal-groups/utility-modals'
+import CombatModals from './modal-groups/CombatModals'
+import DmModals from './modal-groups/DmModals'
+import MechanicsModals from './modal-groups/MechanicsModals'
+import UtilityModals from './modal-groups/UtilityModals'
 
-export type ActiveModal =
-  | 'action'
-  | 'item'
-  | 'hiddenDice'
-  | 'whisper'
-  | 'quickCondition'
-  | 'timer'
-  | 'initiative'
-  | 'notes'
-  | 'attack'
-  | 'help'
-  | 'jump'
-  | 'falling'
-  | 'influence'
-  | 'aoe'
-  | 'travelPace'
-  | 'mount'
-  | 'creatures'
-  | 'familiar'
-  | 'wildShape'
-  | 'steed'
-  | 'summonCreature'
-  | 'timeEdit'
-  | 'lightSource'
-  | 'shortRest'
-  | 'longRest'
-  | 'dmRoller'
-  | 'commandRef'
-  | 'customEffect'
-  | 'encounterBuilder'
-  | 'treasureGenerator'
-  | 'chaseTracker'
-  | 'mobCalculator'
-  | 'groupRoll'
-  | 'study'
-  | 'shortcutRef'
-  | 'dispute'
-  | 'downtime'
-  | 'shop'
-  | 'spellRef'
-  | 'calendar'
-  | 'gridSettings'
-  | 'tokenEditor'
-  | 'handout'
-  | 'handoutViewer'
-  | 'npcGenerator'
-  | 'magic-item-tracker'
-  | null
+export type { ActiveModal } from './active-modal-types'
+
+import type { ActiveModal } from './active-modal-types'
 
 interface GameModalDispatcherProps {
   activeModal: ActiveModal
@@ -95,6 +50,7 @@ interface GameModalDispatcherProps {
   handleWildShapeTransform: (monster: MonsterStatBlock) => void
   handleWildShapeRevert: () => void
   handleWildShapeUseAdjust: (delta: number) => void
+  localPeerId: string
 }
 
 function broadcastMsg(
@@ -144,7 +100,8 @@ export default function GameModalDispatcher(props: GameModalDispatcherProps): JS
     handleCompanionSummon,
     handleWildShapeTransform,
     handleWildShapeRevert,
-    handleWildShapeUseAdjust
+    handleWildShapeUseAdjust,
+    localPeerId
   } = props
 
   const gameStore = useGameStore()
@@ -216,6 +173,7 @@ export default function GameModalDispatcher(props: GameModalDispatcherProps): JS
         sendMessage={sendMessage}
         disputeContext={disputeContext}
         setDisputeContext={setDisputeContext}
+        localPeerId={localPeerId}
       />
     </>
   )

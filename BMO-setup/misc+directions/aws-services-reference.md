@@ -2,6 +2,8 @@
 
 > Quick-reference card for all cloud services used in BMO + VTT infrastructure.
 > Region: **us-east-1** for all AWS services.
+>
+> **Automated provisioning**: `bash bmo.sh setup aws` creates all AWS resources (IAM, SG, EBS, EIP, launch template, budget alerts) in one command. The CLI commands below are for reference and troubleshooting.
 
 ---
 
@@ -295,6 +297,8 @@ CloudWatch Alarm
 
 ## 5. IAM -- Access Control
 
+> **Automated**: `bash bmo.sh setup aws` creates both the EC2 role and Pi IAM user with correct policies. The access key is output and saved to `.env`.
+
 | Principal | Purpose | Permissions |
 |-----------|---------|-------------|
 | EC2 instance role (`bmo-ec2-role`) | S3 access from AI server | `s3:GetObject`, `s3:PutObject` on backup + sync buckets |
@@ -409,14 +413,30 @@ ssh -i ~/.ssh/your-key.pem ubuntu@<IP> "lsblk && df -h"
 
 ### User Data Script (Auto-Reattach on Spot Relaunch)
 
+> **Note**: `aws-setup.sh` generates an improved user-data template at `/opt/ai-server/user-data-template.sh` that uses **tag-based volume lookup** instead of hardcoded volume IDs. The example below shows the updated approach:
+
 ```bash
 #!/bin/bash
-VOLUME_ID="vol-xxxxxxxxxxxxxxxxx"
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-aws ec2 attach-volume --volume-id $VOLUME_ID --instance-id $INSTANCE_ID --device /dev/xvdf
+# Uses IMDSv2 and tag-based volume discovery — no hardcoded IDs needed
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/placement/availability-zone)
+REGION="${AZ%?}"
+
+VOLUME_ID=$(aws ec2 describe-volumes \
+    --filters "Name=tag:Name,Values=bmo-ai-data" "Name=availability-zone,Values=$AZ" \
+    --query "Volumes[0].VolumeId" --output text --region "$REGION")
+
+aws ec2 attach-volume --volume-id "$VOLUME_ID" --instance-id "$INSTANCE_ID" \
+    --device /dev/xvdf --region "$REGION"
 sleep 10
-mount /dev/xvdf /mnt/data
+mount /dev/xvdf /opt/ai-server
+systemctl restart ollama && sleep 10
 systemctl restart ai-server
+systemctl restart spot-monitor
 ```
 
 ---

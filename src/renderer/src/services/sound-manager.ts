@@ -7,7 +7,7 @@
  * Module-level state with exported functions.
  */
 
-import soundEventsJson from '../../public/data/5e/audio/sound-events.json'
+import soundEventsJson from '../../public/data/audio/sound-events.json'
 import { logger } from '../utils/logger'
 
 // -- Combat sounds (10) --

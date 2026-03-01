@@ -1,3 +1,5 @@
+import { Tooltip } from '../../ui'
+
 interface ViewModeToggleProps {
   viewMode: 'dm' | 'player'
   onToggle: () => void
@@ -5,11 +7,12 @@ interface ViewModeToggleProps {
 }
 
 export default function ViewModeToggle({ viewMode, onToggle, characterName }: ViewModeToggleProps): JSX.Element {
+  const label = viewMode === 'dm' ? 'Switch to Player View' : 'Switch to DM View'
   return (
-    <div>
+    <Tooltip text={label}>
       <button
         onClick={onToggle}
-        title={viewMode === 'dm' ? 'Switch to Player View' : 'Switch to DM View'}
+        aria-label={label}
         className={`px-3 py-1.5 text-xs font-semibold rounded-full cursor-pointer transition-colors ${
           viewMode === 'dm'
             ? 'bg-gray-700/80 hover:bg-gray-600/80 text-gray-300 border border-gray-600'
@@ -18,6 +21,6 @@ export default function ViewModeToggle({ viewMode, onToggle, characterName }: Vi
       >
         {viewMode === 'dm' ? 'DM' : characterName || 'Player'}
       </button>
-    </div>
+    </Tooltip>
   )
 }

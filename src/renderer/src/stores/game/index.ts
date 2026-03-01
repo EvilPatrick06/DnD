@@ -6,12 +6,14 @@ import { createConditionsSlice } from './conditions-slice'
 import { createEffectsSlice } from './effects-slice'
 import { createFogSlice } from './fog-slice'
 import { createInitiativeSlice } from './initiative-slice'
+import { createJournalSlice } from './journal-slice'
 import { createMapTokenSlice } from './map-token-slice'
 import { createShopSlice } from './shop-slice'
 import { createSidebarSlice } from './sidebar-slice'
 import { createTimeSlice } from './time-slice'
 import { createTimerSlice } from './timer-slice'
 import { type GameStoreState, initialState, type SessionLogEntry } from './types'
+import { createVisionSlice } from './vision-slice'
 
 export const useGameStore = create<GameStoreState>()((...a) => {
   const [set, _get] = a
@@ -30,6 +32,23 @@ export const useGameStore = create<GameStoreState>()((...a) => {
     ...createCombatLogSlice(...a),
     ...createTimeSlice(...a),
     ...createEffectsSlice(...a),
+    ...createVisionSlice(...a),
+    ...createJournalSlice(...a),
+
+    // --- Reaction prompt ---
+    pendingReactionPrompt: null,
+    setPendingReactionPrompt: (prompt) => set({ pendingReactionPrompt: prompt }),
+
+    // --- Trade/Inspect ephemeral state ---
+    pendingTradeOffer: null,
+    setPendingTradeOffer: (offer) => set({ pendingTradeOffer: offer }),
+    clearPendingTradeOffer: () => set({ pendingTradeOffer: null }),
+    pendingTradeResult: null,
+    setPendingTradeResult: (result) => set({ pendingTradeResult: result }),
+    clearPendingTradeResult: () => set({ pendingTradeResult: null }),
+    inspectedCharacterData: null,
+    setInspectedCharacter: (data) => set({ inspectedCharacterData: data }),
+    clearInspectedCharacter: () => set({ inspectedCharacterData: null }),
 
     // --- Game flow ---
     setPaused: (paused: boolean) => set({ isPaused: paused }),
@@ -74,7 +93,13 @@ export const useGameStore = create<GameStoreState>()((...a) => {
         centerOnEntityId: null,
         sessionLog: [],
         currentSessionId: `session-${Date.now()}`,
-        currentSessionLabel: `Session 1`
+        currentSessionLabel: `Session 1`,
+        partyVisionCells: [],
+        pendingReactionPrompt: null,
+        sharedJournal: [],
+        pendingTradeOffer: null,
+        pendingTradeResult: null,
+        inspectedCharacterData: null
       }),
 
     loadGameState: (
@@ -93,6 +118,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
         savedWeatherPresets?: GameStoreState['savedWeatherPresets']
         handouts?: Handout[]
         combatTimer?: CombatTimerConfig | null
+        sharedJournal?: import('../../types/game-state').SharedJournalEntry[]
       }
     ) => {
       const {
@@ -110,6 +136,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
         savedWeatherPresets,
         handouts,
         combatTimer,
+        sharedJournal,
         ...gameState
       } = state
       set({
@@ -127,7 +154,8 @@ export const useGameStore = create<GameStoreState>()((...a) => {
         ...(moonOverride !== undefined ? { moonOverride } : {}),
         ...(savedWeatherPresets ? { savedWeatherPresets } : {}),
         ...(handouts ? { handouts } : {}),
-        ...(combatTimer !== undefined ? { combatTimer } : {})
+        ...(combatTimer !== undefined ? { combatTimer } : {}),
+        ...(sharedJournal ? { sharedJournal } : {})
       })
     },
 

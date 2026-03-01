@@ -8,8 +8,6 @@ interface PlayerCardProps {
   isLocallyMuted?: boolean
   onToggleLocalMute?: () => void
   isHostView?: boolean
-  onForceMute?: (force: boolean) => void
-  onForceDeafen?: (force: boolean) => void
   onViewCharacter?: () => void
   onKick?: () => void
   onBan?: () => void
@@ -25,8 +23,6 @@ export default memo(function PlayerCard({
   isLocallyMuted,
   onToggleLocalMute,
   isHostView,
-  onForceMute,
-  onForceDeafen,
   onViewCharacter,
   onKick,
   onBan,
@@ -56,9 +52,6 @@ export default memo(function PlayerCard({
           >
             {avatarLetter}
           </div>
-          {player.isSpeaking && (
-            <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-pulse" />
-          )}
         </div>
 
         {/* Player info */}
@@ -95,47 +88,6 @@ export default memo(function PlayerCard({
 
         {/* Status icons & controls */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* Force-deafened indicator (visible to everyone) */}
-          {player.isForceDeafened && (
-            <div className="text-red-500" title="Deafened by DM">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M10 3.75a6.25 6.25 0 0 0-6.25 6.25v2.5A1.25 1.25 0 0 0 5 13.75h.625a1.25 1.25 0 0 0 1.25-1.25v-2.5a1.25 1.25 0 0 0-1.25-1.25H5c0-2.761 2.239-5 5-5s5 2.239 5 5h-.625a1.25 1.25 0 0 0-1.25 1.25v2.5a1.25 1.25 0 0 0 1.25 1.25H15A1.25 1.25 0 0 0 16.25 12.5V10A6.25 6.25 0 0 0 10 3.75Z" />
-                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l14 14a.75.75 0 1 0 1.06-1.06l-14-14Z" />
-              </svg>
-            </div>
-          )}
-
-          {/* Force-muted indicator (visible to everyone, only shown if not also force-deafened) */}
-          {player.isForceMuted && !player.isForceDeafened && (
-            <div className="text-red-500" title="Muted by DM">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M7.25 3.75a2.75 2.75 0 1 1 5.5 0v5.5a2.75 2.75 0 1 1-5.5 0v-5.5Z" />
-                <path d="M5 8.5a.75.75 0 0 1 .75.75v.5a4.25 4.25 0 1 0 8.5 0v-.5a.75.75 0 0 1 1.5 0v.5a5.751 5.751 0 0 1-5 5.701V17h2.25a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1 0-1.5H9.25v-1.549A5.751 5.751 0 0 1 4.25 9.75v-.5A.75.75 0 0 1 5 8.5Z" />
-                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l14 14a.75.75 0 1 0 1.06-1.06l-14-14Z" />
-              </svg>
-            </div>
-          )}
-
-          {/* Self-deafened indicator (only if not force-deafened) */}
-          {player.isDeafened && !player.isForceDeafened && (
-            <div className="text-red-400" title="Self-deafened">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M10 3.75a6.25 6.25 0 0 0-6.25 6.25v2.5A1.25 1.25 0 0 0 5 13.75h.625a1.25 1.25 0 0 0 1.25-1.25v-2.5a1.25 1.25 0 0 0-1.25-1.25H5c0-2.761 2.239-5 5-5s5 2.239 5 5h-.625a1.25 1.25 0 0 0-1.25 1.25v2.5a1.25 1.25 0 0 0 1.25 1.25H15A1.25 1.25 0 0 0 16.25 12.5V10A6.25 6.25 0 0 0 10 3.75Z" />
-                <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l14 14a.75.75 0 1 0 1.06-1.06l-14-14Z" />
-              </svg>
-            </div>
-          )}
-
-          {/* Self-muted indicator (only if not force-muted and not deafened — force/deafen indicators take priority) */}
-          {player.isMuted && !player.isForceMuted && !player.isDeafened && !player.isForceDeafened && (
-            <div className="text-red-400" title="Muted">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M7.707 3.293A1 1 0 0 0 6 4v6.586l-2.293-2.293a1 1 0 0 0-1.414 1.414l4 4a1 1 0 0 0 1.414 0L10 11.414V4a1 1 0 0 0-1.707-.707Z" />
-                <path d="m2.343 2.343 14.314 14.314-1.414 1.414L.929 3.757l1.414-1.414Z" />
-              </svg>
-            </div>
-          )}
-
           {/* Local mute button (visible on non-self players) */}
           {!isLocal && onToggleLocalMute && (
             <button
@@ -203,39 +155,6 @@ export default memo(function PlayerCard({
       {/* DM moderation controls — second row */}
       {isHostView && !isLocal && !player.isHost && (
         <div className="flex flex-wrap items-center gap-1 ml-[3.25rem] overflow-hidden">
-          {/* Force-mute toggle */}
-          <button
-            onClick={() => onForceMute?.(!player.isForceMuted)}
-            title={player.isForceMuted ? 'Remove force-mute' : 'Force-mute player'}
-            className={`p-1.5 rounded transition-colors cursor-pointer ${
-              player.isForceMuted
-                ? 'bg-red-900/40 text-red-400 hover:bg-red-900/60'
-                : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800'
-            }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path d="M7.25 3.75a2.75 2.75 0 1 1 5.5 0v5.5a2.75 2.75 0 1 1-5.5 0v-5.5Z" />
-              <path d="M5 8.5a.75.75 0 0 1 .75.75v.5a4.25 4.25 0 1 0 8.5 0v-.5a.75.75 0 0 1 1.5 0v.5a5.751 5.751 0 0 1-5 5.701V17h2.25a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1 0-1.5H9.25v-1.549A5.751 5.751 0 0 1 4.25 9.75v-.5A.75.75 0 0 1 5 8.5Z" />
-              <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l14 14a.75.75 0 1 0 1.06-1.06l-14-14Z" />
-            </svg>
-          </button>
-
-          {/* Force-deafen toggle */}
-          <button
-            onClick={() => onForceDeafen?.(!player.isForceDeafened)}
-            title={player.isForceDeafened ? 'Remove force-deafen' : 'Force-deafen player'}
-            className={`p-1.5 rounded transition-colors cursor-pointer ${
-              player.isForceDeafened
-                ? 'bg-red-900/40 text-red-400 hover:bg-red-900/60'
-                : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800'
-            }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-              <path d="M10 3.75a6.25 6.25 0 0 0-6.25 6.25v2.5A1.25 1.25 0 0 0 5 13.75h.625a1.25 1.25 0 0 0 1.25-1.25v-2.5a1.25 1.25 0 0 0-1.25-1.25H5c0-2.761 2.239-5 5-5s5 2.239 5 5h-.625a1.25 1.25 0 0 0-1.25 1.25v2.5a1.25 1.25 0 0 0 1.25 1.25H15A1.25 1.25 0 0 0 16.25 12.5V10A6.25 6.25 0 0 0 10 3.75Z" />
-              <path d="M3.53 2.47a.75.75 0 0 0-1.06 1.06l14 14a.75.75 0 1 0 1.06-1.06l-14-14Z" />
-            </svg>
-          </button>
-
           {/* Chat timeout (5 min) */}
           {onChatTimeout && (
             <button

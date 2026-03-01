@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { load5eEncounterBudgets, load5eMonsters } from '../../../../services/data-provider'
+import { logger } from '../../../../utils/logger'
 
 interface EncounterBuilderModalProps {
   onClose: () => void
@@ -111,7 +112,7 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
         const entries = data as unknown as BudgetEntry[]
         if (Array.isArray(entries) && entries.length > 0) setBudgetData(entries)
       })
-      .catch(() => {})
+      .catch((e) => logger.warn('[EncounterBuilder] Failed to load budget data', e))
   }, [])
 
   useEffect(() => {
@@ -212,7 +213,12 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
       partyLevel,
       monsters: selectedMonsters
     }
-    const saved = JSON.parse(localStorage.getItem('encounter-presets') ?? '[]')
+    let saved: unknown[] = []
+    try {
+      saved = JSON.parse(localStorage.getItem('encounter-presets') ?? '[]')
+    } catch {
+      /* corrupted data, reset */
+    }
     saved.push(preset)
     localStorage.setItem('encounter-presets', JSON.stringify(saved))
     setPresetName('')

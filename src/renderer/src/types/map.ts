@@ -12,6 +12,7 @@ export interface GameMap {
   fogOfWar: FogOfWarData
   wallSegments?: WallSegment[]
   terrain: TerrainCell[]
+  floors?: Array<{ id: string; name: string }>
   audioEmitters?: Array<{
     id: string
     x: number
@@ -29,12 +30,18 @@ export interface GameMap {
 export interface TerrainCell {
   x: number
   y: number
-  type: 'difficult' | 'hazard' | 'water' | 'climbing'
+  type: 'difficult' | 'hazard' | 'water' | 'climbing' | 'portal'
   movementCost: number // 2 for difficult terrain, water, or climbing (without swim/climb speed)
   /** Hazard subtype for damage on entry (C5) */
   hazardType?: 'fire' | 'acid' | 'pit' | 'spikes'
   /** Damage dealt by hazard on entry */
   hazardDamage?: number
+  /** Portal destination: target map and grid position */
+  portalTarget?: {
+    mapId: string
+    gridX: number
+    gridY: number
+  }
 }
 
 /** Darkvision: derived from species data — Elf, Dwarf, Gnome, Tiefling, Half-Elf */
@@ -61,11 +68,15 @@ export interface MapToken {
   gridY: number
   /** Elevation in feet (0 = ground level). Positive = flying/elevated, negative = below ground. */
   elevation?: number
+  /** Floor index this token is on (for multi-floor maps) */
+  floor?: number
 
   sizeX: number
   sizeY: number
 
   visibleToPlayers: boolean
+  /** Whether the token's name label is visible to players (default true for PCs, false for monsters) */
+  nameVisible?: boolean
   conditions: string[]
   currentHP?: number
   maxHP?: number
@@ -82,6 +93,8 @@ export interface MapToken {
   immunities?: string[]
   /** Whether this creature has darkvision */
   darkvision?: boolean
+  /** Darkvision range in feet (e.g. 60, 120). Overrides darkvision boolean when set. */
+  darkvisionRange?: number
   /** Swim speed in feet (0 or undefined = no swim speed) */
   swimSpeed?: number
   /** Climb speed in feet (0 or undefined = no climb speed) */
@@ -124,4 +137,8 @@ export interface WallSegment {
 export interface FogOfWarData {
   enabled: boolean
   revealedCells: Array<{ x: number; y: number }>
+  /** Cells auto-revealed by player movement (shown dimmed when out of current vision) */
+  exploredCells?: Array<{ x: number; y: number }>
+  /** DM toggle for automatic vision-driven fog reveal */
+  dynamicFogEnabled?: boolean
 }

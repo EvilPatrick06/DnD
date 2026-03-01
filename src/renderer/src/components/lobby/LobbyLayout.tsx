@@ -1,16 +1,22 @@
+import { useParams } from 'react-router'
 import { setCharacterInfo } from '../../network/client-manager'
+import { useCampaignStore } from '../../stores/use-campaign-store'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
 import CharacterSelector from './CharacterSelector'
 import ChatPanel from './ChatPanel'
+import DiscordLink from './DiscordLink'
 import PlayerList from './PlayerList'
 import ReadyButton from './ReadyButton'
 
 export default function LobbyLayout(): JSX.Element {
+  const { campaignId } = useParams<{ campaignId: string }>()
   const updatePlayer = useLobbyStore((s) => s.updatePlayer)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
   const characters = useCharacterStore((s) => s.characters)
+  const campaigns = useCampaignStore((s) => s.campaigns)
+  const campaign = campaigns.find((c) => c.id === campaignId)
 
   const sendMessage = useNetworkStore((s) => s.sendMessage)
 
@@ -45,6 +51,9 @@ export default function LobbyLayout(): JSX.Element {
         <div className="flex-1 bg-gray-900/50 border border-gray-800 rounded-lg p-4 overflow-y-auto">
           <CharacterSelector onSelect={handleCharacterSelect} />
         </div>
+
+        {/* Discord link */}
+        {campaign?.discordInviteUrl && <DiscordLink url={campaign.discordInviteUrl} />}
 
         {/* Ready button */}
         <ReadyButton />

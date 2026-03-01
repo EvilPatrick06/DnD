@@ -77,12 +77,14 @@ Your Windows PC needs:
 |-------|------|
 | Hardware assembly | 30 min |
 | Pi OS flash + first boot | 15 min |
-| Pi setup script (`pi-setup.sh`) | 45 min (mostly downloads) |
-| AWS account + EC2 launch | 30 min |
-| GPU server setup (`aws-setup.sh`) | 30 min (mostly model downloads) |
-| Cloudflare configuration | 20 min |
-| Deployment + verification | 15 min |
-| **Total** | **~3 hours** |
+| Pi setup (`bmo.sh setup pi`) | 45 min (mostly downloads) |
+| AWS infra provisioning (`bmo.sh setup aws`) | 10 min |
+| GPU server setup (`aws-setup.sh` via UserData) | 30 min (mostly model downloads) |
+| Deploy to both (`bmo.sh deploy all`) | 10 min |
+| Post-setup auth (`bmo.sh auth`) | 15 min |
+| **Total** | **~2.5 hours** |
+
+> **New**: All operations go through a single entry point: `bash bmo.sh <command>`. Configure `.env` once (copy from `.env.template`), then run 4 commands. See [Section 9: Deployment](#9-deployment) for the streamlined flow.
 
 ---
 
@@ -134,7 +136,7 @@ Your Windows PC needs:
 |                     |  |  Ollama :11434      |
 |  PeerJS Server :9000|  |   - bmo (Llama 3.1  |
 |  Ollama (fallback)  |  |     70B Q4_K_M)     |
-|   - bmo (Gemma3:4b) |  |                     |
+|   - bmo (llama3.2:3b) |  |                     |
 |                     |  |  Fish Speech (TTS)  |
 |  cloudflared tunnel |  |  Whisper Large-v3   |
 +---------------------+  |  YOLOv8-Large       |
@@ -153,7 +155,7 @@ Request → Check GPU /health (30s cache) → OK? → GPU Server → Response
 
 | Service | GPU (Primary) | Local (Fallback) |
 |---------|--------------|-----------------|
-| LLM | Llama 3.1 70B Q4 (32K ctx) | Gemma3:4b (8K ctx) |
+| LLM | Llama 3.1 70B Q4 (32K ctx) | llama3.2:3b (8K ctx) |
 | STT | Whisper Large-v3 (CUDA fp16) | Whisper base (CPU int8) |
 | TTS | Fish Speech (voice-cloned) | Piper TTS + sox pitch shift |
 | Vision | YOLOv8-Large (CUDA) | YOLOv8-Nano (CPU) |
@@ -425,6 +427,13 @@ Key settings:
 
 ## 5. IAM & Security
 
+> **Automated**: All IAM roles, users, policies, security groups, and key pairs in this section are created automatically by `bmo.sh setup aws`. You only need to run:
+> ```bash
+> cd BMO-setup && cp .env.template .env  # Edit .env with your values
+> bash bmo.sh setup aws                  # Creates everything below
+> ```
+> The manual steps are documented here for reference and troubleshooting.
+
 ### 5.1 IAM Users and Roles
 
 | Principal | Type | Purpose |
@@ -624,6 +633,13 @@ Rotate keys every 90 days:
 
 ## 6. EC2 GPU Server Setup
 
+> **Automated**: `bmo.sh setup aws` creates the launch template, security group, IAM resources, EBS volume, Elastic IP, and optionally launches the spot instance in one command:
+> ```bash
+> bash bmo.sh setup aws             # Provision only
+> bash bmo.sh setup aws --launch    # Provision + launch spot + auto-deploy
+> ```
+> All created resource IDs are saved to `.env` automatically.
+
 ### 6.1 Launch Template Creation
 
 Create a launch template via the AWS console or CLI:
@@ -660,6 +676,17 @@ aws ec2 create-launch-template \
 > ```
 
 ### 6.2 Running aws-setup.sh
+
+**Automated approach** (recommended):
+
+```bash
+# After bmo.sh setup aws has provisioned and launched the instance:
+bash bmo.sh deploy aws   # Uploads all files, installs deps, creates model, restarts services
+```
+
+`bmo.sh deploy aws` reads `.env` for EC2_IP, SSH_KEY_PATH, etc. -- no manual arguments needed.
+
+**Manual approach** (if not using bmo.sh):
 
 1. Launch the spot instance from the template
 2. SSH in and copy files:
@@ -721,18 +748,33 @@ sudo systemctl status ai-server ollama nginx spot-monitor
 
 ### 6.4 Spot Re-launch User Data
 
-Save this as the EC2 launch template user data. It runs on every new spot instance boot:
+Save this as the EC2 launch template user data. It runs on every new spot instance boot.
+
+> **Note**: The `aws-setup.sh` script generates this user data template at `/opt/ai-server/user-data-template.sh`. It uses **tag-based volume lookup** (`Name=bmo-ai-data`) instead of hardcoded volume IDs, so it works across spot relaunches without editing.
 
 ```bash
 #!/bin/bash
-VOLUME_ID="vol-XXXXXXXXX"  # Replace with your EBS volume ID
 DEVICE="/dev/xvdf"
 MOUNT="/opt/ai-server"
-REGION="us-west-2"
 
-# Wait for instance metadata
-sleep 10
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+# Get instance metadata (IMDSv2)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/placement/availability-zone)
+REGION="${AZ%?}"
+
+# Find volume by tag instead of hardcoded ID
+VOLUME_ID=$(aws ec2 describe-volumes \
+    --filters "Name=tag:Name,Values=bmo-ai-data" "Name=availability-zone,Values=$AZ" \
+    --query "Volumes[0].VolumeId" --output text --region "$REGION" 2>/dev/null)
+
+if [ -z "$VOLUME_ID" ] || [ "$VOLUME_ID" = "None" ]; then
+    echo "ERROR: No EBS volume with tag 'bmo-ai-data' found in $AZ"
+    exit 1
+fi
 
 # Attach EBS volume if not already attached
 if ! lsblk | grep -q xvdf; then
@@ -804,8 +846,8 @@ systemctl restart spot-monitor
 Copy and run the setup script:
 
 ```bash
-# From your Windows PC
-scp BMO-setup/pi-setup.sh patrick@<PI_IP>:~/
+# From your Windows PC (if .env is configured, PI_IP is read automatically)
+scp BMO-setup/.env BMO-setup/pi-setup.sh patrick@<PI_IP>:~/
 
 # SSH into Pi
 ssh patrick@<PI_IP>
@@ -814,6 +856,8 @@ ssh patrick@<PI_IP>
 chmod +x ~/pi-setup.sh
 ./pi-setup.sh
 ```
+
+> **Tip**: If you place `.env` in the same directory as `pi-setup.sh`, it will be sourced automatically for timezone and other configuration.
 
 **Expected output per phase:**
 
@@ -866,6 +910,12 @@ ls -la ~/bmo/data/commands/ ~/bmo/data/memory/ ~/bmo/.bmo/hooks/ ~/bmo/.bmo/comm
 ## 8. Cloudflare Setup
 
 ### 8.1 Tunnel
+
+> **Automated**: `bmo.sh auth` walks you through Cloudflare tunnel setup interactively via SSH, auto-generating `config.yml` and DNS routes:
+> ```bash
+> bash bmo.sh auth
+> ```
+> The manual steps below are for reference.
 
 SSH into the Pi and create the tunnel:
 
@@ -1034,66 +1084,96 @@ sudo certbot renew --dry-run
 
 ## 9. Deployment
 
-### 9.1 First Deploy from Windows (deploy.sh)
+> **All deployment scripts read from `.env`** — configure it once and no script needs manual arguments. Copy `.env.template` to `.env` and fill in your values.
+
+### 9.0 Quick Start (Recommended Flow)
 
 From your Windows PC in Git Bash:
 
 ```bash
-cd /path/to/BMO-setup
+cd /c/Users/evilp/dnd/BMO-setup
 
-# Deploy to Pi
-bash deploy.sh <PI_IP> patrick
+# 1. Configure once
+cp .env.template .env
+nano .env  # Fill in PI_IP, EC2_IP, AI_DOMAIN, etc.
+
+# 2. Pi setup + deploy
+bash bmo.sh setup pi           # SCP pi-setup.sh to Pi, run it, prompt reboot
+bash bmo.sh deploy pi          # After reboot: copies files, installs deps, restarts
+
+# 3. AWS setup + deploy (all in one)
+bash bmo.sh setup aws --launch # Creates infra, launches spot, auto-deploys
+
+# 4. Interactive auth on Pi
+bash bmo.sh auth               # Cloudflare tunnel, Google Calendar, hardware check
 ```
 
-This copies:
-- 22 Python service files
-- `agents/` directory (33 modules)
-- Templates + static assets (HTML, CSS, JS, images)
-- Config files (Google Calendar OAuth)
-- Modelfile for Ollama
+### 9.1 Deploy to Pi (`bmo.sh deploy pi`)
 
-After deploy, SSH into the Pi:
+Fully automated -- copies files, installs Python dependencies, creates the Ollama model, and restarts the service via SSH. No manual post-deploy steps needed.
 
 ```bash
-ssh patrick@<PI_IP>
-source ~/bmo/venv/bin/activate
-pip install -r ~/bmo/requirements.txt
-pip install mcp httpx sseclient-py rich
-ollama create bmo -f ~/bmo/Modelfile
-sudo systemctl restart bmo
+bash bmo.sh deploy pi    # Uses PI_IP from .env
 ```
 
-### 9.2 On-Pi Deploy (deploy-pi.sh)
+**What it does** (8 automated steps):
+1. Creates directories on Pi
+2. Copies 22 Python service files + requirements.txt
+3. Copies agents directory
+4. Copies templates + static assets
+5. Copies config files + Modelfile
+6. Installs Python dependencies via SSH
+7. Creates BMO Ollama model + restarts service
+8. Runs health checks (services, HTTP, Ollama models)
 
-If you want to run deployment directly on the Pi (e.g., after cloning the repo there):
+### 9.2 Deploy to AWS (`bmo.sh deploy aws`)
+
+Handles the full GPU server deployment with retry logic and health checks.
 
 ```bash
-# Copy files to Pi (any method: git clone, scp, USB)
-# Then run:
-chmod +x deploy-pi.sh
-./deploy-pi.sh
+bash bmo.sh deploy aws   # Uses EC2_IP, SSH_KEY_PATH from .env
 ```
 
-This handles system packages, Ollama, BMO model creation, Python venv, pip install, and systemd service creation — all in one script.
+**What it does** (7 automated steps):
+1. Waits for EC2 host to be SSH-reachable
+2. Uploads AI server files (ai_server.py, rag_search.py, requirements.txt, Modelfile)
+3. Uploads voice reference files (BMO + NPC voices)
+4. Uploads RAG data
+5. Syncs DnD project via rsync (excludes node_modules, .git, dist)
+6. Installs Python deps + creates BMO model + restarts ai-server
+7. Runs health checks (services, models, disk space)
 
-### 9.3 GPU Server Deploy
+Also auto-configures `aws-dev` in `~/.ssh/config` for VS Code Remote-SSH.
+
+### 9.3 Deploy All
 
 ```bash
-# Copy app files to EC2
-scp BMO-setup/AWS/ai_server.py BMO-setup/AWS/requirements.txt \
-    ubuntu@<ELASTIC_IP>:/opt/ai-server/app/
-
-# Copy Modelfile
-scp BMO-setup/AWS/Modelfile ubuntu@<ELASTIC_IP>:/opt/ai-server/app/
-
-# SSH in and restart
-ssh ubuntu@<ELASTIC_IP>
-sudo -s
-source /opt/ai-server/venv/bin/activate
-pip install -r /opt/ai-server/app/requirements.txt
-ollama create bmo -f /opt/ai-server/app/Modelfile
-systemctl restart ai-server
+bash bmo.sh deploy all   # Deploys to Pi first, then AWS
 ```
+
+### 9.4 Cleanup (`bmo.sh cleanup`)
+
+To uninstall BMO from Pi, AWS, or both:
+
+```bash
+bash bmo.sh cleanup pi           # Remove from Pi only
+bash bmo.sh cleanup aws          # Remove from AWS only
+bash bmo.sh cleanup all          # Remove from both
+bash bmo.sh cleanup all --force  # Skip confirmation prompts
+```
+
+Prompts before each destructive action. Preserves EBS volume and Elastic IP by default.
+
+### 9.5 Script Inventory
+
+| Script | Run From | Purpose |
+|--------|----------|---------|
+| `.env.template` | -- | Copy to `.env`, fill in your values |
+| `bmo.sh` | Windows | Single entry point for all operations |
+| `lib.sh` | -- | Shared helpers (sourced by bmo.sh) |
+| `pi-setup.sh` | Pi | One-time Pi OS/software setup (run by `bmo.sh setup pi`) |
+| `aws-setup.sh` | EC2 | One-time GPU server OS/software setup (runs as UserData) |
+| `pi/post-setup-auth.sh` | Pi | Interactive auth (run by `bmo.sh auth`) |
 
 ### 9.4 Full-Stack Verification Checklist
 
@@ -1593,9 +1673,7 @@ sudo apt update && sudo apt upgrade -y
 
 ```bash
 # From Windows PC
-bash deploy.sh <PI_IP> patrick
-# Then on Pi:
-sudo systemctl restart bmo
+bash bmo.sh deploy pi  # Copies files, installs deps, restarts service
 ```
 
 **Python packages:**
@@ -1659,7 +1737,7 @@ In `~/bmo/data/settings.json`:
 
 ### 12.1 GPU Server Unreachable
 
-**Symptoms**: Agent logs `[agent] GPU server unreachable -- using local fallback`. All AI responses come from local Gemma3:4b (slower, lower quality).
+**Symptoms**: Agent logs `[agent] GPU server unreachable -- using local fallback`. All AI responses come from local llama3.2:3b (slower, lower quality).
 
 ```bash
 # Check health endpoint
@@ -1680,7 +1758,7 @@ sudo systemctl restart ollama && sleep 10 && sudo systemctl restart ai-server
 
 ### 12.2 Local Fallback Quality Issues
 
-**Expected**: Gemma3:4b (4B params) will produce shorter, less coherent responses than Llama 3.1 70B. Piper TTS sounds generic vs Fish Speech voice clone.
+**Expected**: llama3.2:3b (4B params) will produce shorter, less coherent responses than Llama 3.1 70B. Piper TTS sounds generic vs Fish Speech voice clone.
 
 ```bash
 # Verify correct model

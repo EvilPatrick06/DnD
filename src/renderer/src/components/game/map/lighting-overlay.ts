@@ -24,6 +24,8 @@ import type { GameMap, MapToken } from '../../../types/map'
 export interface LightingConfig {
   ambientLight: 'bright' | 'dim' | 'darkness'
   darkvisionRange?: number // in grid cells (e.g., 12 for 60ft at 5ft/cell)
+  /** Per-token darkvision ranges in grid cells (for multi-viewer party vision) */
+  tokenDarkvisionRanges?: Map<string, number>
 }
 
 // ─── Draw lighting overlay ────────────────────────────────────
@@ -33,7 +35,7 @@ export interface LightingConfig {
  *
  * @param gfx          PixiJS Graphics to draw on
  * @param map          The current game map
- * @param viewerToken  The player's token (null for DM view)
+ * @param viewerTokens Player tokens for shared party vision (empty for DM view)
  * @param lightSources Active light sources on the map
  * @param config       Ambient light and darkvision config
  * @param isHost       Whether the viewer is DM
@@ -41,7 +43,7 @@ export interface LightingConfig {
 export function drawLightingOverlay(
   gfx: Graphics,
   map: GameMap,
-  viewerToken: MapToken | null,
+  viewerTokens: MapToken[],
   lightSources: LightSource[],
   config: LightingConfig,
   isHost: boolean
@@ -75,12 +77,12 @@ export function drawLightingOverlay(
   }
 
   // Player view: full darkness mask with visibility cutouts
-  if (!viewerToken) return
+  if (viewerTokens.length === 0) return
 
   drawPlayerView(
     gfx,
     segments,
-    viewerToken,
+    viewerTokens,
     lightSources,
     config,
     pixelWidth,
@@ -139,7 +141,7 @@ function drawDMPreview(
 function drawPlayerView(
   gfx: Graphics,
   segments: Segment[],
-  viewerToken: MapToken,
+  viewerTokens: MapToken[],
   lightSources: LightSource[],
   config: LightingConfig,
   width: number,
@@ -148,15 +150,6 @@ function drawPlayerView(
   offsetX: number,
   offsetY: number
 ): void {
-  // Player's position (center of token)
-  const playerOrigin: Point = {
-    x: (viewerToken.gridX + viewerToken.sizeX / 2) * cellSize,
-    y: (viewerToken.gridY + viewerToken.sizeY / 2) * cellSize
-  }
-
-  // Compute player's base visibility (line of sight through walls)
-  const visibility = computeVisibility(playerOrigin, segments, { width, height })
-
   // Determine darkness alpha based on ambient light
   const darknessAlpha = config.ambientLight === 'darkness' ? 0.85 : config.ambientLight === 'dim' ? 0.5 : 0.2
 
@@ -164,25 +157,38 @@ function drawPlayerView(
   gfx.rect(offsetX, offsetY, width, height)
   gfx.fill({ color: 0x000000, alpha: darknessAlpha })
 
-  // Cut out the visibility polygon (what the player can see)
-  if (visibility.points.length >= 3) {
-    gfx.beginPath()
-    const first = visibility.points[0]
-    gfx.moveTo(first.x + offsetX, first.y + offsetY)
-    for (let i = 1; i < visibility.points.length; i++) {
-      gfx.lineTo(visibility.points[i].x + offsetX, visibility.points[i].y + offsetY)
+  // Cut out visibility polygon for each player token (shared party vision)
+  for (const token of viewerTokens) {
+    const origin: Point = {
+      x: (token.gridX + token.sizeX / 2) * cellSize,
+      y: (token.gridY + token.sizeY / 2) * cellSize
     }
-    gfx.closePath()
-    gfx.cut()
+    const visibility = computeVisibility(origin, segments, { width, height })
+
+    if (visibility.points.length >= 3) {
+      gfx.beginPath()
+      const first = visibility.points[0]
+      gfx.moveTo(first.x + offsetX, first.y + offsetY)
+      for (let i = 1; i < visibility.points.length; i++) {
+        gfx.lineTo(visibility.points[i].x + offsetX, visibility.points[i].y + offsetY)
+      }
+      gfx.closePath()
+      gfx.cut()
+    }
   }
 
-  // If player has darkvision, apply dim-light treatment within range
-  if (config.darkvisionRange && config.darkvisionRange > 0) {
-    const dvRadius = config.darkvisionRange * cellSize
-    // In darkvision range, darkness appears as dim light
-    // Draw a slightly lighter circle for darkvision area
-    gfx.circle(playerOrigin.x + offsetX, playerOrigin.y + offsetY, dvRadius)
-    gfx.fill({ color: 0x000000, alpha: -0.2 }) // negative = lighten (won't work directly, use a cutout)
+  // Darkvision cutouts for each token with darkvision
+  for (const token of viewerTokens) {
+    const dvRange = config.tokenDarkvisionRanges?.get(token.id) ?? (config.darkvisionRange || 0)
+    if (dvRange > 0) {
+      const origin: Point = {
+        x: (token.gridX + token.sizeX / 2) * cellSize,
+        y: (token.gridY + token.sizeY / 2) * cellSize
+      }
+      const dvRadius = dvRange * cellSize
+      gfx.circle(origin.x + offsetX, origin.y + offsetY, dvRadius)
+      gfx.cut()
+    }
   }
 
   // Compute lit areas from light sources

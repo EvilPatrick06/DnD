@@ -2,8 +2,12 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { DiceOverlay } from './components/game/dice3d'
 import { ErrorBoundary, ShortcutsOverlay, Spinner, ToastContainer } from './components/ui'
+import ColorblindFilters from './components/ui/ColorblindFilters'
+import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
+import { applyColorblindFilter } from './services/theme-manager'
+import { useAccessibilityStore } from './stores/use-accessibility-store'
 import { logger } from './utils/logger'
 
 const ViewCharactersPage = lazy(() => import('./pages/ViewCharactersPage'))
@@ -24,6 +28,18 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
 function App(): JSX.Element {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const uiScale = useAccessibilityStore((s) => s.uiScale)
+  const colorblindMode = useAccessibilityStore((s) => s.colorblindMode)
+
+  // Apply UI scale to root font-size (rem-based Tailwind scales with this)
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${uiScale}%`
+  }, [uiScale])
+
+  // Apply colorblind filter
+  useEffect(() => {
+    applyColorblindFilter(colorblindMode)
+  }, [colorblindMode])
 
   const handleGlobalKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -63,6 +79,8 @@ function App(): JSX.Element {
 
   return (
     <div className="relative min-h-screen bg-gray-950 text-gray-100">
+      <ColorblindFilters />
+      <ScreenReaderAnnouncer />
       <DiceOverlay />
       <ToastContainer />
       <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
@@ -152,10 +170,38 @@ function App(): JSX.Element {
                 </ErrorBoundary>
               }
             />
-            <Route path="/library" element={<LibraryPage />} />
-            <Route path="/bastions" element={<BastionPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route
+              path="/library"
+              element={
+                <ErrorBoundary>
+                  <LibraryPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/bastions"
+              element={
+                <ErrorBoundary>
+                  <BastionPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ErrorBoundary>
+                  <CalendarPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ErrorBoundary>
+                  <SettingsPage />
+                </ErrorBoundary>
+              }
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

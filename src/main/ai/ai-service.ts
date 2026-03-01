@@ -4,6 +4,8 @@ import { app, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { logToFile } from '../log'
 import { saveConversation } from '../storage/ai-conversation-storage'
+import { parseRuleCitations, stripRuleCitations } from './ai-response-parser'
+import type { StreamHandlerDeps } from './ai-stream-handler'
 import { buildChunkIndex, loadChunkIndex } from './chunk-builder'
 import { buildContext, setSearchEngine } from './context-builder'
 import { ConversationManager } from './conversation-manager'
@@ -25,10 +27,11 @@ import {
   ollamaStreamChat,
   setOllamaUrl
 } from './ollama-client'
+import { OLLAMA_BASE_URL } from './ollama-manager'
 import { SearchEngine } from './search-engine'
 import { applyMutations, describeChange, isNegativeChange, parseStatChanges, stripStatChanges } from './stat-mutations'
 import { cleanNarrativeText, hasViolations } from './tone-validator'
-import type { AiChatRequest, AiConfig, DmActionData, ProviderStatus, StatChange } from './types'
+import type { AiChatRequest, AiConfig, DmActionData, ProviderStatus, RuleCitation, StatChange } from './types'
 import { formatSearchResults, hasWebSearchTag, parseWebSearch, performWebSearch, stripWebSearch } from './web-search'
 
 // Per-campaign conversation managers
@@ -113,11 +116,20 @@ let currentConfig: {
   ollamaUrl: string
 } = {
   ollamaModel: 'llama3.1',
-  ollamaUrl: 'http://localhost:11434'
+  ollamaUrl: OLLAMA_BASE_URL
 }
 
 let searchEngine: SearchEngine | null = null
 let streamCounter = 0
+
+/** Build stream handler dependencies for the current config. */
+function getStreamDeps(): StreamHandlerDeps {
+  return {
+    activeStreams,
+    ollamaModel: currentConfig.ollamaModel,
+    streamWithRetry
+  }
+}
 
 function getConfigPath(): string {
   return join(app.getPath('userData'), 'ai-config.json')
@@ -128,7 +140,7 @@ function getConfigPath(): string {
 export function configure(config: AiConfig): void {
   currentConfig = {
     ollamaModel: config.ollamaModel || 'llama3.1',
-    ollamaUrl: config.ollamaUrl || 'http://localhost:11434'
+    ollamaUrl: config.ollamaUrl || OLLAMA_BASE_URL
   }
 
   setOllamaUrl(currentConfig.ollamaUrl)
@@ -152,7 +164,7 @@ export function getConfig(): AiConfig {
       const saved = JSON.parse(readFileSync(configPath, 'utf-8'))
       currentConfig = {
         ollamaModel: saved.ollamaModel || 'llama3.1',
-        ollamaUrl: saved.ollamaUrl || 'http://localhost:11434'
+        ollamaUrl: saved.ollamaUrl || OLLAMA_BASE_URL
       }
     } catch {
       // Use defaults
@@ -242,6 +254,7 @@ export interface StreamResult {
     displayText: string
     statChanges: StatChange[]
     dmActions: DmActionData[]
+    ruleCitations: RuleCitation[]
   }>
 }
 
@@ -303,7 +316,13 @@ function sendWebSearchStatus(
 export function startChat(
   request: AiChatRequest,
   onChunk: (text: string) => void,
-  onDone: (fullText: string, displayText: string, statChanges: StatChange[], dmActions: DmActionData[]) => void,
+  onDone: (
+    fullText: string,
+    displayText: string,
+    statChanges: StatChange[],
+    dmActions: DmActionData[],
+    ruleCitations: RuleCitation[]
+  ) => void,
   onError: (error: string) => void
 ): string {
   const streamId = `stream-${++streamCounter}`
@@ -383,12 +402,19 @@ async function handleStreamCompletion(
   streamId: string,
   abortController: AbortController,
   onChunk: (text: string) => void,
-  onDone: (fullText: string, displayText: string, statChanges: StatChange[], dmActions: DmActionData[]) => void,
+  onDone: (
+    fullText: string,
+    displayText: string,
+    statChanges: StatChange[],
+    dmActions: DmActionData[],
+    ruleCitations: RuleCitation[]
+  ) => void,
   onError: (error: string) => void,
-  fileReadDepth: number
+  fileReadDepth: number,
+  deps: StreamHandlerDeps = getStreamDeps()
 ): Promise<void> {
   const restreamConversation = async (): Promise<void> => {
-    activeStreams.set(streamId, abortController)
+    deps.activeStreams.set(streamId, abortController)
     let nextFullText = ''
     const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
 
@@ -399,7 +425,7 @@ async function handleStreamCompletion(
       },
       onDone: (text: string) => {
         nextFullText = text
-        activeStreams.delete(streamId)
+        deps.activeStreams.delete(streamId)
         handleStreamCompletion(
           nextFullText,
           request,
@@ -409,22 +435,23 @@ async function handleStreamCompletion(
           onChunk,
           onDone,
           onError,
-          fileReadDepth + 1
+          fileReadDepth + 1,
+          deps
         )
       },
       onError: (error: Error) => {
         clearPendingWebSearchApproval(streamId, false)
-        activeStreams.delete(streamId)
+        deps.activeStreams.delete(streamId)
         onError(error.message)
       }
     }
 
-    await streamWithRetry(
-      (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, currentConfig.ollamaModel, signal),
+    await deps.streamWithRetry(
+      (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, deps.ollamaModel, signal),
       abortController,
       (errMsg) => {
         clearPendingWebSearchApproval(streamId, false)
-        activeStreams.delete(streamId)
+        deps.activeStreams.delete(streamId)
         onError(errMsg)
       }
     )
@@ -497,7 +524,8 @@ async function handleStreamCompletion(
 
     const statChanges = parseStatChanges(cleaned)
     const dmActions = parseDmActions(cleaned)
-    const displayText = stripDmActions(stripStatChanges(cleaned))
+    const ruleCitations = parseRuleCitations(cleaned)
+    const displayText = stripRuleCitations(stripDmActions(stripStatChanges(cleaned)))
 
     conv.addMessage('assistant', displayText)
 
@@ -514,11 +542,11 @@ async function handleStreamCompletion(
       // Non-fatal
     }
 
-    onDone(cleaned, displayText, statChanges, dmActions)
+    onDone(cleaned, displayText, statChanges, dmActions, ruleCitations)
   } catch (err) {
     logToFile('ERROR', '[AI] Error parsing AI response, delivering raw text:', String(err))
     conv.addMessage('assistant', fullText)
-    onDone(fullText, fullText, [], [])
+    onDone(fullText, fullText, [], [], [])
   }
 }
 
@@ -561,7 +589,7 @@ export function prepareScene(campaignId: string, characterIds: string[]): string
   const streamId = startChat(
     request,
     () => {}, // onChunk — no renderer listener during lobby prep
-    (_fullText, _displayText, _statChanges, _dmActions) => {
+    (_fullText, _displayText, _statChanges, _dmActions, _ruleCitations) => {
       scenePrepStatus.set(campaignId, { status: 'ready', streamId: null })
     },
     (_error) => {

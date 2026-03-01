@@ -56,6 +56,8 @@ const api = {
   // File I/O
   readFile: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_READ, path),
   writeFile: (path: string, content: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_WRITE, path, content),
+  writeFileBinary: (path: string, buffer: ArrayBuffer) =>
+    ipcRenderer.invoke(IPC_CHANNELS.FS_WRITE_BINARY, path, buffer),
 
   // Window controls
   toggleFullscreen: () => ipcRenderer.invoke(IPC_CHANNELS.TOGGLE_FULLSCREEN),
@@ -96,6 +98,24 @@ const api = {
     getTokenBudget: () => ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET),
     previewTokenBudget: (campaignId: string, characterIds: string[]) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW, campaignId, characterIds),
+    // NPC relationship tracking
+    logNpcInteraction: (campaignId: string, npcName: string, summary: string, attitudeAfter: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_LOG_NPC_INTERACTION, campaignId, npcName, summary, attitudeAfter),
+    setNpcRelationship: (
+      campaignId: string,
+      npcName: string,
+      targetNpcName: string,
+      relationship: string,
+      disposition: string
+    ) =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.AI_SET_NPC_RELATIONSHIP,
+        campaignId,
+        npcName,
+        targetNpcName,
+        relationship,
+        disposition
+      ),
     // Memory files
     listMemoryFiles: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_MEMORY_FILES, campaignId),
     readMemoryFile: (campaignId: string, fileName: string) =>
@@ -112,6 +132,7 @@ const api = {
         displayText: string
         statChanges: unknown[]
         dmActions: unknown[]
+        ruleCitations?: Array<{ source: string; rule: string; text: string }>
       }) => void
     ) => {
       ipcRenderer.on(IPC_CHANNELS.AI_STREAM_DONE, (_e, data) => cb(data))
@@ -179,13 +200,157 @@ const api = {
   audioPickFile: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_PICK_FILE),
 
   // App info
-  getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_VERSION)
+  getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_VERSION),
+
+  // Game data
+  game: {
+    loadJson: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, path.replace(/^\.\//, '')),
+
+    // Character data
+    loadSpecies: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/species.json'),
+    loadSpeciesTraits: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/species-traits.json'),
+    loadClasses: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/classes.json'),
+    loadBackgrounds: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/backgrounds.json'),
+    loadClassFeatures: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/class-features.json'),
+    loadFeats: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/feats.json'),
+    loadSubclasses: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/subclasses.json'),
+    loadStartingEquipment: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/starting-equipment.json'),
+    loadSpeciesSpells: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/species-spells.json'),
+    loadAbilityScoreConfig: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/ability-score-config.json'),
+    loadPresetIcons: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/preset-icons.json'),
+    loadLanguageD12Table: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/character/language-d12-table.json'),
+
+    // Spell data
+    loadSpells: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/spells/spells.json'),
+
+    // Equipment data
+    loadEquipment: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/equipment.json'),
+    loadLightSources: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/light-sources.json'),
+    loadMagicItems: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/magic-items.json'),
+    loadMounts: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/mounts.json'),
+    loadSentientItems: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/sentient-items.json'),
+    loadTrinkets: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/trinkets.json'),
+    loadVariantItems: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/variant-items.json'),
+    loadWearableItems: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/wearable-items.json'),
+    loadCurrencyConfig: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/equipment/currency-config.json'),
+
+    // Creature data
+    loadMonsters: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/monsters.json'),
+    loadNpcs: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/npcs.json'),
+    loadCreatures: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/creatures.json'),
+    loadCreatureTypes: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/creature-types.json'),
+    loadNpcNames: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/generation-tables/npc-names.json'),
+    loadNpcAppearance: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/generation-tables/npc-appearance.json'),
+    loadNpcMannerisms: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/generation-tables/npc-mannerisms.json'),
+    loadAlignmentDescriptions: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/generation-tables/alignment-descriptions.json'),
+    loadPersonalityTables: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/dm/npcs/generation-tables/personality-tables.json'),
+
+    // Encounter data
+    loadChaseTables: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/encounters/chase-tables.json'),
+    loadEncounterBudgets: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/encounters/encounter-budgets.json'),
+    loadEncounterPresets: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/encounters/encounter-presets.json'),
+    loadRandomTables: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/encounters/random-tables.json'),
+
+    // Hazard data
+    loadConditions: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/conditions.json'),
+    loadCurses: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/curses.json'),
+    loadDiseases: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/diseases.json'),
+    loadEnvironmentalEffects: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/environmental-effects.json'),
+    loadHazards: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/hazards.json'),
+    loadPoisons: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/poisons.json'),
+    loadTraps: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/traps.json'),
+    loadSupernaturalGifts: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/hazards/supernatural-gifts.json'),
+
+    // Bastion data
+    loadBastionEvents: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/bastions/bastion-events.json'),
+    loadBastionFacilities: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/bastions/bastion-facilities.json'),
+
+    // World data
+    loadCalendarPresets: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/calendar-presets.json'),
+    loadCraftingTools: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/crafting.json'),
+    loadDowntime: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/downtime.json'),
+    loadSettlements: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/settlements.json'),
+    loadSiegeEquipment: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/siege-equipment.json'),
+    loadTreasureTables: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/treasure-tables.json'),
+    loadWeatherGeneration: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/weather-generation.json'),
+    loadBuiltInMaps: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/built-in-maps.json'),
+    loadSessionZeroConfig: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/session-zero-config.json'),
+    loadAdventureSeeds: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/world/adventure-seeds.json'),
+
+    // Mechanics data
+    loadEffectDefinitions: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/effect-definitions.json'),
+    loadFightingStyles: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/fighting-styles.json'),
+    loadLanguages: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/languages.json'),
+    loadSkills: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/skills.json'),
+    loadSpellSlots: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/spell-slots.json'),
+    loadWeaponMastery: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/weapon-mastery.json'),
+    loadXpThresholds: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/xp-thresholds.json'),
+    loadClassResources: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/class-resources.json'),
+    loadSpeciesResources: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/species-resources.json'),
+    loadDiceTypes: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/dice-types.json'),
+    loadLightingTravel: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/mechanics/lighting-travel.json'),
+
+    // Audio data (outside 5e/)
+    loadSoundEvents: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/audio/sound-events.json'),
+    loadAmbientTracks: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/audio/ambient-tracks.json'),
+
+    // UI data (outside 5e/)
+    loadKeyboardShortcuts: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/keyboard-shortcuts.json'),
+    loadThemes: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/themes.json'),
+    loadDiceColors: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/dice-colors.json'),
+    loadDmTabs: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/dm-tabs.json'),
+    loadNotificationTemplates: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/notification-templates.json'),
+    loadRarityOptions: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/ui/rarity-options.json'),
+
+    // AI data
+    loadModeration: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/ai/moderation.json')
+  },
+
+  // Plugins
+  plugins: {
+    scan: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_SCAN),
+    enable: (pluginId: string) => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_ENABLE, pluginId),
+    disable: (pluginId: string) => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_DISABLE, pluginId),
+    loadContent: (pluginId: string, manifest: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_LOAD_CONTENT, pluginId, manifest),
+    getEnabled: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_GET_ENABLED),
+    install: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_INSTALL),
+    uninstall: (pluginId: string) => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_UNINSTALL, pluginId),
+    storageGet: (pluginId: string, key: string) => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_STORAGE_GET, pluginId, key),
+    storageSet: (pluginId: string, key: string, value: unknown) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_STORAGE_SET, pluginId, key, value),
+    storageDelete: (pluginId: string, key: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_STORAGE_DELETE, pluginId, key)
+  }
 }
 
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
-  } catch (_error) {
+  } catch {
     /* console suppressed in preload */
   }
 } else {

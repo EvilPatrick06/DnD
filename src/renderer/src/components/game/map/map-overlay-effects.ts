@@ -1,6 +1,7 @@
 import type { Application, Graphics } from 'pixi.js'
 import { useEffect } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
+import { recomputeVision } from '../../../services/map/vision-computation'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap } from '../../../types/map'
@@ -80,11 +81,20 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
   }, [initialized, map?.grid, map?.width, map?.height, refs])
 
   // Draw fog of war
+  const partyVisionCells = useGameStore((s) => s.partyVisionCells)
+
   useEffect(() => {
     if (!initialized || !refs.fogGraphicsRef.current || !map) return
     refs.fogGraphicsRef.current.alpha = isHost ? 0.3 : 1
-    drawFogOfWar(refs.fogGraphicsRef.current, map.fogOfWar, map.grid, map.width, map.height)
-  }, [initialized, map?.fogOfWar, map?.grid, map?.width, map?.height, isHost, map, refs])
+    drawFogOfWar(
+      refs.fogGraphicsRef.current,
+      map.fogOfWar,
+      map.grid,
+      map.width,
+      map.height,
+      map.fogOfWar.dynamicFogEnabled ? partyVisionCells : undefined
+    )
+  }, [initialized, map?.fogOfWar, map?.grid, map?.width, map?.height, isHost, map, refs, partyVisionCells])
 
   // Draw walls (DM only)
   useEffect(() => {
@@ -121,12 +131,18 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
       }
     })
 
-    const viewerToken = !isHost ? (tokens.find((t) => t.entityType === 'player') ?? null) : null
+    const viewerTokens = !isHost ? tokens.filter((t) => t.entityType === 'player') : []
+    // Build per-token darkvision ranges (in grid cells: feet / 5)
+    const tokenDarkvisionRanges = new Map<string, number>()
+    for (const t of viewerTokens) {
+      const range = t.darkvisionRange ?? (t.darkvision ? 60 : 0)
+      if (range > 0) tokenDarkvisionRanges.set(t.id, Math.ceil(range / 5))
+    }
     const config: LightingConfig = {
       ambientLight,
-      darkvisionRange: viewerToken?.darkvision ? 12 : undefined
+      tokenDarkvisionRanges
     }
-    drawLightingOverlay(refs.lightingGraphicsRef.current, map, viewerToken, lightSources, config, isHost)
+    drawLightingOverlay(refs.lightingGraphicsRef.current, map, viewerTokens, lightSources, config, isHost)
   }, [initialized, map, isHost, refs])
 
   // Draw terrain overlay
@@ -191,6 +207,15 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     turnState,
     refs
   ])
+
+  // Initial vision computation when dynamic fog is enabled or map/tokens change
+  useEffect(() => {
+    if (!initialized || !map || !isHost) return
+    if (!map.fogOfWar.dynamicFogEnabled) return
+    const { visibleCells } = recomputeVision(map)
+    useGameStore.getState().setPartyVisionCells(visibleCells)
+    useGameStore.getState().addExploredCells(map.id, visibleCells)
+  }, [initialized, map?.fogOfWar.dynamicFogEnabled, map?.tokens, map?.wallSegments, map?.id, isHost, map])
 
   // Weather overlay
   const weatherOverride = useGameStore((s) => s.weatherOverride)

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import {
   computeSpellcastingInfo,
   FULL_CASTERS_5E,
   getCantripsKnown,
+  getItemGrantedSpells,
   getPreparedSpellMax,
   HALF_CASTERS_5E,
   isMulticlassSpellcaster,
@@ -10,6 +11,8 @@ import {
 } from '../../../services/character/spell-data'
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useGameStore } from '../../../stores/use-game-store'
+import { useLobbyStore } from '../../../stores/use-lobby-store'
+import { useNetworkStore } from '../../../stores/use-network-store'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
 import type { SpellEntry } from '../../../types/character-common'
@@ -17,6 +20,9 @@ import { abilityModifier } from '../../../types/character-common'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 import SpellList5e from './SpellList5e'
 import SpellSlotTracker5e from './SpellSlotTracker5e'
+
+const MulticlassAdvisor = lazy(() => import('./MulticlassAdvisor'))
+const SpellPrepOptimizer = lazy(() => import('./SpellPrepOptimizer'))
 
 interface SpellcastingSection5eProps {
   character: Character5e
@@ -31,6 +37,9 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
   const proficiencyBonus = Math.floor((character.level - 1) / 4) + 2
   const [ritualMessage, setRitualMessage] = useState<string | null>(null)
   const [concentrationConfirm, setConcentrationConfirm] = useState<SpellEntry | null>(null)
+  const [pendingCastSlot, setPendingCastSlot] = useState<number | null>(null)
+  const [showMulticlassAdvisor, setShowMulticlassAdvisor] = useState(false)
+  const [showSpellPrepOptimizer, setShowSpellPrepOptimizer] = useState(false)
 
   const turnState = useGameStore((s) => s.getTurnState(character.id))
   const isConcentrating = !!turnState?.concentratingSpell
@@ -61,9 +70,18 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
     return <></>
   }
 
+  // Merge item-granted spells
+  const itemSpells = getItemGrantedSpells(character.magicItems ?? [], knownSpells)
+  const allSpells = [...knownSpells]
+  for (const iSpell of itemSpells) {
+    if (!allSpells.some((s) => s.name === iSpell.name)) {
+      allSpells.push(iSpell)
+    }
+  }
+
   // Group spells by level
   const spellsByLevel = new Map<number, SpellEntry[]>()
-  for (const spell of knownSpells) {
+  for (const spell of allSpells) {
     const group = spellsByLevel.get(spell.level) ?? []
     group.push(spell)
     spellsByLevel.set(spell.level, group)
@@ -113,16 +131,86 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
   function handleCastRitual(spell: SpellEntry): void {
     setRitualMessage(`Casting ${spell.name} as a ritual (10 minutes, no slot used).`)
     setTimeout(() => setRitualMessage(null), 4000)
+
+    const lobby = useLobbyStore.getState()
+    const localPeerId = useNetworkStore.getState().localPeerId
+    const localPlayer = lobby.players.find((p) => p.peerId === localPeerId)
+    lobby.addChatMessage({
+      id: `ritual-${Date.now()}`,
+      senderId: localPeerId ?? 'local',
+      senderName: localPlayer?.displayName ?? character.name,
+      content: `${character.name} casts ${spell.name} as a ritual (10 min, no slot used).`,
+      timestamp: Date.now(),
+      isSystem: true
+    })
   }
 
   function handleConcentrationWarning(spell: SpellEntry): void {
     setConcentrationConfirm(spell)
   }
 
+  function deductSlot(slotLevel: number): void {
+    const latest = (useCharacterStore.getState().characters.find((c) => c.id === character.id) ||
+      character) as Character5e
+    const currentSlots = { ...latest.spellSlotLevels }
+    const slot = currentSlots[slotLevel]
+    if (slot && slot.current > 0) {
+      currentSlots[slotLevel] = { ...slot, current: slot.current - 1 }
+    }
+    const updated = { ...latest, spellSlotLevels: currentSlots, updatedAt: new Date().toISOString() } as Character
+    useCharacterStore.getState().saveCharacter(updated)
+  }
+
+  function broadcastCast(spell: SpellEntry, slotLevel: number): void {
+    const lobby = useLobbyStore.getState()
+    const localPeerId = useNetworkStore.getState().localPeerId
+    const localPlayer = lobby.players.find((p) => p.peerId === localPeerId)
+    const isUpcast = slotLevel > spell.level
+    let content = `${character.name} casts ${spell.name} (Level ${slotLevel} slot)${isUpcast ? ' [Upcast]' : ''}.`
+    if (isUpcast && spell.higherLevels) {
+      content += ` At Higher Levels: ${spell.higherLevels}`
+    }
+    lobby.addChatMessage({
+      id: `cast-${Date.now()}`,
+      senderId: localPeerId ?? 'local',
+      senderName: localPlayer?.displayName ?? character.name,
+      content,
+      timestamp: Date.now(),
+      isSystem: true
+    })
+  }
+
+  function handleCastSpell(spell: SpellEntry, slotLevel: number): void {
+    if (readonly) return
+
+    // If concentration spell and already concentrating, prompt for switch
+    if (spell.concentration && isConcentrating) {
+      setPendingCastSlot(slotLevel)
+      setConcentrationConfirm(spell)
+      return
+    }
+
+    deductSlot(slotLevel)
+
+    if (spell.concentration) {
+      useGameStore.getState().setConcentrating(character.id, spell.name)
+    }
+
+    broadcastCast(spell, slotLevel)
+  }
+
   function confirmConcentrationSwitch(): void {
     if (!concentrationConfirm) return
+
+    // If there's a pending slot, deduct it and broadcast
+    if (pendingCastSlot != null) {
+      deductSlot(pendingCastSlot)
+      broadcastCast(concentrationConfirm, pendingCastSlot)
+    }
+
     useGameStore.getState().setConcentrating(character.id, concentrationConfirm.name)
     setConcentrationConfirm(null)
+    setPendingCastSlot(null)
   }
 
   return (
@@ -149,7 +237,10 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
               Yes, Switch
             </button>
             <button
-              onClick={() => setConcentrationConfirm(null)}
+              onClick={() => {
+                setConcentrationConfirm(null)
+                setPendingCastSlot(null)
+              }}
               className="px-2 py-0.5 text-[10px] rounded bg-gray-700 text-gray-300 hover:bg-gray-600 cursor-pointer"
             >
               Cancel
@@ -289,6 +380,26 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
           )
         })()}
 
+      {/* Utility buttons */}
+      <div className="flex gap-2 mb-3">
+        {character.classes.length > 1 && (
+          <button
+            onClick={() => setShowMulticlassAdvisor(true)}
+            className="px-2 py-1 text-[10px] rounded transition-colors cursor-pointer bg-purple-600/30 text-purple-300 hover:bg-purple-600/50"
+          >
+            Multiclass Advisor
+          </button>
+        )}
+        {knownSpells.filter((s) => s.level > 0).length > 0 && (
+          <button
+            onClick={() => setShowSpellPrepOptimizer(true)}
+            className="px-2 py-1 text-[10px] rounded transition-colors cursor-pointer bg-blue-600/30 text-blue-300 hover:bg-blue-600/50"
+          >
+            Optimize Prep
+          </button>
+        )}
+      </div>
+
       {/* Known spells by level */}
       <SpellList5e
         spellsByLevel={spellsByLevel}
@@ -298,9 +409,46 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
         onToggleInnateUse={handleInnateUseClick}
         onCastRitual={handleCastRitual}
         onConcentrationWarning={handleConcentrationWarning}
+        onCastSpell={handleCastSpell}
+        spellSlotLevels={spellSlotLevels}
         proficiencyBonus={proficiencyBonus}
         isConcentrating={isConcentrating}
+        concentratingSpell={turnState?.concentratingSpell}
       />
+
+      {/* Multiclass Advisor modal */}
+      {showMulticlassAdvisor && (
+        <Suspense fallback={null}>
+          <MulticlassAdvisor
+            open={showMulticlassAdvisor}
+            onClose={() => setShowMulticlassAdvisor(false)}
+            abilityScores={character.abilityScores}
+            currentClasses={character.classes.map((c) => c.name.toLowerCase())}
+          />
+        </Suspense>
+      )}
+
+      {/* Spell Prep Optimizer modal */}
+      {showSpellPrepOptimizer && (
+        <Suspense fallback={null}>
+          <SpellPrepOptimizer
+            open={showSpellPrepOptimizer}
+            onClose={() => setShowSpellPrepOptimizer(false)}
+            preparedSpells={knownSpells
+              .filter((s) => s.level > 0 && preparedSpellIds.includes(s.id))
+              .map((s) => ({
+                name: s.name,
+                school: s.school,
+                level: s.level,
+                concentration: s.concentration,
+                ritual: s.ritual
+              }))}
+            knownSpells={knownSpells
+              .filter((s) => s.level > 0)
+              .map((s) => ({ name: s.name, level: s.level, ritual: s.ritual }))}
+          />
+        </Suspense>
+      )}
     </SheetSectionWrapper>
   )
 }

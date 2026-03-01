@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { SidebarEntryStatBlock } from '../../../types/game-state'
+import { CollapsibleSection, NameDescRows } from './StatBlockFormSections'
 
 const SIZE_OPTIONS: SidebarEntryStatBlock['size'][] = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 
@@ -22,106 +23,13 @@ function abilityModifier(score: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`
 }
 
-interface CollapsibleSectionProps {
-  title: string
-  children: React.ReactNode
-  defaultOpen?: boolean
-}
-
-function CollapsibleSection({ title, children, defaultOpen = false }: CollapsibleSectionProps): JSX.Element {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="border border-gray-700/40 rounded">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] font-semibold text-gray-300 hover:text-amber-400 transition-colors cursor-pointer"
-      >
-        <span>{title}</span>
-        <span className="text-gray-500 text-[10px]">{open ? '\u25B2' : '\u25BC'}</span>
-      </button>
-      {open && <div className="px-2 pb-2 space-y-1.5">{children}</div>}
-    </div>
-  )
-}
-
-interface NameDescRowProps {
-  items: Array<{ name: string; description: string; cost?: number }>
-  onChange: (items: Array<{ name: string; description: string; cost?: number }>) => void
-  showCost?: boolean
-}
-
-function NameDescRows({ items, onChange, showCost = false }: NameDescRowProps): JSX.Element {
-  const addRow = (): void => {
-    onChange([...items, { name: '', description: '' }])
-  }
-  const removeRow = (idx: number): void => {
-    onChange(items.filter((_, i) => i !== idx))
-  }
-  const updateRow = (idx: number, field: 'name' | 'description' | 'cost', value: string): void => {
-    const updated = items.map((item, i) => {
-      if (i !== idx) return item
-      if (field === 'cost') {
-        return { ...item, cost: value ? parseInt(value, 10) || undefined : undefined }
-      }
-      return { ...item, [field]: value }
-    })
-    onChange(updated)
-  }
-
-  return (
-    <div className="space-y-1">
-      {items.map((item, idx) => (
-        <div key={idx} className="flex gap-1 items-start">
-          <div className="flex-1 space-y-0.5">
-            <input
-              type="text"
-              value={item.name}
-              onChange={(e) => updateRow(idx, 'name', e.target.value)}
-              className="w-full px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500"
-              placeholder="Name"
-            />
-            <textarea
-              value={item.description}
-              onChange={(e) => updateRow(idx, 'description', e.target.value)}
-              className="w-full px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500 resize-none"
-              rows={2}
-              placeholder="Description"
-            />
-            {showCost && (
-              <input
-                type="number"
-                value={item.cost ?? ''}
-                onChange={(e) => updateRow(idx, 'cost', e.target.value)}
-                className="w-16 px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500"
-                placeholder="Cost"
-                min={1}
-              />
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => removeRow(idx)}
-            className="text-gray-500 hover:text-red-400 text-xs mt-0.5 cursor-pointer shrink-0"
-            title="Remove"
-          >
-            &#10005;
-          </button>
-        </div>
-      ))}
-      <button type="button" onClick={addRow} className="text-[10px] text-gray-500 hover:text-amber-400 cursor-pointer">
-        + Add
-      </button>
-    </div>
-  )
-}
-
 interface StatBlockFormProps {
   statBlock: SidebarEntryStatBlock | undefined
   onChange: (sb: SidebarEntryStatBlock) => void
 }
 
 function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element {
+  const [editing, setEditing] = useState(false)
   const sb = statBlock ?? {}
 
   const update = (partial: Partial<SidebarEntryStatBlock>): void => {
@@ -199,7 +107,7 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
 
   const updateSlot = (level: string, value: string): void => {
     if (!sb.spellcasting) return
-    const slots = { ...(sb.spellcasting.slots ?? {}) }
+    const slots = { ...sb.spellcasting.slots }
     const numVal = parseInt(value, 10)
     if (!value || Number.isNaN(numVal)) {
       delete slots[level]
@@ -211,6 +119,15 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
 
   return (
     <div className="space-y-1.5">
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setEditing((e) => !e)}
+          className="text-[10px] px-2 py-0.5 rounded cursor-pointer bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700"
+        >
+          {editing ? 'Preview' : 'Edit'}
+        </button>
+      </div>
       {/* Identity */}
       <CollapsibleSection title="Identity">
         <div className="grid grid-cols-2 gap-1">

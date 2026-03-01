@@ -75,6 +75,7 @@ interface BanAPI {
 interface FileAPI {
   readFile: (path: string) => Promise<string>
   writeFile: (path: string, content: string) => Promise<void>
+  writeFileBinary: (path: string, buffer: ArrayBuffer) => Promise<void>
 }
 
 // AI DM types for preload bridge
@@ -88,12 +89,19 @@ interface AiDmAction {
   [key: string]: unknown
 }
 
+interface AiRuleCitation {
+  source: string
+  rule: string
+  text: string
+}
+
 interface AiStreamDoneData {
   streamId: string
   fullText: string
   displayText: string
   statChanges: AiStatChange[]
   dmActions: AiDmAction[]
+  ruleCitations?: AiRuleCitation[]
 }
 
 interface AiStreamErrorData {
@@ -140,6 +148,7 @@ interface CuratedModel {
   id: string
   name: string
   vramMB: number
+  contextSize: number
   desc: string
 }
 
@@ -231,6 +240,20 @@ interface AiAPI {
     memory: number
     total: number
   } | null>
+  // NPC relationship tracking
+  logNpcInteraction: (
+    campaignId: string,
+    npcName: string,
+    summary: string,
+    attitudeAfter: string
+  ) => Promise<{ success: boolean }>
+  setNpcRelationship: (
+    campaignId: string,
+    npcName: string,
+    targetNpcName: string,
+    relationship: string,
+    disposition: string
+  ) => Promise<{ success: boolean }>
   // Memory files
   listMemoryFiles: (campaignId: string) => Promise<Array<{ name: string; size: number }>>
   readMemoryFile: (campaignId: string, fileName: string) => Promise<string>
@@ -311,6 +334,140 @@ interface AudioAPI {
   audioPickFile: () => Promise<{ success: boolean; data?: AudioPickResult; error?: string }>
 }
 
+interface GameDataAPI {
+  loadJson: (path: string) => Promise<unknown>
+
+  // Character data
+  loadSpecies: () => Promise<unknown[]>
+  loadSpeciesTraits: () => Promise<Record<string, unknown>>
+  loadClasses: () => Promise<unknown[]>
+  loadBackgrounds: () => Promise<unknown[]>
+  loadClassFeatures: () => Promise<Record<string, unknown>>
+  loadFeats: () => Promise<unknown[]>
+  loadSubclasses: () => Promise<unknown[]>
+  loadStartingEquipment: () => Promise<unknown[]>
+  loadSpeciesSpells: () => Promise<Record<string, unknown>>
+  loadAbilityScoreConfig: () => Promise<Record<string, unknown>>
+  loadPresetIcons: () => Promise<unknown[]>
+  loadLanguageD12Table: () => Promise<unknown[]>
+
+  // Spell data
+  loadSpells: () => Promise<unknown[]>
+
+  // Equipment data
+  loadEquipment: () => Promise<Record<string, unknown>>
+  loadLightSources: () => Promise<Record<string, unknown>>
+  loadMagicItems: () => Promise<unknown[]>
+  loadMounts: () => Promise<Record<string, unknown>>
+  loadSentientItems: () => Promise<Record<string, unknown>>
+  loadTrinkets: () => Promise<unknown[]>
+  loadVariantItems: () => Promise<Record<string, unknown>>
+  loadWearableItems: () => Promise<unknown[]>
+  loadCurrencyConfig: () => Promise<unknown[]>
+
+  // Creature data
+  loadMonsters: () => Promise<unknown[]>
+  loadNpcs: () => Promise<unknown[]>
+  loadCreatures: () => Promise<unknown[]>
+  loadCreatureTypes: () => Promise<Record<string, unknown>>
+  loadNpcNames: () => Promise<Record<string, unknown>>
+  loadNpcAppearance: () => Promise<Record<string, unknown>>
+  loadNpcMannerisms: () => Promise<Record<string, unknown>>
+  loadAlignmentDescriptions: () => Promise<Record<string, unknown>>
+  loadPersonalityTables: () => Promise<Record<string, unknown>>
+
+  // Encounter data
+  loadChaseTables: () => Promise<Record<string, unknown>>
+  loadEncounterBudgets: () => Promise<Record<string, unknown>>
+  loadEncounterPresets: () => Promise<unknown[]>
+  loadRandomTables: () => Promise<Record<string, unknown>>
+
+  // Hazard data
+  loadConditions: () => Promise<unknown[]>
+  loadCurses: () => Promise<unknown[]>
+  loadDiseases: () => Promise<unknown[]>
+  loadEnvironmentalEffects: () => Promise<unknown[]>
+  loadHazards: () => Promise<unknown[]>
+  loadPoisons: () => Promise<unknown[]>
+  loadTraps: () => Promise<unknown[]>
+  loadSupernaturalGifts: () => Promise<unknown[]>
+
+  // Bastion data
+  loadBastionEvents: () => Promise<Record<string, unknown>>
+  loadBastionFacilities: () => Promise<Record<string, unknown>>
+
+  // World data
+  loadCalendarPresets: () => Promise<Record<string, unknown>>
+  loadCraftingTools: () => Promise<unknown[]>
+  loadDowntime: () => Promise<unknown[]>
+  loadSettlements: () => Promise<unknown[]>
+  loadSiegeEquipment: () => Promise<unknown[]>
+  loadTreasureTables: () => Promise<Record<string, unknown>>
+  loadWeatherGeneration: () => Promise<Record<string, unknown>>
+  loadBuiltInMaps: () => Promise<unknown[]>
+  loadSessionZeroConfig: () => Promise<Record<string, unknown>>
+  loadAdventureSeeds: () => Promise<Record<string, unknown>>
+
+  // Mechanics data
+  loadEffectDefinitions: () => Promise<Record<string, unknown>>
+  loadFightingStyles: () => Promise<unknown[]>
+  loadLanguages: () => Promise<unknown[]>
+  loadSkills: () => Promise<unknown[]>
+  loadSpellSlots: () => Promise<Record<string, unknown>>
+  loadWeaponMastery: () => Promise<unknown[]>
+  loadXpThresholds: () => Promise<unknown[]>
+  loadClassResources: () => Promise<Record<string, unknown>>
+  loadSpeciesResources: () => Promise<Record<string, unknown>>
+  loadDiceTypes: () => Promise<unknown[]>
+  loadLightingTravel: () => Promise<Record<string, unknown>>
+
+  // Audio data
+  loadSoundEvents: () => Promise<Record<string, unknown>>
+  loadAmbientTracks: () => Promise<Record<string, unknown>>
+
+  // UI data
+  loadKeyboardShortcuts: () => Promise<unknown[]>
+  loadThemes: () => Promise<Record<string, unknown>>
+  loadDiceColors: () => Promise<Record<string, unknown>>
+  loadDmTabs: () => Promise<unknown[]>
+  loadNotificationTemplates: () => Promise<Record<string, unknown>>
+  loadRarityOptions: () => Promise<unknown[]>
+
+  // AI data
+  loadModeration: () => Promise<Record<string, unknown>>
+}
+
+interface PluginScanResult {
+  success: boolean
+  data?: Array<{
+    id: string
+    manifest: Record<string, unknown>
+    enabled: boolean
+    loaded: boolean
+    error?: string
+  }>
+  error?: string
+}
+
+interface PluginContentResult {
+  success: boolean
+  data?: Record<string, unknown[]>
+  error?: string
+}
+
+interface PluginAPI {
+  scan: () => Promise<PluginScanResult>
+  enable: (pluginId: string) => Promise<{ success: boolean }>
+  disable: (pluginId: string) => Promise<{ success: boolean }>
+  loadContent: (pluginId: string, manifest: Record<string, unknown>) => Promise<PluginContentResult>
+  getEnabled: () => Promise<string[]>
+  install: () => Promise<{ success: boolean; data?: string; error?: string }>
+  uninstall: (pluginId: string) => Promise<{ success: boolean; error?: string }>
+  storageGet: (pluginId: string, key: string) => Promise<unknown>
+  storageSet: (pluginId: string, key: string, value: unknown) => Promise<{ success: boolean }>
+  storageDelete: (pluginId: string, key: string) => Promise<{ success: boolean }>
+}
+
 declare global {
   interface Window {
     api: CharacterAPI &
@@ -327,6 +484,8 @@ declare global {
       AudioAPI & {
         ai: AiAPI
         update: UpdateAPI
+        game: GameDataAPI
+        plugins: PluginAPI
         getVersion: () => Promise<string>
       }
   }

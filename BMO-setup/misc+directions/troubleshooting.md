@@ -6,7 +6,7 @@ Common issues and fixes for the BMO two-system setup (Raspberry Pi + EC2 GPU ser
 
 ## 1. GPU Server Unreachable
 
-**Symptoms**: Agent logs `[agent] GPU server unreachable -- using local fallback`. All AI responses come from the local Gemma3:4b model (slower, lower quality). TTS uses Piper instead of Fish Speech.
+**Symptoms**: Agent logs `[agent] GPU server unreachable -- using local fallback`. All AI responses come from the local llama3.2:3b model (slower, lower quality). TTS uses Piper instead of Fish Speech.
 
 ### Check the health endpoint
 
@@ -90,7 +90,7 @@ If the GPU server will be down for an extended period, the Pi continues operatin
 
 **Symptoms**: Responses are shorter, less coherent, or slower when the GPU server is down. TTS voice sounds generic instead of BMO.
 
-### LLM quality (Gemma3:4b vs Llama 3.1 70B)
+### LLM quality (llama3.2:3b vs Llama 3.1 70B)
 
 This is expected. The local model has 4B parameters vs 70B on the GPU. Mitigations:
 
@@ -100,7 +100,7 @@ This is expected. The local model has 4B parameters vs 70B on the GPU. Mitigatio
   ```bash
   ollama list
   ```
-  You should see `bmo` (based on Gemma3:4b or whichever model was configured).
+  You should see `bmo` (based on llama3.2:3b or whichever model was configured).
 
 ### TTS quality (Piper vs Fish Speech)
 
@@ -452,8 +452,6 @@ ollama create bmo -f ~/bmo/Modelfile
 If the base model is missing:
 ```bash
 # Pi (fallback)
-ollama pull gemma3:4b
-# or
 ollama pull llama3.2:3b
 
 # GPU server
@@ -462,7 +460,7 @@ ollama pull llama3.1:70b-instruct-q4_K_M
 
 ### Out of memory on Pi
 
-The Pi has 8GB RAM. Gemma3:4b needs roughly 3-4GB. If Ollama crashes:
+The Pi has 8GB RAM. llama3.2:3b needs roughly 3-4GB. If Ollama crashes:
 
 ```bash
 sudo journalctl -u ollama --since "10 minutes ago" | grep -i "memory\|oom\|killed"
@@ -471,7 +469,7 @@ sudo journalctl -u ollama --since "10 minutes ago" | grep -i "memory\|oom\|kille
 Mitigations:
 - Reduce `num_ctx` in the agent's `OLLAMA_OPTIONS` (default 8192 on Pi)
 - Close other memory-heavy processes
-- Use a smaller model: `ollama pull gemma3:1b`
+- Use a smaller model: `ollama pull llama3.2:1b`
 
 ### Ollama not starting on GPU server
 
@@ -749,3 +747,29 @@ sudo systemctl restart nginx
 ```bash
 sudo journalctl -u bmo -u peerjs -u cloudflared -u ollama --since "30 minutes ago" --no-pager
 ```
+
+### Automated deployment scripts
+
+If services are broken after an update, re-deploy from Windows:
+
+```bash
+cd BMO-setup
+bash bmo.sh deploy pi    # Re-deploy to Pi (installs deps, restarts services)
+bash bmo.sh deploy aws   # Re-deploy to AWS (uploads files, restarts services)
+bash bmo.sh deploy all   # Re-deploy to both
+```
+
+All commands include retry logic and health checks. Run `bash bmo.sh status` for a quick health check.
+
+### Full uninstall
+
+To cleanly remove BMO from Pi, AWS, or both:
+
+```bash
+bash bmo.sh cleanup pi           # Pi only
+bash bmo.sh cleanup aws          # AWS only
+bash bmo.sh cleanup all          # Both
+bash bmo.sh cleanup all --force  # Skip confirmation prompts
+```
+
+Prompts before each destructive action. Use `--force` to skip prompts.

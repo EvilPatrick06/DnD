@@ -80,6 +80,7 @@ export interface Character5e {
   attunement: Array<{ name: string; description: string }>
   magicItems?: MagicItemEntry5e[]
   bonusFeats?: Array<{ id: string; name: string; description: string }>
+  customFeatures?: CustomFeature[]
   classResources?: import('./character-common').ClassResource[]
   speciesResources?: import('./character-common').ClassResource[]
   languageDescriptions: Record<string, string>
@@ -215,6 +216,15 @@ export interface Feature {
   description: string
 }
 
+export interface CustomFeature {
+  id: string
+  name: string
+  source: string
+  description: string
+  grantedAt: string
+  temporary?: boolean
+}
+
 export type SentientCommunication = 'empathy' | 'speech' | 'telepathy'
 
 export interface SentientItemTraits {
@@ -246,5 +256,11 @@ export interface MagicItemEntry5e {
     rechargeType: 'dawn' | 'long-rest' | 'none'
     rechargeDice?: string
   }
+  grantedSpells?: Array<{
+    spellId: string
+    spellName: string
+    charges?: number
+  }>
   sentient?: SentientItemTraits
+  identified?: boolean
 }

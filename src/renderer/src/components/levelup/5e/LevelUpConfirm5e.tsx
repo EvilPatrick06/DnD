@@ -38,7 +38,7 @@ export function meetsPrerequisites(
 
 export function ClassLevelSelector({
   character,
-  level,
+  level: _level,
   allClasses,
   selectedClassId,
   onSelect

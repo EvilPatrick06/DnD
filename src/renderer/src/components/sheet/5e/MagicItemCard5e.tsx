@@ -39,20 +39,46 @@ export default function MagicItemCard5e({
   setBuyWarning
 }: MagicItemCard5eProps): JSX.Element {
   const i = index
-  const colors = RARITY_COLOR[item.rarity] ?? 'border-gray-600 text-gray-400'
-  const hasEffects = !!getMagicItemEffects(item.name)
+  const isUnidentified = item.identified === false
+  const colors = isUnidentified
+    ? 'border-gray-600 text-gray-400'
+    : (RARITY_COLOR[item.rarity] ?? 'border-gray-600 text-gray-400')
+  const hasEffects = !isUnidentified && !!getMagicItemEffects(item.name)
   const isWeaponType = item.type === 'weapon' || /weapon|\+\d.*weapon/i.test(item.name)
   const isArmorType = item.type === 'armor' || /armor|shield|\+\d.*armor/i.test(item.name)
   const weapons = character.weapons ?? []
   const armors = character.armor ?? []
+
+  // Unidentified items: show masked info to players
+  if (isUnidentified && readonly) {
+    return (
+      <div className={`border rounded px-2 py-1.5 ${colors}`}>
+        <div className="flex items-center justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium truncate italic">Unidentified {item.type || 'Magic'} Item</span>
+              <span className="text-[10px] text-gray-600 shrink-0">???</span>
+            </div>
+            <div className="text-[10px] text-gray-600 mt-0.5">This item has not been identified.</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const displayName = isUnidentified ? item.name : item.name
+  const displayRarity = isUnidentified
+    ? `??? ${RARITY_LABEL[item.rarity] ?? item.rarity}`
+    : (RARITY_LABEL[item.rarity] ?? item.rarity)
 
   return (
     <div className={`border rounded px-2 py-1.5 ${colors}`}>
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">{item.name}</span>
-            <span className="text-[10px] text-gray-500 shrink-0">{RARITY_LABEL[item.rarity] ?? item.rarity}</span>
+            <span className="text-sm font-medium truncate">{displayName}</span>
+            <span className="text-[10px] text-gray-500 shrink-0">{displayRarity}</span>
+            {isUnidentified && <span className="text-[10px] text-yellow-500 shrink-0 italic">Unidentified</span>}
             {item.attunement && (
               <button
                 disabled={readonly}
@@ -162,6 +188,24 @@ export default function MagicItemCard5e({
             title="Remove magic item"
           >
             &#x2715;
+          </button>
+        )}
+        {!readonly && isUnidentified && (
+          <button
+            onClick={() => {
+              const latest = getLatest()
+              if (!latest) return
+              const updated = {
+                ...latest,
+                magicItems: (latest.magicItems ?? []).map((mi, idx) => (idx === i ? { ...mi, identified: true } : mi)),
+                updatedAt: new Date().toISOString()
+              } as Character5e
+              saveAndBroadcast(updated)
+            }}
+            className="text-[10px] text-green-400 hover:text-green-300 cursor-pointer ml-2 shrink-0 border border-green-600 rounded px-1.5 py-0.5"
+            title="Identify this magic item"
+          >
+            Identify
           </button>
         )}
       </div>

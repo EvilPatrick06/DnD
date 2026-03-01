@@ -1,5 +1,26 @@
+import { getPluginCommandRegistry } from '../plugin-system/plugin-registry'
+import {
+  dashCommand,
+  delayactionCommand,
+  disengageCommand,
+  dodgeCommand,
+  grappleCommand,
+  hideCommand,
+  multiattackCommand,
+  reactionCommand,
+  readyactionCommand,
+  searchCommand,
+  shoveCommand,
+  useobjCommand
+} from './action-commands'
+import {
+  aoeDamageCommand,
+  attackCommand,
+  offhandAttackCommand,
+  torchCommand,
+  unarmedAttackCommand
+} from './attack-commands'
 import { commands as conditionShortcutCommands } from './commands-condition-shortcuts'
-
 import { commands as diceCommands } from './commands-dice'
 import { commands as dmAiCommands } from './commands-dm-ai'
 import { commands as dmBastionCommands } from './commands-dm-bastion'
@@ -25,6 +46,25 @@ import { commands as playerSpellCommands } from './commands-player-spells'
 import { commands as playerUtilityCommands } from './commands-player-utility'
 import { commands as socialCommands } from './commands-social'
 import { commands as utilityCommands } from './commands-utility'
+import {
+  centerCommand,
+  darknessCommand,
+  elevateCommand,
+  fogCommand,
+  gridCommand,
+  lightCommand,
+  sunmoonCommand,
+  weatherCommand2,
+  zoomCommand
+} from './map-environment-commands'
+import {
+  moveTokenCommand,
+  summonCommand,
+  tokenCloneCommand,
+  tokenCommand,
+  tokenHideCommand,
+  tokenShowCommand
+} from './map-token-commands'
 import type { ChatCommand, CommandContext, CommandResult, CommandReturn } from './types'
 
 // ─── Full command registry ───────────────────────────────────────
@@ -55,7 +95,43 @@ const allCommands: ChatCommand[] = [
   ...dmCampaignCommands,
   ...socialCommands,
   ...utilityCommands,
-  ...dmSoundCommands
+  ...dmSoundCommands,
+  // Action commands (grapple, shove, dash, dodge, hide, etc.)
+  grappleCommand,
+  shoveCommand,
+  readyactionCommand,
+  delayactionCommand,
+  multiattackCommand,
+  reactionCommand,
+  useobjCommand,
+  dashCommand,
+  disengageCommand,
+  dodgeCommand,
+  hideCommand,
+  searchCommand,
+  // Attack commands (offhand, unarmed, AoE, full attack, torch)
+  offhandAttackCommand,
+  unarmedAttackCommand,
+  aoeDamageCommand,
+  attackCommand,
+  torchCommand,
+  // Map environment commands (fog, light, elevation, weather, grid, zoom)
+  fogCommand,
+  lightCommand,
+  elevateCommand,
+  darknessCommand,
+  weatherCommand2,
+  sunmoonCommand,
+  gridCommand,
+  zoomCommand,
+  centerCommand,
+  // Map token commands (add/remove, summon, clone, hide/show, move)
+  tokenCommand,
+  summonCommand,
+  tokenCloneCommand,
+  tokenHideCommand,
+  tokenShowCommand,
+  moveTokenCommand
 ]
 
 // ─── Normalize command return ────────────────────────────────────
@@ -92,7 +168,25 @@ export function executeCommand(input: string, ctx: CommandContext): CommandResul
   const cmdName = (spaceIdx === -1 ? input.slice(1) : input.slice(1, spaceIdx)).toLowerCase()
   const args = spaceIdx === -1 ? '' : input.slice(spaceIdx + 1)
 
-  const cmd = allCommands.find((c) => c.name === cmdName || c.aliases.includes(cmdName))
+  let cmd: ChatCommand | undefined = allCommands.find((c) => c.name === cmdName || c.aliases.includes(cmdName))
+
+  // Search plugin-registered commands if no built-in match
+  if (!cmd) {
+    const pluginCmds = getPluginCommandRegistry()
+    const pluginCmd = pluginCmds.find((c) => c.name === cmdName || (c.aliases ?? []).includes(cmdName))
+    if (pluginCmd) {
+      cmd = {
+        name: pluginCmd.name,
+        aliases: pluginCmd.aliases ?? [],
+        description: pluginCmd.description,
+        usage: `/${pluginCmd.name}`,
+        category: 'player' as const,
+        dmOnly: pluginCmd.dmOnly ?? false,
+        execute: pluginCmd.execute as ChatCommand['execute']
+      }
+    }
+  }
+
   if (!cmd) return null
 
   if (cmd.dmOnly && !ctx.isDM) {
@@ -111,8 +205,18 @@ export function executeCommand(input: string, ctx: CommandContext): CommandResul
 }
 
 export function getCommands(isDM: boolean): ChatCommand[] {
-  if (isDM) return allCommands
-  return allCommands.filter((c) => !c.dmOnly)
+  const pluginCmds: ChatCommand[] = getPluginCommandRegistry().map((pc) => ({
+    name: pc.name,
+    aliases: pc.aliases ?? [],
+    description: pc.description,
+    usage: `/${pc.name}`,
+    category: 'player' as const,
+    dmOnly: pc.dmOnly ?? false,
+    execute: pc.execute as ChatCommand['execute']
+  }))
+  const combined = [...allCommands, ...pluginCmds]
+  if (isDM) return combined
+  return combined.filter((c) => !c.dmOnly)
 }
 
 export function getFilteredCommands(partial: string, isDM: boolean): ChatCommand[] {

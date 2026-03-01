@@ -438,6 +438,34 @@ export function executeBastionRecruit(action: DmAction): boolean {
   return true
 }
 
+// ── NPC Relationship Tracking ──
+
+export function executeLogNpcInteraction(action: DmAction, gameStore: GameStoreSnapshot): boolean {
+  const npcName = action.npcName as string
+  const summary = action.summary as string
+  const attitudeAfter = action.attitudeAfter as string
+  if (!npcName || !summary || !attitudeAfter) throw new Error('Missing params for log_npc_interaction')
+  const campaignId = gameStore.campaignId
+  if (campaignId) {
+    window.api.ai.logNpcInteraction?.(campaignId, npcName, summary, attitudeAfter)
+  }
+  return true
+}
+
+export function executeSetNpcRelationship(action: DmAction, gameStore: GameStoreSnapshot): boolean {
+  const npcName = action.npcName as string
+  const targetNpcName = action.targetNpcName as string
+  const relationship = action.relationship as string
+  const disposition = action.disposition as string
+  if (!npcName || !targetNpcName || !relationship || !disposition)
+    throw new Error('Missing params for set_npc_relationship')
+  const campaignId = gameStore.campaignId
+  if (campaignId) {
+    window.api.ai.setNpcRelationship?.(campaignId, npcName, targetNpcName, relationship, disposition)
+  }
+  return true
+}
+
 export function executeBastionAddCreature(
   action: DmAction,
   _gameStore: GameStoreSnapshot,

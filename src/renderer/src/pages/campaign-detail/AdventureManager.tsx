@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import AdventureImportWizard from '../../components/campaign/AdventureImportWizard'
 import type { AdventureData } from '../../components/campaign/AdventureWizard'
 import AdventureWizard from '../../components/campaign/AdventureWizard'
 import { Button, Card, Modal } from '../../components/ui'
+import { type AdventureImportResult, exportAdventure } from '../../services/io/adventure-io'
 import type { AdventureEntry, Campaign } from '../../types/campaign'
 
 interface AdventureManagerProps {
@@ -11,6 +13,7 @@ interface AdventureManagerProps {
 
 export default function AdventureManager({ campaign, saveCampaign }: AdventureManagerProps): JSX.Element {
   const [showWizard, setShowWizard] = useState(false)
+  const [showImportWizard, setShowImportWizard] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({
     title: '',
@@ -60,6 +63,24 @@ export default function AdventureManager({ campaign, saveCampaign }: AdventureMa
     })
   }
 
+  const handleExport = async (adv: AdventureEntry): Promise<void> => {
+    const relatedEncounters = campaign.encounters ?? []
+    const relatedNpcs = campaign.npcs ?? []
+    await exportAdventure(adv, relatedEncounters, relatedNpcs)
+  }
+
+  const handleImport = async (result: AdventureImportResult): Promise<void> => {
+    const existingEncounters = campaign.encounters ?? []
+    const existingNpcs = campaign.npcs ?? []
+    await saveCampaign({
+      ...campaign,
+      adventures: [...adventures, result.adventure],
+      encounters: [...existingEncounters, ...result.encounters],
+      npcs: [...existingNpcs, ...result.npcs],
+      updatedAt: new Date().toISOString()
+    })
+  }
+
   return (
     <>
       <Card title={`Adventures (${adventures.length})`}>
@@ -103,6 +124,12 @@ export default function AdventureManager({ campaign, saveCampaign }: AdventureMa
                           Edit
                         </button>
                         <button
+                          onClick={() => handleExport(adv)}
+                          className="text-[10px] text-blue-400 hover:text-blue-300 cursor-pointer"
+                        >
+                          Export
+                        </button>
+                        <button
                           onClick={() => handleDelete(adv.id)}
                           className="text-[10px] text-red-400 hover:text-red-300 cursor-pointer"
                         >
@@ -116,15 +143,30 @@ export default function AdventureManager({ campaign, saveCampaign }: AdventureMa
                 ))}
               </div>
             )}
-            <button
-              onClick={() => setShowWizard(true)}
-              className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
-            >
-              + Create Adventure
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowWizard(true)}
+                className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer"
+              >
+                + Create Adventure
+              </button>
+              <button
+                onClick={() => setShowImportWizard(true)}
+                className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer"
+              >
+                Import Adventure
+              </button>
+            </div>
           </>
         )}
       </Card>
+
+      {/* Adventure Import Wizard */}
+      <AdventureImportWizard
+        open={showImportWizard}
+        onClose={() => setShowImportWizard(false)}
+        onImport={handleImport}
+      />
 
       {/* Adventure Edit Modal */}
       <Modal open={editingId !== null} onClose={() => setEditingId(null)} title="Edit Adventure">

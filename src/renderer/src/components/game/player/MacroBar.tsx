@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useMacroStore } from '../../../stores/use-macro-store'
 import type { Character } from '../../../types/character'
 import { is5eCharacter } from '../../../types/character'
 import { abilityModifier, formatMod } from '../../../types/character-common'
@@ -105,38 +106,49 @@ export default function MacroBar({ character, onRoll }: MacroBarProps): JSX.Elem
     setCustomLabel('')
   }
 
+  const handlePinToHotbar = (macro: MacroButton): void => {
+    const { hotbar, setHotbarSlot } = useMacroStore.getState()
+    // Find first empty slot
+    const emptyIndex = hotbar.indexOf(null)
+    if (emptyIndex === -1) return // all slots full
+    setHotbarSlot(emptyIndex, {
+      id: `pinned-${macro.id}-${Date.now()}`,
+      name: macro.label,
+      command: `/roll ${macro.formula}`,
+      icon: macro.category === 'weapon' ? '\u2694\uFE0F' : undefined,
+      color: macro.color.split(' ')[0] // just the bg class
+    })
+  }
+
+  const renderMacroButton = (macro: MacroButton): JSX.Element => (
+    <div key={macro.id} className="relative group shrink-0">
+      <button
+        onClick={() => onRoll(macro.formula, macro.label)}
+        className={`px-2 py-1 text-[10px] font-medium rounded border transition-colors cursor-pointer ${macro.color}`}
+        title={`Roll ${macro.formula}`}
+      >
+        {macro.label}
+      </button>
+      <button
+        onClick={() => handlePinToHotbar(macro)}
+        className="absolute -top-1.5 -right-1.5 w-4 h-4 text-[8px] rounded-full bg-gray-900 border border-gray-600 text-gray-400 hover:text-amber-400 hover:border-amber-500 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+        title="Pin to hotbar"
+      >
+        +
+      </button>
+    </div>
+  )
+
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 overflow-x-auto">
       {/* Weapon macros */}
-      {macros
-        .filter((m) => m.category === 'weapon')
-        .map((macro) => (
-          <button
-            key={macro.id}
-            onClick={() => onRoll(macro.formula, macro.label)}
-            className={`shrink-0 px-2 py-1 text-[10px] font-medium rounded border transition-colors cursor-pointer ${macro.color}`}
-            title={`Roll ${macro.formula}`}
-          >
-            {macro.label}
-          </button>
-        ))}
+      {macros.filter((m) => m.category === 'weapon').map(renderMacroButton)}
 
       {macros.filter((m) => m.category === 'weapon').length > 0 &&
         macros.filter((m) => m.category === 'skill').length > 0 && <div className="w-px h-4 bg-gray-700/50 shrink-0" />}
 
       {/* Skill macros */}
-      {macros
-        .filter((m) => m.category === 'skill')
-        .map((macro) => (
-          <button
-            key={macro.id}
-            onClick={() => onRoll(macro.formula, macro.label)}
-            className={`shrink-0 px-2 py-1 text-[10px] font-medium rounded border transition-colors cursor-pointer ${macro.color}`}
-            title={`Roll ${macro.formula}`}
-          >
-            {macro.label}
-          </button>
-        ))}
+      {macros.filter((m) => m.category === 'skill').map(renderMacroButton)}
 
       {/* Toggle all skills */}
       <button

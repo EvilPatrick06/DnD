@@ -39,6 +39,7 @@ export default function SpellSelectionSection5e({
   const setSpellsRequired = useLevelUpStore((s) => s.setSpellsRequired)
   const [availableSpells, setAvailableSpells] = useState<RawSpell[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAllSpells, setShowAllSpells] = useState(false)
 
   const className = character.classes[0]?.name?.toLowerCase() ?? ''
   const subclassId = character.classes[0]?.subclass?.toLowerCase().replace(/\s+/g, '-') ?? ''
@@ -117,6 +118,8 @@ export default function SpellSelectionSection5e({
   // If not a caster, return null
   const isCaster = hasAnySpellcasting(className) || isThirdCasterClass
 
+  const spellListClass = isThirdCasterClass ? 'wizard' : className
+
   useEffect(() => {
     if (!isCaster || maxSpellLevel === 0) {
       setLoading(false)
@@ -125,19 +128,36 @@ export default function SpellSelectionSection5e({
     load5eSpells()
       .then((spells) => {
         const existingIds = new Set(character.knownSpells?.map((s) => s.id) ?? [])
-        // Third-casters use wizard spell list
-        const spellListClass = isThirdCasterClass ? 'wizard' : className
         const filtered = spells.filter((s) => {
           if (s.level === 0 || s.level > maxSpellLevel) return false
           if (existingIds.has(s.id)) return false
-          if (s.classes && !s.classes.some((c) => c.toLowerCase() === spellListClass)) return false
+          if (!showAllSpells && s.classes && !s.classes.some((c) => c.toLowerCase() === spellListClass)) return false
           return true
         })
-        setAvailableSpells(filtered.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)))
+        // Sort on-list before off-list when showing all
+        if (showAllSpells) {
+          filtered.sort((a, b) => {
+            const aOnList = a.classes?.some((c) => c.toLowerCase() === spellListClass) ? 0 : 1
+            const bOnList = b.classes?.some((c) => c.toLowerCase() === spellListClass) ? 0 : 1
+            if (aOnList !== bOnList) return aOnList - bOnList
+            return a.level - b.level || a.name.localeCompare(b.name)
+          })
+        } else {
+          filtered.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
+        }
+        setAvailableSpells(filtered)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [isCaster, maxSpellLevel, className, isThirdCasterClass, character.knownSpells?.map])
+  }, [
+    isCaster,
+    maxSpellLevel,
+    className,
+    isThirdCasterClass,
+    character.knownSpells?.map,
+    showAllSpells,
+    spellListClass
+  ])
 
   if (!isCaster || maxSpellLevel === 0) return null
 
@@ -176,6 +196,17 @@ export default function SpellSelectionSection5e({
           Select spells to add to your prepared list ({newSpellIds.length} selected)
         </div>
       )}
+
+      <label className="flex items-center gap-2 text-xs text-gray-500 mb-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={showAllSpells}
+          onChange={(e) => setShowAllSpells(e.target.checked)}
+          className="accent-amber-500"
+        />
+        Show All Spells
+        {showAllSpells && <span className="text-orange-400">(off-list spells marked)</span>}
+      </label>
 
       {loading ? (
         <div className="text-sm text-gray-500">Loading spells...</div>
@@ -216,6 +247,11 @@ export default function SpellSelectionSection5e({
                           }`}
                         />
                         <span>{spell.name}</span>
+                        {showAllSpells && !spell.classes?.some((c) => c.toLowerCase() === spellListClass) && (
+                          <span className="text-[10px] text-orange-400 border border-orange-700 rounded px-1">
+                            Off-List
+                          </span>
+                        )}
                         {spell.concentration && (
                           <span className="text-[10px] text-yellow-500 border border-yellow-700 rounded px-1">C</span>
                         )}

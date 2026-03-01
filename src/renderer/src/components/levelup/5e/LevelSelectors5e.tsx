@@ -2,11 +2,10 @@ import type { Character5e } from '../../../types/character-5e'
 import type { BuildSlot } from '../../../types/character-common'
 
 // Re-exports from split files
-export { AsiOrFeatSelector5e, GeneralFeatPicker } from './AsiSelector5e'
-export { AsiAbilityPicker5e as AsiSelector5e } from './AsiSelector5e'
+export { AsiAbilityPicker5e as AsiSelector5e, AsiOrFeatSelector5e, GeneralFeatPicker } from './AsiSelector5e'
 export { EpicBoonSelector5e, FightingStyleSelector5e } from './FeatSelector5e'
+export { DivineOrderSelector5e, ElementalFurySelector5e, PrimalOrderSelector5e } from './SpellSelector5e'
 export { SubclassSelector5e } from './SubclassSelector5e'
-export { PrimalOrderSelector5e, DivineOrderSelector5e, ElementalFurySelector5e } from './SpellSelector5e'
 
 export function ExpertiseSelector5e({
   slot,

@@ -97,13 +97,13 @@ export function disconnect(): void {
     // Send a leave message before closing
     try {
       sendMessage({ type: 'player:leave', payload: { displayName } })
-    } catch (_e) {
+    } catch {
       // Ignore errors during disconnect
     }
 
     try {
       connection.close()
-    } catch (_e) {
+    } catch {
       // Ignore close errors
     }
     connection = null
@@ -307,7 +307,7 @@ async function attemptConnection(
             for (const cb of messageCallbacks) {
               try {
                 cb(message)
-              } catch (_e) {
+              } catch {
                 /* ignore */
               }
             }

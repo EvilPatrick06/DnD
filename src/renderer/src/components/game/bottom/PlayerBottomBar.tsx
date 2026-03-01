@@ -27,6 +27,9 @@ interface PlayerBottomBarProps {
   onQuickCondition?: () => void
   onCheckTime?: () => void
   onLightSource?: () => void
+  onTrade?: () => void
+  onJournal?: () => void
+  onCompendium?: () => void
   onDowntime?: () => void
   onSpellRef?: () => void
   onShortcutRef?: () => void
@@ -52,6 +55,9 @@ export default function PlayerBottomBar({
   onQuickCondition,
   onCheckTime,
   onLightSource,
+  onTrade,
+  onJournal,
+  onCompendium,
   onDowntime,
   onSpellRef,
   onShortcutRef,
@@ -361,6 +367,39 @@ export default function PlayerBottomBar({
                       className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
                     >
                       Downtime Activity
+                    </button>
+                  )}
+                  {onTrade && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onTrade()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-amber-300 hover:bg-gray-800 hover:text-amber-200 transition-colors cursor-pointer"
+                    >
+                      Trade Items
+                    </button>
+                  )}
+                  {onJournal && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onJournal()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                    >
+                      Shared Journal
+                    </button>
+                  )}
+                  {onCompendium && (
+                    <button
+                      onClick={() => {
+                        setToolsOpen(false)
+                        onCompendium()
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-gray-800 hover:text-gray-100 transition-colors cursor-pointer"
+                    >
+                      Compendium
                     </button>
                   )}
                 </div>
