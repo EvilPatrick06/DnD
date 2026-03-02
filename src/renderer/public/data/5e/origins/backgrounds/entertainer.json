@@ -5,6 +5,9 @@
   "skillProficiencies": ["Acrobatics", "Performance"],
   "toolProficiency": "one kind of Musical Instrument",
   "feat": "Musician",
-  "equipment": ["Musical Instrument (same as above), 2 Costumes, Mirror, Perfume, Traveler's Clothes, 11 GP", "50 GP"],
+  "equipment": [
+    { "option": "A", "items": ["Musical Instrument (same as above)", "2 Costumes", "Mirror", "Perfume", "Traveler's Clothes", "11 GP"] },
+    { "option": "B", "items": ["50 GP"] }
+  ],
   "source": "PHB 2024"
 }

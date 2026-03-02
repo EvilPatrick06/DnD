@@ -514,7 +514,7 @@ export default function SettingsPage(): JSX.Element {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="h-screen bg-gray-950 text-gray-100 overflow-y-auto">
       {/* Header */}
       <div className="border-b border-gray-800">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">

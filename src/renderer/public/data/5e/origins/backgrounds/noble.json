@@ -5,6 +5,9 @@
   "skillProficiencies": ["History", "Persuasion"],
   "toolProficiency": "Choose one kind of Gaming Set (see chapter 6)",
   "feat": "Skilled (see chapter 5)",
-  "equipment": ["Gaming Set (same as above), Fine Clothes, Perfume, 29 GP", "50 GP"],
+  "equipment": [
+    { "option": "A", "items": ["Gaming Set (same as above)", "Fine Clothes", "Perfume", "29 GP"] },
+    { "option": "B", "items": ["50 GP"] }
+  ],
   "source": "PHB 2024"
 }

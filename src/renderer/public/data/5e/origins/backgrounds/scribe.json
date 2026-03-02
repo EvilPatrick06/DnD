@@ -5,6 +5,9 @@
   "skillProficiencies": ["Investigation", "Perception"],
   "toolProficiency": "Calligrapher's Supplies",
   "feat": "Skilled",
-  "equipment": ["Calligrapher's Supplies", "Fine Clothes", "Lamp", "Oil (3 flasks)", "Parchment (12 sheets)", "23 GP"],
+  "equipment": [
+    { "option": "A", "items": ["Calligrapher's Supplies", "Fine Clothes", "Lamp", "Oil (3 flasks)", "Parchment (12 sheets)", "23 GP"] },
+    { "option": "B", "items": ["50 GP"] }
+  ],
   "source": "PHB 2024"
 }

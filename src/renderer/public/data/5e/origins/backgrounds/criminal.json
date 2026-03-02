@@ -5,6 +5,9 @@
   "skillProficiencies": ["Sleight of Hand", "Stealth"],
   "toolProficiency": "Thieves' Tools",
   "feat": "Alert",
-  "equipment": ["2 Daggers", "Thieves' Tools", "Crowbar", "2 Pouches", "Traveler's Clothes", "16 GP"],
+  "equipment": [
+    { "option": "A", "items": ["2 Daggers", "Thieves' Tools", "Crowbar", "2 Pouches", "Traveler's Clothes", "16 GP"] },
+    { "option": "B", "items": ["50 GP"] }
+  ],
   "source": "PHB 2024"
 }

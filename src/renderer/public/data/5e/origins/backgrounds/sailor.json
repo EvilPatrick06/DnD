@@ -5,6 +5,9 @@
   "skillProficiencies": ["Acrobatics", "Perception"],
   "toolProficiency": "Navigator's Tools",
   "feat": "Tavern Brawler",
-  "equipment": ["Dagger", "Navigator's Tools", "Rope", "Traveler's Clothes", "20 GP"],
+  "equipment": [
+    { "option": "A", "items": ["Dagger", "Navigator's Tools", "Rope", "Traveler's Clothes", "20 GP"] },
+    { "option": "B", "items": ["50 GP"] }
+  ],
   "source": "PHB 2024"
 }

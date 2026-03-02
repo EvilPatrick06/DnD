@@ -6,15 +6,8 @@
   "toolProficiency": "Any Gaming Set",
   "feat": "Alert",
   "equipment": [
-    "Spear",
-    "Light Crossbow",
-    "20 Bolts",
-    "Gaming Set",
-    "Hooded Lantern",
-    "Manacles",
-    "Quiver",
-    "Traveler's Clothes",
-    "12 GP"
+    { "option": "A", "items": ["Spear", "Light Crossbow", "20 Bolts", "Gaming Set", "Hooded Lantern", "Manacles", "Quiver", "Traveler's Clothes", "12 GP"] },
+    { "option": "B", "items": ["50 GP"] }
   ],
   "source": "PHB 2024"
 }

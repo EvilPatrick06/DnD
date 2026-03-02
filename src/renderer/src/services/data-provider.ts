@@ -210,7 +210,7 @@ function classToOption(cls: ClassData): SelectableOption {
     },
     {
       label: 'Skills',
-      value: `Choose ${ct.skillProficiencies.count} from: ${ct.skillProficiencies.from.join(', ')}`
+      value: `Choose ${ct.skillProficiencies.count} from: ${Array.isArray(ct.skillProficiencies.from) ? ct.skillProficiencies.from.join(', ') : ct.skillProficiencies.from}`
     }
   ]
 
@@ -243,10 +243,11 @@ function backgroundToOption(bg: BackgroundData): SelectableOption {
 
   const equipment = Array.isArray(bg.equipment) ? bg.equipment : []
   if (equipment.length > 0) {
-    details.push({
-      label: 'Equipment',
-      value: equipment.map((e) => `Option ${e.option}: ${e.items.join(', ')}`).join(' | ')
-    })
+    const eqValue =
+      typeof equipment[0] === 'string'
+        ? (equipment as unknown as string[]).join(', ')
+        : equipment.map((e) => `Option ${e.option}: ${e.items.join(', ')}`).join(' | ')
+    details.push({ label: 'Equipment', value: eqValue })
   }
 
   return {
