@@ -22,21 +22,66 @@ import { useAiDmStore } from '../stores/use-ai-dm-store'
 import { useGameStore } from '../stores/use-game-store'
 import type { ChatMessage } from '../stores/use-lobby-store'
 import { useLobbyStore } from '../stores/use-lobby-store'
+import type { CampaignPlayer } from '../types/campaign'
 
 interface UseGameNetworkOptions {
   networkRole: 'none' | 'host' | 'client'
   campaignId: string
   aiDmEnabled: boolean
+  /** Campaign players used as fallback when lobby players is empty (solo mode) */
+  campaignPlayers?: CampaignPlayer[]
   addChatMessage: (msg: ChatMessage) => void
   sendMessage: (type: MessageType, payload: unknown) => void
   setTimeRequestToast: (toast: { requesterId: string; requesterName: string } | null) => void
   setNarrationText: (text: string | null) => void
 }
 
+/** Build a player roster string for AI context.
+ *  Uses lobby players if available (multiplayer), falls back to campaign players (solo). */
+function buildPlayerRoster(
+  lobbyPlayers: Array<{
+    displayName: string
+    characterId: string | null
+    characterName: string | null
+    peerId: string
+  }>,
+  campaignPlayers: CampaignPlayer[]
+): { charIds: string[]; rosterText: string } {
+  const resolved =
+    lobbyPlayers.length > 0
+      ? lobbyPlayers
+          .filter((p) => p.characterId)
+          .map((p) => ({ displayName: p.displayName, characterId: p.characterId!, characterName: p.characterName }))
+      : campaignPlayers
+          .filter((p) => p.characterId && p.isActive)
+          .map((p) => ({ displayName: p.displayName, characterId: p.characterId!, characterName: null }))
+
+  const charIds = resolved.map((p) => p.characterId)
+  const isSolo = lobbyPlayers.length <= 1
+
+  if (resolved.length === 0) return { charIds: [], rosterText: '' }
+
+  let rosterText: string
+  if (isSolo) {
+    const p = resolved[0]
+    const charLabel = p.characterName ? `${p.characterName} (charId: ${p.characterId})` : `(charId: ${p.characterId})`
+    rosterText = `[PARTY ROSTER]\nSolo play: ${p.displayName} controls ${charLabel}\n[/PARTY ROSTER]`
+  } else {
+    const lines = resolved.map((p) => {
+      const charLabel = p.characterName ? `${p.characterName} (charId: ${p.characterId})` : `(charId: ${p.characterId})`
+      return `- ${p.displayName} → ${charLabel}`
+    })
+    rosterText = `[PARTY ROSTER]\nParty roster (${resolved.length} players):\n${lines.join('\n')}\n[/PARTY ROSTER]`
+  }
+
+  return { charIds, rosterText }
+}
+
 export function useGameNetwork({
   networkRole,
   campaignId,
   aiDmEnabled,
+  campaignPlayers = [],
   addChatMessage,
   sendMessage,
   setTimeRequestToast,
@@ -44,6 +89,7 @@ export function useGameNetwork({
 }: UseGameNetworkOptions): void {
   const aiDmStore = useAiDmStore()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: campaignPlayers/aiDmStore are stable — not re-running unnecessarily
   useEffect(() => {
     if (networkRole === 'none') return
 
@@ -91,8 +137,9 @@ export function useGameNetwork({
         const payload = msg.payload as ChatPayload
         addChatMessage({
           id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-          senderId: msg.senderId || 'unknown',
-          senderName: msg.senderName || 'Unknown',
+          // Prefer payload-level overrides so AI DM messages show as "AI Dungeon Master"
+          senderId: (payload.senderId as string | undefined) || msg.senderId || 'unknown',
+          senderName: (payload.senderName as string | undefined) || msg.senderName || 'Unknown',
           content: payload.message,
           timestamp: Date.now(),
           isSystem: payload.isSystem ?? false,
@@ -110,10 +157,11 @@ export function useGameNetwork({
           msg.senderId !== 'ai-dm' &&
           !payload.message.startsWith('/')
         ) {
-          const players = useLobbyStore.getState().players
-          const charIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
+          const lobbyPlayers = useLobbyStore.getState().players
+          const { charIds, rosterText } = buildPlayerRoster(lobbyPlayers, campaignPlayers)
           import('../services/game-action-executor').then(({ buildGameStateSnapshot }) => {
-            const gameState = buildGameStateSnapshot()
+            const baseGameState = buildGameStateSnapshot()
+            const gameState = rosterText ? `${baseGameState}\n\n${rosterText}` : baseGameState
             const currentMap = useGameStore.getState().maps.find((m) => m.id === useGameStore.getState().activeMapId)
             const activeCreatures =
               currentMap?.tokens
@@ -153,13 +201,15 @@ export function useGameNetwork({
         const payload = msg.payload as TimeRequestPayload
         if (networkRole === 'host') {
           if (aiDmEnabled && !useAiDmStore.getState().paused) {
-            const players = useLobbyStore.getState().players
-            const charIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
+            const lobbyPlayers = useLobbyStore.getState().players
+            const { charIds, rosterText } = buildPlayerRoster(lobbyPlayers, campaignPlayers)
             aiDmStore.sendMessage(
               campaignId,
               `${payload.requesterName} asks: What time is it?`,
               charIds,
-              payload.requesterName
+              payload.requesterName,
+              undefined,
+              rosterText || undefined
             )
           } else {
             setTimeRequestToast({ requesterId: payload.requesterId, requesterName: payload.requesterName })

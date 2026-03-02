@@ -121,6 +121,15 @@ function validateChange(char: Record<string, unknown>, change: StatChange): stri
     case 'creature_remove_condition':
     case 'creature_kill':
       return null // Creature mutations pass through to renderer — validated there
+    case 'set_ability_score': {
+      const valid = ['str', 'dex', 'con', 'int', 'wis', 'cha']
+      if (!valid.includes(change.ability)) return `Invalid ability score: ${change.ability}`
+      if (change.value < 1 || change.value > 30) return `Ability score out of range (1-30): ${change.value}`
+      return null
+    }
+    case 'grant_feature':
+    case 'revoke_feature':
+      return null
     default:
       return `Unknown change type: ${(change as { type: string }).type}`
   }
@@ -263,6 +272,46 @@ function applyChange(char: Record<string, unknown>, change: StatChange): void {
       }
       break
     }
+    case 'set_ability_score': {
+      const abilityMap: Record<string, string> = {
+        str: 'strength',
+        dex: 'dexterity',
+        con: 'constitution',
+        int: 'intelligence',
+        wis: 'wisdom',
+        cha: 'charisma'
+      }
+      const abilityScores = char.abilityScores as Record<string, number> | undefined
+      if (abilityScores) {
+        const fullName = abilityMap[change.ability]
+        if (fullName) abilityScores[fullName] = change.value
+        // Also update short-form keys if present
+        abilityScores[change.ability] = change.value
+      }
+      break
+    }
+    case 'grant_feature': {
+      const features = char.features as
+        | Array<{ id: string; name: string; description?: string; source?: string }>
+        | undefined
+      if (features) {
+        features.push({
+          id: crypto.randomUUID(),
+          name: change.name,
+          description: change.description,
+          source: 'AI DM'
+        })
+      }
+      break
+    }
+    case 'revoke_feature': {
+      const features = char.features as Array<{ id: string; name: string }> | undefined
+      if (features) {
+        const idx = features.findIndex((f) => f.name.toLowerCase() === change.name.toLowerCase())
+        if (idx !== -1) features.splice(idx, 1)
+      }
+      break
+    }
   }
 }
 
@@ -294,6 +343,170 @@ export async function applyMutations(characterId: string, changes: StatChange[])
     await saveCharacter(char as Record<string, unknown>)
   }
 
+  return { applied, rejected }
+}
+
+/**
+ * Apply a long rest to a character: restore all HP, all spell slots, all class resources,
+ * restore half total hit dice (min 1), and clear temporary HP.
+ */
+export async function applyLongRestMutations(characterId: string): Promise<MutationResult> {
+  const result = await loadCharacter(characterId)
+  if (!result.success || !result.data) {
+    return {
+      applied: [],
+      rejected: [{ change: { type: 'reset_death_saves', reason: 'long rest' }, reason: 'Character not found' }]
+    }
+  }
+
+  const char = result.data as unknown as Record<string, unknown>
+  const changes: StatChange[] = []
+
+  // Restore HP to max and clear temp HP
+  const hp = char.hitPoints as { current: number; maximum: number; temporary: number } | undefined
+  if (hp) {
+    if (hp.current < hp.maximum) {
+      changes.push({ type: 'heal', value: hp.maximum - hp.current, reason: 'long rest' })
+    }
+    // Clear temp HP
+    if (hp.temporary > 0) {
+      hp.temporary = 0
+    }
+  }
+
+  // Restore all spell slots to max
+  const regularSlots = char.spellSlotLevels as Record<string, { current: number; max: number }> | undefined
+  if (regularSlots) {
+    for (const [levelStr, slot] of Object.entries(regularSlots)) {
+      const level = Number(levelStr)
+      if (!Number.isNaN(level) && slot.current < slot.max) {
+        changes.push({ type: 'restore_spell_slot', level, count: slot.max - slot.current, reason: 'long rest' })
+      }
+    }
+  }
+
+  // Pact Magic slots also restore on long rest (in addition to short rest)
+  const pactSlots = char.pactMagicSlotLevels as Record<string, { current: number; max: number }> | undefined
+  if (pactSlots) {
+    for (const [levelStr, slot] of Object.entries(pactSlots)) {
+      const level = Number(levelStr)
+      if (!Number.isNaN(level) && slot.current < slot.max) {
+        changes.push({ type: 'restore_spell_slot', level, count: slot.max - slot.current, reason: 'long rest' })
+      }
+    }
+  }
+
+  // Restore all class resources
+  const resources = char.classResources as Array<{ name: string; current: number; max: number }> | undefined
+  if (resources) {
+    for (const resource of resources) {
+      if (resource.current < resource.max) {
+        changes.push({ type: 'restore_class_resource', name: resource.name, reason: 'long rest' })
+      }
+    }
+  }
+
+  // Restore half total hit dice (min 1)
+  const hitDice = char.hitDice as Array<{ current: number; maximum: number; dieType: number }> | undefined
+  if (hitDice && hitDice.length > 0) {
+    const totalMax = hitDice.reduce((s, h) => s + h.maximum, 0)
+    const totalCurrent = hitDice.reduce((s, h) => s + h.current, 0)
+    const restore = Math.max(1, Math.floor(totalMax / 2))
+    const canRestore = Math.min(restore, totalMax - totalCurrent)
+    if (canRestore > 0) {
+      changes.push({ type: 'hit_dice', value: canRestore, reason: 'long rest' })
+    }
+  }
+
+  // Remove one level of Exhaustion (handled via remove_condition)
+  const conditions = char.conditions as Array<{ name: string }> | undefined
+  const exhaustion = conditions?.find((c) => c.name.toLowerCase() === 'exhaustion')
+  if (exhaustion) {
+    changes.push({ type: 'remove_condition', name: 'Exhaustion', reason: 'long rest' })
+  }
+
+  if (changes.length === 0) {
+    return { applied: [], rejected: [] }
+  }
+
+  // Apply all changes at once
+  const applied: StatChange[] = []
+  const rejected: Array<{ change: StatChange; reason: string }> = []
+  for (const change of changes) {
+    const error = validateChange(char, change)
+    if (error) {
+      rejected.push({ change, reason: error })
+    } else {
+      applyChange(char, change)
+      applied.push(change)
+    }
+  }
+
+  if (applied.length > 0) {
+    ;(char as Record<string, unknown>).updatedAt = new Date().toISOString()
+    await saveCharacter(char as Record<string, unknown>)
+  }
+  return { applied, rejected }
+}
+
+/**
+ * Apply a short rest to a character: restore Warlock Pact Magic slots and short-rest class resources.
+ * Hit dice spending is handled by the player via the character sheet — we don't auto-spend them.
+ */
+export async function applyShortRestMutations(characterId: string): Promise<MutationResult> {
+  const result = await loadCharacter(characterId)
+  if (!result.success || !result.data) {
+    return { applied: [], rejected: [] }
+  }
+
+  const char = result.data as unknown as Record<string, unknown>
+  const changes: StatChange[] = []
+
+  // Restore Pact Magic slots to max (Warlock short rest recovery)
+  const pactSlots = char.pactMagicSlotLevels as Record<string, { current: number; max: number }> | undefined
+  if (pactSlots) {
+    for (const [levelStr, slot] of Object.entries(pactSlots)) {
+      const level = Number(levelStr)
+      if (!Number.isNaN(level) && slot.current < slot.max) {
+        changes.push({ type: 'restore_spell_slot', level, count: slot.max - slot.current, reason: 'short rest' })
+      }
+    }
+  }
+
+  // Restore short-rest class resources (those that recharge on short rest)
+  // We restore all class resources since we can't easily distinguish short vs long rest resources.
+  // The system prompt instructs the DM to only trigger short_rest when appropriate.
+  const resources = char.classResources as
+    | Array<{ name: string; current: number; max: number; recharge?: string }>
+    | undefined
+  if (resources) {
+    for (const resource of resources) {
+      if (resource.current < resource.max && resource.recharge === 'short') {
+        changes.push({ type: 'restore_class_resource', name: resource.name, reason: 'short rest' })
+      }
+    }
+  }
+
+  if (changes.length === 0) {
+    return { applied: [], rejected: [] }
+  }
+
+  const applied: StatChange[] = []
+  const rejected: Array<{ change: StatChange; reason: string }> = []
+  for (const change of changes) {
+    const error = validateChange(char, change)
+    if (error) {
+      rejected.push({ change, reason: error })
+    } else {
+      applyChange(char, change)
+      applied.push(change)
+    }
+  }
+
+  if (applied.length > 0) {
+    ;(char as Record<string, unknown>).updatedAt = new Date().toISOString()
+    await saveCharacter(char as Record<string, unknown>)
+  }
   return { applied, rejected }
 }
 
@@ -346,6 +559,12 @@ export function describeChange(change: StatChange): string {
       return `${change.targetLabel}: lost ${change.name} (${change.reason})`
     case 'creature_kill':
       return `${change.targetLabel}: killed (${change.reason})`
+    case 'set_ability_score':
+      return `${change.ability.toUpperCase()} set to ${change.value} (${change.reason})`
+    case 'grant_feature':
+      return `Feature granted: ${change.name} (${change.reason})`
+    case 'revoke_feature':
+      return `Feature revoked: ${change.name} (${change.reason})`
   }
 }
 

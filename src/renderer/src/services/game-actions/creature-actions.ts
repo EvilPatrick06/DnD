@@ -379,6 +379,21 @@ export function executeRechargeRoll(
   return true
 }
 
+/**
+ * Looks up character IDs for the given character/player names from the lobby.
+ * Matches against player displayName and characterName (case-insensitive).
+ */
+function resolveCharacterIds(names: string[], stores: StoreAccessors): { name: string; charId: string | null }[] {
+  const players = stores.getLobbyStore().getState().players
+  return names.map((name) => {
+    const lname = name.toLowerCase()
+    const player = players.find(
+      (p) => p.displayName.toLowerCase() === lname || (p.characterName?.toLowerCase() ?? '') === lname
+    )
+    return { name, charId: player?.characterId ?? null }
+  })
+}
+
 // ── XP & Level-Up ──
 
 export function executeAwardXp(
@@ -396,6 +411,16 @@ export function executeAwardXp(
   playSound('xp-gain')
   const msg = `${characterNames.join(', ')} gained ${amount} XP${reason ? ` (${reason})` : ''}!`
   postDmChatMessage(stores, 'ai-xp', msg)
+
+  // Apply XP to each character's sheet
+  const resolved = resolveCharacterIds(characterNames, stores)
+  for (const { name, charId } of resolved) {
+    if (charId) {
+      window.api.ai
+        .applyMutations(charId, [{ type: 'xp', value: amount, reason: reason ?? `Award XP for ${name}` }])
+        .catch(() => {})
+    }
+  }
   return true
 }
 
@@ -436,6 +461,14 @@ export function executeShortRest(
 
   const msg = `Short rest completed for ${names.join(', ')}. Hit dice may be spent to recover HP. Warlock spell slots restored.`
   postDmChatMessage(stores, 'ai-rest', msg)
+
+  // Apply short rest mutations (Pact Magic slot restoration, short-rest resource recharge)
+  const resolved = resolveCharacterIds(names, stores)
+  for (const { charId } of resolved) {
+    if (charId) {
+      window.api.ai.shortRest(charId).catch(() => {})
+    }
+  }
 
   const newTime = stores.getGameStore().getState().inGameTime
   if (newTime) stores.getNetworkStore().getState().sendMessage('dm:time-sync', { totalSeconds: newTime.totalSeconds })
@@ -479,6 +512,14 @@ export function executeLongRest(
   const msg = `Long rest completed for ${names.join(', ')}. All HP restored, spell slots recovered, class resources reset, and all Exhaustion removed.`
   postDmChatMessage(stores, 'ai-rest', msg)
 
+  // Apply long rest mutations (HP, spell slots, class resources, hit dice)
+  const resolved = resolveCharacterIds(names, stores)
+  for (const { charId } of resolved) {
+    if (charId) {
+      window.api.ai.longRest(charId).catch(() => {})
+    }
+  }
+
   const newTime = stores.getGameStore().getState().inGameTime
   if (newTime) stores.getNetworkStore().getState().sendMessage('dm:time-sync', { totalSeconds: newTime.totalSeconds })
 
@@ -499,6 +540,88 @@ export function executeLoadEncounter(
   if (!encounterName) throw new Error('Missing encounter name')
 
   postDmChatMessage(stores, 'ai-enc', `Loading encounter: "${encounterName}"...`)
+
+  // Async: load presets + monsters, then place tokens
+  ;(async () => {
+    const { load5eEncounterPresets, load5eMonsters } = await import('../data-provider')
+    const { getSizeTokenDimensions } = await import('../../types/monster')
+    const [presets, monsters] = await Promise.all([load5eEncounterPresets(), load5eMonsters()])
+
+    const preset = presets.find((p) => p.name.toLowerCase() === encounterName.toLowerCase())
+    if (!preset) {
+      postDmChatMessage(
+        stores,
+        'ai-enc-err',
+        `Encounter "${encounterName}" not found in encounter presets. You may need to place creatures manually.`
+      )
+      return
+    }
+
+    // Get fresh map state after async
+    const freshState = stores.getGameStore().getState()
+    const map = freshState.maps.find((m) => m.id === freshState.activeMapId)
+    if (!map) {
+      postDmChatMessage(stores, 'ai-enc-err', `No active map to place encounter on.`)
+      return
+    }
+
+    // Place monsters in a grid pattern starting at center of map
+    const centerX = Math.floor((map.width ?? 20) / 2)
+    const centerY = Math.floor((map.height ?? 20) / 2)
+    let offset = 0
+    let spawnedCount = 0
+
+    for (const entry of preset.monsters) {
+      const monster = monsters.find((m) => m.id === entry.id)
+      if (!monster) continue
+      const dims = getSizeTokenDimensions(monster.size)
+
+      for (let i = 0; i < entry.count; i++) {
+        const col = offset % 5
+        const row = Math.floor(offset / 5)
+        const token = {
+          id: crypto.randomUUID(),
+          entityId: crypto.randomUUID(),
+          entityType: 'enemy' as const,
+          label: entry.count > 1 ? `${monster.name} ${i + 1}` : monster.name,
+          gridX: centerX + col * dims.x,
+          gridY: centerY + row * dims.y,
+          sizeX: dims.x,
+          sizeY: dims.y,
+          visibleToPlayers: false,
+          conditions: [],
+          currentHP: monster.hp,
+          maxHP: monster.hp,
+          ac: monster.ac,
+          monsterStatBlockId: monster.id,
+          walkSpeed: monster.speed.walk ?? 30,
+          swimSpeed: monster.speed.swim,
+          climbSpeed: monster.speed.climb,
+          flySpeed: monster.speed.fly,
+          initiativeModifier: monster.abilityScores ? Math.floor((monster.abilityScores.dex - 10) / 2) : 0,
+          resistances: monster.resistances,
+          vulnerabilities: monster.vulnerabilities,
+          immunities: monster.damageImmunities,
+          darkvision: !!(monster.senses?.darkvision && monster.senses.darkvision > 0),
+          darkvisionRange: monster.senses?.darkvision || undefined
+        }
+        stores.getGameStore().getState().addToken(map.id, token)
+        offset++
+        spawnedCount++
+      }
+    }
+
+    if (spawnedCount > 0) {
+      broadcastTokenSync(map.id, stores)
+      postDmChatMessage(
+        stores,
+        'ai-enc-done',
+        `Encounter "${preset.name}" loaded with ${spawnedCount} creature${spawnedCount !== 1 ? 's' : ''}! ${preset.description}`
+      )
+    } else {
+      postDmChatMessage(stores, 'ai-enc-err', `Encounter "${preset.name}" found but no monsters could be placed.`)
+    }
+  })().catch(() => {})
   return true
 }
 

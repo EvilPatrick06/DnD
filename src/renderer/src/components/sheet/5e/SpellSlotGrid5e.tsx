@@ -39,7 +39,7 @@ export default function SpellSlotGrid5e({
                             ? 'bg-purple-500 border-purple-400'
                             : 'bg-amber-500 border-amber-400'
                           : 'border-gray-600 bg-gray-800'
-                      } ${readonly ? 'cursor-default' : `cursor-pointer hover:border-${isPact ? 'purple' : 'amber'}-400`}`}
+                      } ${readonly ? 'cursor-default' : isPact ? 'cursor-pointer hover:border-purple-400' : 'cursor-pointer hover:border-amber-400'}`}
                       title={
                         isFilled
                           ? isPact

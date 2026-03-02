@@ -56,7 +56,12 @@ export function executeSetTravelPace(action: DmAction, gameStore: GameStoreSnaps
   return true
 }
 
-export function executeLightSource(action: DmAction, gameStore: GameStoreSnapshot, activeMap: ActiveMap): boolean {
+export function executeLightSource(
+  action: DmAction,
+  gameStore: GameStoreSnapshot,
+  activeMap: ActiveMap,
+  stores: StoreAccessors
+): boolean {
   const entityName = action.entityName as string
   const sourceName = action.sourceName as string
   if (!entityName || !sourceName) throw new Error('Missing entityName or sourceName')
@@ -66,11 +71,21 @@ export function executeLightSource(action: DmAction, gameStore: GameStoreSnapsho
   if (!sourceData) throw new Error(`Unknown light source: ${sourceName}`)
 
   const token = activeMap ? resolveTokenByLabel(activeMap.tokens, entityName) : undefined
-  gameStore.lightSource(token?.entityId ?? entityName, entityName, sourceKey, sourceData.durationSeconds)
+  const entityId = token?.entityId ?? entityName
+  gameStore.lightSource(entityId, entityName, sourceKey, sourceData.durationSeconds)
+  stores
+    .getNetworkStore()
+    .getState()
+    .sendMessage('dm:light-source-update', { entityId, entityName, sourceName: sourceKey, action: 'light' })
   return true
 }
 
-export function executeExtinguishSource(action: DmAction, gameStore: GameStoreSnapshot): boolean {
+export function executeExtinguishSource(
+  action: DmAction,
+  gameStore: GameStoreSnapshot,
+  _activeMap: ActiveMap,
+  stores: StoreAccessors
+): boolean {
   const entityName = action.entityName as string
   const sourceName = action.sourceName as string
   if (!entityName) throw new Error('Missing entityName')
@@ -83,6 +98,15 @@ export function executeExtinguishSource(action: DmAction, gameStore: GameStoreSn
   )
   if (!source) throw new Error(`No active light source found for ${entityName}`)
   gameStore.extinguishSource(source.id)
+  stores
+    .getNetworkStore()
+    .getState()
+    .sendMessage('dm:light-source-update', {
+      entityId: source.entityId ?? source.entityName,
+      entityName,
+      sourceName: source.sourceName,
+      action: 'extinguish'
+    })
   return true
 }
 

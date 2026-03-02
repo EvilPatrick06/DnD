@@ -3,6 +3,7 @@
  * Resolves entity names to IDs and validates grid coordinates.
  */
 
+import { logger } from '../utils/logger'
 import type { ActiveMap, DmAction, ExecutionResult, GameStoreSnapshot, StoreAccessors } from './game-actions/types'
 import { pluginEventBus } from './plugin-system/event-bus'
 
@@ -70,6 +71,7 @@ import {
   executeRemoveSidebarEntry,
   executeSetNpcRelationship,
   executeSetTime,
+  executeShareHandout,
   executeShareTime,
   executeStartTimer,
   executeStopTimer,
@@ -155,6 +157,7 @@ export function executeDmActions(actions: DmAction[], bypassApproval = false): E
   const result: ExecutionResult = { executed: [], failed: [] }
 
   if (actions.length > MAX_ACTIONS_PER_BATCH) {
+    logger.warn(`AI DM: action batch exceeded ${MAX_ACTIONS_PER_BATCH} limit (got ${actions.length}); truncating.`)
     actions = actions.slice(0, MAX_ACTIONS_PER_BATCH)
   }
 
@@ -282,9 +285,9 @@ function executeOne(action: DmAction, gameStore: GameStoreSnapshot, activeMap: A
 
     // ── Light Sources ──
     case 'light_source':
-      return executeLightSource(action, gameStore, activeMap)
+      return executeLightSource(action, gameStore, activeMap, stores)
     case 'extinguish_source':
-      return executeExtinguishSource(action, gameStore)
+      return executeExtinguishSource(action, gameStore, activeMap, stores)
 
     // ── Sound ──
     case 'sound_effect':
@@ -361,6 +364,10 @@ function executeOne(action: DmAction, gameStore: GameStoreSnapshot, activeMap: A
     // ── Recharge Roll ──
     case 'recharge_roll':
       return executeRechargeRoll(action, gameStore, activeMap, stores)
+
+    // ── Handouts ──
+    case 'share_handout':
+      return executeShareHandout(action, gameStore, activeMap, stores)
 
     default: {
       // Check plugin-registered action handlers

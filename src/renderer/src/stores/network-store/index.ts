@@ -18,19 +18,12 @@ import {
   startHosting,
   stopHosting
 } from '../../network'
+import { useGameStore } from '../use-game-store'
 import { handleClientMessage } from './client-handlers'
 import { handleHostMessage } from './host-handlers'
 import type { NetworkState } from './types'
 
 export type { NetworkState }
-
-// Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
-function getGameStore() {
-  return (require('../use-game-store') as typeof import('../use-game-store')).useGameStore
-}
-function _getLobbyStore() {
-  return (require('../use-lobby-store') as typeof import('../use-lobby-store')).useLobbyStore
-}
 
 const listenerCleanups: Array<() => void> = []
 function clearListenerCleanups(): void {
@@ -192,6 +185,8 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
         localPeerId: getPeerId()
       })
     } catch (err) {
+      // Clean up listeners so they don't linger if the connection attempt failed
+      clearListenerCleanups()
       const errorMsg = err instanceof Error ? err.message : 'Failed to join game'
       set({
         connectionState: 'error',
@@ -289,7 +284,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 // --- Game state helpers ---
 
 function buildNetworkGameState(): NetworkGameState {
-  const gs = getGameStore().getState()
+  const gs = useGameStore.getState()
   return {
     activeMapId: gs.activeMapId,
     maps: gs.maps.map((m) => ({

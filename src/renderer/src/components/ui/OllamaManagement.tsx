@@ -4,19 +4,14 @@ import {
   type ActiveOp,
   AvailableModelList,
   type CuratedModel,
-  formatBytes,
   getPerformanceTier,
   type InstalledModel,
   InstalledModelList,
   type PerformanceTier,
-  TIER_STYLES,
-  timeAgo
+  TIER_STYLES
 } from './OllamaModelList'
 
 type _PerformanceTier = PerformanceTier
-
-/** Re-export formatBytes and timeAgo for consumers that import from OllamaManagement. */
-export { formatBytes, timeAgo }
 
 interface VersionInfo {
   installed: string

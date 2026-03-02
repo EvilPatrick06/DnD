@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger'
 
 interface Props {
   children: ReactNode
+  fallback?: ReactNode
 }
 
 interface State {
@@ -107,6 +108,9 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render(): ReactNode {
     if (this.state.hasError) {
+      if (this.props.fallback !== undefined) {
+        return this.props.fallback
+      }
       return (
         <div className="h-screen w-screen flex items-center justify-center bg-gray-950 text-gray-100">
           <div className="max-w-lg w-full mx-4 bg-gray-900 border border-red-500/50 rounded-xl p-8 shadow-2xl">

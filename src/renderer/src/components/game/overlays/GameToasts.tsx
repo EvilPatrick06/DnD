@@ -1,5 +1,27 @@
 import { useGameStore } from '../../../stores/use-game-store'
 
+// --- Time Request Toast ---
+interface TimeRequestToastProps {
+  toast: { requesterId: string; requesterName: string }
+  onDismiss: () => void
+}
+
+export function TimeRequestToast({ toast, onDismiss }: TimeRequestToastProps): JSX.Element {
+  return (
+    <div className="fixed top-28 left-1/2 -translate-x-1/2 z-40">
+      <div className="bg-gray-900 border border-cyan-500/50 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3">
+        <span className="text-xs text-gray-200">{toast.requesterName} wants to know the current time</span>
+        <button
+          onClick={onDismiss}
+          className="px-2 py-1 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded cursor-pointer"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // --- Rest Request Toast ---
 interface RestRequestToastProps {
   toast: { playerName: string; restType: 'short' | 'long' }

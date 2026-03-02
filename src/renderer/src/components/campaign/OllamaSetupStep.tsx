@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Card } from '../ui'
 
 type SetupPhase = 'idle' | 'detecting' | 'downloading' | 'installing' | 'starting' | 'pulling' | 'ready' | 'error'
@@ -36,6 +36,7 @@ export default function OllamaSetupStep({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [curatedModels, setCuratedModels] = useState<CuratedModel[]>([])
   const [installedModels, setInstalledModels] = useState<string[]>([])
+  const progressListenerRegistered = useRef(false)
 
   // Detect Ollama status
   const detectStatus = useCallback(async () => {
@@ -75,15 +76,14 @@ export default function OllamaSetupStep({
     if (enabled) {
       detectStatus()
 
-      // Listen for progress events
-      window.api.ai.onOllamaProgress((data) => {
-        if (data.type === 'download') setDownloadProgress(data.percent)
-        if (data.type === 'pull') setPullProgress(data.percent)
-      })
-    }
-
-    return () => {
-      // Cleanup handled by removeAllAiListeners on unmount
+      // Register progress listener only once to avoid accumulation on re-renders
+      if (!progressListenerRegistered.current) {
+        progressListenerRegistered.current = true
+        window.api.ai.onOllamaProgress((data) => {
+          if (data.type === 'download') setDownloadProgress(data.percent)
+          if (data.type === 'pull') setPullProgress(data.percent)
+        })
+      }
     }
   }, [enabled, detectStatus])
 

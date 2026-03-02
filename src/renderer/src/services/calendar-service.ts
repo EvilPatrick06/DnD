@@ -15,7 +15,7 @@ export interface SunPosition {
   lightLevel: 'bright' | 'dim' | 'darkness' // based on current hour
 }
 
-export interface MoonPhase {
+interface MoonPhase {
   name: string // "New Moon", "Waxing Crescent", etc.
   illumination: number // 0-1
   emoji: string // moon phase emoji

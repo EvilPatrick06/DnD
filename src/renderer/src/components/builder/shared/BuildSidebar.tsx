@@ -32,11 +32,15 @@ export default function BuildSidebar(): JSX.Element {
           value={characterName}
           onChange={(e) => setCharacterName(e.target.value)}
           placeholder="Character Name"
+          aria-label="Character name"
           className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-500"
         />
         <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-400">Level</label>
+          <label htmlFor="builder-level" className="text-xs text-gray-400">
+            Level
+          </label>
           <input
+            id="builder-level"
             type="number"
             min={1}
             max={20}

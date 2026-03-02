@@ -95,23 +95,7 @@ export default function ChatInput(): JSX.Element {
     if (!value.trim()) return
     if (isInputDisabled) return
 
-    const trimmed = value.trim()
     sendChat(value)
-
-    if (trimmed.startsWith('/roll ')) {
-      // After local processing, send dice result over network
-      const messages = useLobbyStore.getState().chatMessages
-      const lastMsg = messages.length > 0 ? messages[messages.length - 1] : undefined
-      if (lastMsg?.isDiceRoll && lastMsg.diceResult) {
-        sendMessage('chat:message', {
-          message: lastMsg.content,
-          isDiceRoll: true,
-          diceResult: lastMsg.diceResult
-        })
-      }
-    } else if (!trimmed.startsWith('/')) {
-      sendMessage('chat:message', { message: trimmed })
-    }
     setValue('')
 
     // Start slow mode cooldown (DM is exempt)

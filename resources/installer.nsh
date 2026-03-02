@@ -10,10 +10,6 @@
 ; Safe because the new installer recreates all registry entries via
 ; registryAddInstallInfo after extracting files.
 !macro customInit
-  ; Kill any running app processes before touching registry/files
-  ExecWait 'cmd.exe /C taskkill /F /IM "${APP_EXECUTABLE_FILENAME}" /T >nul 2>&1'
-  Sleep 2000
-
   ; Clean per-user uninstall registry (always accessible without elevation)
   ReadRegStr $R0 HKCU "${UNINSTALL_REGISTRY_KEY}" UninstallString
   ${if} $R0 != ""
@@ -48,7 +44,7 @@
 ; $PowerShellPath is set by the CHECK_APP_RUNNING wrapper before this runs.
 ; $$ is NSIS syntax for literal $ in backtick strings.
 !macro customCheckAppRunning
-  ExecWait 'cmd.exe /C taskkill /F /IM "${APP_EXECUTABLE_FILENAME}" /T >nul 2>&1'
+  nsExec::ExecToLog 'taskkill /F /IM "${APP_EXECUTABLE_FILENAME}" /T'
 
   nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance Win32_Process | ? { $$_.Path -and $$_.Path.StartsWith('$INSTDIR','CurrentCultureIgnoreCase') } | % { Stop-Process -Id $$_.ProcessId -Force -EA SilentlyContinue }"`
   Pop $0
@@ -73,7 +69,18 @@
 ; the "old version" in a future upgrade, its uninstaller uses RMDir /r
 ; (silently skips locked files) instead of un.atomicRMDir (aborts on
 ; any locked file). This prevents the retry loop in future upgrades.
+;
+; Guard: verify $INSTDIR is set and contains the app executable before
+; removing, to prevent accidental deletion of unrelated directories.
 !macro customRemoveFiles
-  SetOutPath $TEMP
-  RMDir /r $INSTDIR
+  ${if} $INSTDIR != ""
+    ${if} ${FileExists} "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+      SetOutPath $TEMP
+      RMDir /r $INSTDIR
+    ${else}
+      DetailPrint "Skipping removal: app executable not found in $INSTDIR"
+    ${endif}
+  ${else}
+    DetailPrint "Skipping removal: installation directory is not set"
+  ${endif}
 !macroend

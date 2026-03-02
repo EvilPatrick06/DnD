@@ -69,9 +69,12 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   deleteHomebrewEntry: async (category, id) => {
     try {
-      await window.api.deleteHomebrew(category, id)
-      set({ homebrewEntries: get().homebrewEntries.filter((e) => e.id !== id) })
-      return true
+      const success = await window.api.deleteHomebrew(category, id)
+      if (success) {
+        set({ homebrewEntries: get().homebrewEntries.filter((e) => e.id !== id) })
+        return true
+      }
+      return false
     } catch (err) {
       logger.error('Failed to delete homebrew entry:', err)
       return false

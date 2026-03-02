@@ -342,18 +342,18 @@ describe('import-export', () => {
       expect(await importAllData()).toBeNull()
     })
 
-    it('throws on malformed JSON', async () => {
+    it('returns null on malformed JSON', async () => {
       mockShowOpenDialog.mockResolvedValue('/tmp/bad.dndbackup')
       mockReadFile.mockResolvedValue('not json')
 
-      await expect(importAllData()).rejects.toThrow('Invalid backup file: malformed JSON')
+      expect(await importAllData()).toBeNull()
     })
 
-    it('throws on unsupported version', async () => {
+    it('returns null on unsupported version', async () => {
       mockShowOpenDialog.mockResolvedValue('/tmp/bad.dndbackup')
       mockReadFile.mockResolvedValue(JSON.stringify({ version: 999, characters: [] }))
 
-      await expect(importAllData()).rejects.toThrow('Invalid or unsupported backup file version')
+      expect(await importAllData()).toBeNull()
     })
 
     it('handles v1 backups missing customCreatures and homebrew', async () => {

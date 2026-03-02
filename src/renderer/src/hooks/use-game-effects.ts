@@ -61,6 +61,8 @@ export function useGameEffects({
   }, [isDM, campaign.id])
 
   // AI DM initialization (host only)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one-shot init hook — aiInitRef/addChatMessage/sendMessage are stable
   useEffect(() => {
     if (!isDM || !campaign.aiDm?.enabled || aiInitRef.current) return
     aiInitRef.current = true
@@ -71,36 +73,72 @@ export function useGameEffects({
     // Initialize AI DM (preserves sceneStatus if already set from lobby)
     aiDmStore.initFromCampaign(campaign)
 
+    /** Post the pre-generated opening narration to chat (scene was ready from lobby). */
+    const postSceneNarration = (msgs: Array<{ role: string; content: string; timestamp: number }>): void => {
+      const lastAssistant = [...msgs].reverse().find((m) => m.role === 'assistant')
+      if (!lastAssistant) return
+      const alreadyPosted = useLobbyStore
+        .getState()
+        .chatMessages.some((cm) => cm.senderId === 'ai-dm' && cm.timestamp === lastAssistant.timestamp)
+      if (alreadyPosted) return
+      addChatMessage({
+        id: `ai-dm-${lastAssistant.timestamp}`,
+        senderId: 'ai-dm',
+        senderName: 'AI Dungeon Master',
+        content: lastAssistant.content,
+        timestamp: lastAssistant.timestamp,
+        isSystem: true
+      })
+      sendMessage('chat:message', {
+        message: lastAssistant.content,
+        isSystem: true,
+        senderId: 'ai-dm',
+        senderName: 'AI Dungeon Master'
+      })
+    }
+
+    // Get character IDs — prefer lobby players, fall back to campaign players (solo mode)
+    const getCharacterIds = (): string[] => {
+      const lobbyPlayers = useLobbyStore.getState().players
+      if (lobbyPlayers.length > 0) {
+        return lobbyPlayers.filter((p) => p.characterId).map((p) => p.characterId!)
+      }
+      // Solo mode: derive from campaign players
+      return campaign.players.filter((p) => p.isActive && p.characterId).map((p) => p.characterId!)
+    }
+
     // Check if scene was already pre-generated in lobby
     const checkAndSetScene = async (): Promise<void> => {
       const status = await window.api.ai.getSceneStatus(campaign.id)
 
       if (status.status === 'ready') {
-        // Scene already generated — conversation was loaded by initFromCampaign
-        // If messages aren't loaded yet (race condition), wait and reload
-        const currentMessages = useAiDmStore.getState().messages
-        if (currentMessages.length === 0) {
-          setTimeout(async () => {
-            const msgs = useAiDmStore.getState().messages
-            if (msgs.length === 0) {
-              // Force reload from disk
-              const result = await window.api.ai.loadConversation(campaign.id)
-              if (result.success && result.data) {
-                const data = result.data as { messages?: Array<{ role: string; content: string; timestamp?: string }> }
-                if (data.messages?.length) {
-                  useAiDmStore.setState({
-                    messages: data.messages.map((m) => ({
-                      role: m.role as 'user' | 'assistant',
-                      content: m.content,
-                      timestamp: m.timestamp ? new Date(m.timestamp).getTime() : Date.now()
-                    })),
-                    sceneStatus: 'ready'
-                  })
-                }
+        // Scene already generated — explicitly post it to chat rather than relying on the
+        // reactive effect (which can miss due to timing of the async initFromCampaign reset)
+        const waitForMessages = async (): Promise<void> => {
+          let msgs = useAiDmStore.getState().messages
+          if (msgs.length === 0) {
+            await new Promise<void>((resolve) => setTimeout(resolve, 500))
+            msgs = useAiDmStore.getState().messages
+          }
+          if (msgs.length === 0) {
+            // Force reload from disk
+            const result = await window.api.ai.loadConversation(campaign.id)
+            if (result.success && result.data) {
+              const data = result.data as { messages?: Array<{ role: string; content: string; timestamp?: string }> }
+              if (data.messages?.length) {
+                const loaded = data.messages.map((m) => ({
+                  role: m.role as 'user' | 'assistant',
+                  content: m.content,
+                  timestamp: m.timestamp ? new Date(m.timestamp).getTime() : Date.now()
+                }))
+                useAiDmStore.setState({ messages: loaded, sceneStatus: 'ready' })
+                msgs = loaded
               }
             }
-          }, 500)
+          }
+          postSceneNarration(msgs)
         }
+        waitForMessages()
         return // Don't call setScene
       }
 
@@ -114,15 +152,13 @@ export function useGameEffects({
             if (result.success && result.data) {
               const data = result.data as { messages?: Array<{ role: string; content: string; timestamp?: string }> }
               if (data.messages?.length) {
-                useAiDmStore.setState({
-                  messages: data.messages.map((m) => ({
-                    role: m.role as 'user' | 'assistant',
-                    content: m.content,
-                    timestamp: m.timestamp ? new Date(m.timestamp).getTime() : Date.now()
-                  })),
-                  sceneStatus: 'ready',
-                  isTyping: false
-                })
+                const loaded = data.messages.map((m) => ({
+                  role: m.role as 'user' | 'assistant',
+                  content: m.content,
+                  timestamp: m.timestamp ? new Date(m.timestamp).getTime() : Date.now()
+                }))
+                useAiDmStore.setState({ messages: loaded, sceneStatus: 'ready', isTyping: false })
+                postSceneNarration(loaded)
               }
             }
           }
@@ -133,8 +169,8 @@ export function useGameEffects({
       }
 
       // Fallback: no scene prep happened — use original behavior
-      const players = useLobbyStore.getState().players
-      const characterIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
+      // Works for both multiplayer (lobby players) and solo mode (campaign players)
+      const characterIds = getCharacterIds()
 
       if (characterIds.length > 0) {
         setTimeout(() => {
@@ -156,6 +192,8 @@ export function useGameEffects({
   ])
 
   // When AI DM finishes streaming, add the message to chat and broadcast
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: addChatMessage/sendMessage are stable props — not re-running on every render
   useEffect(() => {
     if (!isDM || !campaign.aiDm?.enabled) return
 
@@ -181,7 +219,7 @@ export function useGameEffects({
     addChatMessage({
       id: `ai-dm-${lastMsg.timestamp}`,
       senderId: 'ai-dm',
-      senderName: 'Dungeon Master',
+      senderName: 'AI Dungeon Master',
       content: messageContent,
       timestamp: lastMsg.timestamp,
       isSystem: true
@@ -190,7 +228,9 @@ export function useGameEffects({
     // Broadcast to clients
     sendMessage('chat:message', {
       message: messageContent,
-      isSystem: true
+      isSystem: true,
+      senderId: 'ai-dm',
+      senderName: 'AI Dungeon Master'
     })
 
     // Apply stat changes if any
@@ -198,12 +238,35 @@ export function useGameEffects({
       const creatureChanges = lastMsg.statChanges.filter((c: { type: string }) => c.type.startsWith('creature_'))
       const characterChanges = lastMsg.statChanges.filter((c: { type: string }) => !c.type.startsWith('creature_'))
 
-      // Apply character changes via IPC
+      // Apply character changes via IPC — route each change to the correct character by name
       if (characterChanges.length > 0) {
         const players = useLobbyStore.getState().players
-        const charIds = players.filter((p) => p.characterId).map((p) => p.characterId!)
-        if (charIds.length > 0) {
-          window.api.ai.applyMutations(charIds[0], characterChanges)
+        const playersWithChars = players.filter((p) => p.characterId)
+        if (playersWithChars.length > 0) {
+          // Group changes by characterName; fall back to first character if unspecified
+          const changesByCharId = new Map<string, typeof characterChanges>()
+          for (const change of characterChanges) {
+            const named = (change as { characterName?: string }).characterName
+            let charId: string | undefined
+            if (named) {
+              const match = playersWithChars.find(
+                (p) =>
+                  p.displayName?.toLowerCase() === named.toLowerCase() ||
+                  p.characterName?.toLowerCase() === named.toLowerCase()
+              )
+              charId = match?.characterId ?? playersWithChars[0].characterId ?? undefined
+            } else {
+              charId = playersWithChars[0].characterId ?? undefined
+            }
+            if (charId) {
+              const existing = changesByCharId.get(charId) ?? []
+              existing.push(change)
+              changesByCharId.set(charId, existing)
+            }
+          }
+          for (const [charId, changes] of changesByCharId) {
+            window.api.ai.applyMutations(charId, changes)
+          }
         }
       }
 
@@ -243,8 +306,6 @@ export function useGameEffects({
     window.api.ai.saveConversation(campaign.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    aiDmStore.messages.length, // Add to chat
-    addChatMessage,
     aiDmStore.messages,
     activeMap,
     campaign.aiDm?.enabled,

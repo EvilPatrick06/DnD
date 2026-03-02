@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { logger } from '../utils/logger'
 
 type DataCategory =
   | 'species'
@@ -88,6 +89,10 @@ interface CacheEntry {
 
 const CACHE_TTL_MS = 30 * 60 * 1000
 
+// Module-level waiter map so concurrent callers for the same category are settled
+// without polling, and rejected when the primary loader fails.
+const waiters = new Map<DataCategory, Array<{ resolve: (v: unknown) => void; reject: (e: unknown) => void }>>()
+
 interface DataStoreState {
   cache: Map<DataCategory, CacheEntry>
   homebrewByCategory: Map<string, Record<string, unknown>[]>
@@ -123,8 +128,9 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
         }
         set({ homebrewByCategory: byCategory, homebrewLoaded: true })
       }
-    } catch {
-      set({ homebrewLoaded: true })
+    } catch (err) {
+      // Log but do NOT set homebrewLoaded=true so the next call can retry
+      logger.error('[DataStore] Failed to load homebrew; will retry on next access', err)
     }
   },
 
@@ -144,6 +150,12 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
         const contentResult = await window.api.plugins.loadContent(plugin.id, plugin.manifest)
         if (contentResult.success && contentResult.data) {
           for (const [category, items] of Object.entries(contentResult.data)) {
+            if (!Array.isArray(items)) {
+              logger.warn(
+                `[DataStore] Plugin "${plugin.id}" returned non-array data for category "${category}", skipping`
+              )
+              continue
+            }
             const existing = byCategory.get(category) || []
             existing.push(...(items as Record<string, unknown>[]))
             byCategory.set(category, existing)
@@ -166,16 +178,10 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
     }
 
     if (cached?.loading) {
-      return new Promise<T>((resolve) => {
-        const check = (): void => {
-          const entry = get().cache.get(category)
-          if (entry && !entry.loading) {
-            resolve(entry.data as T)
-          } else {
-            setTimeout(check, 10)
-          }
-        }
-        check()
+      return new Promise<T>((resolve, reject) => {
+        const list = waiters.get(category) ?? []
+        list.push({ resolve: resolve as (v: unknown) => void, reject })
+        waiters.set(category, list)
       })
     }
 
@@ -201,11 +207,26 @@ export const useDataStore = create<DataStoreState>((set, get) => ({
       finalCache.set(category, { data: merged, timestamp: Date.now(), loading: false })
       set({ cache: finalCache })
 
+      // Settle any concurrent callers that were waiting for this load
+      const pending = waiters.get(category)
+      if (pending) {
+        waiters.delete(category)
+        for (const w of pending) w.resolve(merged)
+      }
+
       return merged as T
     } catch (err) {
       const errCache = new Map(get().cache)
       errCache.delete(category)
       set({ cache: errCache })
+
+      // Reject any concurrent callers that were waiting for this load
+      const pending = waiters.get(category)
+      if (pending) {
+        waiters.delete(category)
+        for (const w of pending) w.reject(err)
+      }
+
       throw err
     }
   },

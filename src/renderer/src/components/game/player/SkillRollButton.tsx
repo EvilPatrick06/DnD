@@ -123,7 +123,6 @@ export default function SkillRollButton({ character, onRoll }: SkillRollButtonPr
 
     // Restrained: disadvantage on DEX saves
     if (!isSkillCheck && character) {
-      const entityConditions = gameConditions.filter((c) => c.entityId === character.id)
       const abilityName = label.split(' ')[0]
       if (abilityName === 'DEX' && entityConditions.some((ec) => ec.condition === 'Restrained')) {
         if (effectiveAdvantage === 'normal') effectiveAdvantage = 'disadvantage'

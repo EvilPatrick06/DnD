@@ -58,6 +58,7 @@ function createMockState(overrides: Partial<HostStateAccessors> = {}): HostState
     })) as HostStateAccessors['buildMessage'],
     broadcastMessage: vi.fn(),
     sendToPeer: vi.fn(),
+    broadcastExcluding: vi.fn(),
     disconnectPeer: vi.fn(),
     persistBans: vi.fn(),
     getConnectedPeers: vi.fn(() => []),
@@ -160,7 +161,7 @@ describe('handleJoin', () => {
     expect(state.peerInfoMap.has('new-peer')).toBe(true)
     expect(state.lastHeartbeat.has('new-peer')).toBe(true)
     expect(state.sendToPeer).toHaveBeenCalledWith('new-peer', expect.any(Object))
-    expect(state.broadcastMessage).toHaveBeenCalled()
+    expect(state.broadcastExcluding).toHaveBeenCalled()
     expect(joinCb).toHaveBeenCalledWith(
       expect.objectContaining({
         peerId: 'new-peer',

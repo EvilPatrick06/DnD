@@ -39,7 +39,11 @@ export const useBastionStore = create<BastionState>()((...a) => {
 
     saveBastion: async (bastion) => {
       try {
-        await window.api.saveBastion(bastion as unknown as Record<string, unknown>)
+        const result = await window.api.saveBastion(bastion as unknown as Record<string, unknown>)
+        if (result && !result.success) {
+          logger.error('Failed to save bastion:', (result as { success: boolean; error?: string }).error)
+          return
+        }
         const { bastions } = get()
         const index = bastions.findIndex((b) => b.id === bastion.id)
         if (index >= 0) {

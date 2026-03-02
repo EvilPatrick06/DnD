@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ConfirmDialog } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
-import { type BackupStats, exportAllData, importAllData } from '../services/io/import-export'
-
-type _BackupStats = BackupStats
-
+import { exportAllData, importAllData } from '../services/io/import-export'
 import { logger } from '../utils/logger'
 
 const FEATURES = [
@@ -29,7 +26,7 @@ const FEATURES = [
   'Sound Manager with 60+ sound events',
   'Calendar/time system with day/night cycle',
   'Mount & Vehicle system, Downtime activities',
-  '167+ chat commands across 24 command modules',
+  '167+ chat commands across 26 command modules',
   'Undo/redo, auto-save, theme system',
   'Import/export characters and campaigns'
 ]
@@ -151,8 +148,14 @@ export default function AboutPage(): JSX.Element {
                       if (result.version) setUpdateVersion(result.version)
                     } else if (result.state === 'not-available') {
                       setUpdateStatus('up-to-date')
+                    } else if (result.state === 'downloading') {
+                      setUpdateStatus('downloading')
+                    } else if (result.state === 'downloaded') {
+                      setUpdateStatus('downloaded')
+                      if (result.version) setUpdateVersion(result.version)
                     } else if (result.state === 'error') {
                       setUpdateStatus('error')
+                      if (result.message) setErrorMsg(result.message)
                     }
                   })
                   .catch((e) => {
@@ -178,7 +181,10 @@ export default function AboutPage(): JSX.Element {
                 onClick={() => {
                   setUpdateStatus('downloading')
                   setDownloadPercent(0)
-                  window.api.update.downloadUpdate().catch(() => setUpdateStatus('error'))
+                  window.api.update.downloadUpdate().catch((e) => {
+                    setUpdateStatus('error')
+                    setErrorMsg(e instanceof Error ? e.message : String(e))
+                  })
                 }}
                 className="px-4 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
               >

@@ -229,7 +229,6 @@ export function InvocationSection5e({
         {eligible.map((inv) => {
           const count = selectionCounts.get(inv.id) ?? 0
           const selected = count > 0
-          const _canAdd = !atMax || selected
           const disabled = !selected && atMax
 
           return (

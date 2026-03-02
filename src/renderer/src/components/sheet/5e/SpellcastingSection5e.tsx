@@ -434,6 +434,8 @@ export default function SpellcastingSection5e({ character, readonly }: Spellcast
           <SpellPrepOptimizer
             open={showSpellPrepOptimizer}
             onClose={() => setShowSpellPrepOptimizer(false)}
+            classId={character.classes[0]?.name.toLowerCase()}
+            level={character.level}
             preparedSpells={knownSpells
               .filter((s) => s.level > 0 && preparedSpellIds.includes(s.id))
               .map((s) => ({

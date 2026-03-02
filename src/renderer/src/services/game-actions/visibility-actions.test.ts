@@ -162,7 +162,7 @@ describe('visibility-actions', () => {
       const gs = makeGameStore()
       const map = makeActiveMap([{ id: 't1', entityId: 'e1', label: 'Fighter' }])
       const action: DmAction = { action: 'light_source', entityName: 'Fighter', sourceName: 'Torch' }
-      expect(executeLightSource(action, gs, map)).toBe(true)
+      expect(executeLightSource(action, gs, map, stores)).toBe(true)
       expect(gs.lightSource).toHaveBeenCalledWith('e1', 'Fighter', 'torch', 3600)
     })
 
@@ -171,7 +171,7 @@ describe('visibility-actions', () => {
       const gs = makeGameStore()
       const map = makeActiveMap([{ id: 't1', entityId: 'e1', label: 'Fighter' }])
       const action: DmAction = { action: 'light_source', entityName: 'Fighter', sourceName: 'Neon Sign' }
-      expect(() => executeLightSource(action, gs, map)).toThrow('Unknown light source')
+      expect(() => executeLightSource(action, gs, map, stores)).toThrow('Unknown light source')
     })
 
     it('throws if entityName or sourceName missing', async () => {
@@ -179,7 +179,7 @@ describe('visibility-actions', () => {
       const gs = makeGameStore()
       const map = makeActiveMap()
       const action: DmAction = { action: 'light_source', entityName: '', sourceName: '' }
-      expect(() => executeLightSource(action, gs, map)).toThrow('Missing entityName or sourceName')
+      expect(() => executeLightSource(action, gs, map, stores)).toThrow('Missing entityName or sourceName')
     })
   })
 
@@ -190,7 +190,7 @@ describe('visibility-actions', () => {
         activeLightSources: [{ id: 'ls1', entityName: 'Fighter', sourceName: 'torch' }]
       })
       const action: DmAction = { action: 'extinguish_source', entityName: 'Fighter' }
-      expect(executeExtinguishSource(action, gs)).toBe(true)
+      expect(executeExtinguishSource(action, gs, undefined, stores)).toBe(true)
       expect(gs.extinguishSource).toHaveBeenCalledWith('ls1')
     })
 
@@ -198,14 +198,14 @@ describe('visibility-actions', () => {
       const { executeExtinguishSource } = await import('./visibility-actions')
       const gs = makeGameStore({ activeLightSources: [] })
       const action: DmAction = { action: 'extinguish_source', entityName: 'Nobody' }
-      expect(() => executeExtinguishSource(action, gs)).toThrow('No active light source found')
+      expect(() => executeExtinguishSource(action, gs, undefined, stores)).toThrow('No active light source found')
     })
 
     it('throws if entityName is missing', async () => {
       const { executeExtinguishSource } = await import('./visibility-actions')
       const gs = makeGameStore()
       const action: DmAction = { action: 'extinguish_source', entityName: '' }
-      expect(() => executeExtinguishSource(action, gs)).toThrow('Missing entityName')
+      expect(() => executeExtinguishSource(action, gs, undefined, stores)).toThrow('Missing entityName')
     })
   })
 

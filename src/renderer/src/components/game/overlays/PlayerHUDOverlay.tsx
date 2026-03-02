@@ -37,6 +37,7 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
   const ambientLight = useGameStore((s) => s.ambientLight)
   const travelPace = useGameStore((s) => s.travelPace)
   const turnStates = useGameStore((s) => s.turnStates)
+  const customEffects = useGameStore((s) => s.customEffects)
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -73,12 +74,15 @@ export default function PlayerHUDOverlay({ character, conditions }: PlayerHUDOve
     window.addEventListener('mouseup', onUp)
   }, [])
 
+  const myCustomEffects = useMemo(
+    () => customEffects.filter((e) => e.targetEntityId === character?.id),
+    [customEffects, character?.id]
+  )
+
   if (!character) return <></>
   const char5e = is5eCharacter(character) ? character : null
 
   // Resolved effects for HUD indicators
-  const customEffects = useGameStore((s) => s.customEffects)
-  const myCustomEffects = customEffects.filter((e) => e.targetEntityId === character.id)
   const resolved = useMemo(() => (char5e ? resolveEffects(char5e, myCustomEffects) : null), [char5e, myCustomEffects])
 
   const hp = character.hitPoints

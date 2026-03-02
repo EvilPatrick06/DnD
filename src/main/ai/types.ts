@@ -172,24 +172,39 @@ export interface StreamCallbacks {
 // ── Stat Change types ──
 
 export type StatChange =
-  | { type: 'damage'; value: number; damageType?: string; reason: string }
-  | { type: 'heal'; value: number; reason: string }
-  | { type: 'temp_hp'; value: number; reason: string }
-  | { type: 'add_condition'; name: string; reason: string }
-  | { type: 'remove_condition'; name: string; reason: string }
-  | { type: 'death_save'; success: boolean; reason: string }
-  | { type: 'reset_death_saves'; reason: string }
-  | { type: 'expend_spell_slot'; level: number; reason: string }
-  | { type: 'restore_spell_slot'; level: number; count?: number; reason: string }
-  | { type: 'add_item'; name: string; quantity?: number; description?: string; reason: string }
-  | { type: 'remove_item'; name: string; quantity?: number; reason: string }
-  | { type: 'gold'; value: number; denomination?: 'cp' | 'sp' | 'gp' | 'pp' | 'ep'; reason: string }
-  | { type: 'xp'; value: number; reason: string }
-  | { type: 'use_class_resource'; name: string; amount?: number; reason: string }
-  | { type: 'restore_class_resource'; name: string; amount?: number; reason: string }
-  | { type: 'heroic_inspiration'; grant: boolean; reason: string }
-  | { type: 'hit_dice'; value: number; reason: string }
+  | { type: 'damage'; characterName?: string; value: number; damageType?: string; reason: string }
+  | { type: 'heal'; characterName?: string; value: number; reason: string }
+  | { type: 'temp_hp'; characterName?: string; value: number; reason: string }
+  | { type: 'add_condition'; characterName?: string; name: string; reason: string }
+  | { type: 'remove_condition'; characterName?: string; name: string; reason: string }
+  | { type: 'death_save'; characterName?: string; success: boolean; reason: string }
+  | { type: 'reset_death_saves'; characterName?: string; reason: string }
+  | { type: 'expend_spell_slot'; characterName?: string; level: number; reason: string }
+  | { type: 'restore_spell_slot'; characterName?: string; level: number; count?: number; reason: string }
+  | { type: 'add_item'; characterName?: string; name: string; quantity?: number; description?: string; reason: string }
+  | { type: 'remove_item'; characterName?: string; name: string; quantity?: number; reason: string }
+  | {
+      type: 'gold'
+      characterName?: string
+      value: number
+      denomination?: 'cp' | 'sp' | 'gp' | 'pp' | 'ep'
+      reason: string
+    }
+  | { type: 'xp'; characterName?: string; value: number; reason: string }
+  | { type: 'use_class_resource'; characterName?: string; name: string; amount?: number; reason: string }
+  | { type: 'restore_class_resource'; characterName?: string; name: string; amount?: number; reason: string }
+  | { type: 'heroic_inspiration'; characterName?: string; grant: boolean; reason: string }
+  | { type: 'hit_dice'; characterName?: string; value: number; reason: string }
   | { type: 'npc_attitude'; name: string; attitude: 'friendly' | 'indifferent' | 'hostile'; reason: string }
+  | {
+      type: 'set_ability_score'
+      characterName?: string
+      ability: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+      value: number
+      reason: string
+    }
+  | { type: 'grant_feature'; characterName?: string; name: string; description?: string; reason: string }
+  | { type: 'revoke_feature'; characterName?: string; name: string; reason: string }
   | { type: 'creature_damage'; targetLabel: string; value: number; damageType?: string; reason: string }
   | { type: 'creature_heal'; targetLabel: string; value: number; reason: string }
   | { type: 'creature_add_condition'; targetLabel: string; name: string; reason: string }

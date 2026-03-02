@@ -66,8 +66,7 @@ function SpellCard({ spell }: { spell: SpellIndexEntry }): JSX.Element {
   )
 }
 
-// Caster classes that appear in the CANTRIPS_KNOWN table
-const CASTER_CLASSES = Object.keys(CANTRIPS_KNOWN)
+// CASTER_CLASSES computed inside the component via useMemo to stay reactive after async data loads
 
 /** Resolve max cantrips known for a class at a given level from the threshold table */
 function resolveCantripsKnown(classId: string, level: number): number {
@@ -102,6 +101,8 @@ export default function SpellsTab(): JSX.Element {
       cancelled = true
     }
   }, [])
+
+  const casterClasses = useMemo(() => Object.keys(CANTRIPS_KNOWN), [spells])
 
   const filtered = useMemo(() => {
     let result = spells
@@ -187,7 +188,7 @@ export default function SpellsTab(): JSX.Element {
       {/* Caster quick-reference */}
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-[10px] text-gray-500">Ref:</span>
-        {CASTER_CLASSES.map((cls) => (
+        {casterClasses.map((cls) => (
           <button
             key={cls}
             onClick={() => setRefClass(refClass === cls ? null : cls)}

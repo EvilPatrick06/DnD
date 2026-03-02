@@ -12,6 +12,13 @@ import { logger } from '../utils/logger'
 
 type StatusFilter = 'active' | 'retired' | 'deceased' | 'all'
 
+const filterTabs: Array<{ key: StatusFilter; label: string }> = [
+  { key: 'active', label: 'Active' },
+  { key: 'retired', label: 'Retired' },
+  { key: 'deceased', label: 'Deceased' },
+  { key: 'all', label: 'All' }
+]
+
 export default function ViewCharactersPage(): JSX.Element {
   const navigate = useNavigate()
   const { characters, loading, loadCharacters, deleteCharacter, deleteAllCharacters, saveCharacter } =
@@ -54,8 +61,8 @@ export default function ViewCharactersPage(): JSX.Element {
     const character = characters.find((c) => c.id === characterId)
     if (!character) return
     try {
-      await exportCharacterToFile(character)
-      addToast('Character exported', 'success')
+      const saved = await exportCharacterToFile(character)
+      if (saved) addToast('Character exported', 'success')
     } catch (err) {
       logger.error('Failed to export character:', err)
       addToast('Failed to export character', 'error')
@@ -68,7 +75,6 @@ export default function ViewCharactersPage(): JSX.Element {
       const character = await importCharacterFromFile()
       if (character) {
         await saveCharacter(character)
-        await loadCharacters()
         addToast('Character imported successfully', 'success')
       }
     } catch (err) {
@@ -83,7 +89,6 @@ export default function ViewCharactersPage(): JSX.Element {
       const character = await importDndBeyondCharacter()
       if (character) {
         await saveCharacter(character)
-        await loadCharacters()
         addToast(`Imported "${character.name}" from D&D Beyond`, 'success')
       }
     } catch (err) {
@@ -98,7 +103,6 @@ export default function ViewCharactersPage(): JSX.Element {
       const character = await importFoundryCharacter()
       if (character) {
         await saveCharacter(character)
-        await loadCharacters()
         addToast(`Imported "${character.name}" from Foundry VTT`, 'success')
       }
     } catch (err) {
@@ -113,6 +117,7 @@ export default function ViewCharactersPage(): JSX.Element {
     try {
       const success = await exportCharacterToPdf(character)
       if (success) addToast('Character exported to PDF', 'success')
+      else addToast('Failed to export PDF', 'error')
     } catch (err) {
       logger.error('PDF export failed:', err)
       addToast('Failed to export PDF', 'error')
@@ -130,13 +135,6 @@ export default function ViewCharactersPage(): JSX.Element {
     }
     return result
   }, [characters, statusFilter, searchQuery])
-
-  const filterTabs: Array<{ key: StatusFilter; label: string }> = [
-    { key: 'active', label: 'Active' },
-    { key: 'retired', label: 'Retired' },
-    { key: 'deceased', label: 'Deceased' },
-    { key: 'all', label: 'All' }
-  ]
 
   return (
     <div className="p-8 h-screen overflow-y-auto">

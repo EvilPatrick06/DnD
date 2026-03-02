@@ -8,6 +8,7 @@
 import type { GameMap, MapToken } from '../../types/map'
 import { DARKVISION_SPECIES } from '../../types/map'
 import {
+  clipToRadius,
   computeVisibility,
   isPointVisible,
   type LightSource,
@@ -54,7 +55,18 @@ export function computePartyVision(map: GameMap, playerTokens: MapToken[]): Part
       x: (token.gridX + token.sizeX / 2) * cellSize,
       y: (token.gridY + token.sizeY / 2) * cellSize
     }
-    const poly = computeVisibility(origin, segments, bounds)
+    let poly = computeVisibility(origin, segments, bounds)
+
+    // Apply darkvision radius clipping for fog-of-war purposes.
+    // Darkvision range: explicit darkvisionRange field takes precedence,
+    // then fall back to 60ft default if the darkvision boolean is set.
+    // Call hasDarkvision(species) at token creation time to populate these fields.
+    const dvRangeFt = token.darkvisionRange ?? (token.darkvision ? 60 : 0)
+    if (dvRangeFt > 0) {
+      // Convert feet to pixels (cellSize px / 5ft per cell)
+      poly = clipToRadius(poly, (dvRangeFt / 5) * cellSize)
+    }
+
     partyPolygons.push(poly)
   }
 

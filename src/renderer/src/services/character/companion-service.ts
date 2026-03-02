@@ -30,8 +30,8 @@ export function getWildShapeEligibleBeasts(druidLevel: number, monsters: Monster
     .filter((m) => {
       if (m.type !== 'Beast') return false
       if (crToNumber(m.cr) > maxCR) return false
-      if (!allowFlying && m.speed.fly && m.speed.fly > 0) return false
-      if (!allowSwimming && m.speed.swim && m.speed.swim > 0 && (!m.speed.walk || m.speed.walk === 0)) return false
+      if (!allowFlying && m.speed?.fly && m.speed.fly > 0) return false
+      if (!allowSwimming && m.speed?.swim && m.speed.swim > 0 && (!m.speed?.walk || m.speed.walk === 0)) return false
       return true
     })
     .sort((a, b) => crToNumber(b.cr) - crToNumber(a.cr) || a.name.localeCompare(b.name))

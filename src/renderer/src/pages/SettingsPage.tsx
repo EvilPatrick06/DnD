@@ -48,6 +48,7 @@ import type { NotificationEvent } from '../services/notification-service'
 
 type _NotificationEvent = NotificationEvent
 
+import { DISPLAY_NAME_KEY } from '../constants'
 import * as NotificationService from '../services/notification-service'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 import { type ColorblindMode, type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
@@ -462,7 +463,7 @@ export default function SettingsPage(): JSX.Element {
         }
         profile.displayName = name.trim()
         await window.api.saveSettings({ ...settings, userProfile: profile })
-        localStorage.setItem('dnd-vtt-display-name', name.trim())
+        localStorage.setItem(DISPLAY_NAME_KEY, name.trim())
       } catch {
         // save failed silently
       }

@@ -28,6 +28,7 @@ export interface HostStateAccessors {
   isGlobalRateLimited: () => boolean
   buildMessage: <T>(type: NetworkMessage['type'], payload: T) => NetworkMessage<T>
   broadcastMessage: (msg: NetworkMessage) => void
+  broadcastExcluding: (msg: NetworkMessage, excludePeerId: string) => void
   sendToPeer: (peerId: string, msg: NetworkMessage) => void
   disconnectPeer: (peerId: string, message: NetworkMessage) => void
   persistBans: () => void
@@ -155,15 +156,24 @@ export function handleNewConnection(conn: DataConnection, state: HostStateAccess
     }
   })
 
+  // Guard against both 'close' and 'error' firing and double-invoking handleDisconnection
+  let disconnectHandled = false
+
   conn.on('close', () => {
     clearTimeout(joinTimeout)
-    handleDisconnection(peerId, state)
+    if (!disconnectHandled) {
+      disconnectHandled = true
+      handleDisconnection(peerId, state)
+    }
   })
 
   conn.on('error', (err) => {
     logger.error('[HostManager] Connection error with', peerId, err)
     clearTimeout(joinTimeout)
-    handleDisconnection(peerId, state)
+    if (!disconnectHandled) {
+      disconnectHandled = true
+      handleDisconnection(peerId, state)
+    }
   })
 }
 
@@ -186,6 +196,7 @@ export function handleJoin(
   if (state.bannedNames.has(playerName.toLowerCase())) {
     logger.debug('[HostManager] Rejected banned name:', playerName, '(peer:', peerId, ')')
     state.bannedPeers.add(peerId)
+    state.bannedNames.add(playerName.toLowerCase())
     state.persistBans()
     const banPayload: BanPayload = { peerId, reason: 'Banned by DM' }
     const banMsg = state.buildMessage('dm:ban-player', banPayload)
@@ -202,12 +213,14 @@ export function handleJoin(
     isReady: false,
     isHost: false
   }
+  // Capture connected peers BEFORE adding the new peer so game:state-full
+  // doesn't include the joining peer in their own peer list
+  const allPeers = state.getConnectedPeers()
   state.peerInfoMap.set(peerId, peerInfo)
   state.lastHeartbeat.set(peerId, Date.now())
 
   logger.debug('[HostManager] Player joined:', playerName, '(', peerId, ')')
 
-  const allPeers = state.getConnectedPeers()
   const hostPeer: PeerInfo = {
     peerId: getPeerId() || '',
     displayName: state.getDisplayName(),
@@ -230,13 +243,14 @@ export function handleJoin(
   }
   state.sendToPeer(peerId, state.buildMessage('game:state-full', fullPayload))
 
-  state.broadcastMessage(
+  state.broadcastExcluding(
     state.buildMessage('player:join', {
       displayName: playerName,
       characterId,
       characterName,
       peerId
-    })
+    }),
+    peerId
   )
 
   for (const cb of state.joinCallbacks) {

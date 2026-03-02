@@ -170,6 +170,12 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
   startConstruction: (bastionId, project) => {
     const bastion = getBastion(get().bastions, bastionId)
     if (!bastion) return
+    if (bastion.treasury < project.cost) {
+      logger.warn(
+        `[Bastion] Not enough gold to start construction. Need ${project.cost} gp, have ${bastion.treasury} gp`
+      )
+      return
+    }
     const fullProject: ConstructionProject = {
       ...project,
       id: crypto.randomUUID(),
@@ -179,7 +185,7 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
     const updated: Bastion = {
       ...bastion,
       construction: [...bastion.construction, fullProject],
-      treasury: Math.max(0, bastion.treasury - project.cost),
+      treasury: bastion.treasury - project.cost,
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)
@@ -193,6 +199,8 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
 
     const basicFacilities = [...bastion.basicFacilities]
     const specialFacilities = [...bastion.specialFacilities]
+
+    let defensiveWalls = bastion.defensiveWalls
 
     if (project.projectType === 'add-basic' && project.facilityType) {
       basicFacilities.push({
@@ -222,6 +230,12 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
         hirelingNames: [],
         order: specialFacilities.length
       })
+    } else if (project.projectType === 'defensive-wall') {
+      const squaresAdded = project.cost / 250
+      defensiveWalls = {
+        squaresBuilt: (defensiveWalls?.squaresBuilt ?? 0) + squaresAdded,
+        fullyEnclosed: true
+      }
     }
 
     const updated: Bastion = {
@@ -229,6 +243,7 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
       construction: bastion.construction.filter((p) => p.id !== projectId),
       basicFacilities,
       specialFacilities,
+      defensiveWalls,
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)
@@ -241,8 +256,12 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
     if (!bastion) return
     const cost = squares * 250
     const days = squares * 10
+    if (bastion.treasury < cost) {
+      logger.warn(`[Bastion] Not enough gold to build defensive walls. Need ${cost} gp, have ${bastion.treasury} gp`)
+      return
+    }
     const currentWalls = bastion.defensiveWalls || { squaresBuilt: 0, fullyEnclosed: false }
-    // Add as construction project
+    // Add as construction project; squaresBuilt increments only on completion
     const project: ConstructionProject = {
       id: crypto.randomUUID(),
       projectType: 'defensive-wall',
@@ -254,11 +273,8 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
     const updated: Bastion = {
       ...bastion,
       construction: [...bastion.construction, project],
-      defensiveWalls: {
-        ...currentWalls,
-        squaresBuilt: currentWalls.squaresBuilt + squares
-      },
-      treasury: Math.max(0, bastion.treasury - cost),
+      defensiveWalls: currentWalls,
+      treasury: bastion.treasury - cost,
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)

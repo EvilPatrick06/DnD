@@ -30,7 +30,15 @@ import {
 } from './ollama-client'
 import { OLLAMA_BASE_URL } from './ollama-manager'
 import { SearchEngine } from './search-engine'
-import { applyMutations, describeChange, isNegativeChange, parseStatChanges, stripStatChanges } from './stat-mutations'
+import {
+  applyLongRestMutations,
+  applyMutations,
+  applyShortRestMutations,
+  describeChange,
+  isNegativeChange,
+  parseStatChanges,
+  stripStatChanges
+} from './stat-mutations'
 import { cleanNarrativeText, hasViolations } from './tone-validator'
 import type {
   AiChatRequest,
@@ -669,4 +677,4 @@ export function getLastTokenEstimate(campaignId: string): number {
 }
 
 // Re-export mutation functions
-export { applyMutations, describeChange, isNegativeChange }
+export { applyMutations, applyLongRestMutations, applyShortRestMutations, describeChange, isNegativeChange }

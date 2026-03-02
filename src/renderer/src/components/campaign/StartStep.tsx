@@ -20,7 +20,8 @@ function loadLastSession(): JoinedSession | null {
     const raw = localStorage.getItem(LAST_SESSION_KEY)
     if (!raw) return null
     const session = JSON.parse(raw)
-    if (!session.inviteCode || !session.displayName) return null
+    if (!session.inviteCode || !session.displayName || !session.campaignId || typeof session.timestamp !== 'number')
+      return null
     return session as JoinedSession
   } catch {
     return null
@@ -32,7 +33,7 @@ function loadJoinedSessions(): JoinedSession[] {
     const raw = localStorage.getItem(JOINED_SESSIONS_KEY)
     if (!raw) return []
     const sessions = JSON.parse(raw) as JoinedSession[]
-    return sessions.filter((s) => s.inviteCode && s.displayName)
+    return sessions.filter((s) => s.inviteCode && s.displayName && s.campaignId && typeof s.timestamp === 'number')
   } catch {
     return []
   }
@@ -123,18 +124,32 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
   }
 
   const handleExport = async (campaign: Campaign): Promise<void> => {
-    await exportCampaignToFile(campaign)
+    try {
+      await exportCampaignToFile(campaign)
+    } catch {
+      addToast('Failed to export campaign. Please try again.', 'error')
+    }
   }
 
   const handleDelete = async (id: string): Promise<void> => {
-    await deleteCampaign(id)
-    setConfirmDelete(null)
+    try {
+      await deleteCampaign(id)
+      setConfirmDelete(null)
+    } catch {
+      addToast('Failed to delete campaign. Please try again.', 'error')
+      setConfirmDelete(null)
+    }
   }
 
   const handleDeleteAll = async (): Promise<void> => {
-    await deleteAllCampaigns()
-    setShowDeleteAllConfirm(false)
-    addToast('All campaigns deleted', 'success')
+    try {
+      await deleteAllCampaigns()
+      setShowDeleteAllConfirm(false)
+      addToast('All campaigns deleted', 'success')
+    } catch {
+      setShowDeleteAllConfirm(false)
+      addToast('Failed to delete all campaigns. Please try again.', 'error')
+    }
   }
 
   const formatDate = (dateStr: string): string => {
@@ -332,7 +347,7 @@ export default function StartStep({ onNewCampaign }: StartStepProps): JSX.Elemen
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-100 truncate">{c.name}</span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-900/40 text-red-400">
-                          5e
+                          {c.system ?? '5e'}
                         </span>
                       </div>
                       <div className="text-[10px] text-gray-500 mt-0.5">

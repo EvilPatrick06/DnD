@@ -1,4 +1,5 @@
 import { load5eXpThresholds } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 // 5e XP thresholds: XP required to reach each level (index = level)
 const XP_THRESHOLDS_5E: number[] = [
@@ -12,7 +13,7 @@ load5eXpThresholds()
     XP_THRESHOLDS_5E.length = 0
     XP_THRESHOLDS_5E.push(...data)
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('Failed to load XP thresholds data', e))
 
 export function xpThresholdForLevel(level: number): number {
   return XP_THRESHOLDS_5E[Math.min(level, 20)] ?? 0

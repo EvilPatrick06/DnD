@@ -39,8 +39,8 @@
         "useDefaultParameterLast": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "off",
-        "useHookAtTopLevel": "off",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "warn",
         "noUnusedFunctionParameters": "off",
         "noUnusedImports": "warn"
       }

@@ -5,6 +5,7 @@
 // ============================================================================
 
 import { load5eBastionEvents } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 // ---- Dice Helpers ----------------------------------------------------------
 
@@ -135,7 +136,9 @@ load5eBastionEvents()
       EMERALD_ENCLAVE_CREATURES = data.emeraldEnclaveCreatures as typeof EMERALD_ENCLAVE_CREATURES
     if (data.forgeConstructs) FORGE_CONSTRUCTS = data.forgeConstructs as typeof FORGE_CONSTRUCTS
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('[BastionEvents] Failed to load bastion event tables:', err)
+  })
 
 // ---- Resolution Functions --------------------------------------------------
 
@@ -149,9 +152,13 @@ function findTreasureEntry(roll: number): { description: string; category: strin
   return entry ?? { description: 'A curious trinket of unknown value', category: 'art-25gp' }
 }
 
-function _findGamblingEntry(roll: number): { diceCount: number; description: string } {
+/**
+ * Roll on the gaming hall winnings table (used for Harvest order result).
+ */
+export function rollGamingHallWinnings(): { diceCount: number; description: string; roll: number } {
+  const roll = rollD100()
   const entry = GAMING_HALL_WINNINGS.find((e) => roll >= e.min && roll <= e.max)
-  return entry ?? { diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' }
+  return { ...(entry ?? { diceCount: 1, description: 'The house takes in 1d6 × 10 GP.' }), roll }
 }
 
 /**
@@ -186,7 +193,7 @@ export function rollBastionEvent(): BastionEventResult {
       const bribeRoll = rollD(6)
       subRolls['d6-bribe'] = bribeRoll
       const bribeCost = bribeRoll * 100
-      description = `Criminal Hireling! One of your hirelings has been caught engaging in criminal activity. You can pay a bribe of ${bribeCost} GP (${bribeRoll}d100) to make the problem go away, or dismiss the hireling and lose use of their facility for 1 bastion turn.`
+      description = `Criminal Hireling! One of your hirelings has been caught engaging in criminal activity. You can pay a bribe of ${bribeCost} GP (${bribeRoll} × 100) to make the problem go away, or dismiss the hireling and lose use of their facility for 1 bastion turn.`
       break
     }
 

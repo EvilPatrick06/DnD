@@ -203,6 +203,9 @@ export type DmAction =
       disposition: 'friendly' | 'neutral' | 'hostile'
     }
 
+  // Handouts
+  | { action: 'share_handout'; title: string; content: string; contentType?: 'text' | 'image' }
+
 /** Extract DM actions JSON from AI response text. */
 export function parseDmActions(response: string): DmAction[] {
   const match = response.match(DM_ACTIONS_RE)

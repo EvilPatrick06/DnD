@@ -94,7 +94,7 @@ interface AiDmState {
     gameState?: string
   ) => Promise<void>
   cancelStream: () => void
-  setScene: (campaignId: string, characterIds: string[]) => Promise<void>
+  setScene: (campaignId: string, characterIds: string[], gameState?: string) => Promise<void>
   prepareScene: (campaignId: string, characterIds: string[]) => Promise<void>
   checkSceneStatus: (campaignId: string) => Promise<void>
   clearMessages: () => void
@@ -267,14 +267,17 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     set({ sceneStatus: result.status === 'idle' ? 'idle' : result.status })
   },
 
-  setScene: async (campaignId, characterIds) => {
+  setScene: async (campaignId, characterIds, gameState?: string) => {
     const state = get()
     if (!state.enabled) return
 
     await state.sendMessage(
       campaignId,
       'The adventure begins. Set the scene for the party. Describe the opening location and atmosphere.',
-      characterIds
+      characterIds,
+      undefined,
+      undefined,
+      gameState
     )
   },
 

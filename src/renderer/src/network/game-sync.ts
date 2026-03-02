@@ -1,10 +1,7 @@
+import { useGameStore } from '../stores/use-game-store'
 import type { EntityCondition } from '../types/game-state'
-
-function getGameStore() {
-  return (require('../stores/use-game-store') as typeof import('../stores/use-game-store')).useGameStore
-}
-
 import type { GameMap } from '../types/map'
+import { logger } from '../utils/logger'
 import type { MessageType } from './types'
 
 type SendMessageFn = (type: MessageType, payload: unknown) => void
@@ -54,17 +51,17 @@ async function encodeMapImage(imagePath: string): Promise<string | null> {
 export function startGameSync(sendMessage: SendMessageFn): void {
   stopGameSync()
 
-  let prevMaps: GameMap[] = getGameStore().getState().maps
-  let prevActiveMapId: string | null = getGameStore().getState().activeMapId
-  let prevInitiative = getGameStore().getState().initiative
-  let prevRound = getGameStore().getState().round
-  let prevConditions: EntityCondition[] = getGameStore().getState().conditions
-  let prevTurnMode = getGameStore().getState().turnMode
-  let prevIsPaused = getGameStore().getState().isPaused
-  let prevTurnStates = getGameStore().getState().turnStates
-  let prevPartyVisionCells = getGameStore().getState().partyVisionCells
+  let prevMaps: GameMap[] = useGameStore.getState().maps
+  let prevActiveMapId: string | null = useGameStore.getState().activeMapId
+  let prevInitiative = useGameStore.getState().initiative
+  let prevRound = useGameStore.getState().round
+  let prevConditions: EntityCondition[] = useGameStore.getState().conditions
+  let prevTurnMode = useGameStore.getState().turnMode
+  let prevIsPaused = useGameStore.getState().isPaused
+  let prevTurnStates = useGameStore.getState().turnStates
+  let prevPartyVisionCells = useGameStore.getState().partyVisionCells
 
-  unsubscribe = getGameStore().subscribe((state) => {
+  unsubscribe = useGameStore.subscribe((state) => {
     // Sync party vision cells
     if (state.partyVisionCells !== prevPartyVisionCells) {
       prevPartyVisionCells = state.partyVisionCells
@@ -75,13 +72,24 @@ export function startGameSync(sendMessage: SendMessageFn): void {
       prevActiveMapId = state.activeMapId
       const map = state.maps.find((m) => m.id === state.activeMapId)
       if (map) {
-        encodeMapImage(map.imagePath).then((imageData) => {
-          sendMessage('dm:map-change', {
-            mapId: state.activeMapId,
-            mapData: { ...map, imageData: imageData || undefined }
+        encodeMapImage(map.imagePath)
+          .then((imageData) => {
+            sendMessage('dm:map-change', {
+              mapId: state.activeMapId,
+              mapData: { ...map, imageData: imageData || undefined }
+            })
           })
-        })
+          .catch((err) => {
+            logger.error('[GameSync] Failed to encode map image, sending map without image data:', err)
+            sendMessage('dm:map-change', {
+              mapId: state.activeMapId,
+              mapData: { ...map }
+            })
+          })
       } else {
+        if (state.activeMapId !== null) {
+          logger.warn('[GameSync] activeMapId', state.activeMapId, 'not found in maps — broadcasting mapId only')
+        }
         sendMessage('dm:map-change', { mapId: state.activeMapId })
       }
     }
@@ -190,7 +198,7 @@ export function stopGameSync(): void {
  * Encodes map images as base64 data URLs so clients can render them.
  */
 export async function buildFullGameStatePayload(): Promise<Record<string, unknown>> {
-  const gs = getGameStore().getState()
+  const gs = useGameStore.getState()
   const mapsWithImages = await Promise.all(
     gs.maps.map(async (m) => {
       const imageData = await encodeMapImage(m.imagePath)

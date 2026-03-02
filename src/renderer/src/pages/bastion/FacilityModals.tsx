@@ -297,7 +297,10 @@ export function AddSpecialFacilityModal({
             onClick={handleAddSpecial}
             disabled={
               !selectedSpecialType ||
-              (selectedBastion && selectedBastion.specialFacilities.length >= maxSpecial) ||
+              (selectedBastion != null &&
+                selectedBastion.specialFacilities.length +
+                  selectedBastion.construction.filter((p) => p.projectType === 'add-special').length >=
+                  maxSpecial) ||
               (selectedSpecialDef != null &&
                 selectedBastion != null &&
                 selectedBastion.treasury <

@@ -202,8 +202,8 @@ export async function exportAllData(): Promise<BackupStats | null> {
 
   // Validate against IPC write size limit
   if (json.length > MAX_WRITE_CONTENT_SIZE) {
-    logger.error(`Backup export exceeds max write size (${(MAX_WRITE_CONTENT_SIZE / 1024 / 1024).toFixed(0)} MB)`)
-    throw new Error('Backup data is too large to export')
+    const limitMb = (MAX_WRITE_CONTENT_SIZE / 1024 / 1024).toFixed(0)
+    throw new Error(`Backup is too large to export (limit: ${limitMb} MB). Consider removing unused data first.`)
   }
 
   await window.api.writeFile(filePath, json)
@@ -238,11 +238,11 @@ export async function importAllData(): Promise<BackupStats | null> {
   try {
     payload = JSON.parse(raw)
   } catch {
-    throw new Error('Invalid backup file: malformed JSON')
+    return null
   }
 
   if (!payload || typeof payload !== 'object' || !payload.version || payload.version > BACKUP_VERSION) {
-    throw new Error('Invalid or unsupported backup file version')
+    return null
   }
 
   const chars = Array.isArray(payload.characters) ? payload.characters : []
@@ -252,20 +252,20 @@ export async function importAllData(): Promise<BackupStats | null> {
   const creatures = Array.isArray(payload.customCreatures) ? payload.customCreatures : []
   const hb = Array.isArray(payload.homebrew) ? payload.homebrew : []
 
-  for (const c of chars) {
-    await window.api.saveCharacter(c as Record<string, unknown>)
-  }
-  for (const c of camps) {
-    await window.api.saveCampaign(c as Record<string, unknown>)
-  }
-  for (const b of basts) {
-    await window.api.saveBastion(b as Record<string, unknown>)
-  }
-  for (const cr of creatures) {
-    await window.api.saveCustomCreature(cr as Record<string, unknown>)
-  }
-  for (const h of hb) {
-    await window.api.saveHomebrew(h as Record<string, unknown>)
+  const results = await Promise.allSettled([
+    ...chars.map((c) => window.api.saveCharacter(c as Record<string, unknown>)),
+    ...camps.map((c) => window.api.saveCampaign(c as Record<string, unknown>)),
+    ...basts.map((b) => window.api.saveBastion(b as Record<string, unknown>)),
+    ...creatures.map((cr) => window.api.saveCustomCreature(cr as Record<string, unknown>)),
+    ...hb.map((h) => window.api.saveHomebrew(h as Record<string, unknown>))
+  ])
+
+  const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+  if (failed.length > 0) {
+    logger.warn(`[Import] ${failed.length} item(s) failed to save during import`)
+    if (failed.length === results.length) {
+      throw new Error('Import failed: no items could be saved')
+    }
   }
 
   if (payload.appSettings && typeof payload.appSettings === 'object') {

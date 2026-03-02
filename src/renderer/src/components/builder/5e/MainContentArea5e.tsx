@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { useBuilderStore } from '../../../stores/use-builder-store'
+import ErrorBoundary from '../../ui/ErrorBoundary'
 import AbilityScoreModal from '../shared/AbilityScoreModal'
 import AsiModal from '../shared/AsiModal'
 import ExpertiseModal from '../shared/ExpertiseModal'
@@ -27,9 +28,13 @@ function ActiveTabContent(): JSX.Element {
       return <SpellsTab5e />
     case 'gear':
       return (
-        <Suspense fallback={<div className="p-4 text-gray-500 text-sm">Loading...</div>}>
-          <GearTab5e />
-        </Suspense>
+        <ErrorBoundary
+          fallback={<div className="p-4 text-red-400 text-sm">Failed to load gear tab. Please restart the app.</div>}
+        >
+          <Suspense fallback={<div className="p-4 text-gray-500 text-sm">Loading...</div>}>
+            <GearTab5e />
+          </Suspense>
+        </ErrorBoundary>
       )
     default:
       return <DetailsTab5e />

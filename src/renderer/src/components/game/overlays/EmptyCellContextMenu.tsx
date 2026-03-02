@@ -3,6 +3,7 @@ import { load5eMonsters } from '../../../services/data-provider'
 import { useGameStore } from '../../../stores/use-game-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 import type { MonsterStatBlock } from '../../../types/monster'
+import { logger } from '../../../utils/logger'
 
 interface EmptyCellContextMenuProps {
   gridX: number
@@ -36,7 +37,7 @@ export default function EmptyCellContextMenu({
     if (showSearch && allMonsters.length === 0) {
       load5eMonsters()
         .then(setAllMonsters)
-        .catch(() => {})
+        .catch((e) => logger.warn('Failed to load monsters for context menu', e))
     }
   }, [showSearch, allMonsters.length])
 

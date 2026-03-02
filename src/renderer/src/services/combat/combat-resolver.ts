@@ -879,7 +879,12 @@ function applyDamageToToken(token: MapToken, damage: number): void {
   if (damage <= 0) return
   const gameStore = useGameStore.getState()
   const map = gameStore.maps.find((m) => m.id === gameStore.activeMapId)
-  if (!map) return
+  if (!map) {
+    console.warn(
+      `[CombatResolver] applyDamageToToken: no active map found (activeMapId=${gameStore.activeMapId}). Damage of ${damage} to "${token.label}" was not applied.`
+    )
+    return
+  }
 
   const currentHP = token.currentHP ?? 0
   const newHP = Math.max(0, currentHP - damage)

@@ -523,6 +523,10 @@ addCheck(22, 'Missing key prop in .map()', 'React & Hooks', () => {
         // Skip .map() inside object spreads or assigned to object properties (data transforms, not JSX)
         if (/\w+:\s*(?:\w+\.)*\w+\.map\s*\(/.test(lines[i])) continue
         if (/\.\.\.\w+\.map\s*\(/.test(lines[i])) continue
+        // Skip chained .map() lines (leading dot = continuation of a variable assignment)
+        if (/^\s*\.map\s*\(/.test(lines[i])) continue
+        // Skip .map() that returns plain objects ({) not JSX (<)
+        if (/=>\s*\(\{/.test(lines[i])) continue
         // Look ahead 5 lines for key=
         const block = lines.slice(i, i + 6).join(' ')
         if (/\breturn\s+null\b/.test(block)) continue

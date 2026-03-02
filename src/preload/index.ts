@@ -79,6 +79,8 @@ const api = {
     cancelStream: (streamId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_CANCEL_STREAM, streamId),
     applyMutations: (characterId: string, changes: unknown[]) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_APPLY_MUTATIONS, characterId, changes),
+    longRest: (characterId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LONG_REST, characterId),
+    shortRest: (characterId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_SHORT_REST, characterId),
     saveConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_SAVE_CONVERSATION, campaignId),
     loadConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LOAD_CONVERSATION, campaignId),
     deleteConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_DELETE_CONVERSATION, campaignId),

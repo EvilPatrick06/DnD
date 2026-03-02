@@ -4,26 +4,17 @@ import { load5eClasses } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { ClassData } from '../../../types/data'
-import LevelSection5e, { AsiSelector5e, GeneralFeatPicker } from './LevelSection5e'
+import LevelSection5e from './LevelSection5e'
 import { ClassLevelSelector, InvocationSection5e, MetamagicSection5e } from './LevelUpConfirm5e'
 import { calculateSummary5e, LevelUpSummaryBar5e } from './LevelUpSummary5e'
 import SpellSelectionSection5e from './SpellSelectionSection5e'
 
-/**
- * Standalone picker components available for custom level-up UIs.
- * AsiSelector5e: pure ability score increase picker (+2/+1+1)
- * GeneralFeatPicker: standalone general feat selection with search/filtering
- */
-export const LevelUpSubComponents = {
-  AsiSelector5e,
-  GeneralFeatPicker
-} as const
-
 interface LevelUpWizard5eProps {
   character: Character5e
+  incompleteChoices: string[]
 }
 
-export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JSX.Element {
+export default function LevelUpWizard5e({ character, incompleteChoices }: LevelUpWizard5eProps): JSX.Element {
   const currentLevel = useLevelUpStore((s) => s.currentLevel)
   const targetLevel = useLevelUpStore((s) => s.targetLevel)
   const setTargetLevel = useLevelUpStore((s) => s.setTargetLevel)
@@ -34,12 +25,6 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
   const newSpellIds = useLevelUpStore((s) => s.newSpellIds)
   const classLevelChoices = useLevelUpStore((s) => s.classLevelChoices)
   const setClassLevelChoice = useLevelUpStore((s) => s.setClassLevelChoice)
-  const [incompleteChoices, setIncompleteChoices] = useState<string[]>([])
-  useEffect(() => {
-    const update = (): void => setIncompleteChoices(useLevelUpStore.getState().getIncompleteChoices())
-    update()
-    return useLevelUpStore.subscribe(update)
-  }, [])
 
   const [allClasses, setAllClasses] = useState<ClassData[]>([])
 
@@ -57,18 +42,20 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
     return meetsPrerequisites(character, primaryClass.coreTraits.primaryAbility.join(' or '))
   }, [character, allClasses])
 
-  // Group slots by level
-  const slotsByLevel = new Map<number, typeof levelUpSlots>()
-  for (const slot of levelUpSlots) {
-    const group = slotsByLevel.get(slot.level) ?? []
-    group.push(slot)
-    slotsByLevel.set(slot.level, group)
-  }
-
-  // Ensure every new level has an entry even without slots
-  for (let lvl = currentLevel + 1; lvl <= targetLevel; lvl++) {
-    if (!slotsByLevel.has(lvl)) slotsByLevel.set(lvl, [])
-  }
+  // Group slots by level (memoized — only rebuilds when slots or level range changes)
+  const slotsByLevel = useMemo(() => {
+    const map = new Map<number, typeof levelUpSlots>()
+    for (const slot of levelUpSlots) {
+      const group = map.get(slot.level) ?? []
+      group.push(slot)
+      map.set(slot.level, group)
+    }
+    // Ensure every new level has an entry even without slots
+    for (let lvl = currentLevel + 1; lvl <= targetLevel; lvl++) {
+      if (!map.has(lvl)) map.set(lvl, [])
+    }
+    return map
+  }, [levelUpSlots, currentLevel, targetLevel])
 
   // Calculate summary
   const summary = calculateSummary5e(

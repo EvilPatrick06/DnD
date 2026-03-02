@@ -201,6 +201,8 @@ interface AiAPI {
   }) => Promise<{ success: boolean; streamId?: string; error?: string }>
   cancelStream: (streamId: string) => Promise<{ success: boolean }>
   applyMutations: (characterId: string, changes: AiStatChange[]) => Promise<AiMutationResult>
+  longRest: (characterId: string) => Promise<AiMutationResult>
+  shortRest: (characterId: string) => Promise<AiMutationResult>
   saveConversation: (campaignId: string) => Promise<{ success: boolean }>
   loadConversation: (campaignId: string) => Promise<{ success: boolean; data?: unknown }>
   deleteConversation: (campaignId: string) => Promise<{ success: boolean }>

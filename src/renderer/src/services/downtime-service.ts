@@ -199,7 +199,8 @@ export function advanceDowntime(
   progress: DowntimeProgress,
   days: number
 ): { progress: DowntimeProgress; complete: boolean; goldPerDay: number } {
-  const goldPerDay = progress.goldRequired > 0 ? progress.goldRequired / progress.daysRequired : 0
+  const goldPerDay =
+    progress.daysRequired > 0 && progress.goldRequired > 0 ? progress.goldRequired / progress.daysRequired : 0
   const goldForDays = goldPerDay * days
   const newDaysSpent = Math.min(progress.daysRequired, progress.daysSpent + days)
   const newGoldSpent = Math.min(progress.goldRequired, progress.goldSpent + goldForDays)
@@ -274,7 +275,7 @@ export function advanceTrackedDowntime(
   const entry = (campaign.downtimeProgress ?? []).find((e) => e.id === entryId)
   if (!entry) return { campaign, complete: false }
 
-  const goldPerDay = entry.goldRequired > 0 ? entry.goldRequired / entry.daysRequired : 0
+  const goldPerDay = entry.daysRequired > 0 && entry.goldRequired > 0 ? entry.goldRequired / entry.daysRequired : 0
   const newDays = Math.min(entry.daysRequired, entry.daysSpent + days)
   const newGold = Math.min(entry.goldRequired, entry.goldSpent + goldPerDay * days)
   const complete = newDays >= entry.daysRequired

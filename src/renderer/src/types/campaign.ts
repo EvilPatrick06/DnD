@@ -23,6 +23,8 @@ export interface CalendarConfig {
   hoursPerDay: number
   /** DM preference for when AI/system shares exact numeric time */
   exactTimeDefault: 'always' | 'contextual' | 'never'
+  /** Starting in-game time as total seconds (from campaign creation wizard) */
+  startingTime?: number
 }
 
 export interface LoreEntry {

@@ -170,9 +170,8 @@ export function registerIpcHandlers(): void {
       if (err instanceof Error && err.message.startsWith('File too large')) throw err
       logToFile('ERROR', 'fs:read-file failed:', String(err))
       throw err
-    } finally {
-      dialogAllowedPaths.delete(resolvedPath)
     }
+    // Dialog path is NOT consumed on read so the caller can subsequently write to the same path.
   })
 
   ipcMain.handle(IPC_CHANNELS.FS_WRITE, async (_event, filePath: string, content: string) => {

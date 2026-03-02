@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
-import LevelUpWizard5e, { type LevelUpSubComponents } from '../components/levelup/5e/LevelUpWizard5e'
-
-/** Sub-component references for custom level-up UI scenarios. */
-type _LevelUpSubComponents = typeof LevelUpSubComponents
+import LevelUpWizard5e from '../components/levelup/5e/LevelUpWizard5e'
 
 import { useCharacterStore } from '../stores/use-character-store'
 import { useLevelUpStore } from '../stores/use-level-up-store'
@@ -166,7 +163,9 @@ export default function LevelUp5ePage(): JSX.Element {
             </div>
           )}
 
-          {storeCharacterRef && is5eCharacter(storeCharacterRef) && <LevelUpWizard5e character={storeCharacterRef} />}
+          {storeCharacterRef && is5eCharacter(storeCharacterRef) && (
+            <LevelUpWizard5e character={storeCharacterRef} incompleteChoices={incompleteChoices} />
+          )}
         </div>
       </div>
     </div>

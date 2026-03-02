@@ -18,6 +18,7 @@ import ShortRestModal5e from '../components/sheet/5e/ShortRestModal5e'
 import SkillsSection5e from '../components/sheet/5e/SkillsSection5e'
 import SpellcastingSection5e from '../components/sheet/5e/SpellcastingSection5e'
 import Modal from '../components/ui/Modal'
+import { addToast } from '../hooks/use-toast'
 
 const PrintSheet = lazy(() => import('../components/sheet/shared/PrintSheet'))
 
@@ -58,6 +59,7 @@ export default function CharacterSheet5ePage(): JSX.Element {
   const [versions, setVersions] = useState<Array<{ fileName: string; timestamp: string; sizeBytes: number }>>([])
   const [loadingVersions, setLoadingVersions] = useState(false)
   const [restoringVersion, setRestoringVersion] = useState<string | null>(null)
+  const [confirmRestoreFile, setConfirmRestoreFile] = useState<string | null>(null)
 
   if (!character) {
     return (
@@ -186,7 +188,7 @@ export default function CharacterSheet5ePage(): JSX.Element {
                   : 'border border-gray-600 hover:border-amber-600 text-gray-300 hover:text-amber-400'
               }`}
             >
-              {isEditing ? 'Save' : 'Edit'}
+              {isEditing ? 'Done' : 'Edit'}
             </button>
             <button
               onClick={() => setShowShortRest(true)}
@@ -228,7 +230,7 @@ export default function CharacterSheet5ePage(): JSX.Element {
                   const result = await window.api.listCharacterVersions(character.id)
                   if (result.success && result.data) setVersions(result.data)
                 } catch {
-                  /* non-fatal */
+                  addToast('Failed to load version history.', 'error')
                 }
                 setLoadingVersions(false)
               }}
@@ -298,20 +300,18 @@ export default function CharacterSheet5ePage(): JSX.Element {
       {/* Long Rest Confirmation */}
       <Modal open={showLongRestConfirm} onClose={() => setShowLongRestConfirm(false)} title="Long Rest">
         <div className="space-y-4">
-          <p className="text-sm text-gray-400">
-            Taking a long rest will:
-            <ul className="list-disc ml-5 mt-2 space-y-1">
-              <li>Restore HP to maximum</li>
-              <li>Recover all Hit Point Dice</li>
-              <li>Restore all spell slots</li>
-              <li>Clear death saves</li>
-              <li>Clear temporary HP</li>
-              <li>Reduce Exhaustion by 1 level</li>
-              {(character.knownSpells ?? []).some((s) => s.innateUses) && <li>Restore innate spell uses</li>}
-              {character.wildShapeUses && character.wildShapeUses.max > 0 && <li>Restore all Wild Shape uses</li>}
-              {character.species?.toLowerCase() === 'human' && <li>Grant Heroic Inspiration (Human trait)</li>}
-            </ul>
-          </p>
+          <p className="text-sm text-gray-400">Taking a long rest will:</p>
+          <ul className="list-disc ml-5 mt-2 space-y-1 text-sm text-gray-400">
+            <li>Restore HP to maximum</li>
+            <li>Recover all Hit Point Dice</li>
+            <li>Restore all spell slots</li>
+            <li>Clear death saves</li>
+            <li>Clear temporary HP</li>
+            <li>Reduce Exhaustion by 1 level</li>
+            {(character.knownSpells ?? []).some((s) => s.innateUses) && <li>Restore innate spell uses</li>}
+            {character.wildShapeUses && character.wildShapeUses.max > 0 && <li>Restore all Wild Shape uses</li>}
+            {character.species?.toLowerCase() === 'human' && <li>Grant Heroic Inspiration (Human trait)</li>}
+          </ul>
           <div className="text-xs text-gray-500">
             Hit Point Dice: {character.hitDice.reduce((s, h) => s + h.current, 0)}/
             {character.hitDice.reduce((s, h) => s + h.maximum, 0)}
@@ -361,9 +361,10 @@ export default function CharacterSheet5ePage(): JSX.Element {
               <h3 className="text-sm font-semibold text-amber-400">Version History</h3>
               <button
                 onClick={() => setShowVersionHistory(false)}
+                aria-label="Close version history"
                 className="text-gray-500 hover:text-gray-300 text-lg cursor-pointer"
               >
-                &times;
+                <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-2">
@@ -390,20 +391,7 @@ export default function CharacterSheet5ePage(): JSX.Element {
                       <div className="text-[10px] text-gray-500">{(v.sizeBytes / 1024).toFixed(1)} KB</div>
                     </div>
                     <button
-                      onClick={async () => {
-                        if (!confirm('Restore this version? Your current save will be backed up first.')) return
-                        setRestoringVersion(v.fileName)
-                        try {
-                          const result = await window.api.restoreCharacterVersion(character.id, v.fileName)
-                          if (result.success && result.data) {
-                            await useCharacterStore.getState().loadCharacters()
-                            setShowVersionHistory(false)
-                          }
-                        } catch {
-                          /* non-fatal */
-                        }
-                        setRestoringVersion(null)
-                      }}
+                      onClick={() => setConfirmRestoreFile(v.fileName)}
                       disabled={restoringVersion !== null}
                       className="px-3 py-1 text-xs bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded cursor-pointer transition-colors"
                     >
@@ -416,6 +404,45 @@ export default function CharacterSheet5ePage(): JSX.Element {
           </div>
         </div>
       )}
+
+      {/* Version Restore Confirmation Modal */}
+      <Modal open={confirmRestoreFile !== null} onClose={() => setConfirmRestoreFile(null)} title="Restore Version">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-300">Restore this version? Your current save will be backed up first.</p>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setConfirmRestoreFile(null)}
+              className="px-4 py-2 text-sm border border-gray-600 rounded hover:bg-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirmRestoreFile) return
+                const fileName = confirmRestoreFile
+                setConfirmRestoreFile(null)
+                setRestoringVersion(fileName)
+                try {
+                  const result = await window.api.restoreCharacterVersion(character.id, fileName)
+                  if (result.success && result.data) {
+                    await useCharacterStore.getState().loadCharacters()
+                    setShowVersionHistory(false)
+                    addToast('Character version restored successfully.', 'success')
+                  } else {
+                    addToast('Failed to restore version. Please try again.', 'error')
+                  }
+                } catch {
+                  addToast('Failed to restore version. Please try again.', 'error')
+                }
+                setRestoringVersion(null)
+              }}
+              className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded font-semibold transition-colors"
+            >
+              Restore
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

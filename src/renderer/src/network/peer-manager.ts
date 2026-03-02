@@ -35,8 +35,20 @@ let customSignalingSecure: boolean = true
 /**
  * Configure a custom PeerJS signaling server (e.g. Pi via Cloudflare Tunnel).
  * Call before createPeer() to take effect.
+ * @throws {Error} If the host does not use a secure (wss/https) scheme implicitly
  */
 export function setSignalingServer(host: string, port?: number, path?: string, secure?: boolean): void {
+  // Reject plaintext ws:// or http:// URLs passed as the host value
+  if (/^https?:\/\//i.test(host) || /^wss?:\/\//i.test(host)) {
+    const scheme = host.match(/^[a-z]+:\/\//i)?.[0] ?? ''
+    const isInsecure = /^(http|ws):\/\//i.test(scheme)
+    if (isInsecure) {
+      logger.warn('setSignalingServer: insecure scheme rejected, use wss:// or https://')
+      return
+    }
+    // Strip any scheme prefix — PeerJS expects a bare hostname
+    host = host.replace(/^[a-z]+:\/\//i, '')
+  }
   customSignalingHost = host
   customSignalingPort = port ?? (secure !== false ? 443 : 80)
   customSignalingPath = path ?? '/'

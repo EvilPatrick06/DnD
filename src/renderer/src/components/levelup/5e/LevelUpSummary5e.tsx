@@ -46,7 +46,7 @@ export function calculateSummary5e(
     hpGain += Math.max(1, dieResult + newConMod)
   }
 
-  const retroactive = (newConMod - conMod) * targetLevel
+  const retroactive = (newConMod - conMod) * currentLevel
   const newMaxHP = character.hitPoints.maximum + hpGain + retroactive
 
   const asiChanges: string[] = []

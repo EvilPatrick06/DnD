@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import {
+  getEffectiveSpeed,
   isMoveBlockedByFear,
   type MovementType,
   proneStandUpCost,
@@ -207,9 +208,38 @@ export function useTokenMovement({
           }
         }
 
+        // Check conditions that reduce or prevent movement (Restrained, Grappled, Exhaustion).
+        // Build conditions array from the token's condition list and store conditions (for level-based effects).
+        const storeConditions = gameStore.conditions
+          .filter((c) => c.entityId === movingToken.entityId)
+          .map((c) => ({ name: c.condition, value: c.value }))
+        const tokenConditions = movingToken.conditions
+          .filter((c) => !storeConditions.some((sc) => sc.name.toLowerCase() === c.toLowerCase()))
+          .map((c) => ({ name: c }))
+        const allConditions = [...storeConditions, ...tokenConditions]
+        const conditionSpeed = getEffectiveSpeed(effectiveSpeed, allConditions)
+        if (
+          conditionSpeed === 0 &&
+          allConditions.some((c) => ['grappled', 'restrained'].includes(c.name.toLowerCase()))
+        ) {
+          const blocker = allConditions.find((c) => ['grappled', 'restrained'].includes(c.name.toLowerCase()))
+          addChatMessage({
+            id: `msg-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+            senderId: 'system',
+            senderName: 'System',
+            content: `${movingToken.label} cannot move — they are ${blocker?.name ?? 'immobilized'}!`,
+            timestamp: Date.now(),
+            isSystem: true
+          })
+          return
+        }
+        // Apply exhaustion speed penalty
+        effectiveSpeed = conditionSpeed
+
         const isProne = movingToken.conditions.some((c) => c.toLowerCase() === 'prone')
         if (isProne && ts.movementRemaining === ts.movementMax) {
           const standCost = proneStandUpCost(effectiveSpeed)
+          // biome-ignore lint/correctness/useHookAtTopLevel: gameStore.useMovement is a Zustand action, not a React hook
           gameStore.useMovement(movingToken.entityId, standCost)
           const updatedConditions = movingToken.conditions.filter((c) => c.toLowerCase() !== 'prone')
           gameStore.updateToken(activeMap.id, tokenId, { conditions: updatedConditions })
@@ -245,6 +275,7 @@ export function useTokenMovement({
           actualCost = Math.round(actualCost * (ts.movementMax / effectiveSpeed))
         }
 
+        // biome-ignore lint/correctness/useHookAtTopLevel: gameStore.useMovement is a Zustand action, not a React hook
         gameStore.useMovement(movingToken.entityId, actualCost)
       }
 

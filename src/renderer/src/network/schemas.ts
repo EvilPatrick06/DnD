@@ -46,7 +46,10 @@ const ChatPayloadSchema = z.object({
       total: z.number(),
       rolls: z.array(z.number())
     })
-    .optional()
+    .optional(),
+  // Optional overrides so AI DM messages arrive as "AI Dungeon Master" on all clients
+  senderId: z.string().max(100).optional(),
+  senderName: z.string().max(100).optional()
 })
 
 const WhisperPayloadSchema = z.object({

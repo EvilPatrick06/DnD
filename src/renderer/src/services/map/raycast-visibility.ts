@@ -215,7 +215,7 @@ export function computeLitAreas(
 
 // ─── Clip visibility polygon to a circular radius ─────────────
 
-function clipToRadius(poly: VisibilityPolygon, radius: number): VisibilityPolygon {
+export function clipToRadius(poly: VisibilityPolygon, radius: number): VisibilityPolygon {
   if (radius <= 0) return { origin: poly.origin, points: [] }
 
   const clipped: Point[] = []

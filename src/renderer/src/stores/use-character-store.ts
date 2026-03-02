@@ -76,13 +76,11 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
   deleteAllCharacters: async () => {
     const { characters } = get()
-    for (const c of characters) {
-      try {
-        await window.api.deleteCharacter(c.id)
-      } catch (error) {
-        logger.error('Failed to delete character:', c.id, error)
-      }
-    }
+    await Promise.allSettled(
+      characters.map((c) =>
+        window.api.deleteCharacter(c.id).catch((error) => logger.error('Failed to delete character:', c.id, error))
+      )
+    )
     set({ characters: [], selectedCharacterId: null })
   },
 

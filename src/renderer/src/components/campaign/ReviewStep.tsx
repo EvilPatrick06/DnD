@@ -4,6 +4,7 @@ import type { GameSystem } from '../../types/game-system'
 import { GAME_SYSTEMS } from '../../types/game-system'
 import type { GameMap } from '../../types/map'
 import { Button, Card } from '../ui'
+import type { SessionZeroData } from './SessionZeroStep'
 
 interface AiDmSummary {
   ollamaModel: string
@@ -24,6 +25,7 @@ interface ReviewStepProps {
   customAudioCount?: number
   calendar?: CalendarConfig | null
   aiDm?: AiDmSummary | null
+  sessionZero?: SessionZeroData | null
   onSubmit: () => void
   submitting: boolean
 }
@@ -50,9 +52,19 @@ export default function ReviewStep({
   customAudioCount,
   calendar,
   aiDm,
+  sessionZero,
   onSubmit,
   submitting
 }: ReviewStepProps): JSX.Element {
+  const hasSessionZeroData =
+    sessionZero &&
+    (sessionZero.tone !== 'heroic' ||
+      sessionZero.pvpAllowed ||
+      sessionZero.characterDeathExpectation !== 'possible' ||
+      sessionZero.contentLimits.length > 0 ||
+      sessionZero.playSchedule.trim() ||
+      sessionZero.additionalNotes.trim())
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-2">Review Campaign</h2>
@@ -164,6 +176,36 @@ export default function ReviewStep({
               {customAudioCount} custom audio file{customAudioCount !== 1 ? 's' : ''} will be uploaded when the campaign
               is created.
             </p>
+          </Card>
+        )}
+
+        {hasSessionZeroData && sessionZero && (
+          <Card>
+            <h3 className="text-lg font-semibold mb-3">Session Zero</h3>
+            <div className="grid grid-cols-2 gap-y-2 text-sm">
+              <span className="text-gray-400">Tone</span>
+              <span className="capitalize">{sessionZero.tone}</span>
+
+              <span className="text-gray-400">PvP</span>
+              <span>{sessionZero.pvpAllowed ? 'Allowed' : 'Not allowed'}</span>
+
+              <span className="text-gray-400">Character Death</span>
+              <span className="capitalize">{sessionZero.characterDeathExpectation}</span>
+
+              {sessionZero.contentLimits.length > 0 && (
+                <>
+                  <span className="text-gray-400">Content Limits</span>
+                  <span>{sessionZero.contentLimits.join(', ')}</span>
+                </>
+              )}
+
+              {sessionZero.playSchedule.trim() && (
+                <>
+                  <span className="text-gray-400">Schedule</span>
+                  <span>{sessionZero.playSchedule}</span>
+                </>
+              )}
+            </div>
           </Card>
         )}
 

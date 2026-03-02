@@ -1,4 +1,5 @@
 import { load5eSkills, type SkillEntry } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export interface SkillDescription {
   name: string
@@ -34,7 +35,7 @@ load5eSkills()
     SKILLS_5E.length = 0
     SKILLS_5E.push(...entries.map(mapEntry))
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('Failed to load 5e skills data', e))
 
 export function getSkillDescription(skillName: string): SkillDescription | undefined {
   return SKILLS_5E.find((s) => s.name === skillName)

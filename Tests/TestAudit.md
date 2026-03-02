@@ -1,47 +1,47 @@
 # Project Audit Report
-Generated: 2026-03-02T02:30:18.767Z
+Generated: 2026-03-02T06:07:55.996Z
 
 ## Summary Dashboard
 | # | Check | Category | Status | Issues | Time |
 |---|-------|----------|--------|--------|------|
-| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 5.6s |
-| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 3.8s |
+| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 5.4s |
+| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 3.5s |
 | 3 | Biome format check | Core Quality | ✅ PASS | 0 | 2.7s |
-| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 39.3s |
-| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 46.5s |
-| 6 | Production build | Core Quality | ✅ PASS | 0 | 19.2s |
-| 7 | OxLint | Core Quality | ✅ PASS | 0 | 1.3s |
-| 8 | npm audit | Security | ✅ PASS | 0 | 2.8s |
-| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.4s |
+| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 36.6s |
+| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 43.6s |
+| 6 | Production build | Core Quality | ✅ PASS | 0 | 16.4s |
+| 7 | OxLint | Core Quality | ✅ PASS | 0 | 0.9s |
+| 8 | npm audit | Security | ✅ PASS | 0 | 2.3s |
+| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.1s |
 | 10 | Electron security scan | Security | ✅ PASS | 0 | 0.0s |
 | 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.2s |
-| 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.2s |
-| 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.2s |
-| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 1.0s |
-| 15 | Dead code (knip) | Dependencies | ✅ PASS | 87 | 7.0s |
-| 16 | Outdated packages | Dependencies | ✅ PASS | 0 | 2.6s |
-| 17 | License compliance | Dependencies | ✅ PASS | 0 | 2.6s |
-| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.5s |
-| 19 | Duplicate packages | Dependencies | ✅ PASS | 50 | 1.7s |
-| 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 1.2s |
+| 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.1s |
+| 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.1s |
+| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 0.9s |
+| 15 | Dead code (knip) | Dependencies | ⚠️ WARN | 110 | 4.7s |
+| 16 | Outdated packages | Dependencies | ✅ PASS | 0 | 1.7s |
+| 17 | License compliance | Dependencies | ✅ PASS | 0 | 1.5s |
+| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.0s |
+| 19 | Duplicate packages | Dependencies | ✅ PASS | 50 | 1.2s |
+| 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 0.8s |
 | 21 | Missing export default on lazy components | React & Hooks | ✅ PASS | 0 | 0.0s |
 | 22 | Missing key prop in .map() | React & Hooks | ✅ PASS | 0 | 0.1s |
-| 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.2s |
-| 24 | console.log leaks | Code Quality | ✅ PASS | 0 | 0.2s |
-| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.2s |
-| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 4 | 0.2s |
-| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.2s |
-| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.2s |
-| 29 | Functions >200 lines | Code Quality | ✅ PASS | 42 | 0.2s |
-| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 636 | 29.8s |
+| 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.1s |
+| 24 | console.log leaks | Code Quality | ✅ PASS | 1 | 0.1s |
+| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.1s |
+| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 3 | 0.1s |
+| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.1s |
+| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.1s |
+| 29 | Functions >200 lines | Code Quality | ✅ PASS | 43 | 0.2s |
+| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 639 | 21.6s |
 | 31 | Regex safety (ReDoS) | Code Quality | ✅ PASS | 0 | 0.1s |
-| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 178 | 0.1s |
+| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 132 | 0.1s |
 | 33 | File naming conventions | Project Hygiene | ✅ PASS | 0 | 0.0s |
 | 34 | Missing test files | Project Hygiene | ✅ PASS | 7 | 0.1s |
-| 35 | Orphan files (not imported) | Project Hygiene | ✅ PASS | 0 | 1.3s |
-| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 54.8s |
+| 35 | Orphan files (not imported) | Project Hygiene | ✅ PASS | 0 | 0.9s |
+| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 36.7s |
 
-**Total: 0 errors, 0 warnings, 1 informational**
+**Total: 0 errors, 1 warnings, 1 informational**
 
 ---
 
@@ -87,14 +87,14 @@ All files formatted
 **Issues**: 0
 
 ```
-Statement coverage: 64.23%
+Statement coverage: 64.34%
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   64.23 |    53.96 |   63.31 |   65.14 |                   
- data              |   81.14 |    61.87 |    87.7 |   83.41 |                   
+All files          |   64.34 |    53.97 |   63.22 |   65.27 |                   
+ data              |   82.15 |    62.54 |   88.52 |   84.07 |                   
   ...scriptions.ts |     100 |      100 |     100 |     100 |                   
-  ...ion-events.ts |   55.38 |    40.29 |   52.63 |   53.27 | ...69-235,245-253 
+  ...ion-events.ts |   59.09 |    43.28 |   57.89 |   55.96 | 151-161,184-260   
   ...ar-presets.ts |     100 |       80 |     100 |     100 | 28-35             
   ...-resources.ts |      95 |    73.68 |   92.85 |   94.11 | 20,84             
   conditions.ts    |      88 |     87.5 |      80 |   86.36 | 42-43,62          
@@ -107,7 +107,7 @@ All files          |   64.23 |    53.96 |   63.31 |   65.14 |
   ...mannerisms.ts |     100 |       50 |     100 |     100 | 8-9               
   ...ity-tables.ts |     100 |    85.71 |     100 |     100 | 36,55             
   ...ient-items.ts |     100 |    54.16 |     100 |     100 | 23-27,58,64-75    
-  skills.ts        |     100 |       75 |     100 |     100 | 23                
+  skills.ts        |     100 |       75 |     100 |     100 | 24                
 ```
 
 #### 6. Production build
@@ -124,7 +124,7 @@ Build succeeded
 
 ```
 Found 0 warnings and 0 errors.
-Finished in 86ms on 1323 files with 93 rules using 22 threads.
+Finished in 82ms on 1324 files with 93 rules using 22 threads.
 
 ```
 
@@ -160,6 +160,14 @@ node_modules/fast-xml-parser
       @aws-sdk/credential-provider-env  >=3.894.0
       Depends on vulnerable versions of @aws-sdk/core
       node_modules/@aws-sdk/credential-provider-env
+        @aws-sdk/credential-provider-node  >=3.894.0
+        Depends on vulnerable versions of @aws-sdk/credential-provider-env
+        Depends on vulnerable versions of @aws-sdk/credential-provider-http
+        Depends on vulnerable versions of @aws-sdk/credential-provider-ini
+        Depends on vulnerable versions of @aws-sdk/credential-provider-process
+        Depends on vulnerable versions of @aws-sdk/credential-provider-sso
+        Depends on vulnerable versions of @aws-sdk/credential-provider-web-identity
+        node_modules/@aws-sdk/credential-provider-node
       @aws-sdk/credential-provider-http  >=3.894.0
       Depends on vulnerable versions of @aws-sdk/core
       node_modules/@aws-sdk/credential-provider-http
@@ -179,15 +187,7 @@ node_modules/fast-xml-parser
       node_modules/@aws-sdk/credential-provider-login
       @aws-sdk/credential-provider-process  >=3.894.0
       Depends on vulnerable versions of @aws-sdk/core
-      node_modules/@aws-sdk/credential-provider-process
-        @aws-sdk/credential-provider-node  >=3.894.0
-        Depends on vulnerable versions of @aws-sdk/credential-provider-env
-        Depends on vulnerable versions of @aws-sdk/credential-provider-http
-        Depends on vulnerable versions of @aws-sdk/credential-provider-ini
-        Depends on vulnerable versions of @aws-sdk/credential-provider-process
-        Depends on vulnerable versions of @aws-sdk/credential-provider-sso
-        Depends on vulnerable versions of @aws-sdk/credential-provider-web-identity
-       
+      no
 ```
 
 #### 9. Lockfile lint
@@ -258,53 +258,51 @@ No circular dependencies (barrel + lazy-require false positives excluded)
 ```
 
 #### 15. Dead code (knip)
-**Status**: ✅ PASS  
-**Issues**: 87
+**Status**: ⚠️ WARN  
+**Issues**: 110
 
 ```
-[93m[4mUnused exports[24m[39m (37)
-applyDamageToToken                  src/renderer/src/services/combat/attack-resolver.ts:36:30 
-buildAttackSummary                  src/renderer/src/services/combat/attack-resolver.ts:36:50 
-doubleDiceInFormula                 src/renderer/src/services/combat/attack-resolver.ts:36:70 
-rollDamage                          src/renderer/src/services/combat/attack-resolver.ts:36:91 
-resolveUnarmedStrikeBase            src/renderer/src/services/combat/attack-resolver.ts:39:10 
-resolveUnarmedStrike      function  src/renderer/src/services/combat/attack-resolver.ts:141:17
-shouldTriggerLairAction             src/renderer/src/services/combat/combat-resolver.ts:47:10 
-spendLegendaryAction                src/renderer/src/services/combat/combat-resolver.ts:47:35 
-useLegendaryResistance              src/renderer/src/services/combat/combat-resolver.ts:47:57 
-resolveAttack             function  src/renderer/src/services/combat/combat-resolver.ts:304:17
-resolveSavingThrow        function  src/renderer/src/services/combat/combat-resolver.ts:593:17
-getEffectiveSpeed         function  src/renderer/src/services/combat/combat-rules.ts:256:17   
-applyDamageToToken                  src/renderer/src/services/combat/damage-resolver.ts:41:3  
-buildAttackSummary                  src/renderer/src/services/combat/damage-resolver.ts:42:3  
-doubleDiceInFormula                 src/renderer/src/services/combat/damage-resolver.ts:43:3  
-resolveUnarmedStrike                src/renderer/src/services/combat/damage-resolver.ts:44:3  
-resolveUnarmedStrikeBase            src/renderer/src/services/combat/damage-resolver.ts:45:3  
-rollDamage                          src/renderer/src/services/combat/damage-resolver.ts:46:3  
-resolveSavingThrow                  src/renderer/src/services/combat/damage-resolver.ts:51:3  
-shouldTriggerLairAction             src/renderer/src/services/combat/damage-resolver.ts:53:3  
-spendLegendaryAction                src/renderer/src/services/combat/damage-resolver.ts:54:3  
-useLegendaryResistance              src/renderer/src/services/combat/damage-resolver.ts:55:3  
-getEffectiveSpeed                   src/renderer/src/services/combat/damage-resolver.ts:59:10 
-hasDarkvision             function  src/renderer/src/services/map/vision-computation.ts:184:17
-isConnected                         src/renderer/src/network/index.ts:5:3                     
-getConnectedPeers                   src/renderer/src/network/index.ts:19:3                    
-getInviteCode                       src/renderer/src/network/index.ts:20:3                    
-isHosting                           src/renderer/src/network/index.ts:22:3                    
-createMessageRouter                 src/renderer/src/network/index.ts:37:10                   
-createPeer                          src/renderer/src/network/index.ts:40:3                    
-destroyPeer                         src/renderer/src/network/index.ts:41:3                    
-generateInviteCode                  src/renderer/src/network/index.ts:42:3                    
-getPeer                             src/renderer/src/network/index.ts:44:3                    
-validateNetworkMessage              src/renderer/src/network/index.ts:53:75                   
-GAME_SYSTEMS                        src/renderer/src/types/index.ts:17:10                     
-formatBytes                         src/renderer/src/components/ui/OllamaManagement.tsx:19:10 
-timeAgo                             src/renderer/src/components/ui/OllamaManagement.tsx:19:23 
-[93m[4mUnused exported types[24m[39m (47)
-NetworkMap               type       src/renderer/src/network/types.ts:74:3                                
-MoonPhase                interface  src/renderer/src/services/calendar-service.ts:18:18                   
-AttackOptions            type       src/renderer/src/services/chat-commands.ts:7:3                        
-AttackResult             type       src/renderer/src/services/chat-commands.ts:
+[93m[4mUnused exports[24m[39m (42)
+CR_OPTIONS                          src/renderer/src/pages/library/LibraryFilters.tsx:5:10         
+SIZE_OPTIONS                        src/renderer/src/pages/library/LibraryFilters.tsx:5:22         
+sizeOrder                           src/renderer/src/pages/library/LibraryFilters.tsx:5:36         
+TABS                                src/renderer/src/pages/library/LibraryFilters.tsx:5:47         
+TYPE_OPTIONS                        src/renderer/src/pages/library/LibraryFilters.tsx:5:53         
+applyDamageToToken                  src/renderer/src/services/combat/attack-resolver.ts:36:30      
+buildAttackSummary                  src/renderer/src/services/combat/attack-resolver.ts:36:50      
+doubleDiceInFormula                 src/renderer/src/services/combat/attack-resolver.ts:36:70      
+rollDamage                          src/renderer/src/services/combat/attack-resolver.ts:36:91      
+resolveUnarmedStrikeBase            src/renderer/src/services/combat/attack-resolver.ts:39:10      
+resolveUnarmedStrike      function  src/renderer/src/services/combat/attack-resolver.ts:141:17     
+shouldTriggerLairAction             src/renderer/src/services/combat/combat-resolver.ts:47:10      
+spendLegendaryAction                src/renderer/src/services/combat/combat-resolver.ts:47:35      
+useLegendaryResistance              src/renderer/src/services/combat/combat-resolver.ts:47:57      
+resolveAttack             function  src/renderer/src/services/combat/combat-resolver.ts:304:17     
+resolveSavingThrow        function  src/renderer/src/services/combat/combat-resolver.ts:593:17     
+applyDamageToToken                  src/renderer/src/services/combat/damage-resolver.ts:41:3       
+buildAttackSummary                  src/renderer/src/services/combat/damage-resolver.ts:42:3       
+doubleDiceInFormula                 src/renderer/src/services/combat/damage-resolver.ts:43:3       
+resolveUnarmedStrike                src/renderer/src/services/combat/damage-resolver.ts:44:3       
+resolveUnarmedStrikeBase            src/renderer/src/services/combat/damage-resolver.ts:45:3       
+rollDamage                          src/renderer/src/services/combat/damage-resolver.ts:46:3       
+resolveSavingThrow                  src/renderer/src/services/combat/damage-resolver.ts:51:3       
+shouldTriggerLairAction             src/renderer/src/services/combat/damage-resolver.ts:53:3       
+spendLegendaryAction                src/renderer/src/services/combat/damage-resolver.ts:54:3       
+useLegendaryResistance              src/renderer/src/services/combat/damage-resolver.ts:55:3       
+getEffectiveSpeed                   src/renderer/src/services/combat/damage-resolver.ts:59:10      
+isConnected                         src/renderer/src/network/index.ts:5:3                          
+getConnectedPeers                   src/renderer/src/network/index.ts:19:3                         
+getInviteCode                       src/renderer/src/network/index.ts:20:3                         
+isHosting                           src/renderer/src/network/index.ts:22:3                         
+createMessageRouter                 src/renderer/src/network/index.ts:37:10                        
+createPeer                          src/renderer/src/network/index.ts:40:3                         
+destroyPeer                         src/renderer/src/network/index.ts:41:3                         
+generateInviteCode                  src/renderer/src/network/index.ts:42:3                         
+getPeer                             src/renderer/src/network/index.ts:44:3                         
+validateNetworkMessage              src/renderer/src/network/index.ts:53:75                        
+GAME_SYSTEMS                        src/renderer/src/types/index.ts:17:10                          
+formatBytes               function  src/renderer/src/components/ui/OllamaModelList.tsx:42:17       
+timeAgo                   function  src/renderer/src/componen
 ```
 
 #### 16. Outdated packages
@@ -377,7 +375,7 @@ ansi-regex: 5.0.1, 6.2.2
 
 ```
 Found 0 warnings and 0 errors.
-Finished in 84ms on 1323 files with 93 rules using 22 threads.
+Finished in 63ms on 1324 files with 93 rules using 22 threads.
 
 ```
 
@@ -409,10 +407,10 @@ All files use LF
 
 #### 24. console.log leaks
 **Status**: ✅ PASS  
-**Issues**: 0
+**Issues**: 1
 
 ```
-No console statements
+src/renderer/src/services/combat/combat-resolver.ts:883 — console.warn(
 ```
 
 #### 25. TODO/FIXME/HACK count
@@ -425,13 +423,12 @@ No developer notes
 
 #### 26. Large files (>1000 lines)
 **Status**: ✅ PASS  
-**Issues**: 4
+**Issues**: 3
 
 ```
 src/renderer/src/components/game/modals/mechanics/DowntimeModal.tsx — 1111 lines
 src/renderer/src/services/json-schema.test.ts — 1076 lines
-src/renderer/src/pages/SettingsPage.tsx — 1028 lines
-src/renderer/src/services/data-provider.ts — 1003 lines
+src/renderer/src/pages/SettingsPage.tsx — 1029 lines
 ```
 
 #### 27. `any` type usage
@@ -452,56 +449,57 @@ No empty catch blocks
 
 #### 29. Functions >200 lines
 **Status**: ✅ PASS  
-**Issues**: 42
+**Issues**: 43
 
 ```
 src/renderer/src/stores/builder/slices/build-character-5e.ts:41 — buildCharacter5e (619 lines)
-src/renderer/src/pages/SettingsPage.tsx:426 — SettingsPage (602 lines)
+src/renderer/src/pages/SettingsPage.tsx:427 — SettingsPage (602 lines)
 src/renderer/src/components/builder/5e/SpellsTab5e.tsx:17 — SpellsTab5e (471 lines)
-src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx:22 — CharacterBuilder5e (400 lines)
-src/renderer/src/pages/CharacterSheet5ePage.tsx:34 — CharacterSheet5ePage (388 lines)
+src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx:20 — CharacterBuilder5e (452 lines)
+src/renderer/src/pages/CharacterSheet5ePage.tsx:35 — CharacterSheet5ePage (414 lines)
+src/renderer/src/components/campaign/CampaignWizard.tsx:39 — CampaignWizard (383 lines)
 src/renderer/src/pages/BastionPage.tsx:30 — BastionPage (379 lines)
-src/renderer/src/stores/network-store/client-handlers.ts:91 — handleClientMessage (376 lines)
-src/renderer/src/components/ui/OllamaManagement.tsx:27 — OllamaManagement (370 lines)
-src/renderer/src/components/campaign/CampaignWizard.tsx:41 — CampaignWizard (369 lines)
-src/main/ipc/ai-handlers.ts:65 — registerAiHandlers (358 lines)
+src/renderer/src/components/ui/OllamaManagement.tsx:22 — OllamaManagement (370 lines)
+src/renderer/src/stores/network-store/client-handlers.ts:85 — handleClientMessage (370 lines)
+src/main/ipc/ai-handlers.ts:65 — registerAiHandlers (368 lines)
+src/renderer/src/components/builder/shared/AsiModal.tsx:10 — AsiModal (359 lines)
 src/renderer/src/components/game/bottom/DMAudioPanel.tsx:41 — DMAudioPanel (352 lines)
-src/renderer/src/components/builder/shared/AsiModal.tsx:10 — AsiModal (351 lines)
 src/renderer/src/services/io/import-foundry.ts:104 — importFoundryCharacter (347 lines)
 src/renderer/src/components/builder/5e/SpecialAbilitiesTab5e.tsx:32 — SpecialAbilitiesTab5e (340 lines)
-src/renderer/src/stores/network-store/host-handlers.ts:38 — handleHostMessage (337 lines)
+src/renderer/src/stores/network-store/host-handlers.ts:32 — handleHostMessage (335 lines)
+src/renderer/src/pages/AboutPage.tsx:48 — AboutPage (333 lines)
 src/renderer/src/components/game/player/ShopView.tsx:94 — ShopView (330 lines)
-src/renderer/src/pages/AboutPage.tsx:51 — AboutPage (324 lines)
-src/renderer/src/components/builder/5e/DetailsTab5e.tsx:10 — DetailsTab5e (310 lines)
+src/renderer/src/components/builder/5e/DetailsTab5e.tsx:10 — DetailsTab5e (316 lines)
+src/renderer/src/pages/LibraryPage.tsx:22 — LibraryPage (311 lines)
 src/renderer/src/components/game/modals/utility/WeatherOverridePanel.tsx:50 — WeatherOverridePanel (307 lines)
-src/renderer/src/components/lobby/ChatInput.tsx:15 — ChatInput (301 lines)
 src/renderer/src/components/builder/shared/AbilityScoreModal.tsx:16 — AbilityScoreModal (300 lines)
-src/renderer/src/pages/ViewCharactersPage.tsx:15 — ViewCharactersPage (298 lines)
-src/renderer/src/stores/builder/slices/load-character-5e.ts:11 — loadCharacterForEdit5e (292 lines)
-src/renderer/src/stores/use-ai-dm-store.ts:106 — useAiDmStore (288 lines)
+src/renderer/src/stores/builder/slices/load-character-5e.ts:12 — loadCharacterForEdit5e (293 lines)
+src/renderer/src/stores/use-ai-dm-store.ts:106 — useAiDmStore (291 lines)
+src/renderer/src/pages/ViewCharactersPage.tsx:22 — ViewCharactersPage (289 lines)
 src/renderer/src/pages/LobbyPage.tsx:16 — LobbyPage (287 lines)
+src/renderer/src/components/lobby/ChatInput.tsx:15 — ChatInput (285 lines)
 src/renderer/src/pages/CampaignDetailPage.tsx:28 — CampaignDetailPage (285 lines)
 src/renderer/src/services/combat/combat-resolver.ts:304 — resolveAttack (285 lines)
 src/renderer/src/pages/CalendarPage.tsx:53 — CalendarPage (276 lines)
-src/renderer/src/pages/LibraryPage.tsx:41 — LibraryPage (273 lines)
 src/renderer/src/stores/level-up/feature-selection-slice.ts:10 — createFeatureSelectionSlice (266 lines)
-src/renderer/src/stores/network-store/index.ts:41 — useNetworkStore (247 lines)
-src/renderer/src/stores/use-lobby-store.ts:79 — useLobbyStore (246 lines)
+src/renderer/src/stores/use-lobby-store.ts:78 — useLobbyStore (253 lines)
+src/renderer/src/stores/network-store/index.ts:34 — useNetworkStore (249 lines)
 src/main/ipc/storage-handlers.ts:39 — registerStorageHandlers (243 lines)
-src/renderer/src/services/library-service.ts:165 — loadCategoryItems (239 lines)
+src/renderer/src/App.tsx:36 — App (240 lines)
+src/renderer/src/services/library-service.ts:148 — loadCategoryItems (239 lines)
 src/main/ai/campaign-context.ts:11 — formatCampaignForContext (236 lines)
 src/renderer/src/services/combat/effect-resolver-5e.ts:103 — resolveEffects (236 lines)
-src/renderer/src/pages/InGamePage.tsx:17 — InGamePage (227 lines)
-src/renderer/src/App.tsx:35 — App (218 lines)
-src/renderer/src/pages/JoinGamePage.tsx:13 — JoinGamePage (215 lines)
+src/renderer/src/pages/InGamePage.tsx:14 — InGamePage (227 lines)
+src/renderer/src/pages/JoinGamePage.tsx:8 — JoinGamePage (217 lines)
 src/renderer/src/stores/level-up/index.ts:16 — useLevelUpStore (209 lines)
+src/renderer/src/components/builder/5e/CharacterSummaryBar5e.tsx:120 — CharacterSummaryBar5e (208 lines)
 src/renderer/src/components/game/dm/DMNotepad.tsx:6 — DMNotepad (202 lines)
 src/renderer/src/components/game/map/map-event-handlers.ts:162 — setupMouseHandlers (202 lines)
 ```
 
 #### 30. Code duplication (jscpd)
 **Status**: ✅ PASS  
-**Issues**: 636
+**Issues**: 639
 
 ```
 5]
@@ -509,20 +507,20 @@ src/renderer/src/components/game/map/map-event-handlers.ts:162 — setupMouseHan
 [90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
 [90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m typescript [90m│[39m 705            [90m│[39m 120573      [90m│[39m 1165192      [90m│[39m 503          [90m│[39m 7452 (6.18%)     [90m│[39m 78804 (6.76%)     [90m│[39m
+[90m│[39m typescript [90m│[39m 706            [90m│[39m 122402      [90m│[39m 1183811      [90m│[39m 507          [90m│[39m 7498 (6.13%)     [90m│[39m 79429 (6.71%)     [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m javascript [90m│[39m 334            [90m│[39m 36225       [90m│[39m 319609       [90m│[39m 6            [90m│[39m 181 (0.5%)       [90m│[39m 1479 (0.46%)      [90m│[39m
+[90m│[39m javascript [90m│[39m 335            [90m│[39m 36484       [90m│[39m 321946       [90m│[39m 6            [90m│[39m 181 (0.5%)       [90m│[39m 1479 (0.46%)      [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m tsx        [90m│[39m 611            [90m│[39m 70694       [90m│[39m 659406       [90m│[39m 127          [90m│[39m 1320 (1.87%)     [90m│[39m 13651 (2.07%)     [90m│[39m
+[90m│[39m tsx        [90m│[39m 612            [90m│[39m 71043       [90m│[39m 662698       [90m│[39m 126          [90m│[39m 1314 (1.85%)     [90m│[39m 13589 (2.05%)     [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
 [90m│[39m css        [90m│[39m 1              [90m│[39m 61          [90m│[39m 290          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
 [90m│[39m json       [90m│[39m 3              [90m│[39m 161         [90m│[39m 755          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m [1mTotal:[22m     [90m│[39m 1654           [90m│[39m 227714      [90m│[39m 2145252      [90m│[39m 636          [90m│[39m 8953 (3.93%)     [90m│[39m 93934 (4.38%)     [90m│[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 1657           [90m│[39m 230151      [90m│[39m 2169500      [90m│[39m 639          [90m│[39m 8993 (3.91%)     [90m│[39m 94497 (4.36%)     [90m│[39m
 [90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
-[90mFound 636 clones.[39m
-[3m[90mDetection time:[39m[23m: 27.854s
+[90mFound 639 clones.[39m
+[3m[90mDetection time:[39m[23m: 20.285s
 
 ```
 
@@ -538,39 +536,39 @@ No ReDoS-prone patterns found
 
 #### 32. Git status (uncommitted changes)
 **Status**: ℹ️ INFO  
-**Issues**: 178
+**Issues**: 132
 
 ```
+ M .gitignore
  M Tests/TestAudit.md
- M Tests/knip-report.json
- M package-lock.json
+ M Tests/run-audit.js
+ M biome.json
+ M dev-app-update.yml
+ M electron.vite.config.ts
  M package.json
+ M resources/installer.nsh
+ D scripts/build-chunk-index.js
  M src/main/ai/ai-service.ts
- M src/main/ai/ai-stream-handler.ts
- M src/main/ai/context-builder.ts
+ M src/main/ai/dm-actions.ts
+ M src/main/ai/dm-system-prompt.ts
+ M src/main/ai/prompt-sections/character-rules.ts
+ M src/main/ai/stat-mutations.ts
+ M src/main/ai/types.ts
+ M src/main/index.ts
  M src/main/ipc/ai-handlers.ts
  M src/main/ipc/index.ts
- M src/main/ipc/storage-handlers.ts
- M src/main/storage/settings-storage.ts
+ M src/main/updater.test.ts
+ M src/main/updater.ts
  M src/preload/index.d.ts
+ M src/preload/index.ts
  M src/renderer/src/App.tsx
- M src/renderer/src/components/builder/5e/BackstoryEditor5e.tsx
  M src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx
  M src/renderer/src/components/builder/5e/CharacterSummaryBar5e.tsx
+ M src/renderer/src/components/builder/5e/DetailsTab5e.tsx
+ M src/renderer/src/components/builder/5e/GearTab5e.tsx
  M src/renderer/src/components/builder/5e/HigherLevelEquipment5e.tsx
  M src/renderer/src/components/builder/5e/LanguagesTab5e.tsx
- M src/renderer/src/components/builder/5e/gear-tab-types.ts
- M src/renderer/src/components/builder/shared/ExpertiseModal.tsx
- M src/renderer/src/components/builder/shared/SelectionFilterBar.tsx
- M src/renderer/src/components/campaign/AdventureWizard.tsx
- M src/renderer/src/components/campaign/CampaignWizard.tsx
- M src/renderer/src/components/campaign/MapConfigStep.tsx
- M src/renderer/src/components/campaign/SessionZeroStep.tsx
- M src/renderer/src/components/campaign/StartStep.tsx
- M src/renderer/src/components/game/GameLayout.tsx
- M src/renderer/src/components/game/GameModalDispatcher.tsx
- M src/renderer/src/components/game/bottom/CommandAutocomplete.tsx
- M src/renderer/src/components/game/bottom/DMAudioPanel.tsx
+ M src/renderer/src/components/builder/5e/MainContentArea5e.tsx
 ```
 
 #### 33. File naming conventions
@@ -610,7 +608,7 @@ No orphan files
 
 ```
 Type coverage: 99.26%
-(289253 / 291383) 99.26%
+(290793 / 292948) 99.26%
 type-coverage success.
 
 ```
@@ -619,7 +617,8 @@ type-coverage success.
 
 ## Recommendations
 
-1. **[LOW]** Consider: Git status (uncommitted changes) (178 items)
+1. **[HIGH]** Review: Dead code (knip) (110 issues)
+1. **[LOW]** Consider: Git status (uncommitted changes) (132 items)
 
 ---
 
@@ -742,7 +741,7 @@ All scripts are modular and export reusable functions for programmatic use.
 Items are automatically removed from this list when their completion criteria are met.
 
 ### 7a. Split GameLayout.tsx
-Current size: 929 lines
+Current size: 946 lines
 Extract from `src/renderer/src/components/game/GameLayout.tsx`:
 1. `GameModalDispatcher.tsx` — all lazy modal imports + render logic
 2. `hooks/use-game-network.ts` — host/client network message handlers
@@ -755,8 +754,7 @@ Apply the same extraction pattern to these files:
 | File | Lines | Suggested Split |
 |------|-------|----------------|
 | DowntimeModal.tsx | 1111 | Extract sub-components / helpers |
-| SettingsPage.tsx | 1028 | Extract sub-components / helpers |
-| data-provider.ts | 1003 | Extract sub-components / helpers |
+| SettingsPage.tsx | 1029 | Extract sub-components / helpers |
 
 
 

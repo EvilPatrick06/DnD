@@ -1,6 +1,6 @@
 export type WeatherType = 'clear' | 'rain' | 'heavy-rain' | 'fog' | 'snow' | 'blizzard' | 'sandstorm'
 
-export interface WeatherEffect {
+interface WeatherEffect {
   weather: WeatherType
   visibilityRadius: number // in grid squares, -1 = unlimited
   speedModifier: number // multiplier (1 = normal, 0.5 = half speed)

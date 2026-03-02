@@ -179,6 +179,16 @@ export function registerAiHandlers(): void {
     return await aiService.applyMutations(characterId, changes)
   })
 
+  ipcMain.handle(IPC_CHANNELS.AI_LONG_REST, async (_event, characterId: string) => {
+    logToFile('info', `[AI Mutation] ${characterId}: long rest`)
+    return await aiService.applyLongRestMutations(characterId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_SHORT_REST, async (_event, characterId: string) => {
+    logToFile('info', `[AI Mutation] ${characterId}: short rest`)
+    return await aiService.applyShortRestMutations(characterId)
+  })
+
   // ── Scene Preparation ──
 
   ipcMain.handle(IPC_CHANNELS.AI_PREPARE_SCENE, async (_event, campaignId: string, characterIds: string[]) => {

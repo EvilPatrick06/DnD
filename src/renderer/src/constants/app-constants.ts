@@ -36,6 +36,7 @@ export const INVITE_CODE_LENGTH = 6
 export const LAST_SESSION_KEY = 'dnd-vtt-last-session'
 export const JOINED_SESSIONS_KEY = 'dnd-vtt-joined-sessions'
 export const AUTO_REJOIN_KEY = 'dnd-vtt-auto-rejoin'
+export const DISPLAY_NAME_KEY = 'dnd-vtt-display-name'
 
 // Heartbeat
 export const HEARTBEAT_INTERVAL_MS = 15_000

@@ -74,14 +74,12 @@ export default function AttackCalculator5e({
               }
               const desc =
                 weaponProfDescriptions[prof.toLowerCase()] ||
-                (weaponDatabase.find((w) => w.name.toLowerCase() === prof.toLowerCase())
-                  ? (() => {
-                      const w = weaponDatabase.find((wd) => wd.name.toLowerCase() === prof.toLowerCase())
-                      return w
-                        ? `${w.category} weapon. ${w.damage} ${w.damageType}. ${w.properties.length > 0 ? `Properties: ${w.properties.join(', ')}.` : ''}`
-                        : undefined
-                    })()
-                  : undefined)
+                (() => {
+                  const w = weaponDatabase.find((wd) => wd.name.toLowerCase() === prof.toLowerCase())
+                  return w
+                    ? `${w.category} weapon. ${w.damage} ${w.damageType}. ${w.properties.length > 0 ? `Properties: ${w.properties.join(', ')}.` : ''}`
+                    : undefined
+                })()
               const isExpanded = expandedWeaponProf === prof
               return (
                 <div key={prof} className="inline-flex flex-col">

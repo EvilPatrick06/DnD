@@ -47,9 +47,9 @@ When a campaign is active with a loaded character, and your response involves me
 \`\`\`
 [STAT_CHANGES]
 {"changes": [
-  {"type": "damage", "value": 7, "damageType": "slashing", "reason": "goblin's scimitar hit"},
-  {"type": "expend_spell_slot", "level": 1, "reason": "cast Shield as reaction"},
-  {"type": "add_condition", "name": "poisoned", "reason": "failed DC 12 CON save vs venom"}
+  {"type": "damage", "characterName": "Aria", "value": 7, "damageType": "slashing", "reason": "goblin's scimitar hit"},
+  {"type": "expend_spell_slot", "characterName": "Aria", "level": 1, "reason": "cast Shield as reaction"},
+  {"type": "add_condition", "characterName": "Aria", "name": "poisoned", "reason": "failed DC 12 CON save vs venom"}
 ]}
 [/STAT_CHANGES]
 \`\`\`
@@ -59,24 +59,25 @@ When a campaign is active with a loaded character, and your response involves me
 - Only emit when the campaign has a loaded character with a characterId
 - Include ALL mechanical changes from this response in a single block
 - Use the character's actual stats to determine outcomes
+- **ALWAYS include "characterName" matching the character's name from [CHARACTER DATA] blocks** — this is required so changes are applied to the correct character, especially in multiplayer
 - Valid change types:
-  - **damage**: {value, damageType?, reason} — HP reduction
-  - **heal**: {value, reason} — HP restoration
-  - **temp_hp**: {value, reason} — temporary hit points
-  - **add_condition**: {name, reason} — gain a condition
-  - **remove_condition**: {name, reason} — lose a condition
-  - **death_save**: {success: bool, reason} — death saving throw result
-  - **reset_death_saves**: {reason} — clear death save tallies
-  - **expend_spell_slot**: {level, reason} — use a spell slot
-  - **restore_spell_slot**: {level, count?, reason} — regain a slot
-  - **add_item**: {name, quantity?, description?, reason} — gain equipment
-  - **remove_item**: {name, quantity?, reason} — lose equipment
-  - **gold**: {value (+/-), denomination? (cp/sp/gp/pp), reason} — currency change
-  - **xp**: {value, reason} — experience points gained
-  - **use_class_resource**: {name, amount?, reason} — spend class resource
-  - **restore_class_resource**: {name, amount?, reason} — regain class resource
-  - **heroic_inspiration**: {grant: bool, reason} — inspiration toggle
-  - **hit_dice**: {value (+/-), reason} — hit dice change
+  - **damage**: {characterName, value, damageType?, reason} — HP reduction
+  - **heal**: {characterName, value, reason} — HP restoration
+  - **temp_hp**: {characterName, value, reason} — temporary hit points
+  - **add_condition**: {characterName, name, reason} — gain a condition
+  - **remove_condition**: {characterName, name, reason} — lose a condition
+  - **death_save**: {characterName, success: bool, reason} — death saving throw result
+  - **reset_death_saves**: {characterName, reason} — clear death save tallies
+  - **expend_spell_slot**: {characterName, level, reason} — use a spell slot
+  - **restore_spell_slot**: {characterName, level, count?, reason} — regain a slot
+  - **add_item**: {characterName, name, quantity?, description?, reason} — gain equipment
+  - **remove_item**: {characterName, name, quantity?, reason} — lose equipment
+  - **gold**: {characterName, value (+/-), denomination? (cp/sp/gp/pp), reason} — currency change
+  - **xp**: {characterName, value, reason} — experience points gained
+  - **use_class_resource**: {characterName, name, amount?, reason} — spend class resource
+  - **restore_class_resource**: {characterName, name, amount?, reason} — regain class resource
+  - **heroic_inspiration**: {characterName, grant: bool, reason} — inspiration toggle
+  - **hit_dice**: {characterName, value (+/-), reason} — hit dice change
 
 ### Creature Mutations
 When creatures/monsters on the map take damage, gain/lose conditions, or are killed, emit these creature-targeted changes in the SAME [STAT_CHANGES] block:
@@ -85,12 +86,16 @@ When creatures/monsters on the map take damage, gain/lose conditions, or are kil
   - **creature_add_condition**: {targetLabel, name, reason} — add condition to creature
   - **creature_remove_condition**: {targetLabel, name, reason} — remove condition from creature
   - **creature_kill**: {targetLabel, reason} — kill a creature (set HP to 0)
+  - **set_ability_score**: {characterName, ability, value, reason} — set an ability score (ability: str/dex/con/int/wis/cha, value 1-30)
+  - **grant_feature**: {characterName, name, description?, reason} — grant a special feature or permanent effect
+  - **revoke_feature**: {characterName, name, reason} — remove a feature or effect
 
-Example with mixed player and creature changes:
+Example with mixed player and creature changes (multiplayer):
 \`\`\`
 [STAT_CHANGES]
 {"changes": [
-  {"type": "damage", "value": 12, "damageType": "fire", "reason": "dragon's fire breath"},
+  {"type": "damage", "characterName": "Thorin", "value": 12, "damageType": "fire", "reason": "dragon's fire breath"},
+  {"type": "damage", "characterName": "Aria", "value": 8, "damageType": "fire", "reason": "dragon's fire breath"},
   {"type": "creature_damage", "targetLabel": "Wolf 1", "value": 8, "damageType": "slashing", "reason": "fighter's longsword hit"},
   {"type": "creature_kill", "targetLabel": "Wolf 2", "reason": "rogue's sneak attack finished it off"}
 ]}
@@ -127,6 +132,9 @@ export interface StatChangeEvent {
     | 'restore_class_resource'
     | 'heroic_inspiration'
     | 'hit_dice'
+    | 'set_ability_score'
+    | 'grant_feature'
+    | 'revoke_feature'
   value?: number
   damageType?: string
   reason: string
@@ -139,6 +147,7 @@ export interface StatChangeEvent {
   denomination?: 'cp' | 'sp' | 'gp' | 'pp'
   grant?: boolean
   amount?: number
+  ability?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
 }
 
 export interface CreatureMutationEvent {

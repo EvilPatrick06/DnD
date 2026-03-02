@@ -467,3 +467,29 @@ export function executeBastionAddCreature(
   postDmChatMessage(stores, 'ai-bastion-cr', msg)
   return true
 }
+
+// ── Handouts ──
+
+export function executeShareHandout(
+  action: DmAction,
+  gameStore: GameStoreSnapshot,
+  _activeMap: ActiveMap,
+  stores: StoreAccessors
+): boolean {
+  const title = action.title as string
+  const content = action.content as string
+  if (!title || !content) throw new Error('Missing title or content for share_handout')
+
+  const handout = {
+    id: crypto.randomUUID(),
+    title,
+    content,
+    contentType: ((action.contentType as string) || 'text') as 'text' | 'image',
+    visibility: 'all' as const,
+    createdAt: Date.now()
+  }
+
+  gameStore.addHandout(handout)
+  stores.getNetworkStore().getState().sendMessage('dm:share-handout', { handout })
+  return true
+}

@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router'
 import { DiceOverlay } from './components/game/dice3d'
 import { ErrorBoundary, ShortcutsOverlay, Spinner, ToastContainer } from './components/ui'
 import ColorblindFilters from './components/ui/ColorblindFilters'
+import GlobalSettingsButton from './components/ui/GlobalSettingsButton'
 import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
@@ -56,20 +57,42 @@ function App(): JSX.Element {
     loadNotificationTemplates()
 
     // Dynamic imports for component/store-level cache loaders
-    import('./services/character/auto-populate-5e').then((m) => m.loadSpeciesSpellData())
-    import('./components/builder/5e/gear-tab-types').then((m) => m.loadCurrencyConfigData())
-    import('./components/builder/5e/LanguagesTab5e').then((m) => m.loadLanguageD12Data())
-    import('./components/builder/shared/SelectionFilterBar').then((m) => m.loadRarityOptionData())
-    import('./components/game/bottom/DMTabPanel').then((m) => m.loadDmTabData())
-    import('./components/game/dice3d/dice-meshes').then((m) => m.loadDiceColorData())
-    import('./components/game/dm/StatBlockEditor').then((m) => m.loadCreatureTypeData())
-    import('./stores/builder/types').then((m) => {
-      m.loadAbilityScoreConfigData()
-      m.loadPresetIconData()
-    })
-    import('./components/campaign/AdventureWizard').then((m) => m.loadAdventureSeedData())
-    import('./components/campaign/SessionZeroStep').then((m) => m.loadSessionZeroConfigData())
-    import('./components/campaign/MapConfigStep').then((m) => m.loadBuiltInMapData())
+    import('./services/character/auto-populate-5e')
+      .then((m) => m.loadSpeciesSpellData())
+      .catch((e) => logger.warn('preload auto-populate-5e failed', e))
+    import('./components/builder/5e/gear-tab-types')
+      .then((m) => m.loadCurrencyConfigData())
+      .catch((e) => logger.warn('preload gear-tab-types failed', e))
+    import('./components/builder/5e/LanguagesTab5e')
+      .then((m) => m.loadLanguageD12Data())
+      .catch((e) => logger.warn('preload LanguagesTab5e failed', e))
+    import('./components/builder/shared/SelectionFilterBar')
+      .then((m) => m.loadRarityOptionData())
+      .catch((e) => logger.warn('preload SelectionFilterBar failed', e))
+    import('./components/game/bottom/DMTabPanel')
+      .then((m) => m.loadDmTabData())
+      .catch((e) => logger.warn('preload DMTabPanel failed', e))
+    import('./components/game/dice3d/dice-meshes')
+      .then((m) => m.loadDiceColorData())
+      .catch((e) => logger.warn('preload dice-meshes failed', e))
+    import('./components/game/dm/StatBlockEditor')
+      .then((m) => m.loadCreatureTypeData())
+      .catch((e) => logger.warn('preload StatBlockEditor failed', e))
+    import('./stores/builder/types')
+      .then((m) => {
+        m.loadAbilityScoreConfigData()
+        m.loadPresetIconData()
+      })
+      .catch((e) => logger.warn('preload builder/types failed', e))
+    import('./components/campaign/AdventureWizard')
+      .then((m) => m.loadAdventureSeedData())
+      .catch((e) => logger.warn('preload AdventureWizard failed', e))
+    import('./components/campaign/SessionZeroStep')
+      .then((m) => m.loadSessionZeroConfigData())
+      .catch((e) => logger.warn('preload SessionZeroStep failed', e))
+    import('./components/campaign/MapConfigStep')
+      .then((m) => m.loadBuiltInMapData())
+      .catch((e) => logger.warn('preload MapConfigStep failed', e))
   }, [])
 
   // Apply UI scale to root font-size (rem-based Tailwind scales with this)
@@ -110,9 +133,8 @@ function App(): JSX.Element {
 
   useEffect(() => {
     const handler = (e: PromiseRejectionEvent): void => {
-      const msg = e.reason instanceof Error ? e.reason.message : String(e.reason)
       logger.error('[UnhandledRejection]', e.reason)
-      addToast(`Unexpected error: ${msg}`, 'error')
+      addToast('An unexpected error occurred. See logs for details.', 'error')
     }
     window.addEventListener('unhandledrejection', handler)
     return () => window.removeEventListener('unhandledrejection', handler)
@@ -125,6 +147,7 @@ function App(): JSX.Element {
       <DiceOverlay />
       <ToastContainer />
       <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <GlobalSettingsButton />
       <ErrorBoundary>
         <Suspense
           fallback={

@@ -37,7 +37,7 @@ export default function AbilityScoresGrid5e({ character }: AbilityScoresGrid5ePr
     <div className="mb-6">
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
         {ABILITY_NAMES.map((ab) => {
-          const score = character.abilityScores[ab]
+          const score = character.abilityScores[ab] ?? 10
           const mod = abilityModifier(score)
           const isExpanded = expandedAbility === ab
           return (

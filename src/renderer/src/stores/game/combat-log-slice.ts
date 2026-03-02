@@ -26,7 +26,10 @@ export const createCombatLogSlice: StateCreator<GameStoreState, [], [], CombatLo
   // --- Combat log ---
   combatLog: [],
   addCombatLogEntry: (entry: CombatLogEntry) => {
-    set((s) => ({ combatLog: [...s.combatLog, entry] }))
+    set((s) => {
+      const updated = [...s.combatLog, entry]
+      return { combatLog: updated.length > 500 ? updated.slice(-500) : updated }
+    })
   },
   clearCombatLog: () => set({ combatLog: [] }),
 

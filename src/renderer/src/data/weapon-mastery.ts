@@ -1,4 +1,5 @@
 import { load5eWeaponMastery, type WeaponMasteryEntry } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 type _WeaponMasteryEntry = WeaponMasteryEntry
 
@@ -15,7 +16,7 @@ load5eWeaponMastery()
       WEAPON_MASTERY_PROPERTIES[entry.name] = { name: entry.name, description: entry.description }
     }
   })
-  .catch(() => {})
+  .catch((e) => logger.warn('Failed to load weapon mastery data', e))
 
 export function getMasteryDescription(mastery: string): string {
   return WEAPON_MASTERY_PROPERTIES[mastery]?.description ?? ''

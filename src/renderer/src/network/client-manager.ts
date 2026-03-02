@@ -36,6 +36,11 @@ let connected = false
 let displayName = ''
 let sequenceCounter = 0
 
+// Sequence gap detection — tracks the last seen sequence number from the host
+// to detect dropped or out-of-order messages (informational only; WebRTC reliable
+// ordered channels should prevent gaps, but we log when they occur for debugging).
+let lastHostSequence = -1
+
 // Persisted character info for reconnection
 let lastCharacterId: string | null = null
 let lastCharacterName: string | null = null
@@ -44,6 +49,7 @@ let lastCharacterName: string | null = null
 let retryCount = 0
 let retryTimeout: ReturnType<typeof setTimeout> | null = null
 let lastInviteCode: string | null = null
+let isReconnecting = false
 
 // Heartbeat
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null
@@ -115,6 +121,8 @@ export function disconnect(): void {
   lastCharacterId = null
   lastCharacterName = null
   retryCount = 0
+  isReconnecting = false
+  lastHostSequence = -1
 
   stopHeartbeat()
   destroyPeer()
@@ -236,6 +244,7 @@ async function attemptConnection(
           connection = conn
           connected = true
           retryCount = 0
+          lastHostSequence = -1 // Reset sequence tracking on each (re)connect
 
           logger.debug('[ClientManager] Connected to host')
 
@@ -271,6 +280,19 @@ async function attemptConnection(
           if (!validateIncomingMessage(message)) {
             logger.warn('[ClientManager] Message failed validation:', (message as Record<string, unknown>)?.type)
             return
+          }
+
+          // Sequence gap detection — log if host sequence skipped (informational; WebRTC
+          // reliable ordered channels should prevent this, but we track it for debugging)
+          if (typeof message.sequence === 'number' && message.sequence >= 0) {
+            if (lastHostSequence >= 0 && message.sequence > lastHostSequence + 1) {
+              logger.warn(
+                `[ClientManager] Sequence gap detected: expected ${lastHostSequence + 1}, got ${message.sequence} (type: ${message.type})`
+              )
+            }
+            if (message.sequence > lastHostSequence) {
+              lastHostSequence = message.sequence
+            }
           }
 
           // Handle kick — do NOT retry reconnection
@@ -361,7 +383,8 @@ function handleDisconnection(reason: string): void {
   connected = false
   connection = null
 
-  if (wasConnected && retryCount < MAX_RECONNECT_RETRIES && lastInviteCode) {
+  if (wasConnected && retryCount < MAX_RECONNECT_RETRIES && lastInviteCode && !isReconnecting) {
+    isReconnecting = true
     retryCount++
     // Exponential backoff with jitter, minimum RECONNECT_DELAY_MS (capped at 30s)
     const delay = Math.max(RECONNECT_DELAY_MS, Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS))
@@ -375,6 +398,7 @@ function handleDisconnection(reason: string): void {
     destroyPeer()
 
     retryTimeout = setTimeout(async () => {
+      isReconnecting = false
       try {
         await attemptConnection(lastInviteCode!, lastCharacterId, lastCharacterName)
         logger.debug('[ClientManager] Reconnected successfully')

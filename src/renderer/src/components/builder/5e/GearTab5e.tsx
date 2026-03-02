@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import { deductWithConversion, parseCost, totalInCopper } from '../../../utils/currency'
 import SectionBanner from '../shared/SectionBanner'
@@ -232,6 +232,13 @@ export default function GearTab5e(): JSX.Element {
   const equipDb = useEquipmentDatabase()
   const [showShop, setShowShop] = useState(false)
   const [shopWarning, setShopWarning] = useState<string | null>(null)
+  const shopWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (shopWarningTimerRef.current !== null) clearTimeout(shopWarningTimerRef.current)
+    }
+  }, [])
 
   // Flat combined inventory list
   const allItems = [
@@ -255,7 +262,8 @@ export default function GearTab5e(): JSX.Element {
         setShopWarning(
           `Not enough funds (need ${cost.amount} ${cost.currency.toUpperCase()} = ${costCp} cp, have ${totalCp} cp total)`
         )
-        setTimeout(() => setShopWarning(null), 3000)
+        if (shopWarningTimerRef.current !== null) clearTimeout(shopWarningTimerRef.current)
+        shopWarningTimerRef.current = setTimeout(() => setShopWarning(null), 3000)
         return
       }
       setCurrency(newCurrency)

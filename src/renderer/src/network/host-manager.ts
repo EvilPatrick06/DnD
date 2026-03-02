@@ -65,7 +65,45 @@ const messageCallbacks = new Set<MessageCallback>()
 // Internal message router for host-side message handling
 const router = createMessageRouter()
 
-// --- Bound helper wrappers ---
+// Per-peer bounded send queue — prevents unbounded memory growth when a peer is slow
+// Messages are serialized strings; oldest are dropped when the queue is full.
+const MAX_PEER_QUEUE_SIZE = 50
+const peerQueues = new Map<string, string[]>()
+
+/** Queue a serialized message for a specific peer and drain synchronously. */
+function queueForPeer(peerId: string, serialized: string): void {
+  const conn = connections.get(peerId)
+  if (!conn?.open) return
+
+  let queue = peerQueues.get(peerId)
+  if (!queue) {
+    queue = []
+    peerQueues.set(peerId, queue)
+  }
+
+  if (queue.length >= MAX_PEER_QUEUE_SIZE) {
+    logger.warn('[HostManager] Peer send queue full for', peerId, '— dropping oldest message')
+    queue.shift()
+  }
+  queue.push(serialized)
+
+  // Drain in FIFO order (PeerJS conn.send is synchronous / non-blocking)
+  while (queue.length > 0) {
+    const c = connections.get(peerId)
+    if (!c?.open) {
+      queue.length = 0
+      break
+    }
+    try {
+      c.send(queue[0])
+      queue.shift()
+    } catch (e) {
+      logger.warn('[HostManager] Failed to send queued message to', peerId, e)
+      queue.shift() // drop the failed message and stop draining
+      break
+    }
+  }
+}
 
 function buildMessage<T>(type: NetworkMessage['type'], payload: T): NetworkMessage<T> {
   return buildMessageUtil(type, payload, displayName, sequenceCounter)
@@ -95,6 +133,7 @@ function disconnectPeer(peerId: string, message: NetworkMessage): void {
   const peerInfo = peerInfoMap.get(peerId)
   connections.delete(peerId)
   peerInfoMap.delete(peerId)
+  peerQueues.delete(peerId)
 
   if (peerInfo) {
     broadcastMessage(buildMessage('player:leave', { displayName: peerInfo.displayName }))
@@ -131,6 +170,7 @@ function getStateAccessors(): HostStateAccessors {
     isGlobalRateLimited: () => isGlobalRateLimitedUtil(globalMessageTimestamps),
     buildMessage,
     broadcastMessage,
+    broadcastExcluding,
     sendToPeer,
     disconnectPeer,
     persistBans,
@@ -211,7 +251,10 @@ export async function startHosting(hostDisplayName: string, existingInviteCode?:
       lastHeartbeat,
       messageCallbacks,
       buildMessage,
-      handleDisconnection: (peerId) => handleDisconnection(peerId, getStateAccessors())
+      handleDisconnection: (peerId) => {
+        peerQueues.delete(peerId)
+        handleDisconnection(peerId, getStateAccessors())
+      }
     })
 
     logger.debug('[HostManager] Hosting started with invite code:', inviteCode)
@@ -249,6 +292,7 @@ export function stopHosting(): void {
   bannedNames.clear()
   chatMutedPeers.clear()
   lastHeartbeat.clear()
+  peerQueues.clear()
   stopHeartbeatCheck()
   router.clear()
   joinCallbacks.clear()
@@ -275,46 +319,27 @@ export function stopHosting(): void {
 /** Send a message to all connected peers. */
 export function broadcastMessage(msg: NetworkMessage): void {
   const serialized = JSON.stringify(msg)
-  for (const [peerId, conn] of connections) {
-    try {
-      if (conn.open) {
-        conn.send(serialized)
-      }
-    } catch (e) {
-      logger.warn('[HostManager] Failed to send to peer', peerId, e)
-    }
+  for (const [peerId] of connections) {
+    queueForPeer(peerId, serialized)
   }
 }
 
 /** Broadcast to all peers except the specified one (rebroadcast without echo). */
 export function broadcastExcluding(msg: NetworkMessage, excludePeerId: string): void {
   const serialized = JSON.stringify(msg)
-  for (const [peerId, conn] of connections) {
+  for (const [peerId] of connections) {
     if (peerId === excludePeerId) continue
-    try {
-      if (conn.open) {
-        conn.send(serialized)
-      }
-    } catch (e) {
-      logger.warn('[HostManager] Failed to send to peer', peerId, e)
-    }
+    queueForPeer(peerId, serialized)
   }
 }
 
 /** Send a message to a specific peer. */
 export function sendToPeer(peerId: string, msg: NetworkMessage): void {
-  const conn = connections.get(peerId)
-  if (!conn) {
+  if (!connections.has(peerId)) {
     logger.warn('[HostManager] No connection found for peer:', peerId)
     return
   }
-  try {
-    if (conn.open) {
-      conn.send(JSON.stringify(msg))
-    }
-  } catch (e) {
-    logger.warn('[HostManager] Failed to send to peer', peerId, e)
-  }
+  queueForPeer(peerId, JSON.stringify(msg))
 }
 
 /** Kick a peer from the game. */

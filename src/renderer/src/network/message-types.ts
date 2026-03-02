@@ -74,6 +74,7 @@ export const MESSAGE_TYPES = [
   'player:inspect-request',
   'dm:inspect-response',
   'dm:push-macros',
+  'dm:light-source-update',
   'ping',
   'pong'
 ] as const
@@ -106,6 +107,10 @@ export interface ChatPayload {
   isSystem?: boolean
   isDiceRoll?: boolean
   diceResult?: { formula: string; total: number; rolls: number[] }
+  /** When set, identifies the sender as a specific entity (e.g. 'ai-dm') instead of the host peer. */
+  senderId?: string
+  /** Display name override for the sender (e.g. 'AI Dungeon Master'). */
+  senderName?: string
 }
 
 export interface WhisperPayload {

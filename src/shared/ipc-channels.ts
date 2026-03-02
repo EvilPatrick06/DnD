@@ -61,6 +61,8 @@ export const IPC_CHANNELS = {
   AI_CHAT_STREAM: 'ai:chat-stream',
   AI_CANCEL_STREAM: 'ai:cancel-stream',
   AI_APPLY_MUTATIONS: 'ai:apply-mutations',
+  AI_LONG_REST: 'ai:long-rest',
+  AI_SHORT_REST: 'ai:short-rest',
 
   // === AI DM: Scene ===
   AI_PREPARE_SCENE: 'ai:prepare-scene',

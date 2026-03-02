@@ -3,6 +3,10 @@ import type { UpdateStatus } from './updater'
 
 // Mock electron before importing the module
 vi.mock('electron', () => ({
+  app: {
+    getVersion: vi.fn(() => '1.7.0'),
+    quit: vi.fn()
+  },
   BrowserWindow: {
     getFocusedWindow: vi.fn(() => null)
   },

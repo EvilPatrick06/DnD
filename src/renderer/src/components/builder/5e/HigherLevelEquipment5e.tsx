@@ -137,7 +137,6 @@ export default function HigherLevelEquipment5e(): JSX.Element | null {
   const setCurrency = useBuilderStore((s) => s.setCurrency)
 
   const hlEquip: HigherLevelEquipment | null = getHigherLevelEquipment(targetLevel)
-  if (!hlEquip) return null
 
   const handleRollGold = useCallback((): void => {
     const rolled = rollStartingGold(targetLevel)
@@ -148,11 +147,13 @@ export default function HigherLevelEquipment5e(): JSX.Element | null {
   }, [targetLevel, currency, higherLevelGoldBonus, setCurrency, setHigherLevelGoldBonus])
 
   const handleTakeAverage = useCallback((): void => {
-    const avg = hlEquip.baseGold + (hlEquip.diceCount > 0 ? Math.ceil(5.5 * hlEquip.diceMultiplier) : 0)
+    const avg = hlEquip ? hlEquip.baseGold + (hlEquip.diceCount > 0 ? Math.ceil(5.5 * hlEquip.diceMultiplier) : 0) : 0
     const currentGp = currency.gp - higherLevelGoldBonus + avg
     setCurrency({ ...currency, gp: Math.max(0, currentGp) })
     setHigherLevelGoldBonus(avg)
   }, [hlEquip, currency, higherLevelGoldBonus, setCurrency, setHigherLevelGoldBonus])
+
+  if (!hlEquip) return null
 
   // Build magic item slots from the grants table
   const magicSlots: Array<{ rarity: MagicItemRarity5e; index: number }> = []

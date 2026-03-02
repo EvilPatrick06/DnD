@@ -11,6 +11,8 @@ import {
   type PubSpecialEntry,
   resolveAttackEvent,
   rollBastionEvent,
+  rollD,
+  rollGamingHallWinnings,
   type TreasureResult
 } from '../../data/bastion-events'
 import type { Bastion, BastionTurn, TurnOrder } from '../../types/bastion'
@@ -49,6 +51,8 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
 
     const basicFacilities = [...bastion.basicFacilities]
     const specialFacilities = [...bastion.specialFacilities]
+    let defensiveWalls = bastion.defensiveWalls
+
     for (const project of completed) {
       if (project.projectType === 'add-basic' && project.facilityType) {
         basicFacilities.push({
@@ -78,6 +82,12 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
           hirelingNames: [],
           order: specialFacilities.length
         })
+      } else if (project.projectType === 'defensive-wall') {
+        const squaresAdded = project.cost / 250
+        defensiveWalls = {
+          squaresBuilt: (defensiveWalls?.squaresBuilt ?? 0) + squaresAdded,
+          fullyEnclosed: true
+        }
       }
     }
 
@@ -87,6 +97,7 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
       construction: remaining,
       basicFacilities,
       specialFacilities,
+      defensiveWalls,
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)
@@ -182,12 +193,13 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
     if (!bastion) return
 
     const turn = bastion.turns.find((t) => t.turnNumber === turnNumber)
-    if (!turn || !turn.maintainIssued) return
+    if (!turn) return
 
     const eventResult = rollBastionEvent()
     let treasury = bastion.treasury
     let defenders = [...bastion.defenders]
     const eventDetails: Record<string, unknown> = { ...eventResult.subRolls }
+    let eventOutcome = eventResult.description
 
     // Auto-resolve certain events
     if (eventResult.eventType === 'attack') {
@@ -195,6 +207,8 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
       const hasWalls = bastion.defensiveWalls?.fullyEnclosed || false
       const attackResult = resolveAttackEvent(defenders.length, hasArmory, hasWalls)
       eventDetails.attackResult = attackResult
+      // Use the resolved description (includes armory/walls modifiers) over the preliminary one
+      eventOutcome = attackResult.description
 
       // Remove killed defenders (from the end of the list)
       if (attackResult.defendersLost > 0) {
@@ -210,6 +224,18 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
       eventDetails.goldGained = income
     }
 
+    // Harvest order: gaming hall earns winnings this bastion turn.
+    const gamingHallHarvest = bastion.specialFacilities.find(
+      (f) => f.type === 'gaming-hall' && f.currentOrder === 'harvest'
+    )
+    if (gamingHallHarvest) {
+      const winnings = rollGamingHallWinnings()
+      const diceRolls = Array.from({ length: winnings.diceCount }, () => rollD(6))
+      const goldEarned = diceRolls.reduce((sum, d) => sum + d, 0) * 10
+      treasury += goldEarned
+      eventDetails.gamingHallWinnings = { ...winnings, goldEarned, diceRolls }
+    }
+
     const updated: Bastion = {
       ...bastion,
       turns: bastion.turns.map((t) =>
@@ -218,7 +244,7 @@ export const createEventSlice: StateCreator<BastionState, [], [], EventSliceStat
               ...t,
               eventRoll: eventResult.roll,
               eventType: eventResult.eventType,
-              eventOutcome: eventResult.description,
+              eventOutcome: eventOutcome,
               eventDetails
             }
           : t

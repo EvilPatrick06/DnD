@@ -55,13 +55,13 @@ export type LibraryGroup =
   | 'tables-encounters'
   | 'media'
 
-export interface LibraryGroupDef {
+interface LibraryGroupDef {
   id: LibraryGroup
   label: string
   categories: LibraryCategoryDef[]
 }
 
-export interface LibraryCategoryDef {
+interface LibraryCategoryDef {
   id: LibraryCategory
   label: string
   group: LibraryGroup

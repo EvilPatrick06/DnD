@@ -23,6 +23,7 @@ export function parseDiceFormula(formula: string): DiceParsed | null {
 }
 
 export function rollDice(count: number, sides: number): number[] {
+  if (count < 1 || sides < 1) return []
   const results: number[] = []
   for (let i = 0; i < count; i++) {
     if (sides === 3) {

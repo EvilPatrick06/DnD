@@ -300,6 +300,7 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
             <div className="flex items-center gap-2">
               <button
                 disabled={readonly || effectiveCharacter.wildShapeUses.current <= 0}
+                aria-label="Use Wild Shape"
                 onClick={() => {
                   const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
                   const ws = (latest as Character5e).wildShapeUses
@@ -328,6 +329,7 @@ export default function CombatStatsBar5e({ character, readonly }: CombatStatsBar
               <span className="text-sm text-gray-500">/ {effectiveCharacter.wildShapeUses.max}</span>
               <button
                 disabled={readonly || effectiveCharacter.wildShapeUses.current >= effectiveCharacter.wildShapeUses.max}
+                aria-label="Regain Wild Shape use"
                 onClick={() => {
                   const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
                   const ws = (latest as Character5e).wildShapeUses

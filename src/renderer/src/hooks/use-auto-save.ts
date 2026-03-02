@@ -54,6 +54,7 @@ export function saveBuilderDraft(): void {
   try {
     const state = useBuilderStore.getState()
     if (state.phase !== 'building' || !state.characterName) return
+    if (state.editingCharacterId) return
 
     const draft: BuilderDraft = {
       characterName: state.characterName,

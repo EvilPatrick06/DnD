@@ -29,12 +29,15 @@ export default function DetailsTab5e(): JSX.Element {
       setOriginFeatDescription(null)
       return
     }
+    let cancelled = false
     load5eBackgrounds().then(async (bgs) => {
+      if (cancelled) return
       const bg = bgs.find((b) => b.id === backgroundId)
       const featName = bg?.originFeat ?? null
       setOriginFeat(featName)
       if (featName) {
         const feats = await load5eFeats('Origin')
+        if (cancelled) return
         const baseName = featName.replace(/\s*\(.*\)$/, '')
         const match = feats.find((f) => f.name === baseName)
         setOriginFeatDescription(match?.description ?? null)
@@ -42,6 +45,9 @@ export default function DetailsTab5e(): JSX.Element {
         setOriginFeatDescription(null)
       }
     })
+    return () => {
+      cancelled = true
+    }
   }, [backgroundId])
 
   // Determine if species is Human (for Versatile feat)
@@ -242,7 +248,7 @@ export default function DetailsTab5e(): JSX.Element {
                 <div className="mt-2 bg-gray-800/60 border border-gray-700 rounded px-3 py-2">
                   <div className="text-xs text-gray-400 space-y-0.5">
                     {chosen.items.length > 0 ? (
-                      chosen.items.map((item, i) => <div key={i}>{item}</div>)
+                      chosen.items.map((item, i) => <div key={`${i}-${item}`}>{item}</div>)
                     ) : (
                       <div className="text-amber-400">{chosen.gp} GP</div>
                     )}

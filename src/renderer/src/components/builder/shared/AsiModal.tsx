@@ -25,6 +25,7 @@ export default function AsiModal(): JSX.Element {
 
   // Feat state
   const [allFeats, setAllFeats] = useState<FeatData[]>([])
+  const [featsLoadError, setFeatsLoadError] = useState(false)
   const [featSearch, setFeatSearch] = useState('')
   const [chosenFeat, setChosenFeat] = useState<FeatData | null>(null)
 
@@ -43,12 +44,12 @@ export default function AsiModal(): JSX.Element {
 
   // Load feats when switching to feat tab
   useEffect(() => {
-    if (tab === 'feat' && allFeats.length === 0) {
+    if (tab === 'feat' && allFeats.length === 0 && !featsLoadError) {
       load5eFeats('General')
         .then(setAllFeats)
-        .catch(() => setAllFeats([]))
+        .catch(() => setFeatsLoadError(true))
     }
-  }, [tab, allFeats.length])
+  }, [tab, allFeats.length, featsLoadError])
 
   // Build a partial character for prerequisite checking
   const partialCharacter = useMemo((): Character5e => {
@@ -300,7 +301,14 @@ export default function AsiModal(): JSX.Element {
                   </button>
                 )
               })}
-              {allFeats.length === 0 && <p className="text-xs text-gray-500 text-center py-4">Loading feats...</p>}
+              {allFeats.length === 0 && !featsLoadError && (
+                <p className="text-xs text-gray-500 text-center py-4">Loading feats...</p>
+              )}
+              {featsLoadError && (
+                <p className="text-xs text-red-400 text-center py-4">
+                  Failed to load feats. Please close and reopen this panel.
+                </p>
+              )}
             </div>
           </>
         )}

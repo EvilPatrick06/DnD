@@ -32,7 +32,7 @@ export default function HitPointsBar5e({ character, effectiveCharacter, readonly
     const latest = useCharacterStore.getState().characters.find((c) => c.id === character.id) || character
     const updated = {
       ...latest,
-      hitPoints: { current: hpCurrent, maximum: hpMax, temporary: hpTemp },
+      hitPoints: { current: hpCurrent, maximum: Math.max(1, hpMax), temporary: Math.max(0, hpTemp) },
       updatedAt: new Date().toISOString()
     }
     saveCharacter(updated)

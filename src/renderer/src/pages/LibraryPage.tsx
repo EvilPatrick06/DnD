@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   HomebrewCreateModal,
@@ -10,33 +10,14 @@ import {
 import { BackButton, Button, EmptyState, Skeleton } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
-import { loadCategoryItems } from '../services/library-service'
+import { loadCategoryItems, summarizeItem } from '../services/library-service'
 import { useLibraryStore } from '../stores/use-library-store'
-import type {
-  HomebrewEntry,
-  LibraryCategory,
-  LibraryCategoryDef,
-  LibraryGroup,
-  LibraryGroupDef,
-  LibraryItem
-} from '../types/library'
+import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
 import { getAllCategories, getCategoryDef, LIBRARY_GROUPS } from '../types/library'
-import type { SortField, Tab } from './library/LibraryFilters'
-import { CR_OPTIONS, SIZE_OPTIONS, sizeOrder, TABS, TYPE_OPTIONS } from './library/LibraryFilters'
-
-type _SortField = SortField
-type _Tab = Tab
-
-/** Library filter constants re-exported from LibraryFilters for downstream use. */
-const _LIBRARY_FILTER_META = { CR_OPTIONS, SIZE_OPTIONS, TYPE_OPTIONS, TABS, sizeOrder } as const
-void _LIBRARY_FILTER_META
-
-type _LibraryCategoryDef = LibraryCategoryDef
-type _LibraryGroup = LibraryGroup
-type _LibraryGroupDef = LibraryGroupDef
-
 import type { MonsterStatBlock } from '../types/monster'
 import { logger } from '../utils/logger'
+
+const BESTIARY_CATEGORIES = new Set<LibraryCategory>(['monsters', 'creatures', 'npcs'])
 
 export default function LibraryPage(): JSX.Element {
   const [searchParams] = useSearchParams()
@@ -47,7 +28,6 @@ export default function LibraryPage(): JSX.Element {
     setCategory,
     searchQuery: search,
     setSearchQuery: setSearch,
-    items,
     setItems,
     loading,
     setLoading,
@@ -66,6 +46,17 @@ export default function LibraryPage(): JSX.Element {
   const [importing, setImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [debouncedSearch, setDebouncedSearch] = useState(search)
+
+  // Debounce search input (300ms)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [search])
 
   // Load homebrew on mount
   useEffect(() => {
@@ -82,24 +73,26 @@ export default function LibraryPage(): JSX.Element {
   }, [homebrewEntries])
 
   // Total available categories and groups for reference
-  const allCategories = getAllCategories()
+  const allCategories = useMemo(() => getAllCategories(), [])
   const totalCategoryCount = allCategories.length
   const totalGroupCount = LIBRARY_GROUPS.length
 
   // Item counts per category (homebrew only for now — static counts are too expensive to load all at once)
   const itemCounts = homebrewCounts
 
-  // Load items when category changes
+  // Load official items when category changes (not on homebrew changes)
+  const [officialItems, setOfficialItems] = useState<LibraryItem[]>([])
   useEffect(() => {
     if (!selectedCategory) {
+      setOfficialItems([])
       setItems([])
       return
     }
     let cancelled = false
     setLoading(true)
-    loadCategoryItems(selectedCategory, homebrewEntries)
+    loadCategoryItems(selectedCategory, [])
       .then((result) => {
-        if (!cancelled) setItems(result)
+        if (!cancelled) setOfficialItems(result)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -107,14 +100,35 @@ export default function LibraryPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [selectedCategory, homebrewEntries, setItems, setLoading])
+  }, [selectedCategory, setItems, setLoading])
 
-  // Filter items by search
+  // Merge official items with homebrew items for current category
+  const mergedItems = useMemo(() => {
+    if (!selectedCategory) return officialItems
+    const hbItems = homebrewEntries
+      .filter((e) => e.type === selectedCategory)
+      .map((e) => ({
+        id: e.id,
+        name: e.name,
+        category: selectedCategory,
+        source: 'homebrew' as const,
+        summary: summarizeItem(e.data as Record<string, unknown>, selectedCategory),
+        data: { ...e.data, _homebrewId: e.id, _basedOn: e.basedOn, _createdAt: e.createdAt }
+      }))
+    return [...officialItems.filter((i) => i.source !== 'homebrew'), ...hbItems]
+  }, [officialItems, homebrewEntries, selectedCategory])
+
+  // Sync merged items into store (for consumers that read from store directly)
+  useEffect(() => {
+    setItems(mergedItems)
+  }, [mergedItems, setItems])
+
+  // Filter items by debounced search
   const filteredItems = useMemo(() => {
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
-  }, [items, search])
+    if (!debouncedSearch.trim()) return mergedItems
+    const q = debouncedSearch.toLowerCase()
+    return mergedItems.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
+  }, [mergedItems, debouncedSearch])
 
   const handleSelectCategory = useCallback(
     (cat: LibraryCategory | null) => {
@@ -170,7 +184,7 @@ export default function LibraryPage(): JSX.Element {
         await window.api.saveCustomCreature(item as unknown as Record<string, unknown>)
       }
       addToast(`Imported ${importedItems.length} creature(s)`, 'success')
-      handleSelectCategory('monsters')
+      handleSelectCategory(selectedCategory ?? 'monsters')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Import failed'
       addToast(msg, 'error')
@@ -178,7 +192,7 @@ export default function LibraryPage(): JSX.Element {
     } finally {
       setImporting(false)
     }
-  }, [handleSelectCategory])
+  }, [handleSelectCategory, selectedCategory])
 
   const handleExportAll = useCallback(async () => {
     if (filteredItems.length === 0) return
@@ -223,10 +237,12 @@ export default function LibraryPage(): JSX.Element {
           Library
         </h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleImport} disabled={importing}>
-            {importing ? 'Importing...' : 'Import'}
-          </Button>
-          {selectedCategory && filteredItems.length > 0 && (
+          {selectedCategory && BESTIARY_CATEGORIES.has(selectedCategory) && (
+            <Button variant="secondary" onClick={handleImport} disabled={importing}>
+              {importing ? 'Importing...' : 'Import'}
+            </Button>
+          )}
+          {selectedCategory && BESTIARY_CATEGORIES.has(selectedCategory) && filteredItems.length > 0 && (
             <Button variant="secondary" onClick={handleExportAll} disabled={exporting}>
               Export All ({filteredItems.length})
             </Button>
@@ -273,9 +289,12 @@ export default function LibraryPage(): JSX.Element {
                 <Skeleton key={i} className="h-12 rounded" />
               ))}
             </div>
-          ) : !loading && filteredItems.length === 0 && search.trim() ? (
+          ) : !loading && filteredItems.length === 0 && debouncedSearch.trim() ? (
             <div className="flex-1 flex items-center justify-center p-6">
-              <EmptyState title="No results found" description={`No items match "${search}" in this category.`} />
+              <EmptyState
+                title="No results found"
+                description={`No items match "${debouncedSearch}" in this category.`}
+              />
             </div>
           ) : (
             <LibraryItemList

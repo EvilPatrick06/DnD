@@ -125,7 +125,7 @@ function AiDmSettingsSection(): JSX.Element {
 function DiceColorSection(): JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const localPeerId = useNetworkStore((s) => s.localPeerId)
-  const diceColors = useLobbyStore((s) => s.getLocalDiceColors())
+  const diceColors = useLobbyStore((s) => s.getLocalDiceColors(localPeerId))
   const setDiceColors = useLobbyStore((s) => s.setDiceColors)
 
   const handleChange = (colors: DiceColors): void => {
@@ -156,17 +156,23 @@ function DiceColorSection(): JSX.Element {
 
 function SoundCustomizationSection(): JSX.Element {
   const [expanded, setExpanded] = useState(false)
+  const [version, setVersion] = useState(0)
   const customSounds = getCustomSounds()
   const allEvents = getAllSoundEvents()
+
+  // version is used to force re-render after add/remove mutations
+  void version
 
   const handleRemove = (event: SoundEvent | AmbientSound): void => {
     removeCustomSound(event)
     reinitSound()
+    setVersion((v) => v + 1)
   }
 
   const handleAdd = (event: SoundEvent | AmbientSound): void => {
     registerCustomSound(event, `/sounds/custom/${event}.mp3`)
     reinitSound()
+    setVersion((v) => v + 1)
   }
 
   const unusedEvents = allEvents.filter((e) => !customSounds.has(e))

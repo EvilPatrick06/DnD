@@ -96,9 +96,10 @@ function useCharacterSelectBridge(role: string, localPeerId: string | null): voi
 // --- Network chat messages -> lobby chat ---
 function useChatBridge(role: string, localPeerId: string | null): void {
   const msgIdRef = useRef(0)
-  const generateMsgId = (): string => `net-${Date.now()}-${++msgIdRef.current}`
 
   useEffect(() => {
+    const generateMsgId = (): string => `net-${Date.now()}-${++msgIdRef.current}`
+
     const handleChat = (senderId: string, senderName: string, payload: ChatPayload, timestamp: number): void => {
       if (senderId === localPeerId) return
       const senderPlayer = useLobbyStore.getState().players.find((p) => p.peerId === senderId)
@@ -159,7 +160,7 @@ function useChatBridge(role: string, localPeerId: string | null): void {
         }
       })
     }
-  }, [role, localPeerId, generateMsgId])
+  }, [role, localPeerId])
 }
 
 // --- DM character updates -> client saves locally ---

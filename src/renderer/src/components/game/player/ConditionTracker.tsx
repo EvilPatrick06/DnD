@@ -34,7 +34,9 @@ export default function ConditionTracker({
   // Load available buffs for identifying positive conditions
   const [buffs, setBuffs] = useState<ConditionDef[]>([])
   useEffect(() => {
-    getBuffs5e().then(setBuffs)
+    getBuffs5e()
+      .then(setBuffs)
+      .catch(() => {})
   }, [])
   const buffNames = new Set(buffs.map((b) => b.name.toLowerCase()))
 

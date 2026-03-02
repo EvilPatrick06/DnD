@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-export interface DmAlert {
+interface DmAlert {
   id: string
   level: 'error' | 'warning' | 'info'
   message: string

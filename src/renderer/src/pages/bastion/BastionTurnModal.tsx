@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../../components/ui/Modal'
 import type { Bastion, BastionOrderType, SpecialFacilityDef } from '../../types/bastion'
 import { ORDER_LABELS } from './bastion-constants'
@@ -34,6 +34,15 @@ export function BastionTurnModal({
   >({})
   const [turnMaintain, setTurnMaintain] = useState(false)
   const [turnStep, setTurnStep] = useState<'orders' | 'event' | 'summary'>('orders')
+
+  // Reset local state whenever the modal opens for a new turn
+  useEffect(() => {
+    if (open) {
+      setTurnOrders({})
+      setTurnMaintain(false)
+      setTurnStep('orders')
+    }
+  }, [open, activeTurnNumber])
 
   const activeTurn = selectedBastion?.turns.find((t) => t.turnNumber === activeTurnNumber) ?? null
 
@@ -117,12 +126,16 @@ export function BastionTurnModal({
                     {currentOrder && def && (
                       <select
                         value={currentOrder.details}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const selectedName = e.target.value
+                          const option = def.orderOptions.find(
+                            (o) => o.order === currentOrder.orderType && o.name === selectedName
+                          )
                           setTurnOrders({
                             ...turnOrders,
-                            [facility.id]: { ...currentOrder, details: e.target.value }
+                            [facility.id]: { ...currentOrder, details: selectedName, cost: option?.cost ?? 0 }
                           })
-                        }
+                        }}
                         className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-amber-500"
                       >
                         <option value="">Select action...</option>

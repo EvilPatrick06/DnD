@@ -32,18 +32,22 @@ interface SpellPrepOptimizerProps {
     ritual?: boolean
   }>
   knownSpells: Array<{ name: string; level: number; ritual?: boolean }>
+  classId?: string
+  level?: number
 }
 
 export default function SpellPrepOptimizer({
   open,
   onClose,
   preparedSpells,
-  knownSpells
+  knownSpells,
+  classId,
+  level
 }: SpellPrepOptimizerProps): JSX.Element {
   const analysis = useMemo(() => analyzePreparation(preparedSpells, knownSpells), [preparedSpells, knownSpells])
 
-  // Build a caster summary when a classId is provided (used for cantrip/ability display)
-  const casterSummary = useMemo(() => buildCasterSummary('wizard', 1), [])
+  // Build a caster summary using the character's actual class and level
+  const casterSummary = useMemo(() => buildCasterSummary(classId ?? '', level ?? 1), [classId, level])
 
   return (
     <Modal open={open} onClose={onClose} title="Spell Preparation Helper">

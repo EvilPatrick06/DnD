@@ -6,7 +6,7 @@ import { useGameNetwork } from '../../hooks/use-game-network'
 import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
 import { executeMacro } from '../../services/macro-engine'
-import { recomputeVision } from '../../services/map/vision-computation'
+import { hasDarkvision, recomputeVision } from '../../services/map/vision-computation'
 import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useGameStore } from '../../stores/use-game-store'
@@ -19,6 +19,7 @@ import { is5eCharacter } from '../../types/character'
 import type { MapToken } from '../../types/map'
 import { getBuilderCreatePath } from '../../utils/character-routes'
 import { processDawnRecharge } from '../../utils/dawn-recharge'
+import { ErrorBoundary } from '../ui'
 import { announce } from '../ui/ScreenReaderAnnouncer'
 import DMBottomBar from './bottom/DMBottomBar'
 import PlayerBottomBar from './bottom/PlayerBottomBar'
@@ -29,17 +30,13 @@ import GameModalDispatcher from './GameModalDispatcher'
 
 const CharacterInspectModal = lazy(() => import('./modals/utility/CharacterInspectModal'))
 
-import { getWeatherEffects, type WeatherEffect, type WeatherType } from '../../services/weather-mechanics'
-
-type _WeatherEffect = WeatherEffect
+import { getWeatherEffects, type WeatherType } from '../../services/weather-mechanics'
 
 import type { AoEConfig } from './map/aoe-overlay'
 import MapCanvas from './map/MapCanvas'
 import ActionEconomyBar from './overlays/ActionEconomyBar'
 import ClockOverlay from './overlays/ClockOverlay'
-import DmAlertTray, { type DmAlert } from './overlays/DmAlertTray'
-
-type _DmAlert = DmAlert
+import DmAlertTray from './overlays/DmAlertTray'
 
 import EmptyCellContextMenu from './overlays/EmptyCellContextMenu'
 import {
@@ -56,6 +53,7 @@ import {
   LongRestWarning,
   PhaseChangeToast,
   RestRequestToast,
+  TimeRequestToast,
   WallToolbar
 } from './overlays/GameToasts'
 import Hotbar from './overlays/Hotbar'
@@ -96,9 +94,11 @@ function InspectModalRenderer(): JSX.Element | null {
   const clearInspectedCharacter = useGameStore((s) => s.clearInspectedCharacter)
   if (!inspectedCharacterData) return null
   return (
-    <Suspense fallback={null}>
-      <CharacterInspectModal characterData={inspectedCharacterData} onClose={clearInspectedCharacter} />
-    </Suspense>
+    <ErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <CharacterInspectModal characterData={inspectedCharacterData} onClose={clearInspectedCharacter} />
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 
@@ -128,7 +128,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   })
   const prevBottomHeight = useRef(320)
   const prevSidebarWidth = useRef(280)
-  const [teleportMove, setTeleportMove] = useState(false)
+  const [teleportMove, _setTeleportMove] = useState(false)
   const [activeAoE, setActiveAoE] = useState<AoEConfig | null>(null)
   const [viewMode, setViewModeRaw] = useState<'dm' | 'player'>(() => {
     try {
@@ -153,7 +153,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   const [activeTool, setActiveTool] = useState<'select' | 'fog-reveal' | 'fog-hide' | 'wall'>('select')
   const [fogBrushSize, setFogBrushSize] = useState(1)
   const [wallType, setWallType] = useState<'solid' | 'door' | 'window'>('solid')
-  const [_timeRequestToast, setTimeRequestToast] = useState<{ requesterId: string; requesterName: string } | null>(null)
+  const [timeRequestToast, setTimeRequestToast] = useState<{ requesterId: string; requesterName: string } | null>(null)
   const [phaseChangeToast, setPhaseChangeToast] = useState<{
     phase: string
     suggestedLight: 'bright' | 'dim' | 'darkness'
@@ -242,7 +242,10 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   })()
 
   // Current active entity in initiative
-  const currentInitEntity = gameStore.initiative?.entries[gameStore.initiative?.currentIndex ?? -1] ?? null
+  const currentInitEntity = (() => {
+    const idx = gameStore.initiative?.currentIndex ?? -1
+    return idx >= 0 ? (gameStore.initiative?.entries[idx] ?? null) : null
+  })()
 
   // Detect turn changes and show banner
   useEffect(() => {
@@ -351,6 +354,24 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     }
   }, [pendingFallDamage, effectiveIsDM])
 
+  // Sync darkvision from character species onto the player's own token whenever the map loads.
+  // hasDarkvision(speciesId) is the source of truth for which species have darkvision.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeMap.id is sufficient — avoids re-running on every token change
+  useEffect(() => {
+    if (!activeMap || !character || !is5eCharacter(character)) return
+    const speciesId = character.buildChoices?.speciesId
+    const dvFt = hasDarkvision(speciesId) ? 60 : 0
+    const token = activeMap.tokens.find((t) => t.entityId === character.id)
+    if (!token) return
+    const needsUpdate = token.darkvision !== dvFt > 0 || (dvFt > 0 && token.darkvisionRange !== dvFt)
+    if (needsUpdate) {
+      gameStore.updateToken(activeMap.id, token.id, {
+        darkvision: dvFt > 0,
+        darkvisionRange: dvFt > 0 ? dvFt : undefined
+      })
+    }
+  }, [activeMap?.id, character, gameStore])
+
   const handleViewModeToggle = (): void => {
     if (viewMode === 'player') {
       setViewMode('dm')
@@ -367,6 +388,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     networkRole,
     campaignId: campaign.id,
     aiDmEnabled: campaign.aiDm?.enabled ?? false,
+    campaignPlayers: campaign.players,
     addChatMessage,
     sendMessage,
     setTimeRequestToast,
@@ -388,8 +410,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     handleCompanionSummon,
     handleWildShapeTransform,
     handleWildShapeRevert,
-    handleWildShapeUseAdjust,
-    handleOpenShop
+    handleWildShapeUseAdjust
   } = useGameHandlers({
     campaign,
     isDM,
@@ -565,23 +586,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         {effectiveIsDM ? (
           <DMBottomBar
             onEditMap={() => setEditMapMode(true)}
-            onHiddenDice={() => setActiveModal('dmRoller')}
-            onInitiative={() => setActiveModal('initiative')}
-            onWhisper={() => setActiveModal('whisper')}
-            onTimer={() => setActiveModal('timer')}
-            onQuickCondition={() => setActiveModal('quickCondition')}
-            onShop={handleOpenShop}
-            onNotes={() => setActiveModal('notes')}
-            onJump={() => setActiveModal('jump')}
-            onFallingDamage={() => setActiveModal('falling')}
-            onAoETemplate={() => setActiveModal('aoe')}
-            onTravelPace={() => setActiveModal('travelPace')}
-            onCreatures={() => setActiveModal('creatures')}
-            onSummonCreature={() => setActiveModal('summonCreature')}
             playerName={playerName}
             campaign={campaign}
-            teleportMove={teleportMove}
-            onToggleTeleportMove={() => setTeleportMove((t) => !t)}
             collapsed={bottomCollapsed}
             onToggleCollapse={() => setBottomCollapsed((c) => !c)}
             onOpenModal={(modal) => setActiveModal(modal as ActiveModal)}
@@ -752,9 +758,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       )}
       {gameStore.timerRunning && <TimerOverlay />}
       {narrationText && (
-        <Suspense fallback={null}>
-          <NarrationOverlay text={narrationText} onDismiss={() => setNarrationText(null)} />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <NarrationOverlay text={narrationText} onDismiss={() => setNarrationText(null)} />
+          </Suspense>
+        </ErrorBoundary>
       )}
       {!effectiveIsDM && gameStore.pendingGroupRoll && character && (
         <RollRequestOverlay
@@ -798,22 +806,24 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
       {/* Character picker for DM player-view toggle */}
       {showCharacterPicker && (
-        <Suspense fallback={null}>
-          <CharacterPickerOverlay
-            campaignId={campaign.id}
-            onSelect={(c) => {
-              // Prefer latest data from the store over potentially stale picker data
-              const fresh = allCharacters.find((ch) => ch.id === c.id)
-              const charToSave = fresh ?? c
-              useCharacterStore
-                .getState()
-                .saveCharacter({ ...charToSave, campaignId: campaign.id, updatedAt: new Date().toISOString() })
-              setShowCharacterPicker(false)
-              setViewMode('player')
-            }}
-            onClose={() => setShowCharacterPicker(false)}
-          />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <CharacterPickerOverlay
+              campaignId={campaign.id}
+              onSelect={(c) => {
+                // Prefer latest data from the store over potentially stale picker data
+                const fresh = allCharacters.find((ch) => ch.id === c.id)
+                const charToSave = fresh ?? c
+                useCharacterStore
+                  .getState()
+                  .saveCharacter({ ...charToSave, campaignId: campaign.id, updatedAt: new Date().toISOString() })
+                setShowCharacterPicker(false)
+                setViewMode('player')
+              }}
+              onClose={() => setShowCharacterPicker(false)}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* Modals */}
@@ -848,6 +858,9 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       <InspectModalRenderer />
 
       {/* Toast overlays */}
+      {timeRequestToast && isDM && (
+        <TimeRequestToast toast={timeRequestToast} onDismiss={() => setTimeRequestToast(null)} />
+      )}
       {restRequestToast && isDM && (
         <RestRequestToast
           toast={restRequestToast}
@@ -908,20 +921,24 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
 
       {/* DM Map Editor fullscreen */}
       {editMapMode && effectiveIsDM && (
-        <Suspense fallback={null}>
-          <DMMapEditor
-            campaign={campaign}
-            onClose={() => {
-              setEditMapMode(false)
-              setMapKey((k) => k + 1)
-            }}
-          />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <DMMapEditor
+              campaign={campaign}
+              onClose={() => {
+                setEditMapMode(false)
+                setMapKey((k) => k + 1)
+              }}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
       {effectiveIsDM && aiDmStore.pendingActions && (
-        <Suspense fallback={null}>
-          <RulingApprovalModal />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <RulingApprovalModal />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </div>
   )

@@ -2,12 +2,11 @@ import { create } from 'zustand'
 import type { DiceColors } from '../components/game/dice3d'
 import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
 import { MAX_CHAT_LENGTH } from '../constants'
-import { PLAYER_COLORS } from '../network'
+import { PLAYER_COLORS } from '../network/types'
 import { rollFormula } from '../services/dice/dice-engine'
 import type { Character } from '../types/character'
 
 function getNetworkStore(): typeof import('./use-network-store').useNetworkStore {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return (require('./use-network-store') as typeof import('./use-network-store')).useNetworkStore
 }
 
@@ -66,7 +65,7 @@ interface LobbyState {
   setFileSharingEnabled: (enabled: boolean) => void
   setChatMutedUntil: (timestamp: number | null) => void
   setDiceColors: (peerId: string, colors: DiceColors) => void
-  getLocalDiceColors: () => DiceColors
+  getLocalDiceColors: (localPeerId?: string | null) => DiceColors
   reset: () => void
 }
 
@@ -90,6 +89,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   setCampaignId: (id) => set({ campaignId: id }),
 
   addPlayer: (player) => {
+    let shouldNotify = false
     set((state) => {
       const exists = state.players.some((p) => p.peerId === player.peerId)
       if (exists) {
@@ -97,6 +97,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
           players: state.players.map((p) => (p.peerId === player.peerId ? player : p))
         }
       }
+      shouldNotify = true
       // Assign a color if none set
       if (!player.color) {
         const usedColors = new Set(state.players.map((p) => p.color))
@@ -106,16 +107,18 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       return { players: [...state.players, player] }
     })
 
-    // Add system message
-    const systemMsg: ChatMessage = {
-      id: generateMessageId(),
-      senderId: 'system',
-      senderName: 'System',
-      content: `${player.displayName} has joined the lobby.`,
-      timestamp: Date.now(),
-      isSystem: true
+    // Only show "joined" message for new players, not updates
+    if (shouldNotify) {
+      const systemMsg: ChatMessage = {
+        id: generateMessageId(),
+        senderId: 'system',
+        senderName: 'System',
+        content: `${player.displayName} has joined the lobby.`,
+        timestamp: Date.now(),
+        isSystem: true
+      }
+      get().addChatMessage(systemMsg)
     }
-    get().addChatMessage(systemMsg)
   },
 
   removePlayer: (peerId) => {
@@ -303,9 +306,12 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     }))
   },
 
-  getLocalDiceColors: () => {
+  getLocalDiceColors: (localPeerId?: string | null) => {
     const { players } = get()
-    const localPlayer = players.find((p) => p.isHost) ?? (players.length > 0 ? players[0] : undefined)
+    const localPlayer =
+      (localPeerId ? players.find((p) => p.peerId === localPeerId) : undefined) ??
+      players.find((p) => p.isHost) ??
+      (players.length > 0 ? players[0] : undefined)
     return localPlayer?.diceColors || DEFAULT_DICE_COLORS
   },
 

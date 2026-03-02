@@ -37,16 +37,6 @@ function createWindow(): void {
     backgroundColor: '#030712',
     show: false,
     autoHideMenuBar: true,
-    icon: (() => {
-      const iconPath = app.isPackaged
-        ? join(process.resourcesPath, 'icon.ico')
-        : join(__dirname, '../../resources/icon.ico')
-      const icon = nativeImage.createFromPath(iconPath)
-      if (icon.isEmpty()) {
-        logToFile('WARN', `Failed to load app icon from: ${iconPath}`)
-      }
-      return icon
-    })(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
@@ -62,6 +52,8 @@ function createWindow(): void {
   const appIcon = nativeImage.createFromPath(iconPath)
   if (!appIcon.isEmpty()) {
     mainWindow.setIcon(appIcon)
+  } else {
+    logToFile('WARN', `Failed to load app icon from: ${iconPath}`)
   }
 
   // Content Security Policy
@@ -70,7 +62,7 @@ function createWindow(): void {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self' plugin:; script-src 'self' plugin:; worker-src 'self' blob:; style-src 'self' plugin:; connect-src 'self' data: plugin: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:"
+          "default-src 'self' plugin:; script-src 'self' plugin:; worker-src 'self' blob:; style-src 'self' plugin:; connect-src 'self' plugin: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:"
         ]
       }
     })

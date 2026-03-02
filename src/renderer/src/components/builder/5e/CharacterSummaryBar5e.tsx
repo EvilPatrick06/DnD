@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type {
-  ArmorForAC,
-  DerivedStats5e,
-  EncumbranceResult,
-  LifestyleLevel,
-  ToolSkillInteraction
-} from '../../../services/character/stat-calculator-5e'
+import type { ArmorForAC, DerivedStats5e } from '../../../services/character/stat-calculator-5e'
 import { calculate5eStats } from '../../../services/character/stat-calculator-5e'
 import { load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { buildArmorFromEquipment5e } from '../../../stores/builder/slices/save-slice-5e'
@@ -14,9 +8,6 @@ import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/charac
 import { CharacterIcon } from '../shared/IconPicker'
 
 // Ensure imported types are used for type-safety
-type _EncumbranceResult = EncumbranceResult
-type _LifestyleLevel = LifestyleLevel
-type _ToolSkillInteraction = ToolSkillInteraction
 
 function EditableHP({
   currentHP,
@@ -152,10 +143,12 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const [armorEntries, setArmorEntries] = useState<ArmorForAC[]>([])
 
   useEffect(() => {
+    let cancelled = false
     const classId = classSlot?.selectedId
     const speciesId = speciesSlot?.selectedId
     if (classId) {
       load5eClasses().then((classes) => {
+        if (cancelled) return
         const cls = classes.find((c) => c.id === classId)
         if (cls) {
           setClassHitDie(cls.coreTraits.hitPointDie)
@@ -170,6 +163,7 @@ export default function CharacterSummaryBar5e(): JSX.Element {
     }
     if (speciesId) {
       load5eSpecies().then((speciesList) => {
+        if (cancelled) return
         const foundSpecies = speciesList.find((r) => r.id === speciesId)
         if (foundSpecies) {
           setSpeciesData({
@@ -182,11 +176,16 @@ export default function CharacterSummaryBar5e(): JSX.Element {
     } else {
       setSpeciesData(null)
     }
+    return () => {
+      cancelled = true
+    }
   }, [classSlot?.selectedId, speciesSlot?.selectedId])
 
   useEffect(() => {
+    let cancelled = false
     if (classEquipment.length > 0) {
       buildArmorFromEquipment5e(classEquipment).then(({ armor }) => {
+        if (cancelled) return
         setArmorEntries(
           armor.map((a) => ({
             acBonus: a.acBonus,
@@ -199,6 +198,9 @@ export default function CharacterSummaryBar5e(): JSX.Element {
       })
     } else {
       setArmorEntries([])
+    }
+    return () => {
+      cancelled = true
     }
   }, [classEquipment])
 

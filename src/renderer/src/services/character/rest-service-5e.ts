@@ -190,8 +190,10 @@ export function applyShortRest(
   let remaining = totalHDSpent
   for (const roll of diceRolls) {
     const pool = newHitDice.find((hd) => hd.dieType === roll.dieSize && hd.current > 0)
-    if (pool) pool.current--
-    remaining--
+    if (pool) {
+      pool.current--
+      remaining--
+    }
   }
   if (remaining > 0) {
     for (const hd of newHitDice) {

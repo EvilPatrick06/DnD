@@ -18,18 +18,12 @@ import type {
 } from '../../network'
 import { broadcastExcluding, broadcastMessage, getPeerId, getPeerInfo, sendToPeer, updatePeerInfo } from '../../network'
 import type { Character5e } from '../../types/character-5e'
+import { useGameStore } from '../use-game-store'
+import { useLobbyStore } from '../use-lobby-store'
 import type { NetworkState } from './index'
 
 // In-memory trade tracking
 const pendingTrades = new Map<string, TradeRequestPayload>()
-
-// Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
-function getGameStore() {
-  return (require('../use-game-store') as typeof import('../use-game-store')).useGameStore
-}
-function getLobbyStore() {
-  return (require('../use-lobby-store') as typeof import('../use-lobby-store')).useLobbyStore
-}
 
 /**
  * Handle messages received by the host from connected peers.
@@ -72,7 +66,7 @@ export function handleHostMessage(
     case 'player:color-change': {
       const colorPayload = message.payload as ColorChangePayload
       get().updatePeer(fromPeerId, { color: colorPayload.color })
-      getLobbyStore().getState().updatePlayer(fromPeerId, { color: colorPayload.color })
+      useLobbyStore.getState().updatePlayer(fromPeerId, { color: colorPayload.color })
       updatePeerInfo(fromPeerId, { color: colorPayload.color })
       broadcastExcluding(message, fromPeerId)
       break
@@ -84,16 +78,14 @@ export function handleHostMessage(
 
       // If targeted at the host, display it locally
       if (payload.targetPeerId === localId) {
-        getLobbyStore()
-          .getState()
-          .addChatMessage({
-            id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-            senderId: message.senderId,
-            senderName: `${message.senderName} (Whisper)`,
-            content: payload.message,
-            timestamp: Date.now(),
-            isSystem: false
-          })
+        useLobbyStore.getState().addChatMessage({
+          id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+          senderId: message.senderId,
+          senderName: `${message.senderName} (Whisper)`,
+          content: payload.message,
+          timestamp: Date.now(),
+          isSystem: false
+        })
       } else {
         // Forward whisper only to the target, after validating they exist
         const targetInfo = getPeerInfo(payload.targetPeerId)
@@ -113,7 +105,7 @@ export function handleHostMessage(
     case 'player:buy-item': {
       const buyPayload = message.payload as BuyItemPayload
       {
-        const gameStore = getGameStore().getState()
+        const gameStore = useGameStore.getState()
         const updatedInventory = gameStore.shopInventory.map((item: ShopItem) => {
           if (item.id !== buyPayload.itemId) return item
           const updates: Partial<ShopItem> = {}
@@ -137,7 +129,7 @@ export function handleHostMessage(
     case 'player:sell-item': {
       const sellPayload = message.payload as SellItemPayload
       {
-        const gameStore = getGameStore().getState()
+        const gameStore = useGameStore.getState()
         const existing = gameStore.shopInventory.find(
           (item: ShopItem) => item.name.toLowerCase() === sellPayload.itemName.toLowerCase()
         )
@@ -179,7 +171,7 @@ export function handleHostMessage(
 
     case 'player:turn-end': {
       const turnEndPayload = message.payload as TurnEndPayload
-      const gs = getGameStore().getState()
+      const gs = useGameStore.getState()
       const { initiative } = gs
       if (initiative) {
         const currentEntry = initiative.entries[initiative.currentIndex]
@@ -217,7 +209,7 @@ export function handleHostMessage(
       if (!trade) break
       pendingTrades.delete(payload.tradeId)
 
-      const lobby = getLobbyStore().getState()
+      const lobby = useLobbyStore.getState()
       const remoteChars = lobby.remoteCharacters
       const fromChar = remoteChars[trade.fromPeerId]
       const toChar = remoteChars[trade.toPeerId]
@@ -300,7 +292,7 @@ export function handleHostMessage(
 
     case 'player:journal-add': {
       const payload = message.payload as JournalAddPayload
-      getGameStore().getState().addJournalEntry(payload.entry)
+      useGameStore.getState().addJournalEntry(payload.entry)
       broadcastExcluding(message, fromPeerId)
       break
     }
@@ -311,7 +303,7 @@ export function handleHostMessage(
       if (payload.title !== undefined) updates.title = payload.title
       if (payload.content !== undefined) updates.content = payload.content
       if (payload.visibility !== undefined) updates.visibility = payload.visibility
-      getGameStore()
+      useGameStore
         .getState()
         .updateJournalEntry(
           payload.entryId,
@@ -325,7 +317,7 @@ export function handleHostMessage(
 
     case 'player:journal-delete': {
       const payload = message.payload as JournalDeletePayload
-      getGameStore().getState().deleteJournalEntry(payload.entryId)
+      useGameStore.getState().deleteJournalEntry(payload.entryId)
       broadcastExcluding(message, fromPeerId)
       break
     }
@@ -333,13 +325,13 @@ export function handleHostMessage(
     // --- Group roll result from player ---
     case 'player:roll-result': {
       const payload = message.payload as RollResultPayload
-      getGameStore().getState().addGroupRollResult(payload)
+      useGameStore.getState().addGroupRollResult(payload)
       break
     }
 
     case 'player:inspect-request': {
       const payload = message.payload as InspectRequestPayload
-      const lobby = getLobbyStore().getState()
+      const lobby = useLobbyStore.getState()
       // Try to find the character from remote characters
       let charData: unknown = null
       for (const char of Object.values(lobby.remoteCharacters)) {

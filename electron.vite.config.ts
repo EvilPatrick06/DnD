@@ -16,12 +16,7 @@ function analyzePlugin(): Plugin | null {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
-    build: {
-      rollupOptions: {
-        external: ['electron-updater']
-      }
-    }
+    plugins: [externalizeDepsPlugin()]
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
@@ -41,10 +36,22 @@ export default defineConfig({
         output: {
           // Code-split heavy dependencies into separate chunks
           manualChunks(id) {
+            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'vendor-react'
+            if (id.includes('node_modules/react-router')) return 'vendor-router'
+            if (
+              id.includes('node_modules/zustand') ||
+              id.includes('node_modules/zod') ||
+              id.includes('node_modules/immer')
+            )
+              return 'vendor-state'
             if (id.includes('node_modules/three')) return 'vendor-three'
             if (id.includes('node_modules/cannon-es')) return 'vendor-physics'
             if (id.includes('node_modules/pixi.js') || id.includes('node_modules/@pixi')) return 'vendor-pixi'
             if (id.includes('node_modules/@tiptap')) return 'vendor-tiptap'
+            if (id.includes('node_modules/@langchain')) return 'vendor-langchain'
+            if (id.includes('node_modules/@aws-sdk')) return 'vendor-aws'
+            if (id.includes('node_modules/@anthropic-ai')) return 'vendor-anthropic'
+            if (id.includes('node_modules/peerjs')) return 'vendor-peerjs'
           }
         }
       }

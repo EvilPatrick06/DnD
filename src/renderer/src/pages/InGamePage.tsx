@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
 import { Spinner } from '../components/ui'
@@ -7,10 +7,7 @@ import { useAutoSaveGame } from '../hooks/use-auto-save'
 import { useBastionStore } from '../stores/use-bastion-store'
 import { useCampaignStore } from '../stores/use-campaign-store'
 import { useCharacterStore } from '../stores/use-character-store'
-import { type GameStoreState, useGameStore } from '../stores/use-game-store'
-
-type _GameStoreState = GameStoreState
-
+import { useGameStore } from '../stores/use-game-store'
 import { useNetworkStore } from '../stores/use-network-store'
 import { totalSecondsFromDateTime } from '../utils/calendar-utils'
 
@@ -32,8 +29,6 @@ export default function InGamePage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [reconnectAttempt, setReconnectAttempt] = useState(0)
   const [showReconnect, setShowReconnect] = useState(false)
-  const [_showExitConfirm, _setShowExitConfirm] = useState(false)
-  const _exitTargetRef = useRef<string | null>(null)
 
   useEffect(() => {
     loadCampaigns()
@@ -112,7 +107,9 @@ export default function InGamePage(): JSX.Element {
           saved?.inGameTime ??
           (campaign.calendar
             ? {
-                totalSeconds: totalSecondsFromDateTime(campaign.calendar.startingYear, 0, 1, 8, 0, 0, campaign.calendar)
+                totalSeconds:
+                  campaign.calendar.startingTime ??
+                  totalSecondsFromDateTime(campaign.calendar.startingYear, 0, 1, 8, 0, 0, campaign.calendar)
               }
             : null),
         restTracking: saved?.restTracking ?? null,

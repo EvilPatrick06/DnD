@@ -108,15 +108,20 @@ export default function SheetHeader5e({ character, onEdit, onClose, readonly }: 
   }
 
   // Get other 5e characters that don't have inspiration (for transfer)
-  const transferTargets = useCharacterStore
-    .getState()
-    .characters.filter((c) => c.id !== character.id && is5eCharacter(c) && !c.heroicInspiration)
+  const transferTargets = useCharacterStore((s) =>
+    s.characters.filter((c) => c.id !== character.id && is5eCharacter(c) && !c.heroicInspiration)
+  )
 
   return (
     <div className="flex items-start gap-4 mb-6">
       <div className="relative">
         {!readonly ? (
-          <button onClick={() => setShowIconPicker(!showIconPicker)} className="cursor-pointer" title="Change icon">
+          <button
+            onClick={() => setShowIconPicker(!showIconPicker)}
+            className="cursor-pointer"
+            aria-label="Change character icon"
+            title="Change icon"
+          >
             <CharacterIcon {...iconProps} size="lg" />
           </button>
         ) : (
@@ -310,9 +315,10 @@ export default function SheetHeader5e({ character, onEdit, onClose, readonly }: 
         {onClose && (
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-gray-500 hover:text-gray-300 text-2xl cursor-pointer w-8 h-8 flex items-center justify-center"
           >
-            &times;
+            <span aria-hidden="true">&times;</span>
           </button>
         )}
       </div>

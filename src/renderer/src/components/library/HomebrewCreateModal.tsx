@@ -5,7 +5,7 @@ import { getCategoryDef } from '../../types/library'
 interface HomebrewCreateModalProps {
   category: LibraryCategory
   existingItem?: LibraryItem
-  onSave: (entry: HomebrewEntry) => void
+  onSave: (entry: HomebrewEntry) => Promise<void>
   onClose: () => void
 }
 
@@ -17,7 +17,7 @@ function formatLabel(key: string): string {
     .trim()
 }
 
-const EDITABLE_SKIP = new Set(['id', '_homebrewId', '_basedOn', 'tokenSize', 'source'])
+const EDITABLE_SKIP = new Set(['id', '_homebrewId', '_basedOn', '_createdAt', 'tokenSize', 'source'])
 
 export default function HomebrewCreateModal({
   category,
@@ -61,17 +61,22 @@ export default function HomebrewCreateModal({
     if (!name) return
 
     setSaving(true)
-    const entry: HomebrewEntry = {
-      id: isEditing ? (existingItem!.data._homebrewId as string) : crypto.randomUUID(),
-      type: category,
-      name,
-      data: { ...formData, id: `homebrew-${crypto.randomUUID().slice(0, 8)}` },
-      basedOn: basedOn ?? existingItem?.id,
-      createdAt: isEditing ? new Date().toISOString() : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    try {
+      const entry: HomebrewEntry = {
+        id: isEditing ? (existingItem!.data._homebrewId as string) : crypto.randomUUID(),
+        type: category,
+        name,
+        data: { ...formData, id: `homebrew-${crypto.randomUUID().slice(0, 8)}` },
+        basedOn: basedOn ?? existingItem?.id,
+        createdAt: isEditing
+          ? (existingItem!.data._createdAt as string) || new Date().toISOString()
+          : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      await onSave(entry)
+    } finally {
+      setSaving(false)
     }
-    onSave(entry)
-    setSaving(false)
   }
 
   const handleBackdropClick = useCallback(

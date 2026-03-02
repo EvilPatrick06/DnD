@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { DEFAULT_OLLAMA_URL } from '../../constants'
+import { addToast } from '../../hooks/use-toast'
 import { type Adventure, loadAdventures } from '../../services/adventure-loader'
 import { useCampaignStore } from '../../stores/use-campaign-store'
 import {
@@ -8,11 +9,8 @@ import {
   type CampaignType,
   type CustomRule,
   DEFAULT_OPTIONAL_RULES,
-  type OptionalRules,
   type TurnMode
 } from '../../types/campaign'
-
-type _OptionalRules = OptionalRules
 
 import type { GameSystem } from '../../types/game-system'
 import type { GameMap } from '../../types/map'
@@ -79,7 +77,11 @@ export default function CampaignWizard(): JSX.Element {
   // For review step: resolve adventure name
   const [adventures, setAdventures] = useState<Adventure[]>([])
   useEffect(() => {
-    loadAdventures().then(setAdventures)
+    loadAdventures()
+      .then(setAdventures)
+      .catch((err) => {
+        logger.error('[CampaignWizard] Failed to load adventures:', err)
+      })
   }, [])
 
   const selectedAdventure = adventures.find((a) => a.id === selectedAdventureId) ?? null
@@ -245,15 +247,24 @@ export default function CampaignWizard(): JSX.Element {
 
       // If AI DM enabled, configure Ollama
       if (aiEnabled) {
-        await window.api.ai.configure({
-          ollamaModel: aiOllamaModel,
-          ollamaUrl: aiOllamaUrl
-        })
+        try {
+          await window.api.ai.configure({
+            ollamaModel: aiOllamaModel,
+            ollamaUrl: aiOllamaUrl
+          })
+        } catch (configErr) {
+          logger.error('Failed to configure AI DM after campaign creation:', configErr)
+          addToast(
+            'Campaign created, but AI DM configuration failed. You can reconfigure it from the campaign settings.',
+            'error'
+          )
+        }
       }
 
       navigate(`/campaign/${campaign.id}`)
     } catch (error) {
       logger.error('Failed to create campaign:', error)
+      addToast('Failed to create campaign. Please try again.', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -379,6 +390,7 @@ export default function CampaignWizard(): JSX.Element {
           customAudioCount={customAudio.length}
           calendar={calendar}
           aiDm={aiEnabled ? { ollamaModel: aiOllamaModel, ollamaUrl: aiOllamaUrl } : null}
+          sessionZero={sessionZero}
           onSubmit={handleCreate}
           submitting={submitting}
         />

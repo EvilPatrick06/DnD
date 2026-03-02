@@ -46,12 +46,8 @@ export default function CalendarStep({ calendar, onChange }: CalendarStepProps):
     cyl: string = customYearLabel
   ): void => {
     const cfg = buildCalendarConfig(p, yr, etd, cm, cyl)
-    // Encode starting date/time into totalSeconds
-    const _totalSeconds = totalSecondsFromDateTime(yr, startMonth, startDay, startHour, 0, 0, cfg)
-    onChange({ ...cfg, startingYear: yr })
-    // Store totalSeconds via a wrapper — we pass the config; InGamePage uses calendar + startingTime
-    // The config itself is stored on the Campaign, and InGamePage initializes inGameTime from it
-    onChange({ ...cfg, startingYear: yr })
+    const startingTime = totalSecondsFromDateTime(yr, startMonth, startDay, startHour, 0, 0, cfg)
+    onChange({ ...cfg, startingYear: yr, startingTime })
   }
 
   const handleEnable = (on: boolean): void => {

@@ -20,9 +20,9 @@ function rollD12Language(knownSet: Set<string>): { roll: number; language: strin
   if (available.length === 0) return null
 
   const roll = Math.floor(Math.random() * 12) + 1
-  const entry = LANGUAGE_D12_TABLE.find((e) => roll >= e.min && roll <= e.max)!
+  const entry = LANGUAGE_D12_TABLE.find((e) => roll >= e.min && roll <= e.max)
 
-  if (!knownSet.has(entry.language)) {
+  if (entry && !knownSet.has(entry.language)) {
     return { roll, language: entry.language }
   }
   // Re-roll: pick randomly from available entries

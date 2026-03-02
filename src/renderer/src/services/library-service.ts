@@ -1,10 +1,5 @@
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
 import {
-  type BastionFacilitiesData,
-  type CurseData,
-  type DowntimeActivity,
-  type EnvironmentalEffectData,
-  type HazardData,
   load5eBackgrounds,
   load5eChaseTables,
   load5eClasses,
@@ -42,22 +37,10 @@ import {
   load5eTreasureTables,
   load5eTrinkets,
   load5eVehicles,
-  load5eWeaponMastery,
-  type PoisonData,
-  type SupernaturalGiftData,
-  type TrapData
+  load5eWeaponMastery
 } from './data-provider'
 
-type _TrapData = TrapData
-type _HazardData = HazardData
-type _PoisonData = PoisonData
-type _CurseData = CurseData
-type _EnvironmentalEffectData = EnvironmentalEffectData
-type _SupernaturalGiftData = SupernaturalGiftData
-type _DowntimeActivity = DowntimeActivity
-type _BastionFacilitiesData = BastionFacilitiesData
-
-function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
+export function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
   switch (category) {
     case 'monsters':
     case 'creatures':
@@ -140,7 +123,7 @@ function toLibraryItems(
   source: 'official' | 'homebrew' = 'official'
 ): LibraryItem[] {
   return items.map((item) => ({
-    id: (item.id as string) ?? crypto.randomUUID(),
+    id: (item.id as string) || (item.name as string) || category,
     name: (item.name as string) ?? 'Unknown',
     category,
     source,
@@ -158,7 +141,7 @@ function homebrewToLibraryItems(entries: HomebrewEntry[], category: LibraryCateg
       category,
       source: 'homebrew' as const,
       summary: summarizeItem(e.data, category),
-      data: { ...e.data, _homebrewId: e.id, _basedOn: e.basedOn }
+      data: { ...e.data, _homebrewId: e.id, _basedOn: e.basedOn, _createdAt: e.createdAt }
     }))
 }
 
@@ -266,8 +249,8 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
       return [...toLibraryItems(eq.gear as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'tools': {
-      const crafting = await load5eCrafting()
-      return [...toLibraryItems(crafting as unknown as Record<string, unknown>[], category), ...hbItems]
+      // No dedicated tools loader exists; return homebrew only until tools data is consolidated
+      return hbItems
     }
     case 'magic-items': {
       const data = await load5eMagicItems()
@@ -411,24 +394,38 @@ export async function searchAllCategories(query: string, homebrew: HomebrewEntry
     'creatures',
     'npcs',
     'spells',
+    'invocations',
+    'metamagic',
     'classes',
     'subclasses',
     'species',
     'backgrounds',
     'feats',
+    'supernatural-gifts',
+    'class-features',
+    'fighting-styles',
     'weapons',
     'armor',
+    'gear',
     'magic-items',
+    'vehicles',
+    'mounts',
+    'siege-equipment',
+    'trinkets',
     'traps',
+    'hazards',
     'poisons',
     'diseases',
     'curses',
+    'environmental-effects',
+    'settlements',
+    'crafting',
+    'downtime',
+    'encounter-presets',
     'conditions',
     'weapon-mastery',
     'languages',
-    'skills',
-    'fighting-styles',
-    'class-features'
+    'skills'
   ]
 
   const results = await Promise.allSettled(allCategories.map((cat) => loadCategoryItems(cat, homebrew)))

@@ -35,15 +35,17 @@ export function ShieldReactionPrompt({
   const gameStore = useGameStore.getState()
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [remaining, setRemaining] = useState(AUTO_DISMISS_MS / 1000)
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
 
   useEffect(() => {
-    timerRef.current = setTimeout(onDismiss, AUTO_DISMISS_MS)
+    timerRef.current = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS)
     const interval = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
     return () => {
       clearTimeout(timerRef.current)
       clearInterval(interval)
     }
-  }, [onDismiss])
+  }, [])
 
   const shieldedAC = prompt.currentAC + 5
 
@@ -127,15 +129,17 @@ export function CounterspellReactionPrompt({
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [remaining, setRemaining] = useState(AUTO_DISMISS_MS / 1000)
   const [selectedSlot, setSelectedSlot] = useState(Math.max(3, prompt.spellLevel))
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
 
   useEffect(() => {
-    timerRef.current = setTimeout(onDismiss, AUTO_DISMISS_MS)
+    timerRef.current = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS)
     const interval = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
     return () => {
       clearTimeout(timerRef.current)
       clearInterval(interval)
     }
-  }, [onDismiss])
+  }, [])
 
   const autoSuccess = selectedSlot >= prompt.spellLevel
   const slotOptions: number[] = []

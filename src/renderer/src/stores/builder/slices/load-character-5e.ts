@@ -1,3 +1,4 @@
+import { addToast } from '../../../hooks/use-toast'
 import { generate5eBuildSlots } from '../../../services/character/build-tree-5e'
 import { load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
@@ -211,6 +212,7 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
   Promise.all([load5eSpecies(), load5eClasses(), load5eBackgrounds()])
     .catch((err) => {
       logger.error('Failed to load SRD data for character edit:', err)
+      addToast('Some character data failed to load — the builder may be incomplete.', 'warning')
       return [[], [], []] as [
         Awaited<ReturnType<typeof load5eSpecies>>,
         Awaited<ReturnType<typeof load5eClasses>>,
@@ -226,7 +228,7 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
         updates.speciesLanguages = speciesData.languages
         updates.speciesExtraLangCount = speciesData.traits.filter((t) => t.name === 'Extra Language').length
         updates.speciesExtraSkillCount = speciesData.traits.filter((t) => t.name === 'Skillful').length
-        updates.speciesSize = Array.isArray(speciesData.size) ? '' : speciesData.size
+        updates.speciesSize = Array.isArray(speciesData.size) ? (character.size ?? '') : speciesData.size
         updates.speciesSpeed = speciesData.speed
         updates.speciesTraits = speciesData.traits
         updates.speciesProficiencies = speciesData.proficiencies ?? []

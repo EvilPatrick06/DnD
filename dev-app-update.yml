@@ -1,3 +1,4 @@
 provider: github
 owner: EvilPatrick06
 repo: DnD
+releaseType: release

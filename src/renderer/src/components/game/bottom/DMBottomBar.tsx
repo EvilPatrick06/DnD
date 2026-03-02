@@ -8,23 +8,8 @@ import DMTabPanel from './DMTabPanel'
 
 interface DMBottomBarProps {
   onEditMap: () => void
-  onHiddenDice: () => void
-  onInitiative: () => void
-  onWhisper: () => void
-  onTimer: () => void
-  onQuickCondition: () => void
-  onShop: () => void
-  onNotes: () => void
-  onJump?: () => void
-  onFallingDamage?: () => void
-  onAoETemplate?: () => void
-  onTravelPace?: () => void
-  onCreatures?: () => void
-  onSummonCreature?: () => void
   playerName: string
   campaign: Campaign
-  teleportMove?: boolean
-  onToggleTeleportMove?: () => void
   collapsed?: boolean
   onToggleCollapse?: () => void
   onOpenModal?: (modal: string) => void

@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
+import { addToast } from '../../../hooks/use-toast'
 import { getCantripsKnown, getPreparedSpellMax, hasAnySpellcasting } from '../../../services/character/spell-data'
 import { getHeritageOptions5e, load5eSpells, resolveDataPath } from '../../../services/data-provider'
-import { type BuilderState, useBuilderStore } from '../../../stores/use-builder-store'
-
-type _BuilderState = BuilderState
-
+import { useBuilderStore } from '../../../stores/use-builder-store'
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 import { useNetworkStore } from '../../../stores/use-network-store'
@@ -63,13 +61,16 @@ export default function CharacterBuilder5e(): JSX.Element {
   const bgEquipment = useBuilderStore((s) => s.bgEquipment)
   const blessedWarriorCantrips = useBuilderStore((s) => s.blessedWarriorCantrips)
   const druidicWarriorCantrips = useBuilderStore((s) => s.druidicWarriorCantrips)
+  const classExtraLangCount = useBuilderStore((s) => s.classExtraLangCount)
   const saveCharacter = useCharacterStore((s) => s.saveCharacter)
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false)
 
   // Load spell level map for spell validation
   const [spellLevelMap, setSpellLevelMap] = useState<Map<string, number>>(new Map())
+  const [spellDataError, setSpellDataError] = useState(false)
   useEffect(() => {
     load5eSpells()
       .then((spells) => {
@@ -77,7 +78,10 @@ export default function CharacterBuilder5e(): JSX.Element {
         for (const s of spells) map.set(s.id, s.level)
         setSpellLevelMap(map)
       })
-      .catch((err) => logger.error('Failed to load spell data:', err))
+      .catch((err) => {
+        logger.error('Failed to load spell data:', err)
+        setSpellDataError(true)
+      })
   }, [])
 
   // Preload heritage options for the selected species
@@ -87,7 +91,9 @@ export default function CharacterBuilder5e(): JSX.Element {
     if (speciesId) {
       const dataPath = resolveDataPath('dnd5e', 'species')
       logger.debug('Resolved species data path:', dataPath)
-      getHeritageOptions5e(speciesId).catch(() => {})
+      getHeritageOptions5e(speciesId).catch((e) =>
+        logger.warn('Failed to load heritage options for species', speciesId, e)
+      )
     }
   }, [speciesSlot?.selectedId])
 
@@ -140,8 +146,8 @@ export default function CharacterBuilder5e(): JSX.Element {
       if (issues[issues.length - 1] === 'Choose specific equipment variants (About tab)') break
     }
 
-    // 7. Trinket required
-    if (!classEquipment.some((e) => e.source === 'trinket')) {
+    // 7. Trinket required (only for new characters; existing characters may pre-date the trinket system)
+    if (!editingCharacterId && !classEquipment.some((e) => e.source === 'trinket')) {
       issues.push('Roll a trinket (About tab)')
     }
 
@@ -193,7 +199,7 @@ export default function CharacterBuilder5e(): JSX.Element {
     }
 
     // 15. Languages complete
-    const totalBonusSlots = 2 + speciesExtraLangCount + bgLanguageCount
+    const totalBonusSlots = 2 + speciesExtraLangCount + bgLanguageCount + classExtraLangCount
     if (totalBonusSlots > 0 && chosenLanguages.length < totalBonusSlots) {
       issues.push(
         `Choose ${totalBonusSlots - chosenLanguages.length} more language${totalBonusSlots - chosenLanguages.length !== 1 ? 's' : ''}`
@@ -247,6 +253,7 @@ export default function CharacterBuilder5e(): JSX.Element {
     chosenLanguages,
     speciesExtraLangCount,
     bgLanguageCount,
+    classExtraLangCount,
     selectedSkills,
     maxSkills,
     versatileFeatId,
@@ -261,7 +268,8 @@ export default function CharacterBuilder5e(): JSX.Element {
     druidicWarriorCantrips,
     characterAlignment,
     classEquipment,
-    bgEquipment
+    bgEquipment,
+    editingCharacterId
   ])
 
   const canSave = validation.length === 0
@@ -326,6 +334,7 @@ export default function CharacterBuilder5e(): JSX.Element {
       navigate(returnTo || `/characters/5e/${character.id}`)
     } catch (err) {
       logger.error('Failed to save character:', err)
+      addToast('Failed to save character. Please try again.', 'error')
     } finally {
       savingRef.current = false
       setSaving(false)
@@ -343,6 +352,10 @@ export default function CharacterBuilder5e(): JSX.Element {
   }
 
   const handleBack = (): void => {
+    if (editingCharacterId) {
+      setShowLeaveDialog(true)
+      return
+    }
     resetBuilder()
     navigate(returnTo || '/characters')
   }
@@ -359,7 +372,7 @@ export default function CharacterBuilder5e(): JSX.Element {
             &larr; Back
           </button>
           <div className="w-px h-4 bg-gray-700" />
-          <span className="text-xs text-gray-500">{editingCharacterId ? 'Make Character' : 'Character Builder'}</span>
+          <span className="text-xs text-gray-500">{editingCharacterId ? 'Edit Character' : 'Character Builder'}</span>
         </div>
 
         <div className="flex flex-col items-end gap-0.5">
@@ -371,7 +384,12 @@ export default function CharacterBuilder5e(): JSX.Element {
             {saving ? 'Saving...' : editingCharacterId ? 'Save Changes' : 'Save Character'}
           </button>
           {!canSave && validation.length > 0 && (
-            <span className="text-[10px] text-red-400 max-w-60 text-right truncate" title={validation.join(', ')}>
+            <span
+              role="alert"
+              aria-live="polite"
+              className="text-[10px] text-red-400 max-w-60 text-right truncate"
+              title={validation.join(', ')}
+            >
               {validation[0]}
             </span>
           )}
@@ -380,6 +398,13 @@ export default function CharacterBuilder5e(): JSX.Element {
 
       {/* Summary bar */}
       <CharacterSummaryBar5e />
+
+      {/* Spell data load error warning */}
+      {spellDataError && (
+        <div className="px-3 py-1.5 bg-yellow-900/50 border-b border-yellow-700/50 text-xs text-yellow-400 text-center">
+          ⚠ Spell data failed to load — spell selection validation is unavailable.
+        </div>
+      )}
 
       {/* Main 2-panel layout */}
       <div className="flex flex-1 min-h-0">
@@ -412,6 +437,31 @@ export default function CharacterBuilder5e(): JSX.Element {
               className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white rounded font-semibold transition-colors"
             >
               Save Anyway
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Leave without saving confirmation */}
+      <Modal open={showLeaveDialog} onClose={() => setShowLeaveDialog(false)} title="Leave Without Saving?">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-400">Your changes will be lost if you leave now.</p>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setShowLeaveDialog(false)}
+              className="px-4 py-2 text-sm border border-gray-600 rounded hover:bg-gray-800 transition-colors"
+            >
+              Stay
+            </button>
+            <button
+              onClick={() => {
+                setShowLeaveDialog(false)
+                resetBuilder()
+                navigate(returnTo || '/characters')
+              }}
+              className="px-4 py-2 text-sm bg-red-700 hover:bg-red-600 text-white rounded font-semibold transition-colors"
+            >
+              Leave
             </button>
           </div>
         </div>

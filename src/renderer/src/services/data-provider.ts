@@ -62,15 +62,6 @@ type _MountData = MountData
 type _MountsFile = MountsFile
 
 import type {
-  CurseData,
-  DowntimeActivity,
-  EnvironmentalEffectData,
-  HazardData,
-  PoisonData,
-  SupernaturalGiftData,
-  TrapData
-} from '../types/data/world-data-types'
-import type {
   Curse,
   EnvironmentalEffect,
   Hazard,
@@ -97,13 +88,6 @@ export { cdnProvider }
 
 // Re-export world/data types for consumers that access them through data-provider
 export type {
-  TrapData,
-  HazardData,
-  PoisonData,
-  CurseData,
-  EnvironmentalEffectData,
-  SupernaturalGiftData,
-  DowntimeActivity,
   BastionFacilitiesData,
   MonsterAction,
   MonsterSpeed,

@@ -9,6 +9,8 @@ export interface PeerInfo {
   isHost: boolean
   color?: string
   isCoDM?: boolean
+  /** Transiently set by the host heartbeat check when a peer stops responding but hasn't yet been removed. */
+  isDisconnected?: boolean
 }
 
 export type ShopItemCategory =

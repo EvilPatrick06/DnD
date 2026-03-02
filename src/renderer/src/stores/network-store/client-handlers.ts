@@ -24,24 +24,18 @@ import type {
   TradeResultPayload,
   WhisperPayload
 } from '../../network'
+import { useGameStore } from '../use-game-store'
+import { useLobbyStore } from '../use-lobby-store'
 import type { NetworkState } from './index'
-
-// Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
-function getGameStore() {
-  return (require('../use-game-store') as typeof import('../use-game-store')).useGameStore
-}
-function getLobbyStore() {
-  return (require('../use-lobby-store') as typeof import('../use-lobby-store')).useLobbyStore
-}
 
 /** Apply a partial game state update from the network */
 function applyGameState(data: Record<string, unknown>): void {
-  getGameStore().getState().loadGameState(data)
+  useGameStore.getState().loadGameState(data)
 }
 
 /** Handle granular game:state-update messages with add/remove/update operations */
 function handleGameStateUpdate(payload: Record<string, unknown>): void {
-  const gs = getGameStore().getState()
+  const gs = useGameStore.getState()
 
   if (payload.addToken) {
     const { mapId, token } = payload.addToken as { mapId: string; token: import('../../types/map').MapToken }
@@ -76,7 +70,7 @@ function handleGameStateUpdate(payload: Record<string, unknown>): void {
       segments: import('../../types/map').WallSegment[]
     }
     const maps = gs.maps.map((m) => (m.id === mapId ? { ...m, wallSegments: segments } : m))
-    getGameStore().setState({ maps })
+    useGameStore.setState({ maps })
     return
   }
 
@@ -113,8 +107,8 @@ export function handleClientMessage(
         applyGameState(gs as unknown as Record<string, unknown>)
         // Apply shop state if present
         if (gs.shopOpen) {
-          getGameStore().getState().openShop(gs.shopName)
-          if (gs.shopInventory) getGameStore().getState().setShopInventory(gs.shopInventory)
+          useGameStore.getState().openShop(gs.shopName)
+          if (gs.shopInventory) useGameStore.getState().setShopInventory(gs.shopInventory)
         }
       }
       break
@@ -184,21 +178,21 @@ export function handleClientMessage(
     case 'dm:promote-codm': {
       const payload = message.payload as CoDMPayload
       get().updatePeer(payload.peerId, { isCoDM: payload.isCoDM })
-      getLobbyStore().getState().updatePlayer(payload.peerId, { isCoDM: payload.isCoDM })
+      useLobbyStore.getState().updatePlayer(payload.peerId, { isCoDM: payload.isCoDM })
       break
     }
 
     case 'dm:demote-codm': {
       const payload = message.payload as CoDMPayload
       get().updatePeer(payload.peerId, { isCoDM: false })
-      getLobbyStore().getState().updatePlayer(payload.peerId, { isCoDM: false })
+      useLobbyStore.getState().updatePlayer(payload.peerId, { isCoDM: false })
       break
     }
 
     case 'player:color-change': {
       const payload = message.payload as ColorChangePayload
       get().updatePeer(message.senderId, { color: payload.color })
-      getLobbyStore().getState().updatePlayer(message.senderId, { color: payload.color })
+      useLobbyStore.getState().updatePlayer(message.senderId, { color: payload.color })
       break
     }
 
@@ -217,7 +211,7 @@ export function handleClientMessage(
 
     case 'dm:token-move': {
       const payload = message.payload as TokenMovePayload
-      getGameStore().getState().moveToken(payload.mapId, payload.tokenId, payload.gridX, payload.gridY)
+      useGameStore.getState().moveToken(payload.mapId, payload.tokenId, payload.gridX, payload.gridY)
       break
     }
 
@@ -226,15 +220,15 @@ export function handleClientMessage(
         fogOfWar?: { revealedCells: Array<{ x: number; y: number }>; enabled?: boolean }
       }
       if (payload.fogOfWar) {
-        const gs = getGameStore().getState()
+        const gs = useGameStore.getState()
         const maps = gs.maps.map((m) =>
           m.id === payload.mapId ? { ...m, fogOfWar: { enabled: m.fogOfWar.enabled, ...payload.fogOfWar! } } : m
         )
-        getGameStore().setState({ maps })
+        useGameStore.setState({ maps })
       } else if (payload.reveal) {
-        getGameStore().getState().revealFog(payload.mapId, payload.cells)
+        useGameStore.getState().revealFog(payload.mapId, payload.cells)
       } else {
-        getGameStore().getState().hideFog(payload.mapId, payload.cells)
+        useGameStore.getState().hideFog(payload.mapId, payload.cells)
       }
       break
     }
@@ -242,7 +236,7 @@ export function handleClientMessage(
     case 'dm:map-change': {
       const payload = message.payload as MapChangePayload
       if (payload.mapData) {
-        const gs = getGameStore().getState()
+        const gs = useGameStore.getState()
         const existing = gs.maps.find((m) => m.id === payload.mapId)
         if (existing) {
           const maps = gs.maps.map((m) =>
@@ -254,7 +248,7 @@ export function handleClientMessage(
                 }
               : m
           ) as import('../../types/map').GameMap[]
-          getGameStore().setState({ maps })
+          useGameStore.setState({ maps })
         } else {
           const newMap = {
             ...payload.mapData,
@@ -263,7 +257,7 @@ export function handleClientMessage(
           gs.addMap(newMap)
         }
       }
-      getGameStore().getState().setActiveMap(payload.mapId)
+      useGameStore.getState().setActiveMap(payload.mapId)
       break
     }
 
@@ -296,46 +290,44 @@ export function handleClientMessage(
     }
 
     case 'game:turn-advance': {
-      getGameStore().getState().nextTurn()
+      useGameStore.getState().nextTurn()
       break
     }
 
     case 'dm:slow-mode': {
       const payload = message.payload as SlowModePayload
-      getLobbyStore().getState().setSlowMode(payload.seconds)
+      useLobbyStore.getState().setSlowMode(payload.seconds)
       break
     }
 
     case 'dm:file-sharing': {
       const payload = message.payload as FileSharingPayload
-      getLobbyStore().getState().setFileSharingEnabled(payload.enabled)
+      useLobbyStore.getState().setFileSharingEnabled(payload.enabled)
       break
     }
 
     case 'chat:whisper': {
       const payload = message.payload as WhisperPayload
-      getLobbyStore()
-        .getState()
-        .addChatMessage({
-          id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
-          senderId: message.senderId,
-          senderName: `${message.senderName} (Whisper)`,
-          content: payload.message,
-          timestamp: Date.now(),
-          isSystem: false
-        })
+      useLobbyStore.getState().addChatMessage({
+        id: `whisper-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+        senderId: message.senderId,
+        senderName: `${message.senderName} (Whisper)`,
+        content: payload.message,
+        timestamp: Date.now(),
+        isSystem: false
+      })
       break
     }
 
     case 'dm:vision-update': {
       const payload = message.payload as { partyVisionCells: Array<{ x: number; y: number }> }
-      getGameStore().getState().setPartyVisionCells(payload.partyVisionCells)
+      useGameStore.getState().setPartyVisionCells(payload.partyVisionCells)
       break
     }
 
     case 'combat:reaction-prompt': {
       const payload = message.payload as ReactionPromptPayload
-      getGameStore().getState().setPendingReactionPrompt({
+      useGameStore.getState().setPendingReactionPrompt({
         promptId: payload.promptId,
         targetEntityId: payload.targetEntityId,
         triggerType: payload.triggerType,
@@ -356,31 +348,31 @@ export function handleClientMessage(
     // --- Trade messages ---
     case 'player:trade-request': {
       const payload = message.payload as TradeRequestPayload
-      getGameStore().getState().setPendingTradeOffer(payload)
+      useGameStore.getState().setPendingTradeOffer(payload)
       break
     }
 
     case 'player:trade-cancel': {
       const _payload = message.payload as TradeCancelPayload
-      getGameStore().getState().clearPendingTradeOffer()
+      useGameStore.getState().clearPendingTradeOffer()
       break
     }
 
     case 'dm:trade-result': {
       const payload = message.payload as TradeResultPayload
-      getGameStore().getState().setPendingTradeResult({
+      useGameStore.getState().setPendingTradeResult({
         tradeId: payload.tradeId,
         accepted: payload.accepted,
         summary: payload.summary
       })
-      getGameStore().getState().clearPendingTradeOffer()
+      useGameStore.getState().clearPendingTradeOffer()
       break
     }
 
     // --- Journal messages ---
     case 'player:journal-add': {
       const payload = message.payload as JournalAddPayload
-      getGameStore().getState().addJournalEntry(payload.entry)
+      useGameStore.getState().addJournalEntry(payload.entry)
       break
     }
 
@@ -390,7 +382,7 @@ export function handleClientMessage(
       if (payload.title !== undefined) updates.title = payload.title
       if (payload.content !== undefined) updates.content = payload.content
       if (payload.visibility !== undefined) updates.visibility = payload.visibility
-      getGameStore()
+      useGameStore
         .getState()
         .updateJournalEntry(
           payload.entryId,
@@ -403,13 +395,13 @@ export function handleClientMessage(
 
     case 'player:journal-delete': {
       const payload = message.payload as JournalDeletePayload
-      getGameStore().getState().deleteJournalEntry(payload.entryId)
+      useGameStore.getState().deleteJournalEntry(payload.entryId)
       break
     }
 
     case 'dm:journal-sync': {
       const payload = message.payload as JournalSyncPayload
-      getGameStore().getState().setSharedJournal(payload.entries)
+      useGameStore.getState().setSharedJournal(payload.entries)
       break
     }
 
@@ -418,7 +410,7 @@ export function handleClientMessage(
       const payload = message.payload as InspectResponsePayload
       const localId = get().localPeerId
       if (payload.targetPeerId === localId) {
-        getGameStore().getState().setInspectedCharacter(payload.characterData)
+        useGameStore.getState().setInspectedCharacter(payload.characterData)
       }
       break
     }
@@ -426,18 +418,16 @@ export function handleClientMessage(
     // --- Group roll request from DM ---
     case 'dm:roll-request': {
       const payload = message.payload as RollRequestPayload
-      getGameStore()
-        .getState()
-        .setPendingGroupRoll({
-          id: payload.id ?? `roll-${Date.now()}`,
-          type: payload.type,
-          ability: payload.ability,
-          skill: payload.skill,
-          dc: payload.dc,
-          isSecret: payload.isSecret,
-          scope: 'all',
-          targetEntityIds: []
-        })
+      useGameStore.getState().setPendingGroupRoll({
+        id: payload.id ?? `roll-${Date.now()}`,
+        type: payload.type,
+        ability: payload.ability,
+        skill: payload.skill,
+        dc: payload.dc,
+        isSecret: payload.isSecret,
+        scope: 'all',
+        targetEntityIds: []
+      })
       break
     }
 
@@ -446,16 +436,14 @@ export function handleClientMessage(
       const payload = message.payload as MacroPushPayload
       const { useMacroStore } = require('../use-macro-store') as typeof import('../use-macro-store')
       useMacroStore.getState().importMacros(payload.macros)
-      getLobbyStore()
-        .getState()
-        .addChatMessage({
-          id: `sys-macros-${Date.now()}`,
-          senderId: 'system',
-          senderName: 'System',
-          content: `DM shared ${payload.macros.length} macro${payload.macros.length === 1 ? '' : 's'} with the party!`,
-          timestamp: Date.now(),
-          isSystem: true
-        })
+      useLobbyStore.getState().addChatMessage({
+        id: `sys-macros-${Date.now()}`,
+        senderId: 'system',
+        senderName: 'System',
+        content: `DM shared ${payload.macros.length} macro${payload.macros.length === 1 ? '' : 's'} with the party!`,
+        timestamp: Date.now(),
+        isSystem: true
+      })
       break
     }
 

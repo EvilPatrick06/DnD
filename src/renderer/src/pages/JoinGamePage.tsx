@@ -1,14 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { BackButton, Button, Input, Spinner } from '../components/ui'
-import { AUTO_REJOIN_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../constants'
-import { type NetworkState, useNetworkStore } from '../stores/use-network-store'
-
-type _NetworkState = NetworkState
-
+import { AUTO_REJOIN_KEY, DISPLAY_NAME_KEY, JOINED_SESSIONS_KEY, LAST_SESSION_KEY } from '../constants'
+import { useNetworkStore } from '../stores/use-network-store'
 import { logger } from '../utils/logger'
-
-const DISPLAY_NAME_KEY = 'dnd-vtt-display-name'
 
 export default function JoinGamePage(): JSX.Element {
   const navigate = useNavigate()
@@ -26,6 +21,7 @@ export default function JoinGamePage(): JSX.Element {
   const [waitingForCampaign, setWaitingForCampaign] = useState(false)
 
   // Fall back to settings profile if localStorage display name is empty
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     if (displayName) return
     window.api.loadSettings().then((settings) => {
@@ -33,7 +29,7 @@ export default function JoinGamePage(): JSX.Element {
         setDisplayName(settings.userProfile.displayName)
       }
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
   const navigatedRef = useRef(false)
   const autoRejoinTriggered = useRef(false)
 
@@ -60,6 +56,7 @@ export default function JoinGamePage(): JSX.Element {
       // Defer the connection attempt to next tick so state is applied
       setTimeout(async () => {
         try {
+          setError(null)
           localStorage.setItem(DISPLAY_NAME_KEY, session.displayName)
           await joinGame(session.inviteCode, session.displayName)
           setWaitingForCampaign(true)
@@ -70,7 +67,7 @@ export default function JoinGamePage(): JSX.Element {
     } catch (e) {
       logger.warn('[JoinGame] Auto-rejoin read failed:', e)
     }
-  }, [joinGame])
+  }, [joinGame, setError])
 
   // When host sends game:state-full with campaignId, navigate to the real lobby URL
   useEffect(() => {
@@ -81,7 +78,7 @@ export default function JoinGamePage(): JSX.Element {
       // Persist session info for future rejoin
       try {
         const session = {
-          inviteCode: inviteCode || useNetworkStore.getState().inviteCode || '',
+          inviteCode: inviteCode.trim() || useNetworkStore.getState().inviteCode || '',
           displayName: displayName || useNetworkStore.getState().displayName || '',
           campaignId,
           campaignName: '',
@@ -166,7 +163,7 @@ export default function JoinGamePage(): JSX.Element {
           <input
             type="text"
             value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+            onChange={(e) => setInviteCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
             onKeyDown={handleKeyDown}
             placeholder="e.g. ABC123"
             maxLength={10}

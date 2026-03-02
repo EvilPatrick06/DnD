@@ -44,11 +44,10 @@ export function startHeartbeatCheck(state: SyncStateAccessors): void {
         state.lastHeartbeat.delete(peerId)
       } else if (elapsed >= HEARTBEAT_TIMEOUT_MS) {
         const peerInfo = state.peerInfoMap.get(peerId)
-        if (peerInfo && !(peerInfo as PeerInfo & { isDisconnected?: boolean }).isDisconnected) {
+        if (peerInfo && !peerInfo.isDisconnected) {
           logger.debug('[HostManager] Peer heartbeat timeout:', peerId)
-          // Mark as disconnected but keep in the list
-          const updated = { ...peerInfo, isDisconnected: true } as PeerInfo & { isDisconnected?: boolean }
-          state.peerInfoMap.set(peerId, updated as PeerInfo)
+          // Mark as disconnected but keep in the list until HEARTBEAT_REMOVE_MS
+          state.peerInfoMap.set(peerId, { ...peerInfo, isDisconnected: true })
           for (const cb of state.messageCallbacks) {
             try {
               cb(
@@ -142,10 +141,14 @@ export function buildMessage<T>(
   displayName: string,
   sequenceCounterRef: { value: number }
 ): NetworkMessage<T> {
+  const peerId = getPeerId()
+  if (!peerId) {
+    logger.warn('[HostManager] buildMessage called with no peer ID for type:', type)
+  }
   return {
     type,
     payload,
-    senderId: getPeerId() || '',
+    senderId: peerId ?? '',
     senderName: displayName,
     timestamp: Date.now(),
     sequence: sequenceCounterRef.value++
