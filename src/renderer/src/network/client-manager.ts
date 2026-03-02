@@ -4,8 +4,9 @@ import {
   CONNECTION_TIMEOUT_MS,
   HEARTBEAT_INTERVAL_MS,
   MAX_RECONNECT_RETRIES,
-  MAX_RETRY_MS
-} from '../constants/app-constants'
+  MAX_RETRY_MS,
+  RECONNECT_DELAY_MS
+} from '../constants'
 import { logger } from '../utils/logger'
 import { createPeer, destroyPeer, getPeerId } from './peer-manager'
 import { validateNetworkMessage } from './schemas'
@@ -362,8 +363,8 @@ function handleDisconnection(reason: string): void {
 
   if (wasConnected && retryCount < MAX_RECONNECT_RETRIES && lastInviteCode) {
     retryCount++
-    // Exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s (capped at 30s)
-    const delay = Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS)
+    // Exponential backoff with jitter, minimum RECONNECT_DELAY_MS (capped at 30s)
+    const delay = Math.max(RECONNECT_DELAY_MS, Math.min(BASE_RETRY_MS * 2 ** (retryCount - 1), MAX_RETRY_MS))
     const jitter = Math.floor(Math.random() * 500)
     const totalDelay = delay + jitter
     logger.debug(

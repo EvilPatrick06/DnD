@@ -1,5 +1,16 @@
 import { useCallback, useState } from 'react'
-import { applyLongRest, applyShortRest } from '../../../../services/character/rest-service-5e'
+import {
+  applyLongRest,
+  applyShortRest,
+  type LongRestPreview,
+  type LongRestResult,
+  type ShortRestResult
+} from '../../../../services/character/rest-service-5e'
+
+type _LongRestPreview = LongRestPreview
+type _LongRestResult = LongRestResult
+type _ShortRestResult = ShortRestResult
+
 import { useCharacterStore } from '../../../../stores/use-character-store'
 import { useGameStore } from '../../../../stores/use-game-store'
 import { useLobbyStore } from '../../../../stores/use-lobby-store'

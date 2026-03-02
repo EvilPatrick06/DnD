@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { DiceColors } from '../components/game/dice3d'
 import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
-import { MAX_CHAT_LENGTH } from '../constants/app-constants'
-import { PLAYER_COLORS } from '../network/types'
+import { MAX_CHAT_LENGTH } from '../constants'
+import { PLAYER_COLORS } from '../network'
 import { rollFormula } from '../services/dice/dice-engine'
 import type { Character } from '../types/character'
 

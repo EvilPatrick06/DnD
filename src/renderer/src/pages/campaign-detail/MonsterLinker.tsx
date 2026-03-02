@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import MonsterStatBlockView from '../../components/game/dm/MonsterStatBlockView'
+import { MonsterStatBlockView } from '../../components/game/dm'
 import { loadAllStatBlocks, searchMonsters } from '../../services/data-provider'
 import type { MonsterStatBlock } from '../../types/monster'
 

@@ -5,6 +5,20 @@
 
 import type { PluginManifest } from '../../../../shared/plugin-types'
 import { logger } from '../../utils/logger'
+import {
+  type DmAction,
+  type ExecutionFailure,
+  type ExecutionResult,
+  type GameStoreSnapshot,
+  registerPluginDmAction,
+  unregisterPluginDmAction
+} from '../game-action-executor'
+
+type _DmAction = DmAction
+type _ExecutionFailure = ExecutionFailure
+type _ExecutionResult = ExecutionResult
+type _GameStoreSnapshot = GameStoreSnapshot
+
 import { pluginEventBus } from './event-bus'
 import { createPluginAPI, type PluginAPI, type PluginCommandDef } from './plugin-api'
 
@@ -100,6 +114,11 @@ export async function loadPlugin(manifest: PluginManifest): Promise<LoadedPlugin
     const api = createPluginAPI(id, manifest)
     module.activate(api)
 
+    // Register a default plugin DM action handler if the plugin provides one
+    if (typeof module.handleDmAction === 'function') {
+      registerPluginDmAction(`plugin:${id}:action`, module.handleDmAction)
+    }
+
     const loaded: LoadedPlugin = {
       id,
       manifest,
@@ -137,6 +156,9 @@ export function unloadPlugin(id: string): void {
 
   // Remove all event subscriptions
   pluginEventBus.removePlugin(id)
+
+  // Remove any registered plugin DM actions (prefixed with 'plugin:<id>:')
+  unregisterPluginDmAction(`plugin:${id}:action`)
 
   // Remove registered commands
   for (let i = pluginCommandRegistry.length - 1; i >= 0; i--) {

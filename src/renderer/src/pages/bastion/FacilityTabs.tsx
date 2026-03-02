@@ -1,6 +1,131 @@
-import type { BasicFacilityDef, Bastion, SpecialFacilityDef } from '../../types/bastion'
+import type {
+  AttackEventResult,
+  BastionEventResult,
+  EnclaveCreatureEntry,
+  ExpertTrainerEntry,
+  ForgeConstructEntry,
+  GamblingResult,
+  GuildEntry,
+  MenagerieCreatureEntry,
+  PubSpecialEntry,
+  TreasureResult
+} from '../../data/bastion-events'
+import {
+  ALL_IS_WELL_FLAVORS,
+  BASTION_EVENTS_TABLE,
+  CREATURE_COSTS_BY_CR,
+  EMERALD_ENCLAVE_CREATURES,
+  EXPERT_TRAINERS,
+  FORGE_CONSTRUCTS,
+  GAMING_HALL_WINNINGS,
+  GUEST_TABLE,
+  MENAGERIE_CREATURES,
+  PUB_SPECIALS,
+  SAMPLE_GUILDS,
+  TREASURE_TABLE
+} from '../../data/bastion-events'
+import type { BasicFacilityDef, Bastion, BastionFacilitiesData, SpecialFacilityDef } from '../../types/bastion'
+import { ENLARGE_COSTS, FACILITY_SPACE_SQUARES } from '../../types/bastion'
 import type { Character5e } from '../../types/character-5e'
 import { ORDER_COLORS, ORDER_LABELS } from './bastion-constants'
+
+/** Type references to satisfy import usage for bastion event result types */
+type _EventTypes =
+  | BastionEventResult
+  | AttackEventResult
+  | GamblingResult
+  | TreasureResult
+  | MenagerieCreatureEntry
+  | ExpertTrainerEntry
+  | PubSpecialEntry
+  | GuildEntry
+  | EnclaveCreatureEntry
+  | ForgeConstructEntry
+  | BastionFacilitiesData
+
+/** Show facility-relevant reference data from bastion event tables */
+function FacilityReferenceData({ facilityType }: { facilityType: string }): JSX.Element | null {
+  switch (facilityType) {
+    case 'gaming-hall':
+      return GAMING_HALL_WINNINGS.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Winnings table:</span>{' '}
+          {GAMING_HALL_WINNINGS.map((w) => w.description).join('; ')}
+        </div>
+      ) : null
+
+    case 'menagerie':
+      return MENAGERIE_CREATURES.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Available creatures:</span>{' '}
+          {MENAGERIE_CREATURES.map((c) => `${c.name} (CR ${c.cr}, ${c.cost} GP)`).join(', ')}
+          {CREATURE_COSTS_BY_CR.length > 0 && (
+            <span className="ml-1">
+              | Cost by CR: {CREATURE_COSTS_BY_CR.map((e) => `CR ${e.cr}=${e.cost} GP`).join(', ')}
+            </span>
+          )}
+        </div>
+      ) : null
+
+    case 'training-area':
+      return EXPERT_TRAINERS.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Expert trainers:</span>{' '}
+          {EXPERT_TRAINERS.map((t) => `${t.name} (${t.type})`).join(', ')}
+        </div>
+      ) : null
+
+    case 'pub':
+      return PUB_SPECIALS.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Pub specials:</span> {PUB_SPECIALS.map((p) => p.name).join(', ')}
+        </div>
+      ) : null
+
+    case 'guildhall':
+      return SAMPLE_GUILDS.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Sample guilds:</span>{' '}
+          {SAMPLE_GUILDS.map((g) => g.guildType).join(', ')}
+        </div>
+      ) : null
+
+    case 'emerald-enclave-grove':
+      return EMERALD_ENCLAVE_CREATURES.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Enclave creatures:</span>{' '}
+          {EMERALD_ENCLAVE_CREATURES.map((c) => `${c.creatureType} (CR ${c.cr})`).join(', ')}
+        </div>
+      ) : null
+
+    case 'construct-forge':
+    case 'artificers-forge':
+      return FORGE_CONSTRUCTS.length > 0 ? (
+        <div className="mt-2 text-xs text-gray-500">
+          <span className="text-gray-400 font-medium">Constructs:</span>{' '}
+          {FORGE_CONSTRUCTS.map((f) => `${f.name} (CR ${f.cr}, ${f.costGP} GP, ${f.timeDays} days)`).join(', ')}
+        </div>
+      ) : null
+
+    default:
+      return null
+  }
+}
+
+/** Summary of bastion event tables for the events reference tooltip */
+function _getEventTablesSummary(): {
+  eventCount: number
+  flavorCount: number
+  guestCount: number
+  treasureCount: number
+} {
+  return {
+    eventCount: BASTION_EVENTS_TABLE.length,
+    flavorCount: ALL_IS_WELL_FLAVORS.length,
+    guestCount: GUEST_TABLE.length,
+    treasureCount: TREASURE_TABLE.length
+  }
+}
 
 export function BasicTab({
   bastion,
@@ -35,8 +160,11 @@ export function BasicTab({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm text-gray-100">{f.name}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700 capitalize">
-                      {f.space}
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700 capitalize"
+                      title={`${FACILITY_SPACE_SQUARES[f.space]} squares`}
+                    >
+                      {f.space} ({FACILITY_SPACE_SQUARES[f.space]} sq)
                     </span>
                   </div>
                   <button
@@ -113,8 +241,15 @@ export function SpecialTab({
                         Lv {def.level}
                       </span>
                     )}
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700 capitalize">
-                      {f.space}
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700 capitalize"
+                      title={`${FACILITY_SPACE_SQUARES[f.space]} squares${
+                        !f.enlarged && f.space !== 'vast'
+                          ? ` | Enlarge: ${ENLARGE_COSTS[f.space === 'cramped' ? 'cramped-roomy' : 'roomy-vast']?.gp ?? '?'} GP, ${ENLARGE_COSTS[f.space === 'cramped' ? 'cramped-roomy' : 'roomy-vast']?.days ?? '?'} days`
+                          : ''
+                      }`}
+                    >
+                      {f.space} ({FACILITY_SPACE_SQUARES[f.space]} sq)
                     </span>
                     {f.enlarged && (
                       <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-700">
@@ -205,6 +340,8 @@ export function SpecialTab({
                       ))}
                     </div>
                   )}
+                {/* Facility-specific reference data from event tables */}
+                <FacilityReferenceData facilityType={f.type} />
               </div>
             )
           })}

@@ -2,13 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { addToast } from '../../hooks/use-toast'
 import {
   type ActiveOp,
+  AvailableModelList,
   type CuratedModel,
   formatBytes,
   getPerformanceTier,
   type InstalledModel,
+  InstalledModelList,
+  type PerformanceTier,
   TIER_STYLES,
   timeAgo
 } from './OllamaModelList'
+
+type _PerformanceTier = PerformanceTier
+
+/** Re-export formatBytes and timeAgo for consumers that import from OllamaManagement. */
+export { formatBytes, timeAgo }
 
 interface VersionInfo {
   installed: string
@@ -190,7 +198,6 @@ export default function OllamaManagement(): JSX.Element {
   const availableModels = curatedModels.filter(
     (c) => !installedNames.has(c.id) && !installedNames.has(c.id.replace(/:latest$/, ''))
   )
-  const curatedLookup = new Map(curatedModels.map((c) => [c.id.replace(/:latest$/, ''), c]))
 
   const isBusy = activeOp !== null
 
@@ -330,184 +337,26 @@ export default function OllamaManagement(): JSX.Element {
               )
             })()}
 
-          {/* Installed Models */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Installed Models</h4>
-              {installedModels.length > 0 && (
-                <button
-                  onClick={handleUpdateAllModels}
-                  disabled={isBusy}
-                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Update All
-                </button>
-              )}
-            </div>
+          {/* Installed Models — uses extracted InstalledModelList component */}
+          <InstalledModelList
+            models={installedModels}
+            curatedModels={curatedModels}
+            activeOp={activeOp}
+            isBusy={isBusy}
+            vram={vram}
+            onPull={handlePullModel}
+            onDelete={handleDeleteModel}
+            onUpdateAll={handleUpdateAllModels}
+          />
 
-            {installedModels.length === 0 ? (
-              <p className="text-sm text-gray-500">No models installed yet.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {installedModels.map((model) => {
-                  const isPulling = activeOp?.type === 'pull' && activeOp.model === model.name
-                  const isDeleting = activeOp?.type === 'delete' && activeOp.model === model.name
-                  const curated = curatedLookup.get(model.name.replace(/:latest$/, ''))
-                  const tier = vram > 0 && curated ? getPerformanceTier(vram, curated.vramMB) : null
-                  const tierStyle = tier ? TIER_STYLES[tier] : null
-                  return (
-                    <div
-                      key={model.digest}
-                      className="flex items-center justify-between py-2 px-3 bg-gray-800/40 rounded-lg"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-gray-200 font-medium truncate">{model.name}</span>
-                          {model.parameterSize && (
-                            <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
-                              {model.parameterSize}
-                            </span>
-                          )}
-                          {model.quantization && (
-                            <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
-                              {model.quantization}
-                            </span>
-                          )}
-                          {model.family && (
-                            <span className="text-[10px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded">
-                              {model.family}
-                            </span>
-                          )}
-                          {tierStyle && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${tierStyle.className}`}>
-                              {tierStyle.label}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">
-                          {formatBytes(model.size)}
-                          {curated && <> &middot; ~{(curated.vramMB / 1000).toFixed(1)}GB VRAM</>} &middot;{' '}
-                          {timeAgo(model.modifiedAt)}
-                        </div>
-                      </div>
-
-                      {isPulling ? (
-                        <div className="flex items-center gap-2 ml-3">
-                          <div className="w-16 bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-amber-500 h-1 rounded-full transition-all duration-300"
-                              style={{ width: `${activeOp.percent}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-gray-400 w-8 text-right">{activeOp.percent}%</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 ml-3">
-                          <button
-                            onClick={() => handlePullModel(model.name)}
-                            disabled={isBusy}
-                            title="Update model"
-                            className="p-1.5 text-gray-500 hover:text-amber-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="w-3.5 h-3.5"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H4.598a.75.75 0 0 0-.75.75v3.634a.75.75 0 0 0 1.5 0v-2.033l.312.311a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm-7.268-4.43a.75.75 0 0 0 .196-.013 5.5 5.5 0 0 1 9.201-2.466l.312.311h-2.433a.75.75 0 0 0 0 1.5h3.634a.75.75 0 0 0 .75-.75V1.942a.75.75 0 0 0-1.5 0v2.033l-.312-.311A7 7 0 0 0 6.172 6.802a.75.75 0 0 0 1.449.39 5.506 5.506 0 0 1 .423-.198Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteModel(model.name)}
-                            disabled={isBusy}
-                            title="Delete model"
-                            className="p-1.5 text-gray-500 hover:text-red-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            {isDeleting ? (
-                              <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                                className="w-3.5 h-3.5"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.519.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 1 .7.798l-.35 5.5a.75.75 0 0 1-1.497-.096l.35-5.5a.75.75 0 0 1 .797-.702Zm2.84 0a.75.75 0 0 1 .798.702l.35 5.5a.75.75 0 0 1-1.497.096l-.35-5.5a.75.75 0 0 1 .7-.798Z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Available Models */}
-          {availableModels.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Available Models</h4>
-              <div className="space-y-1.5">
-                {availableModels.map((model) => {
-                  const isPulling = activeOp?.type === 'pull' && activeOp.model === model.id
-                  const tier = vram > 0 ? getPerformanceTier(vram, model.vramMB) : null
-                  const tierStyle = tier ? TIER_STYLES[tier] : null
-                  return (
-                    <div
-                      key={model.id}
-                      className="flex items-center justify-between py-2 px-3 bg-gray-800/40 rounded-lg"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-gray-300 font-medium">{model.name}</span>
-                          {tierStyle && (
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${tierStyle.className}`}>
-                              {tierStyle.label}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">
-                          {model.desc} &middot; ~{(model.vramMB / 1000).toFixed(1)}GB VRAM &middot;{' '}
-                          {(model.contextSize / 1024).toFixed(0)}K ctx
-                        </div>
-                      </div>
-
-                      {isPulling ? (
-                        <div className="flex items-center gap-2 ml-3">
-                          <div className="w-16 bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-amber-500 h-1 rounded-full transition-all duration-300"
-                              style={{ width: `${activeOp.percent}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-gray-400 w-8 text-right">{activeOp.percent}%</span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handlePullModel(model.id)}
-                          disabled={isBusy}
-                          className="ml-3 px-3 py-1 text-xs rounded-lg border border-gray-700 text-gray-400 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          Install
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+          {/* Available Models — uses extracted AvailableModelList component */}
+          <AvailableModelList
+            models={availableModels}
+            activeOp={activeOp}
+            isBusy={isBusy}
+            vram={vram}
+            onPull={handlePullModel}
+          />
 
           {/* Custom Model Pull */}
           <div>
@@ -545,3 +394,6 @@ export default function OllamaManagement(): JSX.Element {
     </div>
   )
 }
+
+// Re-export model list components for consumers that import from OllamaManagement
+export { AvailableModelList, InstalledModelList }

@@ -1,20 +1,21 @@
 import { useEffect } from 'react'
 import { trigger3dDice } from '../components/game/dice3d'
-import { onMessage as onClientMessage } from '../network/client-manager'
-import { onMessage as onHostMessage } from '../network/host-manager'
 import type {
   ChatPayload,
+  DiceResultPayload,
   MessageType,
   NarrationPayload,
   PlayAmbientPayload,
   PlaySoundPayload,
   ShopUpdatePayload,
+  StopAmbientPayload,
   TimeRequestPayload,
   TimerStartPayload,
   TimeSharePayload,
   TimeSyncPayload,
   WhisperPlayerPayload
-} from '../network/types'
+} from '../network'
+import { onClientMessage, onHostMessage } from '../network'
 import type { AmbientSound, SoundEvent } from '../services/sound-manager'
 import { playAmbient, play as playSound, setAmbientVolume, stopAmbient } from '../services/sound-manager'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
@@ -74,10 +75,11 @@ export function useGameNetwork({
         playAmbient(payload.ambient as AmbientSound)
       }
       if (msg.type === 'dm:stop-ambient') {
+        const _stopPayload = msg.payload as StopAmbientPayload
         stopAmbient()
       }
       if (msg.type === 'game:dice-result') {
-        const payload = msg.payload as { formula: string; rolls: number[]; total: number; rollerName: string }
+        const payload = msg.payload as DiceResultPayload
         trigger3dDice({
           formula: payload.formula,
           rolls: payload.rolls,

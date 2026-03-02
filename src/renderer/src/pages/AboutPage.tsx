@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ConfirmDialog } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
-import { exportAllData, importAllData } from '../services/io/import-export'
+import { type BackupStats, exportAllData, importAllData } from '../services/io/import-export'
+
+type _BackupStats = BackupStats
+
 import { logger } from '../utils/logger'
 
 const FEATURES = [

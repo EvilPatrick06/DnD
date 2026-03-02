@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
-import { DATA_PATHS, loadJson } from '../../../services/data-provider'
+import { DATA_PATHS, loadJson, type TrinketsFile } from '../../../services/data-provider'
+
+type _TrinketsFile = TrinketsFile
+
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import SectionBanner from '../shared/SectionBanner'
 

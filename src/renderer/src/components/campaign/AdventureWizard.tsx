@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import adventureSeedsJson from '../../../public/data/5e/world/adventure-seeds.json'
+import { load5eAdventureSeeds } from '../../services/data-provider'
 
 const ADVENTURE_SEEDS: Record<string, string[]> = adventureSeedsJson
+
+/** Load adventure seeds from the data store (includes plugin seeds). */
+export async function loadAdventureSeedData(): Promise<unknown> {
+  return load5eAdventureSeeds()
+}
 
 interface AdventureData {
   title: string

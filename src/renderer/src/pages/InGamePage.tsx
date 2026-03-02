@@ -2,12 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
 import { Spinner } from '../components/ui'
-import { LOADING_GRACE_PERIOD_MS } from '../constants/app-constants'
+import { LOADING_GRACE_PERIOD_MS } from '../constants'
 import { useAutoSaveGame } from '../hooks/use-auto-save'
 import { useBastionStore } from '../stores/use-bastion-store'
 import { useCampaignStore } from '../stores/use-campaign-store'
 import { useCharacterStore } from '../stores/use-character-store'
-import { useGameStore } from '../stores/use-game-store'
+import { type GameStoreState, useGameStore } from '../stores/use-game-store'
+
+type _GameStoreState = GameStoreState
+
 import { useNetworkStore } from '../stores/use-network-store'
 import { totalSecondsFromDateTime } from '../utils/calendar-utils'
 

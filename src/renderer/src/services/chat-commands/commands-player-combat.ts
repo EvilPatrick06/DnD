@@ -1,10 +1,24 @@
 import { trigger3dDice } from '../../components/game/dice3d'
 import { LIGHT_SOURCE_LABELS, LIGHT_SOURCES } from '../../data/light-sources'
 import { useGameStore } from '../../stores/use-game-store'
+import type { AoETargetResult } from '../combat/aoe-targeting'
+import type { AttackOptions, AttackResult } from '../combat/attack-resolver'
 import { findWeapon, formatAttackResult, resolveAttack } from '../combat/attack-resolver'
+import type { DeathSaveResult, DeathSaveState, GrappleResult, ShoveResult } from '../combat/damage-resolver'
 import { rollMultiple } from '../dice/dice-service'
 import { findTokenByName, rollD20WithTag } from './helpers'
 import type { ChatCommand } from './types'
+
+// Re-export combat types for consumers that access them through the chat-commands barrel
+export type {
+  AttackOptions,
+  AttackResult,
+  DeathSaveResult,
+  DeathSaveState,
+  GrappleResult,
+  ShoveResult,
+  AoETargetResult
+}
 
 const grappleCommand: ChatCommand = {
   name: 'grapple',

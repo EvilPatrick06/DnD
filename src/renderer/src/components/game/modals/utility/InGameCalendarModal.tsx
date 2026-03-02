@@ -4,13 +4,26 @@ import {
   getSeason,
   getSunPosition,
   getWeatherWithOverride,
-  type MoonPhase,
   type Season,
   type Weather
 } from '../../../../services/calendar-service'
+import type { MoonPhase, SunPosition, TimeBreakdown } from '../../../../services/calendar-weather'
+
+type _SunPosition = SunPosition
+type _TimeBreakdown = TimeBreakdown
+
 import { useGameStore } from '../../../../stores/use-game-store'
 import type { CalendarConfig } from '../../../../types/campaign'
-import { formatInGameDate, formatInGameTime, getDateParts, getTimeOfDayPhase } from '../../../../utils/calendar-utils'
+import {
+  type DateParts,
+  formatInGameDate,
+  formatInGameTime,
+  getDateParts,
+  getTimeOfDayPhase
+} from '../../../../utils/calendar-utils'
+
+type _DateParts = DateParts
+
 import { presetToWeatherType } from '../../map/weather-overlay'
 import MoonOverridePanel from './MoonOverridePanel'
 import WeatherOverridePanel from './WeatherOverridePanel'

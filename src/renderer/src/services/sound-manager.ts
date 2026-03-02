@@ -9,6 +9,7 @@
 
 import soundEventsJson from '../../public/data/audio/sound-events.json'
 import { logger } from '../utils/logger'
+import { load5eAmbientTracks, load5eSoundEvents } from './data-provider'
 import {
   customOverrides as playbackCustomOverrides,
   fadeAmbient as playbackFadeAmbient,
@@ -287,12 +288,17 @@ export function getCustomSounds(): Map<string, string> {
 
 /**
  * Reinitialize the sound system (e.g., after registering custom sounds).
+ * Optionally refreshes sound event data from the data store (includes homebrew merges).
  */
 export function reinit(): void {
   initialized = false
   pools.clear()
   poolIndex.clear()
   init()
+
+  // Warm the data-store cache for sound data so homebrew/plugin sounds are available
+  load5eSoundEvents().catch(() => {})
+  load5eAmbientTracks().catch(() => {})
 }
 
 /**

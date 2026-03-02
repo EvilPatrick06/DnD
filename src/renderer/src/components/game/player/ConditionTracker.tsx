@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { type ConditionDef, getBuffs5e } from '../../../data/conditions'
 import type { EntityCondition } from '../../../types/game-state'
 
 interface ConditionTrackerProps {
@@ -29,6 +31,13 @@ export default function ConditionTracker({
   isHost,
   onRemoveCondition
 }: ConditionTrackerProps): JSX.Element {
+  // Load available buffs for identifying positive conditions
+  const [buffs, setBuffs] = useState<ConditionDef[]>([])
+  useEffect(() => {
+    getBuffs5e().then(setBuffs)
+  }, [])
+  const buffNames = new Set(buffs.map((b) => b.name.toLowerCase()))
+
   if (conditions.length === 0) {
     return <div className="text-xs text-gray-500 text-center py-2">No active conditions</div>
   }
@@ -36,7 +45,8 @@ export default function ConditionTracker({
   return (
     <div className="space-y-1">
       {conditions.map((cond) => {
-        const icon = CONDITION_ICONS[cond.condition.toLowerCase()] ?? '\u{26A0}'
+        const isBuff = buffNames.has(cond.condition.toLowerCase())
+        const icon = CONDITION_ICONS[cond.condition.toLowerCase()] ?? (isBuff ? '\u{2B50}' : '\u{26A0}')
         const durationText =
           cond.duration === 'permanent'
             ? 'Permanent'
@@ -47,7 +57,9 @@ export default function ConditionTracker({
             <span className="text-base">{icon}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-gray-200 font-medium capitalize">{cond.condition}</span>
+                <span className={`font-medium capitalize ${isBuff ? 'text-green-300' : 'text-gray-200'}`}>
+                  {cond.condition}
+                </span>
                 {cond.value !== undefined && <span className="text-amber-400 font-semibold">{cond.value}</span>}
               </div>
               <p className="text-[10px] text-gray-500 truncate">{durationText}</p>

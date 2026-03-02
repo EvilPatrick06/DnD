@@ -226,3 +226,13 @@ export function getFilteredCommands(partial: string, isDM: boolean): ChatCommand
 
 // Re-export types for backward compatibility
 export type { ChatCommand, CommandContext, CommandResult }
+
+// Re-export combat types from commands-player-combat barrel
+export type {
+  AttackOptions,
+  AttackResult,
+  DeathSaveResult,
+  DeathSaveState,
+  GrappleResult,
+  ShoveResult
+} from './commands-player-combat'

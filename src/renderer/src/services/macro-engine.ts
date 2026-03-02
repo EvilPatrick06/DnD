@@ -1,8 +1,8 @@
 import type { Macro } from '../stores/use-macro-store'
 import type { Character5e } from '../types/character-5e'
 import { abilityModifier, formatMod } from '../types/character-common'
+import type { CommandContext } from './chat-commands/index'
 import { executeCommand } from './chat-commands/index'
-import type { CommandContext } from './chat-commands/types'
 
 /**
  * Resolve $variable tokens in a macro command string.

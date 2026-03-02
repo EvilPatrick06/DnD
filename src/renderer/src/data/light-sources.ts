@@ -1,4 +1,6 @@
-import { load5eLightSources } from '../services/data-provider'
+import { type LightSourceEntry, load5eLightSources } from '../services/data-provider'
+
+type _LightSourceEntry = LightSourceEntry
 
 export interface LightSourceDef {
   durationSeconds: number

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import type { ShopItem } from '../../../../network/types'
+import type { ShopItem } from '../../../../network'
 import { load5eEquipment, load5eMagicItems } from '../../../../services/data-provider'
 import { useGameStore } from '../../../../stores/use-game-store'
 import { useNetworkStore } from '../../../../stores/use-network-store'

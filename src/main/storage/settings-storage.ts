@@ -8,8 +8,16 @@ export interface RTCIceServerConfig {
   credential?: string
 }
 
+export interface UserProfile {
+  id: string
+  displayName: string
+  avatarPath?: string
+  createdAt: string
+}
+
 export interface AppSettings {
   turnServers?: RTCIceServerConfig[]
+  userProfile?: UserProfile
 }
 
 function getSettingsPath(): string {

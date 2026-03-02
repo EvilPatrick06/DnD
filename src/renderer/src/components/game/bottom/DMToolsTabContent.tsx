@@ -1,11 +1,17 @@
 import { lazy, Suspense } from 'react'
 import lightingTravelData from '../../../../public/data/5e/game/mechanics/lighting-travel.json'
+import { load5eLightingTravel } from '../../../services/data-provider'
 import { useGameStore } from '../../../stores/use-game-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 
 const DiseaseCurseTracker = lazy(() => import('../dm/DiseaseCurseTracker'))
 const EnvironmentalEffectsPanel = lazy(() => import('../dm/EnvironmentalEffectsPanel'))
 const TrapPlacerPanel = lazy(() => import('../dm/TrapPlacerPanel'))
+
+/** Load lighting/travel data from the data store (includes plugin additions). */
+export async function loadLightingTravelData(): Promise<unknown> {
+  return load5eLightingTravel()
+}
 
 interface DMToolsTabContentProps {
   onOpenModal: (modal: string) => void

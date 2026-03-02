@@ -1,8 +1,19 @@
 import * as THREE from 'three'
-import { createFaceMaterials, createWireMaterial } from './dice-textures'
+import { _createSolidMaterial, createFaceMaterials, createWireMaterial } from './dice-textures'
 import type { DiceColors, DieDefinition } from './dice-types'
 
 const DIE_SCALE = 1.0
+
+/** Create face materials — solid color for reduced-motion, textured otherwise. */
+function makeMaterials(
+  faceLabels: string[],
+  colors: DiceColors,
+  isHidden: boolean,
+  solidOnly: boolean
+): THREE.MeshStandardMaterial[] {
+  if (solidOnly) return faceLabels.map(() => _createSolidMaterial(colors))
+  return createFaceMaterials(faceLabels, colors, isHidden)
+}
 
 export function computeFaceNormalsFromGeo(geo: THREE.BufferGeometry, faceCount: number): THREE.Vector3[] {
   const pos = geo.getAttribute('position')
@@ -31,7 +42,7 @@ export function computeFaceNormalsFromGeo(geo: THREE.BufferGeometry, faceCount: 
   return normals
 }
 
-export function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
+export function createD4(colors: DiceColors, isHidden: boolean, solidOnly: boolean = false): DieDefinition {
   const radius = 0.8 * DIE_SCALE
   const geo = new THREE.TetrahedronGeometry(radius)
   geo.computeVertexNormals()
@@ -55,7 +66,7 @@ export function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
   }
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
@@ -67,14 +78,14 @@ export function createD4(colors: DiceColors, isHidden: boolean): DieDefinition {
   return { sides: 4, mesh, faceNormals, wireframe }
 }
 
-export function createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
+export function createD6(colors: DiceColors, isHidden: boolean, solidOnly: boolean = false): DieDefinition {
   const size = 0.7 * DIE_SCALE
   const geo = new THREE.BoxGeometry(size, size, size)
 
   const faceMap = [4, 3, 5, 2, 1, 6]
   const faceLabels = faceMap.map(String)
 
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(geo, materials)
   mesh.castShadow = true
 
@@ -93,7 +104,7 @@ export function createD6(colors: DiceColors, isHidden: boolean): DieDefinition {
   return { sides: 6, mesh, faceNormals, wireframe }
 }
 
-export function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
+export function createD8(colors: DiceColors, isHidden: boolean, solidOnly: boolean = false): DieDefinition {
   const radius = 0.75 * DIE_SCALE
   const geo = new THREE.OctahedronGeometry(radius)
 
@@ -115,7 +126,7 @@ export function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
   const faceLabels = ['1', '2', '3', '4', '5', '6', '7', '8']
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
@@ -127,7 +138,12 @@ export function createD8(colors: DiceColors, isHidden: boolean): DieDefinition {
   return { sides: 8, mesh, faceNormals, wireframe }
 }
 
-export function createD10(colors: DiceColors, isHidden: boolean, isPercentile: boolean = false): DieDefinition {
+export function createD10(
+  colors: DiceColors,
+  isHidden: boolean,
+  isPercentile: boolean = false,
+  solidOnly: boolean = false
+): DieDefinition {
   const radius = 0.7 * DIE_SCALE
   const vertices: number[] = []
   const indices: number[] = []
@@ -196,7 +212,7 @@ export function createD10(colors: DiceColors, isHidden: boolean, isPercentile: b
     ? ['00', '10', '20', '30', '40', '50', '60', '70', '80', '90']
     : ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
@@ -208,7 +224,7 @@ export function createD10(colors: DiceColors, isHidden: boolean, isPercentile: b
   return { sides: 10, mesh, faceNormals, wireframe }
 }
 
-export function createD12(colors: DiceColors, isHidden: boolean): DieDefinition {
+export function createD12(colors: DiceColors, isHidden: boolean, solidOnly: boolean = false): DieDefinition {
   const radius = 0.75 * DIE_SCALE
   const geo = new THREE.DodecahedronGeometry(radius)
 
@@ -237,7 +253,7 @@ export function createD12(colors: DiceColors, isHidden: boolean): DieDefinition 
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
   const faceLabels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
@@ -249,7 +265,7 @@ export function createD12(colors: DiceColors, isHidden: boolean): DieDefinition 
   return { sides: 12, mesh, faceNormals, wireframe }
 }
 
-export function createD20(colors: DiceColors, isHidden: boolean): DieDefinition {
+export function createD20(colors: DiceColors, isHidden: boolean, solidOnly: boolean = false): DieDefinition {
   const radius = 0.8 * DIE_SCALE
   const geo = new THREE.IcosahedronGeometry(radius)
 
@@ -271,7 +287,7 @@ export function createD20(colors: DiceColors, isHidden: boolean): DieDefinition 
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
 
   const faceLabels = Array.from({ length: 20 }, (_, i) => String(i + 1))
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = makeMaterials(faceLabels, colors, isHidden, solidOnly)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 

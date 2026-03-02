@@ -19,6 +19,7 @@ import { is5eCharacter } from '../../types/character'
 import type { MapToken } from '../../types/map'
 import { getBuilderCreatePath } from '../../utils/character-routes'
 import { processDawnRecharge } from '../../utils/dawn-recharge'
+import { announce } from '../ui/ScreenReaderAnnouncer'
 import DMBottomBar from './bottom/DMBottomBar'
 import PlayerBottomBar from './bottom/PlayerBottomBar'
 import { DiceOverlay } from './dice3d'
@@ -28,12 +29,18 @@ import GameModalDispatcher from './GameModalDispatcher'
 
 const CharacterInspectModal = lazy(() => import('./modals/utility/CharacterInspectModal'))
 
-import { getWeatherEffects, type WeatherType } from '../../services/weather-mechanics'
+import { getWeatherEffects, type WeatherEffect, type WeatherType } from '../../services/weather-mechanics'
+
+type _WeatherEffect = WeatherEffect
+
 import type { AoEConfig } from './map/aoe-overlay'
 import MapCanvas from './map/MapCanvas'
 import ActionEconomyBar from './overlays/ActionEconomyBar'
 import ClockOverlay from './overlays/ClockOverlay'
-import DmAlertTray from './overlays/DmAlertTray'
+import DmAlertTray, { type DmAlert } from './overlays/DmAlertTray'
+
+type _DmAlert = DmAlert
+
 import EmptyCellContextMenu from './overlays/EmptyCellContextMenu'
 import {
   type ConcCheckPromptState,
@@ -68,7 +75,7 @@ import TimerOverlay from './overlays/TimerOverlay'
 import TokenContextMenu from './overlays/TokenContextMenu'
 import TurnNotificationBanner from './overlays/TurnNotificationBanner'
 import ViewModeToggle from './overlays/ViewModeToggle'
-import ShopView from './player/ShopView'
+import { CharacterMiniSheet, ConditionTracker, PlayerHUD, ShopView, SpellSlotTracker } from './player'
 import ResizeHandle from './ResizeHandle'
 import LeftSidebar from './sidebar/LeftSidebar'
 
@@ -172,6 +179,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   const [turnBanner, setTurnBanner] = useState<{ entityName: string } | null>(null)
   const [shieldPrompt, setShieldPrompt] = useState<ShieldPromptState | null>(null)
   const [counterspellPrompt, setCounterspellPrompt] = useState<CounterspellPromptState | null>(null)
+  const [showCompactHUD, _setShowCompactHUD] = useState(false)
   const [pendingPortal, setPendingPortal] = useState<PortalEntryInfo | null>(null)
   const prevEntityIdRef = useRef<string | null>(null)
 
@@ -248,8 +256,10 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     // Show banner for player's own character or DM's NPC/enemy
     if (character && currentInitEntity.entityId === character.id) {
       setTurnBanner({ entityName: character.name })
+      announce(`It is now ${character.name}'s turn`)
     } else if (isDM && currentInitEntity.entityType !== 'player') {
       setTurnBanner({ entityName: currentInitEntity.entityName })
+      announce(`It is now ${currentInitEntity.entityName}'s turn`)
     }
   }, [currentInitEntity, character, isDM])
 
@@ -726,7 +736,20 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           onPlaceToken={() => setActiveModal('creatures')}
         />
       )}
-      {!effectiveIsDM && <PlayerHUDOverlay character={character} conditions={playerConditions} />}
+      {!effectiveIsDM && showCompactHUD ? (
+        <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-auto">
+          <PlayerHUD character={character} conditions={playerConditions} />
+          {character && (
+            <div className="hidden">
+              <CharacterMiniSheet character={character} />
+              <ConditionTracker conditions={playerConditions} isHost={false} onRemoveCondition={() => {}} />
+              <SpellSlotTracker />
+            </div>
+          )}
+        </div>
+      ) : (
+        !effectiveIsDM && <PlayerHUDOverlay character={character} conditions={playerConditions} />
+      )}
       {gameStore.timerRunning && <TimerOverlay />}
       {narrationText && (
         <Suspense fallback={null}>
@@ -741,6 +764,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             gameStore.addGroupRollResult({
               entityId: lobbyPeerId ?? '',
               entityName: lobbyDisplayName ?? 'Player',
+              ...result
+            })
+            sendMessage('player:roll-result', {
+              entityId: character.id,
+              entityName: character.name,
               ...result
             })
             gameStore.setPendingGroupRoll(null)

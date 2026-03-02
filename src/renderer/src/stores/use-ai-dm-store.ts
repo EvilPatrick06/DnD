@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
-import { parseRendererActions, stripActionTags } from '../services/ai-renderer-actions'
+import { type AiRendererAction, parseRendererActions, stripActionTags } from '../services/ai-renderer-actions'
 import type { Campaign } from '../types/campaign'
 import { useLobbyStore } from './use-lobby-store'
 
@@ -328,7 +328,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
         const ruleCitations = data.ruleCitations ?? []
 
         // Parse and strip renderer action tags from display text
-        const rendererActions = parseRendererActions(data.displayText)
+        const rendererActions: AiRendererAction[] = parseRendererActions(data.displayText)
         const cleanDisplayText = rendererActions.length > 0 ? stripActionTags(data.displayText) : data.displayText
 
         const newMessage: AiMessage = {

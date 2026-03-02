@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import creatureTypesJson from '../../../../public/data/5e/dm/npcs/creature-types.json'
-import type { CreatureSize, CreatureType, MonsterAction, MonsterStatBlock, MonsterTrait } from '../../../types/monster'
+import type { MonsterSpeed, MonsterSpellcasting, MonsterTrait } from '../../../services/data-provider'
+import { load5eCreatureTypes } from '../../../services/data-provider'
+import type { CreatureSize, CreatureType, MonsterAction, MonsterStatBlock } from '../../../types/monster'
+import type { SpellcastingSection as SidebarSpellcastingSection } from '../sidebar/StatBlockForm'
+
+type _MonsterSpeed = MonsterSpeed
+type _MonsterSpellcasting = MonsterSpellcasting
+
+/** Re-imported sidebar SpellcastingSection for potential reuse in stat block editing workflows. */
+type _SidebarSpellcastingSection = typeof SidebarSpellcastingSection
 
 interface StatBlockEditorProps {
   value: Partial<MonsterStatBlock>
@@ -9,6 +18,11 @@ interface StatBlockEditorProps {
 
 const SIZES = creatureTypesJson.sizes as CreatureSize[]
 const TYPES = creatureTypesJson.types as CreatureType[]
+
+/** Load creature types from the data store (includes homebrew creature types). */
+export async function loadCreatureTypeData(): Promise<unknown> {
+  return load5eCreatureTypes()
+}
 
 const COMMON_SKILLS = [
   'Acrobatics',

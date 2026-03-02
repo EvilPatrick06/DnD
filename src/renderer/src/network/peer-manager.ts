@@ -1,5 +1,5 @@
 import Peer from 'peerjs'
-import { PEER_CREATION_TIMEOUT_MS } from '../constants/app-constants'
+import { PEER_CREATION_TIMEOUT_MS } from '../constants'
 import { logger } from '../utils/logger'
 
 export { generateInviteCode } from '../utils/invite-code'

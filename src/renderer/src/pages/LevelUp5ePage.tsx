@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
-import LevelUpWizard5e from '../components/levelup/5e/LevelUpWizard5e'
+import LevelUpWizard5e, { type LevelUpSubComponents } from '../components/levelup/5e/LevelUpWizard5e'
+
+/** Sub-component references for custom level-up UI scenarios. */
+type _LevelUpSubComponents = typeof LevelUpSubComponents
+
 import { useCharacterStore } from '../stores/use-character-store'
 import { useLevelUpStore } from '../stores/use-level-up-store'
 import { useLobbyStore } from '../stores/use-lobby-store'

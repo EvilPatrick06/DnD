@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import builtInMapsJson from '../../../public/data/5e/world/built-in-maps.json'
+import { load5eBuiltInMaps } from '../../services/data-provider'
 import type { GameMap } from '../../types/map'
 import { Button, Input } from '../ui'
 
@@ -11,6 +12,11 @@ interface MapConfigStepProps {
 }
 
 const BUILT_IN_MAPS = builtInMapsJson
+
+/** Load built-in map definitions from the data store (includes plugin maps). */
+export async function loadBuiltInMapData(): Promise<unknown> {
+  return load5eBuiltInMaps()
+}
 
 export default function MapConfigStep({ maps, campaignId, onChange, adventureMaps }: MapConfigStepProps): JSX.Element {
   const [showAddForm, setShowAddForm] = useState(false)

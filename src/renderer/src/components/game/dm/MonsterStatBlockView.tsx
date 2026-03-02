@@ -1,5 +1,6 @@
-import { extractConditionsFromDescription } from '../../../services/combat/condition-extractor'
-import type { MonsterAction, MonsterStatBlock } from '../../../types/monster'
+import { type ExtractedCondition, extractConditionsFromDescription } from '../../../services/combat/condition-extractor'
+import type { MonsterAction } from '../../../services/data-provider'
+import type { MonsterStatBlock } from '../../../types/monster'
 import { abilityModifier } from '../../../types/monster'
 
 interface MonsterStatBlockViewProps {
@@ -30,7 +31,7 @@ function ActionQuickRef({ action }: { action: MonsterAction }): JSX.Element {
   if (action.damageType) parts.push(action.damageType)
   if (action.recharge) parts.push(`R:${action.recharge}`)
   const summary = parts.join(' | ')
-  const conditions = extractConditionsFromDescription(action.description)
+  const conditions: ExtractedCondition[] = extractConditionsFromDescription(action.description)
 
   return (
     <div className="flex items-center justify-between text-[10px]">

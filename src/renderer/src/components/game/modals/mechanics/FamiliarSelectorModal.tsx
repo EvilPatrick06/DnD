@@ -3,7 +3,7 @@ import { getFamiliarForms } from '../../../../services/character/companion-servi
 import { load5eMonsters } from '../../../../services/data-provider'
 import type { Companion5e } from '../../../../types/companion'
 import type { MonsterStatBlock } from '../../../../types/monster'
-import MonsterStatBlockView from '../../dm/MonsterStatBlockView'
+import { MonsterStatBlockView } from '../../dm'
 import CompanionStatusBanner from '../shared/CompanionStatusBanner'
 
 interface FamiliarSelectorModalProps {

@@ -4,6 +4,9 @@
  */
 
 import themesJson from '../../public/data/ui/themes.json'
+import { load5eThemes, type ThemesFile } from './data-provider'
+
+type _ThemesFile = ThemesFile
 
 export type ThemeName = 'dark' | 'parchment' | 'high-contrast' | 'royal-purple'
 
@@ -42,6 +45,11 @@ export function getTheme(): ThemeName {
 /** Returns the ordered list of all available theme names. */
 export function getThemeNames(): ThemeName[] {
   return Object.keys(THEME_DEFINITIONS) as ThemeName[]
+}
+
+/** Load theme definitions from the data store (includes plugin overrides). */
+export async function loadThemeDefinitions(): Promise<Record<string, Record<string, string>>> {
+  return load5eThemes()
 }
 
 /**

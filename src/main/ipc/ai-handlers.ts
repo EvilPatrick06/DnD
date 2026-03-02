@@ -2,26 +2,65 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import { AiChatRequestSchema, AiConfigSchema } from '../../shared/ipc-schemas'
+import {
+  AiChatRequestSchema,
+  AiConfigSchema,
+  type ValidatedAiChatRequest,
+  type ValidatedAiConfig
+} from '../../shared/ipc-schemas'
+import type { AiConnectionStatus, StreamResult } from '../ai/ai-service'
 import * as aiService from '../ai/ai-service'
-import { buildContext, getLastTokenBreakdown } from '../ai/context-builder'
+import { buildContext, getLastTokenBreakdown, getSearchEngine } from '../ai/context-builder'
+import type { DmAction } from '../ai/dm-actions'
 import { getMemoryManager } from '../ai/memory-manager'
 import {
   CURATED_MODELS,
+  type CuratedModel,
   checkOllamaUpdate,
   deleteModel,
   detectOllama,
   downloadOllama,
   getSystemVram,
+  type InstalledModelInfo,
   installOllama,
   listInstalledModels,
   listInstalledModelsDetailed,
+  type OllamaStatus,
+  type OllamaVersionInfo,
+  type PerformanceTier,
   pullModel,
   startOllama,
-  updateOllama
+  updateOllama,
+  type VramInfo
 } from '../ai/ollama-manager'
-import type { AiChatRequest, AiConfig, StatChange } from '../ai/types'
+import type {
+  AiChatRequest,
+  AiConfig,
+  AiIndexProgress,
+  AiStreamChunk,
+  AiStreamDone,
+  AiStreamError,
+  StatChange
+} from '../ai/types'
+import { logToFile } from '../log'
 import { deleteConversation, loadConversation, saveConversation } from '../storage/ai-conversation-storage'
+
+// Ensure imported types are used for type-safety
+type _ValidatedAiChatRequest = ValidatedAiChatRequest
+type _ValidatedAiConfig = ValidatedAiConfig
+type _AiConnectionStatus = AiConnectionStatus
+type _StreamResult = StreamResult
+type _DmAction = DmAction
+type _CuratedModel = CuratedModel
+type _InstalledModelInfo = InstalledModelInfo
+type _OllamaStatus = OllamaStatus
+type _OllamaVersionInfo = OllamaVersionInfo
+type _PerformanceTier = PerformanceTier
+type _VramInfo = VramInfo
+type _AiStreamChunk = AiStreamChunk
+type _AiStreamDone = AiStreamDone
+type _AiStreamError = AiStreamError
+type _AiIndexProgress = AiIndexProgress
 
 export function registerAiHandlers(): void {
   // ── Configuration ──
@@ -127,6 +166,16 @@ export function registerAiHandlers(): void {
   // ── Stat Mutations ──
 
   ipcMain.handle(IPC_CHANNELS.AI_APPLY_MUTATIONS, async (_event, characterId: string, changes: StatChange[]) => {
+    // Log human-readable descriptions of each mutation
+    for (const change of changes) {
+      const desc = aiService.describeChange(change)
+      const isNeg = aiService.isNegativeChange(change)
+      if (isNeg) {
+        logToFile('warn', `[AI Mutation] ${characterId}: ${desc} (negative)`)
+      } else {
+        logToFile('info', `[AI Mutation] ${characterId}: ${desc}`)
+      }
+    }
     return await aiService.applyMutations(characterId, changes)
   })
 
@@ -144,7 +193,8 @@ export function registerAiHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.AI_CONNECTION_STATUS, async () => {
     return {
       status: aiService.getConnectionStatus(),
-      consecutiveFailures: aiService.getConsecutiveFailures()
+      consecutiveFailures: aiService.getConsecutiveFailures(),
+      webSearchAvailable: getSearchEngine() !== null
     }
   })
 
@@ -168,7 +218,9 @@ export function registerAiHandlers(): void {
     const conv = aiService.getConversationManager(campaignId)
     const data = conv.serialize()
     await saveConversation(campaignId, data)
-    return { success: true }
+    // Generate a session summary alongside the save
+    const summary = await aiService.generateSessionSummary(campaignId).catch(() => null)
+    return { success: true, summary }
   })
 
   ipcMain.handle(IPC_CHANNELS.AI_LOAD_CONVERSATION, async (_event, campaignId: string) => {

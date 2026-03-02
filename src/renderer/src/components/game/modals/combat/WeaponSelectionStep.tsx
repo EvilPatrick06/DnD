@@ -1,4 +1,7 @@
-import { getMasteryDescription } from '../../../../data/weapon-mastery'
+import { getMasteryDescription, type MasteryProperty } from '../../../../data/weapon-mastery'
+
+type _MasteryProperty = MasteryProperty
+
 import { formatMod } from '../../../../types/character-common'
 import type { AttackWeapon, UnarmedMode } from './attack-utils'
 

@@ -6,7 +6,9 @@ import type { Character5e } from '../../../types/character-5e'
 import type { ArmorEntry, Currency } from '../../../types/character-common'
 import { addCurrency, computeSellPrice, deductWithConversion, parseCost, totalInCopper } from '../../../utils/currency'
 
-import { armorDataToEntry, getArmorDetail, useArmorDatabase } from './defense-utils'
+import { type ArmorData5e, armorDataToEntry, getArmorDetail, useArmorDatabase } from './defense-utils'
+
+type _ArmorData5e = ArmorData5e
 
 interface ArmorManager5eProps {
   character: Character5e

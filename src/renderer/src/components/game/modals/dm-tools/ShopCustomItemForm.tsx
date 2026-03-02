@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network/types'
+import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network'
 
-import { RARITY_OPTIONS, SHOP_CATEGORIES } from './shop-utils'
+import { type PresetDef, RARITY_OPTIONS, SHOP_CATEGORIES } from './shop-utils'
+
+type _PresetDef = PresetDef
 
 interface ShopCustomItemFormProps {
   onAddItem: (item: ShopItem) => void

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import currencyConfigJson from '../../../../public/data/5e/equipment/currency-config.json'
-import { load5eEquipment } from '../../../services/data-provider'
+import { load5eCurrencyConfig, load5eEquipment } from '../../../services/data-provider'
 import { logger } from '../../../utils/logger'
 
 export const CURRENCY_CONFIG = currencyConfigJson as Array<{
@@ -11,6 +11,11 @@ export const CURRENCY_CONFIG = currencyConfigJson as Array<{
   bg: string
   text: string
 }>
+
+/** Load currency config from the data store (includes plugin currencies). */
+export async function loadCurrencyConfigData(): Promise<unknown> {
+  return load5eCurrencyConfig()
+}
 
 // Equipment data types from equipment.json
 export interface WeaponData {

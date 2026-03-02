@@ -5,6 +5,7 @@
  * All functions handle errors gracefully, returning false or null on failure.
  */
 
+import { MAX_READ_FILE_SIZE, MAX_WRITE_CONTENT_SIZE } from '../../constants/app-constants'
 import { logger } from '../../utils/logger'
 
 const JSON_FILTER = [{ name: 'JSON Files', extensions: ['json'] }]
@@ -197,7 +198,15 @@ export async function exportAllData(): Promise<BackupStats | null> {
   })
   if (!filePath) return null
 
-  await window.api.writeFile(filePath, JSON.stringify(payload, null, 2))
+  const json = JSON.stringify(payload, null, 2)
+
+  // Validate against IPC write size limit
+  if (json.length > MAX_WRITE_CONTENT_SIZE) {
+    logger.error(`Backup export exceeds max write size (${(MAX_WRITE_CONTENT_SIZE / 1024 / 1024).toFixed(0)} MB)`)
+    throw new Error('Backup data is too large to export')
+  }
+
+  await window.api.writeFile(filePath, json)
   return {
     characters: payload.characters.length,
     campaigns: payload.campaigns.length,
@@ -219,6 +228,12 @@ export async function importAllData(): Promise<BackupStats | null> {
   if (!filePath) return null
 
   const raw = await window.api.readFile(filePath)
+
+  // Validate file size against IPC read limit
+  if (raw.length > MAX_READ_FILE_SIZE) {
+    throw new Error(`Backup file exceeds maximum read size (${(MAX_READ_FILE_SIZE / 1024 / 1024).toFixed(0)} MB)`)
+  }
+
   let payload: BackupPayload
   try {
     payload = JSON.parse(raw)

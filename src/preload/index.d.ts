@@ -299,6 +299,12 @@ interface RTCIceServerConfig {
 
 interface AppSettingsData {
   turnServers?: RTCIceServerConfig[]
+  userProfile?: {
+    id: string
+    displayName: string
+    avatarPath?: string
+    createdAt: string
+  }
 }
 
 interface SettingsAPI {

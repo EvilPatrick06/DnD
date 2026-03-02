@@ -1,15 +1,10 @@
 import type { DataConnection } from 'peerjs'
-import {
-  FILE_SIZE_LIMIT,
-  JOIN_TIMEOUT_MS,
-  MAX_DISPLAY_NAME_LENGTH,
-  MESSAGE_SIZE_LIMIT
-} from '../constants/app-constants'
+import { FILE_SIZE_LIMIT, JOIN_TIMEOUT_MS, MAX_DISPLAY_NAME_LENGTH, MESSAGE_SIZE_LIMIT } from '../constants'
 import { logger } from '../utils/logger'
 import { applyChatModeration, isClientAllowedMessageType, validateMessage } from './host-message-handlers'
 import { getPeerId } from './peer-manager'
 import { validateNetworkMessage } from './schemas'
-import type { JoinPayload, NetworkMessage, PeerInfo } from './types'
+import type { BanPayload, JoinPayload, NetworkMessage, PeerInfo } from './types'
 
 /** Shared host state passed to connection handlers to avoid circular module references */
 export interface HostStateAccessors {
@@ -192,7 +187,8 @@ export function handleJoin(
     logger.debug('[HostManager] Rejected banned name:', playerName, '(peer:', peerId, ')')
     state.bannedPeers.add(peerId)
     state.persistBans()
-    const banMsg = state.buildMessage('dm:ban-player', { peerId, reason: 'Banned by DM' })
+    const banPayload: BanPayload = { peerId, reason: 'Banned by DM' }
+    const banMsg = state.buildMessage('dm:ban-player', banPayload)
     state.disconnectPeer(peerId, banMsg)
     return
   }

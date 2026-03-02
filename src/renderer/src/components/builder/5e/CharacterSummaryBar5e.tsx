@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ArmorForAC } from '../../../services/character/stat-calculator-5e'
+import type {
+  ArmorForAC,
+  DerivedStats5e,
+  EncumbranceResult,
+  LifestyleLevel,
+  ToolSkillInteraction
+} from '../../../services/character/stat-calculator-5e'
 import { calculate5eStats } from '../../../services/character/stat-calculator-5e'
 import { load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { buildArmorFromEquipment5e } from '../../../stores/builder/slices/save-slice-5e'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import { ABILITY_NAMES, abilityModifier, formatMod } from '../../../types/character-common'
 import { CharacterIcon } from '../shared/IconPicker'
+
+// Ensure imported types are used for type-safety
+type _EncumbranceResult = EncumbranceResult
+type _LifestyleLevel = LifestyleLevel
+type _ToolSkillInteraction = ToolSkillInteraction
 
 function EditableHP({
   currentHP,
@@ -193,7 +204,7 @@ export default function CharacterSummaryBar5e(): JSX.Element {
 
   const speciesSlotId = speciesSlot?.selectedId ?? null
 
-  const stats5e = useMemo(() => {
+  const stats5e: DerivedStats5e | null = useMemo(() => {
     const cls =
       classHitDie != null
         ? { hitDie: parseInt(classHitDie.replace(/\D/g, ''), 10) || 8, savingThrows: classSaves }

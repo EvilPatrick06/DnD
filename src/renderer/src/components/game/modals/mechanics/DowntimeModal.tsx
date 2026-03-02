@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
+import { LIFESTYLE_COSTS, type LifestyleLevel } from '../../../../services/character/stat-calculator-5e'
 import { type LanguageEntry, load5eLanguages } from '../../../../services/data-provider'
 import { rollSingle } from '../../../../services/dice/dice-service'
 import {
   addDowntimeProgress,
   advanceTrackedDowntime,
+  type ComplicationEntry,
+  type ComplicationTables,
   calculateDowntimeCost,
   type DowntimeActivity,
   type ExtendedDowntimeActivity,
@@ -18,6 +21,9 @@ import {
 import type { Campaign, DowntimeProgressEntry } from '../../../../types/campaign'
 import type { Character5e } from '../../../../types/character-5e'
 import CraftingBrowser from './CraftingBrowser'
+
+type _ComplicationEntry = ComplicationEntry
+type _ComplicationTables = ComplicationTables
 
 type DowntimeTab = 'activities' | 'extended' | 'crafting' | 'training'
 
@@ -621,19 +627,23 @@ function ExtendedTab({
             <div className="space-y-1">
               <label className="text-[10px] text-gray-400 font-semibold">Lifestyle:</label>
               <div className="flex flex-wrap gap-1">
-                {Object.entries(selected.costs).map(([tier, info]) => (
-                  <button
-                    key={tier}
-                    onClick={() => setLifestyleTier(tier)}
-                    className={`px-2 py-0.5 text-[10px] rounded cursor-pointer ${
-                      lifestyleTier === tier
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                    }`}
-                  >
-                    {tier} ({info.costPerDayGP} GP/day)
-                  </button>
-                ))}
+                {Object.entries(selected.costs).map(([tier, info]) => {
+                  const phbCost = LIFESTYLE_COSTS[tier as LifestyleLevel]
+                  return (
+                    <button
+                      key={tier}
+                      onClick={() => setLifestyleTier(tier)}
+                      className={`px-2 py-0.5 text-[10px] rounded cursor-pointer ${
+                        lifestyleTier === tier
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      {tier} ({info.costPerDayGP} GP/day
+                      {phbCost !== undefined && phbCost !== info.costPerDayGP ? ` + ${phbCost} GP/day living` : ''})
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}

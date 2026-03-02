@@ -27,10 +27,16 @@ interface CustomAudioEntry {
 }
 
 import ambientTracksJson from '../../../../public/data/audio/ambient-tracks.json'
+import { load5eAmbientTracks } from '../../../services/data-provider'
 import { logger } from '../../../utils/logger'
 
 const AMBIENT_TRACKS = ambientTracksJson.ambientTracks as Array<{ id: AmbientSound; label: string; icon: string }>
 const QUICK_SFX = ambientTracksJson.quickSfx as Array<{ event: SoundEvent; label: string }>
+
+/** Load ambient track definitions from the data store (includes plugin tracks). */
+export async function loadAmbientTrackData(): Promise<unknown> {
+  return load5eAmbientTracks()
+}
 
 export default function DMAudioPanel(): JSX.Element {
   const [activeAmbient, setActiveAmbient] = useState<AmbientSound | null>(null)

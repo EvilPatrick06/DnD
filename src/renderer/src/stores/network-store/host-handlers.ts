@@ -1,16 +1,22 @@
-import * as hostManager from '../../network/host-manager'
-import { broadcastExcluding } from '../../network/host-manager'
 import type {
+  BuyItemPayload,
+  ColorChangePayload,
   InspectRequestPayload,
   JournalAddPayload,
   JournalDeletePayload,
   JournalUpdatePayload,
+  MessageType,
+  NetworkMessage,
+  RollResultPayload,
+  SellItemPayload,
+  ShopItem,
   TradeCancelPayload,
   TradeRequestPayload,
-  TradeResponsePayload
-} from '../../network/message-types'
-import { getPeerId } from '../../network/peer-manager'
-import type { MessageType, NetworkMessage, ShopItem } from '../../network/types'
+  TradeResponsePayload,
+  TurnEndPayload,
+  WhisperPayload
+} from '../../network'
+import { broadcastExcluding, broadcastMessage, getPeerId, getPeerInfo, sendToPeer, updatePeerInfo } from '../../network'
 import type { Character5e } from '../../types/character-5e'
 import type { NetworkState } from './index'
 
@@ -64,16 +70,16 @@ export function handleHostMessage(
     }
 
     case 'player:color-change': {
-      const colorPayload = message.payload as { color: string }
+      const colorPayload = message.payload as ColorChangePayload
       get().updatePeer(fromPeerId, { color: colorPayload.color })
       getLobbyStore().getState().updatePlayer(fromPeerId, { color: colorPayload.color })
-      hostManager.updatePeerInfo(fromPeerId, { color: colorPayload.color })
+      updatePeerInfo(fromPeerId, { color: colorPayload.color })
       broadcastExcluding(message, fromPeerId)
       break
     }
 
     case 'chat:whisper': {
-      const payload = message.payload as { message: string; targetPeerId: string; targetName?: string }
+      const payload = message.payload as WhisperPayload
       const localId = getPeerId()
 
       // If targeted at the host, display it locally
@@ -90,10 +96,10 @@ export function handleHostMessage(
           })
       } else {
         // Forward whisper only to the target, after validating they exist
-        const targetInfo = hostManager.getPeerInfo(payload.targetPeerId)
+        const targetInfo = getPeerInfo(payload.targetPeerId)
         if (targetInfo) {
           ;(message.payload as Record<string, unknown>).targetName = targetInfo.displayName
-          hostManager.sendToPeer(payload.targetPeerId, message)
+          sendToPeer(payload.targetPeerId, message)
         }
       }
       break
@@ -105,7 +111,7 @@ export function handleHostMessage(
     }
 
     case 'player:buy-item': {
-      const buyPayload = message.payload as { itemId: string; itemName: string }
+      const buyPayload = message.payload as BuyItemPayload
       {
         const gameStore = getGameStore().getState()
         const updatedInventory = gameStore.shopInventory.map((item: ShopItem) => {
@@ -116,7 +122,7 @@ export function handleHostMessage(
           return { ...item, ...updates }
         })
         gameStore.setShopInventory(updatedInventory)
-        hostManager.broadcastMessage({
+        broadcastMessage({
           type: 'dm:shop-update' as MessageType,
           payload: { shopInventory: updatedInventory, shopName: gameStore.shopName },
           senderId: getPeerId() || '',
@@ -129,10 +135,7 @@ export function handleHostMessage(
       break
     }
     case 'player:sell-item': {
-      const sellPayload = message.payload as {
-        itemName: string
-        price: { cp?: number; sp?: number; gp?: number; pp?: number }
-      }
+      const sellPayload = message.payload as SellItemPayload
       {
         const gameStore = getGameStore().getState()
         const existing = gameStore.shopInventory.find(
@@ -161,7 +164,7 @@ export function handleHostMessage(
           updatedInventory = [...gameStore.shopInventory, newItem]
         }
         gameStore.setShopInventory(updatedInventory)
-        hostManager.broadcastMessage({
+        broadcastMessage({
           type: 'dm:shop-update' as MessageType,
           payload: { shopInventory: updatedInventory, shopName: gameStore.shopName },
           senderId: getPeerId() || '',
@@ -175,14 +178,14 @@ export function handleHostMessage(
     }
 
     case 'player:turn-end': {
-      const turnEndPayload = message.payload as { entityId: string }
+      const turnEndPayload = message.payload as TurnEndPayload
       const gs = getGameStore().getState()
       const { initiative } = gs
       if (initiative) {
         const currentEntry = initiative.entries[initiative.currentIndex]
         if (currentEntry && currentEntry.entityId === turnEndPayload.entityId) {
           gs.nextTurn()
-          hostManager.broadcastMessage({
+          broadcastMessage({
             type: 'game:turn-advance' as MessageType,
             payload: {},
             senderId: getPeerId() || '',
@@ -204,7 +207,7 @@ export function handleHostMessage(
       const payload = message.payload as TradeRequestPayload
       pendingTrades.set(payload.tradeId, payload)
       // Forward to the target player
-      hostManager.sendToPeer(payload.toPeerId, message)
+      sendToPeer(payload.toPeerId, message)
       break
     }
 
@@ -230,7 +233,7 @@ export function handleHostMessage(
             tradeId: trade.tradeId,
             accepted: true,
             fromPlayerName: trade.fromPlayerName,
-            toPlayerName: hostManager.getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
+            toPlayerName: getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
             summary: result.summary
           }
           const tradeResultMessage: NetworkMessage = {
@@ -241,10 +244,10 @@ export function handleHostMessage(
             timestamp: Date.now(),
             sequence: 0
           }
-          hostManager.sendToPeer(trade.fromPeerId, tradeResultMessage)
-          hostManager.sendToPeer(trade.toPeerId, tradeResultMessage)
+          sendToPeer(trade.fromPeerId, tradeResultMessage)
+          sendToPeer(trade.toPeerId, tradeResultMessage)
           // Send updated character data back
-          hostManager.sendToPeer(trade.fromPeerId, {
+          sendToPeer(trade.fromPeerId, {
             type: 'dm:character-update' as MessageType,
             payload: { characterId: (result.fromChar as Record<string, unknown>).id, characterData: result.fromChar },
             senderId: getPeerId() || '',
@@ -252,7 +255,7 @@ export function handleHostMessage(
             timestamp: Date.now(),
             sequence: 0
           })
-          hostManager.sendToPeer(trade.toPeerId, {
+          sendToPeer(trade.toPeerId, {
             type: 'dm:character-update' as MessageType,
             payload: { characterId: (result.toChar as Record<string, unknown>).id, characterData: result.toChar },
             senderId: getPeerId() || '',
@@ -267,7 +270,7 @@ export function handleHostMessage(
           tradeId: trade.tradeId,
           accepted: false,
           fromPlayerName: trade.fromPlayerName,
-          toPlayerName: hostManager.getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
+          toPlayerName: getPeerInfo(trade.toPeerId)?.displayName ?? 'Unknown',
           summary: 'Trade declined.'
         }
         const tradeResultMessage: NetworkMessage = {
@@ -278,8 +281,8 @@ export function handleHostMessage(
           timestamp: Date.now(),
           sequence: 0
         }
-        hostManager.sendToPeer(trade.fromPeerId, tradeResultMessage)
-        hostManager.sendToPeer(trade.toPeerId, tradeResultMessage)
+        sendToPeer(trade.fromPeerId, tradeResultMessage)
+        sendToPeer(trade.toPeerId, tradeResultMessage)
       }
       break
     }
@@ -290,7 +293,7 @@ export function handleHostMessage(
       if (trade) {
         pendingTrades.delete(payload.tradeId)
         const counterpartId = fromPeerId === trade.fromPeerId ? trade.toPeerId : trade.fromPeerId
-        hostManager.sendToPeer(counterpartId, message)
+        sendToPeer(counterpartId, message)
       }
       break
     }
@@ -327,6 +330,13 @@ export function handleHostMessage(
       break
     }
 
+    // --- Group roll result from player ---
+    case 'player:roll-result': {
+      const payload = message.payload as RollResultPayload
+      getGameStore().getState().addGroupRollResult(payload)
+      break
+    }
+
     case 'player:inspect-request': {
       const payload = message.payload as InspectRequestPayload
       const lobby = getLobbyStore().getState()
@@ -339,7 +349,7 @@ export function handleHostMessage(
         }
       }
       if (charData) {
-        hostManager.sendToPeer(payload.requesterPeerId, {
+        sendToPeer(payload.requesterPeerId, {
           type: 'dm:inspect-response' as MessageType,
           payload: {
             characterId: payload.characterId,

@@ -10,13 +10,13 @@ import {
   unarmedStrikeDC
 } from '../../../../services/combat/combat-rules'
 import { getCritThreshold } from '../../../../services/combat/crit-range'
-import { resolveEffects } from '../../../../services/combat/effect-resolver-5e'
 import {
   type GrappleRequest,
   resolveGrapple,
   resolveShove,
   type ShoveRequest
-} from '../../../../services/combat/grapple-shove-resolver'
+} from '../../../../services/combat/damage-resolver'
+import { resolveEffects } from '../../../../services/combat/effect-resolver-5e'
 import { useGameStore } from '../../../../stores/use-game-store'
 import type { Character } from '../../../../types/character'
 import type { Character5e } from '../../../../types/character-5e'

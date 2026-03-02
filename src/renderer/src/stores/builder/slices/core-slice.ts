@@ -1,5 +1,26 @@
 import type { StateCreator } from 'zustand'
-import { generate5eBuildSlots, generate5eLevelUpSlots } from '../../../services/character/build-tree-5e'
+import {
+  type ClassArmorTraining,
+  type ClassFeature,
+  type ClassProficiencies,
+  type ClassSkillProficiencies,
+  type ClassWeaponProficiency,
+  type FeatureGrantedSpell,
+  type FeatureSavingThrow,
+  type FeatureUsesPerRest,
+  generate5eBuildSlots,
+  generate5eLevelUpSlots
+} from '../../../services/character/build-tree-5e'
+
+type _ClassProficiencies = ClassProficiencies
+type _ClassArmorTraining = ClassArmorTraining
+type _ClassWeaponProficiency = ClassWeaponProficiency
+type _ClassSkillProficiencies = ClassSkillProficiencies
+type _FeatureUsesPerRest = FeatureUsesPerRest
+type _FeatureSavingThrow = FeatureSavingThrow
+type _FeatureGrantedSpell = FeatureGrantedSpell
+type _ClassFeature = ClassFeature
+
 import type { BuilderState, CoreSliceState } from '../types'
 import { DEFAULT_SCORES } from '../types'
 import { DEFAULT_CHARACTER_DETAILS } from './character-details-slice'

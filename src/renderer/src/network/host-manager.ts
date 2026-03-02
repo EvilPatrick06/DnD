@@ -1,6 +1,6 @@
 import type { DataConnection } from 'peerjs'
 import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
-import { KICK_DELAY_MS, MAX_RECONNECT_ATTEMPTS } from '../constants/app-constants'
+import { KICK_DELAY_MS, MAX_RECONNECT_ATTEMPTS } from '../constants'
 import { logger } from '../utils/logger'
 import { type HostStateAccessors, handleDisconnection, handleNewConnection } from './host-connection'
 import {
@@ -14,7 +14,7 @@ import {
 } from './host-state-sync'
 import { createMessageRouter } from './message-handler'
 import { createPeer, destroyPeer, generateInviteCode, getPeer } from './peer-manager'
-import type { NetworkMessage, PeerInfo } from './types'
+import type { BanPayload, KickPayload, NetworkMessage, PeerInfo } from './types'
 
 // Module-level state
 let hosting = false
@@ -319,7 +319,8 @@ export function sendToPeer(peerId: string, msg: NetworkMessage): void {
 
 /** Kick a peer from the game. */
 export function kickPeer(peerId: string): void {
-  const kickMsg = buildMessage('dm:kick-player', { peerId, reason: 'Kicked by DM' })
+  const kickPayload: KickPayload = { peerId, reason: 'Kicked by DM' }
+  const kickMsg = buildMessage('dm:kick-player', kickPayload)
   disconnectPeer(peerId, kickMsg)
 }
 
@@ -380,7 +381,8 @@ export function banPeer(peerId: string): void {
   if (peerInfo) {
     bannedNames.add(peerInfo.displayName.toLowerCase())
   }
-  const banMsg = buildMessage('dm:ban-player', { peerId, reason: 'Banned by DM' })
+  const banPayload: BanPayload = { peerId, reason: 'Banned by DM' }
+  const banMsg = buildMessage('dm:ban-player', banPayload)
   disconnectPeer(peerId, banMsg)
   logger.debug('[HostManager] Banned peer:', peerId, peerInfo ? `(name: ${peerInfo.displayName})` : '')
   persistBans()

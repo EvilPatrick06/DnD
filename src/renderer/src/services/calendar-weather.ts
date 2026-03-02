@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Season, Weather } from './calendar-service'
 import { generateWeather } from './calendar-service'
-import type { MoonPhase, SunPosition, TimeBreakdown } from './calendar-types'
+import type { Weather as CalendarTypesWeather, MoonPhase, SunPosition, TimeBreakdown } from './calendar-types'
+
+type _CalendarTypesWeather = CalendarTypesWeather
 
 // Re-export calendar types for external consumers
 export type { SunPosition, MoonPhase, TimeBreakdown }

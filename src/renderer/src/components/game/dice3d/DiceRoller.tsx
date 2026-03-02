@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import diceTypesJson from '../../../../public/data/5e/game/mechanics/dice-types.json'
+import { load5eDiceTypes } from '../../../services/data-provider'
 import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
 import { play, playDiceSound } from '../../../services/sound-manager'
 import type { GameSystem } from '../../../types/game-system'
@@ -12,6 +13,11 @@ interface DiceRollerProps {
   rollerName: string
   onRoll?: (result: { formula: string; total: number; rolls: number[] }) => void
   allowCritDoubling?: boolean
+}
+
+/** Load dice type definitions from the data store (includes plugin dice). */
+export async function loadDiceTypeData(): Promise<unknown> {
+  return load5eDiceTypes()
 }
 
 interface RollResult {

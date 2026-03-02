@@ -22,7 +22,10 @@ import type { AbilityName } from '../../../types/character-common'
 import type { MagicItemData } from '../../../types/data'
 import { useCharacterStore } from '../../use-character-store'
 import type { BuilderState } from '../types'
-import { resolveBuilderSpells } from './builder-spells'
+import { type BuilderSpellsInput, resolveBuilderSpells } from './builder-spells'
+
+type _BuilderSpellsInput = BuilderSpellsInput
+
 import { getSpeciesResistances, getSpeciesSenses } from './character-species-helpers'
 import { buildArmorFromEquipment5e, buildWeaponsFromEquipment5e } from './save-slice-5e'
 

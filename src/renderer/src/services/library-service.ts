@@ -1,5 +1,10 @@
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
 import {
+  type BastionFacilitiesData,
+  type CurseData,
+  type DowntimeActivity,
+  type EnvironmentalEffectData,
+  type HazardData,
   load5eBackgrounds,
   load5eChaseTables,
   load5eClasses,
@@ -37,8 +42,20 @@ import {
   load5eTreasureTables,
   load5eTrinkets,
   load5eVehicles,
-  load5eWeaponMastery
+  load5eWeaponMastery,
+  type PoisonData,
+  type SupernaturalGiftData,
+  type TrapData
 } from './data-provider'
+
+type _TrapData = TrapData
+type _HazardData = HazardData
+type _PoisonData = PoisonData
+type _CurseData = CurseData
+type _EnvironmentalEffectData = EnvironmentalEffectData
+type _SupernaturalGiftData = SupernaturalGiftData
+type _DowntimeActivity = DowntimeActivity
+type _BastionFacilitiesData = BastionFacilitiesData
 
 function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
   switch (category) {

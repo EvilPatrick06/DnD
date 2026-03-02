@@ -1,5 +1,4 @@
-import type { TradeRequestPayload } from '../../network/message-types'
-import type { ShopItem } from '../../network/types'
+import type { ShopItem, TradeRequestPayload } from '../../network'
 import type { ActiveLightSource, CombatTimerConfig } from '../../types/campaign'
 import type { ActiveCurse, ActiveDisease, ActiveEnvironmentalEffect, PlacedTrap } from '../../types/dm-toolbox'
 import type { CustomEffect } from '../../types/effects'

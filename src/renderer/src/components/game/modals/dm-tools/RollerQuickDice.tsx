@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { trigger3dDice } from '../../../../components/game/dice3d'
+import type { DiceRollHiddenPayload } from '../../../../network'
 import { useNetworkStore } from '../../../../stores/use-network-store'
 import { rollDice } from '../../../../utils/dice-utils'
 
@@ -48,12 +49,13 @@ export default function RollerQuickDice({ autoMinimize, onRevealQuickResult }: R
           autoMinimize()
           trigger3dDice({ formula: `1${die}`, rolls: result.rolls, total: result.total, rollerName: 'DM' })
           if (quickHiddenDefault) {
-            sendMessage('game:dice-roll-hidden', {
+            const hiddenPayload: DiceRollHiddenPayload = {
               formula: `1${die}`,
               diceCount: 1,
               dieSides: [parseInt(die.slice(1), 10)],
               rollerName: 'DM'
-            })
+            }
+            sendMessage('game:dice-roll-hidden', hiddenPayload)
           }
         }
       }
@@ -83,12 +85,13 @@ export default function RollerQuickDice({ autoMinimize, onRevealQuickResult }: R
         if (quickHiddenDefault) {
           const diceMatch = expr.match(/(\d*)d(\d+)/)
           const sides = diceMatch ? [parseInt(diceMatch[2], 10)] : [20]
-          sendMessage('game:dice-roll-hidden', {
+          const hiddenPayload: DiceRollHiddenPayload = {
             formula: expr,
             diceCount: result.rolls.length,
             dieSides: sides,
             rollerName: 'DM'
-          })
+          }
+          sendMessage('game:dice-roll-hidden', hiddenPayload)
         }
       }
     }

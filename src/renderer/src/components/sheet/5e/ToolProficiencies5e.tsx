@@ -2,7 +2,15 @@ import { useState } from 'react'
 import { useCharacterEditor } from '../../../hooks/use-character-editor'
 import type { Character5e } from '../../../types/character-5e'
 
-import { GENERIC_TOOL_VARIANTS, getGenericToolBase, isGenericTool, useToolDescriptions } from './defense-utils'
+import {
+  GENERIC_TOOL_VARIANTS,
+  getGenericToolBase,
+  isGenericTool,
+  type ToolData,
+  useToolDescriptions
+} from './defense-utils'
+
+type _ToolData = ToolData
 
 interface ToolProficiencies5eProps {
   character: Character5e

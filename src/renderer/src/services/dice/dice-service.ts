@@ -6,10 +6,23 @@
  * 3. Sound effects play
  * 4. Last-roll tracking works for /reroll
  */
-import { trigger3dDice } from '../../components/game/dice3d'
+import {
+  type CreateDieOptions,
+  type Dice3dRollEvent,
+  type DiceTrayEntry,
+  trigger3dDice
+} from '../../components/game/dice3d'
+import type { DiceResultPayload, DiceRevealPayload, DiceRollHiddenPayload } from '../../network'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
 import { cryptoRandom } from '../../utils/crypto-random'
+import type { DiceParsed, DiceRollResult as EngineRollResult } from './dice-engine'
+
+type _CreateDieOptions = CreateDieOptions
+type _Dice3dRollEvent = Dice3dRollEvent
+type _DiceTrayEntry = DiceTrayEntry
+type _DiceParsed = DiceParsed
+type _EngineRollResult = EngineRollResult
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -192,12 +205,13 @@ export function rollForDm(formula: string, options: DiceRollOptions = {}): DiceR
   // Send hidden animation to players
   const { sendMessage } = useNetworkStore.getState()
   const parsed = parseFormula(formula)
-  sendMessage('game:dice-roll-hidden', {
+  const hiddenPayload: DiceRollHiddenPayload = {
     formula: result.formula,
     diceCount: result.rolls.length,
     dieSides: parsed ? [parsed.sides] : [20],
     rollerName
-  })
+  }
+  sendMessage('game:dice-roll-hidden', hiddenPayload)
 
   return result
 }
@@ -210,13 +224,14 @@ export function revealRoll(result: DiceRollResult, label?: string): void {
   broadcastResult(result.formula, result.rolls, result.total, rollerName, label)
 
   const { sendMessage } = useNetworkStore.getState()
-  sendMessage('game:dice-reveal', {
+  const revealPayload: DiceRevealPayload = {
     formula: result.formula,
     rolls: result.rolls,
     total: result.total,
     rollerName,
     label
-  })
+  }
+  sendMessage('game:dice-reveal', revealPayload)
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -250,12 +265,13 @@ function broadcastResult(formula: string, rolls: number[], total: number, roller
     diceResult: { formula, rolls, total }
   })
 
-  sendMessage('game:dice-result', {
+  const resultPayload: DiceResultPayload = {
     formula,
     rolls,
     total,
     isCritical: rolls.length === 1 && rolls[0] === 20,
     isFumble: rolls.length === 1 && rolls[0] === 1,
     rollerName
-  })
+  }
+  sendMessage('game:dice-result', resultPayload)
 }

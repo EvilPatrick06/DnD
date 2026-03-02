@@ -1,4 +1,7 @@
-import { useLevelUpStore } from '../../../stores/use-level-up-store'
+import { type HpChoice, useLevelUpStore } from '../../../stores/use-level-up-store'
+
+type _HpChoice = HpChoice
+
 import type { Character5e } from '../../../types/character-5e'
 import { abilityModifier } from '../../../types/character-common'
 

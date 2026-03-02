@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import CalendarStep from '../../components/campaign/CalendarStep'
 import { Button, Card, Modal } from '../../components/ui'
-import { getSeason } from '../../services/calendar-service'
-import { useWeather } from '../../services/calendar-weather'
+import { getSeason, type SunPosition, type TimeBreakdown, type WeatherOverride } from '../../services/calendar-service'
+import { type MoonPhase, useWeather } from '../../services/calendar-weather'
+
+type _SunPosition = SunPosition
+type _TimeBreakdown = TimeBreakdown
+type _WeatherOverride = WeatherOverride
+type _MoonPhase = MoonPhase
+
 import type { CalendarConfig, Campaign } from '../../types/campaign'
 
 interface CalendarCardProps {

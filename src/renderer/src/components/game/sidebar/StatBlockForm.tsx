@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { SidebarEntryStatBlock } from '../../../types/game-state'
-import { CollapsibleSection, NameDescRows } from './StatBlockFormSections'
+import { CollapsibleSection, NameDescRows, SpellcastingSection } from './StatBlockFormSections'
 
 const SIZE_OPTIONS: SidebarEntryStatBlock['size'][] = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
 
@@ -15,8 +15,6 @@ const ABILITY_LABELS: Record<string, string> = {
 }
 
 const SAVE_NAMES = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma']
-
-const SPELLCASTING_ABILITIES = ['Intelligence', 'Wisdom', 'Charisma']
 
 function abilityModifier(score: number): string {
   const mod = Math.floor((score - 10) / 2)
@@ -468,89 +466,18 @@ function StatBlockForm({ statBlock, onChange }: StatBlockFormProps): JSX.Element
         />
       </CollapsibleSection>
 
-      {/* Spellcasting */}
-      <CollapsibleSection title="Spellcasting">
-        <label className="flex items-center gap-1.5 text-[10px] text-gray-300 cursor-pointer mb-1">
-          <input
-            type="checkbox"
-            checked={!!sb.spellcasting}
-            onChange={toggleSpellcasting}
-            className="accent-amber-500"
-          />
-          Enable Spellcasting
-        </label>
-        {sb.spellcasting && (
-          <div className="space-y-1">
-            <div className="grid grid-cols-3 gap-1">
-              <div>
-                <label className="text-[9px] text-gray-500 uppercase">Ability</label>
-                <select
-                  value={sb.spellcasting.ability}
-                  onChange={(e) => updateSpellcasting({ ability: e.target.value })}
-                  className="w-full px-1 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500"
-                >
-                  {SPELLCASTING_ABILITIES.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] text-gray-500 uppercase">Save DC</label>
-                <input
-                  type="number"
-                  value={sb.spellcasting.dc}
-                  onChange={(e) => updateSpellcasting({ dc: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-1 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 text-center focus:outline-none focus:border-amber-500"
-                />
-              </div>
-              <div>
-                <label className="text-[9px] text-gray-500 uppercase">Atk Bonus</label>
-                <input
-                  type="number"
-                  value={sb.spellcasting.attackBonus}
-                  onChange={(e) => updateSpellcasting({ attackBonus: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-1 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 text-center focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-[9px] text-gray-500 uppercase block mb-0.5">Spell Slots by Level</label>
-              <div className="grid grid-cols-9 gap-0.5">
-                {Array.from({ length: 9 }, (_, i) => String(i + 1)).map((level) => (
-                  <div key={level} className="text-center">
-                    <label className="text-[8px] text-gray-600 block">{level}</label>
-                    <input
-                      type="number"
-                      value={sb.spellcasting?.slots?.[level] ?? ''}
-                      onChange={(e) => updateSlot(level, e.target.value)}
-                      className="w-full px-0 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 text-center focus:outline-none focus:border-amber-500"
-                      min={0}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="text-[9px] text-gray-500 uppercase">Spells (comma-separated)</label>
-              <textarea
-                value={sb.spellcasting.spells?.join(', ') ?? ''}
-                onChange={(e) =>
-                  updateSpellcasting({
-                    spells: e.target.value ? parseCommaSeparated(e.target.value) : undefined
-                  })
-                }
-                className="w-full px-1.5 py-0.5 rounded bg-gray-900 border border-gray-700 text-[10px] text-gray-100 focus:outline-none focus:border-amber-500 resize-none"
-                rows={2}
-                placeholder="Fireball, Shield, Counterspell, ..."
-              />
-            </div>
-          </div>
-        )}
-      </CollapsibleSection>
+      {/* Spellcasting — uses extracted SpellcastingSection component */}
+      <SpellcastingSection
+        spellcasting={sb.spellcasting}
+        onToggle={toggleSpellcasting}
+        onUpdate={updateSpellcasting}
+        onSlotUpdate={updateSlot}
+      />
     </div>
   )
 }
+
+// Re-export SpellcastingSection so consumers of StatBlockForm can use the extracted component
+export { SpellcastingSection }
 
 export default StatBlockForm

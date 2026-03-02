@@ -3,8 +3,25 @@ import { Application, Assets, type Container, type Graphics, Sprite } from 'pixi
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
 // Map utilities: calculateZoomToFit for fitting all tokens in view, getGridLabel for A1-style grid labels
-import { calculateZoomToFit, getGridLabel } from '../../../services/map/map-utils'
-import { buildVisionSet, getLightingAtPoint, isTokenInVisionSet } from '../../../services/map/vision-computation'
+import { calculateZoomToFit, getGridLabel, type MapPing } from '../../../services/map/map-utils'
+
+type _MapPing = MapPing
+
+import {
+  buildVisionSet,
+  getLightingAtPoint,
+  isTokenInVisionSet,
+  type PartyVisionResult,
+  type Point,
+  type Segment,
+  type VisibilityPolygon
+} from '../../../services/map/vision-computation'
+
+type _PartyVisionResult = PartyVisionResult
+type _Point = Point
+type _Segment = Segment
+type _VisibilityPolygon = VisibilityPolygon
+
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap, MapToken } from '../../../types/map'

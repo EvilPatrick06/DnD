@@ -1,3 +1,5 @@
+import { formatKeyCombo, getEffectiveShortcuts } from '../../services/keyboard-shortcuts'
+
 interface ShortcutsOverlayProps {
   open: boolean
   onClose: () => void
@@ -44,6 +46,10 @@ export default function ShortcutsOverlay({
 }: ShortcutsOverlayProps): JSX.Element | null {
   if (!open) return null
 
+  // Load effective shortcuts (includes user customizations)
+  const effectiveShortcuts = getEffectiveShortcuts()
+  const customizedShortcutMap = new Map(effectiveShortcuts.map((s) => [s.action, formatKeyCombo(s)]))
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
@@ -78,6 +84,12 @@ export default function ShortcutsOverlay({
                 ))}
               </div>
             </div>
+          )}
+
+          {customizedShortcutMap.size > 0 && (
+            <p className="text-[10px] text-gray-600 mt-2">
+              {effectiveShortcuts.length} shortcuts configured. Customize in Settings &gt; Keybindings.
+            </p>
           )}
         </div>
       </div>

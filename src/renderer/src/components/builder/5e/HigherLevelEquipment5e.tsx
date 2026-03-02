@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getHigherLevelEquipment, rollStartingGold } from '../../../data/starting-equipment-table'
+import {
+  getHigherLevelEquipment,
+  type HigherLevelEquipment,
+  rollStartingGold
+} from '../../../data/starting-equipment-table'
 import { load5eMagicItems } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { MagicItemRarity5e } from '../../../types/character-common'
@@ -132,7 +136,7 @@ export default function HigherLevelEquipment5e(): JSX.Element | null {
   const currency = useBuilderStore((s) => s.currency)
   const setCurrency = useBuilderStore((s) => s.setCurrency)
 
-  const hlEquip = getHigherLevelEquipment(targetLevel)
+  const hlEquip: HigherLevelEquipment | null = getHigherLevelEquipment(targetLevel)
   if (!hlEquip) return null
 
   const handleRollGold = useCallback((): void => {

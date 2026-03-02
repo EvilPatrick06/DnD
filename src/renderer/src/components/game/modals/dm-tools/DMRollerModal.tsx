@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react'
 import { trigger3dDice } from '../../../../components/game/dice3d'
+import type { DiceRevealPayload } from '../../../../network'
+import type { MonsterStatBlockData } from '../../../../services/data-provider'
 import { load5eMonsterById } from '../../../../services/data-provider'
 import { rollMultiple, rollSingle } from '../../../../services/dice/dice-service'
 import { useCharacterStore } from '../../../../stores/use-character-store'
@@ -9,6 +11,9 @@ import { useNetworkStore } from '../../../../stores/use-network-store'
 import { is5eCharacter } from '../../../../types/character'
 import type { Character5e } from '../../../../types/character-5e'
 import type { MonsterAction, MonsterStatBlock } from '../../../../types/monster'
+
+type _MonsterStatBlockData = MonsterStatBlockData
+
 import RollerEntityBlock from './RollerEntityBlock'
 import RollerQuickDice, { type QuickRollResult } from './RollerQuickDice'
 
@@ -186,13 +191,14 @@ export default function DMRollerModal({ onClose, onMinimize, onRestore }: DMRoll
         diceResult: { formula: result.formula, rolls: [result.roll], total: result.total }
       })
 
-      sendMessage('game:dice-reveal', {
+      const revealPayload: DiceRevealPayload = {
         formula: result.formula,
         rolls: [result.roll],
         total: result.total,
         rollerName: 'DM',
         label: `${result.entityName} ${result.label}`
-      })
+      }
+      sendMessage('game:dice-reveal', revealPayload)
     },
     [addChatMessage, sendMessage]
   )

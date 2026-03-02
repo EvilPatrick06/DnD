@@ -1,6 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { onMessage as onClientMessage } from '../../network/client-manager'
-import { onMessage as onHostMessage } from '../../network/host-manager'
 import type {
   CharacterSelectPayload,
   CharacterUpdatePayload,
@@ -8,7 +6,8 @@ import type {
   ChatTimeoutPayload,
   FileSharingPayload,
   SlowModePayload
-} from '../../network/types'
+} from '../../network'
+import { onClientMessage, onHostMessage } from '../../network'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'

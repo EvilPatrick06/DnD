@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { ShopItem } from '../../../network/types'
+import type { ShopItem } from '../../../network'
 import { load5ePoisons } from '../../../services/data-provider'
 import { useGameStore } from '../../../stores/use-game-store'
 import { useNetworkStore } from '../../../stores/use-network-store'
-import type { Poison } from '../../../types/dm-toolbox'
+import type { Poison, Settlement } from '../../../types/dm-toolbox'
+
+type _Settlement = Settlement
 
 const PRESET_ITEMS: ShopItem[] = [
   {

@@ -6,7 +6,7 @@
  */
 
 import { expect, vi } from 'vitest'
-import type { CommandContext } from './services/chat-commands/types'
+import type { CommandContext } from './services/chat-commands/index'
 import type { Character5e } from './types/character-5e'
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,17 @@
 import { useCharacterEditor } from '../../../hooks/use-character-editor'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
-import { calculateTotalWeight, getCarryingCapacity, getEncumbranceStatus } from '../../../utils/weight-calculator'
+import {
+  type CarryingCapacity,
+  calculateTotalWeight,
+  type EncumbranceStatus,
+  getCarryingCapacity,
+  getEncumbranceStatus
+} from '../../../utils/weight-calculator'
+
+type _CarryingCapacity = CarryingCapacity
+type _EncumbranceStatus = EncumbranceStatus
+
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 
 import CharacterTraitsPanel from './CharacterTraitsPanel5e'

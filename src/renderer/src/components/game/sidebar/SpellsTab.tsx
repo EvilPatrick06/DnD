@@ -1,6 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
-import { SPELL_SCHOOLS } from '../../../constants/spell-schools'
+import { SPELL_SCHOOLS } from '../../../constants'
+import type {
+  HigherLevelCasting,
+  HigherLevelScalingEntry,
+  SpellAction,
+  SpellComponents,
+  SpellD20Modifier,
+  SpellDamageData,
+  SpellDuration,
+  SpellHealingData,
+  SpellRange
+} from '../../../services/character/spell-data'
+import { CANTRIPS_KNOWN, getWarlockMaxSpellLevel } from '../../../services/character/spell-preparation-analyzer'
+import { playSpellSound } from '../../../services/sound-manager'
 import type { SpellIndexEntry } from '../../../types/data/spell-data-types'
+
+type _SpellAction = SpellAction
+type _SpellRange = SpellRange
+type _SpellComponents = SpellComponents
+type _SpellDuration = SpellDuration
+type _SpellDamageData = SpellDamageData
+type _SpellHealingData = SpellHealingData
+type _SpellD20Modifier = SpellD20Modifier
+type _HigherLevelScalingEntry = HigherLevelScalingEntry
+type _HigherLevelCasting = HigherLevelCasting
 
 const SPELL_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -12,7 +35,10 @@ function SpellCard({ spell }: { spell: SpellIndexEntry }): JSX.Element {
   return (
     <div
       className="bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/30 cursor-pointer hover:border-gray-600/50 transition-colors"
-      onClick={() => setExpanded(!expanded)}
+      onClick={() => {
+        if (!expanded && spell.school) playSpellSound(spell.school)
+        setExpanded(!expanded)
+      }}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="text-xs font-semibold text-amber-400 truncate">{spell.name}</div>
@@ -40,12 +66,28 @@ function SpellCard({ spell }: { spell: SpellIndexEntry }): JSX.Element {
   )
 }
 
+// Caster classes that appear in the CANTRIPS_KNOWN table
+const CASTER_CLASSES = Object.keys(CANTRIPS_KNOWN)
+
+/** Resolve max cantrips known for a class at a given level from the threshold table */
+function resolveCantripsKnown(classId: string, level: number): number {
+  const table = CANTRIPS_KNOWN[classId]
+  if (!table) return 0
+  let known = 0
+  for (const [lvl, count] of Object.entries(table)) {
+    if (level >= Number(lvl)) known = count
+  }
+  return known
+}
+
 export default function SpellsTab(): JSX.Element {
   const [spells, setSpells] = useState<SpellIndexEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [levelFilter, setLevelFilter] = useState<number | null>(null)
   const [schoolFilter, setSchoolFilter] = useState<string | null>(null)
+  const [refClass, setRefClass] = useState<string | null>(null)
+  const [refLevel, setRefLevel] = useState(1)
 
   useEffect(() => {
     let cancelled = false
@@ -141,6 +183,45 @@ export default function SpellsTab(): JSX.Element {
       <div className="text-[10px] text-gray-500">
         {filtered.length} spell{filtered.length !== 1 ? 's' : ''} found
       </div>
+
+      {/* Caster quick-reference */}
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="text-[10px] text-gray-500">Ref:</span>
+        {CASTER_CLASSES.map((cls) => (
+          <button
+            key={cls}
+            onClick={() => setRefClass(refClass === cls ? null : cls)}
+            className={`px-1 py-0.5 text-[9px] rounded cursor-pointer transition-colors ${
+              refClass === cls ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {cls.charAt(0).toUpperCase() + cls.slice(1, 4)}
+          </button>
+        ))}
+      </div>
+      {refClass && (
+        <div className="bg-gray-800/50 border border-gray-700/30 rounded-lg px-2 py-1.5 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-400">Lv</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={refLevel}
+              onChange={(e) => setRefLevel(Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)))}
+              className="w-10 bg-gray-800 border border-gray-600 rounded text-center text-[10px] text-gray-200 px-0.5 py-0.5"
+            />
+            <span className="text-[10px] text-gray-300">
+              Cantrips: <span className="text-amber-400 font-semibold">{resolveCantripsKnown(refClass, refLevel)}</span>
+            </span>
+            {refClass === 'warlock' && (
+              <span className="text-[10px] text-gray-300">
+                Pact slot lv: <span className="text-purple-400 font-semibold">{getWarlockMaxSpellLevel(refLevel)}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Spell list */}
       <div className="flex-1 overflow-y-auto space-y-1.5 min-h-0">

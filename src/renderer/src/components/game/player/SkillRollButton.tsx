@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { SKILLS_5E } from '../../../data/skills'
+import {
+  getToolSkillAdvantage as getToolAdvantage,
+  TOOL_SKILL_INTERACTIONS
+} from '../../../services/character/stat-calculator-5e'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { Character } from '../../../types/character'
 import type { Character5e } from '../../../types/character-5e'
@@ -22,33 +26,6 @@ const ABILITY_LABELS: Record<AbilityName, string> = {
 }
 
 const SAVE_ORDER: AbilityName[] = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
-
-/** 2024 PHB: When proficient in both a skill and a related tool, gain Advantage on the check. */
-const TOOL_SKILL_ADVANTAGE_MAP: Record<string, string[]> = {
-  "Thieves' Tools": ['Sleight of Hand', 'Investigation'],
-  'Herbalism Kit': ['Medicine', 'Nature'],
-  "Alchemist's Supplies": ['Investigation', 'Arcana'],
-  "Brewer's Supplies": ['Medicine', 'Persuasion'],
-  "Calligrapher's Supplies": ['History', 'Arcana'],
-  "Carpenter's Tools": ['Investigation', 'Perception'],
-  "Cartographer's Tools": ['Nature', 'Survival'],
-  "Cobbler's Tools": ['Investigation', 'History'],
-  "Cook's Utensils": ['Medicine', 'Survival'],
-  'Forgery Kit': ['Deception', 'History'],
-  "Glassblower's Tools": ['Investigation', 'History'],
-  "Jeweler's Tools": ['Investigation', 'Arcana'],
-  "Leatherworker's Tools": ['Investigation', 'Survival'],
-  "Mason's Tools": ['Investigation', 'Perception'],
-  "Navigator's Tools": ['Nature', 'Survival'],
-  "Painter's Supplies": ['Investigation', 'History'],
-  "Poisoner's Kit": ['Medicine', 'Nature'],
-  "Potter's Tools": ['Investigation', 'History'],
-  "Smith's Tools": ['Investigation', 'History'],
-  "Tinker's Tools": ['Investigation', 'History'],
-  "Weaver's Tools": ['Investigation', 'History'],
-  "Woodcarver's Tools": ['Nature', 'History'],
-  'Disguise Kit': ['Deception', 'Performance']
-}
 
 function rollD20(): number {
   return Math.floor(Math.random() * 20) + 1
@@ -96,15 +73,12 @@ export default function SkillRollButton({ character, onRoll }: SkillRollButtonPr
   }
 
   // Check if character has tool proficiency that grants advantage on a skill (2024 PHB)
+  // TOOL_SKILL_INTERACTIONS defines the full set of tool-skill advantage pairings
+  const toolInteractionCount = TOOL_SKILL_INTERACTIONS.length
   const getToolSkillAdvantage = (skillName: string): string | null => {
     const tools = char5e.proficiencies?.tools ?? []
-    for (const tool of tools) {
-      const linkedSkills = TOOL_SKILL_ADVANTAGE_MAP[tool]
-      if (linkedSkills?.includes(skillName)) {
-        return tool
-      }
-    }
-    return null
+    const interaction = getToolAdvantage(tools, skillName)
+    return interaction?.tool ?? null
   }
 
   const doRoll = (label: string, mod: number, isSkillCheck = false, skillName?: string): void => {
@@ -203,7 +177,7 @@ export default function SkillRollButton({ character, onRoll }: SkillRollButtonPr
             ? 'bg-amber-600/30 text-amber-300 border border-amber-500/50'
             : 'bg-gray-800 border border-gray-700 text-gray-400 hover:text-gray-200'
         }`}
-        title="Skill & Save Rolls"
+        title={`Skill & Save Rolls (${toolInteractionCount} tool-skill interactions)`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
           <path

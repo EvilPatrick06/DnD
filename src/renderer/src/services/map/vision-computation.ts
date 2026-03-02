@@ -6,15 +6,19 @@
  */
 
 import type { GameMap, MapToken } from '../../types/map'
+import { DARKVISION_SPECIES } from '../../types/map'
 import {
   computeVisibility,
   isPointVisible,
   type LightSource,
+  type LitArea,
   type Point,
   type Segment,
   type VisibilityPolygon,
   wallsToSegments
 } from './raycast-visibility'
+
+type _LitArea = LitArea
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -172,6 +176,14 @@ export function recomputeVision(map: GameMap, overrideTokens?: MapToken[]): Part
   const tokens = overrideTokens ?? map.tokens
   const playerTokens = tokens.filter((t) => t.entityType === 'player')
   return computePartyVision(map, playerTokens)
+}
+
+/**
+ * Check if a token's associated species has darkvision (used for dim-light visibility).
+ */
+export function hasDarkvision(speciesId: string | undefined): boolean {
+  if (!speciesId) return false
+  return DARKVISION_SPECIES.includes(speciesId.toLowerCase())
 }
 
 // Re-export needed types

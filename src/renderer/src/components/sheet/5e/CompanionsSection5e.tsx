@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useCharacterEditor } from '../../../hooks/use-character-editor'
 import { load5eMonsterById } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
-import type { Companion5e, CompanionType } from '../../../types/companion'
+import type { Companion5e, CompanionType, WildShapeTier } from '../../../types/companion'
+
+type _WildShapeTier = WildShapeTier
+
 import type { MonsterStatBlock } from '../../../types/monster'
 import SheetSectionWrapper from '../shared/SheetSectionWrapper'
 
