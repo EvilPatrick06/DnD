@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { load5eFeats, load5eSpells } from '../../../services/data-provider'
+import { formatPrerequisites, load5eFeats, load5eSpells } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { BuildSlot } from '../../../types/character-common'
@@ -61,16 +61,24 @@ export function EpicBoonSelector5e({
                     key={feat.id}
                     onClick={() => {
                       if (!meetsPrereqs) return
-                      onSelect({ id: feat.id, name: feat.name, description: feat.description })
+                      onSelect({
+                        id: feat.id,
+                        name: feat.name,
+                        description: feat.benefits.map((b) => b.description).join(' ')
+                      })
                       setExpanded(false)
                     }}
                     disabled={!meetsPrereqs}
                     className={`w-full text-left border rounded p-2 transition-colors ${meetsPrereqs ? 'bg-gray-800/50 hover:bg-gray-800 border-gray-700 hover:border-purple-600 cursor-pointer' : 'bg-gray-900/30 border-gray-800 opacity-50 cursor-not-allowed'}`}
                   >
                     <div className="text-sm text-purple-300 font-medium">{feat.name}</div>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{feat.description}</p>
-                    {!meetsPrereqs && feat.prerequisites.length > 0 && (
-                      <p className="text-[10px] text-red-400 mt-0.5">Requires: {feat.prerequisites.join(', ')}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                      {feat.benefits.map((b) => b.description).join(' ')}
+                    </p>
+                    {!meetsPrereqs && formatPrerequisites(feat.prerequisites).length > 0 && (
+                      <p className="text-[10px] text-red-400 mt-0.5">
+                        Requires: {formatPrerequisites(feat.prerequisites).join(', ')}
+                      </p>
                     )}
                   </button>
                 )
@@ -245,7 +253,12 @@ export function FightingStyleSelector5e({
       .then((all) => {
         // Filter class-restricted fighting styles
         const classId = character.buildChoices.classId
-        setFeats(all.filter((f) => f.prerequisites.length === 0 || f.prerequisites.includes(classId)))
+        setFeats(
+          all.filter((f) => {
+            const prereqs = formatPrerequisites(f.prerequisites)
+            return prereqs.length === 0 || prereqs.some((p) => p.toLowerCase().includes(classId))
+          })
+        )
       })
       .catch(() => setFeats([]))
   }, [character.buildChoices.classId])
@@ -253,7 +266,13 @@ export function FightingStyleSelector5e({
   // Filter out already-taken fighting styles
   const takenIds = new Set((character.feats ?? []).map((f) => f.id))
   const available: Array<{ id: string; name: string; description: string }> = [
-    ...feats.filter((f) => !takenIds.has(f.id)),
+    ...feats
+      .filter((f) => !takenIds.has(f.id))
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        description: f.benefits.map((b) => b.description).join(' ')
+      })),
     ...(isRanger
       ? [
           {

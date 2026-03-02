@@ -42,7 +42,7 @@ export const DEFAULT_CHARACTER_DETAILS = {
   speciesTraits: [] as Array<{ name: string; description: string }>,
   speciesProficiencies: [] as string[],
   classEquipment: [] as Array<{ name: string; quantity: number; source: string }>,
-  bgEquipment: [] as Array<{ name: string; quantity: number; source: string }>,
+  bgEquipment: [] as Array<{ option: string; items: string[]; source: string }>,
   currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
   higherLevelGoldBonus: 0,
   selectedMagicItems: [] as Array<{ slotRarity: string; itemId: string; itemName: string }>,

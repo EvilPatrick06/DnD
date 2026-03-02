@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatPrerequisites } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
 import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
@@ -59,7 +60,7 @@ interface FeatPickerRowProps {
 
 export function FeatPickerRow({ feat, character, onSelect }: FeatPickerRowProps): JSX.Element {
   const [expanded, setExpanded] = useState(false)
-  const meetsPrereqs = feat.prerequisites.length === 0 || meetsFeatPrerequisites(character, feat.prerequisites)
+  const meetsPrereqs = meetsFeatPrerequisites(character, feat.prerequisites)
   return (
     <div
       className={`border rounded ${meetsPrereqs ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-900/50 border-gray-800 opacity-50'}`}
@@ -84,12 +85,14 @@ export function FeatPickerRow({ feat, character, onSelect }: FeatPickerRowProps)
       </div>
       {expanded && (
         <div className="px-2 pb-2">
-          {feat.prerequisites.length > 0 && (
+          {formatPrerequisites(feat.prerequisites).length > 0 && (
             <p className={`text-xs mb-1 ${meetsPrereqs ? 'text-yellow-500' : 'text-red-400'}`}>
-              Requires: {feat.prerequisites.join(', ')}
+              Requires: {formatPrerequisites(feat.prerequisites).join(', ')}
             </p>
           )}
-          <p className="text-xs text-gray-400 whitespace-pre-wrap">{feat.description}</p>
+          <p className="text-xs text-gray-400 whitespace-pre-wrap">
+            {feat.benefits.map((b) => b.description).join(' ')}
+          </p>
         </div>
       )}
     </div>

@@ -13,12 +13,7 @@ const DATA_DIR = resolve(__dirname, '../../public/data/5e')
 
 // Files were reorganized into subdirectories — map flat names to actual paths
 const FILE_PATH_MAP: Record<string, string> = {
-  'species.json': 'character/species.json',
-  'species-traits.json': 'character/species-traits.json',
-  'classes.json': 'character/classes.json',
-  'backgrounds.json': 'character/backgrounds.json',
   'subclasses.json': 'character/subclasses.json',
-  'feats.json': 'character/feats.json',
   'class-features.json': 'character/class-features.json',
   'spells.json': 'spells/spells.json',
   'equipment.json': 'equipment/equipment.json',
@@ -62,11 +57,25 @@ function loadJsonFile<T>(filename: string): T {
   return JSON.parse(raw) as T
 }
 
-// === species.json ===
-describe('species.json', () => {
-  let data: unknown[]
+function loadFromIndex<T>(
+  indexPath: string,
+  filter?: (entry: Record<string, unknown>) => boolean
+): (T & { id: string })[] {
+  const indexRaw = readFileSync(resolve(DATA_DIR, indexPath), 'utf-8')
+  let index = JSON.parse(indexRaw) as Array<{ id: string; path: string; [key: string]: unknown }>
+  if (filter) index = index.filter(filter)
+  return index.map((entry) => {
+    const raw = readFileSync(resolve(DATA_DIR, entry.path), 'utf-8')
+    const data = JSON.parse(raw) as T
+    return { ...data, id: entry.id }
+  })
+}
+
+// === species (via index) ===
+describe('species (index)', () => {
+  let data: Array<Record<string, unknown>>
   beforeAll(() => {
-    data = loadJsonFile('species.json')
+    data = loadFromIndex('origins/species/index.json', (e) => typeof e.speed === 'number')
   })
 
   it('is a non-empty array', () => {
@@ -75,18 +84,19 @@ describe('species.json', () => {
   })
 
   it('each entry has required fields', () => {
-    for (const species of data as Record<string, unknown>[]) {
+    for (const species of data) {
       expect(species).toHaveProperty('id')
       expect(species).toHaveProperty('name')
       expect(species).toHaveProperty('speed')
       expect(species).toHaveProperty('size')
       expect(species).toHaveProperty('traits')
-      expect(species).toHaveProperty('languages')
       expect(typeof species.id).toBe('string')
       expect(typeof species.name).toBe('string')
       expect(typeof species.speed).toBe('number')
+      const size = species.size as Record<string, unknown>
+      expect(size).toHaveProperty('type')
+      expect(['fixed', 'choice']).toContain(size.type)
       expect(Array.isArray(species.traits)).toBe(true)
-      expect(Array.isArray(species.languages)).toBe(true)
     }
   })
 
@@ -103,22 +113,6 @@ describe('species.json', () => {
     }
   })
 
-  it('subrace traitModifications.add entries are objects with name and description', () => {
-    for (const species of data as Array<{ subraces?: Array<{ traitModifications: { add: unknown[] } }> }>) {
-      if (!species.subraces) continue
-      for (const sr of species.subraces) {
-        for (const trait of sr.traitModifications.add) {
-          expect(typeof trait).toBe('object')
-          const t = trait as Record<string, unknown>
-          expect(t).toHaveProperty('name')
-          expect(t).toHaveProperty('description')
-          expect(typeof t.name).toBe('string')
-          expect(typeof t.description).toBe('string')
-        }
-      }
-    }
-  })
-
   it('IDs are kebab-case and unique', () => {
     const ids = (data as Array<{ id: string }>).map((s) => s.id)
     expect(new Set(ids).size).toBe(ids.length)
@@ -128,47 +122,11 @@ describe('species.json', () => {
   })
 })
 
-// === species-traits.json ===
-describe('species-traits.json', () => {
-  let data: Record<string, unknown>
+// === classes (via index) ===
+describe('classes (index)', () => {
+  let data: Array<Record<string, unknown>>
   beforeAll(() => {
-    data = loadJsonFile('species-traits.json')
-  })
-
-  it('is a non-empty object', () => {
-    expect(typeof data).toBe('object')
-    expect(data).not.toBeNull()
-    expect(Object.keys(data).length).toBeGreaterThan(0)
-  })
-
-  it('keys are kebab-case', () => {
-    for (const key of Object.keys(data)) {
-      expect(key).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
-    }
-  })
-
-  it('each entry has name and description', () => {
-    for (const [_key, value] of Object.entries(data)) {
-      const trait = value as Record<string, unknown>
-      expect(trait).toHaveProperty('name')
-      expect(trait).toHaveProperty('description')
-      expect(typeof trait.name).toBe('string')
-      expect(typeof trait.description).toBe('string')
-      expect((trait.name as string).length).toBeGreaterThan(0)
-      expect((trait.description as string).length).toBeGreaterThan(0)
-      // spellGranted is optional
-      if ('spellGranted' in trait && trait.spellGranted !== null && trait.spellGranted !== undefined) {
-        expect(['string', 'object']).toContain(typeof trait.spellGranted)
-      }
-    }
-  })
-})
-
-// === classes.json ===
-describe('classes.json', () => {
-  let data: unknown[]
-  beforeAll(() => {
-    data = loadJsonFile('classes.json')
+    data = loadFromIndex('classes/index.json')
   })
 
   it('is a non-empty array', () => {
@@ -177,17 +135,17 @@ describe('classes.json', () => {
   })
 
   it('each entry has required fields', () => {
-    for (const cls of data as Record<string, unknown>[]) {
+    for (const cls of data) {
       expect(cls).toHaveProperty('id')
       expect(cls).toHaveProperty('name')
-      expect(cls).toHaveProperty('hitDie')
-      expect(cls).toHaveProperty('primaryAbility')
-      expect(cls).toHaveProperty('savingThrows')
-      expect(cls).toHaveProperty('proficiencies')
-      expect(cls).toHaveProperty('subclassLevel')
-      expect(typeof cls.hitDie).toBe('number')
-      expect(typeof cls.subclassLevel).toBe('number')
-      expect(Array.isArray(cls.savingThrows)).toBe(true)
+      expect(cls).toHaveProperty('coreTraits')
+      const core = cls.coreTraits as Record<string, unknown>
+      expect(core).toHaveProperty('primaryAbility')
+      expect(core).toHaveProperty('hitPointDie')
+      expect(core).toHaveProperty('savingThrowProficiencies')
+      expect(Array.isArray(core.primaryAbility)).toBe(true)
+      expect(typeof core.hitPointDie).toBe('string')
+      expect(Array.isArray(core.savingThrowProficiencies)).toBe(true)
     }
   })
 
@@ -197,11 +155,11 @@ describe('classes.json', () => {
   })
 })
 
-// === backgrounds.json ===
-describe('backgrounds.json', () => {
-  let data: unknown[]
+// === backgrounds (via index) ===
+describe('backgrounds (index)', () => {
+  let data: Array<Record<string, unknown>>
   beforeAll(() => {
-    data = loadJsonFile('backgrounds.json')
+    data = loadFromIndex('origins/backgrounds/index.json')
   })
 
   it('is a non-empty array', () => {
@@ -210,12 +168,13 @@ describe('backgrounds.json', () => {
   })
 
   it('each entry has required fields', () => {
-    for (const bg of data as Record<string, unknown>[]) {
+    for (const bg of data) {
       expect(bg).toHaveProperty('id')
       expect(bg).toHaveProperty('name')
-      expect(bg).toHaveProperty('proficiencies')
-      expect(bg).toHaveProperty('startingGold')
-      expect(typeof bg.startingGold).toBe('number')
+      expect(bg).toHaveProperty('skillProficiencies')
+      expect(bg).toHaveProperty('toolProficiency')
+      expect(bg).toHaveProperty('feat')
+      expect(bg).toHaveProperty('equipment')
     }
   })
 
@@ -253,11 +212,11 @@ describe('subclasses.json', () => {
   })
 })
 
-// === feats.json ===
-describe('feats.json', () => {
-  let data: unknown[]
+// === feats (via index) ===
+describe('feats (index)', () => {
+  let data: Array<Record<string, unknown>>
   beforeAll(() => {
-    data = loadJsonFile('feats.json')
+    data = loadFromIndex('feats/index.json')
   })
 
   it('is a non-empty array', () => {
@@ -266,12 +225,20 @@ describe('feats.json', () => {
   })
 
   it('each entry has required fields', () => {
-    for (const feat of data as Record<string, unknown>[]) {
+    for (const feat of data) {
       expect(feat).toHaveProperty('id')
       expect(feat).toHaveProperty('name')
       expect(feat).toHaveProperty('category')
-      expect(feat).toHaveProperty('description')
       expect(['Origin', 'General', 'Fighting Style', 'Epic Boon']).toContain(feat.category)
+      if (feat.benefits !== undefined) {
+        expect(Array.isArray(feat.benefits)).toBe(true)
+        for (const benefit of feat.benefits as Array<Record<string, unknown>>) {
+          expect(benefit).toHaveProperty('name')
+          expect(benefit).toHaveProperty('description')
+          expect(typeof benefit.name).toBe('string')
+          expect(typeof benefit.description).toBe('string')
+        }
+      }
     }
   })
 
@@ -1020,21 +987,21 @@ describe('cross-references', () => {
     }
   })
 
-  it('background origin feats exist in feats.json', () => {
-    const backgrounds = loadJsonFile<Array<{ originFeat?: string }>>('backgrounds.json')
-    const feats = loadJsonFile<Array<{ id: string; name: string }>>('feats.json')
+  it('background origin feats exist in feats', () => {
+    const backgrounds = loadFromIndex<{ feat?: string }>('origins/backgrounds/index.json')
+    const feats = loadFromIndex<{ name: string }>('feats/index.json')
     const featNames = new Set(feats.map((f) => f.name))
     for (const bg of backgrounds) {
-      if (bg.originFeat && bg.originFeat !== 'any') {
-        // originFeat uses display names; strip parenthetical variant (e.g. "Magic Initiate (Cleric)" → "Magic Initiate")
-        const baseName = bg.originFeat.replace(/\s*\(.*\)$/, '')
+      if (bg.feat && bg.feat !== 'any') {
+        // feat uses display names; strip parenthetical variant (e.g. "Magic Initiate (Cleric)" → "Magic Initiate")
+        const baseName = bg.feat.replace(/\s*\(.*\)$/, '')
         expect(featNames.has(baseName)).toBe(true)
       }
     }
   })
 
-  it('subclass class references match classes.json', () => {
-    const classes = loadJsonFile<Array<{ id: string }>>('classes.json')
+  it('subclass class references match classes', () => {
+    const classes = loadFromIndex<Record<string, unknown>>('classes/index.json')
     const classIds = new Set(classes.map((c) => c.id))
     const subclasses = loadJsonFile<Array<{ class: string }>>('subclasses.json')
     for (const sc of subclasses) {
@@ -1043,14 +1010,9 @@ describe('cross-references', () => {
   })
 
   it('species inline traits have name and description', () => {
-    const species =
-      loadJsonFile<
-        Array<{
-          id: string
-          traits: Array<{ name: string; description: string }>
-          subraces?: Array<{ id: string; traitModifications: { add: Array<{ name: string; description: string }> } }>
-        }>
-      >('species.json')
+    const species = loadFromIndex<{
+      traits: Array<{ name: string; description: string }>
+    }>('origins/species/index.json', (e) => typeof e.speed === 'number')
     for (const sp of species) {
       for (const trait of sp.traits) {
         expect(typeof trait.name, `Species "${sp.id}" has trait with invalid name`).toBe('string')
@@ -1059,16 +1021,6 @@ describe('cross-references', () => {
           'string'
         )
         expect(trait.description.length).toBeGreaterThan(0)
-      }
-      if (sp.subraces) {
-        for (const sr of sp.subraces) {
-          for (const trait of sr.traitModifications.add) {
-            expect(typeof trait.name, `Subrace "${sr.id}" has trait with invalid name`).toBe('string')
-            expect(typeof trait.description, `Subrace "${sr.id}" trait "${trait.name}" has invalid description`).toBe(
-              'string'
-            )
-          }
-        }
       }
     }
   })

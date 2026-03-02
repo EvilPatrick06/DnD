@@ -243,7 +243,15 @@ export default function GearTab5e(): JSX.Element {
   // Flat combined inventory list
   const allItems = [
     ...classEquipment.map((item, idx) => ({ ...item, srcType: 'class' as const, srcIdx: idx })),
-    ...bgEquipment.map((item, idx) => ({ ...item, srcType: 'bg' as const, srcIdx: idx }))
+    ...bgEquipment.flatMap((group, gIdx) =>
+      group.items.map((item) => ({
+        name: item,
+        quantity: 1,
+        source: group.source,
+        srcType: 'bg' as const,
+        srcIdx: gIdx
+      }))
+    )
   ]
 
   const hasEquipment = allItems.length > 0

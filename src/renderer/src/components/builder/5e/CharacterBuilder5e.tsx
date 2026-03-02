@@ -134,7 +134,8 @@ export default function CharacterBuilder5e(): JSX.Element {
     }
 
     // 6. Equipment variant choices required
-    const allEquip = [...classEquipment, ...(bgEquipment ?? [])]
+    const bgItems = (bgEquipment ?? []).flatMap((e) => e.items.map((item) => ({ name: item, source: e.source })))
+    const allEquip = [...classEquipment, ...bgItems]
     for (const item of allEquip) {
       const name = item.name.toLowerCase()
       for (const [key, config] of Object.entries(VARIANT_ITEMS)) {

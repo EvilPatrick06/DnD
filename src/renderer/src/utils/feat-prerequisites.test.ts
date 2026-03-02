@@ -48,85 +48,79 @@ function makeCharacter(overrides: Partial<Character5e> = {}): Character5e {
 describe('meetsFeatPrerequisites', () => {
   it('passes with no prerequisites', () => {
     const char = makeCharacter()
-    expect(meetsFeatPrerequisites(char, [])).toBe(true)
+    expect(meetsFeatPrerequisites(char, {})).toBe(true)
   })
 
-  it('checks single ability score "Strength 13 or higher"', () => {
+  it('checks single ability score requirement', () => {
     const char = makeCharacter({
       abilityScores: { strength: 16, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    expect(meetsFeatPrerequisites(char, ['Strength 13 or higher'])).toBe(true)
+    expect(meetsFeatPrerequisites(char, { abilityScores: [{ abilities: ['Strength'], minimum: 13 }] })).toBe(true)
   })
 
   it('fails single ability score when too low', () => {
     const char = makeCharacter({
       abilityScores: { strength: 10, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    expect(meetsFeatPrerequisites(char, ['Strength 13 or higher'])).toBe(false)
+    expect(meetsFeatPrerequisites(char, { abilityScores: [{ abilities: ['Strength'], minimum: 13 }] })).toBe(false)
   })
 
-  it('checks dual ability "Strength or Dexterity 13 or higher"', () => {
+  it('checks dual ability "Strength or Dexterity 13+"', () => {
     // STR 10 but DEX 14 — should pass
     const char = makeCharacter({
       abilityScores: { strength: 10, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    expect(meetsFeatPrerequisites(char, ['Strength or Dexterity 13 or higher'])).toBe(true)
+    expect(
+      meetsFeatPrerequisites(char, { abilityScores: [{ abilities: ['Strength', 'Dexterity'], minimum: 13 }] })
+    ).toBe(true)
   })
 
   it('fails dual ability when both too low', () => {
     const char = makeCharacter({
       abilityScores: { strength: 10, dexterity: 10, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    expect(meetsFeatPrerequisites(char, ['Strength or Dexterity 13 or higher'])).toBe(false)
+    expect(
+      meetsFeatPrerequisites(char, { abilityScores: [{ abilities: ['Strength', 'Dexterity'], minimum: 13 }] })
+    ).toBe(false)
   })
 
-  it('checks armor proficiency', () => {
-    const char = makeCharacter()
-    expect(meetsFeatPrerequisites(char, ['Proficiency with heavy armor'])).toBe(true)
+  it('passes level prerequisite when character level is sufficient', () => {
+    const char = makeCharacter({ level: 5 })
+    expect(meetsFeatPrerequisites(char, { level: 4 })).toBe(true)
   })
 
-  it('fails armor proficiency when lacking', () => {
+  it('fails level prerequisite when character level is too low', () => {
+    const char = makeCharacter({ level: 3 })
+    expect(meetsFeatPrerequisites(char, { level: 4 })).toBe(false)
+  })
+
+  it('checks multiple prerequisites (level + ability score)', () => {
     const char = makeCharacter({
-      proficiencies: { armor: ['Light armor'], weapons: [], tools: [], languages: ['Common'], savingThrows: [] }
+      level: 8,
+      abilityScores: { strength: 16, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    expect(meetsFeatPrerequisites(char, ['Proficiency with heavy armor'])).toBe(false)
-  })
-
-  it('checks spellcasting prerequisite', () => {
-    const char = makeCharacter({
-      classes: [{ name: 'Wizard', level: 5, hitDie: 6, subclass: undefined }]
-    })
-    expect(meetsFeatPrerequisites(char, ['The ability to cast at least one spell'])).toBe(true)
-  })
-
-  it('fails spellcasting for non-caster', () => {
-    const char = makeCharacter()
-    expect(meetsFeatPrerequisites(char, ['The ability to cast at least one spell'])).toBe(false)
-  })
-
-  it('checks multiple prerequisites (all must pass)', () => {
-    const char = makeCharacter()
-    // STR 13+ (has 16) AND heavy armor (has it)
-    expect(meetsFeatPrerequisites(char, ['Strength 13 or higher', 'Proficiency with heavy armor'])).toBe(true)
+    expect(meetsFeatPrerequisites(char, { level: 4, abilityScores: [{ abilities: ['Strength'], minimum: 13 }] })).toBe(
+      true
+    )
   })
 
   it('fails if any prerequisite fails', () => {
     const char = makeCharacter({
+      level: 8,
       abilityScores: { strength: 10, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
     })
-    // STR 13+ fails even though heavy armor passes
-    expect(meetsFeatPrerequisites(char, ['Strength 13 or higher', 'Proficiency with heavy armor'])).toBe(false)
+    expect(meetsFeatPrerequisites(char, { level: 4, abilityScores: [{ abilities: ['Strength'], minimum: 13 }] })).toBe(
+      false
+    )
   })
 
-  it('handles "13+" format', () => {
-    const char = makeCharacter({
-      abilityScores: { strength: 16, dexterity: 14, constitution: 12, intelligence: 10, wisdom: 10, charisma: 8 }
-    })
-    expect(meetsFeatPrerequisites(char, ['Strength 13+'])).toBe(true)
-  })
-
-  it('unknown prerequisites pass by default', () => {
+  it('passes with null level', () => {
     const char = makeCharacter()
-    expect(meetsFeatPrerequisites(char, ['Some unknown requirement'])).toBe(true)
+    expect(meetsFeatPrerequisites(char, { level: null })).toBe(true)
+  })
+
+  it('passes with empty abilityScores array', () => {
+    const char = makeCharacter()
+    expect(meetsFeatPrerequisites(char, { abilityScores: [] })).toBe(true)
   })
 })

@@ -139,7 +139,7 @@ export interface CharacterDetailsSliceState {
   speciesTraits: Array<{ name: string; description: string }>
   speciesProficiencies: string[]
   classEquipment: Array<{ name: string; quantity: number; source: string }>
-  bgEquipment: Array<{ name: string; quantity: number; source: string }>
+  bgEquipment: Array<{ option: string; items: string[]; source: string }>
   currency: { pp: number; gp: number; sp: number; cp: number }
   pets: Array<{ name: string; type: string }>
   currentHP: number | null

@@ -169,7 +169,7 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
   }
 
   const handleAddFeat = (feat: FeatData): void => {
-    const newFeat = { id: feat.id, name: feat.name, description: feat.description }
+    const newFeat = { id: feat.id, name: feat.name, description: feat.benefits.map((b) => b.description).join(' ') }
     saveFeatChange([...feats, newFeat])
     setShowPicker(false)
   }
@@ -316,7 +316,10 @@ export default function FeaturesSection5e({ character, readonly }: FeaturesSecti
               character={character}
               bonusFeats={bonusFeats}
               onSelect={(f) => {
-                saveBonusFeatChange([...bonusFeats, { id: f.id, name: f.name, description: f.description }])
+                saveBonusFeatChange([
+                  ...bonusFeats,
+                  { id: f.id, name: f.name, description: f.benefits.map((b) => b.description).join(' ') }
+                ])
                 setShowBonusFeatPicker(false)
               }}
               onClose={() => setShowBonusFeatPicker(false)}

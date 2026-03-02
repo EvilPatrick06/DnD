@@ -84,10 +84,18 @@ export async function resolveBuilderSpells(input: BuilderSpellsInput): Promise<S
 
   // Add species spell progression (level 3/5 spells from heritage/subrace)
   let progressionSpells: SpellEntry[] = []
-  if (speciesData?.subraces && heritageId) {
-    const subrace = speciesData.subraces.find((sr) => sr.id === heritageId)
-    if (subrace?.spellProgression) {
-      progressionSpells = getSpeciesSpellProgression(subrace.spellProgression, targetLevel, speciesData.name)
+  if (speciesData && heritageId) {
+    const lineageTrait = speciesData.traits.find((t) => t.lineageChoices)
+    const lineageOption = lineageTrait?.lineageChoices?.options.find(
+      (o) => o.name.toLowerCase().replace(/\s+/g, '-') === heritageId
+    )
+    if (lineageOption?.leveledSpells) {
+      const spellProg = lineageOption.leveledSpells.map((ls) => ({
+        spellId: ls.spell,
+        grantedAtLevel: ls.requiredCharacterLevel,
+        innateUses: ls.oncePerLongRestWithoutSlot ? 1 : -1
+      }))
+      progressionSpells = getSpeciesSpellProgression(spellProg, targetLevel, speciesData.name)
     }
   }
 

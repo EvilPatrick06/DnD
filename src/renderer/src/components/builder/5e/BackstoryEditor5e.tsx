@@ -55,6 +55,7 @@ function TrinketRoller(): JSX.Element {
 
 interface VariantItem {
   eqIndex: number
+  bgItemIdx?: number
   itemName: string
   key: string
   config: { label: string; variants: string[] }
@@ -66,7 +67,7 @@ export function VariantChoicesSection({
   bgEquipment
 }: {
   classEquipment: Array<{ name: string; quantity: number; source: string }>
-  bgEquipment: Array<{ name: string; quantity: number; source: string }>
+  bgEquipment: Array<{ option: string; items: string[]; source: string }>
 }): JSX.Element | null {
   const [rePickKey, setRePickKey] = useState<string | null>(null)
 
@@ -88,21 +89,24 @@ export function VariantChoicesSection({
       }
     }
   }
-  // Also check background equipment
-  for (let i = 0; i < bgEquipment.length; i++) {
-    const name = bgEquipment[i].name.toLowerCase()
-    for (const [key, config] of Object.entries(VARIANT_ITEMS)) {
-      const isGeneric = name.includes(key) && !config.variants.some((v) => v.toLowerCase() === name)
-      const isChosen = config.variants.some((v) => v.toLowerCase() === name)
-      if (isGeneric || isChosen) {
-        variantItems.push({
-          eqIndex: -(i + 1), // negative = bg equipment
-          itemName: bgEquipment[i].name,
-          key,
-          config,
-          chosenVariant: isChosen ? bgEquipment[i].name : null
-        })
-        break
+  // Also check background equipment (flatten option groups)
+  for (let gi = 0; gi < bgEquipment.length; gi++) {
+    for (let ii = 0; ii < bgEquipment[gi].items.length; ii++) {
+      const name = bgEquipment[gi].items[ii].toLowerCase()
+      for (const [key, config] of Object.entries(VARIANT_ITEMS)) {
+        const isGeneric = name.includes(key) && !config.variants.some((v) => v.toLowerCase() === name)
+        const isChosen = config.variants.some((v) => v.toLowerCase() === name)
+        if (isGeneric || isChosen) {
+          variantItems.push({
+            eqIndex: -(gi + 1), // negative = bg equipment group
+            bgItemIdx: ii,
+            itemName: bgEquipment[gi].items[ii],
+            key,
+            config,
+            chosenVariant: isChosen ? bgEquipment[gi].items[ii] : null
+          })
+          break
+        }
       }
     }
   }
@@ -111,11 +115,14 @@ export function VariantChoicesSection({
 
   const handleSelectVariant = (item: VariantItem, variant: string): void => {
     if (item.eqIndex < 0) {
-      // Background equipment: compute real index and update bgEquipment
-      const realIdx = -(item.eqIndex + 1)
+      // Background equipment: update the specific item within the option group
+      const groupIdx = -(item.eqIndex + 1)
+      const itemIdx = item.bgItemIdx!
       const currentBg = useBuilderStore.getState().bgEquipment
       useBuilderStore.setState({
-        bgEquipment: currentBg.map((e, idx) => (idx === realIdx ? { ...e, name: variant } : e))
+        bgEquipment: currentBg.map((e, idx) =>
+          idx === groupIdx ? { ...e, items: e.items.map((it, i) => (i === itemIdx ? variant : it)) } : e
+        )
       })
     } else {
       useBuilderStore.setState({

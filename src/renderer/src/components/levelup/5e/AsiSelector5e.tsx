@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { load5eFeats } from '../../../services/data-provider'
+import { formatPrerequisites, load5eFeats } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
 import type { AbilityName, BuildSlot } from '../../../types/character-common'
 import { ABILITY_NAMES } from '../../../types/character-common'
@@ -166,14 +166,17 @@ export function GeneralFeatPicker({
           />
           <div className="max-h-48 overflow-y-auto space-y-1">
             {filteredFeats.map((feat) => {
-              const meetsPrereqs =
-                feat.prerequisites.length === 0 || meetsFeatPrerequisites(character, feat.prerequisites)
+              const meetsPrereqs = meetsFeatPrerequisites(character, feat.prerequisites)
               return (
                 <button
                   key={feat.id}
                   onClick={() => {
                     if (!meetsPrereqs) return
-                    onSelect({ id: feat.id, name: feat.name, description: feat.description })
+                    onSelect({
+                      id: feat.id,
+                      name: feat.name,
+                      description: feat.benefits.map((b) => b.description).join(' ')
+                    })
                     setExpanded(false)
                     setSearch('')
                     setPendingChoices({})
@@ -189,12 +192,14 @@ export function GeneralFeatPicker({
                     {feat.name}
                     {feat.repeatable && <span className="text-xs text-purple-400 ml-1">*</span>}
                   </div>
-                  {feat.prerequisites.length > 0 && (
+                  {formatPrerequisites(feat.prerequisites).length > 0 && (
                     <p className={`text-xs ${meetsPrereqs ? 'text-yellow-500' : 'text-red-400'}`}>
-                      Requires: {feat.prerequisites.join(', ')}
+                      Requires: {formatPrerequisites(feat.prerequisites).join(', ')}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{feat.description}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                    {feat.benefits.map((b) => b.description).join(' ')}
+                  </p>
                 </button>
               )
             })}

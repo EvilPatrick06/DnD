@@ -33,6 +33,7 @@ import {
   load5eSpells,
   load5eSubclasses,
   load5eSupernaturalGifts,
+  load5eTools,
   load5eTraps,
   load5eTreasureTables,
   load5eTrinkets,
@@ -47,21 +48,22 @@ export function summarizeItem(item: Record<string, unknown>, category: LibraryCa
     case 'npcs':
       return `CR ${item.cr ?? '?'} ${item.type ?? ''} - ${item.hp ?? '?'} HP`
     case 'spells':
-      return `Level ${item.level ?? '?'} ${item.school ?? ''} - ${(item.lists as string[])?.join(', ') ?? ''}`
+      return `Level ${item.level ?? '?'} ${item.school ?? ''} - ${(item.spellList as string[])?.join(', ') ?? ''}`
     case 'classes':
       return `${(item.coreTraits as Record<string, unknown>)?.hitPointDie ?? '?'} | ${((item.coreTraits as Record<string, unknown>)?.primaryAbility as string[])?.join(', ') ?? ''}`
     case 'subclasses':
       return `${((item.className as string) ?? '').charAt(0).toUpperCase() + ((item.className as string) ?? '').slice(1)} - Level ${item.level ?? '?'}`
-    case 'species':
-      return `Speed: ${item.speed ?? '?'} ft. | Size: ${Array.isArray(item.size) ? (item.size as string[]).join('/') : (item.size ?? '?')}`
+    case 'species': {
+      const sizeObj = item.size as { type?: string; value?: string; options?: string[] } | undefined
+      const sizeStr = sizeObj?.type === 'choice' ? (sizeObj.options?.join('/') ?? '?') : (sizeObj?.value ?? '?')
+      return `Speed: ${item.speed ?? '?'} ft. | Size: ${sizeStr}`
+    }
     case 'backgrounds':
-      return (
-        ((item.proficiencies as Record<string, unknown>)?.skills as string[])?.join(', ') ??
-        (item.description as string)?.slice(0, 80) ??
-        ''
-      )
-    case 'feats':
-      return `${item.category ?? ''} - Level ${item.level ?? '?'}`
+      return (item.skillProficiencies as string[])?.join(', ') ?? (item.description as string)?.slice(0, 80) ?? ''
+    case 'feats': {
+      const prereqs = item.prerequisites as { level?: number | null } | undefined
+      return `${item.category ?? ''} - Level ${prereqs?.level ?? '?'}`
+    }
     case 'weapons':
       return `${item.category ?? ''} - ${item.damage ?? '?'} ${item.damageType ?? ''}`
     case 'armor':
@@ -97,7 +99,7 @@ export function summarizeItem(item: Record<string, unknown>, category: LibraryCa
     case 'supernatural-gifts':
       return `${item.type ?? ''}`
     case 'encounter-presets':
-      return `${item.difficulty ?? ''} - ${item.minLevel ?? '?'}-${item.maxLevel ?? '?'}`
+      return `${item.difficulty ?? ''} - Levels ${item.partyLevelRange ?? '?'}`
     case 'crafting':
       return `${item.toolType ?? ''}`
     case 'conditions':
@@ -249,8 +251,8 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
       return [...toLibraryItems(eq.gear as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'tools': {
-      // No dedicated tools loader exists; return homebrew only until tools data is consolidated
-      return hbItems
+      const data = await load5eTools()
+      return [...toLibraryItems(data, category), ...hbItems]
     }
     case 'magic-items': {
       const data = await load5eMagicItems()
@@ -270,7 +272,12 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
     }
     case 'trinkets': {
       const data = await load5eTrinkets()
-      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
+      // Trinkets are string arrays — convert to named objects
+      const trinketItems = (data as unknown as string[]).map((t, i) => ({
+        id: `trinket-${i}`,
+        name: typeof t === 'string' ? t : ((t as Record<string, unknown>).name ?? 'Unknown')
+      }))
+      return [...toLibraryItems(trinketItems as unknown as Record<string, unknown>[], category), ...hbItems]
     }
     case 'settlements': {
       const data = await load5eSettlements()
@@ -302,7 +309,14 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
     }
     case 'crafting': {
       const data = await load5eCrafting()
-      return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
+      // CraftingToolEntry is {tool, items[]} — flatten items
+      const craftingItems: Record<string, unknown>[] = []
+      for (const group of data) {
+        for (const recipe of (group as unknown as { tool: string; items: Record<string, unknown>[] }).items) {
+          craftingItems.push({ ...recipe, toolType: (group as unknown as { tool: string }).tool })
+        }
+      }
+      return [...toLibraryItems(craftingItems, category), ...hbItems]
     }
     case 'downtime': {
       const data = await load5eDowntime()
@@ -338,7 +352,12 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
     }
     case 'sounds': {
       const data = await load5eSounds()
-      return toLibraryItems(data as unknown as Record<string, unknown>[], category)
+      // SoundEntry has event/id but no name — derive name from event
+      const soundItems = (data as unknown as Array<{ id: string; event: string; category: string }>).map((s) => ({
+        ...s,
+        name: s.event.replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+      }))
+      return toLibraryItems(soundItems as unknown as Record<string, unknown>[], category)
     }
     case 'conditions': {
       const data = await load5eConditions()

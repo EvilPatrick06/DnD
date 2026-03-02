@@ -87,9 +87,9 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
 
   const speciesForCalc = speciesData
     ? {
-        abilityBonuses: speciesData.abilityBonuses as Partial<Record<AbilityName, number>>,
+        abilityBonuses: {} as Partial<Record<AbilityName, number>>,
         speed: speciesData.speed,
-        size: Array.isArray(speciesData.size) ? speciesData.size[0] : speciesData.size
+        size: speciesData.size.value ?? speciesData.size.options?.[0] ?? 'Medium'
       }
     : null
   const classForCalc = classData
@@ -139,10 +139,11 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
 
   // Resolve origin feat from background
   let originFeat: { id: string; name: string; description: string } | null = null
-  if (bgData?.originFeat) {
-    const baseName = bgData.originFeat.replace(/\s*\(.*\)$/, '')
+  if (bgData?.feat) {
+    const baseName = bgData.feat.replace(/\s*\(.*\)$/, '')
     const match = featsData.find((f) => f.name === baseName)
-    if (match) originFeat = { id: match.id, name: bgData.originFeat, description: match.description }
+    if (match)
+      originFeat = { id: match.id, name: bgData.feat, description: match.benefits.map((b) => b.description).join(' ') }
   }
 
   // Class features
@@ -165,7 +166,11 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
   const bgEquipmentChoice = state.backgroundEquipmentChoice ?? 'equipment'
   const storeBgEquipment = state.bgEquipment
   const bgEquipment =
-    bgEquipmentChoice === 'gold' ? [] : storeBgEquipment.length > 0 ? storeBgEquipment : (bgData?.equipment ?? [])
+    bgEquipmentChoice === 'gold'
+      ? []
+      : storeBgEquipment.length > 0
+        ? storeBgEquipment.flatMap((e) => e.items.map((item) => ({ name: item, quantity: 1 })))
+        : (bgData?.equipment?.[0]?.items ?? []).map((item) => ({ name: item, quantity: 1 }))
   const shopEquipment = state.classEquipment.filter((e) => e.source === 'shop' || e.source === 'trinket')
   const allEquipment = [
     ...startingEquipment.map((e: { name: string; quantity: number }) => ({ ...e, source: 'class' })),
@@ -279,13 +284,12 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     return r
   })()
   const toolProfs = (() => {
-    const bgToolsRaw = bgData?.proficiencies.tools ?? []
+    const bgToolsRaw = bgData?.toolProficiency ? [bgData.toolProficiency] : []
+    const bgItems = storeBgEquipment.flatMap((e) => e.items)
     const bgToolsMapped = bgToolsRaw.map((tool) => {
       const toolLC = tool.toLowerCase()
-      const matchedBgItem = storeBgEquipment.find(
-        (e) => e.name.toLowerCase() !== toolLC && e.name.toLowerCase().includes(toolLC)
-      )
-      return matchedBgItem ? matchedBgItem.name : tool
+      const matchedItem = bgItems.find((item) => item.toLowerCase() !== toolLC && item.toLowerCase().includes(toolLC))
+      return matchedItem ?? tool
     })
     const all = [...bgToolsMapped]
     const seen = new Set<string>()
@@ -298,16 +302,9 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
   })()
   const chosenLangs = state.chosenLanguages
   const langProfs = [
-    ...(speciesData?.languages ?? []),
     ...chosenLangs,
-    ...(classId === 'druid' && !(speciesData?.languages ?? []).includes('Druidic') && !chosenLangs.includes('Druidic')
-      ? ['Druidic']
-      : []),
-    ...(classId === 'rogue' &&
-    !(speciesData?.languages ?? []).includes("Thieves' Cant") &&
-    !chosenLangs.includes("Thieves' Cant")
-      ? ["Thieves' Cant"]
-      : [])
+    ...(classId === 'druid' && !chosenLangs.includes('Druidic') ? ['Druidic'] : []),
+    ...(classId === 'rogue' && !chosenLangs.includes("Thieves' Cant") ? ["Thieves' Cant"] : [])
   ]
   const mergedExpertiseChoices = {
     ...existingChar5e?.buildChoices?.expertiseChoices,
@@ -317,7 +314,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
     const skills = populateSkills5e([
       ...new Set([
         ...selectedSkills,
-        ...(bgData?.proficiencies.skills ?? []),
+        ...(bgData?.skillProficiencies ?? []),
         ...speciesProficiencies,
         ...(keenSensesSkill ? [keenSensesSkill] : [])
       ])
@@ -348,13 +345,20 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       result = result.filter((f) => f.id !== existingChar5e?.buildChoices?.epicBoonId)
       const boonFeat = featsData.find((fd) => fd.id === epicBoonSlot.selectedId)
       result = boonFeat
-        ? [...result, { id: boonFeat.id, name: boonFeat.name, description: boonFeat.description }]
+        ? [
+            ...result,
+            { id: boonFeat.id, name: boonFeat.name, description: boonFeat.benefits.map((b) => b.description).join(' ') }
+          ]
         : [...result, { id: epicBoonSlot.selectedId!, name: epicBoonSlot.selectedName ?? 'Epic Boon', description: '' }]
     }
     if (versatileFeatId) {
       result = result.filter((f) => f.id !== existingChar5e?.buildChoices?.versatileFeatId)
       const vFeat = featsData.find((fd) => fd.id === versatileFeatId)
-      if (vFeat) result = [...result, { id: vFeat.id, name: vFeat.name, description: vFeat.description }]
+      if (vFeat)
+        result = [
+          ...result,
+          { id: vFeat.id, name: vFeat.name, description: vFeat.benefits.map((b) => b.description).join(' ') }
+        ]
     } else if (existingChar5e?.buildChoices?.versatileFeatId) {
       result = result.filter((f) => f.id !== existingChar5e?.buildChoices?.versatileFeatId)
     }
@@ -363,7 +367,10 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       result = result.filter((f) => f.id !== existingChar5e?.buildChoices?.fightingStyleId)
       const fsFeat = featsData.find((fd) => fd.id === fsSlot.selectedId)
       result = fsFeat
-        ? [...result, { id: fsFeat.id, name: fsFeat.name, description: fsFeat.description }]
+        ? [
+            ...result,
+            { id: fsFeat.id, name: fsFeat.name, description: fsFeat.benefits.map((b) => b.description).join(' ') }
+          ]
         : [...result, { id: fsSlot.selectedId!, name: fsSlot.selectedName ?? 'Fighting Style', description: '' }]
     }
     // Merge builder feat selections (from ASI-or-Feat choices)
@@ -570,9 +577,7 @@ export async function buildCharacter5e(get: GetState): Promise<Character5e> {
       sp: state.currency.sp,
       ep: existingChar5e?.treasure?.ep ?? 0,
       gp:
-        (bgEquipmentChoice === 'gold'
-          ? Math.max(0, state.currency.gp - (bgData?.startingGold ?? 0) + 50)
-          : state.currency.gp) +
+        (bgEquipmentChoice === 'gold' ? Math.max(0, state.currency.gp + 50) : state.currency.gp) +
         state.higherLevelGoldBonus +
         classOptionGold,
       pp: state.currency.pp

@@ -80,6 +80,7 @@ type DataCategory =
   | 'ambientTracks'
   | 'languageD12Table'
   | 'rarityOptions'
+  | 'tools'
 
 interface CacheEntry {
   data: unknown
@@ -365,7 +366,8 @@ function categoryToHomebrewKey(category: DataCategory): string {
     creatureTypes: 'creature-types',
     ambientTracks: 'ambient-tracks',
     languageD12Table: 'language-d12-table',
-    rarityOptions: 'rarity-options'
+    rarityOptions: 'rarity-options',
+    tools: 'tools'
   }
   return map[category]
 }

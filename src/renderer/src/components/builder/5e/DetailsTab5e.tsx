@@ -33,14 +33,14 @@ export default function DetailsTab5e(): JSX.Element {
     load5eBackgrounds().then(async (bgs) => {
       if (cancelled) return
       const bg = bgs.find((b) => b.id === backgroundId)
-      const featName = bg?.originFeat ?? null
+      const featName = bg?.feat ?? null
       setOriginFeat(featName)
       if (featName) {
         const feats = await load5eFeats('Origin')
         if (cancelled) return
         const baseName = featName.replace(/\s*\(.*\)$/, '')
         const match = feats.find((f) => f.name === baseName)
-        setOriginFeatDescription(match?.description ?? null)
+        setOriginFeatDescription(match?.benefits.map((b) => b.description).join(' ') ?? null)
       } else {
         setOriginFeatDescription(null)
       }
@@ -156,7 +156,9 @@ export default function DetailsTab5e(): JSX.Element {
                   </span>
                   <span className="text-sm text-gray-200 font-medium">{selectedVersatileFeat.name}</span>
                 </div>
-                <p className="text-xs text-gray-400">{selectedVersatileFeat.description}</p>
+                <p className="text-xs text-gray-400">
+                  {selectedVersatileFeat.benefits.map((b) => b.description).join(' ')}
+                </p>
               </div>
             )}
           </div>

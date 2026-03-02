@@ -164,7 +164,7 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
 
             // Heritage slot management: remove old, add new if species has subraces
             let currentBuildSlots = get().buildSlots.filter((s) => s.id !== 'heritage')
-            const hasSubraces = speciesData.subraces && speciesData.subraces.length > 0
+            const hasSubraces = speciesData.traits.some((t) => t.lineageChoices)
             if (hasSubraces) {
               const ancestryIdx = currentBuildSlots.findIndex((s) => s.category === 'ancestry')
               const heritageSlot = {
@@ -187,14 +187,14 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
 
             set({
               buildSlots: currentBuildSlots,
-              speciesLanguages: speciesData.languages,
+              speciesLanguages: [],
               speciesExtraLangCount: extraLangCount,
               speciesExtraSkillCount: extraSkillCount,
-              speciesSize: Array.isArray(speciesData.size) ? '' : speciesData.size,
+              speciesSize: speciesData.size.type === 'fixed' ? (speciesData.size.value ?? '') : '',
               speciesSpeed: speciesData.speed,
               speciesTraits: speciesData.traits,
               derivedSpeciesTraits: speciesData.traits,
-              speciesProficiencies: speciesData.proficiencies ?? [],
+              speciesProficiencies: [],
               chosenLanguages: [], // reset when species changes
               versatileFeatId: null, // reset Versatile feat when species changes
               heritageId: null, // reset heritage when species changes
@@ -209,30 +209,21 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
         })
       }
       if (currentSlot?.category === 'heritage') {
-        // Heritage selection: apply trait modifications from subrace
+        // Heritage selection: apply lineage choice from species trait
         load5eSpecies().then((speciesList) => {
           const ancestrySlot = get().buildSlots.find((s) => s.category === 'ancestry')
           const speciesData = speciesList.find((r) => r.id === ancestrySlot?.selectedId)
-          if (!speciesData?.subraces) return
-          const subrace = speciesData.subraces.find((sr) => sr.id === optionId)
-          if (!subrace) return
-
-          // Compute derived traits: remove old traits, add new ones
-          const removedNames = new Set(subrace.traitModifications.remove)
-          const baseTraits = speciesData.traits.filter((t) => !removedNames.has(t.name))
-          const derived = [...baseTraits, ...subrace.traitModifications.add]
-
-          // Recompute extra lang count from derived traits
-          const extraLangCount = derived.filter((t) => t.name === 'Extra Language').length
-
-          // Apply speed modifier if any
-          const newSpeed = speciesData.speed + (subrace.speedModifier ?? 0)
+          if (!speciesData) return
+          const lineageTrait = speciesData.traits.find((t) => t.lineageChoices)
+          if (!lineageTrait?.lineageChoices) return
+          const lineageOption = lineageTrait.lineageChoices.options.find(
+            (o) => o.name.toLowerCase().replace(/\s+/g, '-') === optionId
+          )
+          if (!lineageOption) return
 
           set({
             heritageId: optionId,
-            derivedSpeciesTraits: derived,
-            speciesExtraLangCount: extraLangCount,
-            speciesSpeed: newSpeed,
+            speciesSpeed: lineageOption.speedOverride ?? speciesData.speed,
             chosenLanguages: [], // reset languages when heritage changes
             speciesSpellcastingAbility: null // reset species spellcasting ability when heritage changes
           })
@@ -259,10 +250,10 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
               (optionId === 'custom' ? baseMaxSkills + 2 : baseMaxSkills) + get().speciesExtraSkillCount
 
             set({
-              bgLanguageCount: bg.proficiencies.languages,
-              bgEquipment: bg.equipment.map((e) => ({ ...e, source: bg.name })),
+              bgLanguageCount: 0,
+              bgEquipment: bg.equipment.map((e) => ({ option: e.option, items: e.items, source: bg.name })),
               chosenLanguages: [], // reset when background changes
-              currency: { pp: 0, gp: bg.startingGold ?? 0, sp: 0, cp: 0 },
+              currency: { pp: 0, gp: 0, sp: 0, cp: 0 },
               maxSkills: effectiveMaxSkills,
               selectedSkills: [], // reset skill picks when background changes
               backgroundEquipmentChoice: null // reset when background changes — user must choose

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { load5eFeats } from '../../../services/data-provider'
+import { formatPrerequisites, load5eFeats } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { AbilityName } from '../../../types/character-common'
@@ -131,7 +131,7 @@ export default function AsiModal(): JSX.Element {
     setBuilderFeatSelection(activeAsiSlotId, {
       id: chosenFeat.id,
       name: chosenFeat.name,
-      description: chosenFeat.description
+      description: chosenFeat.benefits.map((b) => b.description).join(' ')
     })
     // Mark the slot as confirmed with the feat name
     const updatedSlots = buildSlots.map((slot) =>
@@ -288,15 +288,21 @@ export default function AsiModal(): JSX.Element {
                       <span className="font-medium">{feat.name}</span>
                       {feat.abilityScoreIncrease && (
                         <span className="text-[10px] text-green-500">
-                          +{feat.abilityScoreIncrease.amount} {feat.abilityScoreIncrease.options.join('/')}
+                          {feat.abilityScoreIncrease.options
+                            .map((o) => `+${o.amount} ${o.abilities.join('/')}`)
+                            .join(', ')}
                         </span>
                       )}
                     </div>
-                    {!meetsPrereqs && feat.prerequisites.length > 0 && (
-                      <div className="text-[10px] text-red-400 mt-0.5">Requires: {feat.prerequisites.join(', ')}</div>
+                    {!meetsPrereqs && formatPrerequisites(feat.prerequisites).length > 0 && (
+                      <div className="text-[10px] text-red-400 mt-0.5">
+                        Requires: {formatPrerequisites(feat.prerequisites).join(', ')}
+                      </div>
                     )}
                     {meetsPrereqs && (
-                      <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{feat.description}</div>
+                      <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                        {feat.benefits.map((b) => b.description).join(' ')}
+                      </div>
                     )}
                   </button>
                 )

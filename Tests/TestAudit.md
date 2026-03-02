@@ -1,47 +1,47 @@
 # Project Audit Report
-Generated: 2026-03-02T06:07:55.996Z
+Generated: 2026-03-02T22:31:36.072Z
 
 ## Summary Dashboard
 | # | Check | Category | Status | Issues | Time |
 |---|-------|----------|--------|--------|------|
-| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 5.4s |
-| 2 | Biome lint | Core Quality | ✅ PASS | 0 | 3.5s |
-| 3 | Biome format check | Core Quality | ✅ PASS | 0 | 2.7s |
-| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 36.6s |
-| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 43.6s |
-| 6 | Production build | Core Quality | ✅ PASS | 0 | 16.4s |
-| 7 | OxLint | Core Quality | ✅ PASS | 0 | 0.9s |
-| 8 | npm audit | Security | ✅ PASS | 0 | 2.3s |
-| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.1s |
+| 1 | TypeScript type-check | Core Quality | ✅ PASS | 0 | 2.0s |
+| 2 | Biome lint | Core Quality | ⚠️ WARN | 3 | 5.9s |
+| 3 | Biome format check | Core Quality | ⚠️ WARN | 0 | 4.1s |
+| 4 | Unit tests | Core Quality | ✅ PASS | 0 | 43.1s |
+| 5 | Test coverage | Core Quality | ✅ PASS | 0 | 56.3s |
+| 6 | Production build | Core Quality | ✅ PASS | 0 | 49.7s |
+| 7 | OxLint | Core Quality | ⚠️ WARN | 3 | 2.2s |
+| 8 | npm audit | Security | ✅ PASS | 0 | 6.3s |
+| 9 | Lockfile lint | Security | ✅ PASS | 0 | 1.7s |
 | 10 | Electron security scan | Security | ✅ PASS | 0 | 0.0s |
-| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.2s |
-| 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.1s |
-| 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.1s |
-| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 0.9s |
-| 15 | Dead code (knip) | Dependencies | ⚠️ WARN | 110 | 4.7s |
-| 16 | Outdated packages | Dependencies | ✅ PASS | 0 | 1.7s |
-| 17 | License compliance | Dependencies | ✅ PASS | 0 | 1.5s |
-| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 1.0s |
-| 19 | Duplicate packages | Dependencies | ✅ PASS | 50 | 1.2s |
-| 20 | React hooks lint (OxLint) | React & Hooks | ✅ PASS | 0 | 0.8s |
+| 11 | Hardcoded secrets scan | Security | ✅ PASS | 0 | 0.6s |
+| 12 | eval() / new Function() | Security | ✅ PASS | 0 | 0.5s |
+| 13 | dangerouslySetInnerHTML | Security | ✅ PASS | 0 | 0.4s |
+| 14 | Circular dependencies | Dependencies | ✅ PASS | 0 | 1.5s |
+| 15 | Dead code (knip) | Dependencies | ⚠️ WARN | 110 | 12.7s |
+| 16 | Outdated packages | Dependencies | ℹ️ INFO | 2 | 2.7s |
+| 17 | License compliance | Dependencies | ✅ PASS | 0 | 3.4s |
+| 18 | Unused exports (ts-prune) | Dependencies | ✅ PASS | 0 | 2.0s |
+| 19 | Duplicate packages | Dependencies | ✅ PASS | 50 | 2.2s |
+| 20 | React hooks lint (OxLint) | React & Hooks | ⚠️ WARN | 3 | 1.5s |
 | 21 | Missing export default on lazy components | React & Hooks | ✅ PASS | 0 | 0.0s |
-| 22 | Missing key prop in .map() | React & Hooks | ✅ PASS | 0 | 0.1s |
-| 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.1s |
-| 24 | console.log leaks | Code Quality | ✅ PASS | 1 | 0.1s |
-| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.1s |
-| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 3 | 0.1s |
-| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.1s |
-| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.1s |
-| 29 | Functions >200 lines | Code Quality | ✅ PASS | 43 | 0.2s |
-| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 639 | 21.6s |
-| 31 | Regex safety (ReDoS) | Code Quality | ✅ PASS | 0 | 0.1s |
-| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 132 | 0.1s |
-| 33 | File naming conventions | Project Hygiene | ✅ PASS | 0 | 0.0s |
-| 34 | Missing test files | Project Hygiene | ✅ PASS | 7 | 0.1s |
-| 35 | Orphan files (not imported) | Project Hygiene | ✅ PASS | 0 | 0.9s |
-| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 36.7s |
+| 22 | Missing key prop in .map() | React & Hooks | ✅ PASS | 0 | 0.3s |
+| 23 | CRLF line endings | Code Quality | ✅ PASS | 0 | 0.6s |
+| 24 | console.log leaks | Code Quality | ✅ PASS | 1 | 0.4s |
+| 25 | TODO/FIXME/HACK count | Code Quality | ✅ PASS | 0 | 0.6s |
+| 26 | Large files (>1000 lines) | Code Quality | ✅ PASS | 4 | 0.5s |
+| 27 | `any` type usage | Code Quality | ✅ PASS | 0 | 0.4s |
+| 28 | Empty catch blocks | Code Quality | ✅ PASS | 0 | 0.4s |
+| 29 | Functions >200 lines | Code Quality | ✅ PASS | 43 | 0.7s |
+| 30 | Code duplication (jscpd) | Code Quality | ✅ PASS | 639 | 71.1s |
+| 31 | Regex safety (ReDoS) | Code Quality | ✅ PASS | 0 | 0.5s |
+| 32 | Git status (uncommitted changes) | Project Hygiene | ℹ️ INFO | 39 | 0.2s |
+| 33 | File naming conventions | Project Hygiene | ✅ PASS | 0 | 0.2s |
+| 34 | Missing test files | Project Hygiene | ✅ PASS | 7 | 0.4s |
+| 35 | Orphan files (not imported) | Project Hygiene | ✅ PASS | 0 | 2.4s |
+| 36 | Type coverage % | Project Hygiene | ✅ PASS | 0 | 137.4s |
 
-**Total: 0 errors, 1 warnings, 1 informational**
+**Total: 0 errors, 5 warnings, 2 informational**
 
 ---
 
@@ -58,19 +58,132 @@ Generated: 2026-03-02T06:07:55.996Z
 ```
 
 #### 2. Biome lint
-**Status**: ✅ PASS  
-**Issues**: 0
+**Status**: ⚠️ WARN  
+**Issues**: 3
 
 ```
-No lint issues
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 47.
+Checked 4351 files in 3s. No fixes applied.
+Found 15 errors.
+Found 52 warnings.
+src\renderer\src\components\campaign\MapConfigStep.tsx:92:22 lint/correctness/useExhaustiveDependencies ━━━━━━━━━━
+
+  ! createMapEntry changes on every re-render and should not be used as a hook dependency.
+  
+    90 │       }
+    91 │     },
+  > 92 │     [maps, onChange, createMapEntry]
+       │                      ^^^^^^^^^^^^^^
+    93 │   )
+    94 │ 
+  
+  i To fix this, wrap the definition of createMapEntry in its own useCallback() hook.
+  
+
+src\renderer\src\components\game\dice3d\DiceHistory.tsx:26:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  ! This hook specifies more dependencies than necessary: filtered.length.
+  
+    25 │   // Auto-scroll to bottom on new entries
+  > 26 │   useEffect(() => {
+       │   ^^^^^^^^^
+    27 │     if (scrollRef.current) {
+    28 │       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  
+  i This dependency can be removed from the list.
+  
+    28 │       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    29 │     }
+  > 30 │   }, [filtered.length])
+       │       ^^^^^^^^^^^^^^^
+    31 │ 
+    32 │   const formatTime = useCallback((ts: number) => {
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Specifying more dependencies than required can lead to unnecessary re-rendering
+    and degraded performance.
+  
+  i Unsafe fix: Remove the extra dependencies from the list.
+  
+    30 │ ··},·[filtered.length])
+       │       ---------------  
+
+src\renderer\src\components\game\dice3d\DiceRenderer.tsx:51:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  ! This hook does not specify its dependency on height.
+  
+    49 │   // ── Setup Three.js scene (once) ──────────────────────────
+    50 │ 
+  > 51 │   useEffect(() => {
+       │   ^^^^^^^^^
+    52 │     if (!containerRef.current) return
+    53 │ 
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    66 │       powerPreference: 'high-performance'
+    67 │     })
+  > 68 │     renderer.setSize(width, height)
+       │                             ^^^^^^
+    69 │     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    70 │     renderer.shadowMap.enabled = true
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    55 │     sceneRef.current = scene
+    56 │ 
+  > 57 │     const aspect = width > 0 && height > 0 ? width / height : 16 / 9
+       │                                                      ^^^^^^
+    58 │     const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100)
+    59 │     camera.position.set(0, 8, 6)
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    55 │     sceneRef.current = scene
+    56 │ 
+  > 57 │     const
 ```
 
 #### 3. Biome format check
-**Status**: ✅ PASS  
+**Status**: ⚠️ WARN  
 **Issues**: 0
 
 ```
-All files formatted
+Checked 4350 files in 2s. No fixes applied.
+Found 15 errors.
+src\renderer\public\data\5e\equipment\tools\index.json format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1    │ - [␍
+     2    │ - ··{·"id":·"disguise-kit",·"path":·"equipment/tools/disguise-kit.json"·},␍
+     3    │ - ··{·"id":·"forgery-kit",·"path":·"equipment/tools/forgery-kit.json"·},␍
+     4    │ - ··{·"id":·"herbalism-kit",·"path":·"equipment/tools/herbalism-kit.json"·},␍
+     5    │ - ··{·"id":·"navigators-tools",·"path":·"equipment/tools/navigators-tools.json"·},␍
+     6    │ - ··{·"id":·"poisoners-kit",·"path":·"equipment/tools/poisoners-kit.json"·},␍
+     7    │ - ··{·"id":·"thieves-tools",·"path":·"equipment/tools/thieves-tools.json"·},␍
+     8    │ - ··{·"id":·"alchemists-supplies",·"path":·"equipment/tools/artisan-tools/alchemists-supplies.json"·},␍
+     9    │ - ··{·"id":·"brewers-supplies",·"path":·"equipment/tools/artisan-tools/brewers-supplies.json"·},␍
+    10    │ - ··{·"id":·"calligraphers-supplies",·"path":·"equipment/tools/artisan-tools/calligraphers-supplies.json"·},␍
+    11    │ - ··{·"id":·"carpenters-tools",·"path":·"equipment/tools/artisan-tools/carpenters-tools.json"·},␍
+    12    │ - ··{·"id":·"cartographers-tools",·"path":·"equipment/tools/artisan-tools/cartographers-tools.json"·},␍
+    13    │ - ··{·"id":·"cobblers-tools",·"path":·"equipment/tools/artisan-tools/cobblers-tools.json"·},␍
+    14    │ - ··{·"id":·"cooks-utensils",·"path":·"equipment/tools/artisan-tools/cooks-utensils.json"·},␍
+    15    │ - ··{·"id":·"glassblowers-tools",·"path":·"equipment/tools/artisan-tools/glassblowers-tools.json"·},␍
+    16    │ - ··{·"id":·"jewelers-tools",·"path":·"equipment/tools/artisan-tools/jewelers-tools.json"·},␍
+    17    │ - ··{·"id":·"leatherworkers-tools",·"path":·"equipment/tools/artisan-tools/leatherworkers-tools.json"·},␍
+    18    │ - ··{·"id":·"masons-tools",·"path":·"equipment/tools/artisan-tools/masons-tools.json"·},␍
+    19    │ - ··{·"id":·"painters-supplies",·"path":·"equipment/tools/artisan-tools/painters-supplies.json"·},␍
+    20    │ - ··{·"id":·"potters-tools",·"path":·"equipment/tools/artisan-tools/potters-tools.json"·},␍
+    21    │ - ··{·"id":·"smiths-tools",·"path":·"equipment/tools/artisan-tools/smiths-tools.json"·},␍
+    22    │ - ··{·"id":·"tinkers-tools",·"path":·"equipment/tools/artisan-tools/tinkers-tools.json"·},␍
+    23    │ - ··{·"id":·"weavers-tools",·"path":·"equipment/tools/artisan-tools/weavers-tools.json"·},␍
+    24    │ - ··{·"id":·"woodcarvers-tools",·"path":·"equipment/tools/artisan-tools/woodcarvers-tools.json"·},␍
+    25    │ - ··{·"id":·"dice",·"path":·"equipment/tools/gaming-sets/dice.json"·},␍
+    26    │ - ··{·"id":·"dragonchess",·"path":·"equipment/tools/gaming-sets/dragonchess.json"·},␍
+    27    │ - ··{·"id":·"playing-cards",·"path":·"equipment/tools/gaming-sets/playing-cards.json"·},␍
+    28    │ - ··{·"id":·"three-dragon-ante",·"path":·"equipment/tools/gam
 ```
 
 #### 4. Unit tests
@@ -87,14 +200,14 @@ All files formatted
 **Issues**: 0
 
 ```
-Statement coverage: 64.34%
+Statement coverage: 64.09%
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   64.34 |    53.97 |   63.22 |   65.27 |                   
- data              |   82.15 |    62.54 |   88.52 |   84.07 |                   
+All files          |   64.09 |     53.8 |   62.95 |   65.07 |                   
+ data              |   81.94 |     62.2 |   88.52 |   84.07 |                   
   ...scriptions.ts |     100 |      100 |     100 |     100 |                   
-  ...ion-events.ts |   59.09 |    43.28 |   57.89 |   55.96 | 151-161,184-260   
+  ...ion-events.ts |   58.33 |    41.79 |   57.89 |   55.96 | 151-161,184-260   
   ...ar-presets.ts |     100 |       80 |     100 |     100 | 28-35             
   ...-resources.ts |      95 |    73.68 |   92.85 |   94.11 | 20,84             
   conditions.ts    |      88 |     87.5 |      80 |   86.36 | 42-43,62          
@@ -119,12 +232,43 @@ Build succeeded
 ```
 
 #### 7. OxLint
-**Status**: ✅ PASS  
-**Issues**: 0
+**Status**: ⚠️ WARN  
+**Issues**: 3
 
 ```
-Found 0 warnings and 0 errors.
-Finished in 82ms on 1324 files with 93 rules using 22 threads.
+
+  ! eslint(no-unused-vars): Variable 'bg' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/renderer/src/systems/dnd5e/index.ts:138:13]
+ 137 |       const backgrounds = await load5eBackgrounds()
+ 138 |       const bg = backgrounds.find((b) => b.id === backgroundId)
+     :             ^|
+     :              `-- 'bg' is declared here
+ 139 |       const gold = 10
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Type 'SpeciesTrait' is imported but never used.
+    ,-[src/renderer/src/services/data-provider.ts:50:3]
+ 49 |   SpeciesSpellsFile,
+ 50 |   SpeciesTrait,
+    :   ^^^^^^|^^^^^
+    :         `-- 'SpeciesTrait' is imported here
+ 51 |   SpellData,
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'basePath' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/renderer/src/services/data-provider.ts:459:9]
+ 458 |   const index = await loadJson<IndexEntry[]>(indexPath)
+ 459 |   const basePath = indexPath.substring(0, indexPath.lastIndexOf('/') + 1).replace('./data/5e/', '')
+     :         ^^^^|^^^
+     :             `-- 'basePath' is declared here
+ 460 |   const results = await Promise.all(
+     `----
+  help: Consider removing this declaration.
+
+Found 3 warnings and 0 errors.
+Finished in 180ms on 1324 files with 93 rules using 22 threads.
 
 ```
 
@@ -137,7 +281,7 @@ Finished in 82ms on 1324 files with 93 rules using 22 threads.
 ```
 # npm audit report
 
-fast-xml-parser  <5.3.8
+fast-xml-parser  5.0.0 - 5.3.7
 fast-xml-parser has stack overflow in XMLBuilder with preserveOrder - https://github.com/advisories/GHSA-fj3w-jwp8-x2g3
 fix available via `npm audit fix --force`
 Will install @aws-sdk/client-s3@3.893.0, which is a breaking change
@@ -187,7 +331,7 @@ node_modules/fast-xml-parser
       node_modules/@aws-sdk/credential-provider-login
       @aws-sdk/credential-provider-process  >=3.894.0
       Depends on vulnerable versions of @aws-sdk/core
-      no
+ 
 ```
 
 #### 9. Lockfile lint
@@ -306,11 +450,12 @@ timeAgo                   function  src/renderer/src/componen
 ```
 
 #### 16. Outdated packages
-**Status**: ✅ PASS  
-**Issues**: 0
+**Status**: ℹ️ INFO  
+**Issues**: 2
 
 ```
-All packages up to date
+ @biomejs/biome   ^2.4.4  →   ^2.4.5
+ oxlint          ^1.50.0  →  ^1.51.0
 ```
 
 #### 17. License compliance
@@ -370,12 +515,43 @@ ansi-regex: 5.0.1, 6.2.2
 ### React & Hooks
 
 #### 20. React hooks lint (OxLint)
-**Status**: ✅ PASS  
-**Issues**: 0
+**Status**: ⚠️ WARN  
+**Issues**: 3
 
 ```
-Found 0 warnings and 0 errors.
-Finished in 63ms on 1324 files with 93 rules using 22 threads.
+
+  ! eslint(no-unused-vars): Variable 'bg' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/renderer/src/systems/dnd5e/index.ts:138:13]
+ 137 |       const backgrounds = await load5eBackgrounds()
+ 138 |       const bg = backgrounds.find((b) => b.id === backgroundId)
+     :             ^|
+     :              `-- 'bg' is declared here
+ 139 |       const gold = 10
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Type 'SpeciesTrait' is imported but never used.
+    ,-[src/renderer/src/services/data-provider.ts:50:3]
+ 49 |   SpeciesSpellsFile,
+ 50 |   SpeciesTrait,
+    :   ^^^^^^|^^^^^
+    :         `-- 'SpeciesTrait' is imported here
+ 51 |   SpellData,
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'basePath' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/renderer/src/services/data-provider.ts:459:9]
+ 458 |   const index = await loadJson<IndexEntry[]>(indexPath)
+ 459 |   const basePath = indexPath.substring(0, indexPath.lastIndexOf('/') + 1).replace('./data/5e/', '')
+     :         ^^^^|^^^
+     :             `-- 'basePath' is declared here
+ 460 |   const results = await Promise.all(
+     `----
+  help: Consider removing this declaration.
+
+Found 3 warnings and 0 errors.
+Finished in 119ms on 1324 files with 93 rules using 22 threads.
 
 ```
 
@@ -423,12 +599,13 @@ No developer notes
 
 #### 26. Large files (>1000 lines)
 **Status**: ✅ PASS  
-**Issues**: 3
+**Issues**: 4
 
 ```
 src/renderer/src/components/game/modals/mechanics/DowntimeModal.tsx — 1111 lines
-src/renderer/src/services/json-schema.test.ts — 1076 lines
 src/renderer/src/pages/SettingsPage.tsx — 1029 lines
+src/renderer/src/services/json-schema.test.ts — 1028 lines
+src/renderer/src/services/data-provider.ts — 1016 lines
 ```
 
 #### 27. `any` type usage
@@ -452,10 +629,10 @@ No empty catch blocks
 **Issues**: 43
 
 ```
-src/renderer/src/stores/builder/slices/build-character-5e.ts:41 — buildCharacter5e (619 lines)
+src/renderer/src/stores/builder/slices/build-character-5e.ts:41 — buildCharacter5e (617 lines)
 src/renderer/src/pages/SettingsPage.tsx:427 — SettingsPage (602 lines)
 src/renderer/src/components/builder/5e/SpellsTab5e.tsx:17 — SpellsTab5e (471 lines)
-src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx:20 — CharacterBuilder5e (452 lines)
+src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx:20 — CharacterBuilder5e (453 lines)
 src/renderer/src/pages/CharacterSheet5ePage.tsx:35 — CharacterSheet5ePage (414 lines)
 src/renderer/src/components/campaign/CampaignWizard.tsx:39 — CampaignWizard (383 lines)
 src/renderer/src/pages/BastionPage.tsx:30 — BastionPage (379 lines)
@@ -473,20 +650,20 @@ src/renderer/src/components/builder/5e/DetailsTab5e.tsx:10 — DetailsTab5e (316
 src/renderer/src/pages/LibraryPage.tsx:22 — LibraryPage (311 lines)
 src/renderer/src/components/game/modals/utility/WeatherOverridePanel.tsx:50 — WeatherOverridePanel (307 lines)
 src/renderer/src/components/builder/shared/AbilityScoreModal.tsx:16 — AbilityScoreModal (300 lines)
-src/renderer/src/stores/builder/slices/load-character-5e.ts:12 — loadCharacterForEdit5e (293 lines)
 src/renderer/src/stores/use-ai-dm-store.ts:106 — useAiDmStore (291 lines)
 src/renderer/src/pages/ViewCharactersPage.tsx:22 — ViewCharactersPage (289 lines)
 src/renderer/src/pages/LobbyPage.tsx:16 — LobbyPage (287 lines)
+src/renderer/src/stores/builder/slices/load-character-5e.ts:12 — loadCharacterForEdit5e (286 lines)
 src/renderer/src/components/lobby/ChatInput.tsx:15 — ChatInput (285 lines)
 src/renderer/src/pages/CampaignDetailPage.tsx:28 — CampaignDetailPage (285 lines)
 src/renderer/src/services/combat/combat-resolver.ts:304 — resolveAttack (285 lines)
 src/renderer/src/pages/CalendarPage.tsx:53 — CalendarPage (276 lines)
 src/renderer/src/stores/level-up/feature-selection-slice.ts:10 — createFeatureSelectionSlice (266 lines)
+src/renderer/src/services/library-service.ts:150 — loadCategoryItems (256 lines)
 src/renderer/src/stores/use-lobby-store.ts:78 — useLobbyStore (253 lines)
 src/renderer/src/stores/network-store/index.ts:34 — useNetworkStore (249 lines)
 src/main/ipc/storage-handlers.ts:39 — registerStorageHandlers (243 lines)
 src/renderer/src/App.tsx:36 — App (240 lines)
-src/renderer/src/services/library-service.ts:148 — loadCategoryItems (239 lines)
 src/main/ai/campaign-context.ts:11 — formatCampaignForContext (236 lines)
 src/renderer/src/services/combat/effect-resolver-5e.ts:103 — resolveEffects (236 lines)
 src/renderer/src/pages/InGamePage.tsx:14 — InGamePage (227 lines)
@@ -502,25 +679,23 @@ src/renderer/src/components/game/map/map-event-handlers.ts:162 — setupMouseHan
 **Issues**: 639
 
 ```
-5]
-
-[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+──────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
 [90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m typescript [90m│[39m 706            [90m│[39m 122402      [90m│[39m 1183811      [90m│[39m 507          [90m│[39m 7498 (6.13%)     [90m│[39m 79429 (6.71%)     [90m│[39m
+[90m│[39m typescript [90m│[39m 705            [90m│[39m 121346      [90m│[39m 1173311      [90m│[39m 507          [90m│[39m 7497 (6.18%)     [90m│[39m 79429 (6.77%)     [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m javascript [90m│[39m 335            [90m│[39m 36484       [90m│[39m 321946       [90m│[39m 6            [90m│[39m 181 (0.5%)       [90m│[39m 1479 (0.46%)      [90m│[39m
+[90m│[39m javascript [90m│[39m 335            [90m│[39m 36527       [90m│[39m 322599       [90m│[39m 6            [90m│[39m 181 (0.5%)       [90m│[39m 1479 (0.46%)      [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m tsx        [90m│[39m 612            [90m│[39m 71043       [90m│[39m 662698       [90m│[39m 126          [90m│[39m 1314 (1.85%)     [90m│[39m 13589 (2.05%)     [90m│[39m
+[90m│[39m tsx        [90m│[39m 612            [90m│[39m 71093       [90m│[39m 663549       [90m│[39m 126          [90m│[39m 1316 (1.85%)     [90m│[39m 13621 (2.05%)     [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
 [90m│[39m css        [90m│[39m 1              [90m│[39m 61          [90m│[39m 290          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
 [90m│[39m json       [90m│[39m 3              [90m│[39m 161         [90m│[39m 755          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
 [90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
-[90m│[39m [1mTotal:[22m     [90m│[39m 1657           [90m│[39m 230151      [90m│[39m 2169500      [90m│[39m 639          [90m│[39m 8993 (3.91%)     [90m│[39m 94497 (4.36%)     [90m│[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 1656           [90m│[39m 229188      [90m│[39m 2160504      [90m│[39m 639          [90m│[39m 8994 (3.92%)     [90m│[39m 94529 (4.38%)     [90m│[39m
 [90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
 [90mFound 639 clones.[39m
-[3m[90mDetection time:[39m[23m: 20.285s
+[3m[90mDetection time:[39m[23m: 1:08.360 (m:ss.mmm)
 
 ```
 
@@ -536,39 +711,39 @@ No ReDoS-prone patterns found
 
 #### 32. Git status (uncommitted changes)
 **Status**: ℹ️ INFO  
-**Issues**: 132
+**Issues**: 39
 
 ```
- M .gitignore
- M Tests/TestAudit.md
- M Tests/run-audit.js
- M biome.json
- M dev-app-update.yml
- M electron.vite.config.ts
- M package.json
- M resources/installer.nsh
- D scripts/build-chunk-index.js
- M src/main/ai/ai-service.ts
- M src/main/ai/dm-actions.ts
- M src/main/ai/dm-system-prompt.ts
- M src/main/ai/prompt-sections/character-rules.ts
- M src/main/ai/stat-mutations.ts
- M src/main/ai/types.ts
- M src/main/index.ts
- M src/main/ipc/ai-handlers.ts
- M src/main/ipc/index.ts
- M src/main/updater.test.ts
- M src/main/updater.ts
- M src/preload/index.d.ts
- M src/preload/index.ts
- M src/renderer/src/App.tsx
+ D CLAUDE.md
+ D src/renderer/public/data/5e/character/backgrounds.json
+ D src/renderer/public/data/5e/character/classes.json
+ D src/renderer/public/data/5e/character/feats.json
+ D src/renderer/public/data/5e/character/species-traits.json
+ D src/renderer/public/data/5e/character/species.json
+ M src/renderer/src/components/builder/5e/BackstoryEditor5e.tsx
  M src/renderer/src/components/builder/5e/CharacterBuilder5e.tsx
  M src/renderer/src/components/builder/5e/CharacterSummaryBar5e.tsx
  M src/renderer/src/components/builder/5e/DetailsTab5e.tsx
  M src/renderer/src/components/builder/5e/GearTab5e.tsx
- M src/renderer/src/components/builder/5e/HigherLevelEquipment5e.tsx
- M src/renderer/src/components/builder/5e/LanguagesTab5e.tsx
- M src/renderer/src/components/builder/5e/MainContentArea5e.tsx
+ M src/renderer/src/components/builder/5e/SpecialAbilitiesTab5e.tsx
+ M src/renderer/src/components/builder/shared/AsiModal.tsx
+ M src/renderer/src/components/game/modals/utility/CompendiumModal.tsx
+ M src/renderer/src/components/levelup/5e/AsiSelector5e.tsx
+ M src/renderer/src/components/levelup/5e/FeatSelector5e.tsx
+ M src/renderer/src/components/library/LibraryDetailModal.tsx
+ M src/renderer/src/components/sheet/5e/FeatureCard5e.tsx
+ M src/renderer/src/components/sheet/5e/FeaturesSection5e.tsx
+ M src/renderer/src/services/character/stat-calculator-5e.ts
+ M src/renderer/src/services/data-paths.test.ts
+ M src/renderer/src/services/data-paths.ts
+ M src/renderer/src/services/data-provider.ts
+ M src/renderer/src/services/json-schema.test.ts
+ M src/renderer/src/services/library-service.ts
+ M src/renderer/src/stores/builder/slices/build-character-5e.ts
+ M src/renderer/src/stores/builder/slices/builder-spells.ts
+ M src/renderer/src/stores/builder/slices/character-details-slice.ts
+ M src/renderer/src/stores/builder/slices/load-character-5e.ts
+ M src/renderer/src/stores/builder/slices/selection-slice.ts
 ```
 
 #### 33. File naming conventions
@@ -608,7 +783,7 @@ No orphan files
 
 ```
 Type coverage: 99.26%
-(290793 / 292948) 99.26%
+(290882 / 293041) 99.26%
 type-coverage success.
 
 ```
@@ -617,13 +792,21 @@ type-coverage success.
 
 ## Recommendations
 
+1. **[HIGH]** Review: Biome lint (3 issues)
+1. **[HIGH]** Review: Biome format check (0 issues)
+1. **[HIGH]** Review: OxLint (3 issues)
 1. **[HIGH]** Review: Dead code (knip) (110 issues)
-1. **[LOW]** Consider: Git status (uncommitted changes) (132 items)
+1. **[LOW]** Consider: Outdated packages (2 items)
+1. **[HIGH]** Review: React hooks lint (OxLint) (3 issues)
+1. **[LOW]** Consider: Git status (uncommitted changes) (39 items)
 
 ---
 
 ## Quick Fix Reference
 
+- **Check 2** (Biome lint): Run `npx biome check --write src/` to auto-fix lint issues.
+- **Check 3** (Biome format check): Run `npx biome format --write src/` to fix formatting.
+- **Check 7** (OxLint): Run `npx oxlint src/` and fix reported issues. Prefix unused vars with `_`.
 
 ---
 
@@ -755,6 +938,7 @@ Apply the same extraction pattern to these files:
 |------|-------|----------------|
 | DowntimeModal.tsx | 1111 | Extract sub-components / helpers |
 | SettingsPage.tsx | 1029 | Extract sub-components / helpers |
+| data-provider.ts | 1016 | Extract sub-components / helpers |
 
 
 

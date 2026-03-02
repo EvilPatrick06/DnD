@@ -136,7 +136,6 @@ export default function CharacterSummaryBar5e(): JSX.Element {
   const [classSaves, setClassSaves] = useState<string[]>([])
   const [className, setClassName] = useState<string | null>(null)
   const [speciesData, setSpeciesData] = useState<{
-    abilityBonuses: Record<string, number>
     speed: number
     size: string
   } | null>(null)
@@ -167,9 +166,11 @@ export default function CharacterSummaryBar5e(): JSX.Element {
         const foundSpecies = speciesList.find((r) => r.id === speciesId)
         if (foundSpecies) {
           setSpeciesData({
-            abilityBonuses: foundSpecies.abilityBonuses as Record<string, number>,
             speed: foundSpecies.speed,
-            size: Array.isArray(foundSpecies.size) ? foundSpecies.size[0] : foundSpecies.size
+            size:
+              foundSpecies.size.type === 'choice'
+                ? (foundSpecies.size.options?.[0] ?? 'Medium')
+                : (foundSpecies.size.value ?? 'Medium')
           })
         }
       })

@@ -104,10 +104,18 @@ export async function resolveLevelUpSpells(
     try {
       const speciesDataArr = await load5eSpecies()
       const speciesData = speciesDataArr.find((s) => s.id === character.buildChoices.speciesId)
-      if (speciesData?.subraces) {
-        const subrace = speciesData.subraces.find((sr) => sr.id === character.buildChoices.subspeciesId)
-        if (subrace?.spellProgression) {
-          const progressionSpells = getSpeciesSpellProgression(subrace.spellProgression, targetLevel, speciesData.name)
+      if (speciesData) {
+        const lineageTrait = speciesData.traits.find((t) => t.lineageChoices)
+        const lineageOption = lineageTrait?.lineageChoices?.options.find(
+          (o) => o.name.toLowerCase().replace(/\s+/g, '-') === character.buildChoices.subspeciesId
+        )
+        if (lineageOption?.leveledSpells) {
+          const spellProg = lineageOption.leveledSpells.map((ls) => ({
+            spellId: ls.spell,
+            grantedAtLevel: ls.requiredCharacterLevel,
+            innateUses: ls.oncePerLongRestWithoutSlot ? 1 : -1
+          }))
+          const progressionSpells = getSpeciesSpellProgression(spellProg, targetLevel, speciesData.name)
           for (const spell of progressionSpells) {
             if (
               !character.knownSpells.some((ks) => ks.id === spell.id) &&

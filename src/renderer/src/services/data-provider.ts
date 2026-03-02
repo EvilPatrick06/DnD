@@ -42,14 +42,12 @@ import type {
   PresetIcon,
   RandomTablesFile,
   RarityOptionEntry,
-  RawSpeciesData,
   SessionZeroConfigFile,
   SoundEventsFile,
   SpeciesData,
   SpeciesResourcesFile,
   SpeciesSpellsFile,
   SpeciesTrait,
-  SpeciesTraitsFile,
   SpellData,
   SubclassData,
   ThemesFile,
@@ -141,20 +139,30 @@ export function resolveDataPath(system: GameSystem, pathKey: string): string | u
 
 // === 5e Transformers ===
 
+export function formatPrerequisites(prereqs: FeatData['prerequisites']): string[] {
+  const parts: string[] = []
+  if (prereqs.level) parts.push(`Level ${prereqs.level}`)
+  if (prereqs.abilityScores) {
+    for (const req of prereqs.abilityScores) {
+      parts.push(`${req.abilities.join(' or ')} ${req.minimum}+`)
+    }
+  }
+  return parts
+}
+
 function speciesToOption(species: SpeciesData): SelectableOption {
-  const hasFlexible = Object.keys(species.abilityBonuses).length === 0
-  const bonusStr = hasFlexible
-    ? 'Flexible (+2/+1 or +1/+1/+1)'
-    : Object.entries(species.abilityBonuses)
-        .map(([ab, val]) => `${ab.charAt(0).toUpperCase() + ab.slice(1)} +${val}`)
-        .join(', ')
+  const sizeStr =
+    species.size.type === 'choice' ? (species.size.options ?? []).join(' or ') : (species.size.value ?? '')
 
   const details: DetailField[] = [
-    ...(!hasFlexible ? [{ label: 'Ability Score Increase', value: bonusStr }] : []),
     { label: 'Speed', value: `${species.speed} ft.` },
-    { label: 'Size', value: Array.isArray(species.size) ? species.size.join(' or ') : species.size },
-    { label: 'Languages', value: species.languages.join(', ') }
+    { label: 'Size', value: sizeStr },
+    { label: 'Creature Type', value: species.creatureType }
   ]
+
+  if (species.darkvision) {
+    details.push({ label: 'Darkvision', value: `${species.darkvision} ft.` })
+  }
 
   for (const trait of species.traits) {
     details.push({ label: trait.name, value: trait.description })
@@ -164,9 +172,9 @@ function speciesToOption(species: SpeciesData): SelectableOption {
     id: species.id,
     name: species.name,
     rarity: 'common',
-    description: `${species.name} - ${bonusStr}`,
+    description: `${species.creatureType} - Speed: ${species.speed} ft.`,
     traits: species.traits.map((t) => t.name),
-    source: 'SRD',
+    source: species.source ?? 'SRD',
     detailFields: details
   }
 }
@@ -212,21 +220,16 @@ function classToOption(cls: ClassData): SelectableOption {
 
 function backgroundToOption(bg: BackgroundData): SelectableOption {
   const details: DetailField[] = [
-    { label: 'Skill Proficiencies', value: bg.proficiencies.skills.join(', ') },
-    { label: 'Tool Proficiencies', value: bg.proficiencies.tools.join(', ') || 'None' },
-    {
-      label: 'Languages',
-      value: bg.proficiencies.languages > 0 ? `${bg.proficiencies.languages} of your choice` : 'None'
-    },
-    { label: 'Starting Gold', value: `${bg.startingGold}` },
-    ...(bg.originFeat ? [{ label: 'Origin Feat', value: bg.originFeat }] : []),
-    ...(bg.abilityScores ? [{ label: 'Ability Scores', value: bg.abilityScores.join(', ') }] : [])
+    { label: 'Skill Proficiencies', value: bg.skillProficiencies.join(', ') },
+    { label: 'Tool Proficiency', value: bg.toolProficiency || 'None' },
+    { label: 'Feat', value: bg.feat },
+    { label: 'Ability Scores', value: bg.abilityScores.join(', ') }
   ]
 
   if (bg.equipment.length > 0) {
     details.push({
       label: 'Equipment',
-      value: bg.equipment.map((e) => `${e.name} x${e.quantity}`).join(', ')
+      value: bg.equipment.map((e) => `Option ${e.option}: ${e.items.join(', ')}`).join(' | ')
     })
   }
 
@@ -234,9 +237,9 @@ function backgroundToOption(bg: BackgroundData): SelectableOption {
     id: bg.id,
     name: bg.name,
     rarity: 'common',
-    description: bg.description || `Skills: ${bg.proficiencies.skills.join(', ')}`,
+    description: bg.description || `Skills: ${bg.skillProficiencies.join(', ')}`,
     traits: [],
-    source: 'SRD',
+    source: bg.source ?? 'SRD',
     detailFields: details
   }
 }
@@ -246,24 +249,32 @@ function backgroundToOption(bg: BackgroundData): SelectableOption {
 function feat5eToOption(feat: FeatData): SelectableOption {
   const details: DetailField[] = [
     { label: 'Category', value: feat.category },
-    { label: 'Level', value: `${feat.level}` }
+    { label: 'Level', value: `${feat.prerequisites.level ?? 'None'}` }
   ]
-  if (feat.prerequisites.length > 0) {
-    details.push({ label: 'Prerequisites', value: feat.prerequisites.join(', ') })
+  const prereqParts: string[] = []
+  if (feat.prerequisites.level) prereqParts.push(`Level ${feat.prerequisites.level}`)
+  if (feat.prerequisites.abilityScores) {
+    for (const req of feat.prerequisites.abilityScores) {
+      prereqParts.push(`${req.abilities.join(' or ')} ${req.minimum}+`)
+    }
+  }
+  if (prereqParts.length > 0) {
+    details.push({ label: 'Prerequisites', value: prereqParts.join(', ') })
   }
   if (feat.abilityScoreIncrease) {
     const asi = feat.abilityScoreIncrease
-    const value = `+${asi.amount} ${asi.options.join(' or ')}`
+    const value = asi.options.map((o) => `+${o.amount} ${o.abilities.join(' or ')}`).join('; ')
     details.push({ label: 'Ability Score Increase', value })
   }
   if (feat.repeatable) {
-    details.push({ label: 'Repeatable', value: 'Yes' })
+    details.push({ label: 'Repeatable', value: feat.repeatable.restriction ?? 'Yes' })
   }
+  const description = feat.benefits.map((b) => b.description).join(' ')
   return {
     id: feat.id,
     name: feat.name,
     rarity: 'common',
-    description: feat.description,
+    description,
     traits: [feat.category],
     source: feat.source || 'SRD',
     detailFields: details
@@ -339,11 +350,12 @@ export async function getOptionsForSlot(
       }
       case 'fighting-style': {
         let feats = await load5eFeats('Fighting Style')
-        // Filter class-restricted fighting styles (e.g., Blessed Warrior is Paladin-only)
+        // Filter class-restricted fighting styles based on prerequisites
         if (context?.selectedClassId) {
-          feats = feats.filter(
-            (f) => f.prerequisites.length === 0 || f.prerequisites.includes(context.selectedClassId!)
-          )
+          feats = feats.filter((f) => {
+            const prereqs = formatPrerequisites(f.prerequisites)
+            return prereqs.length === 0 || prereqs.some((p) => p.toLowerCase().includes(context.selectedClassId!))
+          })
         }
         const options = feats.map(feat5eToOption)
         // Add Druidic Warrior for Rangers (alternative to Fighting Style feat)
@@ -431,59 +443,43 @@ export async function getOptionsForSlot(
 // All named loaders go through the centralized DataStore for caching + homebrew merge
 const ds = () => useDataStore.getState()
 
-async function load5eSpeciesTraits(): Promise<SpeciesTraitsFile> {
-  return ds().get('speciesTraits', async () => {
-    const raw = await loadJson<
-      Record<string, SpeciesTrait & { spellGranted?: string | { list: string; count: number } | null }>
-    >(resolvePath('speciesTraits'))
-    // Convert JSON null to undefined for spellGranted
-    for (const trait of Object.values(raw)) {
-      if (trait.spellGranted === null) trait.spellGranted = undefined
-    }
-    return raw as SpeciesTraitsFile
-  })
+// Generic index-based loader: loads index.json, then fetches each individual file
+interface IndexEntry {
+  id: string
+  path: string
+  [key: string]: unknown
 }
 
-function resolveTrait(traitEntry: string | SpeciesTrait, traitMap: SpeciesTraitsFile): SpeciesTrait {
-  if (typeof traitEntry === 'object') return traitEntry
-  const resolved = traitMap[traitEntry]
-  if (!resolved) {
-    logger.warn(`[DataProvider] Unknown species trait ID: "${traitEntry}"`)
-    return { name: traitEntry, description: '' }
-  }
-  return resolved
-}
-
-function resolveSpeciesTraits(rawSpecies: RawSpeciesData[], traitMap: SpeciesTraitsFile): SpeciesData[] {
-  return rawSpecies.map((raw) => ({
-    ...raw,
-    traits: raw.traits.map((t) => resolveTrait(t, traitMap)),
-    subraces: raw.subraces?.map((sr) => ({
-      ...sr,
-      traitModifications: {
-        ...sr.traitModifications,
-        add: sr.traitModifications.add.map((t) => resolveTrait(t, traitMap))
-      }
-    }))
-  }))
+async function loadFromIndex<T extends { id?: string }>(indexPath: string): Promise<T[]> {
+  const index = await loadJson<IndexEntry[]>(indexPath)
+  const basePath = indexPath.substring(0, indexPath.lastIndexOf('/') + 1).replace('./data/5e/', '')
+  const results = await Promise.all(
+    index
+      .filter((entry) => entry.path)
+      .map(async (entry) => {
+        try {
+          const item = await loadJson<T>(`./data/5e/${entry.path}`)
+          if (!item.id) (item as Record<string, unknown>).id = entry.id
+          return item
+        } catch {
+          logger.warn(`[DataProvider] Failed to load: ${entry.path}`)
+          return null
+        }
+      })
+  )
+  return results.filter((r): r is NonNullable<typeof r> => r !== null) as T[]
 }
 
 export async function load5eSpecies(): Promise<SpeciesData[]> {
-  return ds().get('species', async () => {
-    const [rawSpecies, traitMap] = await Promise.all([
-      loadJson<RawSpeciesData[]>(resolvePath('species')),
-      load5eSpeciesTraits()
-    ])
-    return resolveSpeciesTraits(rawSpecies, traitMap)
-  })
+  return ds().get('species', () => loadFromIndex<SpeciesData>(resolvePath('speciesIndex')))
 }
 
 export async function load5eClasses(): Promise<ClassData[]> {
-  return ds().get('classes', () => loadJson<ClassData[]>(resolvePath('classes')))
+  return ds().get('classes', () => loadFromIndex<ClassData>(resolvePath('classIndex')))
 }
 
 export async function load5eBackgrounds(): Promise<BackgroundData[]> {
-  return ds().get('backgrounds', () => loadJson<BackgroundData[]>(resolvePath('backgrounds')))
+  return ds().get('backgrounds', () => loadFromIndex<BackgroundData>(resolvePath('backgroundIndex')))
 }
 
 export async function load5eSubclasses(): Promise<SubclassData[]> {
@@ -491,7 +487,7 @@ export async function load5eSubclasses(): Promise<SubclassData[]> {
 }
 
 export async function load5eFeats(category?: string): Promise<FeatData[]> {
-  const feats = await ds().get('feats', () => loadJson<FeatData[]>(resolvePath('feats')))
+  const feats = await ds().get('feats', () => loadFromIndex<FeatData>(resolvePath('featIndex')))
   if (category) return feats.filter((f) => f.category === category)
   return feats
 }
@@ -506,6 +502,26 @@ export async function load5eClassFeatures(): Promise<ClassFeaturesFile> {
 
 export async function load5eEquipment(): Promise<EquipmentFile> {
   return ds().get('equipment', () => loadJson<EquipmentFile>(resolvePath('equipment')))
+}
+
+export async function load5eTools(): Promise<Record<string, unknown>[]> {
+  return ds().get('tools', async () => {
+    const index = await loadJson<IndexEntry[]>(resolvePath('toolsIndex'))
+    const results = await Promise.all(
+      index
+        .filter((entry) => entry.path)
+        .map(async (entry) => {
+          try {
+            const item = await loadJson<Record<string, unknown>>(`./data/5e/${entry.path}`)
+            if (!item.id) item.id = entry.id
+            return item
+          } catch {
+            return null
+          }
+        })
+    )
+    return results.filter((r): r is NonNullable<typeof r> => r !== null)
+  })
 }
 
 export async function load5eCrafting(): Promise<CraftingToolEntry[]> {
@@ -563,24 +579,33 @@ export async function load5eMagicItems(rarity?: string): Promise<MagicItemData[]
 export async function getHeritageOptions5e(speciesId: string): Promise<SelectableOption[]> {
   const speciesList = await load5eSpecies()
   const species = speciesList.find((s) => s.id === speciesId)
-  if (!species?.subraces || species.subraces.length === 0) return []
+  if (!species) return []
 
-  return species.subraces.map((sr) => {
+  // Find traits with lineage choices (e.g., Elven Lineage)
+  const lineageTrait = species.traits.find((t) => t.lineageChoices)
+  if (!lineageTrait?.lineageChoices) return []
+
+  return lineageTrait.lineageChoices.options.map((option) => {
     const details: DetailField[] = [{ label: 'Species', value: species.name }]
-    // Show added traits
-    for (const trait of sr.traitModifications.add) {
-      details.push({ label: trait.name, value: trait.description })
+    if (option.description) {
+      details.push({ label: 'Description', value: option.description })
     }
-    if (sr.speedModifier) {
-      details.push({ label: 'Speed Modifier', value: `+${sr.speedModifier} ft.` })
+    if (option.darkvisionOverride) {
+      details.push({ label: 'Darkvision', value: `${option.darkvisionOverride} ft.` })
+    }
+    if (option.speedOverride) {
+      details.push({ label: 'Speed', value: `${option.speedOverride} ft.` })
+    }
+    if (option.cantrips?.length) {
+      details.push({ label: 'Cantrips', value: option.cantrips.join(', ') })
     }
     return {
-      id: sr.id,
-      name: sr.name,
+      id: option.name.toLowerCase().replace(/\s+/g, '-'),
+      name: option.name,
       rarity: 'common' as const,
-      description: sr.description,
-      traits: sr.traitModifications.add.map((t) => t.name),
-      source: 'SRD',
+      description: option.description ?? '',
+      traits: [],
+      source: species.source ?? 'SRD',
       detailFields: details
     }
   })

@@ -60,12 +60,39 @@ function renderObject(obj: Record<string, unknown>): JSX.Element {
     <div className="space-y-1.5">
       {Object.entries(obj).map(([k, v]) => {
         if (k.startsWith('_') || v === null || v === undefined) return null
+        if (Array.isArray(v)) {
+          if (v.length === 0) return null
+          return (
+            <div key={k}>
+              <span className="text-xs text-gray-500">{formatLabel(k)}:</span>
+              <div className="pl-3 mt-0.5 space-y-1">
+                {v.map((item, i) => (
+                  <div key={`${k}-${i}`} className="text-xs text-gray-300">
+                    {typeof item === 'object' && item !== null ? (
+                      <div className="pl-2 border-l border-gray-700">
+                        {renderObject(item as Record<string, unknown>)}
+                      </div>
+                    ) : (
+                      String(item)
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+        if (typeof v === 'object') {
+          return (
+            <div key={k}>
+              <span className="text-xs text-gray-500">{formatLabel(k)}:</span>
+              <div className="pl-3 mt-0.5 border-l border-gray-700">{renderObject(v as Record<string, unknown>)}</div>
+            </div>
+          )
+        }
         return (
           <div key={k} className="flex gap-2">
             <span className="text-xs text-gray-500 min-w-[80px]">{formatLabel(k)}:</span>
-            <span className="text-xs text-gray-300 break-words">
-              {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-            </span>
+            <span className="text-xs text-gray-300 break-words">{String(v)}</span>
           </div>
         )
       })}
@@ -121,7 +148,7 @@ function getPriorityKeys(category: LibraryCategory): string[] {
         'actions'
       ]
     case 'spells':
-      return ['name', 'level', 'school', 'castingTime', 'range', 'components', 'duration', 'description', 'lists']
+      return ['name', 'level', 'school', 'castingTime', 'range', 'components', 'duration', 'description', 'spellList']
     case 'classes':
       return ['name', 'hitDie', 'primaryAbility', 'savingThrows', 'proficiencies']
     case 'weapons':

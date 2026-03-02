@@ -9,10 +9,10 @@ describe('DATA_PATHS', () => {
   })
 
   it('contains expected character data paths', () => {
-    expect(DATA_PATHS.species).toBe('./data/5e/character/species.json')
-    expect(DATA_PATHS.classes).toBe('./data/5e/character/classes.json')
-    expect(DATA_PATHS.backgrounds).toBe('./data/5e/character/backgrounds.json')
-    expect(DATA_PATHS.feats).toBe('./data/5e/character/feats.json')
+    expect(DATA_PATHS.classIndex).toBe('./data/5e/classes/index.json')
+    expect(DATA_PATHS.speciesIndex).toBe('./data/5e/origins/species/index.json')
+    expect(DATA_PATHS.backgroundIndex).toBe('./data/5e/origins/backgrounds/index.json')
+    expect(DATA_PATHS.featIndex).toBe('./data/5e/feats/index.json')
     expect(DATA_PATHS.subclasses).toBe('./data/5e/character/subclasses.json')
   })
 

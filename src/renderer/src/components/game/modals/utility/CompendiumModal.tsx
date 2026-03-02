@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DAMAGE_TYPES } from '../../../../constants'
 import { loadSpells } from '../../../../services/character/spell-data'
 import {
+  formatPrerequisites,
   load5eConditions,
   load5eDiseases,
   load5eEquipment,
@@ -205,10 +206,14 @@ export default function CompendiumModal({ onClose }: CompendiumModalProps): JSX.
           }
           case 'feats': {
             const data = await load5eFeats()
-            items = data.map((f) => ({
-              name: f.name,
-              description: f.description?.slice(0, 120) ?? f.prerequisites?.join(', ') ?? ''
-            }))
+            items = data.map((f) => {
+              const desc = f.benefits.map((b) => b.description).join(' ')
+              const prereqs = formatPrerequisites(f.prerequisites)
+              return {
+                name: f.name,
+                description: desc?.slice(0, 120) ?? prereqs.join(', ') ?? ''
+              }
+            })
             break
           }
           case 'magicItems': {

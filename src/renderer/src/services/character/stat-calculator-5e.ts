@@ -29,7 +29,6 @@ export {
 export type { EncumbranceResult, LifestyleLevel, ToolSkillInteraction }
 
 interface SpeciesData {
-  abilityBonuses: Partial<Record<AbilityName, number>>
   speed: number
   size: string
 }
@@ -98,13 +97,9 @@ export function calculate5eStats(
   armorForAC?: ArmorForAC[],
   classNamesForAC?: string[]
 ): DerivedStats5e {
-  // Apply species bonuses (or flexible species ability bonuses for 2024 species)
+  // Apply background ability bonuses (2024 PHB - ability scores come from background)
   const scores: AbilityScoreSet = { ...baseScores }
-  if (species && Object.keys(species.abilityBonuses).length > 0) {
-    for (const [ability, bonus] of Object.entries(species.abilityBonuses)) {
-      scores[ability as AbilityName] += bonus as number
-    }
-  } else if (backgroundAbilityBonuses) {
+  if (backgroundAbilityBonuses) {
     for (const [ability, bonus] of Object.entries(backgroundAbilityBonuses)) {
       scores[ability as AbilityName] += bonus as number
     }

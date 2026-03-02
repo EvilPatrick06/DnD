@@ -225,22 +225,23 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
       const bg = bgs.find((b) => b.id === character.buildChoices.backgroundId)
       const updates: Partial<BuilderState> = {}
       if (speciesData) {
-        updates.speciesLanguages = speciesData.languages
+        updates.speciesLanguages = []
         updates.speciesExtraLangCount = speciesData.traits.filter((t) => t.name === 'Extra Language').length
         updates.speciesExtraSkillCount = speciesData.traits.filter((t) => t.name === 'Skillful').length
-        updates.speciesSize = Array.isArray(speciesData.size) ? (character.size ?? '') : speciesData.size
+        updates.speciesSize =
+          speciesData.size.type === 'choice' ? (character.size ?? '') : (speciesData.size.value ?? '')
         updates.speciesSpeed = speciesData.speed
         updates.speciesTraits = speciesData.traits
-        updates.speciesProficiencies = speciesData.proficiencies ?? []
+        updates.speciesProficiencies = []
 
-        // Restore heritage slot if species has subraces
-        const hasSubraces = speciesData.subraces && speciesData.subraces.length > 0
-        if (hasSubraces) {
+        // Restore heritage slot if species has lineage choices on a trait
+        const lineageTrait = speciesData.traits.find((t) => t.lineageChoices)
+        if (lineageTrait?.lineageChoices) {
           let currentSlots = get().buildSlots.filter((s) => s.id !== 'heritage')
           const ancestryIdx = currentSlots.findIndex((s) => s.category === 'ancestry')
           const heritageSlot = {
             id: 'heritage',
-            label: `${speciesData.name} Lineage`,
+            label: lineageTrait.lineageChoices.label || `${speciesData.name} Lineage`,
             category: 'heritage' as const,
             level: 0,
             required: true,
@@ -257,24 +258,17 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
           updates.buildSlots = currentSlots
           updates.heritageId = character.buildChoices.subspeciesId ?? null
 
-          // Apply heritage trait modifications
+          // Apply lineage speed override if a lineage option is selected
           if (character.buildChoices.subspeciesId) {
-            const subrace = speciesData.subraces?.find(
-              (sr: { id: string }) => sr.id === character.buildChoices.subspeciesId
+            const selectedLineage = lineageTrait.lineageChoices.options.find(
+              (opt) => opt.name === character.buildChoices.subspeciesId || opt.name === character.subspecies
             )
-            if (subrace) {
-              const removedNames = new Set(subrace.traitModifications.remove)
-              const baseTraits = speciesData.traits.filter((t: { name: string }) => !removedNames.has(t.name))
-              updates.derivedSpeciesTraits = [...baseTraits, ...subrace.traitModifications.add]
-              updates.speciesExtraLangCount = (updates.derivedSpeciesTraits as Array<{ name: string }>).filter(
-                (t) => t.name === 'Extra Language'
-              ).length
-              updates.speciesSpeed = speciesData.speed + (subrace.speedModifier ?? 0)
+            if (selectedLineage?.speedOverride) {
+              updates.speciesSpeed = selectedLineage.speedOverride
             }
           }
-        } else {
-          updates.derivedSpeciesTraits = speciesData.traits
         }
+        updates.derivedSpeciesTraits = speciesData.traits
       }
       if (cls) {
         const current = get().classEquipment
@@ -296,8 +290,8 @@ export function loadCharacterForEdit5e(character: Character5e, set: SetState, ge
           speciesExtraSkills
       }
       if (bg) {
-        updates.bgLanguageCount = bg.proficiencies.languages
-        updates.bgEquipment = bg.equipment.map((e: { name: string; quantity: number }) => ({ ...e, source: bg.name }))
+        updates.bgLanguageCount = 0
+        updates.bgEquipment = bg.equipment.map((e) => ({ option: e.option, items: e.items, source: bg.name }))
       }
       set(updates)
     })

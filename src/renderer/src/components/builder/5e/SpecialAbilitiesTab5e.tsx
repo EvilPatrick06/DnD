@@ -76,12 +76,12 @@ export default function SpecialAbilitiesTab5e(): JSX.Element {
     }
     load5eSpecies().then((species) => {
       const sp = species.find((s) => s.id === speciesId)
-      if (sp && Array.isArray(sp.size)) {
-        setSizeOptions(sp.size as string[])
+      if (sp && sp.size.type === 'choice' && sp.size.options) {
+        setSizeOptions(sp.size.options)
       } else {
         setSizeOptions(null)
       }
-      setHasSubraces(!!(sp?.subraces && sp.subraces.length > 0))
+      setHasSubraces(!!sp?.traits.some((t) => t.lineageChoices))
 
       // Check if this species needs a spellcasting ability choice
       if (SPECIES_WITH_SPELL_ABILITY_CHOICE.includes(speciesId)) {

@@ -1,65 +1,55 @@
-import type { AbilityAbbreviation, FeatCategory } from './shared-enums'
+import type { FeatCategory } from './shared-enums'
 
-// === species.json ===
+// === species (individual files via origins/species/index.json) ===
+
+export interface SpeciesSize {
+  type: 'fixed' | 'choice'
+  value?: string
+  options?: string[]
+}
+
+export interface SpeciesTraitUsageLimit {
+  type: string
+  rechargesOn?: string
+}
+
+export interface SpeciesLineageOption {
+  name: string
+  description?: string
+  darkvisionOverride?: number
+  speedOverride?: number
+  cantrips?: string[]
+  leveledSpells?: Array<{
+    spell: string
+    requiredCharacterLevel: number
+    oncePerLongRestWithoutSlot?: boolean
+  }>
+}
 
 export interface SpeciesTrait {
   name: string
   description: string
-  spellGranted?: string | { list: string; count: number }
-}
-
-export type SpeciesTraitsFile = Record<string, SpeciesTrait>
-
-export interface SpeciesSubrace {
-  id: string
-  name: string
-  description: string
-  traitModifications: {
-    add: SpeciesTrait[]
-    remove: string[]
+  usageLimit?: SpeciesTraitUsageLimit
+  grantsSkillProficiency?: { count: number; from: string | string[] }
+  grantsOriginFeat?: { playerChoice: boolean; recommended?: string }
+  lineageChoices?: {
+    label: string
+    spellcastingAbility?: string | string[]
+    options: SpeciesLineageOption[]
   }
-  speedModifier?: number
-  spellProgression?: Array<{ spellId: string; grantedAtLevel: number; innateUses: number }>
 }
 
 export interface SpeciesData {
   id: string
   name: string
-  abilityBonuses: Record<string, number>
+  creatureType: string
+  size: SpeciesSize
   speed: number
-  size: string | string[]
+  darkvision?: number
   traits: SpeciesTrait[]
-  languages: string[]
-  proficiencies?: string[]
-  subraces?: SpeciesSubrace[]
-  source?: string
-  creatureType?: string
-}
-
-export interface RawSpeciesSubrace {
-  id: string
-  name: string
   description: string
-  traitModifications: {
-    add: string[]
-    remove: string[]
-  }
-  speedModifier?: number
-  spellProgression?: Array<{ spellId: string; grantedAtLevel: number; innateUses: number }>
-}
-
-export interface RawSpeciesData {
-  id: string
-  name: string
-  abilityBonuses: Record<string, number>
-  speed: number
-  size: string | string[]
-  traits: string[]
-  languages: string[]
-  proficiencies?: string[]
-  subraces?: RawSpeciesSubrace[]
-  source?: string
-  creatureType?: string
+  source: string
+  lifespan?: number
 }
 
 // === classes.json ===
@@ -206,17 +196,23 @@ export interface ClassData {
   subclasses: SubclassData[]
 }
 
-// === backgrounds.json ===
+// === backgrounds (individual files via origins/backgrounds/index.json) ===
+
+export interface BackgroundEquipmentOption {
+  option: string
+  items: string[]
+}
 
 export interface BackgroundData {
   id: string
   name: string
-  description?: string
-  proficiencies: { skills: string[]; tools: string[]; languages: number }
-  equipment: Array<{ name: string; quantity: number }>
-  startingGold: number
-  originFeat?: string
-  abilityScores?: AbilityAbbreviation[]
+  description: string
+  abilityScores: string[]
+  skillProficiencies: string[]
+  toolProficiency: string
+  feat: string
+  equipment: BackgroundEquipmentOption[]
+  source: string
 }
 
 // === class-features.json ===
@@ -235,7 +231,27 @@ export interface ClassFeatureData {
 
 export type ClassFeaturesFile = Record<string, ClassFeatureData>
 
-// === feats.json ===
+// === feats (individual files via feats/index.json) ===
+
+export interface FeatPrerequisites {
+  level?: number | null
+  abilityScores?: Array<{
+    abilities: string[]
+    minimum: number
+  }>
+}
+
+export interface FeatAbilityScoreOption {
+  abilities: string[]
+  amount: number
+  maximum: number
+  count: number
+}
+
+export interface FeatBenefit {
+  name: string
+  description: string
+}
 
 export interface FeatChoiceConfig {
   type: 'ability' | 'skill' | 'element' | 'skill-and-expertise'
@@ -247,11 +263,10 @@ export interface FeatData {
   id: string
   name: string
   category: FeatCategory
-  level: number
-  prerequisites: string[]
-  description: string
-  abilityScoreIncrease?: { options: string[]; amount: number } | null
-  repeatable?: boolean
+  prerequisites: FeatPrerequisites
+  abilityScoreIncrease?: { options: FeatAbilityScoreOption[] } | null
+  repeatable?: { restriction: string }
+  benefits: FeatBenefit[]
   source: string
   choiceConfig?: Record<string, FeatChoiceConfig>
 }
