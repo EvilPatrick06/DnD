@@ -67,7 +67,7 @@ export function summarizeItem(item: Record<string, unknown>, category: LibraryCa
     case 'weapons':
       return `${item.category ?? ''} - ${item.damage ?? '?'} ${item.damageType ?? ''}`
     case 'armor':
-      return `${item.category ?? ''} - AC ${item.ac ?? '?'}`
+      return `${item.category ?? ''} - AC ${item.baseAC ?? item.ac ?? '?'}`
     case 'magic-items':
       return `${item.rarity ?? ''} ${item.type ?? ''} ${item.attunement ? '(attunement)' : ''}`
     case 'gear':
