@@ -5,9 +5,15 @@
   "skillProficiencies": ["Animal Handling", "Nature"],
   "toolProficiency": "Carpenter's Tools",
   "feat": "Tough",
-  "equipment": {
-    "choiceA": ["Sickle", "Carpenter's Tools", "Healer's Kit", "Iron Pot", "Shovel", "Traveler's Clothes", 30],
-    "choiceB": 50
-  },
+  "equipment": [
+    {
+      "option": "A",
+      "items": ["Sickle", "Carpenter's Tools", "Healer's Kit", "Iron Pot", "Shovel", "Traveler's Clothes", "30 GP"]
+    },
+    {
+      "option": "B",
+      "items": ["50 GP"]
+    }
+  ],
   "source": "PHB 2024"
 }

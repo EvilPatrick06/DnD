@@ -31,7 +31,9 @@ export default function SelectionDetailPanel({ option }: SelectionDetailPanelPro
             {option.rarity}
           </span>
         )}
-        <span className="text-xs text-gray-500">{option.source}</span>
+        <span className="text-xs text-gray-500">
+          {typeof option.source === 'string' ? option.source : (option.source as { book?: string })?.book ?? 'SRD'}
+        </span>
       </div>
 
       {option.traits.length > 0 && (
@@ -52,7 +54,9 @@ export default function SelectionDetailPanel({ option }: SelectionDetailPanelPro
           .map((field, i) => (
             <div key={i}>
               <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-0.5">{field.label}</dt>
-              <dd className="text-sm text-gray-200 leading-relaxed">{field.value}</dd>
+              <dd className="text-sm text-gray-200 leading-relaxed">
+                {typeof field.value === 'string' ? field.value : JSON.stringify(field.value)}
+              </dd>
             </div>
           ))}
       </div>

@@ -75,7 +75,7 @@ function loadFromIndex<T>(
 describe('species (index)', () => {
   let data: Array<Record<string, unknown>>
   beforeAll(() => {
-    data = loadFromIndex('origins/species/index.json', (e) => typeof e.speed === 'number')
+    data = loadFromIndex('origins/species/index.json')
   })
 
   it('is a non-empty array', () => {
@@ -1012,7 +1012,7 @@ describe('cross-references', () => {
   it('species inline traits have name and description', () => {
     const species = loadFromIndex<{
       traits: Array<{ name: string; description: string }>
-    }>('origins/species/index.json', (e) => typeof e.speed === 'number')
+    }>('origins/species/index.json')
     for (const sp of species) {
       for (const trait of sp.traits) {
         expect(typeof trait.name, `Species "${sp.id}" has trait with invalid name`).toBe('string')

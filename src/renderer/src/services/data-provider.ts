@@ -139,6 +139,13 @@ export function resolveDataPath(system: GameSystem, pathKey: string): string | u
 
 // === 5e Transformers ===
 
+/** Normalize source to a display string (handles string, object {book}, or undefined) */
+function normalizeSource(source: unknown): string {
+  if (typeof source === 'string') return source
+  if (source && typeof source === 'object' && 'book' in source) return (source as { book: string }).book
+  return 'SRD'
+}
+
 export function formatPrerequisites(prereqs: FeatData['prerequisites']): string[] {
   const parts: string[] = []
   if (prereqs.level) parts.push(`Level ${prereqs.level}`)
@@ -151,11 +158,18 @@ export function formatPrerequisites(prereqs: FeatData['prerequisites']): string[
 }
 
 function speciesToOption(species: SpeciesData): SelectableOption {
+  const size = species.size
   const sizeStr =
-    species.size.type === 'choice' ? (species.size.options ?? []).join(' or ') : (species.size.value ?? '')
+    typeof size === 'string'
+      ? size
+      : size.type === 'choice'
+        ? (size.options ?? []).join(' or ')
+        : (size.value ?? '')
+
+  const speed = typeof species.speed === 'number' ? species.speed : parseInt(String(species.speed), 10) || 30
 
   const details: DetailField[] = [
-    { label: 'Speed', value: `${species.speed} ft.` },
+    { label: 'Speed', value: `${speed} ft.` },
     { label: 'Size', value: sizeStr },
     { label: 'Creature Type', value: species.creatureType }
   ]
@@ -165,16 +179,16 @@ function speciesToOption(species: SpeciesData): SelectableOption {
   }
 
   for (const trait of species.traits) {
-    details.push({ label: trait.name, value: trait.description })
+    details.push({ label: trait.name, value: typeof trait.description === 'string' ? trait.description : '' })
   }
 
   return {
     id: species.id,
     name: species.name,
     rarity: 'common',
-    description: `${species.creatureType} - Speed: ${species.speed} ft.`,
+    description: `${species.creatureType} - Speed: ${speed} ft.`,
     traits: species.traits.map((t) => t.name),
-    source: species.source ?? 'SRD',
+    source: normalizeSource(species.source),
     detailFields: details
   }
 }
@@ -219,17 +233,19 @@ function classToOption(cls: ClassData): SelectableOption {
 }
 
 function backgroundToOption(bg: BackgroundData): SelectableOption {
+  const toolProf = typeof bg.toolProficiency === 'string' ? bg.toolProficiency : (bg.toolProficiency as { type?: string })?.type ?? 'None'
   const details: DetailField[] = [
-    { label: 'Skill Proficiencies', value: bg.skillProficiencies.join(', ') },
-    { label: 'Tool Proficiency', value: bg.toolProficiency || 'None' },
+    { label: 'Skill Proficiencies', value: Array.isArray(bg.skillProficiencies) ? bg.skillProficiencies.join(', ') : String(bg.skillProficiencies ?? '') },
+    { label: 'Tool Proficiency', value: toolProf || 'None' },
     { label: 'Feat', value: bg.feat },
-    { label: 'Ability Scores', value: bg.abilityScores.join(', ') }
+    { label: 'Ability Scores', value: Array.isArray(bg.abilityScores) ? bg.abilityScores.join(', ') : String(bg.abilityScores ?? '') }
   ]
 
-  if (bg.equipment.length > 0) {
+  const equipment = Array.isArray(bg.equipment) ? bg.equipment : []
+  if (equipment.length > 0) {
     details.push({
       label: 'Equipment',
-      value: bg.equipment.map((e) => `Option ${e.option}: ${e.items.join(', ')}`).join(' | ')
+      value: equipment.map((e) => `Option ${e.option}: ${e.items.join(', ')}`).join(' | ')
     })
   }
 
@@ -239,7 +255,7 @@ function backgroundToOption(bg: BackgroundData): SelectableOption {
     rarity: 'common',
     description: bg.description || `Skills: ${bg.skillProficiencies.join(', ')}`,
     traits: [],
-    source: bg.source ?? 'SRD',
+    source: normalizeSource(bg.source),
     detailFields: details
   }
 }
@@ -276,7 +292,7 @@ function feat5eToOption(feat: FeatData): SelectableOption {
     rarity: 'common',
     description,
     traits: [feat.category],
-    source: feat.source || 'SRD',
+    source: normalizeSource(feat.source),
     detailFields: details
   }
 }
@@ -605,7 +621,7 @@ export async function getHeritageOptions5e(speciesId: string): Promise<Selectabl
       rarity: 'common' as const,
       description: option.description ?? '',
       traits: [],
-      source: species.source ?? 'SRD',
+      source: normalizeSource(species.source),
       detailFields: details
     }
   })

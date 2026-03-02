@@ -5,6 +5,15 @@
   "skillProficiencies": ["Deception", "Sleight of Hand"],
   "toolProficiency": "Forgery Kit",
   "feat": "Skilled",
-  "equipment": "Choose A or B: (A) Forgery Kit, Costume, Fine Clothes, 15 GP; or (B) 50 GP",
+  "equipment": [
+    {
+      "option": "A",
+      "items": ["Forgery Kit", "Costume", "Fine Clothes", "15 GP"]
+    },
+    {
+      "option": "B",
+      "items": ["50 GP"]
+    }
+  ],
   "source": "PHB 2024"
 }
