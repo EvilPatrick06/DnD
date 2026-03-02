@@ -1,6 +1,9 @@
 import type { Graphics } from 'pixi.js'
 import { getReachableCells } from '../../../services/combat/combat-rules'
-import { getReachableCellsWithWalls } from '../../../services/map/pathfinder'
+import { getReachableCellsWithWalls, type PathResult } from '../../../services/map/pathfinder'
+
+type _PathResult = PathResult
+
 import type { TerrainCell, WallSegment } from '../../../types/map'
 
 /**

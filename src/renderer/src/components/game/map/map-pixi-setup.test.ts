@@ -1,26 +1,28 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock pixi.js before importing the module
 vi.mock('pixi.js', () => {
-  const makeStage = () => {
+  function makeStage() {
     const children: unknown[] = []
-    return { children, addChild: vi.fn((c) => children.push(c)) }
+    return { children, addChild: vi.fn((c: unknown) => children.push(c)) }
   }
 
-  const MockContainer = vi.fn(() => ({
-    label: '',
-    children: [],
-    addChild: vi.fn()
-  }))
+  const MockContainer = vi.fn(function (this: Record<string, unknown>) {
+    this.label = ''
+    this.children = []
+    this.addChild = vi.fn()
+  })
 
-  const MockGraphics = vi.fn(() => ({ label: '' }))
+  const MockGraphics = vi.fn(function (this: Record<string, unknown>) {
+    this.label = ''
+  })
 
-  const MockApplication = vi.fn(() => ({
-    stage: makeStage(),
-    init: vi.fn().mockResolvedValue(undefined),
-    ticker: { deltaMS: 16, add: vi.fn(), remove: vi.fn() }
-  }))
+  const MockApplication = vi.fn(function (this: Record<string, unknown>) {
+    this.stage = makeStage()
+    this.init = vi.fn().mockResolvedValue(undefined)
+    this.ticker = { deltaMS: 16, add: vi.fn(), remove: vi.fn() }
+  })
 
   return {
     Application: MockApplication,
@@ -30,10 +32,10 @@ vi.mock('pixi.js', () => {
 })
 
 vi.mock('./weather-overlay', () => ({
-  WeatherOverlayLayer: vi.fn(() => ({
-    getContainer: vi.fn(() => ({ label: '' })),
-    setWeather: vi.fn()
-  }))
+  WeatherOverlayLayer: vi.fn(function (this: Record<string, unknown>) {
+    this.getContainer = vi.fn(() => ({ label: '' }))
+    this.setWeather = vi.fn()
+  })
 }))
 
 vi.mock('../../../utils/logger', () => ({

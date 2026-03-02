@@ -1,3 +1,4 @@
+import { meetsPrerequisites } from '../../components/levelup/5e/LevelUpConfirm5e'
 import {
   MULTICLASS_PREREQUISITES,
   MULTICLASS_PROFICIENCY_GAINS,
@@ -66,3 +67,6 @@ export function getMulticlassAdvice(
 
   return { eligible, gains, warnings }
 }
+
+// Re-export meetsPrerequisites for consumers who need character-level prerequisite checking
+export { meetsPrerequisites }

@@ -1,12 +1,28 @@
 import { create } from 'zustand'
-import { LAST_SESSION_KEY } from '../../constants/app-constants'
-import * as clientManager from '../../network/client-manager'
-import * as hostManager from '../../network/host-manager'
-import { sendToPeer, setGameStateProvider } from '../../network/host-manager'
-import { getPeerId } from '../../network/peer-manager'
-import type { ConnectionState, MessageType, NetworkGameState, NetworkMessage, PeerInfo } from '../../network/types'
+import { LAST_SESSION_KEY } from '../../constants'
+import type { ConnectionState, MessageType, NetworkGameState, NetworkMessage, PeerInfo } from '../../network'
+import {
+  broadcastMessage,
+  disconnect as clientDisconnect,
+  connectToHost,
+  getPeerId,
+  kickPeer,
+  onClientMessage,
+  onDisconnected,
+  onHostMessage,
+  onPeerJoined,
+  onPeerLeft,
+  sendClientMessage,
+  sendToPeer,
+  setGameStateProvider,
+  startHosting,
+  stopHosting
+} from '../../network'
 import { handleClientMessage } from './client-handlers'
 import { handleHostMessage } from './host-handlers'
+import type { NetworkState } from './types'
+
+export type { NetworkState }
 
 // Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
 function getGameStore() {
@@ -20,38 +36,6 @@ const listenerCleanups: Array<() => void> = []
 function clearListenerCleanups(): void {
   for (const fn of listenerCleanups) fn()
   listenerCleanups.length = 0
-}
-
-export interface NetworkState {
-  role: 'none' | 'host' | 'client'
-  connectionState: ConnectionState
-  inviteCode: string | null
-  campaignId: string | null
-  localPeerId: string | null
-  displayName: string
-  peers: PeerInfo[]
-  error: string | null
-  disconnectReason: 'kicked' | 'banned' | null
-  latencyMs: number | null
-
-  // Host actions
-  hostGame: (displayName: string, existingInviteCode?: string) => Promise<string>
-  stopHosting: () => void
-  kickPlayer: (peerId: string) => void
-
-  // Client actions
-  joinGame: (inviteCode: string, displayName: string) => Promise<void>
-  disconnect: () => void
-
-  // Shared
-  sendMessage: (type: MessageType, payload: unknown) => void
-  setDisplayName: (name: string) => void
-  updatePeer: (peerId: string, updates: Partial<PeerInfo>) => void
-  removePeer: (peerId: string) => void
-  addPeer: (peer: PeerInfo) => void
-  setConnectionState: (state: ConnectionState) => void
-  setError: (error: string | null) => void
-  clearDisconnectReason: () => void
 }
 
 export const useNetworkStore = create<NetworkState>((set, get) => ({
@@ -77,11 +61,11 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     })
 
     try {
-      const inviteCode = await hostManager.startHosting(displayName, existingInviteCode)
+      const inviteCode = await startHosting(displayName, existingInviteCode)
 
       clearListenerCleanups()
       listenerCleanups.push(
-        hostManager.onPeerJoined((peer: PeerInfo) => {
+        onPeerJoined((peer: PeerInfo) => {
           get().addPeer(peer)
           // Async: send map images to newly joined peer after the initial handshake
           // Lazy import to break circular dependency (network-store -> game-sync -> use-game-store -> network-store)
@@ -102,10 +86,10 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
               }
             })
         }),
-        hostManager.onPeerLeft((peer: PeerInfo) => {
+        onPeerLeft((peer: PeerInfo) => {
           get().removePeer(peer.peerId)
         }),
-        hostManager.onMessage((message: NetworkMessage, fromPeerId: string) => {
+        onHostMessage((message: NetworkMessage, fromPeerId: string) => {
           handleHostMessage(message, fromPeerId, get, set)
         })
       )
@@ -134,7 +118,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   stopHosting: () => {
     setGameStateProvider(null)
     clearListenerCleanups()
-    hostManager.stopHosting()
+    stopHosting()
     set({
       role: 'none',
       connectionState: 'disconnected',
@@ -149,7 +133,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
   },
 
   kickPlayer: (peerId: string) => {
-    hostManager.kickPeer(peerId)
+    kickPeer(peerId)
     get().removePeer(peerId)
   },
 
@@ -166,10 +150,10 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     try {
       clearListenerCleanups()
       listenerCleanups.push(
-        clientManager.onMessage((message: NetworkMessage) => {
+        onClientMessage((message: NetworkMessage) => {
           handleClientMessage(message, get, set)
         }),
-        clientManager.onDisconnected((reason: string) => {
+        onDisconnected((reason: string) => {
           // Determine if this was a kick or ban based on the reason string
           let disconnectReason: 'kicked' | 'banned' | null = null
           if (reason.toLowerCase().includes('kicked')) {
@@ -200,7 +184,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
         })
       )
 
-      await clientManager.connectToHost(inviteCode, displayName)
+      await connectToHost(inviteCode, displayName)
 
       set({
         connectionState: 'connected',
@@ -224,7 +208,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     if (role === 'host') {
       get().stopHosting()
     } else if (role === 'client') {
-      clientManager.disconnect()
+      clientDisconnect()
       set({
         role: 'none',
         connectionState: 'disconnected',
@@ -254,9 +238,9 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       // dm:character-update: broadcast to all peers so everyone has the latest
       // character data in remoteCharacters, but include targetPeerId in payload
       // so only the target player persists the update to disk
-      hostManager.broadcastMessage(message)
+      broadcastMessage(message)
     } else if (role === 'client') {
-      clientManager.sendMessage({ type, payload })
+      sendClientMessage({ type, payload })
     }
   },
 

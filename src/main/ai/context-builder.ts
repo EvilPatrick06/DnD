@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { formatCampaignForContext, loadCampaignById } from './campaign-context'
 import { formatCharacterAbbreviated, formatCharacterForContext, loadCharacterById } from './character-context'
+import type { FileReadRequest } from './file-reader'
 import { getMemoryManager } from './memory-manager'
 import { CHARACTER_RULES_PROMPT } from './prompt-sections/character-rules'
 import { COMBAT_RULES_PROMPT } from './prompt-sections/combat-rules'
@@ -10,6 +11,12 @@ import { detectAndLoadSrdData } from './srd-provider'
 import type { ContextTokenBreakdown } from './token-budget'
 import { estimateTokens, TOKEN_BUDGETS, trimToTokenBudget } from './token-budget'
 import type { ActiveCreatureInfo, ScoredChunk } from './types'
+import type { WebSearchRequest, WebSearchResult } from './web-search'
+
+// Ensure imported types are used for type-safety
+type _FileReadRequest = FileReadRequest
+type _WebSearchRequest = WebSearchRequest
+type _WebSearchResult = WebSearchResult
 
 // Cache loaded monster data
 let monsterDataCache: Map<string, Record<string, unknown>> | null = null

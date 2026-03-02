@@ -1,6 +1,16 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { PRESET_LABELS } from '../../../data/calendar-presets'
 import { addToast } from '../../../hooks/use-toast'
+import {
+  type AmbientSound,
+  getAllSoundEvents,
+  getCustomSounds,
+  registerCustomSound,
+  reinit as reinitSound,
+  removeCustomSound,
+  type SoundEvent,
+  stopAllCustomAudio
+} from '../../../services/sound-manager'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
 import { useGameStore } from '../../../stores/use-game-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
@@ -10,8 +20,10 @@ import { formatInGameTime } from '../../../utils/calendar-utils'
 import { logger } from '../../../utils/logger'
 import { Tooltip } from '../../ui'
 import type { DiceColors } from '../dice3d'
+import { clearDmAlerts } from './DmAlertTray'
 
 const DiceColorPicker = lazy(() => import('../dice3d/DiceColorPicker'))
+const ThemeSelector = lazy(() => import('./ThemeSelector'))
 
 interface SettingsDropdownProps {
   campaign: Campaign
@@ -142,6 +154,96 @@ function DiceColorSection(): JSX.Element {
   )
 }
 
+function SoundCustomizationSection(): JSX.Element {
+  const [expanded, setExpanded] = useState(false)
+  const customSounds = getCustomSounds()
+  const allEvents = getAllSoundEvents()
+
+  const handleRemove = (event: SoundEvent | AmbientSound): void => {
+    removeCustomSound(event)
+    reinitSound()
+  }
+
+  const handleAdd = (event: SoundEvent | AmbientSound): void => {
+    registerCustomSound(event, `/sounds/custom/${event}.mp3`)
+    reinitSound()
+  }
+
+  const unusedEvents = allEvents.filter((e) => !customSounds.has(e))
+
+  return (
+    <div className="px-4 py-2 border-b border-gray-800">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-400">Sound Overrides</span>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="px-2 py-0.5 text-xs rounded transition-colors cursor-pointer bg-gray-800 text-gray-300 hover:text-gray-100 hover:bg-gray-700"
+        >
+          {expanded ? 'Close' : `Edit (${customSounds.size})`}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+          {Array.from(customSounds.entries()).map(([event, path]) => (
+            <div key={event} className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-300 truncate">
+                {event}: {path}
+              </span>
+              <button
+                onClick={() => handleRemove(event as SoundEvent)}
+                className="text-red-400 hover:text-red-300 cursor-pointer ml-1"
+              >
+                x
+              </button>
+            </div>
+          ))}
+          {customSounds.size === 0 && <p className="text-[10px] text-gray-500">No custom sound overrides</p>}
+          {unusedEvents.length > 0 && (
+            <select
+              className="w-full mt-1 p-1 text-[10px] rounded bg-gray-800 border border-gray-700 text-gray-300"
+              value=""
+              onChange={(e) => {
+                if (e.target.value) handleAdd(e.target.value as SoundEvent)
+              }}
+            >
+              <option value="">Add override...</option>
+              {unusedEvents.map((ev) => (
+                <option key={ev} value={ev}>
+                  {ev}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ThemeSection(): JSX.Element {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div className="px-4 py-2 border-b border-gray-800">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-400">Theme</span>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="px-2 py-0.5 text-xs rounded transition-colors cursor-pointer bg-gray-800 text-gray-300 hover:text-gray-100 hover:bg-gray-700"
+        >
+          {expanded ? 'Close' : 'Edit'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-2">
+          <Suspense fallback={null}>
+            <ThemeSelector />
+          </Suspense>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function SettingsDropdown({
   campaign,
   isDM,
@@ -239,6 +341,9 @@ export default function SettingsDropdown({
             </div>
           )}
 
+          {/* Sound customization */}
+          <SoundCustomizationSection />
+
           {/* AI DM (when enabled) */}
           {campaign.aiDm?.enabled && isDM && <AiDmSettingsSection />}
 
@@ -250,6 +355,9 @@ export default function SettingsDropdown({
 
           {/* Dice Colors */}
           <DiceColorSection />
+
+          {/* Theme */}
+          <ThemeSection />
 
           {/* Fullscreen toggle */}
           <div className="px-4 py-2 border-b border-gray-800">
@@ -283,14 +391,21 @@ export default function SettingsDropdown({
             </button>
             {isDM && onEndSession ? (
               <button
-                onClick={onEndSession}
+                onClick={() => {
+                  clearDmAlerts()
+                  onEndSession()
+                }}
                 className="w-full px-4 py-2 text-left text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors cursor-pointer font-semibold"
               >
                 End Session
               </button>
             ) : (
               <button
-                onClick={() => onLeaveGame('/')}
+                onClick={() => {
+                  clearDmAlerts()
+                  stopAllCustomAudio()
+                  onLeaveGame('/')
+                }}
                 className="w-full px-4 py-2 text-left text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors cursor-pointer"
               >
                 Leave Game

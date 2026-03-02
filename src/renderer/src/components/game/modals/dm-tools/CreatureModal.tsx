@@ -3,7 +3,7 @@ import { load5eMonsters, searchMonsters } from '../../../../services/data-provid
 import type { Companion5e } from '../../../../types/companion'
 import type { MonsterStatBlock } from '../../../../types/monster'
 import { crToNumber } from '../../../../types/monster'
-import MonsterStatBlockView from '../../dm/MonsterStatBlockView'
+import { MonsterStatBlockView } from '../../dm'
 
 type CreatureTab = 'browse' | 'summon'
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ShopItem } from '../../../../network/types'
+import type { ShopItem } from '../../../../network'
 import { load5eEquipment, load5eMagicItems } from '../../../../services/data-provider'
 import type { EquipmentFile, MagicItemData } from '../../../../types/data'
 import { logger } from '../../../../utils/logger'

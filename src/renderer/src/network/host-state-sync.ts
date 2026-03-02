@@ -5,7 +5,7 @@ import {
   MAX_GLOBAL_MESSAGES_PER_SECOND,
   MAX_MESSAGES_PER_WINDOW,
   RATE_LIMIT_WINDOW_MS
-} from '../constants/app-constants'
+} from '../constants'
 import { logger } from '../utils/logger'
 import { getPeerId } from './peer-manager'
 import type { NetworkMessage, PeerInfo } from './types'

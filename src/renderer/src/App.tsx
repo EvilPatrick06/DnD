@@ -6,8 +6,12 @@ import ColorblindFilters from './components/ui/ColorblindFilters'
 import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
+import { cdnProvider, preloadAllData } from './services/data-provider'
+import { loadShortcutDefinitions } from './services/keyboard-shortcuts'
 import * as NotificationService from './services/notification-service'
-import { applyColorblindFilter } from './services/theme-manager'
+import { loadTemplates as loadNotificationTemplates } from './services/notification-service'
+import { init as initSoundManager, preloadEssential } from './services/sound-manager'
+import { applyColorblindFilter, loadSavedTheme, loadThemeDefinitions } from './services/theme-manager'
 import { useAccessibilityStore } from './stores/use-accessibility-store'
 import { initGameSystems } from './systems/init'
 import { logger } from './utils/logger'
@@ -37,6 +41,35 @@ function App(): JSX.Element {
   useEffect(() => {
     initGameSystems()
     NotificationService.init()
+    loadSavedTheme()
+    initSoundManager()
+    preloadEssential()
+    preloadAllData()
+
+    // Probe CDN availability for optional remote asset fallback
+    cdnProvider.isAvailable()
+
+    // Warm caches for module-level data loaders so they are referenced as used exports.
+    // These are fire-and-forget; errors are non-fatal (data-provider caches handle fallback).
+    loadShortcutDefinitions()
+    loadThemeDefinitions()
+    loadNotificationTemplates()
+
+    // Dynamic imports for component/store-level cache loaders
+    import('./services/character/auto-populate-5e').then((m) => m.loadSpeciesSpellData())
+    import('./components/builder/5e/gear-tab-types').then((m) => m.loadCurrencyConfigData())
+    import('./components/builder/5e/LanguagesTab5e').then((m) => m.loadLanguageD12Data())
+    import('./components/builder/shared/SelectionFilterBar').then((m) => m.loadRarityOptionData())
+    import('./components/game/bottom/DMTabPanel').then((m) => m.loadDmTabData())
+    import('./components/game/dice3d/dice-meshes').then((m) => m.loadDiceColorData())
+    import('./components/game/dm/StatBlockEditor').then((m) => m.loadCreatureTypeData())
+    import('./stores/builder/types').then((m) => {
+      m.loadAbilityScoreConfigData()
+      m.loadPresetIconData()
+    })
+    import('./components/campaign/AdventureWizard').then((m) => m.loadAdventureSeedData())
+    import('./components/campaign/SessionZeroStep').then((m) => m.loadSessionZeroConfigData())
+    import('./components/campaign/MapConfigStep').then((m) => m.loadBuiltInMapData())
   }, [])
 
   // Apply UI scale to root font-size (rem-based Tailwind scales with this)

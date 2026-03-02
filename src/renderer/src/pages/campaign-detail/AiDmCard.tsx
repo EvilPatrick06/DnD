@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import OllamaSetupStep from '../../components/campaign/OllamaSetupStep'
 import { Button, Card, Modal } from '../../components/ui'
-import { DEFAULT_OLLAMA_URL } from '../../constants/app-constants'
+import { DEFAULT_OLLAMA_URL } from '../../constants'
 import type { Campaign } from '../../types/campaign'
 
 interface AiDmCardProps {

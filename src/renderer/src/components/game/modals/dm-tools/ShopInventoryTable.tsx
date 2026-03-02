@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network/types'
+import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network'
 
 import { applyMarkup, formatPrice, RARITY_COLORS, RARITY_OPTIONS, SHOP_CATEGORIES } from './shop-utils'
 

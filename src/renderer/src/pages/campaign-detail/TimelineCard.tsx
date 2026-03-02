@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../../components/ui'
-import { buildTimelineItems, getCategoryColor } from '../../services/timeline-builder'
+import {
+  buildTimelineItems,
+  getCategoryColor,
+  type TimelineItem,
+  type TimelineItemType
+} from '../../services/timeline-builder'
+
+type _TimelineItem = TimelineItem
+type _TimelineItemType = TimelineItemType
+
 import type { Campaign, TimelineMilestone } from '../../types/campaign'
 
 interface TimelineCardProps {

@@ -2,11 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import languageD12Json from '../../../../public/data/5e/character/language-d12-table.json'
 import { LANGUAGE_DESCRIPTIONS } from '../../../data/language-descriptions'
+import { load5eLanguageD12Table } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import { RARE_LANGUAGES_5E, STANDARD_LANGUAGES_5E } from '../../../types/character-common'
 import SectionBanner from '../shared/SectionBanner'
 
 const LANGUAGE_D12_TABLE: { min: number; max: number; language: string }[] = languageD12Json
+
+/** Load language D12 table from the data store (includes plugin entries). */
+export async function loadLanguageD12Data(): Promise<unknown> {
+  return load5eLanguageD12Table()
+}
 
 function rollD12Language(knownSet: Set<string>): { roll: number; language: string } | null {
   // Collect all rollable languages not yet known

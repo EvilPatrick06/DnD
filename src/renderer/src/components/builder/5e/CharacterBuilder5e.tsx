@@ -2,11 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { VARIANT_ITEMS } from '../../../data/variant-items'
 import { getCantripsKnown, getPreparedSpellMax, hasAnySpellcasting } from '../../../services/character/spell-data'
-import { load5eSpells } from '../../../services/data-provider'
-import { useBuilderStore } from '../../../stores/use-builder-store'
+import { getHeritageOptions5e, load5eSpells, resolveDataPath } from '../../../services/data-provider'
+import { type BuilderState, useBuilderStore } from '../../../stores/use-builder-store'
+
+type _BuilderState = BuilderState
+
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
 import { useNetworkStore } from '../../../stores/use-network-store'
+import { PRIMORDIAL_DIALECTS } from '../../../types/character-common'
 import { logger } from '../../../utils/logger'
 import Modal from '../../ui/Modal'
 import BuildSidebar from '../shared/BuildSidebar'
@@ -75,6 +79,17 @@ export default function CharacterBuilder5e(): JSX.Element {
       })
       .catch((err) => logger.error('Failed to load spell data:', err))
   }, [])
+
+  // Preload heritage options for the selected species
+  const speciesSlot = useBuilderStore((s) => s.buildSlots.find((sl) => sl.id === 'ancestry'))
+  useEffect(() => {
+    const speciesId = speciesSlot?.selectedId
+    if (speciesId) {
+      const dataPath = resolveDataPath('dnd5e', 'species')
+      logger.debug('Resolved species data path:', dataPath)
+      getHeritageOptions5e(speciesId).catch(() => {})
+    }
+  }, [speciesSlot?.selectedId])
 
   // Validation
   const validation = useMemo(() => {
@@ -183,6 +198,13 @@ export default function CharacterBuilder5e(): JSX.Element {
       issues.push(
         `Choose ${totalBonusSlots - chosenLanguages.length} more language${totalBonusSlots - chosenLanguages.length !== 1 ? 's' : ''}`
       )
+    }
+    // Warn if Primordial is chosen without specifying a dialect
+    if (
+      chosenLanguages.includes('Primordial') &&
+      !chosenLanguages.some((lang) => PRIMORDIAL_DIALECTS.includes(lang as (typeof PRIMORDIAL_DIALECTS)[number]))
+    ) {
+      issues.push(`Primordial speakers typically know a dialect: ${PRIMORDIAL_DIALECTS.join(', ')}`)
     }
 
     // 16. Class spell selection validation

@@ -1,5 +1,6 @@
 import { type ChangeEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react'
-import { isModerationEnabled, setModerationEnabled } from '../../network/host-manager'
+import type { ChatFilePayload } from '../../network'
+import { isModerationEnabled, setModerationEnabled } from '../../network'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
 
@@ -172,14 +173,15 @@ export default function ChatInput(): JSX.Element {
       })
 
       // Send over network
-      sendMessage('chat:file', {
+      const filePayload: ChatFilePayload = {
         fileName: file.name,
         fileType,
         fileData: base64,
         mimeType,
         senderId: localPeerId || '',
         senderName: displayName
-      })
+      }
+      sendMessage('chat:file', filePayload)
     }
     reader.readAsDataURL(file)
     if (fileInputRef.current) fileInputRef.current.value = ''

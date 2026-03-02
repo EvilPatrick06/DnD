@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import type { ShopItem } from '../../network/types'
+import type { ShopItem } from '../../network'
 import type { GameStoreState, ShopSliceState } from './types'
 
 export const createShopSlice: StateCreator<GameStoreState, [], [], ShopSliceState> = (set) => ({

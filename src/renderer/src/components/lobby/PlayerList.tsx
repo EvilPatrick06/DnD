@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { banPeer, chatMutePeer, kickPeer } from '../../network/host-manager'
+import { banPeer, chatMutePeer, kickPeer } from '../../network'
 import { useCampaignStore } from '../../stores/use-campaign-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
-import PlayerCard from './PlayerCard'
+import { PlayerCard } from '.'
 
 export default function PlayerList(): JSX.Element {
   const navigate = useNavigate()

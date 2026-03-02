@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { getPluginContextMenuItems } from '../../../services/plugin-system/ui-extensions'
+import {
+  getPluginContextMenuItems,
+  type PluginBottomBarWidget,
+  type PluginContextMenuAction
+} from '../../../services/plugin-system/ui-extensions'
+
+type _PluginBottomBarWidget = PluginBottomBarWidget
+type _PluginContextMenuAction = PluginContextMenuAction
+
 import { useGameStore } from '../../../stores/use-game-store'
 import type { SidebarEntry } from '../../../types/game-state'
 import type { MapToken } from '../../../types/map'

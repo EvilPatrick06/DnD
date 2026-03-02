@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { ActiveModal } from '../components/game/GameModalDispatcher'
-import type { MessageType } from '../network/types'
+import type { MessageType } from '../network'
 import { createCompanionToken } from '../services/character/companion-service'
 import { load5eMonsterById } from '../services/data-provider'
 import { flushAutoSave } from '../services/io/game-auto-save'

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { MessageType } from '../../../network/types'
+import type { MessageType } from '../../../network'
+import type { ReactionPromptState } from '../../../stores/game/types'
+
+type _ReactionPromptState = ReactionPromptState
+
 import { useGameStore } from '../../../stores/use-game-store'
 import type { ChatMessage } from '../../../stores/use-lobby-store'
 

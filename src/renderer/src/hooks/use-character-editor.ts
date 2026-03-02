@@ -1,7 +1,7 @@
 import { useCharacterStore } from '../stores/use-character-store'
 import { useLobbyStore } from '../stores/use-lobby-store'
 import { useNetworkStore } from '../stores/use-network-store'
-import type { Character } from '../types/character'
+import type { Character } from '../types'
 
 /**
  * Provides common character editing utilities used across sheet sections.

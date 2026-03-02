@@ -2,6 +2,7 @@
 
 import shortcutsJson from '../../public/data/ui/keyboard-shortcuts.json'
 import { type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
+import { load5eKeyboardShortcuts } from './data-provider'
 
 export interface ShortcutDefinition {
   key: string // e.g., 'Space', 'Escape', 'd', '1'-'9'
@@ -145,6 +146,12 @@ export function setEnabled(e: boolean): void {
 /** Get all shortcut definitions (with custom overrides applied). */
 export function getShortcuts(): ShortcutDefinition[] {
   return getEffectiveShortcuts()
+}
+
+/** Load shortcut definitions from the data store (includes plugin additions). */
+export async function loadShortcutDefinitions(): Promise<ShortcutDefinition[]> {
+  const data = await load5eKeyboardShortcuts()
+  return data as unknown as ShortcutDefinition[]
 }
 
 /** Get shortcut definitions grouped by category (with custom overrides applied). */

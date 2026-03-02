@@ -30,6 +30,11 @@ vi.mock('../../services/data-provider', () => ({
   load5eRandomTables: vi.fn(() => Promise.resolve({}))
 }))
 
+vi.mock('../dice/dice-service', () => ({
+  rollForDm: vi.fn(),
+  revealRoll: vi.fn()
+}))
+
 // Stub crypto.randomUUID
 vi.stubGlobal('crypto', { randomUUID: () => 'test-uuid-1234' })
 

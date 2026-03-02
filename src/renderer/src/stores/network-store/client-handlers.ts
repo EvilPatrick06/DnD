@@ -1,26 +1,29 @@
 import type {
+  CoDMPayload,
+  ColorChangePayload,
+  ConditionUpdatePayload,
+  FileSharingPayload,
+  FogRevealPayload,
+  GameStateFullPayload,
   InspectResponsePayload,
   JournalAddPayload,
   JournalDeletePayload,
   JournalSyncPayload,
   JournalUpdatePayload,
   MacroPushPayload,
-  TradeCancelPayload,
-  TradeRequestPayload,
-  TradeResultPayload
-} from '../../network/message-types'
-import type {
-  ConditionUpdatePayload,
-  FileSharingPayload,
-  FogRevealPayload,
-  GameStateFullPayload,
   MapChangePayload,
   NetworkGameState,
   NetworkMessage,
   PeerInfo,
+  ReactionPromptPayload,
+  RollRequestPayload,
   SlowModePayload,
-  TokenMovePayload
-} from '../../network/types'
+  TokenMovePayload,
+  TradeCancelPayload,
+  TradeRequestPayload,
+  TradeResultPayload,
+  WhisperPayload
+} from '../../network'
 import type { NetworkState } from './index'
 
 // Lazy accessors to break circular dependency (network-store -> game/lobby-store -> network-store)
@@ -179,21 +182,21 @@ export function handleClientMessage(
     }
 
     case 'dm:promote-codm': {
-      const payload = message.payload as { peerId: string; isCoDM: boolean }
+      const payload = message.payload as CoDMPayload
       get().updatePeer(payload.peerId, { isCoDM: payload.isCoDM })
       getLobbyStore().getState().updatePlayer(payload.peerId, { isCoDM: payload.isCoDM })
       break
     }
 
     case 'dm:demote-codm': {
-      const payload = message.payload as { peerId: string; isCoDM: boolean }
+      const payload = message.payload as CoDMPayload
       get().updatePeer(payload.peerId, { isCoDM: false })
       getLobbyStore().getState().updatePlayer(payload.peerId, { isCoDM: false })
       break
     }
 
     case 'player:color-change': {
-      const payload = message.payload as { color: string }
+      const payload = message.payload as ColorChangePayload
       get().updatePeer(message.senderId, { color: payload.color })
       getLobbyStore().getState().updatePlayer(message.senderId, { color: payload.color })
       break
@@ -310,7 +313,7 @@ export function handleClientMessage(
     }
 
     case 'chat:whisper': {
-      const payload = message.payload as { message: string; targetPeerId: string; targetName: string }
+      const payload = message.payload as WhisperPayload
       getLobbyStore()
         .getState()
         .addChatMessage({
@@ -331,19 +334,7 @@ export function handleClientMessage(
     }
 
     case 'combat:reaction-prompt': {
-      const payload = message.payload as {
-        promptId: string
-        targetEntityId: string
-        targetPeerId: string
-        triggerType: 'shield' | 'counterspell' | 'absorb-elements' | 'silvery-barbs'
-        triggerContext: {
-          attackRoll?: number
-          attackerName?: string
-          spellName?: string
-          spellLevel?: number
-          damageType?: string
-        }
-      }
+      const payload = message.payload as ReactionPromptPayload
       getGameStore().getState().setPendingReactionPrompt({
         promptId: payload.promptId,
         targetEntityId: payload.targetEntityId,
@@ -429,6 +420,24 @@ export function handleClientMessage(
       if (payload.targetPeerId === localId) {
         getGameStore().getState().setInspectedCharacter(payload.characterData)
       }
+      break
+    }
+
+    // --- Group roll request from DM ---
+    case 'dm:roll-request': {
+      const payload = message.payload as RollRequestPayload
+      getGameStore()
+        .getState()
+        .setPendingGroupRoll({
+          id: payload.id ?? `roll-${Date.now()}`,
+          type: payload.type,
+          ability: payload.ability,
+          skill: payload.skill,
+          dc: payload.dc,
+          isSecret: payload.isSecret,
+          scope: 'all',
+          targetEntityIds: []
+        })
       break
     }
 

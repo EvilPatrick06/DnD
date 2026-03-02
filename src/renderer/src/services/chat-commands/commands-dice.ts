@@ -1,4 +1,5 @@
 import { useGameStore } from '../../stores/use-game-store'
+import { revealRoll, rollForDm } from '../dice/dice-service'
 import { broadcastDiceResult, getLastRoll, parseDiceFormula, rollDiceFormula, rollSingle, setLastRoll } from './helpers'
 import type { ChatCommand, CommandContext } from './types'
 
@@ -15,6 +16,9 @@ function executeHiddenRoll(args: string, ctx: CommandContext) {
   const formulaStr = args.trim()
   const result = rollDiceFormula(formula)
   setLastRoll({ formula: formulaStr, rolls: result.rolls, total: result.total, rollerName: ctx.playerName })
+
+  // Trigger 3D dice locally for DM + send hidden animation to players
+  rollForDm(formulaStr, { rollerName: ctx.playerName })
 
   useGameStore.getState().addHiddenDiceResult({
     id: crypto.randomUUID(),
@@ -226,6 +230,32 @@ export const commands: ChatCommand[] = [
     dmOnly: true,
     execute: (args: string, ctx: CommandContext) => {
       return executeHiddenRoll(args, ctx)
+    }
+  },
+
+  // /reveal - Reveal the last hidden roll to all players
+  {
+    name: 'reveal',
+    aliases: ['showroll'],
+    description: 'Reveal your last hidden roll to all players',
+    usage: '/reveal [label]',
+    examples: ['/reveal Attack Roll', '/reveal'],
+    category: 'dm',
+    dmOnly: true,
+    execute: (args: string, ctx: CommandContext) => {
+      const last = getLastRoll()
+      if (!last) {
+        return { handled: false, error: 'No previous roll to reveal.' }
+      }
+      const label = args.trim() || undefined
+      revealRoll(
+        { formula: last.formula, rolls: last.rolls, total: last.total, natural20: false, natural1: false },
+        label
+      )
+      ctx.addSystemMessage(
+        `[Revealed] ${last.formula}: [${last.rolls.join(', ')}] = ${last.total}${label ? ` (${label})` : ''}`
+      )
+      return { handled: true }
     }
   },
 

@@ -4,14 +4,27 @@ import { ConfirmDialog } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
 import { load5eBastionFacilities } from '../services/data-provider'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
-import { useBastionStore } from '../stores/use-bastion-store'
+import { type BastionState, useBastionStore } from '../stores/use-bastion-store'
 import { useCharacterStore } from '../stores/use-character-store'
-import type { BasicFacilityDef, Bastion, SpecialFacilityDef } from '../types/bastion'
+import type { BasicFacilityDef, Bastion, BastionFacilitiesData, SpecialFacilityDef } from '../types/bastion'
 import { getAvailableFacilityLevel, getMaxSpecialFacilities } from '../types/bastion'
 import { is5eCharacter } from '../types/character'
 import type { Character5e } from '../types/character-5e'
-import BastionModals from './bastion/BastionModals'
-import { BasicTab, DefendersTab, EventsTab, OverviewTab, SpecialTab, TurnsTab } from './bastion/BastionTabs'
+import BastionModals, { type BastionModalsProps } from './bastion/BastionModals'
+
+type _BastionState = BastionState
+type _BastionFacilitiesData = BastionFacilitiesData
+type _BastionModalsProps = BastionModalsProps
+
+import {
+  BasicTab,
+  DefendersTab,
+  EventsTab,
+  OverviewTab,
+  SpecialTab,
+  SummaryCard,
+  TurnsTab
+} from './bastion/BastionTabs'
 import { TABS, type TabId } from './bastion/bastion-constants'
 
 export default function BastionPage(): JSX.Element {
@@ -202,8 +215,22 @@ export default function BastionPage(): JSX.Element {
         {/* Main content */}
         <div className="flex-1 overflow-y-auto">
           {!selectedBastion ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Select a bastion from the sidebar or create a new one
+            <div className="flex flex-col items-center justify-center h-full gap-6">
+              <div className="text-gray-500">Select a bastion from the sidebar or create a new one</div>
+              {bastions.length > 0 && (
+                <div className="grid grid-cols-3 gap-4 max-w-md">
+                  <SummaryCard label="Total Bastions" value={bastions.length} />
+                  <SummaryCard
+                    label="Total Defenders"
+                    value={bastions.reduce((sum, b) => sum + b.defenders.length, 0)}
+                  />
+                  <SummaryCard
+                    label="Total Treasury"
+                    value={`${bastions.reduce((sum, b) => sum + b.treasury, 0)} GP`}
+                    accent
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col h-full">

@@ -5,7 +5,7 @@
  * Extracted from DefenseSection5e for modularity.
  */
 
-import { DAMAGE_TYPE_LABELS } from '../../../constants/damage-types'
+import { DAMAGE_TYPE_LABELS } from '../../../constants'
 import { CONDITIONS_5E } from '../../../data/conditions'
 import { useEquipmentData } from '../../../hooks/use-equipment-data'
 import { load5eEquipment } from '../../../services/data-provider'

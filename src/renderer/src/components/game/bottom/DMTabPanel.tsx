@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import dmTabsJson from '../../../../public/data/ui/dm-tabs.json'
+import { load5eDmTabs } from '../../../services/data-provider'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
 import type { Campaign } from '../../../types/campaign'
 
@@ -17,6 +18,11 @@ interface DMTabPanelProps {
 }
 
 const TABS = dmTabsJson as readonly { id: string; label: string; icon: string }[]
+
+/** Load DM tab definitions from the data store (includes plugin tabs). */
+export async function loadDmTabData(): Promise<unknown> {
+  return load5eDmTabs()
+}
 
 type TabId = string
 

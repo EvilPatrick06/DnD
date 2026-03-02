@@ -1,6 +1,7 @@
 import speciesSpellsJson from '../../../public/data/5e/character/species-spells.json'
 import type { Character5e } from '../../types/character-5e'
 import type { AbilityName, SpellEntry } from '../../types/character-common'
+import { load5eSpeciesSpells } from '../data-provider'
 
 // Skill-to-ability mapping for 5e
 export const SKILL_ABILITY_MAP_5E: Record<string, AbilityName> = {
@@ -120,4 +121,13 @@ export function getSpeciesSpellProgression(
   }
 
   return spells
+}
+
+/**
+ * Load species spell data from the data store (includes homebrew/plugin species spells).
+ * Useful when building characters with homebrewed species that grant spells.
+ */
+export async function loadSpeciesSpellData(): Promise<Record<string, unknown>> {
+  const data = await load5eSpeciesSpells()
+  return data as unknown as Record<string, unknown>
 }

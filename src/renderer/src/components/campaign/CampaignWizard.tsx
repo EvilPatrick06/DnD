@@ -1,24 +1,42 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { DEFAULT_OLLAMA_URL } from '../../constants/app-constants'
+import { DEFAULT_OLLAMA_URL } from '../../constants'
 import { type Adventure, loadAdventures } from '../../services/adventure-loader'
 import { useCampaignStore } from '../../stores/use-campaign-store'
-import type { CalendarConfig, CampaignType, CustomRule, TurnMode } from '../../types/campaign'
+import {
+  type CalendarConfig,
+  type CampaignType,
+  type CustomRule,
+  DEFAULT_OPTIONAL_RULES,
+  type OptionalRules,
+  type TurnMode
+} from '../../types/campaign'
+
+type _OptionalRules = OptionalRules
+
 import type { GameSystem } from '../../types/game-system'
 import type { GameMap } from '../../types/map'
 import { logger } from '../../utils/logger'
 import { Button } from '../ui'
-import AdventureSelector from './AdventureSelector'
-import AudioStep, { type CustomAudioEntry } from './AudioStep'
+import { AdventureSelector, AudioStep, DetailsStep, MapConfigStep, ReviewStep, RulesStep, SystemStep } from '.'
+import type { CustomAudioEntry } from './AudioStep'
 import CalendarStep from './CalendarStep'
-import DetailsStep from './DetailsStep'
-import MapConfigStep from './MapConfigStep'
 import OllamaSetupStep from './OllamaSetupStep'
 import SessionZeroStep, { DEFAULT_SESSION_ZERO, type SessionZeroData } from './SessionZeroStep'
 import StartStep from './StartStep'
-import SystemStep from './SystemStep'
 
-const STEPS = ['System', 'Details', 'AI DM', 'Adventure', 'Session Zero', 'Calendar', 'Maps', 'Audio']
+const STEPS = [
+  'System',
+  'Details',
+  'AI DM',
+  'Adventure',
+  'Session Zero',
+  'Rules',
+  'Calendar',
+  'Maps',
+  'Audio',
+  'Review'
+]
 
 export default function CampaignWizard(): JSX.Element {
   const navigate = useNavigate()
@@ -88,11 +106,15 @@ export default function CampaignWizard(): JSX.Element {
       case 4:
         return true // Session Zero is optional
       case 5:
-        return true // Calendar is optional
+        return true // Rules are optional
       case 6:
-        return true // Maps are optional
+        return true // Calendar is optional
       case 7:
+        return true // Maps are optional
+      case 8:
         return true // Audio is optional
+      case 9:
+        return true // Review — create button is inline
       default:
         return false
     }
@@ -190,7 +212,8 @@ export default function CampaignWizard(): JSX.Element {
           maxPlayers,
           lobbyMessage: lobbyMessage.trim(),
           levelRange: selectedAdventure?.levelRange ?? { min: 1, max: 20 },
-          allowCharCreationInLobby: true
+          allowCharCreationInLobby: true,
+          optionalRules: DEFAULT_OPTIONAL_RULES
         },
         calendar: calendar ?? undefined,
         customAudio:
@@ -319,9 +342,11 @@ export default function CampaignWizard(): JSX.Element {
         />
       )}
 
-      {step === 5 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
+      {step === 5 && <RulesStep rules={customRules} onChange={setCustomRules} />}
 
-      {step === 6 && (
+      {step === 6 && <CalendarStep calendar={calendar} onChange={setCalendar} />}
+
+      {step === 7 && (
         <MapConfigStep
           maps={maps}
           campaignId={tempCampaignId}
@@ -337,25 +362,48 @@ export default function CampaignWizard(): JSX.Element {
         />
       )}
 
-      {step === 7 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
+      {step === 8 && <AudioStep audioEntries={customAudio} onChange={setCustomAudio} />}
 
-      {/* Navigation buttons */}
-      <div className="flex gap-4 mt-8 max-w-2xl">
-        {step > 0 && (
-          <Button variant="secondary" onClick={handleBack}>
-            Back
-          </Button>
-        )}
-        {step < STEPS.length - 1 ? (
+      {step === 9 && system && (
+        <ReviewStep
+          system={system}
+          name={name}
+          description={description}
+          maxPlayers={maxPlayers}
+          turnMode={turnMode}
+          lobbyMessage={lobbyMessage}
+          campaignType={campaignType}
+          adventureName={selectedAdventure?.name ?? null}
+          customRules={customRules}
+          maps={maps}
+          customAudioCount={customAudio.length}
+          calendar={calendar}
+          aiDm={aiEnabled ? { ollamaModel: aiOllamaModel, ollamaUrl: aiOllamaUrl } : null}
+          onSubmit={handleCreate}
+          submitting={submitting}
+        />
+      )}
+
+      {/* Navigation buttons (Review step has its own submit button) */}
+      {step < STEPS.length - 1 && (
+        <div className="flex gap-4 mt-8 max-w-2xl">
+          {step > 0 && (
+            <Button variant="secondary" onClick={handleBack}>
+              Back
+            </Button>
+          )}
           <Button onClick={handleNext} disabled={!canAdvance()}>
             Next
           </Button>
-        ) : (
-          <Button onClick={handleCreate} disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create Campaign'}
+        </div>
+      )}
+      {step === STEPS.length - 1 && step > 0 && (
+        <div className="flex gap-4 mt-4 max-w-2xl">
+          <Button variant="secondary" onClick={handleBack}>
+            Back
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,3 +1,8 @@
+import { CANTRIPS_KNOWN, getSpellcastingAbility, getWarlockMaxSpellLevel, SPELLCASTING_ABILITY_MAP } from './spell-data'
+
+/** Re-export spell data helpers used by preparation analysis consumers */
+export { CANTRIPS_KNOWN, getSpellcastingAbility, getWarlockMaxSpellLevel, SPELLCASTING_ABILITY_MAP }
+
 export interface SpellDiversityResult {
   school: string
   count: number
@@ -15,6 +20,12 @@ export interface RitualSuggestion {
   reason: string
 }
 
+export interface SpellcasterSummary {
+  ability: string | undefined
+  abilityFromMap: boolean
+  maxCantrips: number
+}
+
 export interface SpellPrepAnalysis {
   totalPrepared: number
   diversity: SpellDiversityResult[]
@@ -22,6 +33,7 @@ export interface SpellPrepAnalysis {
   concentrationWarning: boolean
   ritualSuggestions: RitualSuggestion[]
   missingSchools: string[]
+  casterSummary?: SpellcasterSummary
 }
 
 const ALL_SCHOOLS = [
@@ -93,6 +105,27 @@ export function getRitualSpells(
 }
 
 /**
+ * Build a caster summary using SPELLCASTING_ABILITY_MAP, getSpellcastingAbility, and CANTRIPS_KNOWN.
+ */
+export function buildCasterSummary(classId: string, level: number, subclassId?: string): SpellcasterSummary {
+  // Use getSpellcastingAbility which checks both main class and third-caster subclass maps
+  const ability = getSpellcastingAbility(classId, subclassId)
+  // Check if the ability was found directly in the SPELLCASTING_ABILITY_MAP (full/half casters)
+  const abilityFromMap = classId in SPELLCASTING_ABILITY_MAP
+
+  // Determine max cantrips known from the CANTRIPS_KNOWN table
+  const cantripTable = CANTRIPS_KNOWN[classId]
+  let maxCantrips = 0
+  if (cantripTable) {
+    for (const [lvl, count] of Object.entries(cantripTable)) {
+      if (level >= Number(lvl)) maxCantrips = count
+    }
+  }
+
+  return { ability, abilityFromMap, maxCantrips }
+}
+
+/**
  * Full analysis of a caster's prepared spell list.
  */
 export function analyzePreparation(
@@ -103,7 +136,10 @@ export function analyzePreparation(
     concentration?: boolean
     ritual?: boolean
   }>,
-  knownSpells: Array<{ name: string; level: number; ritual?: boolean }>
+  knownSpells: Array<{ name: string; level: number; ritual?: boolean }>,
+  classId?: string,
+  level?: number,
+  subclassId?: string
 ): SpellPrepAnalysis {
   const diversity = analyzeSpellDiversity(preparedSpells)
   const { spells: concentrationSpells, isWarning } = getConcentrationConflicts(preparedSpells)
@@ -111,12 +147,15 @@ export function analyzePreparation(
   const presentSchools = new Set(diversity.map((d) => d.school))
   const missingSchools = ALL_SCHOOLS.filter((s) => !presentSchools.has(s))
 
+  const casterSummary = classId && level ? buildCasterSummary(classId, level, subclassId) : undefined
+
   return {
     totalPrepared: preparedSpells.length,
     diversity,
     concentrationSpells,
     concentrationWarning: isWarning,
     ritualSuggestions,
-    missingSchools
+    missingSchools,
+    casterSummary
   }
 }

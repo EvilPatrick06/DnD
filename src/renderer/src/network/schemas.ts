@@ -1,5 +1,18 @@
 import { z } from 'zod'
-import { MESSAGE_TYPES } from './types'
+import {
+  type AnnouncementPayload,
+  type DiceRoll3dPayload,
+  type DiceRollPayload,
+  type HandoutPayload,
+  type InitiativeUpdatePayload,
+  type LootAwardPayload,
+  type MapPingPayload,
+  MESSAGE_TYPES,
+  type MoveDeclarePayload,
+  type ReactionResponsePayload,
+  type StateUpdatePayload,
+  type XpAwardPayload
+} from './types'
 
 // ── Envelope Schema ──
 
@@ -535,6 +548,23 @@ export function validateNetworkMessage(raw: unknown): ValidationResult {
 
   return { success: true, message: msg }
 }
+
+// ── Type compatibility checks ──
+// Ensure Zod schemas produce types assignable to the TS payload interfaces.
+// These are compile-time only assertions, no runtime cost.
+type AssertAssignable<_Target, Source extends _Target> = Source
+
+type _CheckDiceRoll = AssertAssignable<DiceRollPayload, z.infer<typeof DiceRollPayloadSchema>>
+type _CheckStateUpdate = AssertAssignable<StateUpdatePayload, z.infer<typeof StateUpdatePayloadSchema>>
+type _CheckInitiativeUpdate = AssertAssignable<InitiativeUpdatePayload, z.infer<typeof InitiativeUpdatePayloadSchema>>
+type _CheckLootAward = AssertAssignable<LootAwardPayload, z.infer<typeof LootAwardPayloadSchema>>
+type _CheckXpAward = AssertAssignable<XpAwardPayload, z.infer<typeof XpAwardPayloadSchema>>
+type _CheckHandout = AssertAssignable<HandoutPayload, z.infer<typeof HandoutPayloadSchema>>
+type _CheckAnnouncement = AssertAssignable<AnnouncementPayload, z.infer<typeof AnnouncementPayloadSchema>>
+type _CheckMapPing = AssertAssignable<MapPingPayload, z.infer<typeof MapPingPayloadSchema>>
+type _CheckDiceRoll3d = AssertAssignable<DiceRoll3dPayload, z.infer<typeof DiceRoll3dPayloadSchema>>
+type _CheckMoveDeclare = AssertAssignable<MoveDeclarePayload, z.infer<typeof MoveDeclarePayloadSchema>>
+type _CheckReactionResponse = AssertAssignable<ReactionResponsePayload, z.infer<typeof ReactionResponsePayloadSchema>>
 
 // Export for testing
 export { NetworkMessageEnvelopeSchema, PAYLOAD_SCHEMAS, AnyPayloadSchema }

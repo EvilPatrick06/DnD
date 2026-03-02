@@ -1,4 +1,4 @@
-import type { ConnectionState, MessageType, PeerInfo } from '../../network/types'
+import type { ConnectionState, MessageType, PeerInfo } from '../../network'
 
 export interface NetworkState {
   role: 'none' | 'host' | 'client'

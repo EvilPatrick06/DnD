@@ -1,12 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { meetsPrerequisites } from '../../../services/character/multiclass-advisor'
 import { load5eClasses } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { ClassData } from '../../../types/data'
-import LevelSection5e from './LevelSection5e'
+import LevelSection5e, { AsiSelector5e, GeneralFeatPicker } from './LevelSection5e'
 import { ClassLevelSelector, InvocationSection5e, MetamagicSection5e } from './LevelUpConfirm5e'
 import { calculateSummary5e, LevelUpSummaryBar5e } from './LevelUpSummary5e'
 import SpellSelectionSection5e from './SpellSelectionSection5e'
+
+/**
+ * Standalone picker components available for custom level-up UIs.
+ * AsiSelector5e: pure ability score increase picker (+2/+1+1)
+ * GeneralFeatPicker: standalone general feat selection with search/filtering
+ */
+export const LevelUpSubComponents = {
+  AsiSelector5e,
+  GeneralFeatPicker
+} as const
 
 interface LevelUpWizard5eProps {
   character: Character5e
@@ -37,6 +48,14 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
       .then(setAllClasses)
       .catch(() => setAllClasses([]))
   }, [])
+
+  // Check if the character meets the primary ability prerequisites for their current class
+  // (relevant for multiclass validation per 2024 PHB rules)
+  const primaryClassPrereqMet = useMemo(() => {
+    const primaryClass = allClasses.find((c) => (c.id ?? c.name.toLowerCase()) === character.buildChoices.classId)
+    if (!primaryClass) return true
+    return meetsPrerequisites(character, primaryClass.coreTraits.primaryAbility.join(' or '))
+  }, [character, allClasses])
 
   // Group slots by level
   const slotsByLevel = new Map<number, typeof levelUpSlots>()
@@ -83,6 +102,14 @@ export default function LevelUpWizard5e({ character }: LevelUpWizard5eProps): JS
           Level {currentLevel} &rarr; {targetLevel}
         </span>
       </div>
+
+      {/* Multiclass prerequisite warning */}
+      {!primaryClassPrereqMet && allClasses.length > 1 && (
+        <div className="px-4 py-2 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-xs text-yellow-400">
+          Your ability scores do not meet the multiclass prerequisites for your primary class. Multiclassing out may be
+          restricted by your DM.
+        </div>
+      )}
 
       {/* Per-level sections */}
       {Array.from(slotsByLevel.entries())

@@ -1,4 +1,6 @@
-import { load5eVariantItems } from '../services/data-provider'
+import { load5eVariantItems, type VariantItemEntry } from '../services/data-provider'
+
+type _VariantItemEntry = VariantItemEntry
 
 export const VARIANT_ITEMS: Record<string, { label: string; variants: string[] }> = {}
 

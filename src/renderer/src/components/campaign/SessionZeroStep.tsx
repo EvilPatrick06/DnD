@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import sessionZeroJson from '../../../public/data/5e/world/session-zero-config.json'
+import { load5eSessionZeroConfig } from '../../services/data-provider'
 import type { CustomRule } from '../../types/campaign'
 
 export interface SessionZeroData {
@@ -9,6 +10,11 @@ export interface SessionZeroData {
   characterDeathExpectation: string
   playSchedule: string
   additionalNotes: string
+}
+
+/** Load session zero config from the data store (includes plugin additions). */
+export async function loadSessionZeroConfigData(): Promise<unknown> {
+  return load5eSessionZeroConfig()
 }
 
 export const DEFAULT_SESSION_ZERO: SessionZeroData = {

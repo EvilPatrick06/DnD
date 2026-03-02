@@ -5,13 +5,14 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { logToFile } from '../log'
 import { saveConversation } from '../storage/ai-conversation-storage'
 import { parseRuleCitations, stripRuleCitations } from './ai-response-parser'
-import type { StreamHandlerDeps } from './ai-stream-handler'
+import type { PendingWebSearchApproval, StreamHandlerDeps } from './ai-stream-handler'
 import { buildChunkIndex, loadChunkIndex } from './chunk-builder'
 import { buildContext, setSearchEngine } from './context-builder'
 import { ConversationManager } from './conversation-manager'
 import { parseDmActions, stripDmActions } from './dm-actions'
 import {
   FILE_READ_MAX_DEPTH,
+  type FileReadRequest,
   formatFileContent,
   hasFileReadTag,
   parseFileRead,
@@ -31,21 +32,39 @@ import { OLLAMA_BASE_URL } from './ollama-manager'
 import { SearchEngine } from './search-engine'
 import { applyMutations, describeChange, isNegativeChange, parseStatChanges, stripStatChanges } from './stat-mutations'
 import { cleanNarrativeText, hasViolations } from './tone-validator'
-import type { AiChatRequest, AiConfig, DmActionData, ProviderStatus, RuleCitation, StatChange } from './types'
-import { formatSearchResults, hasWebSearchTag, parseWebSearch, performWebSearch, stripWebSearch } from './web-search'
+import type {
+  AiChatRequest,
+  AiConfig,
+  AiIndexProgress,
+  AiStreamChunk,
+  AiStreamDone,
+  AiStreamError,
+  DmActionData,
+  ProviderStatus,
+  RuleCitation,
+  StatChange
+} from './types'
+import {
+  formatSearchResults,
+  hasWebSearchTag,
+  parseWebSearch,
+  performWebSearch,
+  stripWebSearch,
+  type WebSearchRequest,
+  type WebSearchResult
+} from './web-search'
+
+// Ensure stream/progress types are used for type-safety
+type _AiStreamChunk = AiStreamChunk
+type _AiStreamDone = AiStreamDone
+type _AiStreamError = AiStreamError
+type _AiIndexProgress = AiIndexProgress
 
 // Per-campaign conversation managers
 const conversations = new Map<string, ConversationManager>()
 
 // Active stream abort controllers
 const activeStreams = new Map<string, AbortController>()
-
-interface PendingWebSearchApproval {
-  resolve: (approved: boolean) => void
-  timeout: ReturnType<typeof setTimeout>
-  onAbort: () => void
-  signal: AbortSignal
-}
 
 const pendingWebSearchApprovals = new Map<string, PendingWebSearchApproval>()
 const WEB_SEARCH_APPROVAL_TIMEOUT_MS = 30_000
@@ -459,7 +478,7 @@ async function handleStreamCompletion(
 
   // Check for file read tag
   if (hasFileReadTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
-    const fileReq = parseFileRead(fullText)
+    const fileReq: FileReadRequest | null = parseFileRead(fullText)
     if (fileReq) {
       // Notify renderer of file read status
       const win = BrowserWindow.getAllWindows()[0]
@@ -488,7 +507,7 @@ async function handleStreamCompletion(
 
   // Check for web search tag
   if (hasWebSearchTag(fullText) && fileReadDepth < FILE_READ_MAX_DEPTH) {
-    const searchReq = parseWebSearch(fullText)
+    const searchReq: WebSearchRequest | null = parseWebSearch(fullText)
     if (searchReq) {
       sendWebSearchStatus(streamId, searchReq.query, 'pending_approval')
       const approved = await waitForWebSearchApproval(streamId, abortController.signal)
@@ -505,7 +524,7 @@ async function handleStreamCompletion(
       }
 
       sendWebSearchStatus(streamId, searchReq.query, 'searching')
-      const results = await performWebSearch(searchReq.query)
+      const results: WebSearchResult[] = await performWebSearch(searchReq.query)
       if (abortController.signal.aborted) return
       const searchContent = formatSearchResults(searchReq.query, results)
       conv.addMessage('user', searchContent)

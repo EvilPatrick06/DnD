@@ -1,184 +1,163 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import MonsterStatBlockView from '../components/game/dm/MonsterStatBlockView'
-import { BackButton, Button, Spinner } from '../components/ui'
+import { useSearchParams } from 'react-router'
+import {
+  HomebrewCreateModal,
+  LibraryCategoryGrid,
+  LibraryDetailModal,
+  LibraryItemList,
+  LibrarySidebar
+} from '../components/library'
+import { BackButton, Button, EmptyState, Skeleton } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
-import { searchMonsters } from '../services/data-provider'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
 import { loadCategoryItems } from '../services/library-service'
 import { useLibraryStore } from '../stores/use-library-store'
+import type {
+  HomebrewEntry,
+  LibraryCategory,
+  LibraryCategoryDef,
+  LibraryGroup,
+  LibraryGroupDef,
+  LibraryItem
+} from '../types/library'
+import { getAllCategories, getCategoryDef, LIBRARY_GROUPS } from '../types/library'
+import type { SortField, Tab } from './library/LibraryFilters'
+import { CR_OPTIONS, SIZE_OPTIONS, sizeOrder, TABS, TYPE_OPTIONS } from './library/LibraryFilters'
+
+type _SortField = SortField
+type _Tab = Tab
+
+/** Library filter constants re-exported from LibraryFilters for downstream use. */
+const _LIBRARY_FILTER_META = { CR_OPTIONS, SIZE_OPTIONS, TYPE_OPTIONS, TABS, sizeOrder } as const
+void _LIBRARY_FILTER_META
+
+type _LibraryCategoryDef = LibraryCategoryDef
+type _LibraryGroup = LibraryGroup
+type _LibraryGroupDef = LibraryGroupDef
+
 import type { MonsterStatBlock } from '../types/monster'
-import { crToNumber } from '../types/monster'
 import { logger } from '../utils/logger'
-import LibraryFilters from './library/LibraryFilters'
-import type { SortField, Tab } from './library/library-constants'
-import { sizeOrder } from './library/library-constants'
 
 export default function LibraryPage(): JSX.Element {
-  const _navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('from') || '/'
 
-  const [tab, setTab] = useState<Tab>('monsters')
-  const [loading, setLoading] = useState(true)
-  const [monsters, setMonsters] = useState<MonsterStatBlock[]>([])
-  const [creatures, setCreatures] = useState<MonsterStatBlock[]>([])
-  const [npcs, setNpcs] = useState<MonsterStatBlock[]>([])
-  const [custom, setCustom] = useState<MonsterStatBlock[]>([])
+  const {
+    selectedCategory,
+    setCategory,
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    items,
+    setItems,
+    loading,
+    setLoading,
+    homebrewEntries,
+    loadHomebrew,
+    saveHomebrewEntry,
+    deleteHomebrewEntry
+  } = useLibraryStore()
 
-  const { searchQuery: search, setSearchQuery: setSearch } = useLibraryStore()
-  const [crFilter, setCrFilter] = useState('Any')
-  const [typeFilter, setTypeFilter] = useState('Any')
-  const [sizeFilter, setSizeFilter] = useState('Any')
-  const [sortField, setSortField] = useState<SortField>('name')
-  const [sortAsc, setSortAsc] = useState(true)
-
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [previewId, setPreviewId] = useState<string | null>(null)
+  const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null)
+  const [homebrewModal, setHomebrewModal] = useState<{
+    category: LibraryCategory
+    existingItem?: LibraryItem
+  } | null>(null)
 
   const [importing, setImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [mItems, cItems, nItems] = await Promise.all([
-        loadCategoryItems('monsters', []),
-        loadCategoryItems('creatures', []),
-        loadCategoryItems('npcs', [])
-      ])
-      setMonsters(mItems.map((i) => i.data as unknown as MonsterStatBlock))
-      setCreatures(cItems.map((i) => i.data as unknown as MonsterStatBlock))
-      setNpcs(nItems.map((i) => i.data as unknown as MonsterStatBlock))
+  // Load homebrew on mount
+  useEffect(() => {
+    loadHomebrew().then(() => setInitialLoading(false))
+  }, [loadHomebrew])
 
-      try {
-        const raw = await window.api.loadCustomCreatures()
-        if (Array.isArray(raw)) {
-          setCustom(raw as unknown as MonsterStatBlock[])
-        }
-      } catch {
-        setCustom([])
-      }
-    } finally {
-      setLoading(false)
+  // Compute homebrew counts per category
+  const homebrewCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const entry of homebrewEntries) {
+      counts[entry.type] = (counts[entry.type] ?? 0) + 1
     }
+    return counts
+  }, [homebrewEntries])
+
+  // Total available categories and groups for reference
+  const allCategories = getAllCategories()
+  const totalCategoryCount = allCategories.length
+  const totalGroupCount = LIBRARY_GROUPS.length
+
+  // Item counts per category (homebrew only for now — static counts are too expensive to load all at once)
+  const itemCounts = homebrewCounts
+
+  // Load items when category changes
+  useEffect(() => {
+    if (!selectedCategory) {
+      setItems([])
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    loadCategoryItems(selectedCategory, homebrewEntries)
+      .then((result) => {
+        if (!cancelled) setItems(result)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCategory, homebrewEntries, setItems, setLoading])
+
+  // Filter items by search
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return items
+    const q = search.toLowerCase()
+    return items.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
+  }, [items, search])
+
+  const handleSelectCategory = useCallback(
+    (cat: LibraryCategory | null) => {
+      setCategory(cat)
+      setSelectedItem(null)
+      setSearch('')
+    },
+    [setCategory, setSearch]
+  )
+
+  const handleCloneAsHomebrew = useCallback((item: LibraryItem) => {
+    setSelectedItem(null)
+    setHomebrewModal({ category: item.category, existingItem: item })
   }, [])
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  const activeList = useMemo(() => {
-    switch (tab) {
-      case 'monsters':
-        return monsters
-      case 'creatures':
-        return creatures
-      case 'npcs':
-        return npcs
-      case 'custom':
-        return custom
-    }
-  }, [tab, monsters, creatures, npcs, custom])
-
-  const filtered = useMemo(() => {
-    let list = search ? searchMonsters(activeList, search) : [...activeList]
-
-    if (crFilter !== 'Any') {
-      list = list.filter((m) => m.cr === crFilter)
-    }
-    if (typeFilter !== 'Any') {
-      list = list.filter((m) => m.type === typeFilter)
-    }
-    if (sizeFilter !== 'Any') {
-      list = list.filter((m) => m.size === sizeFilter)
-    }
-
-    list.sort((a, b) => {
-      let cmp = 0
-      switch (sortField) {
-        case 'name':
-          cmp = a.name.localeCompare(b.name)
-          break
-        case 'cr':
-          cmp = crToNumber(a.cr) - crToNumber(b.cr)
-          break
-        case 'type':
-          cmp = a.type.localeCompare(b.type)
-          break
-        case 'size':
-          cmp = sizeOrder(a.size) - sizeOrder(b.size)
-          break
+  const handleDeleteItem = useCallback(
+    async (item: LibraryItem) => {
+      if (item.source !== 'homebrew') return
+      const hbId = item.data._homebrewId as string | undefined
+      if (!hbId) return
+      const ok = await deleteHomebrewEntry(item.category, hbId)
+      if (ok) {
+        addToast(`Deleted "${item.name}"`, 'success')
+        setSelectedItem(null)
       }
-      return sortAsc ? cmp : -cmp
-    })
+    },
+    [deleteHomebrewEntry]
+  )
 
-    return list
-  }, [activeList, search, crFilter, typeFilter, sizeFilter, sortField, sortAsc])
+  const handleSaveHomebrew = useCallback(
+    async (entry: HomebrewEntry) => {
+      const ok = await saveHomebrewEntry(entry)
+      if (ok) {
+        addToast(`Saved "${entry.name}"`, 'success')
+        setHomebrewModal(null)
+      } else {
+        addToast('Failed to save', 'error')
+      }
+    },
+    [saveHomebrewEntry]
+  )
 
-  const previewMonster = useMemo(() => {
-    if (!previewId) return null
-    return [...monsters, ...creatures, ...npcs, ...custom].find((m) => m.id === previewId) ?? null
-  }, [previewId, monsters, creatures, npcs, custom])
-
-  const allSelected = filtered.length > 0 && filtered.every((m) => selected.has(m.id))
-
-  const toggleSelectAll = (): void => {
-    if (allSelected) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(filtered.map((m) => m.id)))
-    }
-  }
-
-  const toggleSelect = (id: string): void => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const handleSort = (field: SortField): void => {
-    if (sortField === field) {
-      setSortAsc(!sortAsc)
-    } else {
-      setSortField(field)
-      setSortAsc(true)
-    }
-  }
-
-  const handleExportSelected = async (): Promise<void> => {
-    const items = filtered.filter((m) => selected.has(m.id))
-    if (items.length === 0) return
-    setExporting(true)
-    try {
-      const ok = await exportEntities('monster', items)
-      if (ok) addToast(`Exported ${items.length} item(s)`, 'success')
-    } catch (err) {
-      addToast('Export failed', 'error')
-      logger.error(err)
-    } finally {
-      setExporting(false)
-    }
-  }
-
-  const handleExportAll = async (): Promise<void> => {
-    if (filtered.length === 0) return
-    setExporting(true)
-    try {
-      const ok = await exportEntities('monster', filtered)
-      if (ok) addToast(`Exported ${filtered.length} item(s)`, 'success')
-    } catch (err) {
-      addToast('Export failed', 'error')
-      logger.error(err)
-    } finally {
-      setExporting(false)
-    }
-  }
-
-  const handleImport = async (): Promise<void> => {
+  const handleImport = useCallback(async () => {
     setImporting(true)
     try {
       const result = await importEntities<MonsterStatBlock>('monster')
@@ -186,14 +165,12 @@ export default function LibraryPage(): JSX.Element {
         setImporting(false)
         return
       }
-
-      const items = reIdItems(result.items)
-      for (const item of items) {
+      const importedItems = reIdItems(result.items)
+      for (const item of importedItems) {
         await window.api.saveCustomCreature(item as unknown as Record<string, unknown>)
       }
-      addToast(`Imported ${items.length} creature(s) to Custom`, 'success')
-      await loadData()
-      setTab('custom')
+      addToast(`Imported ${importedItems.length} creature(s)`, 'success')
+      handleSelectCategory('monsters')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Import failed'
       addToast(msg, 'error')
@@ -201,41 +178,33 @@ export default function LibraryPage(): JSX.Element {
     } finally {
       setImporting(false)
     }
-  }
+  }, [handleSelectCategory])
 
-  const handleDeleteCustom = async (id: string): Promise<void> => {
-    await window.api.deleteCustomCreature(id)
-    setCustom((prev) => prev.filter((c) => c.id !== id))
-    setSelected((prev) => {
-      const n = new Set(prev)
-      n.delete(id)
-      return n
-    })
-    addToast('Creature deleted', 'success')
-  }
-
-  const handleDeleteSelected = async (): Promise<void> => {
-    if (tab !== 'custom') return
-    const ids = [...selected].filter((id) => custom.some((c) => c.id === id))
-    for (const id of ids) {
-      await window.api.deleteCustomCreature(id)
+  const handleExportAll = useCallback(async () => {
+    if (filteredItems.length === 0) return
+    setExporting(true)
+    try {
+      const ok = await exportEntities(
+        'monster',
+        filteredItems.map((i) => i.data)
+      )
+      if (ok) addToast(`Exported ${filteredItems.length} item(s)`, 'success')
+    } catch (err) {
+      addToast('Export failed', 'error')
+      logger.error(err)
+    } finally {
+      setExporting(false)
     }
-    setCustom((prev) => prev.filter((c) => !selected.has(c.id)))
-    setSelected(new Set())
-    addToast(`Deleted ${ids.length} creature(s)`, 'success')
-  }
+  }, [filteredItems])
 
-  const sortIcon = (field: SortField): string => {
-    if (sortField !== field) return ''
-    return sortAsc ? ' \u2191' : ' \u2193'
-  }
+  const catDef = selectedCategory ? getCategoryDef(selectedCategory) : null
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="p-8 h-screen">
         <BackButton to={returnTo} />
-        <div className="flex items-center justify-center py-24">
-          <Spinner size="lg" />
+        <div className="py-8">
+          <Skeleton lines={4} />
         </div>
       </div>
     )
@@ -247,138 +216,98 @@ export default function LibraryPage(): JSX.Element {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold text-amber-400">Library</h1>
+        <h1
+          className="text-3xl font-bold text-amber-400"
+          title={`${totalGroupCount} groups, ${totalCategoryCount} categories available`}
+        >
+          Library
+        </h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={handleImport} disabled={importing}>
             {importing ? 'Importing...' : 'Import'}
           </Button>
-          {selected.size > 0 && (
-            <Button variant="secondary" onClick={handleExportSelected} disabled={exporting}>
-              Export Selected ({selected.size})
+          {selectedCategory && filteredItems.length > 0 && (
+            <Button variant="secondary" onClick={handleExportAll} disabled={exporting}>
+              Export All ({filteredItems.length})
             </Button>
           )}
-          <Button variant="secondary" onClick={handleExportAll} disabled={exporting || filtered.length === 0}>
-            Export All ({filtered.length})
-          </Button>
-          {tab === 'custom' && selected.size > 0 && (
-            <Button variant="danger" onClick={handleDeleteSelected}>
-              Delete ({selected.size})
+          {selectedCategory && (
+            <Button variant="primary" onClick={() => setHomebrewModal({ category: selectedCategory })}>
+              Create Custom
             </Button>
           )}
         </div>
       </div>
 
-      <LibraryFilters
-        tab={tab}
-        setTab={setTab}
-        counts={{ monsters: monsters.length, creatures: creatures.length, npcs: npcs.length, custom: custom.length }}
-        search={search}
-        setSearch={setSearch}
-        crFilter={crFilter}
-        setCrFilter={setCrFilter}
-        typeFilter={typeFilter}
-        setTypeFilter={setTypeFilter}
-        sizeFilter={sizeFilter}
-        setSizeFilter={setSizeFilter}
-        onTabChange={() => {
-          setSelected(new Set())
-          setPreviewId(null)
-        }}
-      />
+      {/* Search bar */}
+      {selectedCategory && (
+        <div className="mb-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${catDef?.label ?? selectedCategory}...`}
+            className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+          />
+        </div>
+      )}
 
       {/* Content */}
-      <div className="flex gap-4 flex-1 min-h-0">
-        {/* List */}
+      <div className="flex gap-0 flex-1 min-h-0 border border-gray-800 rounded-lg overflow-hidden">
+        {/* Sidebar */}
+        <LibrarySidebar
+          selectedCategory={selectedCategory}
+          onSelectCategory={handleSelectCategory}
+          homebrewCounts={homebrewCounts}
+        />
+
+        {/* Main area */}
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Table header */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 rounded-t-lg text-xs text-gray-500 font-semibold uppercase tracking-wider">
-            <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="rounded shrink-0" />
-            <button onClick={() => handleSort('name')} className="flex-1 text-left cursor-pointer hover:text-gray-300">
-              Name{sortIcon('name')}
-            </button>
-            <button onClick={() => handleSort('type')} className="w-24 text-left cursor-pointer hover:text-gray-300">
-              Type{sortIcon('type')}
-            </button>
-            <button onClick={() => handleSort('size')} className="w-20 text-left cursor-pointer hover:text-gray-300">
-              Size{sortIcon('size')}
-            </button>
-            <button onClick={() => handleSort('cr')} className="w-14 text-left cursor-pointer hover:text-gray-300">
-              CR{sortIcon('cr')}
-            </button>
-            <span className="w-12 text-center">HP</span>
-            <span className="w-12 text-center">AC</span>
-            {tab === 'custom' && <span className="w-12" />}
-          </div>
-
-          {/* Table body */}
-          <div className="flex-1 overflow-y-auto border border-gray-800 rounded-b-lg">
-            {filtered.length === 0 ? (
-              <div className="text-center text-gray-500 py-12 text-sm">
-                {search || crFilter !== 'Any' || typeFilter !== 'Any' || sizeFilter !== 'Any'
-                  ? 'No results match your filters.'
-                  : tab === 'custom'
-                    ? 'No custom creatures yet. Import some or add from another tab.'
-                    : 'No data loaded.'}
-              </div>
-            ) : (
-              filtered.map((m) => (
-                <div
-                  key={m.id}
-                  onClick={() => setPreviewId(previewId === m.id ? null : m.id)}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm border-b border-gray-800/50 cursor-pointer transition-colors ${
-                    previewId === m.id ? 'bg-amber-900/20' : 'hover:bg-gray-800/30'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(m.id)}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      toggleSelect(m.id)
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="rounded shrink-0"
-                  />
-                  <span className="flex-1 text-gray-200 truncate font-medium">{m.name}</span>
-                  <span className="w-24 text-gray-400 text-xs truncate">{m.type}</span>
-                  <span className="w-20 text-gray-400 text-xs">{m.size}</span>
-                  <span className="w-14 text-amber-400 text-xs font-mono">{m.cr}</span>
-                  <span className="w-12 text-center text-gray-400 text-xs">{m.hp}</span>
-                  <span className="w-12 text-center text-gray-400 text-xs">{m.ac}</span>
-                  {tab === 'custom' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteCustom(m.id)
-                      }}
-                      className="w-12 text-center text-gray-500 hover:text-red-400 text-xs cursor-pointer"
-                      title="Delete"
-                    >
-                      Del
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Preview panel */}
-        {previewMonster && (
-          <div className="w-96 shrink-0 overflow-y-auto border border-gray-800 rounded-lg bg-gray-900/50 p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-amber-400">{previewMonster.name}</h3>
-              <button
-                onClick={() => setPreviewId(null)}
-                className="text-gray-500 hover:text-gray-300 cursor-pointer text-xs"
-              >
-                Close
-              </button>
+          {!selectedCategory ? (
+            <div className="flex-1 overflow-y-auto p-6">
+              <LibraryCategoryGrid onSelectCategory={handleSelectCategory} itemCounts={itemCounts} />
             </div>
-            <MonsterStatBlockView monster={previewMonster} />
-          </div>
-        )}
+          ) : loading && filteredItems.length === 0 ? (
+            <div className="flex-1 p-6 space-y-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded" />
+              ))}
+            </div>
+          ) : !loading && filteredItems.length === 0 && search.trim() ? (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <EmptyState title="No results found" description={`No items match "${search}" in this category.`} />
+            </div>
+          ) : (
+            <LibraryItemList
+              items={filteredItems}
+              loading={loading}
+              onSelectItem={setSelectedItem}
+              onCreateNew={() => setHomebrewModal({ category: selectedCategory })}
+              categoryLabel={catDef?.label ?? selectedCategory}
+            />
+          )}
+        </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedItem && (
+        <LibraryDetailModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onCloneAsHomebrew={handleCloneAsHomebrew}
+          onDelete={selectedItem.source === 'homebrew' ? handleDeleteItem : undefined}
+        />
+      )}
+
+      {/* Homebrew Create/Edit Modal */}
+      {homebrewModal && (
+        <HomebrewCreateModal
+          category={homebrewModal.category}
+          existingItem={homebrewModal.existingItem}
+          onSave={handleSaveHomebrew}
+          onClose={() => setHomebrewModal(null)}
+        />
+      )}
     </div>
   )
 }

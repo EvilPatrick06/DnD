@@ -1,8 +1,32 @@
 import type { MagicItemEntry5e, SpellcastingInfo5e } from '../../types/character-5e'
 import type { AbilityName, AbilityScoreSet, SpellEntry } from '../../types/character-common'
 import { abilityModifier } from '../../types/character-common'
+import type {
+  HigherLevelCasting,
+  HigherLevelScalingEntry,
+  SpellAction,
+  SpellComponents,
+  SpellD20Modifier,
+  SpellDamageData,
+  SpellDuration,
+  SpellHealingData,
+  SpellRange
+} from '../../types/data/spell-data-types'
 import { logger } from '../../utils/logger'
 import { load5eSpellSlots, load5eSpells } from '../data-provider'
+
+// Re-export structured spell types for consumers that access them through spell-data
+export type {
+  SpellAction,
+  SpellRange,
+  SpellComponents,
+  SpellDuration,
+  SpellDamageData,
+  SpellHealingData,
+  SpellD20Modifier,
+  HigherLevelScalingEntry,
+  HigherLevelCasting
+}
 
 // Module-level caches (populated from spell-slots.json)
 let _loaded = false
@@ -305,36 +329,38 @@ function parseClassLevelTable(raw: Record<string, Record<string, number>>): Reco
   return parsed
 }
 
-load5eSpellSlots()
-  .then((raw) => {
-    const data = raw as Record<string, unknown>
-    if (_loaded) return
-    _loaded = true
+if (typeof window !== 'undefined') {
+  load5eSpellSlots()
+    .then((raw) => {
+      const data = raw as Record<string, unknown>
+      if (_loaded) return
+      _loaded = true
 
-    if (data.fullCaster) FULL_CASTER_SLOTS = parseSlotTable(data.fullCaster as Record<string, Record<string, number>>)
-    if (data.warlock) WARLOCK_PACT_SLOTS = parseSlotTable(data.warlock as Record<string, Record<string, number>>)
+      if (data.fullCaster) FULL_CASTER_SLOTS = parseSlotTable(data.fullCaster as Record<string, Record<string, number>>)
+      if (data.warlock) WARLOCK_PACT_SLOTS = parseSlotTable(data.warlock as Record<string, Record<string, number>>)
 
-    if (data.cantripsKnown) {
-      CANTRIPS_KNOWN = parseClassLevelTable(data.cantripsKnown as Record<string, Record<string, number>>)
-    }
+      if (data.cantripsKnown) {
+        CANTRIPS_KNOWN = parseClassLevelTable(data.cantripsKnown as Record<string, Record<string, number>>)
+      }
 
-    if (data.preparedSpells) {
-      PREPARED_SPELLS = parseClassLevelTable(data.preparedSpells as Record<string, Record<string, number>>)
-    }
+      if (data.preparedSpells) {
+        PREPARED_SPELLS = parseClassLevelTable(data.preparedSpells as Record<string, Record<string, number>>)
+      }
 
-    if (data.thirdCasterSubclasses) {
-      THIRD_CASTER_SUBCLASSES = data.thirdCasterSubclasses as Record<string, string[]>
-    }
+      if (data.thirdCasterSubclasses) {
+        THIRD_CASTER_SUBCLASSES = data.thirdCasterSubclasses as Record<string, string[]>
+      }
 
-    if (data.spellcastingAbilityMap) {
-      Object.assign(SPELLCASTING_ABILITY_MAP, data.spellcastingAbilityMap)
-    }
+      if (data.spellcastingAbilityMap) {
+        Object.assign(SPELLCASTING_ABILITY_MAP, data.spellcastingAbilityMap)
+      }
 
-    if (data.thirdCasterAbilityMap) {
-      Object.assign(THIRD_CASTER_ABILITY_MAP, data.thirdCasterAbilityMap)
-    }
-  })
-  .catch((e) => logger.warn('[SpellData] Failed to preload spell slots', e))
+      if (data.thirdCasterAbilityMap) {
+        Object.assign(THIRD_CASTER_ABILITY_MAP, data.thirdCasterAbilityMap)
+      }
+    })
+    .catch((e) => logger.warn('[SpellData] Failed to preload spell slots', e))
+}
 
 /**
  * Returns the spellcasting ability for a class (or subclass for third-casters).

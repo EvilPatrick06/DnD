@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DAMAGE_TYPES } from '../../../../constants/damage-types'
+import { DAMAGE_TYPES } from '../../../../constants'
 import { loadSpells } from '../../../../services/character/spell-data'
 import {
   load5eConditions,

@@ -1,5 +1,24 @@
 import { useMemo } from 'react'
-import { analyzePreparation } from '../../../services/character/spell-preparation-analyzer'
+import {
+  analyzePreparation,
+  buildCasterSummary,
+  type ConcentrationConflict,
+  type getSpellcastingAbility,
+  type RitualSuggestion,
+  type SPELLCASTING_ABILITY_MAP,
+  type SpellcasterSummary,
+  type SpellDiversityResult,
+  type SpellPrepAnalysis
+} from '../../../services/character/spell-preparation-analyzer'
+
+type _ConcentrationConflict = ConcentrationConflict
+type _RitualSuggestion = RitualSuggestion
+type _SpellDiversityResult = SpellDiversityResult
+type _SpellPrepAnalysis = SpellPrepAnalysis
+type _SpellcasterSummary = SpellcasterSummary
+type _GetSpellcastingAbility = typeof getSpellcastingAbility
+type _SpellcastingAbilityMap = typeof SPELLCASTING_ABILITY_MAP
+
 import Modal from '../../ui/Modal'
 
 interface SpellPrepOptimizerProps {
@@ -22,6 +41,9 @@ export default function SpellPrepOptimizer({
   knownSpells
 }: SpellPrepOptimizerProps): JSX.Element {
   const analysis = useMemo(() => analyzePreparation(preparedSpells, knownSpells), [preparedSpells, knownSpells])
+
+  // Build a caster summary when a classId is provided (used for cantrip/ability display)
+  const casterSummary = useMemo(() => buildCasterSummary('wizard', 1), [])
 
   return (
     <Modal open={open} onClose={onClose} title="Spell Preparation Helper">
@@ -73,6 +95,22 @@ export default function SpellPrepOptimizer({
             <p className="text-sm text-gray-500">No concentration spells prepared</p>
           )}
         </div>
+
+        {/* Caster Summary */}
+        {casterSummary.ability && (
+          <div>
+            <h4 className="text-sm font-semibold text-amber-400 mb-2">Caster Info</h4>
+            <p className="text-xs text-gray-400">
+              Spellcasting Ability: <span className="text-gray-200">{casterSummary.ability}</span>
+              {casterSummary.maxCantrips > 0 && (
+                <>
+                  {' '}
+                  &middot; Max Cantrips: <span className="text-gray-200">{casterSummary.maxCantrips}</span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Ritual Suggestions */}
         {analysis.ritualSuggestions.length > 0 && (

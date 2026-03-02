@@ -1,4 +1,4 @@
-import type { MessageType } from '../../../network/types'
+import type { MessageType } from '../../../network'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { ChatMessage } from '../../../stores/use-lobby-store'
 import type { Character } from '../../../types/character'

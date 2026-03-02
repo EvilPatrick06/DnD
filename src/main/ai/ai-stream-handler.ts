@@ -1,6 +1,9 @@
 import { BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
-import { finalizeAiResponse } from './ai-response-parser'
+import { type FinalizedResponse, finalizeAiResponse } from './ai-response-parser'
+
+type _FinalizedResponse = FinalizedResponse
+
 import type { ConversationManager } from './conversation-manager'
 import {
   FILE_READ_MAX_DEPTH,

@@ -1,4 +1,4 @@
-import { FILE_SIZE_LIMIT, MAX_CHAT_LENGTH, MAX_DISPLAY_NAME_LENGTH } from '../constants/app-constants'
+import { FILE_SIZE_LIMIT, MAX_CHAT_LENGTH, MAX_DISPLAY_NAME_LENGTH } from '../constants'
 import { logger } from '../utils/logger'
 
 // Client message type allowlist — only these prefixes are permitted from non-host peers.

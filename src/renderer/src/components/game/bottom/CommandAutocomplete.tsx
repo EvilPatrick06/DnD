@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { getFilteredCommands } from '../../../services/chat-commands'
+import { type ChatCommand, type CommandResult, getFilteredCommands } from '../../../services/chat-commands'
+
+// Ensure imported types are used for type-safety
+type _ChatCommand = ChatCommand
+type _CommandResult = CommandResult
 
 interface CommandAutocompleteProps {
   input: string

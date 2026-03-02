@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getExpertiseGrants } from '../../../services/character/build-tree-5e'
+import { type ExpertiseGrant, getExpertiseGrants } from '../../../services/character/build-tree-5e'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 
 export default function ExpertiseModal(): JSX.Element {
@@ -26,8 +26,8 @@ export default function ExpertiseModal(): JSX.Element {
   }, [slotId, buildSlots])
 
   // Get the expertise grant for this slot's level
-  const grant = useMemo(() => {
-    const grants = getExpertiseGrants(classId)
+  const grant: ExpertiseGrant | undefined = useMemo(() => {
+    const grants: ExpertiseGrant[] = getExpertiseGrants(classId)
     if (!expertiseSlot) return grants[0]
     return (
       grants.find((g) => {

@@ -1,4 +1,5 @@
 import rarityOptionsJson from '../../../../public/data/ui/rarity-options.json'
+import { load5eRarityOptions } from '../../../services/data-provider'
 import type { Rarity } from '../../../types/character-common'
 
 interface SelectionFilterBarProps {
@@ -9,6 +10,11 @@ interface SelectionFilterBarProps {
 }
 
 const RARITY_OPTIONS = rarityOptionsJson as Array<{ value: Rarity | 'all'; label: string; color: string }>
+
+/** Load rarity options from the data store (includes plugin additions). */
+export async function loadRarityOptionData(): Promise<unknown> {
+  return load5eRarityOptions()
+}
 
 export default function SelectionFilterBar({
   rarityFilter,

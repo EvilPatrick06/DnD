@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastion-storage'
 import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaign-storage'
 import {
+  type CharacterVersion,
   deleteCharacter,
   listCharacterVersions,
   loadCharacter,
@@ -10,7 +11,7 @@ import {
   restoreCharacterVersion,
   saveCharacter
 } from '../storage/character-storage'
-import { CloudSync, type CloudSyncConfig } from '../storage/cloud-sync'
+import { type BackupEntry, CloudSync, type CloudSyncConfig, type SyncResult } from '../storage/cloud-sync'
 import {
   deleteCustomCreature,
   loadCustomCreature,
@@ -29,6 +30,11 @@ import {
   saveHomebrewEntry
 } from '../storage/homebrew-storage'
 import { type AppSettings, loadSettings, saveSettings } from '../storage/settings-storage'
+
+// Ensure imported types are used for type-safety
+type _CharacterVersion = CharacterVersion
+type _BackupEntry = BackupEntry
+type _SyncResult = SyncResult
 
 export function registerStorageHandlers(): void {
   // --- Character storage ---

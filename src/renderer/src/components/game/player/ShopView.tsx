@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { trigger3dDice } from '../../../components/game/dice3d'
-import type { ShopItem, ShopItemCategory } from '../../../network/types'
+import type { HaggleRequestPayload, ShopItem, ShopItemCategory } from '../../../network'
 import { rollSingle } from '../../../services/dice/dice-service'
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useGameStore } from '../../../stores/use-game-store'
@@ -201,14 +201,15 @@ export default function ShopView(): JSX.Element | null {
     trigger3dDice({ formula: '1d20', rolls: [roll], total, rollerName: localChar?.name ?? 'Player' })
 
     setHagglePending(item.id)
-    sendMessage('player:haggle-request', {
+    const hagglePayload: HaggleRequestPayload = {
       itemId: item.id,
       itemName: item.name,
       originalPrice: item.price,
       persuasionRoll: roll,
       persuasionModifier: chaMod + profBonus,
       persuasionTotal: total
-    })
+    }
+    sendMessage('player:haggle-request', hagglePayload)
 
     // Auto-resolve locally after timeout (DM may not respond)
     setTimeout(() => {

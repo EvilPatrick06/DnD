@@ -1,4 +1,5 @@
 import { trigger3dDice } from '../../components/game/dice3d'
+import type { DiceResultPayload } from '../../network'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useGameStore } from '../../stores/use-game-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
@@ -71,14 +72,15 @@ export function broadcastDiceResult(formula: string, rolls: number[], total: num
     diceResult: { formula, rolls, total }
   })
 
-  sendMessage('game:dice-result', {
+  const resultPayload: DiceResultPayload = {
     formula,
     rolls,
     total,
     isCritical: false,
     isFumble: false,
     rollerName
-  })
+  }
+  sendMessage('game:dice-result', resultPayload)
 
   // Trigger 3D dice animation
   trigger3dDice({ formula, rolls, total, rollerName })

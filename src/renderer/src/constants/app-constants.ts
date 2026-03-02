@@ -21,9 +21,8 @@ export const MAX_GLOBAL_MESSAGES_PER_SECOND = 200
 // Chat
 export const MAX_CHAT_LENGTH = 2000
 
-// IPC file size limits
-export const MAX_READ_FILE_SIZE = 50 * 1024 * 1024 // 50 MB (maps)
-export const MAX_WRITE_CONTENT_SIZE = 10 * 1024 * 1024 // 10 MB (data files)
+// IPC file size limits (canonical source: shared/constants.ts)
+export { MAX_READ_FILE_SIZE, MAX_WRITE_CONTENT_SIZE } from '../../../shared/constants'
 
 // UI: pages
 export const LOADING_GRACE_PERIOD_MS = 4000

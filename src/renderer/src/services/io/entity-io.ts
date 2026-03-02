@@ -7,6 +7,7 @@
  * Supports both single-item and bulk (array) exports.
  */
 
+import { MAX_READ_FILE_SIZE, MAX_WRITE_CONTENT_SIZE } from '../../constants/app-constants'
 import { logger } from '../../utils/logger'
 
 // ---------------------------------------------------------------------------
@@ -108,7 +109,17 @@ export async function exportEntities<T>(type: EntityType, items: T[], _suggested
     })
     if (!filePath) return false
 
-    await window.api.writeFile(filePath, JSON.stringify(envelope, null, 2))
+    const json = JSON.stringify(envelope, null, 2)
+
+    // Validate against IPC write size limit
+    if (json.length > MAX_WRITE_CONTENT_SIZE) {
+      logger.error(
+        `Export ${type}: content exceeds max write size (${(MAX_WRITE_CONTENT_SIZE / 1024 / 1024).toFixed(0)} MB)`
+      )
+      return false
+    }
+
+    await window.api.writeFile(filePath, json)
     return true
   } catch (err) {
     logger.error(`Export ${type} failed:`, err)
@@ -147,6 +158,12 @@ export async function importEntities<T>(type: EntityType): Promise<ImportResult<
     if (!filePath) return null
 
     const raw = await window.api.readFile(filePath)
+
+    // Validate file size against IPC limits
+    if (raw.length > MAX_READ_FILE_SIZE) {
+      throw new Error(`File exceeds maximum read size (${(MAX_READ_FILE_SIZE / 1024 / 1024).toFixed(0)} MB)`)
+    }
+
     let parsed: unknown
     try {
       parsed = JSON.parse(raw)

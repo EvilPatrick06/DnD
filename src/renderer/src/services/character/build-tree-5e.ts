@@ -1,4 +1,26 @@
 import type { BuildSlot } from '../../types/character-common'
+import type {
+  ClassArmorTraining,
+  ClassFeature,
+  ClassProficiencies,
+  ClassSkillProficiencies,
+  ClassWeaponProficiency,
+  FeatureGrantedSpell,
+  FeatureSavingThrow,
+  FeatureUsesPerRest
+} from '../../types/data/character-data-types'
+
+// Re-export class/feature data types for consumers that access them through build-tree
+export type {
+  ClassProficiencies,
+  ClassArmorTraining,
+  ClassWeaponProficiency,
+  ClassSkillProficiencies,
+  FeatureUsesPerRest,
+  FeatureSavingThrow,
+  FeatureGrantedSpell,
+  ClassFeature
+}
 
 // 2024 PHB: All classes get subclass at level 3
 const SUBCLASS_LEVEL = 3

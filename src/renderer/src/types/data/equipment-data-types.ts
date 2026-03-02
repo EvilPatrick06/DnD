@@ -1,4 +1,16 @@
-import type { DamageType, ItemRarity, WeaponCategory } from './shared-enums'
+import type {
+  AbilityName,
+  CreatureSize,
+  DamageType,
+  ItemRarity,
+  WeaponCategory,
+  WeaponMasteryProperty
+} from './shared-enums'
+
+// Ensure imported types are used for type-safety
+type _AbilityName = AbilityName
+type _CreatureSize = CreatureSize
+type _WeaponMasteryProperty = WeaponMasteryProperty
 
 export interface WeaponData {
   name: string

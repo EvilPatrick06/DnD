@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import type { MessageType } from '../../../network/types'
+import type { MessageType } from '../../../network'
 import { useCharacterStore } from '../../../stores/use-character-store'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { ChatMessage } from '../../../stores/use-lobby-store'

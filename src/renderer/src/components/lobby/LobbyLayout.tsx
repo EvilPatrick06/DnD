@@ -1,14 +1,11 @@
 import { useParams } from 'react-router'
-import { setCharacterInfo } from '../../network/client-manager'
+import { setCharacterInfo } from '../../network'
 import { useCampaignStore } from '../../stores/use-campaign-store'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useLobbyStore } from '../../stores/use-lobby-store'
 import { useNetworkStore } from '../../stores/use-network-store'
-import CharacterSelector from './CharacterSelector'
-import ChatPanel from './ChatPanel'
+import { CharacterSelector, ChatPanel, PlayerList, ReadyButton } from '.'
 import DiscordLink from './DiscordLink'
-import PlayerList from './PlayerList'
-import ReadyButton from './ReadyButton'
 
 export default function LobbyLayout(): JSX.Element {
   const { campaignId } = useParams<{ campaignId: string }>()

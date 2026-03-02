@@ -2,6 +2,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { MAX_READ_FILE_SIZE, MAX_WRITE_CONTENT_SIZE } from '../../shared/constants'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { isValidUUID } from '../../shared/utils/uuid'
 import { logToFile } from '../log'
@@ -153,9 +154,6 @@ export function registerIpcHandlers(): void {
 
   // --- File I/O (restricted to dialog-selected paths and userData) ---
 
-  const MAX_READ_SIZE = 50 * 1024 * 1024 // 50 MB
-  const MAX_WRITE_SIZE = 10 * 1024 * 1024 // 10 MB
-
   ipcMain.handle(IPC_CHANNELS.FS_READ, async (_event, filePath: string) => {
     if (!isPathAllowed(filePath)) {
       throw new Error('Access denied: path not allowed')
@@ -163,8 +161,8 @@ export function registerIpcHandlers(): void {
     const resolvedPath = resolve(filePath)
     try {
       const fileStats = await stat(resolvedPath)
-      if (fileStats.size > MAX_READ_SIZE) {
-        throw new Error(`File too large: ${fileStats.size} bytes (max ${MAX_READ_SIZE})`)
+      if (fileStats.size > MAX_READ_FILE_SIZE) {
+        throw new Error(`File too large: ${fileStats.size} bytes (max ${MAX_READ_FILE_SIZE})`)
       }
       const content = await readFile(resolvedPath, 'utf-8')
       return content
@@ -181,8 +179,8 @@ export function registerIpcHandlers(): void {
     if (!isPathAllowed(filePath)) {
       throw new Error('Access denied: path not allowed')
     }
-    if (typeof content === 'string' && content.length > MAX_WRITE_SIZE) {
-      throw new Error(`Content too large: ${content.length} bytes (max ${MAX_WRITE_SIZE})`)
+    if (typeof content === 'string' && content.length > MAX_WRITE_CONTENT_SIZE) {
+      throw new Error(`Content too large: ${content.length} bytes (max ${MAX_WRITE_CONTENT_SIZE})`)
     }
     const resolvedPath = resolve(filePath)
     try {

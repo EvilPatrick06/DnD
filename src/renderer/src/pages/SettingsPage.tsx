@@ -1,9 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import OllamaManagement from '../components/ui/OllamaManagement'
+import OllamaManagement, { type AvailableModelList, type InstalledModelList } from '../components/ui/OllamaManagement'
+
+/** Re-exported Ollama model list components for use by consumers importing from SettingsPage. */
+type _AvailableModelList = typeof AvailableModelList
+type _InstalledModelList = typeof InstalledModelList
+
 import { addToast } from '../hooks/use-toast'
+import type { ValidationResult } from '../network'
+
+type _ValidationResult = ValidationResult
+
+import {
+  AnyPayloadSchema,
+  NetworkMessageEnvelopeSchema,
+  PAYLOAD_SCHEMAS,
+  resetSignalingServer,
+  setSignalingServer
+} from '../network'
+import type { AutoSaveConfig, SaveVersion } from '../services/io/auto-save'
+
+type _AutoSaveConfig = AutoSaveConfig
+type _SaveVersion = SaveVersion
+
 import * as AutoSave from '../services/io/auto-save'
-import { exportEntities, importEntities } from '../services/io/entity-io'
+import {
+  type EntityType,
+  type ExportEnvelope,
+  exportEntities,
+  type ImportResult,
+  importEntities
+} from '../services/io/entity-io'
+
+type _EntityType = EntityType
+type _ExportEnvelope = ExportEnvelope
+type _ImportResult = ImportResult<unknown>
+
+import { importDndBeyondCharacter } from '../services/io/import-export'
 import {
   DEFAULT_SHORTCUTS,
   formatKeyCombo,
@@ -11,10 +44,16 @@ import {
   hasConflict,
   type ShortcutDefinition
 } from '../services/keyboard-shortcuts'
+import type { NotificationEvent } from '../services/notification-service'
+
+type _NotificationEvent = NotificationEvent
+
 import * as NotificationService from '../services/notification-service'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 import { type ColorblindMode, type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
 import { useDataStore } from '../stores/use-data-store'
+import { getAllSystems, unregisterSystem } from '../systems/init'
+import type { UserProfile } from '../types/user'
 
 const THEME_LABELS: Record<ThemeName, string> = {
   dark: 'Dark',
@@ -398,8 +437,44 @@ export default function SettingsPage(): JSX.Element {
     return (localStorage.getItem('dnd-vtt-dice-mode') as '3d' | '2d') ?? '3d'
   })
 
+  // Profile settings
+  const [profileName, setProfileName] = useState('')
+  const [profileLoaded, setProfileLoaded] = useState(false)
+
+  useEffect(() => {
+    window.api.loadSettings().then((settings) => {
+      if (settings.userProfile?.displayName) {
+        setProfileName(settings.userProfile.displayName)
+      }
+      setProfileLoaded(true)
+    })
+  }, [])
+
+  const saveProfile = useCallback(
+    async (name: string) => {
+      if (!profileLoaded || !name.trim()) return
+      try {
+        const settings = await window.api.loadSettings()
+        const profile: UserProfile = settings.userProfile ?? {
+          id: crypto.randomUUID(),
+          displayName: '',
+          createdAt: new Date().toISOString()
+        }
+        profile.displayName = name.trim()
+        await window.api.saveSettings({ ...settings, userProfile: profile })
+        localStorage.setItem('dnd-vtt-display-name', name.trim())
+      } catch {
+        // save failed silently
+      }
+    },
+    [profileLoaded]
+  )
+
   // Notification settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => NotificationService.getConfig().enabled)
+
+  // Network / signaling server settings
+  const [signalingUrl, setSignalingUrl] = useState('')
 
   // Auto-save settings
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => AutoSave.getConfig().enabled)
@@ -463,6 +538,26 @@ export default function SettingsPage(): JSX.Element {
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+        {/* Profile */}
+        <Section title="Profile">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-300">Display Name</span>
+            <input
+              type="text"
+              maxLength={32}
+              placeholder="Your name"
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+              onBlur={() => saveProfile(profileName)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveProfile(profileName)
+              }}
+              className="w-48 px-3 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-600 focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <p className="text-[10px] text-gray-500 mt-2">Used as your default name when joining games.</p>
+        </Section>
+
         {/* Theme */}
         <Section title="Theme">
           <div className="grid grid-cols-2 gap-3">
@@ -651,6 +746,9 @@ export default function SettingsPage(): JSX.Element {
 
         {/* Notifications */}
         <Section title="Notifications">
+          {!NotificationService.isSupported() && (
+            <p className="text-xs text-yellow-400 mb-3">Desktop notifications are not available in this environment.</p>
+          )}
           <label className="flex items-center justify-between cursor-pointer">
             <div>
               <span className="text-sm text-gray-300">Enable Notifications</span>
@@ -667,6 +765,104 @@ export default function SettingsPage(): JSX.Element {
               className="w-4 h-4 accent-amber-500 cursor-pointer"
             />
           </label>
+          <label className="flex items-center justify-between cursor-pointer mt-3">
+            <div>
+              <span className="text-sm text-gray-300">Notification Sound</span>
+              <p className="text-[10px] text-gray-500">Play a sound with each notification</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={NotificationService.getConfig().soundEnabled}
+              onChange={(e) => NotificationService.setSoundEnabled(e.target.checked)}
+              className="w-4 h-4 accent-amber-500 cursor-pointer"
+            />
+          </label>
+          <label className="flex items-center justify-between cursor-pointer mt-3">
+            <div>
+              <span className="text-sm text-gray-300">Only When Unfocused</span>
+              <p className="text-[10px] text-gray-500">Only show notifications when the window is not in focus</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={NotificationService.getConfig().onlyWhenBlurred}
+              onChange={(e) => NotificationService.setOnlyWhenBlurred(e.target.checked)}
+              className="w-4 h-4 accent-amber-500 cursor-pointer"
+            />
+          </label>
+          <div className="mt-4 space-y-2">
+            <p className="text-xs text-gray-400 font-semibold">Event Toggles</p>
+            {(
+              [
+                'your-turn',
+                'roll-request',
+                'whisper',
+                'ai-response',
+                'timer-expired',
+                'combat-start',
+                'level-up',
+                'damage-taken'
+              ] as const
+            ).map((event) => (
+              <label key={event} className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs text-gray-300 capitalize">{event.replace(/-/g, ' ')}</span>
+                <input
+                  type="checkbox"
+                  checked={NotificationService.getConfig().enabledEvents.has(event)}
+                  onChange={(e) => NotificationService.setEventEnabled(event, e.target.checked)}
+                  className="w-3.5 h-3.5 accent-amber-500 cursor-pointer"
+                />
+              </label>
+            ))}
+          </div>
+          <button
+            className="mt-3 px-3 py-1 text-xs bg-gray-800 text-gray-300 rounded hover:bg-gray-700 cursor-pointer"
+            onClick={() => NotificationService.notify('your-turn', 'Test Character')}
+          >
+            Test Notification
+          </button>
+        </Section>
+
+        {/* Network */}
+        <Section title="Network">
+          <div className="space-y-4">
+            <p className="text-xs text-gray-400">
+              Configure a custom signaling server for P2P connections. Leave blank to use the default PeerJS server.
+              Network protocol validates {Object.keys(PAYLOAD_SCHEMAS).length} message types with{' '}
+              {Object.keys(NetworkMessageEnvelopeSchema.shape).length}-field envelopes (
+              {AnyPayloadSchema ? 'with fallback' : 'strict'} validation).
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={signalingUrl}
+                onChange={(e) => setSignalingUrl(e.target.value)}
+                placeholder="wss://your-signaling-server.example.com"
+                className="flex-1 px-3 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded text-gray-300 placeholder-gray-600"
+              />
+              <button
+                onClick={() => {
+                  if (signalingUrl.trim()) {
+                    setSignalingServer(signalingUrl.trim())
+                    addToast('Signaling server updated', 'success')
+                  }
+                }}
+                disabled={!signalingUrl.trim()}
+                className="px-3 py-1.5 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                Apply
+              </button>
+              <button
+                onClick={() => {
+                  resetSignalingServer()
+                  setSignalingUrl('')
+                  addToast('Signaling server reset to default', 'info')
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-700 text-gray-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
         </Section>
 
         {/* Auto-Save */}
@@ -760,12 +956,60 @@ export default function SettingsPage(): JSX.Element {
             >
               Import Settings
             </button>
+            <button
+              onClick={async () => {
+                try {
+                  const result = await importDndBeyondCharacter()
+                  if (result) {
+                    addToast('D&D Beyond character imported', 'success')
+                  }
+                } catch {
+                  addToast('D&D Beyond import failed', 'error')
+                }
+              }}
+              className="px-4 py-1.5 text-sm rounded-lg border bg-gray-800 border-gray-700 text-gray-300 hover:border-purple-600 hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              D&D Beyond Import
+            </button>
           </div>
         </Section>
 
         {/* Content Packs & Plugins */}
         <Section title="Content Packs & Plugins">
           <PluginManager />
+        </Section>
+
+        {/* Game Systems */}
+        <Section title="Registered Game Systems">
+          {(() => {
+            const systems = getAllSystems()
+            if (systems.length === 0) {
+              return <p className="text-xs text-gray-500">No game systems registered.</p>
+            }
+            return (
+              <div className="space-y-2">
+                {systems.map((sys) => (
+                  <div key={sys.id} className="flex items-center justify-between py-2 px-3 bg-gray-800/40 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-200 font-medium">{sys.name}</span>
+                      <span className="text-[10px] text-gray-500 ml-2 font-mono">{sys.id}</span>
+                    </div>
+                    {sys.id !== 'dnd5e' && (
+                      <button
+                        onClick={() => {
+                          unregisterSystem(sys.id)
+                          addToast(`Unregistered system "${sys.name}"`, 'success')
+                        }}
+                        className="px-2 py-1 text-[10px] bg-gray-700 border border-gray-600 rounded text-gray-400 hover:text-red-400 hover:border-red-600 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </Section>
 
         {/* Ollama AI */}

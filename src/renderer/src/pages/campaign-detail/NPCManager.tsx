@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import MonsterStatBlockView from '../../components/game/dm/MonsterStatBlockView'
+import { MonsterStatBlockView } from '../../components/game/dm'
 import StatBlockEditor from '../../components/game/dm/StatBlockEditor'
 import { Button, Card, Modal } from '../../components/ui'
 import { addToast } from '../../hooks/use-toast'

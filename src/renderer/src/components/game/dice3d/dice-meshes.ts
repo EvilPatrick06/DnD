@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import diceColorsJson from '../../../../public/data/ui/dice-colors.json'
+import { load5eDiceColors } from '../../../services/data-provider'
 import {
   computeFaceNormalsFromGeo as genComputeFaceNormals,
   createD4 as genD4,
@@ -9,7 +10,11 @@ import {
   createD12 as genD12,
   createD20 as genD20
 } from './dice-generators'
-import { createFaceMaterials, createWireMaterial } from './dice-textures'
+import type { SimulationCallbacks } from './dice-physics'
+
+type _SimulationCallbacks = SimulationCallbacks
+
+import { _createSolidMaterial, createFaceMaterials, createWireMaterial } from './dice-textures'
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -23,6 +28,11 @@ export interface DiceColors {
 }
 
 export const DEFAULT_DICE_COLORS: DiceColors = diceColorsJson.default
+
+/** Load dice color definitions from the data store (includes plugin additions). */
+export async function loadDiceColorData(): Promise<unknown> {
+  return load5eDiceColors()
+}
 
 export const DICE_COLOR_PRESETS = diceColorsJson.presets as readonly {
   label: string
@@ -88,13 +98,16 @@ function buildTriangularFaceDie(
   faceLabels: string[],
   sides: number,
   colors: DiceColors,
-  isHidden: boolean
+  isHidden: boolean,
+  solidOnly: boolean = false
 ): DieDefinition {
   const nonIndexedGeo = geo.toNonIndexed()
   assignFaceGroups(nonIndexedGeo, faceCount)
   nonIndexedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(buildTriangleFaceUVs(faceCount), 2))
 
-  const materials = createFaceMaterials(faceLabels, colors, isHidden)
+  const materials = solidOnly
+    ? faceLabels.map(() => _createSolidMaterial(colors))
+    : createFaceMaterials(faceLabels, colors, isHidden)
   const mesh = new THREE.Mesh(nonIndexedGeo, materials)
   mesh.castShadow = true
 
@@ -312,28 +325,31 @@ function computeFaceNormalsFromGeo(geo: THREE.BufferGeometry, faceCount: number)
 export interface CreateDieOptions {
   colors?: DiceColors
   isHidden?: boolean
+  /** When true, use a solid-color material instead of textured face labels (reduced-motion fast path). */
+  solidOnly?: boolean
 }
 
 export function createDie(type: DieType, options: CreateDieOptions = {}): DieDefinition {
   const colors = options.colors || DEFAULT_DICE_COLORS
   const isHidden = options.isHidden || false
+  const solidOnly = options.solidOnly || false
 
   // Delegate to dice-generators for geometry creation
   switch (type) {
     case 'd4':
-      return genD4(colors, isHidden)
+      return genD4(colors, isHidden, solidOnly)
     case 'd6':
-      return genD6(colors, isHidden)
+      return genD6(colors, isHidden, solidOnly)
     case 'd8':
-      return genD8(colors, isHidden)
+      return genD8(colors, isHidden, solidOnly)
     case 'd10':
-      return genD10(colors, isHidden, false)
+      return genD10(colors, isHidden, false, solidOnly)
     case 'd12':
-      return genD12(colors, isHidden)
+      return genD12(colors, isHidden, solidOnly)
     case 'd20':
-      return genD20(colors, isHidden)
+      return genD20(colors, isHidden, solidOnly)
     case 'd100':
-      return genD10(colors, isHidden, true)
+      return genD10(colors, isHidden, true, solidOnly)
   }
 }
 

@@ -1,8 +1,32 @@
 import type { StateCreator } from 'zustand'
-import { resolveAttackEvent, rollBastionEvent } from '../../data/bastion-events'
+import {
+  type AttackEventResult,
+  type BastionEventResult,
+  type EnclaveCreatureEntry,
+  type ExpertTrainerEntry,
+  type ForgeConstructEntry,
+  type GamblingResult,
+  type GuildEntry,
+  type MenagerieCreatureEntry,
+  type PubSpecialEntry,
+  resolveAttackEvent,
+  rollBastionEvent,
+  type TreasureResult
+} from '../../data/bastion-events'
 import type { Bastion, BastionTurn, TurnOrder } from '../../types/bastion'
 import type { BastionState, EventSliceState } from './types'
 import { getBastion } from './types'
+
+type _AttackEventResult = AttackEventResult
+type _BastionEventResult = BastionEventResult
+type _EnclaveCreatureEntry = EnclaveCreatureEntry
+type _ExpertTrainerEntry = ExpertTrainerEntry
+type _ForgeConstructEntry = ForgeConstructEntry
+type _GamblingResult = GamblingResult
+type _GuildEntry = GuildEntry
+type _MenagerieCreatureEntry = MenagerieCreatureEntry
+type _PubSpecialEntry = PubSpecialEntry
+type _TreasureResult = TreasureResult
 
 export const createEventSlice: StateCreator<BastionState, [], [], EventSliceState> = (_set, get) => ({
   // ---- Bastion Turns ----

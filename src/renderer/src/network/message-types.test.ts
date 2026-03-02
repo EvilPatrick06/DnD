@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { HaggleResponsePayload } from './types'
 
 describe('message-types', () => {
   it('exports MESSAGE_TYPES as a readonly tuple', async () => {
@@ -136,6 +137,18 @@ describe('message-types', () => {
     }
     expect(payload.triggerType).toBe('shield')
     expect(payload.triggerContext.attackRoll).toBe(18)
+  })
+
+  it('HaggleResponsePayload interface satisfies expected shape', () => {
+    const payload: HaggleResponsePayload = {
+      itemId: 'item-1',
+      accepted: true,
+      discountPercent: 15,
+      newPrice: { gp: 85 },
+      targetPeerId: 'peer-1'
+    }
+    expect(payload.accepted).toBe(true)
+    expect(payload.discountPercent).toBe(15)
   })
 
   it('MESSAGE_TYPES has no duplicates', async () => {

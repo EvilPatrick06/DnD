@@ -5,7 +5,7 @@
  * Extracted from DMShopModal for modularity.
  */
 
-import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network/types'
+import type { ShopItem, ShopItemCategory, ShopItemRarity } from '../../../../network'
 import type { ArmorData, GearData, MagicItemData, WeaponData } from '../../../../types/data'
 
 // ─── Price utilities ───────────────────────────────────────────

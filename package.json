@@ -116,6 +116,7 @@
     "electron-builder": "^26.8.1",
     "electron-vite": "^5.0.0",
     "fast-levenshtein": "^3.0.0",
+    "happy-dom": "^20.7.0",
     "jscpd": "^4.0.8",
     "knip": "^5.85.0",
     "license-checker": "^25.0.1",

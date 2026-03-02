@@ -1,6 +1,6 @@
 import { type MutableRefObject, useEffect } from 'react'
-import { startGameSync, stopGameSync } from '../network/game-sync'
-import type { MessageType } from '../network/types'
+import type { MessageType, TypingPayload } from '../network'
+import { startGameSync, stopGameSync } from '../network'
 import { loadPersistedGameState, startAutoSave, stopAutoSave } from '../services/io/game-auto-save'
 import { init as initSounds } from '../services/sound-manager'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
@@ -256,7 +256,8 @@ export function useGameEffects({
   // Broadcast AI typing status
   useEffect(() => {
     if (!isDM || !campaign.aiDm?.enabled) return
-    sendMessage('ai:typing', { isTyping: aiDmStore.isTyping })
+    const typingPayload: TypingPayload = { isTyping: aiDmStore.isTyping }
+    sendMessage('ai:typing', typingPayload)
   }, [aiDmStore.isTyping, isDM, campaign.aiDm?.enabled, sendMessage])
 
   // Auto-populate sidebar allies from connected players

@@ -1,5 +1,13 @@
 import { useMemo } from 'react'
-import { getMulticlassAdvice } from '../../../services/character/multiclass-advisor'
+import {
+  getMulticlassAdvice,
+  type MulticlassAdvice,
+  type MulticlassEligibility
+} from '../../../services/character/multiclass-advisor'
+
+type _MulticlassAdvice = MulticlassAdvice
+type _MulticlassEligibility = MulticlassEligibility
+
 import type { AbilityScoreSet } from '../../../types/character-common'
 import { Modal } from '../../ui'
 

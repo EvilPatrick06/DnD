@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { AudioStep } from '../../components/campaign'
 import type { CustomAudioEntry } from '../../components/campaign/AudioStep'
-import AudioStep from '../../components/campaign/AudioStep'
 import { Button, Card, Modal } from '../../components/ui'
 import type { Campaign } from '../../types/campaign'
 

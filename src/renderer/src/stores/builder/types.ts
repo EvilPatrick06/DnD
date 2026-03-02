@@ -1,5 +1,6 @@
 import abilityScoreConfigJson from '../../../public/data/5e/character/ability-score-config.json'
 import presetIconsJson from '../../../public/data/5e/character/preset-icons.json'
+import { load5eAbilityScoreConfig, load5ePresetIcons } from '../../services/data-provider'
 import type { BuilderPhase, ContentTab, SelectionModalState } from '../../types/builder'
 import type { Character } from '../../types/character'
 import type { Character5e } from '../../types/character-5e'
@@ -26,6 +27,16 @@ export const PRESET_ICONS = presetIconsJson
 export const DEFAULT_SCORES: AbilityScoreSet = abilityScoreConfigJson.defaultScores as AbilityScoreSet
 
 export const POINT_BUY_START: AbilityScoreSet = abilityScoreConfigJson.pointBuyStart as AbilityScoreSet
+
+/** Load ability score config from the data store (includes plugin overrides). */
+export async function loadAbilityScoreConfigData(): Promise<unknown> {
+  return load5eAbilityScoreConfig()
+}
+
+/** Load preset icons from the data store (includes plugin additions). */
+export async function loadPresetIconData(): Promise<unknown> {
+  return load5ePresetIcons()
+}
 
 // --- Helper functions ---
 

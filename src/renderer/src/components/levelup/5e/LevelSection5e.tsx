@@ -8,15 +8,24 @@ import type { BuildSlot } from '../../../types/character-common'
 import HpRollSection5e from './HpRollSection5e'
 import {
   AsiOrFeatSelector5e,
+  AsiSelector5e,
   DivineOrderSelector5e,
   ElementalFurySelector5e,
   EpicBoonSelector5e,
   ExpertiseSelector5e,
   FightingStyleSelector5e,
+  GeneralFeatPicker,
   ordinal,
   PrimalOrderSelector5e,
   SubclassSelector5e
 } from './LevelSelectors5e'
+
+/**
+ * Sub-components available for direct usage in custom level-up UIs.
+ * Exported here so downstream consumers can import standalone pickers
+ * without pulling in the full AsiOrFeatSelector5e parent component.
+ */
+export { AsiSelector5e, GeneralFeatPicker }
 
 interface LevelSection5eProps {
   character: Character5e

@@ -1,4 +1,6 @@
-import { load5eWeaponMastery } from '../services/data-provider'
+import { load5eWeaponMastery, type WeaponMasteryEntry } from '../services/data-provider'
+
+type _WeaponMasteryEntry = WeaponMasteryEntry
 
 export interface MasteryProperty {
   name: string

@@ -1,5 +1,5 @@
 import { memo, useState } from 'react'
-import { PLAYER_COLORS } from '../../network/types'
+import { PLAYER_COLORS } from '../../network'
 import type { LobbyPlayer } from '../../stores/use-lobby-store'
 
 interface PlayerCardProps {

@@ -1,4 +1,5 @@
 import speciesResourcesJson from '../../public/data/5e/game/mechanics/species-resources.json'
+import { load5eSpeciesResources } from '../services/data-provider'
 import type { ClassResource } from '../types/character-common'
 import type { ResourceDefinition, ResourceScaling } from '../types/data'
 
@@ -73,4 +74,9 @@ export function getSpeciesResources(
   }
 
   return resources
+}
+
+/** Load species resources from the data store (includes homebrew species). */
+export async function loadSpeciesResourceData(): Promise<unknown> {
+  return load5eSpeciesResources()
 }

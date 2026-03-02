@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DiceTrayEntry } from './DiceOverlay'
-import { onDiceTrayUpdate } from './DiceOverlay'
+import type { DiceTrayEntry } from '.'
+import { onDiceTrayUpdate } from '.'
 
 const MAX_TRAY_ENTRIES = 5
 const STORAGE_KEY = 'dnd-vtt-dice-tray-position'

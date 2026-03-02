@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import type { PluginStatus } from '../../../shared/plugin-types'
-import { loadPlugin, unloadPlugin } from '../services/plugin-system/plugin-registry'
+import { type LoadedPlugin, loadPlugin, unloadPlugin } from '../services/plugin-system/plugin-registry'
+
+// Ensure imported type is used for type-safety
+type _LoadedPlugin = LoadedPlugin
 
 interface PluginStoreState {
   plugins: PluginStatus[]

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import type { MessageType } from '../../../network/types'
+import type { HandoutSharePayload, MessageType } from '../../../network'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { Campaign } from '../../../types/campaign'
 import type { Character } from '../../../types/character'
@@ -146,7 +146,8 @@ export default function DmModals({
         <HandoutModal
           onClose={close}
           onShareHandout={(handout) => {
-            sendMessage('dm:share-handout', { handout })
+            const sharePayload: HandoutSharePayload = { handout }
+            sendMessage('dm:share-handout', sharePayload)
           }}
         />
       )}
