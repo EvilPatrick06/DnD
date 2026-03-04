@@ -1,55 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Mock themes JSON
+// Mock themes JSON — dark is empty (uses Tailwind defaults), others override --color-* vars
 vi.mock('../../public/data/ui/themes.json', () => ({
   default: {
-    dark: {
-      '--bg-primary': '#1a1a2e',
-      '--bg-secondary': '#16213e',
-      '--bg-tertiary': '#0f3460',
-      '--text-primary': '#e0e0e0',
-      '--text-secondary': '#b0b0b0',
-      '--text-muted': '#707070',
-      '--accent-primary': '#e94560',
-      '--accent-hover': '#ff6b6b',
-      '--border-primary': '#333',
-      '--border-secondary': '#555'
-    },
+    dark: {},
     parchment: {
-      '--bg-primary': '#f5f0e1',
-      '--bg-secondary': '#ebe5d4',
-      '--bg-tertiary': '#d9d0bc',
-      '--text-primary': '#3e2723',
-      '--text-secondary': '#5d4037',
-      '--text-muted': '#8d6e63',
-      '--accent-primary': '#8b0000',
-      '--accent-hover': '#a52a2a',
-      '--border-primary': '#bfae94',
-      '--border-secondary': '#a09070'
+      '--color-gray-950': '#f5f0e1',
+      '--color-gray-900': '#e8e0cc',
+      '--color-gray-800': '#dbd1b8',
+      '--color-gray-100': '#2c1810',
+      '--color-amber-500': '#b8860b'
     },
     'high-contrast': {
-      '--bg-primary': '#000000',
-      '--bg-secondary': '#111111',
-      '--bg-tertiary': '#222222',
-      '--text-primary': '#ffffff',
-      '--text-secondary': '#eeeeee',
-      '--text-muted': '#cccccc',
-      '--accent-primary': '#00ffff',
-      '--accent-hover': '#00cccc',
-      '--border-primary': '#ffffff',
-      '--border-secondary': '#eeeeee'
+      '--color-gray-950': '#000000',
+      '--color-gray-900': '#0a0a0a',
+      '--color-gray-800': '#1a1a1a',
+      '--color-gray-100': '#ffffff',
+      '--color-amber-500': '#ffff00'
     },
     'royal-purple': {
-      '--bg-primary': '#1a0a2e',
-      '--bg-secondary': '#2d1b4e',
-      '--bg-tertiary': '#3d2b5e',
-      '--text-primary': '#e8d5f5',
-      '--text-secondary': '#c8a5e5',
-      '--text-muted': '#9575cd',
-      '--accent-primary': '#bb86fc',
-      '--accent-hover': '#d4a5ff',
-      '--border-primary': '#4a2b7e',
-      '--border-secondary': '#6a4b9e'
+      '--color-gray-950': '#1a0a2e',
+      '--color-gray-900': '#241340',
+      '--color-gray-800': '#2e1c52',
+      '--color-gray-100': '#d0c8e0',
+      '--color-amber-500': '#9b59b6'
     }
   }
 }))
@@ -105,10 +79,15 @@ describe('theme-manager', () => {
   })
 
   describe('setTheme', () => {
-    it('sets CSS custom properties on document root', () => {
+    it('applies no CSS overrides for dark theme (uses Tailwind defaults)', () => {
       themeManager.setTheme('dark')
-      expect(mockStyle.setProperty).toHaveBeenCalledWith('--bg-primary', '#1a1a2e')
-      expect(mockStyle.setProperty).toHaveBeenCalledWith('--text-primary', '#e0e0e0')
+      expect(mockStyle.setProperty).not.toHaveBeenCalled()
+    })
+
+    it('overrides Tailwind color variables for non-dark themes', () => {
+      themeManager.setTheme('parchment')
+      expect(mockStyle.setProperty).toHaveBeenCalledWith('--color-gray-950', '#f5f0e1')
+      expect(mockStyle.setProperty).toHaveBeenCalledWith('--color-amber-500', '#b8860b')
     })
 
     it('updates the current theme', () => {
@@ -122,14 +101,24 @@ describe('theme-manager', () => {
     })
 
     it('does nothing for unknown theme name', () => {
-      const callCountBefore = mockStyle.setProperty.mock.calls.length
       themeManager.setTheme('nonexistent' as never)
-      expect(mockStyle.setProperty.mock.calls.length).toBe(callCountBefore)
+      expect(mockStyle.setProperty).not.toHaveBeenCalled()
     })
 
-    it('applies all 10 CSS variables', () => {
+    it('removes previous overrides when switching themes', () => {
+      themeManager.setTheme('parchment')
+      mockStyle.setProperty.mockClear()
+      mockStyle.removeProperty.mockClear()
+
+      themeManager.setTheme('dark')
+      // Should remove the 5 parchment overrides
+      expect(mockStyle.removeProperty).toHaveBeenCalledWith('--color-gray-950')
+      expect(mockStyle.removeProperty).toHaveBeenCalledWith('--color-amber-500')
+    })
+
+    it('applies all CSS variables for royal-purple', () => {
       themeManager.setTheme('royal-purple')
-      expect(mockStyle.setProperty).toHaveBeenCalledTimes(10)
+      expect(mockStyle.setProperty).toHaveBeenCalledTimes(5)
     })
   })
 

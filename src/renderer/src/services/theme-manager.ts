@@ -1,6 +1,7 @@
 /**
  * Theme manager for the application.
- * Applies CSS custom properties to :root and persists the selection to localStorage.
+ * Overrides Tailwind v4 CSS custom properties (--color-gray-*, --color-amber-*)
+ * on :root to dynamically switch themes at runtime.
  */
 
 import themesJson from '../../public/data/ui/themes.json'
@@ -10,22 +11,12 @@ type _ThemesFile = ThemesFile
 
 export type ThemeName = 'dark' | 'parchment' | 'high-contrast' | 'royal-purple'
 
-interface ThemeVars {
-  '--bg-primary': string
-  '--bg-secondary': string
-  '--bg-tertiary': string
-  '--text-primary': string
-  '--text-secondary': string
-  '--text-muted': string
-  '--accent-primary': string
-  '--accent-hover': string
-  '--border-primary': string
-  '--border-secondary': string
-}
-
 const STORAGE_KEY = 'dnd-vtt-theme'
 
-const THEME_DEFINITIONS = themesJson as Record<ThemeName, ThemeVars>
+const THEME_DEFINITIONS = themesJson as Record<ThemeName, Record<string, string>>
+
+// Track which CSS properties were set so we can remove them when switching to dark
+let appliedProps: string[] = []
 
 // ---------------------------------------------------------------------------
 // Module-level state
@@ -53,18 +44,28 @@ export async function loadThemeDefinitions(): Promise<Record<string, Record<stri
 }
 
 /**
- * Applies the given theme by setting CSS custom properties on :root
+ * Applies the given theme by overriding Tailwind CSS custom properties on :root
  * and persists the choice to localStorage.
+ *
+ * For the 'dark' theme, all overrides are removed so Tailwind defaults apply.
  */
 export function setTheme(theme: ThemeName): void {
   const vars = THEME_DEFINITIONS[theme]
-  if (!vars) return
+  if (vars === undefined) return
 
   currentTheme = theme
-
   const style = document.documentElement.style
+
+  // Remove previously applied overrides
+  for (const prop of appliedProps) {
+    style.removeProperty(prop)
+  }
+  appliedProps = []
+
+  // Apply new overrides (dark theme has empty object — uses Tailwind defaults)
   for (const [prop, value] of Object.entries(vars)) {
     style.setProperty(prop, value)
+    appliedProps.push(prop)
   }
 
   try {
