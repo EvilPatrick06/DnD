@@ -197,6 +197,16 @@ function bmo() {
     kdeNotifications: [],
     notifSettings: { enabled: true, blocklist: [], devices: {} },
 
+    // Scene modes
+    scenes: [],
+    activeScene: null,
+
+    // Audio devices
+    audioDevices: [],
+    audioStatus: {},
+    btScanning: false,
+    btDevices: [],
+
     // Swipe animation direction
     swipeDirection: '',
 
@@ -442,6 +452,10 @@ function bmo() {
       });
       this.socket.on('volume_update', (data) => { this.volumeLevels = data; });
       this.socket.on('conversation_mode', (data) => { this.conversationActive = data.active; });
+      this.socket.on('scene_change', (data) => {
+        this.activeScene = data.scene;
+        this.fetchScenes();
+      });
       this.socket.on('notification', (data) => {
         this.kdeNotifications.unshift(data);
         if (this.kdeNotifications.length > 100) this.kdeNotifications.length = 100;
@@ -1819,12 +1833,14 @@ function bmo() {
 
     async fetchControlsData() {
       try {
-        const [ledRes, volRes, statusRes, notifRes, notifSettRes] = await Promise.all([
+        const [ledRes, volRes, statusRes, notifRes, notifSettRes, scenesRes, audioRes] = await Promise.all([
           fetch('/api/led/status'),
           fetch('/api/volume'),
           fetch('/api/status/summary'),
           fetch('/api/notifications'),
           fetch('/api/notifications/settings'),
+          fetch('/api/scenes'),
+          fetch('/api/audio/devices'),
         ]);
         if (ledRes.ok) {
           const d = await ledRes.json();
@@ -1843,6 +1859,103 @@ function bmo() {
           this.kdeNotifications = nd.notifications || [];
         }
         if (notifSettRes.ok) this.notifSettings = await notifSettRes.json();
+        if (scenesRes.ok) {
+          const sd = await scenesRes.json();
+          this.scenes = sd.scenes || [];
+          this.activeScene = sd.active;
+        }
+        if (audioRes.ok) {
+          const ad = await audioRes.json();
+          this.audioDevices = ad.sinks || ad.devices || [];
+        }
+      } catch {}
+    },
+
+    async fetchScenes() {
+      try {
+        const r = await fetch('/api/scenes');
+        if (r.ok) {
+          const d = await r.json();
+          this.scenes = d.scenes || [];
+          this.activeScene = d.active;
+        }
+      } catch {}
+    },
+
+    async activateScene(name) {
+      try {
+        await fetch('/api/scene/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scene: name }),
+        });
+        this.activeScene = name;
+      } catch {}
+    },
+
+    async deactivateScene() {
+      try {
+        await fetch('/api/scene/deactivate', { method: 'POST' });
+        this.activeScene = null;
+      } catch {}
+    },
+
+    async fetchAudioDevices() {
+      try {
+        const r = await fetch('/api/audio/devices');
+        if (r.ok) {
+          const d = await r.json();
+          this.audioDevices = d.sinks || d.devices || [];
+        }
+      } catch {}
+    },
+
+    async setAudioOutput(deviceName) {
+      try {
+        await fetch('/api/audio/output', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ function: 'all', device_name: deviceName }),
+        });
+        this.fetchAudioDevices();
+      } catch {}
+    },
+
+    async btScan() {
+      this.btScanning = true;
+      this.btDevices = [];
+      try {
+        const r = await fetch('/api/audio/bluetooth/scan', { method: 'POST' });
+        if (r.ok) {
+          const d = await r.json();
+          this.btDevices = d.devices || [];
+        }
+      } catch {}
+      this.btScanning = false;
+    },
+
+    async btPair(address) {
+      try {
+        const r = await fetch('/api/audio/bluetooth/pair', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address }),
+        });
+        if (r.ok) {
+          this.showNotification('Bluetooth paired!');
+          this.fetchAudioDevices();
+        }
+      } catch {}
+    },
+
+    async btDisconnect(address) {
+      try {
+        await fetch('/api/audio/bluetooth/disconnect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address }),
+        });
+        this.fetchAudioDevices();
       } catch {}
     },
 

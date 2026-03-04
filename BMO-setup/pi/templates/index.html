@@ -1247,6 +1247,62 @@
         </template>
       </div>
 
+      <!-- Scene Modes -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">🎬 Scene Modes</h3>
+          <button x-show="activeScene" @click="deactivateScene()"
+                  class="text-xs text-red-400 hover:text-red-300">⏹ Exit Mode</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <template x-for="s in scenes" :key="s.name">
+            <button @click="s.active ? deactivateScene() : activateScene(s.name)"
+                    class="px-3 py-2 rounded text-xs font-medium transition-colors"
+                    :class="s.active ? 'bg-accent text-surface-dark ring-1 ring-accent' : 'bg-surface text-text-muted hover:bg-surface-light'"
+                    x-text="s.label"></button>
+          </template>
+        </div>
+        <p x-show="scenes.length === 0" class="text-xs text-text-dim text-center py-2">No scenes available</p>
+      </div>
+
+      <!-- Audio Output -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">🔈 Audio Output</h3>
+          <button @click="fetchAudioDevices()" class="text-xs text-accent">Refresh</button>
+        </div>
+        <div class="space-y-1.5 mb-2">
+          <template x-for="d in audioDevices" :key="d.pw_id || d.id">
+            <button @click="setAudioOutput(d.description || d.name)"
+                    class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
+                    :class="d.is_default ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="d.is_default ? '🔊' : '🔇'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="d.description || d.name"></span>
+              <span x-show="d.is_default" class="text-[9px] text-accent">DEFAULT</span>
+            </button>
+          </template>
+        </div>
+        <p x-show="audioDevices.length === 0" class="text-xs text-text-dim text-center py-1">No audio devices found</p>
+
+        <!-- Bluetooth -->
+        <div class="border-t border-surface pt-2 mt-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-text-muted">Bluetooth</span>
+            <button @click="btScan()" :disabled="btScanning"
+                    class="text-xs px-2 py-0.5 rounded bg-surface text-accent disabled:opacity-50"
+                    x-text="btScanning ? 'Scanning...' : '🔍 Scan'"></button>
+          </div>
+          <div class="space-y-1">
+            <template x-for="bt in btDevices" :key="bt.address">
+              <div class="flex items-center gap-2 bg-surface rounded px-2 py-1">
+                <span class="text-xs flex-1 truncate" x-text="bt.name || bt.address"></span>
+                <button @click="btPair(bt.address)" class="text-[10px] text-accent">Pair</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- Notifications -->
       <div class="bg-surface-light rounded-lg p-3">
         <div class="flex items-center justify-between mb-2">
