@@ -212,6 +212,13 @@ Available actions:
 - music_previous: {} — Previous track
 - music_volume: {"level": 50} — Set volume (0-100)
 - music_cast: {"device": "device name"} — Cast to a device
+- audio_list_devices: {} — List available audio output devices
+- audio_set_output: {"function": "music", "device_name": "HDMI"} — Route a function's audio to a device. Functions: music, voice, effects, notifications, all. If user doesn't specify function, use "all". If device_name not specified, ask user.
+- audio_bluetooth_scan: {} — Scan for Bluetooth audio devices
+- audio_bluetooth_pair: {"address": "XX:XX:XX:XX:XX:XX"} — Pair and connect a Bluetooth device
+- scene_list: {} — List available scene modes
+- scene_activate: {"scene": "anime"} — Activate a scene mode. Scenes: anime, bedtime, movie, party. Voice triggers: "anime mode", "bedtime", "movie time", "party mode"
+- scene_deactivate: {} — Deactivate current scene and restore previous state. Voice triggers: "normal mode", "stop", "exit mode"
 - tv_launch: {"app": "crunchyroll", "device": "Bedroom TV"} — Launch an app on a TV/Chromecast. Apps: youtube, netflix, crunchyroll, disney, hulu, plex, spotify, twitch, prime
 - tv_pause: {"device": "Bedroom TV"} — Pause the TV (device optional, defaults to first TV)
 - tv_play: {"device": "Bedroom TV"} — Resume the TV (device optional)
@@ -1117,6 +1124,15 @@ class BmoAgent:
             "music_previous": self._handle_music_previous,
             "music_volume": self._handle_music_volume,
             "music_cast": self._handle_music_cast,
+            # Audio output routing
+            "audio_list_devices": self._handle_audio_list_devices,
+            "audio_set_output": self._handle_audio_set_output,
+            "audio_bluetooth_scan": self._handle_audio_bt_scan,
+            "audio_bluetooth_pair": self._handle_audio_bt_pair,
+            # Scene modes
+            "scene_list": self._handle_scene_list,
+            "scene_activate": self._handle_scene_activate,
+            "scene_deactivate": self._handle_scene_deactivate,
             # TV / Smart Home
             "tv_pause": self._handle_tv_pause,
             "tv_play": self._handle_tv_play,
@@ -1200,6 +1216,91 @@ class BmoAgent:
         if music:
             music.set_output_device(params.get("device", "pi"))
             return f"Output switched to {params.get('device', 'pi')}"
+
+    # ── Audio Output Handlers ────────────────────────────────────────
+
+    def _handle_audio_list_devices(self, params):
+        audio = self.services.get("audio")
+        if not audio:
+            return "Audio service not available"
+        sinks = audio.list_sinks()
+        if not sinks:
+            return "No audio output devices found"
+        lines = []
+        for s in sinks:
+            default = " (default)" if s.is_default else ""
+            lines.append(f"  {s.pw_id}: {s.description}{default}")
+        return "Available audio devices:\n" + "\n".join(lines)
+
+    def _handle_audio_set_output(self, params):
+        audio = self.services.get("audio")
+        if not audio:
+            return "Audio service not available"
+        device_name = params.get("device_name", "")
+        function = params.get("function", "all")
+        if device_name:
+            dev = audio.find_device_by_name(device_name)
+            if not dev:
+                sinks = audio.list_sinks()
+                names = ", ".join(s.description for s in sinks)
+                return f"Device '{device_name}' not found. Available: {names}"
+            ok = audio.set_function_output(function, dev.pw_id)
+            return f"{'Set' if ok else 'Failed to set'} {function} output to {dev.description}"
+        device_id = params.get("device_id")
+        if device_id:
+            ok = audio.set_function_output(function, int(device_id))
+            return f"{'Set' if ok else 'Failed to set'} {function} output to device {device_id}"
+        return "Please specify a device_name or device_id"
+
+    def _handle_audio_bt_scan(self, params):
+        audio = self.services.get("audio")
+        if not audio:
+            return "Audio service not available"
+        devices = audio.bluetooth_scan(duration=params.get("duration", 10))
+        if not devices:
+            return "No Bluetooth devices found nearby"
+        lines = [f"  {d['address']}: {d['name']}" for d in devices]
+        return "Bluetooth devices found:\n" + "\n".join(lines)
+
+    def _handle_audio_bt_pair(self, params):
+        audio = self.services.get("audio")
+        if not audio:
+            return "Audio service not available"
+        address = params.get("address", "")
+        if not address:
+            return "Please provide the Bluetooth device address"
+        ok, msg = audio.bluetooth_pair(address)
+        return msg
+
+    # ── Scene Mode Handlers ──────────────────────────────────────────
+
+    def _handle_scene_list(self, params):
+        scenes = self.services.get("scenes")
+        if not scenes:
+            return "Scene service not available"
+        scene_list = scenes.list_scenes()
+        lines = []
+        for s in scene_list:
+            active = " (ACTIVE)" if s["active"] else ""
+            lines.append(f"  {s['label']}{active}")
+        return "Available scenes:\n" + "\n".join(lines)
+
+    def _handle_scene_activate(self, params):
+        scenes = self.services.get("scenes")
+        if not scenes:
+            return "Scene service not available"
+        name = params.get("scene", "")
+        if not name:
+            return "Please specify a scene: anime, bedtime, movie, party"
+        ok, msg = scenes.activate(name)
+        return msg
+
+    def _handle_scene_deactivate(self, params):
+        scenes = self.services.get("scenes")
+        if not scenes:
+            return "Scene service not available"
+        ok, msg = scenes.deactivate()
+        return msg
 
     # ── TV / Smart Home Handlers ─────────────────────────────────────
     # All TV commands go through the Flask API (same as web GUI)

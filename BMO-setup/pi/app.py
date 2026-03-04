@@ -60,13 +60,15 @@ agent = None
 led_controller = None
 health_checker = None
 notifier = None
+audio_service = None
+scene_service = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier, audio_service, scene_service
 
     from agent import BmoAgent
 
@@ -213,6 +215,24 @@ def init_services():
         print("[bmo]   Notifications: OK")
     except Exception as e:
         print(f"[bmo]   Notifications: SKIPPED ({e})")
+
+    # Audio output routing
+    try:
+        from audio_output_service import AudioOutputService
+        audio_service = AudioOutputService()
+        service_map["audio"] = audio_service
+        print("[bmo]   Audio output: OK")
+    except Exception as e:
+        print(f"[bmo]   Audio output: SKIPPED ({e})")
+
+    # Scene mode engine
+    try:
+        from scene_service import SceneService
+        scene_service = SceneService(services=service_map, socketio=socketio)
+        service_map["scenes"] = scene_service
+        print("[bmo]   Scene engine: OK")
+    except Exception as e:
+        print(f"[bmo]   Scene engine: SKIPPED ({e})")
 
     print("[bmo] All services initialized!")
 
@@ -953,6 +973,106 @@ def api_volume_set():
     _save_setting(f"volume.{category}", level)
     socketio.emit("volume_update", {"category": category, "level": level})
     return jsonify({"ok": True, "category": category, "level": level})
+
+
+# ── Audio Output API ─────────────────────────────────────────────────
+
+@app.route("/api/audio/devices")
+def api_audio_devices():
+    """List active audio output devices."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    sinks = audio_service.list_sinks()
+    return jsonify({"devices": [s.to_dict() for s in sinks]})
+
+
+@app.route("/api/audio/status")
+def api_audio_status():
+    """Full audio status: devices, routing, bluetooth."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    return jsonify(audio_service.get_status())
+
+
+@app.route("/api/audio/output", methods=["POST"])
+def api_audio_set_output():
+    """Set audio output for a function or all. Body: {function, device_id}."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    data = request.json or {}
+    function = data.get("function", "all")
+    device_id = data.get("device_id")
+    if device_id is None:
+        return jsonify({"error": "device_id required"}), 400
+    ok = audio_service.set_function_output(function, int(device_id))
+    if ok:
+        socketio.emit("audio_routing_update", audio_service.get_all_routing())
+    return jsonify({"ok": ok})
+
+
+@app.route("/api/audio/bluetooth/scan", methods=["POST"])
+def api_audio_bt_scan():
+    """Scan for Bluetooth devices. Body: {duration: 10}."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    duration = (request.json or {}).get("duration", 10)
+    devices = audio_service.bluetooth_scan(duration=duration)
+    return jsonify({"devices": devices})
+
+
+@app.route("/api/audio/bluetooth/pair", methods=["POST"])
+def api_audio_bt_pair():
+    """Pair + connect Bluetooth device. Body: {address: "XX:XX:..."}."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    address = (request.json or {}).get("address")
+    if not address:
+        return jsonify({"error": "address required"}), 400
+    ok, msg = audio_service.bluetooth_pair(address)
+    return jsonify({"ok": ok, "message": msg})
+
+
+@app.route("/api/audio/bluetooth/disconnect", methods=["POST"])
+def api_audio_bt_disconnect():
+    """Disconnect a Bluetooth device. Body: {address: "XX:XX:..."}."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    address = (request.json or {}).get("address")
+    if not address:
+        return jsonify({"error": "address required"}), 400
+    ok, msg = audio_service.bluetooth_disconnect(address)
+    return jsonify({"ok": ok, "message": msg})
+
+
+# ── Scene Mode Endpoints ─────────────────────────────────────────────
+
+@app.route("/api/scenes")
+def api_scenes():
+    """List all scenes with active status."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    return jsonify(scene_service.get_status())
+
+
+@app.route("/api/scene/activate", methods=["POST"])
+def api_scene_activate():
+    """Activate a scene. Body: {scene: "anime"}."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    name = (request.json or {}).get("scene", "")
+    if not name:
+        return jsonify({"error": "scene name required"}), 400
+    ok, msg = scene_service.activate(name)
+    return jsonify({"ok": ok, "message": msg}), 200 if ok else 400
+
+
+@app.route("/api/scene/deactivate", methods=["POST"])
+def api_scene_deactivate():
+    """Deactivate current scene and restore previous state."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    ok, msg = scene_service.deactivate()
+    return jsonify({"ok": ok, "message": msg}), 200 if ok else 400
 
 
 def _load_setting(key: str, default=None):

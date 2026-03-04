@@ -37,6 +37,7 @@ DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "")
+PIHOLE_API_PASSWORD = os.environ.get("PIHOLE_API_PASSWORD", "bmo-ads-begone")
 
 # Health check targets: service name → config
 HEALTH_CHECKS = {
@@ -345,10 +346,22 @@ class HealthChecker:
         # Check Docker containers
         self._check_docker_containers()
 
+        # Check Pi-hole DNS health
+        self._check_pihole()
+
+        # Check systemd services
+        self._check_systemd_services()
+
+        # Check network interfaces
+        self._check_network()
+
+        # Check critical ports are bound
+        self._check_ports()
+
         # Check internet connectivity
         self._check_internet()
 
-        # Check Pi system resources (CPU, RAM, disk)
+        # Check Pi system resources (CPU, RAM, disk, swap, load)
         self._check_pi_resources()
 
         # Check Pi power supply / throttle status
@@ -369,10 +382,27 @@ class HealthChecker:
         "ollama_local": "🤖 Ollama (local LLM fallback)",
         "peerjs": "🌐 PeerJS (D&D multiplayer signaling)",
         "pihole": "🛡️ Pi-hole (ad blocker DNS)",
+        "pihole_lists": "🛡️ Pi-hole blocklists",
+        "pihole_dns": "🛡️ Pi-hole DNS resolution",
         "bmo_app": "🏠 BMO Flask App (web UI + API)",
         "gemini_api": "☁️ Gemini API (primary LLM)",
         "groq_api": "☁️ Groq API (speech-to-text)",
         "fish_audio_api": "🔊 Fish Audio API (text-to-speech)",
+        "svc_bmo": "🏠 BMO systemd service",
+        "svc_docker": "🐳 Docker engine",
+        "svc_oled": "📺 OLED stats display",
+        "svc_lightdm": "🖥️ Display manager",
+        "net_wlan0": "📶 Wi-Fi (wlan0)",
+        "net_eth0": "🔌 Ethernet (eth0)",
+        "pi_load": "📊 System load",
+        "pi_swap": "💿 Swap usage",
+        "pi_boot_disk": "🗂️ Boot partition",
+        "internet": "🌐 Internet connectivity",
+        "pi_cpu_temp": "🌡️ CPU temperature",
+        "pi_ram": "🧠 RAM usage",
+        "pi_disk": "💾 Disk usage",
+        "pi_power": "⚡ Power supply",
+        "pi_resources": "📊 Pi resources",
     }
 
     def _service_label(self, name: str) -> str:
@@ -511,6 +541,70 @@ class HealthChecker:
                     f"💾 Disk usage high: {disk}%",
                 )
 
+        # Swap usage
+        if PSUTIL_AVAILABLE:
+            try:
+                swap = psutil.swap_memory()
+                swap_pct = swap.percent
+                self._service_status["pi_swap"] = {
+                    "status": "up", "last_check": now,
+                    "message": f"{swap_pct}% ({swap.used // (1024*1024)}MB / {swap.total // (1024*1024)}MB)",
+                    "response_time": None,
+                }
+                if swap_pct > 80.0:
+                    self._service_status["pi_swap"]["status"] = "degraded"
+                    self._emit_alert(
+                        Severity.WARNING, "pi_swap",
+                        f"💿 Swap usage high: {swap_pct}% — system may be thrashing",
+                    )
+            except Exception:
+                pass
+
+        # Load average
+        try:
+            load1, load5, load15 = os.getloadavg()
+            cpu_count = os.cpu_count() or 4
+            self._service_status["pi_load"] = {
+                "status": "up", "last_check": now,
+                "message": f"{load1:.1f} / {load5:.1f} / {load15:.1f} (1/5/15 min)",
+                "response_time": None,
+            }
+            if load5 > cpu_count * 2:
+                self._service_status["pi_load"]["status"] = "degraded"
+                self._emit_alert(
+                    Severity.CRITICAL, "pi_load",
+                    f"📊 System overloaded: load {load5:.1f} (>{cpu_count * 2} threshold for {cpu_count} cores)",
+                )
+            elif load5 > cpu_count * 1.5:
+                self._emit_alert(
+                    Severity.WARNING, "pi_load",
+                    f"📊 System load elevated: {load5:.1f} ({cpu_count} cores)",
+                )
+        except (OSError, AttributeError):
+            pass
+
+        # Boot partition (/boot/firmware)
+        if PSUTIL_AVAILABLE:
+            try:
+                for part in psutil.disk_partitions():
+                    if "/boot" in part.mountpoint:
+                        usage = psutil.disk_usage(part.mountpoint)
+                        boot_pct = usage.percent
+                        self._service_status["pi_boot_disk"] = {
+                            "status": "up", "last_check": now,
+                            "message": f"{boot_pct}% ({usage.used // (1024*1024)}MB / {usage.total // (1024*1024)}MB)",
+                            "response_time": None,
+                        }
+                        if boot_pct > 90.0:
+                            self._service_status["pi_boot_disk"]["status"] = "degraded"
+                            self._emit_alert(
+                                Severity.WARNING, "pi_boot_disk",
+                                f"🗂️ Boot partition {boot_pct}% full — kernel updates may fail",
+                            )
+                        break
+            except Exception:
+                pass
+
     # ── Docker Container Checks ──────────────────────────────────────
 
     def _check_docker_containers(self):
@@ -596,6 +690,356 @@ class HealthChecker:
                     "message": str(e),
                     "response_time": None,
                 }
+
+    # ── Pi-hole Health Check ─────────────────────────────────────────
+
+    def _check_pihole(self):
+        """Check Pi-hole DNS health: API reachable, blocking active, gravity status."""
+        if not REQUESTS_AVAILABLE:
+            return
+
+        now = time.time()
+        pihole_api = "http://localhost:80/api"
+
+        # 1. Authenticate (reuse cached session, re-auth if expired)
+        sid = getattr(self, "_pihole_sid", "")
+        if sid:
+            # Test if session is still valid
+            try:
+                r = requests.get(f"{pihole_api}/dns/blocking", headers={"sid": sid}, timeout=3)
+                if r.status_code == 401:
+                    sid = ""  # expired, re-auth below
+            except Exception:
+                sid = ""
+
+        if not sid:
+            try:
+                r = requests.post(
+                    f"{pihole_api}/auth",
+                    json={"password": PIHOLE_API_PASSWORD},
+                    timeout=5,
+                )
+                if r.status_code != 200:
+                    err_msg = "API auth failed"
+                    try:
+                        err_msg = r.json().get("error", {}).get("message", err_msg)
+                    except Exception:
+                        pass
+                    self._service_status["pihole"] = {
+                        "status": "down", "last_check": now,
+                        "message": err_msg, "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.CRITICAL, "pihole",
+                        f"🛡️ Pi-hole API auth failed: {err_msg}",
+                    )
+                    return
+                sid = r.json().get("session", {}).get("sid", "")
+                self._pihole_sid = sid
+            except Exception as e:
+                self._service_status["pihole"] = {
+                    "status": "down", "last_check": now,
+                    "message": f"API unreachable: {e}", "response_time": None,
+                }
+                self._emit_alert(
+                    Severity.CRITICAL, "pihole",
+                    "🛡️ Pi-hole API unreachable — DNS ad blocking is offline",
+                )
+                return
+
+        # 2. Check blocking status and stats
+        try:
+            # Get blocking state
+            r_block = requests.get(
+                f"{pihole_api}/dns/blocking",
+                headers={"sid": sid},
+                timeout=5,
+            )
+            if r_block.status_code == 200:
+                block_data = r_block.json()
+                blocking_enabled = block_data.get("blocking") == "enabled"
+                if not blocking_enabled:
+                    self._service_status["pihole"] = {
+                        "status": "degraded", "last_check": now,
+                        "message": "Blocking DISABLED",
+                        "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.WARNING, "pihole",
+                        "🛡️ Pi-hole blocking is DISABLED — ads/trackers are not being filtered",
+                    )
+                    return
+
+            # Get gravity stats
+            r_ftl = requests.get(
+                f"{pihole_api}/info/ftl",
+                headers={"sid": sid},
+                timeout=5,
+            )
+            if r_ftl.status_code == 200:
+                ftl = r_ftl.json().get("ftl", {})
+                gravity_count = ftl.get("database", {}).get("gravity", 0)
+                num_lists = ftl.get("database", {}).get("lists", 0)
+
+                if gravity_count < 1000:
+                    self._service_status["pihole"] = {
+                        "status": "degraded", "last_check": now,
+                        "message": f"Only {gravity_count:,} domains — gravity may have failed",
+                        "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.WARNING, "pihole",
+                        f"🛡️ Pi-hole gravity low: only {gravity_count:,} domains blocked — "
+                        "blocklists may have failed. Run: docker exec bmo-pihole pihole -g",
+                    )
+                    return
+
+                self._service_status["pihole"] = {
+                    "status": "up", "last_check": now,
+                    "message": f"Blocking {gravity_count:,} domains ({num_lists} lists)",
+                    "response_time": None,
+                }
+        except Exception as e:
+            self._service_status["pihole"] = {
+                "status": "unknown", "last_check": now,
+                "message": f"Stats check failed: {e}", "response_time": None,
+            }
+
+        # 3. Check for inaccessible blocklists
+        # Pi-hole v6 status: 1=new/pending, 2=OK, 3=inaccessible, 4=disabled
+        try:
+            r = requests.get(
+                f"{pihole_api}/lists?type=block",
+                headers={"sid": sid},
+                timeout=10,
+            )
+            if r.status_code == 200:
+                lists_data = r.json()
+                blocklists = lists_data.get("lists", lists_data) if isinstance(lists_data, dict) else lists_data
+                if isinstance(blocklists, list):
+                    failed = [bl for bl in blocklists if bl.get("status") == 3]
+                    if failed:
+                        names = ", ".join(bl.get("comment", bl.get("address", "?"))[:30] for bl in failed[:5])
+                        self._emit_alert(
+                            Severity.WARNING, "pihole_lists",
+                            f"🛡️ {len(failed)} Pi-hole blocklist(s) failed to update: {names}",
+                        )
+                        self._service_status["pihole_lists"] = {
+                            "status": "degraded", "last_check": now,
+                            "message": f"{len(failed)} list(s) inaccessible",
+                            "response_time": None,
+                        }
+                    else:
+                        enabled = [bl for bl in blocklists if bl.get("enabled")]
+                        self._service_status["pihole_lists"] = {
+                            "status": "up", "last_check": now,
+                            "message": f"All {len(enabled)} active lists OK",
+                            "response_time": None,
+                        }
+        except Exception:
+            pass  # Non-critical — main status already set
+
+        # 4. Quick DNS resolution test
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["dig", "@127.0.0.1", "google.com", "+short", "+time=2", "+tries=1"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode != 0 or not result.stdout.strip():
+                # Try nslookup as fallback
+                result = subprocess.run(
+                    ["nslookup", "google.com", "127.0.0.1"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.returncode != 0:
+                    self._service_status["pihole_dns"] = {
+                        "status": "down", "last_check": now,
+                        "message": "DNS resolution failing",
+                        "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.CRITICAL, "pihole_dns",
+                        "🛡️ Pi-hole DNS resolution is FAILING — devices can't resolve domains",
+                    )
+                    return
+            self._service_status["pihole_dns"] = {
+                "status": "up", "last_check": now,
+                "message": "DNS resolving OK",
+                "response_time": None,
+            }
+        except FileNotFoundError:
+            pass  # dig/nslookup not installed — skip DNS test
+        except Exception:
+            pass
+
+    # ── Systemd Service Checks ───────────────────────────────────────
+
+    _CRITICAL_SERVICES = ["bmo", "docker"]
+    _MONITORED_SERVICES = ["bmo", "docker", "oled-stats", "lightdm"]
+
+    def _check_systemd_services(self):
+        """Check critical systemd service units are active."""
+        import subprocess
+        now = time.time()
+
+        for svc in self._MONITORED_SERVICES:
+            key = f"svc_{svc.replace('-', '_')}"
+            try:
+                result = subprocess.run(
+                    ["systemctl", "is-active", f"{svc}.service"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                state = result.stdout.strip()
+                if state == "active":
+                    self._service_status[key] = {
+                        "status": "up", "last_check": now,
+                        "message": "Running", "response_time": None,
+                    }
+                else:
+                    self._service_status[key] = {
+                        "status": "down", "last_check": now,
+                        "message": f"State: {state}", "response_time": None,
+                    }
+                    severity = Severity.CRITICAL if svc in self._CRITICAL_SERVICES else Severity.WARNING
+                    label = self._service_label(key)
+                    self._emit_alert(
+                        severity, key,
+                        f"⚙️ {label} is {state} — run: sudo systemctl restart {svc}",
+                    )
+            except Exception as e:
+                self._service_status[key] = {
+                    "status": "unknown", "last_check": now,
+                    "message": str(e), "response_time": None,
+                }
+
+    # ── Network Interface Checks ─────────────────────────────────────
+
+    def _check_network(self):
+        """Check network interfaces are up and have IP addresses."""
+        import subprocess
+        now = time.time()
+
+        for iface in ["wlan0", "eth0"]:
+            key = f"net_{iface}"
+            try:
+                result = subprocess.run(
+                    ["ip", "-j", "addr", "show", iface],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.returncode != 0:
+                    self._service_status[key] = {
+                        "status": "unknown", "last_check": now,
+                        "message": "Interface not found", "response_time": None,
+                    }
+                    continue
+
+                info = json.loads(result.stdout)
+                if not info:
+                    continue
+
+                iface_info = info[0]
+                operstate = iface_info.get("operstate", "UNKNOWN")
+                ipv4_addrs = [
+                    a["local"] for a in iface_info.get("addr_info", [])
+                    if a.get("family") == "inet"
+                ]
+
+                if operstate == "UP" and ipv4_addrs:
+                    self._service_status[key] = {
+                        "status": "up", "last_check": now,
+                        "message": f"{operstate} — {', '.join(ipv4_addrs)}",
+                        "response_time": None,
+                    }
+                elif operstate == "UP" and not ipv4_addrs:
+                    self._service_status[key] = {
+                        "status": "degraded", "last_check": now,
+                        "message": "UP but no IPv4 address",
+                        "response_time": None,
+                    }
+                    if iface == "wlan0":
+                        self._emit_alert(
+                            Severity.CRITICAL, key,
+                            f"📶 {iface} is UP but has no IP address — DHCP may have failed",
+                        )
+                else:
+                    # eth0 DOWN is normal (Pi on Wi-Fi), only alert on wlan0
+                    status = "down" if iface == "wlan0" else "info"
+                    self._service_status[key] = {
+                        "status": "down" if iface == "wlan0" else "up",
+                        "last_check": now,
+                        "message": f"{operstate} (no cable)" if iface == "eth0" else operstate,
+                        "response_time": None,
+                    }
+                    if iface == "wlan0" and operstate != "UP":
+                        self._emit_alert(
+                            Severity.CRITICAL, key,
+                            f"📶 Wi-Fi ({iface}) is {operstate} — Pi may be offline",
+                        )
+            except Exception as e:
+                self._service_status[key] = {
+                    "status": "unknown", "last_check": now,
+                    "message": str(e), "response_time": None,
+                }
+
+    # ── Port Binding Checks ──────────────────────────────────────────
+
+    _EXPECTED_PORTS = {
+        53: "Pi-hole DNS",
+        80: "Pi-hole Web",
+        5000: "BMO Flask",
+        9000: "PeerJS",
+        11434: "Ollama",
+    }
+
+    def _check_ports(self):
+        """Verify critical ports are bound and listening."""
+        import subprocess
+        now = time.time()
+
+        try:
+            result = subprocess.run(
+                ["ss", "-tlnH"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode != 0:
+                return
+
+            listening_ports = set()
+            for line in result.stdout.strip().split("\n"):
+                parts = line.split()
+                if len(parts) >= 4:
+                    # local address is field 3, format: 0.0.0.0:PORT or [::]:PORT or *:PORT
+                    addr = parts[3]
+                    port_str = addr.rsplit(":", 1)[-1]
+                    try:
+                        listening_ports.add(int(port_str))
+                    except ValueError:
+                        pass
+
+            missing = []
+            for port, service in self._EXPECTED_PORTS.items():
+                if port not in listening_ports:
+                    missing.append(f"{service} (:{port})")
+
+            if missing:
+                self._service_status["ports"] = {
+                    "status": "degraded", "last_check": now,
+                    "message": f"Not listening: {', '.join(missing)}",
+                    "response_time": None,
+                }
+                self._emit_alert(
+                    Severity.WARNING, "ports",
+                    f"🔌 Expected ports not listening: {', '.join(missing)}",
+                )
+            else:
+                self._service_status["ports"] = {
+                    "status": "up", "last_check": now,
+                    "message": f"All {len(self._EXPECTED_PORTS)} ports bound",
+                    "response_time": None,
+                }
+        except Exception:
+            pass
 
     # ── Internet Connectivity Check ──────────────────────────────────
 
