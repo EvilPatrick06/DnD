@@ -68,6 +68,9 @@ scp "$BMO_DIR/pi/static/js/"*.js "$PI_DEST:~/bmo/static/js/" 2>/dev/null || true
 scp "$BMO_DIR/pi/static/img/"*.png "$PI_DEST:~/bmo/static/img/" 2>/dev/null || true
 scp "$BMO_DIR/docker/docker-compose.yml" "$PI_DEST:~/bmo/"
 scp "$BMO_DIR/docker/bmo.service" "$PI_DEST:~/bmo/"
+scp "$BMO_DIR/pi/backup.sh" "$PI_DEST:~/bmo/"
+scp "$BMO_DIR/docker/bmo-backup.service" "$BMO_DIR/docker/bmo-backup.timer" "$PI_DEST:~/bmo/"
+scp "$BMO_DIR/ARCHITECTURE.md" "$PI_DEST:~/bmo/" 2>/dev/null || true
 # Copy TV certs if present
 scp "$BMO_DIR/pi/tv_cert.pem" "$BMO_DIR/pi/tv_key.pem" "$PI_DEST:~/bmo/" 2>/dev/null || true
 log_ok "Assets copied"

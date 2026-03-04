@@ -33,11 +33,37 @@ except ImportError:
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
+# API keys for cloud health checks
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "")
+
 # Health check targets: service name → config
 HEALTH_CHECKS = {
     "ollama_local": {"url": "http://localhost:11434/api/tags", "timeout": 3},
-    "peerjs": {"url": "http://localhost:9000/health", "timeout": 3},
+    "peerjs": {"url": "http://localhost:9000/myapp", "timeout": 3},
     "bmo_app": {"url": "http://localhost:5000/health", "timeout": 3},
+}
+
+# Cloud API health checks (checked separately with auth headers)
+CLOUD_HEALTH_CHECKS = {
+    "gemini_api": {
+        "url": f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}",
+        "timeout": 5,
+        "enabled": bool(GEMINI_API_KEY),
+    },
+    "groq_api": {
+        "url": "https://api.groq.com/openai/v1/models",
+        "timeout": 5,
+        "headers": {"Authorization": f"Bearer {GROQ_API_KEY}"},
+        "enabled": bool(GROQ_API_KEY),
+    },
+    "fish_audio_api": {
+        "url": "https://api.fish.audio/model",
+        "timeout": 5,
+        "headers": {"Authorization": f"Bearer {FISH_AUDIO_API_KEY}"},
+        "enabled": bool(FISH_AUDIO_API_KEY),
+    },
 }
 
 # Default check interval (seconds)
@@ -240,10 +266,33 @@ class HealthChecker:
         self._service_status: dict[str, dict] = {}
 
         # Previous status for detecting state transitions (recovery detection)
-        self._prev_status: dict[str, str] = {}
+        # Load from disk so recovery alerts work across restarts
+        self._state_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "data", "monitor_state.json"
+        )
+        self._prev_status: dict[str, str] = self._load_prev_status()
 
         # Discord cooldown tracker: service_name → last_webhook_timestamp
         self._discord_cooldowns: dict[str, float] = {}
+
+    def _load_prev_status(self) -> dict[str, str]:
+        """Load previous service status from disk (survives restarts)."""
+        try:
+            if os.path.exists(self._state_file):
+                with open(self._state_file, "r") as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"[monitor] Could not load saved state: {e}")
+        return {}
+
+    def _save_prev_status(self):
+        """Persist current service status to disk for recovery detection."""
+        try:
+            os.makedirs(os.path.dirname(self._state_file), exist_ok=True)
+            with open(self._state_file, "w") as f:
+                json.dump(self._prev_status, f)
+        except Exception as e:
+            print(f"[monitor] Could not save state: {e}")
 
     # ── Lifecycle ────────────────────────────────────────────────────
 
@@ -284,21 +333,49 @@ class HealthChecker:
 
     def check_all(self):
         """Run all health checks and process results."""
-        # Check HTTP services
+        # Check local HTTP services
         for service_name, config in HEALTH_CHECKS.items():
             self._check_http_service(service_name, config)
 
-        # Check Pi system resources
+        # Check cloud API services
+        for service_name, config in CLOUD_HEALTH_CHECKS.items():
+            if config.get("enabled", False):
+                self._check_http_service(service_name, config)
+
+        # Check Docker containers
+        self._check_docker_containers()
+
+        # Check internet connectivity
+        self._check_internet()
+
+        # Check Pi system resources (CPU, RAM, disk)
         self._check_pi_resources()
+
+        # Check Pi power supply / throttle status
+        self._check_pi_power()
 
         # Detect state transitions and emit recovery events
         self._process_state_transitions()
 
-        # Update previous status snapshot
+        # Update previous status snapshot and persist to disk
         for name, info in self._service_status.items():
             self._prev_status[name] = info.get("status", "unknown")
+        self._save_prev_status()
 
     # ── HTTP Service Checks ──────────────────────────────────────────
+
+    # Human-readable names for Discord/log messages
+    _SERVICE_LABELS = {
+        "ollama_local": "🤖 Ollama (local LLM fallback)",
+        "peerjs": "🌐 PeerJS (D&D multiplayer signaling)",
+        "bmo_app": "🏠 BMO Flask App (web UI + API)",
+        "gemini_api": "☁️ Gemini API (primary LLM)",
+        "groq_api": "☁️ Groq API (speech-to-text)",
+        "fish_audio_api": "🔊 Fish Audio API (text-to-speech)",
+    }
+
+    def _service_label(self, name: str) -> str:
+        return self._SERVICE_LABELS.get(name, name)
 
     def _check_http_service(self, name: str, config: dict):
         """Check a single HTTP service endpoint."""
@@ -313,10 +390,12 @@ class HealthChecker:
 
         url = config["url"]
         timeout = config.get("timeout", 5)
+        label = self._service_label(name)
 
         try:
             start = time.monotonic()
-            r = requests.get(url, timeout=timeout)
+            headers = config.get("headers", {})
+            r = requests.get(url, timeout=timeout, headers=headers)
             elapsed = round(time.monotonic() - start, 3)
 
             if r.status_code == 200:
@@ -335,7 +414,7 @@ class HealthChecker:
                 }
                 self._emit_alert(
                     Severity.WARNING, name,
-                    f"{name} returned HTTP {r.status_code}",
+                    f"{label} returned HTTP {r.status_code}",
                 )
 
         except requests.exceptions.Timeout:
@@ -345,7 +424,10 @@ class HealthChecker:
                 "message": f"Timeout after {timeout}s",
                 "response_time": None,
             }
-            self._emit_alert(Severity.WARNING, name, f"{name} timed out after {timeout}s")
+            self._emit_alert(
+                Severity.CRITICAL, name,
+                f"{label} is not responding (timed out after {timeout}s)",
+            )
 
         except requests.exceptions.ConnectionError:
             self._service_status[name] = {
@@ -354,7 +436,10 @@ class HealthChecker:
                 "message": "Connection refused",
                 "response_time": None,
             }
-            self._emit_alert(Severity.WARNING, name, f"{name} connection refused")
+            self._emit_alert(
+                Severity.CRITICAL, name,
+                f"{label} is DOWN — connection refused. Service may have crashed.",
+            )
 
         except Exception as e:
             self._service_status[name] = {
@@ -363,7 +448,7 @@ class HealthChecker:
                 "message": str(e),
                 "response_time": None,
             }
-            self._emit_alert(Severity.WARNING, name, f"{name} check failed: {e}")
+            self._emit_alert(Severity.WARNING, name, f"{label} check failed: {e}")
 
     # ── Pi Resource Checks ───────────────────────────────────────────
 
@@ -386,13 +471,13 @@ class HealthChecker:
             if temp > 80.0:
                 self._service_status["pi_resources"]["status"] = "degraded"
                 self._emit_alert(
-                    Severity.CRITICAL, "pi_resources",
-                    f"CPU temperature critical: {temp}C",
+                    Severity.CRITICAL, "pi_cpu_temp",
+                    f"🌡️ CPU temperature critical: {temp}°C — risk of thermal throttling",
                 )
             elif temp > 70.0:
                 self._emit_alert(
-                    Severity.WARNING, "pi_resources",
-                    f"CPU temperature elevated: {temp}C",
+                    Severity.WARNING, "pi_cpu_temp",
+                    f"🌡️ CPU temperature elevated: {temp}°C",
                 )
 
         # RAM usage thresholds
@@ -400,8 +485,8 @@ class HealthChecker:
         if ram is not None and ram > 85.0:
             self._service_status["pi_resources"]["status"] = "degraded"
             self._emit_alert(
-                Severity.WARNING, "pi_resources",
-                f"RAM usage high: {ram}%",
+                Severity.WARNING, "pi_ram",
+                f"🧠 RAM usage high: {ram}% — may cause OOM kills",
             )
 
         # Disk usage thresholds
@@ -410,14 +495,212 @@ class HealthChecker:
             if disk > 95.0:
                 self._service_status["pi_resources"]["status"] = "degraded"
                 self._emit_alert(
-                    Severity.CRITICAL, "pi_resources",
-                    f"Disk usage critical: {disk}%",
+                    Severity.CRITICAL, "pi_disk",
+                    f"💾 Disk usage critical: {disk}% — BMO may stop writing data",
                 )
             elif disk > 85.0:
                 self._emit_alert(
-                    Severity.WARNING, "pi_resources",
-                    f"Disk usage high: {disk}%",
+                    Severity.WARNING, "pi_disk",
+                    f"💾 Disk usage high: {disk}%",
                 )
+
+    # ── Docker Container Checks ──────────────────────────────────────
+
+    def _check_docker_containers(self):
+        """Check Docker container status via 'docker inspect'."""
+        import subprocess
+
+        containers = ["bmo-ollama", "bmo-peerjs"]
+        for name in containers:
+            try:
+                result = subprocess.run(
+                    ["docker", "inspect", "--format",
+                     '{"running":{{.State.Running}},"status":"{{.State.Status}}","restarts":{{.RestartCount}}}',
+                     name],
+                    capture_output=True, text=True, timeout=5,
+                )
+                if result.returncode != 0:
+                    self._service_status[f"docker_{name}"] = {
+                        "status": "down",
+                        "last_check": time.time(),
+                        "message": f"Container not found",
+                        "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.CRITICAL, f"docker_{name}",
+                        f"🐳 Docker container '{name}' not found — run: docker compose up -d",
+                    )
+                    continue
+
+                info = json.loads(result.stdout.strip())
+                if info.get("running"):
+                    status_msg = f"Running (restarts: {info.get('restarts', 0)})"
+                    self._service_status[f"docker_{name}"] = {
+                        "status": "up",
+                        "last_check": time.time(),
+                        "message": status_msg,
+                        "response_time": None,
+                    }
+                    # Warn if container has been restarting a lot
+                    restarts = info.get("restarts", 0)
+                    if restarts > 5:
+                        self._emit_alert(
+                            Severity.WARNING, f"docker_{name}",
+                            f"🐳 Container '{name}' has restarted {restarts} times — check logs: docker logs {name}",
+                        )
+                else:
+                    state = info.get("status", "unknown")
+                    self._service_status[f"docker_{name}"] = {
+                        "status": "down",
+                        "last_check": time.time(),
+                        "message": f"State: {state}",
+                        "response_time": None,
+                    }
+                    self._emit_alert(
+                        Severity.CRITICAL, f"docker_{name}",
+                        f"🐳 Docker container '{name}' is {state} — run: docker start {name}",
+                    )
+            except subprocess.TimeoutExpired:
+                self._service_status[f"docker_{name}"] = {
+                    "status": "unknown",
+                    "last_check": time.time(),
+                    "message": "Docker inspect timed out",
+                    "response_time": None,
+                }
+            except Exception as e:
+                self._service_status[f"docker_{name}"] = {
+                    "status": "unknown",
+                    "last_check": time.time(),
+                    "message": str(e),
+                    "response_time": None,
+                }
+
+    # ── Internet Connectivity Check ──────────────────────────────────
+
+    def _check_internet(self):
+        """Check internet connectivity by pinging reliable endpoints."""
+        targets = [
+            ("dns_google", "https://dns.google/resolve?name=google.com&type=A"),
+            ("cloudflare", "https://1.1.1.1/cdn-cgi/trace"),
+        ]
+
+        any_reachable = False
+        for name, url in targets:
+            if not REQUESTS_AVAILABLE:
+                break
+            try:
+                start = time.monotonic()
+                r = requests.get(url, timeout=5)
+                elapsed = round(time.monotonic() - start, 3)
+                if r.status_code == 200:
+                    any_reachable = True
+                    break
+            except Exception:
+                pass
+
+        now = time.time()
+        if any_reachable:
+            self._service_status["internet"] = {
+                "status": "up",
+                "last_check": now,
+                "message": "OK",
+                "response_time": elapsed,
+            }
+        else:
+            self._service_status["internet"] = {
+                "status": "down",
+                "last_check": now,
+                "message": "No internet — all cloud APIs will fail",
+                "response_time": None,
+            }
+            self._emit_alert(
+                Severity.CRITICAL, "internet",
+                "🌐 Internet is DOWN — cloud LLMs, STT, TTS, Calendar, Vision all offline. "
+                "BMO will fall back to local Ollama.",
+            )
+
+    # ── Pi Power / Throttle Check ────────────────────────────────────
+
+    def _check_pi_power(self):
+        """Check Pi voltage/throttle flags via vcgencmd or /sys."""
+        import subprocess
+
+        now = time.time()
+        throttle_flags = None
+
+        try:
+            result = subprocess.run(
+                ["vcgencmd", "get_throttled"],
+                capture_output=True, text=True, timeout=3,
+            )
+            if result.returncode == 0:
+                # Output: throttled=0x50000 (or similar hex)
+                val = result.stdout.strip().split("=")[-1]
+                throttle_flags = int(val, 16)
+        except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+            pass
+
+        if throttle_flags is None:
+            # Try sysfs fallback
+            try:
+                with open("/sys/devices/platform/soc/soc:firmware/get_throttled") as f:
+                    throttle_flags = int(f.read().strip(), 16)
+            except (FileNotFoundError, ValueError, PermissionError):
+                self._service_status["pi_power"] = {
+                    "status": "unknown",
+                    "last_check": now,
+                    "message": "Cannot read throttle status",
+                    "response_time": None,
+                }
+                return
+
+        # Decode throttle flags (bits):
+        # 0: under-voltage detected
+        # 1: arm frequency capped
+        # 2: currently throttled
+        # 3: soft temperature limit active
+        # 16: under-voltage has occurred since boot
+        # 17: arm frequency capped has occurred
+        # 18: throttling has occurred
+        # 19: soft temperature limit has occurred
+
+        issues = []
+        if throttle_flags & 0x1:
+            issues.append("⚡ UNDER-VOLTAGE NOW — power supply too weak")
+        if throttle_flags & 0x4:
+            issues.append("🔥 THROTTLED NOW — CPU frequency reduced")
+        if throttle_flags & 0x2:
+            issues.append("⚠️ ARM frequency capped NOW")
+        if throttle_flags & 0x8:
+            issues.append("🌡️ Soft temperature limit active NOW")
+
+        historical = []
+        if throttle_flags & 0x10000:
+            historical.append("under-voltage since boot")
+        if throttle_flags & 0x40000:
+            historical.append("throttled since boot")
+
+        if issues:
+            self._service_status["pi_power"] = {
+                "status": "degraded",
+                "last_check": now,
+                "message": "; ".join(issues),
+                "throttle_flags": hex(throttle_flags),
+            }
+            self._emit_alert(
+                Severity.CRITICAL, "pi_power",
+                " | ".join(issues) + (f" (flags: {hex(throttle_flags)})" if historical else ""),
+            )
+        else:
+            msg = "OK"
+            if historical:
+                msg = f"OK now (past issues: {', '.join(historical)})"
+            self._service_status["pi_power"] = {
+                "status": "up",
+                "last_check": now,
+                "message": msg,
+                "throttle_flags": hex(throttle_flags),
+            }
 
     # ── State Transition Detection ───────────────────────────────────
 
@@ -429,16 +712,20 @@ class HealthChecker:
 
             # Recovery: was down or degraded, now up
             if previous in ("down", "degraded") and current == "up":
+                label = self._service_label(name)
+                recovery_msg = f"✅ {label} has recovered and is back online"
                 print(f"[monitor] RECOVERY: {name} is back up")
+
+                # Discord recovery notification (bypass cooldown)
+                _send_discord_webhook(Severity.INFO, name, recovery_msg)
 
                 if self.socketio:
                     self.socketio.emit("alert", {
                         "level": "info",
                         "service": name,
-                        "message": f"{name} has recovered",
+                        "message": recovery_msg,
                         "recovery": True,
                     })
-                    # Reset OLED face back to normal if it was in error state
                     self.socketio.emit("bmo_status", {"expression": "idle"})
 
     # ── Alert Emission ───────────────────────────────────────────────
@@ -448,9 +735,9 @@ class HealthChecker:
 
         Routing rules:
         - All alerts: print log with [monitor] prefix
-        - Critical + Warning: SocketIO 'alert' event
+        - Critical + Warning: SocketIO 'alert' event + Discord webhook
         - Critical: OLED face expression change (bmo_status: error)
-        - Critical: Discord webhook (with 5-min cooldown per service)
+        - Discord webhook uses 5-min cooldown per service
         - When service recovers: handled by _process_state_transitions
         """
         # Always log
@@ -469,11 +756,11 @@ class HealthChecker:
         if level == Severity.CRITICAL and self.socketio:
             self.socketio.emit("bmo_status", {"expression": "error"})
 
-        # Discord webhook for critical (with cooldown)
-        if level == Severity.CRITICAL:
-            self._send_discord_if_allowed(service, message)
+        # Discord webhook for critical AND warning (with cooldown)
+        if level in (Severity.CRITICAL, Severity.WARNING):
+            self._send_discord_if_allowed(level, service, message)
 
-    def _send_discord_if_allowed(self, service: str, message: str):
+    def _send_discord_if_allowed(self, level: Severity, service: str, message: str):
         """Send Discord webhook if cooldown has elapsed for this service."""
         now = time.time()
         last_sent = self._discord_cooldowns.get(service, 0)
@@ -481,7 +768,7 @@ class HealthChecker:
         if now - last_sent < DISCORD_COOLDOWN:
             return  # Still in cooldown
 
-        if _send_discord_webhook(Severity.CRITICAL, service, message):
+        if _send_discord_webhook(level, service, message):
             self._discord_cooldowns[service] = now
 
     # ── Status Summary ───────────────────────────────────────────────
@@ -491,33 +778,48 @@ class HealthChecker:
 
         Returns:
             Dict with per-service status (up/down/degraded), Pi resource stats,
+            Docker container status, internet status, power status,
             and overall health summary.
 
-        Used by the web UI status bar.
+        Used by the web UI status bar and /api/health/full endpoint.
         """
         services = {}
         for name, info in self._service_status.items():
-            services[name] = {
+            entry = {
                 "status": info.get("status", "unknown"),
                 "last_check": info.get("last_check"),
                 "message": info.get("message", ""),
                 "response_time": info.get("response_time"),
             }
+            # Include extra fields if present
+            if "stats" in info:
+                entry["stats"] = info["stats"]
+            if "throttle_flags" in info:
+                entry["throttle_flags"] = info["throttle_flags"]
+            services[name] = entry
 
         pi_stats = get_pi_stats()
 
         # Overall health: critical if any service is down, warning if degraded
         overall = "healthy"
-        for info in self._service_status.values():
+        down_services = []
+        degraded_services = []
+        for name, info in self._service_status.items():
             status = info.get("status", "unknown")
             if status == "down":
-                overall = "critical"
-                break
-            if status == "degraded":
-                overall = "warning"
+                down_services.append(name)
+            elif status == "degraded":
+                degraded_services.append(name)
+
+        if down_services:
+            overall = "critical"
+        elif degraded_services:
+            overall = "warning"
 
         return {
             "overall": overall,
+            "down_services": down_services,
+            "degraded_services": degraded_services,
             "services": services,
             "pi_stats": pi_stats,
             "check_interval": self.check_interval,

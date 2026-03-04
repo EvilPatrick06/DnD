@@ -57,13 +57,14 @@ weather = None
 timers = None
 agent = None
 led_controller = None
+health_checker = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker
 
     from agent import BmoAgent
 
@@ -181,6 +182,15 @@ def init_services():
     # Try to connect to TV (non-blocking — don't hold up startup)
     threading.Thread(target=init_tv_remote, daemon=True).start()
 
+    # Health checker (monitoring + Discord alerts)
+    try:
+        from monitoring import HealthChecker
+        health_checker = HealthChecker(socketio=socketio, check_interval=60)
+        health_checker.start()
+        print("[bmo]   Health checker: OK (60s interval)")
+    except Exception as e:
+        print(f"[bmo]   Health checker: SKIPPED ({e})")
+
     print("[bmo] All services initialized!")
 
 
@@ -189,6 +199,19 @@ def init_services():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/health/full")
+def api_health_full():
+    """Return full health status from HealthChecker (Pi stats + service checks)."""
+    if health_checker:
+        return jsonify(health_checker.get_status())
+    return jsonify({"overall": "unknown", "services": {}, "pi_stats": {}})
 
 
 # ── Chat API ─────────────────────────────────────────────────────────
