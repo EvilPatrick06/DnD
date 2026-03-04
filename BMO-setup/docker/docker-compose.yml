@@ -49,8 +49,36 @@ services:
       timeout: 5s
       retries: 3
 
+  # Pi-hole — DNS-level ad blocker (laptop, TV, phone only — not network-wide)
+  pihole:
+    image: pihole/pihole:latest
+    container_name: bmo-pihole
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TZ: "America/Chicago"
+      WEBPASSWORD: "bmo-ads-begone"
+      DNSMASQ_LISTENING: "all"
+      PIHOLE_DNS_: "8.8.8.8;1.1.1.1"
+      FTLCONF_LOCAL_IPV4: "10.10.20.242"
+      FTLCONF_dns_listeningMode: "ALL"
+      WEB_PORT: "8080"
+    volumes:
+      - pihole-etc:/etc/pihole
+      - pihole-dnsmasq:/etc/dnsmasq.d
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    cap_add:
+      - NET_ADMIN
+
 volumes:
   ollama-data:
     driver: local
   peerjs-modules:
+    driver: local
+  pihole-etc:
+    driver: local
+  pihole-dnsmasq:
     driver: local

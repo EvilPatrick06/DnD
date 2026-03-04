@@ -368,6 +368,7 @@ class HealthChecker:
     _SERVICE_LABELS = {
         "ollama_local": "🤖 Ollama (local LLM fallback)",
         "peerjs": "🌐 PeerJS (D&D multiplayer signaling)",
+        "pihole": "🛡️ Pi-hole (ad blocker DNS)",
         "bmo_app": "🏠 BMO Flask App (web UI + API)",
         "gemini_api": "☁️ Gemini API (primary LLM)",
         "groq_api": "☁️ Groq API (speech-to-text)",
@@ -510,7 +511,7 @@ class HealthChecker:
         """Check Docker container status via 'docker inspect'."""
         import subprocess
 
-        containers = ["bmo-ollama", "bmo-peerjs"]
+        containers = ["bmo-ollama", "bmo-peerjs", "bmo-pihole"]
         for name in containers:
             try:
                 result = subprocess.run(
