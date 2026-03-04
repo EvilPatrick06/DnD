@@ -11,7 +11,6 @@ import {
   restoreCharacterVersion,
   saveCharacter
 } from '../storage/character-storage'
-import { type BackupEntry, CloudSync, type CloudSyncConfig, type SyncResult } from '../storage/cloud-sync'
 import {
   deleteCustomCreature,
   loadCustomCreature,
@@ -33,8 +32,6 @@ import { type AppSettings, loadSettings, saveSettings } from '../storage/setting
 
 // Ensure imported types are used for type-safety
 type _CharacterVersion = CharacterVersion
-type _BackupEntry = BackupEntry
-type _SyncResult = SyncResult
 
 export function registerStorageHandlers(): void {
   // --- Character storage ---
@@ -226,56 +223,5 @@ export function registerStorageHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, async (_event, settings: AppSettings) => {
     await saveSettings(settings)
     return { success: true }
-  })
-
-  // --- Cloud Sync ---
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLOUD_SYNC_UPLOAD,
-    async (
-      _event,
-      config: CloudSyncConfig,
-      type: 'character' | 'campaign',
-      data: Record<string, unknown>,
-      deviceKey: string
-    ) => {
-      try {
-        const sync = new CloudSync(config)
-        if (type === 'character') {
-          await sync.uploadCharacter(data as { id: string; [key: string]: unknown }, deviceKey)
-        } else {
-          await sync.uploadCampaign(data as { id: string; [key: string]: unknown }, deviceKey)
-        }
-        return { success: true }
-      } catch (err) {
-        return { success: false, error: (err as Error).message }
-      }
-    }
-  )
-
-  ipcMain.handle(
-    IPC_CHANNELS.CLOUD_SYNC_DOWNLOAD,
-    async (_event, config: CloudSyncConfig, type: 'character' | 'campaign', id: string, deviceKey: string) => {
-      try {
-        const sync = new CloudSync(config)
-        const data =
-          type === 'character'
-            ? await sync.downloadCharacter(id, deviceKey)
-            : await sync.downloadCampaign(id, deviceKey)
-        return { success: true, data }
-      } catch (err) {
-        return { success: false, error: (err as Error).message }
-      }
-    }
-  )
-
-  ipcMain.handle(IPC_CHANNELS.CLOUD_SYNC_LIST, async (_event, config: CloudSyncConfig, deviceKey: string) => {
-    try {
-      const sync = new CloudSync(config)
-      const entries = await sync.listBackups(deviceKey)
-      return { success: true, data: entries }
-    } catch (err) {
-      return { success: false, error: (err as Error).message }
-    }
   })
 }

@@ -35,10 +35,7 @@ vi.mock('../../shared/ipc-channels', () => ({
     LOAD_ALL_HOMEBREW: 'storage:load-all-homebrew',
     DELETE_HOMEBREW: 'storage:delete-homebrew',
     SAVE_SETTINGS: 'storage:save-settings',
-    LOAD_SETTINGS: 'storage:load-settings',
-    CLOUD_SYNC_UPLOAD: 'storage:cloud-sync-upload',
-    CLOUD_SYNC_DOWNLOAD: 'storage:cloud-sync-download',
-    CLOUD_SYNC_LIST: 'storage:cloud-sync-list'
+    LOAD_SETTINGS: 'storage:load-settings'
   }
 }))
 
@@ -88,16 +85,6 @@ vi.mock('../storage/homebrew-storage', () => ({
 vi.mock('../storage/settings-storage', () => ({
   loadSettings: vi.fn(() => ({})),
   saveSettings: vi.fn()
-}))
-
-vi.mock('../storage/cloud-sync', () => ({
-  CloudSync: vi.fn(function (this: any) {
-    this.uploadCharacter = vi.fn()
-    this.uploadCampaign = vi.fn()
-    this.downloadCharacter = vi.fn()
-    this.downloadCampaign = vi.fn()
-    this.listBackups = vi.fn(() => [])
-  })
 }))
 
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
@@ -153,16 +140,11 @@ describe('storage-handlers', () => {
     // Settings handlers
     expect(registeredChannels).toContain(IPC_CHANNELS.SAVE_SETTINGS)
     expect(registeredChannels).toContain(IPC_CHANNELS.LOAD_SETTINGS)
-
-    // Cloud sync handlers
-    expect(registeredChannels).toContain(IPC_CHANNELS.CLOUD_SYNC_UPLOAD)
-    expect(registeredChannels).toContain(IPC_CHANNELS.CLOUD_SYNC_DOWNLOAD)
-    expect(registeredChannels).toContain(IPC_CHANNELS.CLOUD_SYNC_LIST)
   })
 
-  it('should register exactly 30 handlers', () => {
+  it('should register exactly 27 handlers', () => {
     registerStorageHandlers()
-    expect(mockHandle).toHaveBeenCalledTimes(30)
+    expect(mockHandle).toHaveBeenCalledTimes(27)
   })
 
   describe('SAVE_CHARACTER handler', () => {
@@ -206,18 +188,6 @@ describe('storage-handlers', () => {
 
       const result = await handler({}, { turnServers: [] })
       expect(result).toEqual({ success: true })
-    })
-  })
-
-  describe('CLOUD_SYNC_LIST handler', () => {
-    it('should create CloudSync instance and list backups', async () => {
-      registerStorageHandlers()
-
-      const handler = mockHandle.mock.calls.find((call) => call[0] === IPC_CHANNELS.CLOUD_SYNC_LIST)![1]
-
-      const config = { bucket: 'test', region: 'us-east-1' }
-      const result = await handler({}, config, 'device-key')
-      expect(result.success).toBe(true)
     })
   })
 })

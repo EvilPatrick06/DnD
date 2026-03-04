@@ -111,14 +111,6 @@ describe('ipc-channels', () => {
     })
   })
 
-  describe('cloud sync channels', () => {
-    it('should define cloud sync channels', () => {
-      expect(IPC_CHANNELS.CLOUD_SYNC_UPLOAD).toBe('storage:cloud-sync-upload')
-      expect(IPC_CHANNELS.CLOUD_SYNC_DOWNLOAD).toBe('storage:cloud-sync-download')
-      expect(IPC_CHANNELS.CLOUD_SYNC_LIST).toBe('storage:cloud-sync-list')
-    })
-  })
-
   describe('audio channels', () => {
     it('should define audio custom track channels', () => {
       expect(IPC_CHANNELS.AUDIO_UPLOAD_CUSTOM).toBe('audio:upload-custom')
