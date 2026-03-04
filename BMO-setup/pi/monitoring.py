@@ -376,7 +376,13 @@ class HealthChecker:
     }
 
     def _service_label(self, name: str) -> str:
-        return self._SERVICE_LABELS.get(name, name)
+        if name in self._SERVICE_LABELS:
+            return self._SERVICE_LABELS[name]
+        # Auto-generate friendly label for docker containers
+        if name.startswith("docker_"):
+            container = name[7:]  # strip "docker_"
+            return f"🐳 {container}"
+        return name
 
     def _check_http_service(self, name: str, config: dict):
         """Check a single HTTP service endpoint."""
@@ -508,10 +514,26 @@ class HealthChecker:
     # ── Docker Container Checks ──────────────────────────────────────
 
     def _check_docker_containers(self):
-        """Check Docker container status via 'docker inspect'."""
+        """Check ALL Docker container status via auto-discovery."""
         import subprocess
 
-        containers = ["bmo-ollama", "bmo-peerjs", "bmo-pihole"]
+        # Auto-discover all containers (running and stopped)
+        try:
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--format", "{{.Names}}"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode != 0:
+                print(f"[monitor] Docker ps failed: {result.stderr.strip()}")
+                return
+            containers = [n.strip() for n in result.stdout.strip().split("\n") if n.strip()]
+        except Exception as e:
+            print(f"[monitor] Docker discovery failed: {e}")
+            return
+
+        if not containers:
+            return
+
         for name in containers:
             try:
                 result = subprocess.run(
@@ -542,7 +564,6 @@ class HealthChecker:
                         "message": status_msg,
                         "response_time": None,
                     }
-                    # Warn if container has been restarting a lot
                     restarts = info.get("restarts", 0)
                     if restarts > 5:
                         self._emit_alert(
