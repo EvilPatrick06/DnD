@@ -164,6 +164,7 @@ class TimerService:
         self._timers[timer.id] = timer
         self._ensure_running()
         self._emit("timer_created", timer.to_dict())
+        self._save_all()
         return timer.to_dict()
 
     def cancel_timer(self, timer_id: str) -> bool:
@@ -171,6 +172,7 @@ class TimerService:
         if timer_id in self._timers:
             del self._timers[timer_id]
             self._emit("timer_cancelled", {"id": timer_id})
+            self._save_all()
             return True
         return False
 
@@ -181,6 +183,7 @@ class TimerService:
             timer.paused = not timer.paused
             if not timer.paused:
                 timer.started_at = time.time() - (timer.duration - timer.remaining)
+            self._save_all()
             return True
         return False
 
@@ -338,8 +341,10 @@ class TimerService:
 
         if self.voice:
             self.voice.speak(msg, volume=85)
+            if hasattr(self.voice, 'start_conversation'):
+                self.voice.start_conversation()
 
-        threading.Timer(5.0, lambda: self._timers.pop(timer.id, None)).start()
+        threading.Timer(5.0, lambda: (self._timers.pop(timer.id, None), self._save_all())).start()
 
     def _on_alarm_fired(self, alarm: Alarm):
         """Called when an alarm triggers — behavior depends on tag."""
@@ -355,6 +360,8 @@ class TimerService:
             })
             if self.voice:
                 self.voice.speak(msg, volume=85)
+                if hasattr(self.voice, 'start_conversation'):
+                    self.voice.start_conversation()
         else:
             # Default "reminder" tag
             msg = f"Hey! Don't forget: {alarm.label}!"
@@ -364,6 +371,8 @@ class TimerService:
             })
             if self.voice:
                 self.voice.speak(msg, volume=85)
+                if hasattr(self.voice, 'start_conversation'):
+                    self.voice.start_conversation()
 
         # Auto-advance repeating alarms to next occurrence
         if alarm.advance_repeat():
@@ -409,6 +418,8 @@ class TimerService:
         print(f"[alarm] Wake-up message: {msg[:80]}...")
         if self.voice:
             self.voice.speak(msg, volume=85)
+            if hasattr(self.voice, 'start_conversation'):
+                self.voice.start_conversation()
 
     @staticmethod
     def _clean_for_speech(text: str) -> str:
@@ -430,13 +441,17 @@ class TimerService:
 
     # ── Persistence ──────────────────────────────────────────────────
 
+    def _save_all(self):
+        """Save both alarms and timers to disk."""
+        self._save_alarms()
+
     def _save_alarms(self):
-        """Save alarms to disk so they survive restarts."""
+        """Save alarms and active timers to disk so they survive restarts."""
         try:
             os.makedirs(os.path.dirname(PERSIST_PATH), exist_ok=True)
-            data = []
+            alarms = []
             for a in self._alarms.values():
-                data.append({
+                alarms.append({
                     "id": a.id,
                     "label": a.label,
                     "hour": a.hour,
@@ -448,20 +463,39 @@ class TimerService:
                     "fired": a.fired,
                     "snoozed": a.snoozed,
                 })
+            timers = []
+            for t in self._timers.values():
+                if not t.fired:
+                    timers.append({
+                        "id": t.id,
+                        "label": t.label,
+                        "duration": t.duration,
+                        "remaining": t.remaining,
+                        "started_at": t.started_at,
+                        "paused": t.paused,
+                    })
             with open(PERSIST_PATH, "w") as f:
-                json.dump(data, f, indent=2)
+                json.dump({"alarms": alarms, "timers": timers}, f, indent=2)
         except Exception as e:
             print(f"[timer] Save failed: {e}")
 
     def _load_alarms(self):
-        """Load saved alarms from disk on startup."""
+        """Load saved alarms and timers from disk on startup."""
         if not os.path.exists(PERSIST_PATH):
             return
         try:
             with open(PERSIST_PATH, "r") as f:
-                data = json.load(f)
+                raw = json.load(f)
+
+            # Support both old format (list of alarms) and new format (dict with alarms+timers)
+            if isinstance(raw, list):
+                alarm_data, timer_data = raw, []
+            else:
+                alarm_data = raw.get("alarms", [])
+                timer_data = raw.get("timers", [])
+
             loaded = 0
-            for item in data:
+            for item in alarm_data:
                 target = datetime.datetime.fromisoformat(item["target_time"])
                 alarm = Alarm(
                     target,
@@ -486,6 +520,39 @@ class TimerService:
 
             if loaded:
                 print(f"[timer] Loaded {loaded} saved alarms")
+
+            # Restore timers with adjusted remaining time
+            timer_loaded = 0
+            now = time.time()
+            for item in timer_data:
+                elapsed_since_save = now - item["started_at"]
+                if item.get("paused"):
+                    remaining = item["remaining"]
+                else:
+                    remaining = item["duration"] - int(elapsed_since_save)
+
+                if remaining <= 0:
+                    # Timer expired while BMO was down — fire it now
+                    msg = f"Beep boop! {item['label']} finished while I was restarting!"
+                    print(f"[timer] EXPIRED DURING DOWNTIME: {item['label']}")
+                    self._emit("timer_fired", {"id": item["id"], "label": item["label"], "message": msg})
+                    if self.voice:
+                        threading.Timer(2.0, lambda m=msg: self.voice.speak(m, volume=85)).start()
+                    continue
+
+                timer = Timer(item["duration"], item["label"])
+                timer.id = item["id"]
+                timer.paused = item.get("paused", False)
+                # Adjust started_at so remaining calculation is correct
+                timer.started_at = now - (item["duration"] - remaining)
+                timer.remaining = remaining
+                self._timers[timer.id] = timer
+                timer_loaded += 1
+
+            if timer_loaded:
+                print(f"[timer] Restored {timer_loaded} saved timers")
+
+            if loaded or timer_loaded:
                 self._ensure_running()
         except Exception as e:
             print(f"[timer] Load failed: {e}")

@@ -1187,6 +1187,93 @@
       </div>
     </div>
 
+    <!-- ═══════ CONTROLS TAB ═══════ -->
+    <div x-show="tab === 'controls'" x-init="$watch('tab', v => { if (v === 'controls') fetchControlsData(); })"
+         :class="swipeDirection === 'left' ? 'tab-slide-enter-left' : swipeDirection === 'right' ? 'tab-slide-enter-right' : ''"
+         class="h-full flex flex-col p-3 gap-3 overflow-y-auto">
+
+      <!-- System Status -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">📊 System Status</h3>
+          <button @click="refreshStatus()" class="text-xs text-accent">Refresh</button>
+        </div>
+        <template x-if="systemStatus">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2 h-2 rounded-full" :class="systemStatus.overall === 'healthy' ? 'bg-green-500' : systemStatus.overall === 'warning' ? 'bg-amber-500' : 'bg-red-500'"></span>
+              <span class="text-xs font-medium capitalize" x-text="systemStatus.overall"></span>
+              <span x-show="conversationActive" class="text-xs text-blue-400 ml-auto">🎙️ Conversation Active</span>
+            </div>
+            <p class="text-xs text-text-muted leading-relaxed" x-text="systemStatus.summary"></p>
+          </div>
+        </template>
+        <p x-show="!systemStatus" class="text-xs text-text-dim">Loading...</p>
+      </div>
+
+      <!-- LED Controls -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <h3 class="text-sm font-bold mb-2">💡 RGB Lights</h3>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <template x-for="m in ['off', 'static', 'breathing', 'rainbow', 'chase']" :key="m">
+            <button @click="setLedMode(m)" class="px-3 py-1 rounded text-xs capitalize"
+                    :class="ledState.mode === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m"></button>
+          </template>
+        </div>
+        <div class="flex items-center gap-2 mb-2">
+          <label class="text-xs text-text-muted">Color:</label>
+          <input type="color" x-model="ledColorHex" @change="setLedColor()" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
+          <div class="w-6 h-6 rounded-full border border-surface" :style="`background: ${ledColorHex}`"></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-text-muted">Brightness:</label>
+          <input type="range" min="0" max="100" :value="ledState.brightness" @change="setLedBrightness($event.target.value)"
+                 class="flex-1 accent-accent">
+          <span class="text-xs text-text-muted w-8 text-right" x-text="ledState.brightness + '%'"></span>
+        </div>
+      </div>
+
+      <!-- Volume Controls -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <h3 class="text-sm font-bold mb-2">🔊 Volume</h3>
+        <template x-for="cat in ['music', 'voice', 'effects', 'notifications']" :key="cat">
+          <div class="flex items-center gap-2 mb-1.5">
+            <label class="text-xs text-text-muted w-20 capitalize" x-text="cat"></label>
+            <input type="range" min="0" max="100" :value="volumeLevels[cat]"
+                   @change="setVolume(cat, $event.target.value)"
+                   class="flex-1 accent-accent">
+            <span class="text-xs text-text-muted w-8 text-right" x-text="volumeLevels[cat]"></span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Notifications -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">🔔 Notifications</h3>
+          <div class="flex gap-2">
+            <button @click="clearKdeNotifications()" class="text-xs text-text-dim">Clear</button>
+            <span class="text-xs" :class="notifSettings.enabled ? 'text-green-400' : 'text-red-400'"
+                  x-text="notifSettings.enabled ? 'ON' : 'OFF'"></span>
+          </div>
+        </div>
+        <div x-show="kdeNotifications.length === 0" class="text-xs text-text-dim text-center py-2">No recent notifications</div>
+        <div class="max-h-48 overflow-y-auto space-y-1">
+          <template x-for="n in kdeNotifications.slice(0, 20)" :key="n.id">
+            <div class="bg-surface rounded px-2 py-1.5 flex items-start gap-2">
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-medium truncate" x-text="n.title || n.app"></div>
+                <div class="text-[10px] text-text-muted truncate" x-text="n.body"></div>
+                <div class="text-[9px] text-text-dim" x-text="n.device + ' · ' + new Date(n.timestamp * 1000).toLocaleTimeString()"></div>
+              </div>
+              <button @click="replyToNotification(n)" class="text-[10px] text-accent shrink-0">Reply</button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 
   <!-- Now-Playing Mini Bar (global, shown on non-music tabs when music is playing) -->

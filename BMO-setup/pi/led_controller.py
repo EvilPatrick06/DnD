@@ -11,6 +11,8 @@ Board LED modes (register 0x03):
   4 = Rainbow (auto cycle)
 """
 
+import json
+import os
 import threading
 import time
 from enum import Enum
@@ -35,6 +37,18 @@ MODE_STATIC = 1
 MODE_FOLLOW = 2
 MODE_BREATHING = 3
 MODE_RAINBOW = 4
+
+MODE_NAMES = {
+    "off": MODE_OFF,
+    "static": MODE_STATIC,
+    "follow": MODE_FOLLOW,
+    "chase": MODE_FOLLOW,
+    "breathing": MODE_BREATHING,
+    "pulse": MODE_BREATHING,
+    "rainbow": MODE_RAINBOW,
+}
+
+SETTINGS_PATH = os.path.join(os.path.dirname(__file__), "data", "settings.json")
 
 
 class LedState(Enum):
@@ -84,15 +98,20 @@ class LedController:
         self._state = LedState.READY
         self._flash_thread = None
         self._flash_stop = threading.Event()
+        # Direct control state (overrides mood state when set)
+        self._custom_color = None  # (r, g, b) or None
+        self._custom_mode = None   # MODE_* int or None
+        self._brightness = 100     # 0-100 percent
 
     def start(self):
-        """Initialize I2C bus and set initial state."""
+        """Initialize I2C bus, restore saved state, and apply."""
         if not LED_AVAILABLE:
             print("[led] smbus2 not available — running headless")
             return
 
         try:
             self._bus = SMBus(I2C_BUS)
+            self._load_state()
             self._apply_state()
             print("[led] LED controller started (I2C 0x{:02X})".format(I2C_ADDR))
         except Exception as e:
@@ -107,7 +126,7 @@ class LedController:
             self._bus = None
 
     def set_state(self, state: str):
-        """Change LED state."""
+        """Change LED mood state (clears custom overrides)."""
         try:
             self._state = LedState(state)
         except ValueError:
@@ -116,19 +135,111 @@ class LedController:
             else:
                 print(f"[led] Unknown LED state: {state}")
                 return
+        self._custom_color = None
+        self._custom_mode = None
         self._apply_state()
+
+    # ── Direct Control API ───────────────────────────────────────────
+
+    def set_color(self, r: int, g: int, b: int):
+        """Set a custom RGB color directly."""
+        self._custom_color = (
+            max(0, min(255, r)),
+            max(0, min(255, g)),
+            max(0, min(255, b)),
+        )
+        if self._custom_mode is None:
+            self._custom_mode = MODE_STATIC
+        self._apply_custom()
+        self._save_state()
+
+    def set_color_by_name(self, name: str) -> bool:
+        """Set color by name. Returns False if unknown."""
+        color = COLORS.get(name.lower())
+        if color is None:
+            return False
+        self.set_color(*color)
+        return True
+
+    def set_mode(self, mode: str) -> bool:
+        """Set LED mode by name (static, breathing, chase, rainbow, off)."""
+        mode_val = MODE_NAMES.get(mode.lower())
+        if mode_val is None:
+            return False
+        self._custom_mode = mode_val
+        if mode_val == MODE_OFF:
+            self._stop_flash()
+            self._set_mode(MODE_OFF)
+        elif mode_val == MODE_RAINBOW:
+            self._stop_flash()
+            self._set_mode(MODE_RAINBOW)
+        else:
+            self._apply_custom()
+        self._save_state()
+        return True
+
+    def set_brightness(self, level: int):
+        """Set brightness 0-100. Scales the current color."""
+        self._brightness = max(0, min(100, level))
+        if self._custom_color:
+            self._apply_custom()
+        else:
+            self._apply_state()
+        self._save_state()
+
+    def get_full_state(self) -> dict:
+        """Return full LED state for API responses."""
+        mode_name = "unknown"
+        for name, val in MODE_NAMES.items():
+            if val == (self._custom_mode if self._custom_mode is not None else
+                       STATE_CONFIG.get(self._state, (MODE_OFF, None))[0]):
+                mode_name = name
+                break
+
+        color = self._custom_color
+        if color is None:
+            _, color_name = STATE_CONFIG.get(self._state, (MODE_OFF, None))
+            color = COLORS.get(color_name, (0, 0, 0)) if color_name else (0, 0, 0)
+
+        return {
+            "state": self._state.value,
+            "color": {"r": color[0], "g": color[1], "b": color[2]},
+            "mode": mode_name,
+            "brightness": self._brightness,
+            "custom": self._custom_color is not None,
+        }
 
     @property
     def current_state(self) -> str:
         return self._state.value
 
-    def _apply_state(self):
-        """Apply the current state to the board."""
+    def _apply_custom(self):
+        """Apply custom color + mode with brightness scaling."""
         self._stop_flash()
+        if self._custom_color:
+            scale = self._brightness / 100.0
+            r = int(self._custom_color[0] * scale)
+            g = int(self._custom_color[1] * scale)
+            b = int(self._custom_color[2] * scale)
+            self._set_color(r, g, b)
+        mode = self._custom_mode if self._custom_mode is not None else MODE_STATIC
+        self._set_mode(mode)
+
+    def _apply_state(self):
+        """Apply the current mood state to the board."""
+        self._stop_flash()
+
+        # If custom overrides are active, use those instead
+        if self._custom_color is not None or self._custom_mode is not None:
+            self._apply_custom()
+            return
+
         mode, color_name = STATE_CONFIG.get(self._state, (MODE_OFF, None))
 
         if color_name:
-            self._set_color(*COLORS[color_name])
+            color = COLORS[color_name]
+            scale = self._brightness / 100.0
+            self._set_color(int(color[0] * scale), int(color[1] * scale), int(color[2] * scale))
 
         # Error and alarm use flashing (toggle on/off rapidly)
         if self._state in (LedState.ERROR, LedState.ALARM):
@@ -136,6 +247,47 @@ class LedController:
             self._start_flash(COLORS[color_name], speed)
         else:
             self._set_mode(mode)
+
+    # ── Persistence ──────────────────────────────────────────────────
+
+    def _save_state(self):
+        """Persist LED state to settings.json."""
+        try:
+            os.makedirs(os.path.dirname(SETTINGS_PATH), exist_ok=True)
+            settings = {}
+            if os.path.exists(SETTINGS_PATH):
+                with open(SETTINGS_PATH, "r") as f:
+                    settings = json.load(f)
+            settings["led"] = {
+                "state": self._state.value,
+                "custom_color": list(self._custom_color) if self._custom_color else None,
+                "custom_mode": self._custom_mode,
+                "brightness": self._brightness,
+            }
+            with open(SETTINGS_PATH, "w") as f:
+                json.dump(settings, f, indent=2)
+        except Exception as e:
+            print(f"[led] Save state failed: {e}")
+
+    def _load_state(self):
+        """Restore LED state from settings.json."""
+        try:
+            if os.path.exists(SETTINGS_PATH):
+                with open(SETTINGS_PATH, "r") as f:
+                    settings = json.load(f)
+                led = settings.get("led", {})
+                if led.get("state"):
+                    try:
+                        self._state = LedState(led["state"])
+                    except ValueError:
+                        pass
+                if led.get("custom_color"):
+                    self._custom_color = tuple(led["custom_color"])
+                self._custom_mode = led.get("custom_mode")
+                self._brightness = led.get("brightness", 100)
+                print(f"[led] Restored state: {self._state.value}, brightness={self._brightness}%")
+        except Exception as e:
+            print(f"[led] Load state failed: {e}")
 
     # ── I2C Helpers ───────────────────────────────────────────────────
 

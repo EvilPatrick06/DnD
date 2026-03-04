@@ -62,6 +62,7 @@ function bmo() {
       { id: 'music', icon: '\u{1F3B5}' },
       { id: 'calendar', icon: '\u{1F4C5}' },
       { id: 'timers', icon: '\u23F1' },
+      { id: 'controls', icon: '\u2699' },
     ],
 
     // Clock
@@ -186,6 +187,15 @@ function bmo() {
     tvConnected: false,
     tvPairing: false,
     tvPairPin: '',
+
+    // Controls tab state
+    ledState: { color: { r: 0, g: 255, b: 0 }, mode: 'breathing', brightness: 100, custom: false },
+    ledColorHex: '#00ff00',
+    volumeLevels: { music: 50, voice: 80, effects: 80, notifications: 80 },
+    systemStatus: null,
+    conversationActive: false,
+    kdeNotifications: [],
+    notifSettings: { enabled: true, blocklist: [], devices: {} },
 
     // Swipe animation direction
     swipeDirection: '',
@@ -419,6 +429,24 @@ function bmo() {
       this.socket.on('scratchpad_update', (data) => {
         this.scratchpad = data;
       });
+
+      // Controls tab events
+      this.socket.on('led_state', (data) => {
+        this.ledState = data;
+        if (data.color) {
+          const r = data.color.r.toString(16).padStart(2, '0');
+          const g = data.color.g.toString(16).padStart(2, '0');
+          const b = data.color.b.toString(16).padStart(2, '0');
+          this.ledColorHex = `#${r}${g}${b}`;
+        }
+      });
+      this.socket.on('volume_update', (data) => { this.volumeLevels = data; });
+      this.socket.on('conversation_mode', (data) => { this.conversationActive = data.active; });
+      this.socket.on('notification', (data) => {
+        this.kdeNotifications.unshift(data);
+        if (this.kdeNotifications.length > 100) this.kdeNotifications.length = 100;
+      });
+      this.socket.on('notification_settings', (data) => { this.notifSettings = data; });
     },
 
     // ── Plan mode helpers ─────────────────────────────────
@@ -1785,6 +1813,108 @@ function bmo() {
         yapping: 'text-orange-400',
         speaking: 'text-purple-400',
       }[this.status] || 'text-text-muted';
+    },
+
+    // ── Controls Tab ──────────────────────────────────────────
+
+    async fetchControlsData() {
+      try {
+        const [ledRes, volRes, statusRes, notifRes, notifSettRes] = await Promise.all([
+          fetch('/api/led/status'),
+          fetch('/api/volume'),
+          fetch('/api/status/summary'),
+          fetch('/api/notifications'),
+          fetch('/api/notifications/settings'),
+        ]);
+        if (ledRes.ok) {
+          const d = await ledRes.json();
+          this.ledState = d;
+          if (d.color) {
+            const r = d.color.r.toString(16).padStart(2, '0');
+            const g = d.color.g.toString(16).padStart(2, '0');
+            const b = d.color.b.toString(16).padStart(2, '0');
+            this.ledColorHex = `#${r}${g}${b}`;
+          }
+        }
+        if (volRes.ok) this.volumeLevels = await volRes.json();
+        if (statusRes.ok) this.systemStatus = await statusRes.json();
+        if (notifRes.ok) {
+          const nd = await notifRes.json();
+          this.kdeNotifications = nd.notifications || [];
+        }
+        if (notifSettRes.ok) this.notifSettings = await notifSettRes.json();
+      } catch {}
+    },
+
+    async setLedColor() {
+      const hex = this.ledColorHex.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      try {
+        await fetch('/api/led/color', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ r, g, b }),
+        });
+      } catch {}
+    },
+
+    async setLedMode(mode) {
+      try {
+        await fetch('/api/led/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode }),
+        });
+      } catch {}
+    },
+
+    async setLedBrightness(val) {
+      try {
+        await fetch('/api/led/brightness', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brightness: parseInt(val) }),
+        });
+      } catch {}
+    },
+
+    async setVolume(category, level) {
+      try {
+        await fetch('/api/volume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category, level: parseInt(level) }),
+        });
+      } catch {}
+    },
+
+    async clearKdeNotifications() {
+      try {
+        await fetch('/api/notifications/clear', { method: 'POST' });
+        this.kdeNotifications = [];
+      } catch {}
+    },
+
+    async replyToNotification(notif) {
+      const msg = prompt('Reply:');
+      if (!msg) return;
+      try {
+        await fetch('/api/notifications/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: notif.id, message: msg, device_id: notif.device_id }),
+        });
+        this.showNotification('Reply sent!');
+      } catch {}
+    },
+
+    async refreshStatus() {
+      try {
+        const res = await fetch('/api/status/summary');
+        if (res.ok) this.systemStatus = await res.json();
+      } catch {}
     },
   };
 }

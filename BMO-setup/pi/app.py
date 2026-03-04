@@ -58,13 +58,14 @@ timers = None
 agent = None
 led_controller = None
 health_checker = None
+notifier = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier
 
     from agent import BmoAgent
 
@@ -191,6 +192,16 @@ def init_services():
     except Exception as e:
         print(f"[bmo]   Health checker: SKIPPED ({e})")
 
+    # Notification service (KDE Connect bridge)
+    try:
+        from notification_service import NotificationService
+        notifier = NotificationService(voice_pipeline=voice, socketio=socketio)
+        notifier.start()
+        service_map["notifier"] = notifier
+        print("[bmo]   Notifications: OK")
+    except Exception as e:
+        print(f"[bmo]   Notifications: SKIPPED ({e})")
+
     print("[bmo] All services initialized!")
 
 
@@ -212,6 +223,74 @@ def api_health_full():
     if health_checker:
         return jsonify(health_checker.get_status())
     return jsonify({"overall": "unknown", "services": {}, "pi_stats": {}})
+
+
+@app.route("/api/status/summary")
+def api_status_summary():
+    """Human-readable status summary for TTS and voice queries."""
+    if not health_checker:
+        return jsonify({"summary": "I can't check my status right now — monitoring isn't running."})
+
+    status = health_checker.get_status()
+    overall = status.get("overall", "unknown")
+    pi = status.get("pi_stats", {})
+    down = status.get("down_services", [])
+    degraded = status.get("degraded_services", [])
+    services = status.get("services", {})
+
+    from monitoring import HealthChecker as _HC
+    label_map = getattr(_HC, '_SERVICE_LABELS', None)
+    def _label(name):
+        if label_map and name in label_map:
+            return label_map[name].split("(")[0].strip().lstrip("🤖🌐🔑🐋📡🎮 ")
+        return name.replace("_", " ").title()
+
+    parts = []
+    if overall == "healthy":
+        total = len(services)
+        parts.append(f"All {total} services are running normally.")
+    elif overall == "critical":
+        labels = [_label(s) for s in down]
+        parts.append(f"Critical: {', '.join(labels)} {'is' if len(labels)==1 else 'are'} down.")
+    elif overall == "warning":
+        labels = [_label(s) for s in degraded]
+        parts.append(f"Warning: {', '.join(labels)} {'is' if len(labels)==1 else 'are'} degraded.")
+
+    # Pi stats
+    cpu = pi.get("cpu_percent")
+    mem = pi.get("memory", {})
+    temp = pi.get("cpu_temp")
+    disk = pi.get("disk", {})
+    throttle = pi.get("throttle_flags", [])
+
+    if cpu is not None:
+        parts.append(f"CPU is at {cpu}%.")
+    if mem:
+        parts.append(f"Memory: {mem.get('percent', '?')}% used.")
+    if temp is not None:
+        parts.append(f"Temperature: {temp}°C.")
+        if temp > 70:
+            parts.append("That's running hot!")
+    if disk:
+        parts.append(f"Disk: {disk.get('percent', '?')}% used.")
+    if throttle:
+        parts.append(f"Power issues: {', '.join(throttle)}.")
+
+    # Internet
+    inet = services.get("internet", {})
+    if inet:
+        if inet.get("status") == "up":
+            parts.append("Internet connection is good.")
+        else:
+            parts.append("Internet is down!")
+
+    # Docker
+    docker_info = services.get("docker", {})
+    if docker_info and docker_info.get("status") == "down":
+        parts.append("Docker containers have issues.")
+
+    summary = " ".join(parts)
+    return jsonify({"summary": summary, "overall": overall, "raw": status})
 
 
 # ── Chat API ─────────────────────────────────────────────────────────
@@ -774,6 +853,133 @@ def api_led_state():
     return jsonify({"ok": True, "state": state})
 
 
+@app.route("/api/led/color", methods=["POST"])
+def api_led_color():
+    """Set LED color directly by name or RGB values."""
+    data = request.json or {}
+    if not led_controller:
+        return jsonify({"ok": False, "error": "LED controller not available"})
+    if "color" in data:
+        if not led_controller.set_color_by_name(data["color"]):
+            return jsonify({"ok": False, "error": f"Unknown color: {data['color']}"})
+    else:
+        r, g, b = data.get("r", 0), data.get("g", 0), data.get("b", 0)
+        led_controller.set_color(r, g, b)
+    socketio.emit("led_state", led_controller.get_full_state())
+    return jsonify({"ok": True, **led_controller.get_full_state()})
+
+
+@app.route("/api/led/mode", methods=["POST"])
+def api_led_mode():
+    """Set LED mode (static, breathing, chase, rainbow, off)."""
+    data = request.json or {}
+    if not led_controller:
+        return jsonify({"ok": False, "error": "LED controller not available"})
+    mode = data.get("mode", "static")
+    if not led_controller.set_mode(mode):
+        return jsonify({"ok": False, "error": f"Unknown mode: {mode}"})
+    socketio.emit("led_state", led_controller.get_full_state())
+    return jsonify({"ok": True, **led_controller.get_full_state()})
+
+
+@app.route("/api/led/brightness", methods=["POST"])
+def api_led_brightness():
+    """Set LED brightness (0-100)."""
+    data = request.json or {}
+    if not led_controller:
+        return jsonify({"ok": False, "error": "LED controller not available"})
+    led_controller.set_brightness(data.get("brightness", 100))
+    socketio.emit("led_state", led_controller.get_full_state())
+    return jsonify({"ok": True, **led_controller.get_full_state()})
+
+
+@app.route("/api/led/status")
+def api_led_status():
+    """Get current LED state."""
+    if not led_controller:
+        return jsonify({"ok": False, "error": "LED controller not available"})
+    return jsonify({"ok": True, **led_controller.get_full_state()})
+
+
+# ── Volume API ───────────────────────────────────────────────────────
+
+@app.route("/api/volume")
+def api_volume_get():
+    """Get all volume levels."""
+    music_vol = 50
+    if music:
+        try:
+            music_vol = music._player.audio_get_volume() if music._player else 50
+        except Exception:
+            music_vol = _load_setting("volume.music", 50)
+    return jsonify({
+        "music": music_vol,
+        "voice": getattr(voice, "_speak_volume", 80) if voice else 80,
+        "effects": _load_setting("volume.effects", 80),
+        "notifications": _load_setting("volume.notifications", 80),
+    })
+
+
+@app.route("/api/volume", methods=["POST"])
+def api_volume_set():
+    """Set volume for a specific category."""
+    data = request.json or {}
+    category = data.get("category", "")
+    level = max(0, min(100, data.get("level", 50)))
+
+    if category == "music" and music:
+        music.set_volume(level)
+    elif category == "voice" and voice:
+        voice._speak_volume = level
+    elif category == "effects":
+        pass  # Sound effects volume applied at play time
+    elif category == "notifications":
+        pass  # Notification volume applied at announce time
+    else:
+        return jsonify({"ok": False, "error": f"Unknown category: {category}"})
+
+    _save_setting(f"volume.{category}", level)
+    socketio.emit("volume_update", {"category": category, "level": level})
+    return jsonify({"ok": True, "category": category, "level": level})
+
+
+def _load_setting(key: str, default=None):
+    """Load a dotted key from data/settings.json."""
+    try:
+        settings_path = os.path.join(os.path.dirname(__file__), "data", "settings.json")
+        if os.path.exists(settings_path):
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+            parts = key.split(".")
+            obj = settings
+            for part in parts:
+                obj = obj.get(part, {})
+            return obj if obj != {} else default
+    except Exception:
+        pass
+    return default
+
+
+def _save_setting(key: str, value):
+    """Save a dotted key to data/settings.json."""
+    try:
+        settings_path = os.path.join(os.path.dirname(__file__), "data", "settings.json")
+        os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+        settings = {}
+        if os.path.exists(settings_path):
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+        parts = key.split(".")
+        obj = settings
+        for part in parts[:-1]:
+            obj = obj.setdefault(part, {})
+        obj[parts[-1]] = value
+        with open(settings_path, "w") as f:
+            json.dump(settings, f, indent=2)
+    except Exception as e:
+        print(f"[settings] Save failed for {key}: {e}")
+
+
 # ── Weather API ──────────────────────────────────────────────────────
 
 @app.route("/api/weather")
@@ -1025,9 +1231,13 @@ _TV_KEYFILE = os.path.join(_TV_CERT_DIR, "tv_key.pem")
 
 TV_KEYS = {
     "up": "DPAD_UP", "down": "DPAD_DOWN", "left": "DPAD_LEFT", "right": "DPAD_RIGHT",
-    "select": "DPAD_CENTER", "back": "BACK", "home": "HOME",
-    "play_pause": "MEDIA_PLAY_PAUSE", "rewind": "MEDIA_PREVIOUS", "forward": "MEDIA_NEXT",
+    "select": "DPAD_CENTER", "enter": "DPAD_CENTER", "back": "BACK", "home": "HOME",
+    "play_pause": "MEDIA_PLAY_PAUSE", "play": "MEDIA_PLAY", "pause": "MEDIA_PAUSE",
+    "rewind": "MEDIA_REWIND", "fast_forward": "MEDIA_FAST_FORWARD",
+    "previous": "MEDIA_PREVIOUS", "next": "MEDIA_NEXT",
+    "forward": "MEDIA_NEXT",  # alias
     "power": "POWER", "volume_up": "VOLUME_UP", "volume_down": "VOLUME_DOWN", "mute": "VOLUME_MUTE",
+    "input": "TV_INPUT",
 }
 
 TV_APPS = {
@@ -1281,6 +1491,95 @@ def api_tv_power():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "TV not connected \u2014 pair first"}), 503
+
+
+@app.route("/api/tv/navigate", methods=["POST"])
+def api_tv_navigate():
+    """D-pad navigation: up, down, left, right, select, back, home."""
+    data = request.json or {}
+    direction = data.get("direction", "select")
+    mapped = TV_KEYS.get(direction, direction)
+    if _tv_remote:
+        try:
+            _tv_remote.send_key_command(mapped)
+            return jsonify({"ok": True})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "TV not connected — pair first"}), 503
+
+
+@app.route("/api/tv/mute", methods=["POST"])
+def api_tv_mute():
+    """Toggle mute."""
+    if _tv_remote:
+        try:
+            _tv_remote.send_key_command("VOLUME_MUTE")
+            return jsonify({"ok": True})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "TV not connected — pair first"}), 503
+
+
+@app.route("/api/tv/apps")
+def api_tv_apps():
+    """List available TV apps."""
+    return jsonify({"apps": list(TV_APPS.keys())})
+
+
+# ── Notification API ─────────────────────────────────────────────────
+
+@app.route("/api/notifications")
+def api_notifications():
+    """Get recent notification history."""
+    if notifier:
+        limit = request.args.get("limit", 50, type=int)
+        return jsonify({"notifications": notifier.get_history(limit)})
+    return jsonify({"notifications": []})
+
+
+@app.route("/api/notifications/settings")
+def api_notification_settings():
+    if notifier:
+        return jsonify(notifier.get_settings())
+    return jsonify({"enabled": False, "blocklist": [], "devices": {}})
+
+
+@app.route("/api/notifications/settings", methods=["POST"])
+def api_notification_settings_update():
+    if notifier:
+        data = request.json or {}
+        notifier.update_settings(
+            enabled=data.get("enabled"),
+            blocklist=data.get("blocklist"),
+        )
+        settings = notifier.get_settings()
+        if socketio:
+            socketio.emit("notification_settings", settings)
+        return jsonify(settings)
+    return jsonify({"error": "Notification service not available"}), 503
+
+
+@app.route("/api/notifications/clear", methods=["POST"])
+def api_notification_clear():
+    if notifier:
+        notifier.clear_history()
+        return jsonify({"ok": True})
+    return jsonify({"error": "Notification service not available"}), 503
+
+
+@app.route("/api/notifications/reply", methods=["POST"])
+def api_notification_reply():
+    """Reply to a notification via KDE Connect."""
+    if notifier:
+        data = request.json or {}
+        notif_id = data.get("id", "")
+        message = data.get("message", "")
+        device_id = data.get("device_id", "")
+        if not message:
+            return jsonify({"error": "No message provided"}), 400
+        ok = notifier.reply(notif_id, message, device_id)
+        return jsonify({"ok": ok})
+    return jsonify({"error": "Notification service not available"}), 503
 
 
 # ── Settings API ────────────────────────────────────────────────────

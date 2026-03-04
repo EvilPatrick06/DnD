@@ -40,6 +40,7 @@ class CameraService:
     def __init__(self, socketio=None):
         self.socketio = socketio
         self._camera = None
+        self._backend = None
         self._yolo = None
         self._ocr_reader = None
         self._known_faces = {}
@@ -53,31 +54,59 @@ class CameraService:
     # ── Camera Lifecycle ─────────────────────────────────────────────
 
     def start(self):
-        """Initialize the Pi camera."""
+        """Initialize the camera (picamera2 preferred, OpenCV USB fallback)."""
         if self._camera is not None:
             return
-        from picamera2 import Picamera2
 
-        self._camera = Picamera2()
-        config = self._camera.create_still_configuration(
-            main={"size": (1280, 960), "format": "RGB888"},
-            lores={"size": (640, 480), "format": "RGB888"},
-        )
-        self._camera.configure(config)
-        self._camera.start()
-        time.sleep(1)  # Warm-up
+        # Try picamera2 first
+        try:
+            from picamera2 import Picamera2
+
+            cam = Picamera2()
+            config = cam.create_still_configuration(
+                main={"size": (1280, 960), "format": "RGB888"},
+                lores={"size": (640, 480), "format": "RGB888"},
+            )
+            cam.configure(config)
+            cam.start()
+            time.sleep(1)  # Warm-up
+            self._camera = cam
+            self._backend = "picamera2"
+            print("[camera] Using picamera2 backend")
+            return
+        except (ImportError, RuntimeError) as e:
+            print(f"[camera] picamera2 unavailable ({e}), trying OpenCV USB fallback")
+
+        # Fallback to OpenCV USB webcam
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            raise RuntimeError("No camera available: picamera2 failed and no USB webcam found")
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+        self._camera = cap
+        self._backend = "opencv"
+        print("[camera] Using OpenCV USB webcam backend")
 
     def stop(self):
         """Stop the camera."""
         self.stop_motion_detection()
         if self._camera:
-            self._camera.stop()
+            if self._backend == "opencv":
+                self._camera.release()
+            else:
+                self._camera.stop()
             self._camera = None
+            self._backend = None
 
     def capture_frame(self) -> np.ndarray:
         """Capture a single frame from the camera. Returns BGR numpy array."""
         if self._camera is None:
             self.start()
+        if self._backend == "opencv":
+            success, frame = self._camera.read()
+            if not success:
+                raise RuntimeError("Failed to capture frame from USB webcam")
+            return frame
         frame_rgb = self._camera.capture_array("lores")
         return cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
 
@@ -85,6 +114,11 @@ class CameraService:
         """Capture a full-resolution frame."""
         if self._camera is None:
             self.start()
+        if self._backend == "opencv":
+            success, frame = self._camera.read()
+            if not success:
+                raise RuntimeError("Failed to capture frame from USB webcam")
+            return frame
         frame_rgb = self._camera.capture_array("main")
         return cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
 

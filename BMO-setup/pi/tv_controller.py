@@ -252,6 +252,11 @@ class TvController:
         """Decrease volume by one step."""
         self._send_key("KEYCODE_VOLUME_DOWN")
 
+    def mute(self):
+        """Toggle mute/unmute."""
+        self._send_key("KEYCODE_VOLUME_MUTE")
+        print("[tv] Mute toggled")
+
     def set_volume(self, level: int):
         """Set volume to a specific level (0-100).
 
@@ -277,6 +282,15 @@ class TvController:
 
         print(f"[tv] Volume set to ~{level}%")
 
+    def get_volume(self) -> int | None:
+        """Get current volume level (0-15 scale). Returns None if unavailable."""
+        result = self._shell("dumpsys audio | grep -A5 'STREAM_MUSIC'")
+        if result:
+            match = re.search(r"volume:\s*(\d+)", result)
+            if match:
+                return int(match.group(1))
+        return None
+
     # ── Navigation ───────────────────────────────────────────────────
 
     def back(self):
@@ -286,6 +300,61 @@ class TvController:
     def home(self):
         """Press the home button."""
         self._send_key("KEYCODE_HOME")
+
+    def navigate(self, direction: str):
+        """Navigate with d-pad: up, down, left, right, enter/select."""
+        key_map = {
+            "up": "KEYCODE_DPAD_UP",
+            "down": "KEYCODE_DPAD_DOWN",
+            "left": "KEYCODE_DPAD_LEFT",
+            "right": "KEYCODE_DPAD_RIGHT",
+            "enter": "KEYCODE_DPAD_CENTER",
+            "select": "KEYCODE_DPAD_CENTER",
+            "ok": "KEYCODE_DPAD_CENTER",
+        }
+        keycode = key_map.get(direction.lower())
+        if keycode:
+            self._send_key(keycode)
+        else:
+            print(f"[tv] Unknown direction: {direction}")
+
+    def switch_input(self):
+        """Cycle TV input sources."""
+        self._send_key("KEYCODE_TV_INPUT")
+        print("[tv] Input switched")
+
+    def rewind(self):
+        """Rewind media playback."""
+        self._send_key("KEYCODE_MEDIA_REWIND")
+        print("[tv] Rewinding")
+
+    def fast_forward(self):
+        """Fast forward media playback."""
+        self._send_key("KEYCODE_MEDIA_FAST_FORWARD")
+        print("[tv] Fast forwarding")
+
+    def previous(self):
+        """Go to previous track/episode."""
+        self._send_key("KEYCODE_MEDIA_PREVIOUS")
+        print("[tv] Previous")
+
+    def get_installed_apps(self) -> list[dict]:
+        """List installed third-party apps on the TV."""
+        result = self._shell("pm list packages -3")
+        if not result:
+            return []
+        apps = []
+        for line in result.strip().split("\n"):
+            pkg = line.replace("package:", "").strip()
+            if pkg:
+                # Map known packages to friendly names
+                friendly = None
+                for name, full_pkg in APP_PACKAGES.items():
+                    if pkg == full_pkg.split("/")[0]:
+                        friendly = name
+                        break
+                apps.append({"package": pkg, "name": friendly or pkg})
+        return apps
 
     # ── Skip Button Detection ────────────────────────────────────────
 

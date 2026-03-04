@@ -225,6 +225,7 @@ Available actions:
 - calendar_today: {} — Show today's events
 - calendar_week: {} — Show this week's events
 - calendar_create: {"summary": "Event name", "date": "2026-02-23", "time": "14:00", "duration_hours": 1}
+- calendar_update: {"summary": "Event name", "new_summary": "...", "new_date": "...", "new_time": "...", "new_duration_hours": ...} — Update an existing event. Only include fields to change.
 - calendar_delete: {"summary": "Event name"} — Delete an event by name
 - timer_set: {"minutes": 10, "seconds": 0, "label": "Pizza"} — Set a countdown timer (minutes and/or seconds)
 - timer_pause: {"label": "Pizza"} — Pause or resume a timer
@@ -244,6 +245,7 @@ Available actions:
 - identify_voice: {} — Identify who's speaking
 - read_file: {"path": "monsters/goblin.json"} — Read a file from the D&D 5e data directory
 - list_dir: {"path": "monsters"} — List files in a D&D 5e data subdirectory
+- bmo_status: {} — Check BMO's own status: service health, Pi stats, internet, Docker. Use when user asks "what's your status?", "how are you?", "are you ok?", "is everything running?", "is the internet up?", "any issues?"
 
 NEVER describe or mention command blocks in your conversational response. The user cannot see them. Just talk normally as BMO, and silently append the command block at the end only when needed.
 """
@@ -886,7 +888,7 @@ class BmoAgent:
             results.append(cmd_result)
 
         # Append informational command results to the spoken text
-        INFORMATIONAL_ACTIONS = {"timer_list", "calendar_today", "calendar_week", "weather", "device_list"}
+        INFORMATIONAL_ACTIONS = {"timer_list", "calendar_today", "calendar_week", "weather", "device_list", "bmo_status"}
         for r in results:
             if r.get("success") and r.get("action") in INFORMATIONAL_ACTIONS and r.get("result"):
                 text = f"{text}\n{r['result']}" if text.strip() else r["result"]
@@ -1130,6 +1132,7 @@ class BmoAgent:
             "calendar_today": self._handle_calendar_today,
             "calendar_week": self._handle_calendar_week,
             "calendar_create": self._handle_calendar_create,
+            "calendar_update": self._handle_calendar_update,
             "calendar_delete": self._handle_calendar_delete,
             # Timer / Alarm
             "timer_set": self._handle_timer_set,
@@ -1144,6 +1147,7 @@ class BmoAgent:
             "camera_snapshot": self._handle_camera_snapshot,
             "camera_describe": self._handle_camera_describe,
             "camera_motion": self._handle_camera_motion,
+            "bmo_status": self._handle_bmo_status,
             # Other
             "weather": self._handle_weather,
             "identify_face": self._handle_identify_face,
@@ -1350,6 +1354,55 @@ class BmoAgent:
                 return f"Deleted: {event['summary']}"
         return f"No event found matching '{params.get('summary', '')}'"
 
+    def _handle_calendar_update(self, params):
+        cal = self.services.get("calendar")
+        if not cal:
+            return "Calendar not available"
+
+        summary = params.get("summary", "").lower()
+        events = cal.get_upcoming_events(days_ahead=30)
+        target = None
+        for event in events:
+            if summary in event["summary"].lower():
+                target = event
+                break
+        if not target:
+            return f"No event found matching '{params.get('summary', '')}'"
+
+        updates = {}
+        if "new_summary" in params:
+            updates["summary"] = params["new_summary"]
+        if "new_date" in params or "new_time" in params:
+            # Reconstruct start/end times
+            old_start = target.get("start", "")
+            try:
+                old_dt = datetime.datetime.fromisoformat(old_start.replace("Z", "+00:00"))
+            except (ValueError, AttributeError):
+                old_dt = datetime.datetime.now()
+
+            new_date = params.get("new_date", old_dt.strftime("%Y-%m-%d"))
+            new_time = params.get("new_time", old_dt.strftime("%H:%M"))
+            new_start = datetime.datetime.strptime(f"{new_date} {new_time}", "%Y-%m-%d %H:%M")
+            duration = params.get("new_duration_hours", None)
+            if duration:
+                new_end = new_start + datetime.timedelta(hours=duration)
+            else:
+                old_end = target.get("end", "")
+                try:
+                    old_end_dt = datetime.datetime.fromisoformat(old_end.replace("Z", "+00:00"))
+                    event_duration = old_end_dt - old_dt
+                    new_end = new_start + event_duration
+                except (ValueError, AttributeError):
+                    new_end = new_start + datetime.timedelta(hours=1)
+            updates["start_dt"] = new_start
+            updates["end_dt"] = new_end
+
+        if not updates:
+            return "No changes specified"
+
+        cal.update_event(target["id"], **updates)
+        return f"Updated: {target['summary']}"
+
     # ── Timer / Alarm Handlers ───────────────────────────────────────
 
     def _handle_timer_set(self, params):
@@ -1550,6 +1603,18 @@ class BmoAgent:
 
     def _handle_identify_voice(self, params):
         return "Voice identification happens automatically during speech input"
+
+    def _handle_bmo_status(self, params):
+        """Return BMO's self-awareness status summary."""
+        try:
+            import requests as _req
+            resp = _req.get("http://localhost:5000/api/status/summary", timeout=5)
+            if resp.ok:
+                data = resp.json()
+                return data.get("summary", "I'm running but can't read my own status right now.")
+            return "I'm having trouble checking my own status."
+        except Exception:
+            return "I'm running, but my monitoring service isn't responding right now."
 
     # ── File Access Handlers (D&D data) ──────────────────────────────
 

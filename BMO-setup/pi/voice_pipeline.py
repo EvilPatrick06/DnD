@@ -281,6 +281,16 @@ class VoicePipeline:
         # Enter follow-up conversation mode — no wake word needed
         self._follow_up_loop()
 
+    def start_conversation(self):
+        """Enter conversation mode programmatically (from alarms, notifications, etc.).
+
+        Starts the follow-up loop in a background thread so the caller
+        doesn't block.
+        """
+        if not self._running:
+            return
+        threading.Thread(target=self._follow_up_loop, daemon=True).start()
+
     def _process_one_turn(self, is_follow_up: bool = False) -> str | None:
         """Record, transcribe, get response, speak it. Returns response text or None."""
         audio_data = self.record_until_silence()
@@ -350,6 +360,8 @@ class VoicePipeline:
         import time as _time
         last_activity = _time.monotonic()
 
+        self._emit("conversation_mode", {"active": True})
+
         while self._running:
             print("[conv] Listening for follow-up...")
             self._emit("status", {"state": "follow_up"})
@@ -361,6 +373,7 @@ class VoicePipeline:
                 if elapsed >= INACTIVITY_TIMEOUT:
                     print("[conv] Inactivity timeout — back to wake word mode")
                     self._emit("status", {"state": "idle"})
+                    self._emit("conversation_mode", {"active": False})
                     return
                 # No speech this turn, but still within inactivity window — keep listening
                 continue
@@ -373,9 +386,11 @@ class VoicePipeline:
                 # No speech captured or empty transcription
                 print("[conv] Empty turn — back to wake word mode")
                 self._emit("status", {"state": "idle"})
+                self._emit("conversation_mode", {"active": False})
                 return
             if response == "":
                 # User said goodbye — conversation ended
+                self._emit("conversation_mode", {"active": False})
                 return
 
             last_activity = _time.monotonic()
