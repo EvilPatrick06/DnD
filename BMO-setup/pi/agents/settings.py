@@ -37,12 +37,12 @@ def _get_default_settings() -> dict:
 
     return {
         "llm": {
-            "gpu_server_url": os.environ.get("GPU_SERVER_URL", "https://ai.yourdomain.com"),
-            "gpu_server_key": os.environ.get("GPU_SERVER_KEY", ""),
-            "gpu_server_timeout": 10,
-            "gpu_health_check_interval": 30,
+            "primary_model": os.environ.get("BMO_PRIMARY_MODEL", "gemini-3-pro"),
+            "router_model": os.environ.get("BMO_ROUTER_MODEL", "gemini-3-flash"),
+            "dnd_model": os.environ.get("BMO_DND_MODEL", "claude-opus-4.6"),
+            "cloud_timeout": 30,
+            "cloud_health_check_interval": 60,
             "local_model": "bmo",
-            "gpu_model": "bmo",
             "ollama_options": ollama_opts,
             "ollama_plan_options": ollama_plan_opts,
         },
@@ -83,15 +83,46 @@ def _get_default_settings() -> dict:
             "device_name": "BMO",
             "maps_api_key": os.environ.get("GOOGLE_MAPS_API_KEY", ""),
             "ssh_key_path": "~/.ssh/id_ed25519",
-            "aws_host": os.environ.get("AWS_HOST", "ai.yourdomain.com"),
-            "pc_host": os.environ.get("PC_HOST", ""),
         },
         "mcp": {
-            "servers": {},
-            "agent_tools": {},
+            "servers": {
+                "dnd_data": {
+                    "transport": "stdio",
+                    "command": "python3",
+                    "args": [os.path.expanduser("~/bmo/mcp_servers/dnd_data_server.py")],
+                    "env": {
+                        "DND_MARKDOWN_ROOT": os.path.expanduser("~/bmo/data/5e-references"),
+                        "DND_JSON_ROOT": os.path.expanduser("~/bmo/data/5e"),
+                        "RAG_DATA_DIR": os.path.expanduser("~/bmo/data/rag_data"),
+                    },
+                },
+                "filesystem": {
+                    "transport": "stdio",
+                    "command": "npx",
+                    "args": ["-y", "@modelcontextprotocol/server-filesystem",
+                             os.path.expanduser("~/bmo"),
+                             os.path.expanduser("~/bmo/data")],
+                    "lazy": True,
+                },
+                "web_search": {
+                    "transport": "stdio",
+                    "command": "npx",
+                    "args": ["-y", "@anthropic/mcp-server-brave-search"],
+                    "env": {"BRAVE_API_KEY": os.environ.get("BRAVE_API_KEY", "")},
+                    "lazy": True,
+                },
+            },
+            "agent_tools": {
+                "dnd_dm": ["mcp__dnd_data__*"],
+                "code": ["mcp__filesystem__*"],
+                "research": ["mcp__web_search__*", "mcp__dnd_data__search_books", "mcp__dnd_data__rag_search"],
+                "smart_home": ["mcp__filesystem__read_file", "mcp__filesystem__list_directory"],
+            },
             "readonly_tools": [
                 "mcp__*__list*", "mcp__*__get*",
                 "mcp__*__read*", "mcp__*__search*",
+                "mcp__*__rag_search",
+                "mcp__web_search__*",
             ],
             "output_max_tokens": 25000,
         },
@@ -128,8 +159,10 @@ def _deep_merge(base: dict, override: dict) -> dict:
 # ── Secret Redaction ─────────────────────────────────────────────────
 
 _SECRET_KEYS = frozenset({
-    "gpu_server_key", "maps_api_key", "ssh_key_path",
+    "maps_api_key", "ssh_key_path",
     "GITHUB_TOKEN", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+    "GEMINI_API_KEY", "GROQ_API_KEY", "FISH_AUDIO_API_KEY",
+    "GOOGLE_VISION_API_KEY",
     "Authorization", "api_key", "token", "secret",
 })
 
@@ -223,7 +256,7 @@ class BmoSettings:
     # ── Getters ──────────────────────────────────────────────────────
 
     def get(self, dotted_key: str, default: Any = None) -> Any:
-        """Get a setting by dotted key path. e.g. 'llm.gpu_server_url'."""
+        """Get a setting by dotted key path. e.g. 'llm.primary_model'."""
         with self._lock:
             current = self._merged
         keys = dotted_key.split(".")

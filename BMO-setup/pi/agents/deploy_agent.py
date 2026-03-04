@@ -18,7 +18,7 @@ Deployment safety:
 - ALWAYS confirm destructive operations before executing
 - Show what will happen before doing it
 - Check service health before and after deployment
-- Use SSH to manage remote servers (host: 'aws' for GPU server, 'pc' for Windows)
+- Use SSH to manage remote servers (host: 'pc' for Windows)
 
 Common deployment tasks:
 - git pull on remote server

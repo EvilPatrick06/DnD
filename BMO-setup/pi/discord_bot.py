@@ -575,13 +575,13 @@ async def status_command(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("Bot not initialized.", ephemeral=True)
         return
 
-    # Check GPU server
-    gpu_status = "Unknown"
+    # Check cloud API connectivity
+    cloud_status = "Unknown"
     try:
-        from agent import _check_gpu_available
-        gpu_status = "Connected" if _check_gpu_available() else "Offline (using local fallback)"
+        from cloud_providers import cloud_chat
+        cloud_status = "Cloud APIs configured"
     except ImportError:
-        gpu_status = "Agent not loaded"
+        cloud_status = "Cloud providers not loaded"
 
     # Check services
     service_statuses: list[str] = []
@@ -610,7 +610,7 @@ async def status_command(interaction: discord.Interaction) -> None:
         title="BMO System Status",
         color=discord.Color.teal(),
     )
-    embed.add_field(name="GPU Server", value=gpu_status, inline=True)
+    embed.add_field(name="Cloud APIs", value=cloud_status, inline=True)
     embed.add_field(name="D&D Session", value=session_str, inline=True)
     embed.add_field(name="Services", value="\n".join(service_statuses), inline=False)
 

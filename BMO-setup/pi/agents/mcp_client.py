@@ -452,16 +452,21 @@ class McpClient:
         except (BrokenPipeError, OSError):
             self._connected = False
 
-    def _stdio_send_receive(self, msg: dict) -> dict:
-        """Send a message and read the response via stdio."""
+    def _stdio_send_receive(self, msg: dict, timeout: float = 30) -> dict:
+        """Send a message and read the response via stdio with timeout."""
         if not self._process or not self._process.stdin or not self._process.stdout:
             return {"error": "Process not running"}
 
         self._stdio_send(msg)
 
-        # Read response with Content-Length framing
+        # Read response with timeout to prevent indefinite blocking
+        import concurrent.futures
         try:
-            return self._stdio_read_message()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(self._stdio_read_message)
+                return future.result(timeout=timeout)
+        except concurrent.futures.TimeoutError:
+            return {"error": f"Timeout ({timeout}s) reading response from MCP server"}
         except Exception as e:
             return {"error": f"Failed to read response: {e}"}
 

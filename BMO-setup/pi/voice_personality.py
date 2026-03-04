@@ -1,36 +1,43 @@
 """BMO Voice Personality — Emotion detection, expression tags, NPC voices, morning routine, battle music DJ.
 
 Parses BMO response tags for hardware control (face, LED, sound, emotion, music, NPC voice).
-Maps emotions to Fish Speech reference files. Provides morning greeting logic and
+Maps emotions to Fish Audio voice IDs (cloud TTS). Provides morning greeting logic and
 a D&D battle music DJ that sets mood-based playlists via MusicService.
 """
 
+import os
 import re
 import time
 
-# ── NPC Voice Mapping (Fish Speech speaker reference files) ──────────
+# ── NPC Voice Mapping (Fish Audio voice reference IDs) ────────────────
+# Set each to a Fish Audio voice model ID after creating/finding them.
+# Use FISH_AUDIO_NPC_* env vars to override without code changes.
 
 NPC_VOICES: dict[str, str] = {
-    "gruff_dwarf": "npc_gruff_dwarf.wav",
-    "mysterious_elf": "npc_mysterious_elf.wav",
-    "booming_dragon": "npc_booming_dragon.wav",
-    "whispery_rogue": "npc_whispery_rogue.wav",
-    "elderly_wizard": "npc_elderly_wizard.wav",
-    "cheerful_bard": "npc_cheerful_bard.wav",
-    "stern_guard": "npc_stern_guard.wav",
-    "tavern_keeper": "npc_tavern_keeper.wav",
+    "gruff_dwarf": os.environ.get("FISH_AUDIO_NPC_GRUFF_DWARF", ""),
+    "mysterious_elf": os.environ.get("FISH_AUDIO_NPC_MYSTERIOUS_ELF", ""),
+    "booming_dragon": os.environ.get("FISH_AUDIO_NPC_BOOMING_DRAGON", ""),
+    "whispery_rogue": os.environ.get("FISH_AUDIO_NPC_WHISPERY_ROGUE", ""),
+    "elderly_wizard": os.environ.get("FISH_AUDIO_NPC_ELDERLY_WIZARD", ""),
+    "cheerful_bard": os.environ.get("FISH_AUDIO_NPC_CHEERFUL_BARD", ""),
+    "stern_guard": os.environ.get("FISH_AUDIO_NPC_STERN_GUARD", ""),
+    "tavern_keeper": os.environ.get("FISH_AUDIO_NPC_TAVERN_KEEPER", ""),
 }
 
-# ── BMO Emotion Voice Mapping (Fish Speech emotion reference files) ──
+# ── BMO Emotion Voice Mapping (Fish Audio voice IDs per emotion) ──────
+# Default all to the main FISH_AUDIO_VOICE_ID; override per-emotion later
+# once different emotion voice clones are uploaded to Fish Audio.
+
+_DEFAULT_VOICE = os.environ.get("FISH_AUDIO_VOICE_ID", "")
 
 BMO_EMOTIONS: dict[str, str] = {
-    "happy": "bmo_happy.wav",
-    "calm": "bmo_calm.wav",
-    "dramatic": "bmo_dramatic.wav",
-    "sleepy": "bmo_sleepy.wav",
-    "excited": "bmo_excited.wav",
-    "sassy": "bmo_sassy.wav",
-    "sad": "bmo_sad.wav",
+    "happy": os.environ.get("FISH_AUDIO_BMO_HAPPY", _DEFAULT_VOICE),
+    "calm": os.environ.get("FISH_AUDIO_BMO_CALM", _DEFAULT_VOICE),
+    "dramatic": os.environ.get("FISH_AUDIO_BMO_DRAMATIC", _DEFAULT_VOICE),
+    "sleepy": os.environ.get("FISH_AUDIO_BMO_SLEEPY", _DEFAULT_VOICE),
+    "excited": os.environ.get("FISH_AUDIO_BMO_EXCITED", _DEFAULT_VOICE),
+    "sassy": os.environ.get("FISH_AUDIO_BMO_SASSY", _DEFAULT_VOICE),
+    "sad": os.environ.get("FISH_AUDIO_BMO_SAD", _DEFAULT_VOICE),
 }
 
 # Shorthand emotion tags that map to canonical emotion names

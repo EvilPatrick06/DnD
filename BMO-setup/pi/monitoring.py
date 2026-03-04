@@ -1,7 +1,7 @@
 """BMO Monitoring & Alerting — Health checks, Pi stats, Discord webhooks.
 
 Periodically checks the health of all BMO infrastructure components:
-GPU server, Cloudflare Tunnel, PeerJS signaling, local Ollama, Pi resources.
+Cloud APIs, Cloudflare Tunnel, PeerJS signaling, local Ollama, Pi resources.
 Routes alerts to OLED face, SocketIO, and optional Discord webhook.
 
 Usage:
@@ -31,14 +31,13 @@ except ImportError:
 
 # ── Configuration ────────────────────────────────────────────────────
 
-GPU_SERVER_URL = os.environ.get("GPU_SERVER_URL", "https://ai.yourdomain.com")
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
 # Health check targets: service name → config
 HEALTH_CHECKS = {
-    "gpu_server": {"url": GPU_SERVER_URL + "/health", "timeout": 5},
     "ollama_local": {"url": "http://localhost:11434/api/tags", "timeout": 3},
     "peerjs": {"url": "http://localhost:9000/health", "timeout": 3},
+    "bmo_app": {"url": "http://localhost:5000/health", "timeout": 3},
 }
 
 # Default check interval (seconds)
@@ -218,71 +217,12 @@ def _send_discord_webhook(level: Severity, service: str, message: str) -> bool:
         return False
 
 
-# ── SNS Notification Handler ─────────────────────────────────────────
-
-def handle_sns_notification(data: dict) -> dict | None:
-    """Parse an AWS SNS notification and route to the alert system.
-
-    Detects EC2 spot interruption warnings and other CloudWatch alarms.
-
-    Args:
-        data: Raw SNS message payload (JSON-parsed).
-
-    Returns:
-        Alert dict {level, service, message} or None if not actionable.
-    """
-    # SNS wraps the actual message in a "Message" field (JSON string)
-    message_str = data.get("Message", "")
-    subject = data.get("Subject", "")
-
-    # Try to parse the inner message as JSON
-    inner = {}
-    if message_str:
-        try:
-            inner = json.loads(message_str)
-        except (json.JSONDecodeError, TypeError):
-            inner = {"raw": message_str}
-
-    # Detect EC2 spot interruption warning
-    detail_type = inner.get("detail-type", "")
-    if "EC2 Spot Instance Interruption" in detail_type or "spot" in subject.lower():
-        instance_id = inner.get("detail", {}).get("instance-id", "unknown")
-        return {
-            "level": Severity.CRITICAL,
-            "service": "gpu_server",
-            "message": f"Spot instance interruption warning for {instance_id}. "
-                       f"GPU server will go down in ~2 minutes.",
-        }
-
-    # Detect CloudWatch alarm state changes
-    if inner.get("AlarmName"):
-        alarm_name = inner["AlarmName"]
-        new_state = inner.get("NewStateValue", "UNKNOWN")
-        reason = inner.get("NewStateReason", "")
-        level = Severity.CRITICAL if new_state == "ALARM" else Severity.INFO
-        return {
-            "level": level,
-            "service": "gpu_server",
-            "message": f"CloudWatch alarm '{alarm_name}': {new_state}. {reason}",
-        }
-
-    # Generic SNS notification
-    if subject or message_str:
-        return {
-            "level": Severity.INFO,
-            "service": "aws",
-            "message": subject or message_str[:200],
-        }
-
-    return None
-
-
 # ── Health Checker ───────────────────────────────────────────────────
 
 class HealthChecker:
     """Periodic health checker for all BMO infrastructure.
 
-    Checks GPU server, local Ollama, PeerJS signaling, and Pi system resources.
+    Checks local Ollama, PeerJS signaling, and Pi system resources.
     Routes alerts via print logging, SocketIO events, OLED face, and Discord.
 
     Args:
@@ -380,25 +320,12 @@ class HealthChecker:
             elapsed = round(time.monotonic() - start, 3)
 
             if r.status_code == 200:
-                # Check if GPU server is slow (degraded)
-                if name == "gpu_server" and elapsed > 5.0:
-                    self._service_status[name] = {
-                        "status": "degraded",
-                        "last_check": time.time(),
-                        "message": f"Slow response ({elapsed}s)",
-                        "response_time": elapsed,
-                    }
-                    self._emit_alert(
-                        Severity.WARNING, name,
-                        f"{name} responding slowly ({elapsed}s)",
-                    )
-                else:
-                    self._service_status[name] = {
-                        "status": "up",
-                        "last_check": time.time(),
-                        "message": "OK",
-                        "response_time": elapsed,
-                    }
+                self._service_status[name] = {
+                    "status": "up",
+                    "last_check": time.time(),
+                    "message": "OK",
+                    "response_time": elapsed,
+                }
             else:
                 self._service_status[name] = {
                     "status": "down",
@@ -406,12 +333,8 @@ class HealthChecker:
                     "message": f"HTTP {r.status_code}",
                     "response_time": elapsed,
                 }
-                severity = (
-                    Severity.CRITICAL if name == "gpu_server"
-                    else Severity.WARNING
-                )
                 self._emit_alert(
-                    severity, name,
+                    Severity.WARNING, name,
                     f"{name} returned HTTP {r.status_code}",
                 )
 
@@ -422,11 +345,7 @@ class HealthChecker:
                 "message": f"Timeout after {timeout}s",
                 "response_time": None,
             }
-            severity = (
-                Severity.CRITICAL if name == "gpu_server"
-                else Severity.WARNING
-            )
-            self._emit_alert(severity, name, f"{name} timed out after {timeout}s")
+            self._emit_alert(Severity.WARNING, name, f"{name} timed out after {timeout}s")
 
         except requests.exceptions.ConnectionError:
             self._service_status[name] = {
@@ -435,11 +354,7 @@ class HealthChecker:
                 "message": "Connection refused",
                 "response_time": None,
             }
-            severity = (
-                Severity.CRITICAL if name == "gpu_server"
-                else Severity.WARNING
-            )
-            self._emit_alert(severity, name, f"{name} connection refused")
+            self._emit_alert(Severity.WARNING, name, f"{name} connection refused")
 
         except Exception as e:
             self._service_status[name] = {

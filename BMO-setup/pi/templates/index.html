@@ -1126,6 +1126,16 @@
                  class="flex-1 bg-surface-light rounded-lg px-3 py-1.5 text-sm text-text outline-none focus:ring-1 focus:ring-accent">
           <button @click="createAlarmFromTime()" class="bg-accent text-surface-dark px-4 py-1.5 rounded-lg text-sm font-medium">Set</button>
         </div>
+        <!-- Tag selector -->
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-[10px] text-text-dim">Type:</span>
+          <button @click="alarmTag = 'reminder'" class="px-2 py-0.5 rounded text-xs"
+                  :class="alarmTag === 'reminder' ? 'bg-accent text-surface-dark' : 'text-text-muted'">&#x1F514; Reminder</button>
+          <button @click="alarmTag = 'wake-up'" class="px-2 py-0.5 rounded text-xs"
+                  :class="alarmTag === 'wake-up' ? 'bg-accent text-surface-dark' : 'text-text-muted'">&#x2600;&#xFE0F; Wake Up</button>
+          <button @click="alarmTag = 'timer'" class="px-2 py-0.5 rounded text-xs"
+                  :class="alarmTag === 'timer' ? 'bg-accent text-surface-dark' : 'text-text-muted'">&#x23F1; Beep</button>
+        </div>
         <!-- Schedule button -->
         <div class="flex items-center justify-center">
           <button @click="schedHour = 0; schedMin = 0; schedAmPm = 'AM'; schedLabel = ''; schedDate = ''; schedRepeat = 'none'; schedRepeatDays = []; showAlarmSchedule = true" type="button"
@@ -1141,7 +1151,7 @@
         <template x-for="(item, i) in timerItems" :key="item.id">
           <div class="bg-surface-light rounded-xl px-4 py-2.5 flex items-center gap-3">
             <!-- Icon -->
-            <div class="text-xl" x-text="item.type === 'timer' ? '\u23F1' : '\u23F0'"></div>
+            <div class="text-xl" x-text="item.type === 'timer' ? '\u23F1' : alarmTagIcon(item)"></div>
             <!-- Info -->
             <div class="flex-1 min-w-0">
               <div class="text-xs text-text-muted truncate" x-text="item.label"></div>
@@ -1154,6 +1164,7 @@
               <div class="text-xs text-text-dim" x-text="item.target_time"></div>
               <div x-show="item.target_date" class="text-[10px] text-text-muted" x-text="item.target_date"></div>
               <div x-show="item.repeat && item.repeat !== 'none'" class="text-[10px] text-accent" x-text="alarmRepeatLabel(item)"></div>
+              <div x-show="item.tag && item.tag !== 'reminder'" class="text-[10px] text-text-muted" x-text="item.tag === 'wake-up' ? '\u2600\uFE0F Wake Up' : item.tag"></div>
             </div>
             <!-- Actions -->
             <div class="flex gap-1.5 shrink-0">

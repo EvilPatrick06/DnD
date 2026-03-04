@@ -33,7 +33,6 @@ MAX_OUTPUT_LENGTH = 8000  # Truncate command output to this many chars
 
 # SSH configuration
 SSH_KEY_PATH = os.path.expanduser("~/.ssh/id_ed25519")
-AWS_HOST = os.environ.get("AWS_HOST", "ai.yourdomain.com")
 PC_HOST = os.environ.get("PC_HOST", "")  # Set if SSH to PC is configured
 
 
@@ -120,11 +119,10 @@ def execute_confirmed(cmd: str, cwd: str | None = None, timeout: int = 30) -> di
 def ssh_command(host: str, cmd: str, timeout: int = 30) -> dict:
     """Run a command on a remote host via SSH.
 
-    Pre-configured hosts: 'aws' (GPU server), 'pc' (your Windows PC).
+    Pre-configured hosts: 'pc' (your Windows PC).
+    All other values treated as direct host strings.
     """
-    if host == "aws":
-        target = f"root@{AWS_HOST}"
-    elif host == "pc" and PC_HOST:
+    if host == "pc" and PC_HOST:
         target = PC_HOST
     else:
         target = host
@@ -508,7 +506,7 @@ TOOL_DEFINITIONS = [
     },
     {
         "name": "ssh_command",
-        "description": "Run a command on a remote host via SSH. Hosts: 'aws', 'pc', or user@host.",
+        "description": "Run a command on a remote host via SSH. Hosts: 'pc' or user@host.",
         "parameters": {"host": "string", "cmd": "string"},
     },
     {

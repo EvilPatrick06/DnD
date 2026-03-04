@@ -15,7 +15,6 @@ Use tool_call blocks:
 ```
 
 Common health checks:
-- GPU: nvidia-smi (on GPU server via SSH)
 - Disk: df -h
 - Memory: free -h
 - CPU: top -bn1 | head -20

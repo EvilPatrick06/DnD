@@ -1,0 +1,56 @@
+# BMO Docker Compose — Supporting services for Raspberry Pi 5
+#
+# BMO's Flask app runs directly on the host (needs camera, mic, speakers,
+# GPIO, I2C, SPI). These containers provide the backing services.
+#
+# Usage:
+#   cd ~/bmo && docker compose up -d
+#   docker compose logs -f
+
+services:
+  # Local LLM fallback — Ollama with lightweight models
+  ollama:
+    image: ollama/ollama:latest
+    container_name: bmo-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || wget -qO- http://localhost:11434/api/tags > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # WebRTC signaling server for D&D VTT multiplayer
+  peerjs:
+    image: node:22-slim
+    container_name: bmo-peerjs
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    working_dir: /app
+    command: >
+      sh -c "npm install peer 2>/dev/null && npx peerjs --port 9000 --path /myapp"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    volumes:
+      - peerjs-modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:9000/myapp').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama-data:
+    driver: local
+  peerjs-modules:
+    driver: local

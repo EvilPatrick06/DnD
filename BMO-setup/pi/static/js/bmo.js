@@ -132,6 +132,7 @@ function bmo() {
     alarmMin: 0,
     alarmAmPm: 'AM',
     alarmLabel: '',
+    alarmTag: 'reminder',
 
     // Schedule overlay (separate state)
     schedHour: null,
@@ -141,6 +142,7 @@ function bmo() {
     schedDate: '',
     schedRepeat: 'none',
     schedRepeatDays: [],
+    schedTag: 'reminder',
     showAlarmSchedule: false,
     alarmCalMonth: new Date().getMonth(),
     alarmCalYear: new Date().getFullYear(),
@@ -1284,12 +1286,13 @@ function bmo() {
       await fetch('/api/alarms/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hour: h24, minute: this.alarmMin, label }),
+        body: JSON.stringify({ hour: h24, minute: this.alarmMin, label, tag: this.alarmTag }),
       });
       this.alarmHour = 0;
       this.alarmMin = 0;
       this.alarmAmPm = 'AM';
       this.alarmLabel = '';
+      this.alarmTag = 'reminder';
       this.fetchTimers();
     },
 
@@ -1303,6 +1306,7 @@ function bmo() {
       if (this.schedDate) body.date = this.schedDate;
       if (this.schedRepeat !== 'none') body.repeat = this.schedRepeat;
       if (this.schedRepeat === 'custom' && this.schedRepeatDays.length > 0) body.repeat_days = this.schedRepeatDays;
+      if (this.schedTag !== 'reminder') body.tag = this.schedTag;
       await fetch('/api/alarms/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1315,6 +1319,7 @@ function bmo() {
       this.schedDate = '';
       this.schedRepeat = 'none';
       this.schedRepeatDays = [];
+      this.schedTag = 'reminder';
       this.fetchTimers();
     },
 
@@ -1394,6 +1399,12 @@ function bmo() {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
 
+    alarmTagIcon(item) {
+      if (!item.tag || item.tag === 'reminder') return '\u23F0';
+      if (item.tag === 'wake-up') return '\u2600\uFE0F';
+      if (item.tag === 'timer') return '\u23F1';
+      return '\u23F0';
+    },
     alarmRepeatLabel(item) {
       if (!item.repeat || item.repeat === 'none') return '';
       if (item.repeat === 'daily') return 'Daily';

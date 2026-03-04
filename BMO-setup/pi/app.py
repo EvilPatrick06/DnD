@@ -56,19 +56,31 @@ smart_home = None
 weather = None
 timers = None
 agent = None
+led_controller = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller
 
     from agent import BmoAgent
 
     print("[bmo] Initializing services...")
 
     service_map = {}
+
+    # LED controller (RGB LEDs)
+    led_controller = None
+    try:
+        from led_controller import LedController
+        led_controller = LedController()
+        led_controller.start()
+        service_map["leds"] = led_controller
+        print("[bmo]   LED controller: OK")
+    except Exception as e:
+        print(f"[bmo]   LED controller: SKIPPED ({e})")
 
     # Voice pipeline (requires pyaudio/mic hardware)
     try:
@@ -127,23 +139,37 @@ def init_services():
     # Timers
     try:
         from timer_service import TimerService
-        timers = TimerService(voice_pipeline=voice, socketio=socketio)
+        timers = TimerService(voice_pipeline=voice, socketio=socketio,
+                              agent_fn=lambda: agent)
         service_map["timers"] = timers
         print("[bmo]   Timers: OK")
     except Exception as e:
         print(f"[bmo]   Timers: SKIPPED ({e})")
 
     # Agent (core — always required)
+    print("[bmo]   Creating agent...")
     agent = BmoAgent(services=service_map, socketio=socketio)
+    print("[bmo]   Agent: OK")
 
     # Start background services that loaded successfully
     if smart_home:
+        print("[bmo]   Starting smart home discovery...")
         smart_home.start_discovery()
     if calendar:
         calendar.start_polling()
     if weather:
         weather.start_polling()
     if voice:
+        print("[bmo]   Starting voice listener...")
+        def _voice_chat(text, speaker="unknown"):
+            """Process voice input through the chat agent."""
+            try:
+                result = agent.chat(text, speaker=speaker)
+                return result.get("text", "")
+            except Exception as e:
+                print(f"[voice] Chat error: {e}")
+                return ""
+        voice._chat_callback = _voice_chat
         voice.start_listening()
 
     # Load notes from disk
@@ -152,8 +178,8 @@ def init_services():
     # Restore chat history into agent memory
     _restore_agent_history()
 
-    # Try to connect to TV
-    init_tv_remote()
+    # Try to connect to TV (non-blocking — don't hold up startup)
+    threading.Thread(target=init_tv_remote, daemon=True).start()
 
     print("[bmo] All services initialized!")
 
@@ -681,7 +707,15 @@ def api_timer_pause(timer_id):
 @app.route("/api/alarms/create", methods=["POST"])
 def api_alarm_create():
     data = request.json or {}
-    alarm = timers.create_alarm(data.get("hour", 7), data.get("minute", 0), data.get("label", ""))
+    alarm = timers.create_alarm(
+        data.get("hour", 7),
+        data.get("minute", 0),
+        data.get("label", ""),
+        date=data.get("date", ""),
+        repeat=data.get("repeat", "none"),
+        repeat_days=data.get("repeat_days"),
+        tag=data.get("tag", "reminder"),
+    )
     return jsonify(alarm)
 
 
@@ -696,6 +730,25 @@ def api_alarm_snooze(alarm_id):
     data = request.json or {}
     timers.snooze_alarm(alarm_id, data.get("minutes", 5))
     return jsonify({"ok": True})
+
+
+# ── LED API ──────────────────────────────────────────────────────────
+
+@app.route("/api/led/wake", methods=["POST"])
+def api_led_wake():
+    """Restore LEDs to ready state after idle sleep."""
+    if led_controller:
+        led_controller.set_state("ready")
+    return jsonify({"ok": True})
+
+
+@app.route("/api/led/state", methods=["POST"])
+def api_led_state():
+    data = request.json or {}
+    state = data.get("state", "ready")
+    if led_controller:
+        led_controller.set_state(state)
+    return jsonify({"ok": True, "state": state})
 
 
 # ── Weather API ──────────────────────────────────────────────────────
@@ -938,6 +991,7 @@ def api_notes_delete(note_id):
 # ── TV Remote API ────────────────────────────────────────────────────
 
 _tv_remote = None
+_tv_is_on = True  # Track TV power state
 _tv_loop = None
 _tv_pairing_remote = None
 
@@ -1006,15 +1060,54 @@ def init_tv_remote():
                 keyfile=_TV_KEYFILE,
                 host=TV_IP,
             )
-            await remote.async_connect()
+            await asyncio.wait_for(remote.async_connect(), timeout=5)
             _tv_remote = remote
+            def _on_is_on(is_on):
+                global _tv_is_on
+                _tv_is_on = is_on
+                print(f"[tv] TV is {'on' if is_on else 'off (standby)'}")
+            remote.add_is_on_updated_callback(_on_is_on)
             print(f"[tv] Connected to TV at {TV_IP}")
+            remote.keep_reconnecting()
 
-        _tv_run(_connect())
+        _tv_run(_connect(), timeout=5)
     except ImportError:
         print("[tv] androidtvremote2 not installed — TV remote disabled")
+    except TimeoutError:
+        print("[tv] Connection timed out — TV may be off")
     except Exception as e:
         print(f"[tv] Connection failed: {e} — try pairing via the TV tab")
+
+    # Background task: retry TV connection every 30s if not connected
+    def _tv_bg_reconnect():
+        import time as _time
+        while True:
+            _time.sleep(30)
+            if _tv_remote is None:
+                try:
+                    import asyncio
+                    async def _reconn():
+                        global _tv_remote
+                        from androidtvremote2 import AndroidTVRemote
+                        r = AndroidTVRemote(
+                            client_name="BMO",
+                            certfile=_TV_CERTFILE, keyfile=_TV_KEYFILE, host=TV_IP,
+                        )
+                        await asyncio.wait_for(r.async_connect(), timeout=5)
+                        _tv_remote = r
+                        r.keep_reconnecting()
+                        def _on_is_on_bg(is_on):
+                            global _tv_is_on
+                            _tv_is_on = is_on
+                            print(f"[tv] TV is {'on' if is_on else 'off (standby)'}")
+                        r.add_is_on_updated_callback(_on_is_on_bg)
+                        print(f"[tv] Background reconnect OK — {TV_IP}")
+                    _tv_run(_reconn(), timeout=5)
+                except Exception:
+                    pass
+    import threading
+    threading.Thread(target=_tv_bg_reconnect, daemon=True).start()
+
 
 
 @app.route("/api/tv/status")
@@ -1119,13 +1212,31 @@ def api_tv_launch():
 @app.route("/api/tv/volume", methods=["POST"])
 def api_tv_volume():
     data = request.json or {}
+    level = data.get("level")
     direction = data.get("direction", "up")
-    key_map = {"up": "VOLUME_UP", "down": "VOLUME_DOWN", "mute": "VOLUME_MUTE"}
-    key = key_map.get(direction, "VOLUME_UP")
     if _tv_remote:
         try:
-            _tv_remote.send_key_command(key)
-            return jsonify({"ok": True})
+            if level is not None:
+                # Set to specific volume level
+                import time as _time
+                vol = _tv_remote.volume_info
+                if not vol:
+                    return jsonify({"error": "Cannot read current volume"}), 500
+                current = vol["level"] if isinstance(vol, dict) else vol.level
+                max_vol = vol["max"] if isinstance(vol, dict) else vol.max
+                target = int(level * max_vol / 100) if level <= 100 else level
+                target = max(0, min(target, max_vol))
+                diff = target - current
+                key = "VOLUME_UP" if diff > 0 else "VOLUME_DOWN"
+                for _ in range(abs(diff)):
+                    _tv_remote.send_key_command(key)
+                    _time.sleep(0.05)
+                return jsonify({"ok": True, "level": target, "max": max_vol})
+            else:
+                key_map = {"up": "VOLUME_UP", "down": "VOLUME_DOWN", "mute": "VOLUME_MUTE"}
+                key = key_map.get(direction, "VOLUME_UP")
+                _tv_remote.send_key_command(key)
+                return jsonify({"ok": True})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "TV not connected — pair first"}), 503
@@ -1135,11 +1246,18 @@ def api_tv_volume():
 def api_tv_power():
     if _tv_remote:
         try:
+            data = request.get_json(silent=True) or {}
+            state = data.get("state", "toggle")
+            # Skip if TV is already in the desired state
+            if state == "on" and _tv_is_on:
+                return jsonify({"ok": True, "already": True, "is_on": True})
+            if state == "off" and not _tv_is_on:
+                return jsonify({"ok": True, "already": True, "is_on": False})
             _tv_remote.send_key_command("POWER")
-            return jsonify({"ok": True})
+            return jsonify({"ok": True, "state": state})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    return jsonify({"error": "TV not connected \u2014 pair first"}), 503
 
 
 # ── Settings API ────────────────────────────────────────────────────

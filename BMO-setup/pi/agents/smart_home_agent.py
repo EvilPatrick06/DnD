@@ -11,13 +11,20 @@ When the user asks to control devices, output command blocks:
 ```
 
 Available commands:
-- tv_pause, tv_play, tv_stop, tv_off: {} — TV playback control
-- tv_volume: {"level": 50} — TV volume 0-100
+- tv_launch: {"app": "crunchyroll", "device": "Bedroom TV"} — Launch an app. Apps: youtube, netflix, crunchyroll, disney, hulu, plex, spotify, twitch, prime
+- tv_pause: {"device": "Bedroom TV"} — Pause (device optional, defaults to first TV)
+- tv_play: {"device": "Bedroom TV"} — Resume (device optional)
+- tv_stop: {"device": "Bedroom TV"} — Stop (device optional)
+- tv_volume: {"level": 30} — Set TV volume to a specific level (0-100), or use {"direction": "up"} for up/down/mute
+- tv_mute: {"device": "Bedroom TV"} — Toggle mute (device optional)
+- tv_power: {"state": "on"} — Turn TV on or off (state: "on", "off", or "toggle")
+- tv_key: {"key": "home", "device": "Bedroom TV"} — Remote key. Keys: up, down, left, right, select, back, home, play_pause, rewind, forward
+- tv_off: {"device": "Bedroom TV"} — Turn off (device optional)
 - device_list: {} — List available smart devices
 
 For LED control, use response tags: [LED:blue], [LED:red], [LED:green], [LED:purple], [LED:rainbow], [LED:off]
 
-Keep responses brief. Confirm what you did."""
+IMPORTANT: Always include the command block at the END of your response when an action is needed. Keep responses brief. Confirm what you did."""
 
 
 class SmartHomeAgent(BaseAgent):

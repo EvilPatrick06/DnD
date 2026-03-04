@@ -95,7 +95,7 @@ KEYWORD_PATTERNS: dict[str, list[str]] = {
         "remove dead code", "consolidate", "tidy up",
     ],
     "monitoring": [
-        "check health", "server status", "gpu usage", "disk space",
+        "check health", "server status", "cloud status", "disk space",
         "cpu usage", "memory usage", "system health", "uptime",
     ],
     "deploy": [
@@ -251,16 +251,20 @@ class AgentRouter:
         return best
 
     def _llm_classify(self, message: str) -> str | None:
-        """Tier 3: Use a cheap LLM call to classify the message."""
+        """Tier 3: Use a cheap LLM call to classify the message.
+
+        Uses the ROUTER_MODEL (Gemini Flash) for fast, cheap classification.
+        """
         if not self._llm_func:
             return None
 
         try:
-            from agent import OLLAMA_PLAN_OPTIONS
+            from agent import OLLAMA_PLAN_OPTIONS, ROUTER_MODEL
 
             prompt = CLASSIFICATION_PROMPT.format(message=message[:500])
             messages = [{"role": "user", "content": prompt}]
-            result = self._llm_func(messages, OLLAMA_PLAN_OPTIONS)
+            result = self._llm_func(messages, OLLAMA_PLAN_OPTIONS,
+                                    model=ROUTER_MODEL)
 
             # Parse response — should be just the agent name
             agent_name = result.strip().lower().replace(" ", "_")

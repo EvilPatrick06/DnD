@@ -1,7 +1,7 @@
-"""BMO Camera Service — GPU-accelerated vision with local fallback.
+"""BMO Camera Service — Cloud vision with local fallback.
 
-Routes object detection to GPU server (YOLOv8-Large) and vision descriptions
-to GPU server (LLM + vision). Falls back to local YOLOv8-Nano and Ollama.
+Routes object detection to Google Cloud Vision API and scene descriptions
+to Gemini cloud API. Falls back to local YOLOv8-Nano and Ollama.
 """
 
 import io
@@ -14,30 +14,22 @@ import cv2
 import numpy as np
 import requests
 
+from cloud_providers import google_vision_detect, google_vision_describe
+
 DATA_DIR = os.path.expanduser("~/bmo/data")
 KNOWN_FACES_PATH = os.path.join(DATA_DIR, "known_faces.pkl")
 SNAPSHOTS_DIR = os.path.join(DATA_DIR, "snapshots")
 
-# GPU server config
-GPU_SERVER_URL = os.environ.get("GPU_SERVER_URL", "https://ai.yourdomain.com")
-GPU_SERVER_KEY = os.environ.get("GPU_SERVER_KEY", "")
 
-
-def _gpu_headers() -> dict:
-    headers = {}
-    if GPU_SERVER_KEY:
-        headers["Authorization"] = f"Bearer {GPU_SERVER_KEY}"
-    return headers
-
-
-def _check_gpu() -> bool:
+def _check_cloud() -> bool:
+    """Quick check if cloud APIs are reachable."""
     try:
-        from agent import _check_gpu_available
-        return _check_gpu_available()
+        from agent import _check_cloud_available
+        return _check_cloud_available()
     except ImportError:
         try:
-            r = requests.get(f"{GPU_SERVER_URL}/health", timeout=3, headers=_gpu_headers())
-            return r.status_code == 200
+            requests.get("https://generativelanguage.googleapis.com/", timeout=3)
+            return True
         except Exception:
             return False
 
@@ -181,7 +173,7 @@ class CameraService:
 
         print(f"[face] Enrolled '{name}' with {len(encodings)} face encodings")
 
-    # ── Object Detection (GPU YOLOv8-Large → local YOLOv8-Nano) ─────
+    # ── Object Detection (Google Cloud Vision → local YOLOv8-Nano) ──
 
     def _load_yolo(self):
         if self._yolo is None:
@@ -190,38 +182,35 @@ class CameraService:
         return self._yolo
 
     def detect_objects(self, frame: np.ndarray = None) -> list[dict]:
-        """Detect objects in a frame. Routes to GPU (YOLOv8-Large) with local fallback."""
+        """Detect objects in a frame. Routes to Google Cloud Vision with local fallback."""
         if frame is None:
             frame = self.capture_frame()
 
-        if _check_gpu():
+        if _check_cloud():
             try:
-                return self._gpu_detect_objects(frame)
+                return self._cloud_detect_objects(frame)
             except Exception as e:
-                print(f"[vision] GPU detection failed ({e}), falling back to local")
+                print(f"[vision] Cloud detection failed ({e}), falling back to local")
 
         return self._local_detect_objects(frame)
 
-    def _gpu_detect_objects(self, frame: np.ndarray) -> list[dict]:
-        """Send frame to GPU server for YOLOv8-Large detection."""
+    def _cloud_detect_objects(self, frame: np.ndarray) -> list[dict]:
+        """Send frame to Google Cloud Vision API for object detection."""
         _, jpeg = cv2.imencode(".jpg", frame)
-        files = {"image": ("frame.jpg", jpeg.tobytes(), "image/jpeg")}
-        r = requests.post(
-            f"{GPU_SERVER_URL}/vision/detect",
-            files=files,
-            headers=_gpu_headers(),
-            timeout=10,
-        )
-        r.raise_for_status()
-        raw = r.json().get("detections", [])
-        # Normalize bbox format
+        result = google_vision_detect(jpeg.tobytes())
         detections = []
-        for d in raw:
-            bbox = d.get("bbox", [0, 0, 0, 0])
+        for obj in result.get("localizedObjectAnnotations", []):
+            verts = obj.get("boundingPoly", {}).get("normalizedVertices", [])
+            h, w = frame.shape[:2]
+            if len(verts) >= 4:
+                x1, y1 = int(verts[0].get("x", 0) * w), int(verts[0].get("y", 0) * h)
+                x2, y2 = int(verts[2].get("x", 0) * w), int(verts[2].get("y", 0) * h)
+            else:
+                x1 = y1 = x2 = y2 = 0
             detections.append({
-                "class": d["class"],
-                "confidence": d["confidence"],
-                "bbox": {"x1": int(bbox[0]), "y1": int(bbox[1]), "x2": int(bbox[2]), "y2": int(bbox[3])},
+                "class": obj.get("name", "unknown"),
+                "confidence": round(obj.get("score", 0), 2),
+                "bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
             })
         return detections
 
@@ -261,22 +250,21 @@ class CameraService:
         results = reader.readtext(frame)
         return " ".join(r[1] for r in results)
 
-    # ── Vision Description (GPU LLM → local Ollama → detection fallback) ──
+    # ── Vision Description (Cloud LLM → local Ollama → detection fallback) ──
 
     def describe_scene(self, prompt: str = "What do you see?") -> str:
         """Describe what the camera sees using LLM vision.
 
-        Routes to GPU server first, falls back to local Ollama,
+        Routes to Google Cloud Vision first, falls back to local Ollama,
         then falls back to object detection + face recognition text summary.
         """
         frame = self.capture_frame()
 
-        # Try GPU server first
-        if _check_gpu():
+        if _check_cloud():
             try:
-                return self._gpu_describe(frame, prompt)
+                return self._cloud_describe(frame, prompt)
             except Exception as e:
-                print(f"[vision] GPU describe failed ({e}), trying local")
+                print(f"[vision] Cloud describe failed ({e}), trying local")
 
         # Try local Ollama
         try:
@@ -287,20 +275,19 @@ class CameraService:
         # Fallback: combine detection + face recognition into text
         return self._detection_fallback(frame)
 
-    def _gpu_describe(self, frame: np.ndarray, prompt: str) -> str:
-        """Send frame to GPU server for LLM vision description."""
+    def _cloud_describe(self, frame: np.ndarray, prompt: str) -> str:
+        """Send frame to Google Cloud Vision API for scene description."""
         _, jpeg = cv2.imencode(".jpg", frame)
-        files = {"image": ("frame.jpg", jpeg.tobytes(), "image/jpeg")}
-        data = {"prompt": prompt}
-        r = requests.post(
-            f"{GPU_SERVER_URL}/vision/describe",
-            files=files,
-            data=data,
-            headers=_gpu_headers(),
-            timeout=30,
-        )
-        r.raise_for_status()
-        return r.json().get("description", "")
+        result = google_vision_describe(jpeg.tobytes())
+        # Build description from labels + text annotations
+        labels = [a.get("description", "") for a in result.get("labelAnnotations", [])]
+        text = result.get("fullTextAnnotation", {}).get("text", "")
+        parts = []
+        if labels:
+            parts.append(f"I see: {', '.join(labels[:10])}")
+        if text:
+            parts.append(f"Text visible: {text[:200]}")
+        return " | ".join(parts) if parts else "Cloud vision returned no results"
 
     def _local_describe(self, frame: np.ndarray, prompt: str) -> str:
         """Describe with local Ollama vision model."""

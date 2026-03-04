@@ -138,7 +138,8 @@ class BaseAgent:
     def llm_call(self, messages: list[dict], options: dict | None = None) -> str:
         """Make an LLM call using the shared infrastructure.
 
-        Routes through GPU server with local Ollama fallback.
+        Routes through cloud API with tiered model selection based on agent name.
+        Falls back to local Ollama if cloud is unreachable.
         Uses agent-specific temperature if no options provided.
         """
         from agent import llm_chat, OLLAMA_OPTIONS
@@ -147,7 +148,7 @@ class BaseAgent:
             options = dict(OLLAMA_OPTIONS)
             options["temperature"] = self.config.temperature
 
-        return llm_chat(messages, options)
+        return llm_chat(messages, options, agent_name=self.config.name)
 
     def get_available_tools(self) -> list[str]:
         """Return tools available to this agent, respecting plan mode and settings."""

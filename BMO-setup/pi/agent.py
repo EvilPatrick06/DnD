@@ -1,7 +1,7 @@
-"""BMO Agent — GPU-accelerated AI with local Ollama fallback.
+"""BMO Agent — Cloud API AI with local Ollama fallback.
 
-Routes LLM calls to GPU server (EC2 g5.xlarge) for fast 70B model inference.
-Falls back to local Ollama (Gemma3:4b) when GPU server is unreachable.
+Routes LLM calls to cloud APIs (Gemini Pro, Claude Opus) for high-quality inference.
+Falls back to local Ollama (Gemma3:4b) when cloud APIs are unreachable.
 """
 
 import glob
@@ -16,29 +16,25 @@ import time
 import requests
 import ollama as ollama_client
 
+from cloud_providers import cloud_chat, PRIMARY_MODEL, ROUTER_MODEL, DND_MODEL
 from dev_tools import dispatch_tool, get_tool_descriptions, MAX_TOOL_CALLS_PER_TURN
 from voice_personality import parse_response_tags
 from agents.settings import init_settings, get_settings
 
-# ── GPU Server Configuration ─────────────────────────────────────────
-# Primary AI brain: EC2 g5.xlarge with A10G 24GB VRAM
-GPU_SERVER_URL = os.environ.get("GPU_SERVER_URL", "https://ai.yourdomain.com")
-GPU_SERVER_KEY = os.environ.get("GPU_SERVER_KEY", "")
-GPU_SERVER_TIMEOUT = 10  # seconds to wait before falling back to local
-GPU_HEALTH_CHECK_INTERVAL = 30  # seconds between health checks
-
-# Local fallback model (runs on Pi's CPU)
+# ── Cloud API Configuration ──────────────────────────────────────────
+# Primary AI brain: Cloud APIs (Gemini Pro, Claude Opus, Groq, Fish Audio)
+# Local fallback model (runs on Pi's CPU when cloud unavailable)
 LOCAL_MODEL = "bmo"
-GPU_MODEL = "bmo"
 
-# Track GPU server availability
-_gpu_available = None  # None = unknown, True/False = last known state
-_gpu_last_check = 0
+# Track cloud API availability
+_cloud_available = None  # None = unknown, True/False = last known state
+_cloud_last_check = 0
+CLOUD_HEALTH_CHECK_INTERVAL = 60  # seconds between health checks
 
 # ── Platform Detection ────────────────────────────────────────────────
 _IS_PI = platform.machine().startswith("aarch64") or platform.machine().startswith("arm")
 
-# Ollama options for LOCAL fallback only (GPU server handles its own config)
+# Ollama options for LOCAL fallback only (cloud APIs handle primary inference)
 if _IS_PI:
     OLLAMA_OPTIONS = {
         "num_ctx": 8192,
@@ -69,55 +65,37 @@ else:
     DND_DATA_DIR = os.environ.get("DND_DATA_DIR", "/opt/dnd-project/src/renderer/public/data/5e")
 
 
-# ── GPU Server Routing ────────────────────────────────────────────────
+# ── Cloud API Routing ─────────────────────────────────────────────────
 
-def _gpu_headers() -> dict:
-    """Build auth headers for GPU server."""
-    headers = {"Content-Type": "application/json"}
-    if GPU_SERVER_KEY:
-        headers["Authorization"] = f"Bearer {GPU_SERVER_KEY}"
-    return headers
-
-
-def _check_gpu_available() -> bool:
-    """Check if GPU server is reachable. Caches result for GPU_HEALTH_CHECK_INTERVAL."""
-    global _gpu_available, _gpu_last_check
+def _check_cloud_available() -> bool:
+    """Check if cloud APIs are reachable. Caches result."""
+    global _cloud_available, _cloud_last_check
 
     now = time.time()
-    if _gpu_available is not None and (now - _gpu_last_check) < GPU_HEALTH_CHECK_INTERVAL:
-        return _gpu_available
+    if _cloud_available is not None and (now - _cloud_last_check) < CLOUD_HEALTH_CHECK_INTERVAL:
+        return _cloud_available
 
     try:
-        r = requests.get(f"{GPU_SERVER_URL}/health", timeout=3, headers=_gpu_headers())
-        _gpu_available = r.status_code == 200
+        # Quick connectivity check via Gemini
+        r = requests.get("https://generativelanguage.googleapis.com/", timeout=3)
+        _cloud_available = True
     except Exception:
-        _gpu_available = False
+        _cloud_available = False
 
-    _gpu_last_check = now
-    if not _gpu_available:
-        print("[agent] GPU server unreachable — using local fallback")
-    else:
-        print("[agent] GPU server connected")
-    return _gpu_available
+    _cloud_last_check = now
+    if not _cloud_available:
+        print("[agent] Cloud APIs unreachable — using local fallback")
+    return _cloud_available
 
 
-def _gpu_chat(messages: list[dict], options: dict | None = None) -> str:
-    """Call GPU server's LLM endpoint. Returns response text or raises on failure."""
-    payload = {
-        "model": GPU_MODEL,
-        "messages": messages,
-        "stream": False,
-        "options": options or {},
-    }
-    r = requests.post(
-        f"{GPU_SERVER_URL}/llm/chat",
-        json=payload,
-        headers=_gpu_headers(),
-        timeout=120,
-    )
-    r.raise_for_status()
-    data = r.json()
-    return data.get("message", {}).get("content", "")
+def _cloud_chat(messages: list[dict], options: dict | None = None,
+                model: str = "") -> str:
+    """Call cloud API for LLM inference. Returns response text."""
+    model = model or PRIMARY_MODEL
+    temperature = (options or {}).get("temperature", 0.8)
+    max_tokens = (options or {}).get("num_predict", 2048)
+    return cloud_chat(messages, model=model, temperature=temperature,
+                      max_tokens=max_tokens)
 
 
 def _local_chat(messages: list[dict], options: dict | None = None) -> str:
@@ -130,36 +108,86 @@ def _local_chat(messages: list[dict], options: dict | None = None) -> str:
     return response["message"]["content"]
 
 
-def llm_chat(messages: list[dict], options: dict | None = None) -> str:
-    """Route LLM call to GPU server, falling back to local Ollama.
+# ── Tiered Model Router ──────────────────────────────────────────────
+# Routes agent requests to the right model tier:
+#   Flash  — routing, simple commands, timers, weather (cheap & fast)
+#   Pro    — general conversation, code, research, planning (balanced)
+#   Opus   — D&D DM narration, creative writing, complex reasoning (premium)
+
+# Agents that need premium creative output → DND_MODEL (Claude Opus)
+_OPUS_AGENTS = frozenset({"dnd_dm"})
+
+# Agents that need solid reasoning → PRIMARY_MODEL (Gemini Pro)
+_PRO_AGENTS = frozenset({
+    "code", "plan", "research", "review", "design",
+    "security", "deploy", "docs", "test", "learning",
+})
+
+# Everything else → ROUTER_MODEL (Gemini Flash) — fast and cheap
+_FLASH_AGENTS = frozenset({
+    "conversation", "music", "smart_home", "timer",
+    "calendar", "weather", "monitoring", "cleanup",
+})
+
+
+def _select_model(agent_name: str, messages: list[dict] | None = None) -> str:
+    """Pick the best model for this agent's workload."""
+    if agent_name in _OPUS_AGENTS:
+        return DND_MODEL
+    if agent_name in _PRO_AGENTS:
+        return PRIMARY_MODEL
+    if agent_name in _FLASH_AGENTS:
+        return ROUTER_MODEL
+    # Unknown agent → default to Pro
+    return PRIMARY_MODEL
+
+
+def llm_chat(messages: list[dict], options: dict | None = None,
+             model: str = "", agent_name: str = "") -> str:
+    """Route LLM call to cloud API, falling back to local Ollama.
 
     This is the primary entry point for all LLM calls.
-    The user doesn't notice the switch — just slightly slower/less accurate on fallback.
+    Model selection:
+      - Explicit model param overrides everything
+      - agent_name triggers tiered routing (DM → Opus, code/plan → Pro, etc.)
+      - Default: PRIMARY_MODEL (Gemini Pro)
     """
-    if _check_gpu_available():
+    if not model:
+        model = _select_model(agent_name, messages)
+
+    if _check_cloud_available():
         try:
-            return _gpu_chat(messages, options)
+            return _cloud_chat(messages, options, model=model)
         except Exception as e:
-            print(f"[agent] GPU LLM failed ({e}), falling back to local")
-            global _gpu_available
-            _gpu_available = False
+            print(f"[agent] Cloud LLM failed ({e}), falling back to local")
+            global _cloud_available
+            _cloud_available = False
 
     return _local_chat(messages, options)
 
 
+_rag_engine = None
+
+def _get_rag_engine():
+    """Lazy-load the local RAG search engine."""
+    global _rag_engine
+    if _rag_engine is None:
+        from rag_search import SearchEngine
+        _rag_engine = SearchEngine()
+        rag_dir = os.path.expanduser("~/bmo/data/rag_data")
+        for domain_name in ["dnd", "personal", "projects"]:
+            index_path = os.path.join(rag_dir, f"chunk-index-{domain_name}.json")
+            if os.path.exists(index_path):
+                count = _rag_engine.load_index_file(domain_name, index_path)
+                print(f"[agent] RAG: loaded {count} chunks for '{domain_name}'")
+    return _rag_engine
+
+
 def rag_search(query: str, domain: str = "dnd", top_k: int = 5) -> list[dict]:
-    """Search RAG knowledge base on GPU server."""
-    if not _check_gpu_available():
-        return []
+    """Search RAG knowledge base locally on Pi."""
     try:
-        r = requests.post(
-            f"{GPU_SERVER_URL}/rag/search",
-            json={"query": query, "domain": domain, "top_k": top_k, "source": "bmo"},
-            headers=_gpu_headers(),
-            timeout=10,
-        )
-        r.raise_for_status()
-        return r.json().get("results", [])
+        engine = _get_rag_engine()
+        return engine.search(query, domain, top_k=top_k)
     except Exception as e:
         print(f"[agent] RAG search failed: {e}")
         return []
@@ -184,19 +212,30 @@ Available actions:
 - music_previous: {} — Previous track
 - music_volume: {"level": 50} — Set volume (0-100)
 - music_cast: {"device": "device name"} — Cast to a device
-- tv_pause: {} — Pause the TV
-- tv_play: {} — Resume the TV
-- tv_stop: {} — Stop the TV
-- tv_volume: {"level": 50} — TV volume (0-100)
-- tv_off: {} — Turn off the TV
+- tv_launch: {"app": "crunchyroll", "device": "Bedroom TV"} — Launch an app on a TV/Chromecast. Apps: youtube, netflix, crunchyroll, disney, hulu, plex, spotify, twitch, prime
+- tv_pause: {"device": "Bedroom TV"} — Pause the TV (device optional, defaults to first TV)
+- tv_play: {"device": "Bedroom TV"} — Resume the TV (device optional)
+- tv_stop: {"device": "Bedroom TV"} — Stop the TV (device optional)
+- tv_volume: {"level": 30} — Set TV volume to a specific level (0-100), or use {"direction": "up"} for up/down/mute
+- tv_mute: {"device": "Bedroom TV"} — Toggle mute (device optional)
+- tv_power: {"state": "on"} — Turn TV on or off (state: "on", "off", or "toggle")
+- tv_key: {"key": "home", "device": "Bedroom TV"} — Send remote key. Keys: up, down, left, right, select, back, home, play_pause, rewind, forward
+- tv_off: {"device": "Bedroom TV"} — Turn off the TV (device optional)
 - device_list: {} — List available smart devices
 - calendar_today: {} — Show today's events
 - calendar_week: {} — Show this week's events
 - calendar_create: {"summary": "Event name", "date": "2026-02-23", "time": "14:00", "duration_hours": 1}
 - calendar_delete: {"summary": "Event name"} — Delete an event by name
-- timer_set: {"minutes": 10, "label": "Pizza"} — Set a countdown timer
-- alarm_set: {"hour": 7, "minute": 30, "label": "Wake up"} — Set an alarm
+- timer_set: {"minutes": 10, "seconds": 0, "label": "Pizza"} — Set a countdown timer (minutes and/or seconds)
+- timer_pause: {"label": "Pizza"} — Pause or resume a timer
 - timer_cancel: {"label": "Pizza"} — Cancel a timer
+- timer_list: {} — List all active timers and alarms. Use when user asks "what timers do I have", "what alarms are set", "any timers running", "show my alarms", etc.
+- alarm_set: {"hour": 7, "minute": 30, "label": "Wake up", "tag": "reminder"} — Set an alarm (tags: "wake-up" for morning routine, "reminder" for spoken reminder, "timer" for beep)
+- alarm_set: {"hour": 7, "minute": 30, "label": "Wake up", "repeat": "weekdays", "tag": "wake-up"} — Repeating alarm (repeat: none/daily/weekdays/weekends/custom, repeat_days: ["mon","wed","fri"] for custom)
+  Infer the tag from context: if the user says "morning alarm", "wake up alarm", "wake me up", or similar → use tag "wake-up". If they say "remind me" → use "reminder". Default to "reminder" if unclear.
+- alarm_update: {"label": "Wake up", "hour": 8, "minute": 0} — Modify an existing alarm (find by label, change any fields: hour, minute, repeat, repeat_days, tag, label). Use this when user says "change my alarm to 8 AM" instead of cancel+recreate.
+- alarm_cancel: {"label": "Wake up"} — Cancel an alarm
+- alarm_snooze: {"label": "Wake up", "minutes": 5} — Snooze a fired alarm
 - camera_snapshot: {} — Take a photo
 - camera_describe: {"prompt": "What do you see?"} — Describe what the camera sees
 - camera_motion: {"enabled": true} — Toggle motion detection
@@ -737,17 +776,11 @@ class BmoAgent:
 
     def _apply_settings_globals(self) -> None:
         """Apply LLM-related settings to module-level globals."""
-        global GPU_SERVER_URL, GPU_SERVER_KEY, GPU_SERVER_TIMEOUT
-        global GPU_HEALTH_CHECK_INTERVAL, LOCAL_MODEL, GPU_MODEL
+        global LOCAL_MODEL
         global OLLAMA_OPTIONS, OLLAMA_PLAN_OPTIONS
 
         s = self.settings
-        GPU_SERVER_URL = s.get("llm.gpu_server_url", GPU_SERVER_URL)
-        GPU_SERVER_KEY = s.get("llm.gpu_server_key", GPU_SERVER_KEY)
-        GPU_SERVER_TIMEOUT = s.get("llm.gpu_server_timeout", GPU_SERVER_TIMEOUT)
-        GPU_HEALTH_CHECK_INTERVAL = s.get("llm.gpu_health_check_interval", GPU_HEALTH_CHECK_INTERVAL)
         LOCAL_MODEL = s.get("llm.local_model", LOCAL_MODEL)
-        GPU_MODEL = s.get("llm.gpu_model", GPU_MODEL)
         OLLAMA_OPTIONS = s.get("llm.ollama_options", OLLAMA_OPTIONS)
         OLLAMA_PLAN_OPTIONS = s.get("llm.ollama_plan_options", OLLAMA_PLAN_OPTIONS)
 
@@ -806,11 +839,13 @@ class BmoAgent:
         if self._pending_confirmations and user_message.lower().strip() in ("yes", "y", "confirm", "do it"):
             return self._execute_pending_confirmation(speaker)
 
-        # Add speaker context
+        # Add time and speaker context
+        now = datetime.datetime.now()
+        time_str = now.strftime("%I:%M %p, %A %B %d %Y")
         if speaker != "unknown":
-            context_msg = f"[Speaker: {speaker}] {user_message}"
+            context_msg = f"[Time: {time_str}] [Speaker: {speaker}] {user_message}"
         else:
-            context_msg = user_message
+            context_msg = f"[Time: {time_str}] {user_message}"
 
         self.conversation_history.append({"role": "user", "content": context_msg})
 
@@ -842,10 +877,19 @@ class BmoAgent:
 
         # Parse and execute BMO command blocks (music, tv, calendar, etc.)
         text, commands = self._parse_response(reply)
+        if commands:
+            print(f"[agent] Commands found: {[c.get('action') for c in commands]}")
         results = []
         for cmd in commands:
             cmd_result = self._execute_command(cmd)
+            print(f"[agent] {cmd.get('action')}: {'OK' if cmd_result.get('success') else cmd_result.get('error', 'failed')}")
             results.append(cmd_result)
+
+        # Append informational command results to the spoken text
+        INFORMATIONAL_ACTIONS = {"timer_list", "calendar_today", "calendar_week", "weather", "device_list"}
+        for r in results:
+            if r.get("success") and r.get("action") in INFORMATIONAL_ACTIONS and r.get("result"):
+                text = f"{text}\n{r['result']}" if text.strip() else r["result"]
 
         # Parse response tags for hardware control ([FACE:x], [LED:x], etc.)
         tags = parse_response_tags(text)
@@ -998,6 +1042,17 @@ class BmoAgent:
         # Remove fenced command blocks from the display text
         text = re.sub(fenced_pattern, "", response, flags=re.DOTALL)
 
+        # Also catch single-backtick command blocks: `command ... `
+        single_tick_pattern = r"`command\s*\n?(.*?)\n?`"
+        single_matches = re.findall(single_tick_pattern, text, re.DOTALL)
+        for match in single_matches:
+            try:
+                cmd = json.loads(match.strip())
+                commands.append(cmd)
+            except (json.JSONDecodeError, ValueError):
+                pass
+        text = re.sub(single_tick_pattern, "", text, flags=re.DOTALL)
+
         # Also catch inline JSON command objects that BMO sometimes writes
         # without proper fencing (e.g. {"action": "...", "params": {...}})
         inline_pattern = r'\{["\']action["\']:\s*["\'][^"\']+["\'],\s*["\']params["\']:\s*\{[^}]*\}\s*\}'
@@ -1066,6 +1121,10 @@ class BmoAgent:
             "tv_stop": self._handle_tv_stop,
             "tv_volume": self._handle_tv_volume,
             "tv_off": self._handle_tv_off,
+            "tv_launch": self._handle_tv_launch,
+            "tv_key": self._handle_tv_key,
+            "tv_power": self._handle_tv_power,
+            "tv_mute": self._handle_tv_mute,
             "device_list": self._handle_device_list,
             # Calendar
             "calendar_today": self._handle_calendar_today,
@@ -1074,8 +1133,13 @@ class BmoAgent:
             "calendar_delete": self._handle_calendar_delete,
             # Timer / Alarm
             "timer_set": self._handle_timer_set,
-            "alarm_set": self._handle_alarm_set,
+            "timer_pause": self._handle_timer_pause,
             "timer_cancel": self._handle_timer_cancel,
+            "timer_list": self._handle_timer_list,
+            "alarm_set": self._handle_alarm_set,
+            "alarm_update": self._handle_alarm_update,
+            "alarm_cancel": self._handle_alarm_cancel,
+            "alarm_snooze": self._handle_alarm_snooze,
             # Camera
             "camera_snapshot": self._handle_camera_snapshot,
             "camera_describe": self._handle_camera_describe,
@@ -1134,59 +1198,109 @@ class BmoAgent:
             return f"Output switched to {params.get('device', 'pi')}"
 
     # ── TV / Smart Home Handlers ─────────────────────────────────────
+    # All TV commands go through the Flask API (same as web GUI)
+
+    def _tv_api(self, endpoint, json_data=None, method="POST"):
+        """Call a local Flask TV API endpoint."""
+        import requests as _req
+        url = f"http://localhost:5000{endpoint}"
+        try:
+            if method == "GET":
+                r = _req.get(url, timeout=5)
+            else:
+                r = _req.post(url, json=json_data or {}, timeout=10)
+            if r.ok:
+                return r.json(), None
+            return None, r.json().get("error", "unknown error")
+        except Exception as e:
+            return None, str(e)
+
+    def _handle_tv_launch(self, params):
+        app_name = params.get("app", "").lower().strip()
+        if not app_name:
+            return "No app specified"
+        _, err = self._tv_api("/api/tv/launch", {"app": app_name})
+        if err:
+            return f"Failed to launch {app_name}: {err}"
+        return f"Launched {app_name} on your TV"
 
     def _handle_tv_pause(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            # Find first TV device
-            for d in home.get_devices():
-                if "tv" in d["name"].lower():
-                    home.pause(d["name"])
-                    return f"Paused {d['name']}"
-        return "No TV found"
+        _, err = self._tv_api("/api/tv/key", {"key": "play_pause"})
+        if err:
+            return f"Pause failed: {err}"
+        return "Paused TV"
 
     def _handle_tv_play(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            for d in home.get_devices():
-                if "tv" in d["name"].lower():
-                    home.play(d["name"])
-                    return f"Resumed {d['name']}"
-        return "No TV found"
+        _, err = self._tv_api("/api/tv/key", {"key": "play_pause"})
+        if err:
+            return f"Play failed: {err}"
+        return "Resumed TV"
 
     def _handle_tv_stop(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            for d in home.get_devices():
-                if "tv" in d["name"].lower():
-                    home.stop(d["name"])
-                    return f"Stopped {d['name']}"
-        return "No TV found"
+        _, err = self._tv_api("/api/tv/key", {"key": "play_pause"})
+        if err:
+            return f"Stop failed: {err}"
+        return "Stopped TV"
 
     def _handle_tv_volume(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            level = params.get("level", 50) / 100.0
-            for d in home.get_devices():
-                if "tv" in d["name"].lower():
-                    home.set_volume(d["name"], level)
-                    return f"TV volume set to {params.get('level', 50)}%"
-        return "No TV found"
+        level = params.get("level")
+        direction = params.get("direction", "")
+        if level is not None:
+            data, err = self._tv_api("/api/tv/volume", {"level": int(level)})
+            if err:
+                return f"Volume failed: {err}"
+            return f"Volume set to {level}%"
+        if direction:
+            _, err = self._tv_api("/api/tv/volume", {"direction": direction})
+            if err:
+                return f"Volume failed: {err}"
+            return f"Volume {direction}"
+        _, err = self._tv_api("/api/tv/volume", {"direction": "up"})
+        if err:
+            return f"Volume failed: {err}"
+        return "Volume up"
+
+    def _handle_tv_mute(self, params):
+        _, err = self._tv_api("/api/tv/volume", {"direction": "mute"})
+        if err:
+            return f"Mute failed: {err}"
+        return "Toggled mute"
+
+    def _handle_tv_power(self, params):
+        state = params.get("state", "on")
+        _, err = self._tv_api("/api/tv/power", {"state": state})
+        if err:
+            return f"Power {state} failed: {err}"
+        return f"TV power {state}"
+
+    def _handle_tv_key(self, params):
+        key = params.get("key", "")
+        KEY_MAP = {
+            "up": "DPAD_UP", "down": "DPAD_DOWN", "left": "DPAD_LEFT",
+            "right": "DPAD_RIGHT", "select": "DPAD_CENTER", "back": "BACK",
+            "home": "HOME", "play_pause": "MEDIA_PLAY_PAUSE",
+            "rewind": "MEDIA_PREVIOUS", "forward": "MEDIA_NEXT",
+        }
+        mapped = KEY_MAP.get(key, key.upper())
+        _, err = self._tv_api("/api/tv/key", {"key": mapped})
+        if err:
+            return f"Key '{key}' failed: {err}"
+        return f"Sent {key}"
 
     def _handle_tv_off(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            for d in home.get_devices():
-                if "tv" in d["name"].lower():
-                    home.quit_app(d["name"])
-                    return f"Turned off {d['name']}"
-        return "No TV found"
+        _, err = self._tv_api("/api/tv/power", {"state": "off"})
+        if err:
+            return f"TV off failed: {err}"
+        return "Turned off TV"
 
     def _handle_device_list(self, params):
-        home = self.services.get("smart_home")
-        if home:
-            return home.get_devices()
-        return []
+        data, err = self._tv_api("/api/devices", method="GET")
+        if err:
+            home = self.services.get("smart_home")
+            if home:
+                return home.get_devices()
+            return f"Failed to list devices: {err}"
+        return data
 
     # ── Calendar Handlers ────────────────────────────────────────────
 
@@ -1241,20 +1355,26 @@ class BmoAgent:
     def _handle_timer_set(self, params):
         timers = self.services.get("timers")
         if timers:
-            minutes = params.get("minutes", 5)
+            minutes = params.get("minutes", 0)
+            seconds = params.get("seconds", 0)
+            total_sec = int(minutes) * 60 + int(seconds)
+            if total_sec <= 0:
+                total_sec = 300
             label = params.get("label", "")
-            timer = timers.create_timer(minutes * 60, label)
-            return f"Timer set for {minutes} minutes"
+            timer = timers.create_timer(total_sec, label)
+            return f"Timer set for {timer['label']}"
 
-    def _handle_alarm_set(self, params):
+    def _handle_timer_pause(self, params):
         timers = self.services.get("timers")
-        if timers:
-            alarm = timers.create_alarm(
-                params.get("hour", 7),
-                params.get("minute", 0),
-                params.get("label", ""),
-            )
-            return f"Alarm set for {alarm['target_time']}"
+        if not timers:
+            return "Timer service not available"
+        label = params.get("label", "").lower()
+        for item in timers.get_all():
+            if item["type"] == "timer" and label in item["label"].lower():
+                timers.pause_timer(item["id"])
+                status = "paused" if not item["paused"] else "resumed"
+                return f"Timer '{item['label']}' {status}"
+        return f"No timer found matching '{label}'"
 
     def _handle_timer_cancel(self, params):
         timers = self.services.get("timers")
@@ -1266,6 +1386,127 @@ class BmoAgent:
                 timers.cancel_timer(item["id"])
                 return f"Cancelled timer: {item['label']}"
         return f"No timer found matching '{label}'"
+
+    def _handle_timer_list(self, params):
+        timers = self.services.get("timers")
+        if not timers:
+            return "Timer service not available"
+        items = timers.get_all()
+        if not items:
+            return "No active timers or alarms"
+        lines = []
+        for item in items:
+            rem = item["remaining"]
+            m, s = divmod(rem, 60)
+            h, m = divmod(m, 60)
+            time_str = f"{h}h {m}m {s}s" if h else f"{m}m {s}s"
+            if item["type"] == "timer":
+                status = " (paused)" if item.get("paused") else ""
+                lines.append(f"⏱️ {item['label']}: {time_str} remaining{status}")
+            else:
+                repeat_str = f" ({item.get('repeat', 'none')})" if item.get("repeat", "none") != "none" else ""
+                lines.append(f"⏰ {item['label']}: {item['target_time']}{repeat_str} — {time_str} away")
+        return "\n".join(lines)
+
+    def _handle_alarm_set(self, params):
+        timers = self.services.get("timers")
+        if timers:
+            alarm = timers.create_alarm(
+                params.get("hour", 7),
+                params.get("minute", 0),
+                params.get("label", ""),
+                date=params.get("date", ""),
+                repeat=params.get("repeat", "none"),
+                repeat_days=params.get("repeat_days"),
+                tag=params.get("tag", "reminder"),
+            )
+            repeat_info = f" ({alarm.get('repeat')})" if alarm.get("repeat", "none") != "none" else ""
+            tag_info = f" [{alarm.get('tag')}]" if alarm.get("tag", "reminder") != "reminder" else ""
+            return f"Alarm set for {alarm['target_time']}{repeat_info}{tag_info}"
+
+    def _find_alarm(self, label: str):
+        """Find an alarm by fuzzy label match (substring, word overlap, or tag)."""
+        timers = self.services.get("timers")
+        if not timers:
+            return None
+        label_lower = label.lower()
+        label_words = set(label_lower.split())
+        alarms = [i for i in timers.get_all() if i["type"] == "alarm"]
+        # Exact substring match
+        for item in alarms:
+            if label_lower in item["label"].lower() or item["label"].lower() in label_lower:
+                return item
+        # Word overlap match (any word from search matches any word in label)
+        for item in alarms:
+            item_words = set(item["label"].lower().split())
+            if label_words & item_words:
+                return item
+        # Tag match (e.g. user says "morning alarm" → tag "wake-up")
+        tag_map = {"morning": "wake-up", "wake": "wake-up", "wakeup": "wake-up",
+                   "reminder": "reminder", "timer": "timer", "beep": "timer"}
+        for word in label_words:
+            tag = tag_map.get(word)
+            if tag:
+                for item in alarms:
+                    if item.get("tag") == tag:
+                        return item
+        # If only one alarm exists, return it
+        if len(alarms) == 1:
+            return alarms[0]
+        return None
+
+    def _handle_alarm_cancel(self, params):
+        timers = self.services.get("timers")
+        if not timers:
+            return "Timer service not available"
+        label = params.get("label", "")
+        target = self._find_alarm(label)
+        if target:
+            timers.cancel_alarm(target["id"])
+            return f"Cancelled alarm: {target['label']}"
+        return f"No alarm found matching '{label}'"
+
+    def _handle_alarm_update(self, params):
+        timers = self.services.get("timers")
+        if not timers:
+            return "Timer service not available"
+        label = params.get("label", "")
+        target = self._find_alarm(label)
+        if not target:
+            return f"No alarm found matching '{label}'"
+        # Build kwargs for in-place update — only include fields that were provided
+        updates = {}
+        if "hour" in params:
+            updates["hour"] = params["hour"]
+        if "minute" in params:
+            updates["minute"] = params["minute"]
+        if "new_label" in params:
+            updates["label"] = params["new_label"]
+        if "repeat" in params:
+            updates["repeat"] = params["repeat"]
+        if "repeat_days" in params:
+            updates["repeat_days"] = params["repeat_days"]
+        if "tag" in params:
+            updates["tag"] = params["tag"]
+        if not updates:
+            return f"No changes specified for alarm '{target['label']}'"
+        result = timers.update_alarm(target["id"], **updates)
+        if result:
+            return f"Updated alarm: {result['label']} → {result['target_time']}"
+        return f"Failed to update alarm '{target['label']}'"
+
+    def _handle_alarm_snooze(self, params):
+        timers = self.services.get("timers")
+        if not timers:
+            return "Timer service not available"
+        label = params.get("label", "")
+        minutes = params.get("minutes", 5)
+        target = self._find_alarm(label)
+        if target:
+            if timers.snooze_alarm(target["id"], minutes):
+                return f"Snoozed alarm '{target['label']}' for {minutes} minutes"
+            return f"Alarm '{target['label']}' hasn't fired yet"
+        return f"No alarm found matching '{label}'"
 
     # ── Camera Handlers ──────────────────────────────────────────────
 
