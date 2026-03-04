@@ -56,6 +56,8 @@ class OledFace:
         self._mouth_state = 0  # 0=closed, 1=half, 2=open
         self._thinking_angle = 0
         self._alert_flash = False
+        self._look_offset = 0  # -1=left, 0=center, 1=right for idle look-around
+        self._look_timer = 0
 
     def start(self):
         """Initialize OLED and start the animation loop."""
@@ -140,7 +142,7 @@ class OledFace:
     # ── Expression Renderers ──────────────────────────────────────────
 
     def _render_idle(self, draw):
-        """Neutral face with slow blink animation."""
+        """Neutral face with slow blink and occasional look-around."""
         # Blink every ~4 seconds (40 frames at 10 FPS)
         self._blink_timer += 1
         if self._blink_timer >= 40:
@@ -148,6 +150,16 @@ class OledFace:
             if self._blink_timer >= 43:  # Blink lasts 3 frames
                 self._blink_state = False
                 self._blink_timer = 0
+
+        # Look-around every ~8 seconds (80 frames)
+        self._look_timer += 1
+        if self._look_timer >= 80:
+            import random
+            self._look_offset = random.choice([-1, 0, 0, 1])
+            if self._look_timer >= 100:
+                self._look_offset = 0
+                self._look_timer = 0
+        pupil_shift = self._look_offset * 3
 
         # Face outline
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
@@ -161,15 +173,15 @@ class OledFace:
             # Open eyes — oval
             draw.ellipse([35, 18, 50, 32], outline=1, fill=1)
             draw.ellipse([78, 18, 93, 32], outline=1, fill=1)
-            # Pupils
-            draw.ellipse([40, 22, 45, 28], outline=0, fill=0)
-            draw.ellipse([83, 22, 88, 28], outline=0, fill=0)
+            # Pupils (shifted by look direction)
+            draw.ellipse([40 + pupil_shift, 22, 45 + pupil_shift, 28], outline=0, fill=0)
+            draw.ellipse([83 + pupil_shift, 22, 88 + pupil_shift, 28], outline=0, fill=0)
 
         # Mouth — small neutral line
         draw.line([52, 44, 76, 44], fill=1, width=1)
 
     def _render_listening(self, draw):
-        """Wide eyes with ear/mic indicators."""
+        """Wide eyes with ear dots and mic indicators."""
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
 
         # Wide open eyes
@@ -182,22 +194,32 @@ class OledFace:
         # Small 'o' mouth (attentive)
         draw.ellipse([58, 40, 70, 50], outline=1, fill=0)
 
-        # Mic indicator — small radiating arcs on the sides
+        # Ear dots (perked) — small dots on the sides of the face
         phase = self._frame_counter % 10
-        if phase < 5:
+        pulse = phase < 5
+        draw.ellipse([14, 18, 18, 22], fill=1)
+        draw.ellipse([14, 26, 18, 30], fill=1)
+        draw.ellipse([110, 18, 114, 22], fill=1)
+        draw.ellipse([110, 26, 114, 30], fill=1)
+
+        # Mic indicator — pulsing arcs on the sides
+        if pulse:
             draw.arc([2, 20, 12, 44], start=270, end=90, fill=1)
             draw.arc([116, 20, 126, 44], start=90, end=270, fill=1)
 
     def _render_thinking(self, draw):
-        """Rotating dots loading animation."""
+        """Eyes looking up-right with rotating dots."""
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
 
-        # Squinting eyes (thinking)
-        draw.line([35, 23, 50, 23], fill=1, width=2)
-        draw.line([78, 23, 93, 23], fill=1, width=2)
-        # Small eyebrow lines
-        draw.line([35, 18, 50, 18], fill=1, width=1)
-        draw.line([78, 18, 93, 18], fill=1, width=1)
+        # Eyes looking up-right
+        draw.ellipse([35, 18, 50, 32], outline=1, fill=1)
+        draw.ellipse([78, 18, 93, 32], outline=1, fill=1)
+        # Pupils shifted up-right
+        draw.ellipse([43, 19, 48, 25], outline=0, fill=0)
+        draw.ellipse([86, 19, 91, 25], outline=0, fill=0)
+
+        # Slight frown (thinking hard)
+        draw.arc([50, 44, 78, 54], start=180, end=360, fill=1, width=1)
 
         # Rotating dots
         import math
@@ -213,14 +235,12 @@ class OledFace:
             draw.ellipse([x - size, y - size, x + size, y + size], fill=1)
 
     def _render_speaking(self, draw):
-        """Mouth animation synced to speaking state."""
+        """Happy eyes with animated mouth synced to speaking state."""
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
 
-        # Normal eyes
-        draw.ellipse([35, 18, 50, 32], outline=1, fill=1)
-        draw.ellipse([78, 18, 93, 32], outline=1, fill=1)
-        draw.ellipse([40, 22, 45, 28], outline=0, fill=0)
-        draw.ellipse([83, 22, 88, 28], outline=0, fill=0)
+        # Happy eyes (slight squint, upward arcs)
+        draw.arc([33, 16, 52, 34], start=200, end=340, fill=1, width=2)
+        draw.arc([76, 16, 95, 34], start=200, end=340, fill=1, width=2)
 
         # Animated mouth — cycles through shapes
         self._mouth_state = (self._frame_counter // 2) % 4

@@ -72,6 +72,7 @@ COLORS = {
     "red": (255, 0, 0),
     "orange": (255, 120, 0),
     "purple": (128, 0, 255),
+    "pink": (255, 105, 180),
     "white": (255, 255, 255),
     "off": (0, 0, 0),
 }
@@ -79,9 +80,9 @@ COLORS = {
 # State → (board_mode, color)
 STATE_CONFIG = {
     LedState.READY:     (MODE_BREATHING, "green"),
-    LedState.LISTENING: (MODE_STATIC,    "blue"),
-    LedState.THINKING:  (MODE_FOLLOW,    "yellow"),
-    LedState.SPEAKING:  (MODE_BREATHING, "cyan"),
+    LedState.LISTENING: (MODE_STATIC,    "pink"),
+    LedState.THINKING:  (MODE_FOLLOW,    "green"),
+    LedState.SPEAKING:  (MODE_BREATHING, "blue"),
     LedState.MUSIC:     (MODE_RAINBOW,   None),
     LedState.COMBAT:    (MODE_BREATHING, "red"),
     LedState.ERROR:     (MODE_STATIC,    "red"),

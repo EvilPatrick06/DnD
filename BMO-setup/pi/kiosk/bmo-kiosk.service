@@ -1,0 +1,42 @@
+[Unit]
+Description=BMO Kiosk — Chromium fullscreen on HDMI
+After=graphical.target bmo.service
+Wants=bmo.service
+PartOf=graphical.target
+
+[Service]
+Type=simple
+User=patrick
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/patrick/.Xauthority
+
+# Wait for BMO Flask to be ready
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 30); do curl -sf http://localhost:5000/api/status > /dev/null && break; sleep 1; done'
+
+# Disable screen blanking
+ExecStartPre=/usr/bin/xset -display :0 s off
+ExecStartPre=/usr/bin/xset -display :0 -dpms
+ExecStartPre=/usr/bin/xset -display :0 s noblank
+
+# Hide cursor after 3 seconds idle
+ExecStartPre=-/usr/bin/killall unclutter
+ExecStart=/bin/bash -c '\
+    unclutter -idle 3 -root &\
+    exec chromium-browser \
+        --kiosk \
+        --noerrdialogs \
+        --disable-infobars \
+        --disable-session-crashed-bubble \
+        --disable-restore-session-state \
+        --disable-features=TranslateUI \
+        --check-for-update-interval=31536000 \
+        --no-first-run \
+        --start-fullscreen \
+        --window-position=0,0 \
+        http://localhost:5000'
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
