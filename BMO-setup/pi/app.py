@@ -12,6 +12,7 @@ import asyncio
 import json
 import os
 import secrets
+import subprocess
 import threading
 import time
 
@@ -191,6 +192,17 @@ def init_services():
         print("[bmo]   Health checker: OK (60s interval)")
     except Exception as e:
         print(f"[bmo]   Health checker: SKIPPED ({e})")
+
+    # Start KDE Connect daemon (needed for notification bridge)
+    try:
+        import shutil
+        if shutil.which("kdeconnectd"):
+            subprocess.Popen(["kdeconnectd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print("[bmo]   KDE Connect daemon: started")
+        else:
+            print("[bmo]   KDE Connect daemon: not installed")
+    except Exception as e:
+        print(f"[bmo]   KDE Connect daemon: SKIPPED ({e})")
 
     # Notification service (KDE Connect bridge)
     try:
