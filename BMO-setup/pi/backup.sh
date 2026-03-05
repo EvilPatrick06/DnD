@@ -50,9 +50,13 @@ BACKUP_PARTITIONS=(
 EXCLUDES=(
     "/proc/**" "/sys/**" "/dev/**" "/tmp/**" "/run/**" "/mnt/**" "/media/**"
     "/var/tmp/**" "/var/cache/apt/**" "/var/lib/docker/overlay2/**"
+    "/var/log/journal/**"
     "/swap.img" "/swapfile"
     "**/node_modules/**" "**/.cache/**" "**/__pycache__/**" "**/*.pyc"
     "**/.audiocache/**" "**/*.swp" "**/*.tmp"
+    "**/venv/**" "**/.venv/**" "**/site-packages/**"
+    "**/.local/lib/**" "**/.local/share/pip/**"
+    "/etc/ssl/private/**"
 )
 
 DRY_RUN=""
@@ -80,6 +84,20 @@ EOF
 # ── Pre-flight checks ─────────────────────────────────────────────
 
 mkdir -p "$BMO_DIR/data"
+
+# Fix ownership if previous sudo run left root-owned files
+if [ -w "$BMO_DIR/data" ] 2>/dev/null; then
+    true
+else
+    sudo chown -R "$(whoami):$(whoami)" "$BMO_DIR/data" 2>/dev/null || true
+fi
+
+# Also fix specific files that might be root-owned
+for f in "$LOG_FILE" "$MANIFEST_FILE" "$RCLONE_LOG"; do
+    if [ -f "$f" ] && [ ! -w "$f" ]; then
+        sudo chown "$(whoami):$(whoami)" "$f" 2>/dev/null || true
+    fi
+done
 
 if ! command -v rclone &> /dev/null; then
     log "ERROR: rclone not installed"
@@ -120,8 +138,12 @@ log "Starting full system backup ($DATE_TAG)"
 # ── Rotate old backups (keep last $MAX_BACKUPS) ───────────────────
 
 log "Checking existing backups..."
-EXISTING=$($RCLONE lsd "${REMOTE}:${REMOTE_BASE}/" 2>/dev/null | awk '{print $NF}' | grep "^backup-" | sort)
-BACKUP_COUNT=$(echo "$EXISTING" | grep -c "^backup-" 2>/dev/null || echo 0)
+EXISTING=$($RCLONE lsd "${REMOTE}:${REMOTE_BASE}/" 2>/dev/null | awk '{print $NF}' | grep "^backup-" | sort || true)
+if [ -z "$EXISTING" ]; then
+    BACKUP_COUNT=0
+else
+    BACKUP_COUNT=$(echo "$EXISTING" | wc -l)
+fi
 
 if [ "$BACKUP_COUNT" -ge "$MAX_BACKUPS" ]; then
     DELETE_COUNT=$((BACKUP_COUNT - MAX_BACKUPS + 1))
@@ -190,6 +212,11 @@ for entry in "${BACKUP_PARTITIONS[@]}"; do
 
     if [ "$RC" -eq 0 ]; then
         log "  rclone copy for $label completed (exit 0)"
+    elif [ "$RC" -eq 6 ]; then
+        # Exit 6 = some files not transferred (permission denied). Expected for non-root.
+        err_count=$(grep -c "^.*ERROR.*permission denied" "$RCLONE_LOG" 2>/dev/null || true)
+        err_count=${err_count:-0}
+        log "  rclone copy for $label completed with $err_count permission errors (non-root, expected)"
     else
         log "  ERROR: rclone copy for $label failed (exit code $RC)"
         log "  rclone log tail:"
@@ -199,8 +226,10 @@ for entry in "${BACKUP_PARTITIONS[@]}"; do
 
     # Per-partition verification: check files actually landed on Drive
     part_info=$($RCLONE size "${REMOTE}:${BACKUP_DIR}/$label/" --json 2>/dev/null || echo '{}')
-    part_count=$(echo "$part_info" | grep -oP '"count":\K\d+' 2>/dev/null || echo "0")
-    part_bytes=$(echo "$part_info" | grep -oP '"bytes":\K\d+' 2>/dev/null || echo "0")
+    part_count=$(echo "$part_info" | grep -oP '"count":\K\d+' 2>/dev/null | head -1 || true)
+    part_count=${part_count:-0}
+    part_bytes=$(echo "$part_info" | grep -oP '"bytes":\K\d+' 2>/dev/null | head -1 || true)
+    part_bytes=${part_bytes:-0}
     part_size=$(numfmt --to=iec "$part_bytes" 2>/dev/null || echo "${part_bytes}B")
 
     if [ "$part_count" -eq 0 ] && [ -z "$DRY_RUN" ]; then
@@ -213,7 +242,8 @@ for entry in "${BACKUP_PARTITIONS[@]}"; do
     fi
 
     # Count transferred files from rclone log (match multiple rclone log formats)
-    transferred=$(grep -cE ": (Copied|Transferred|Updated)" "$RCLONE_LOG" 2>/dev/null || echo 0)
+    transferred=$(grep -cE ": (Copied|Transferred|Updated)" "$RCLONE_LOG" 2>/dev/null || true)
+    transferred=${transferred:-0}
     TOTAL_TRANSFERRED=$((TOTAL_TRANSFERRED + transferred))
 
     log "  $label: $transferred files transferred to Drive"
@@ -230,8 +260,10 @@ done
 
 log "Verifying backup on Google Drive..."
 REMOTE_FILES=$($RCLONE size "${REMOTE}:${BACKUP_DIR}/" --json 2>/dev/null || echo '{}')
-remote_count=$(echo "$REMOTE_FILES" | grep -oP '"count":\K\d+' 2>/dev/null || echo "0")
-remote_bytes=$(echo "$REMOTE_FILES" | grep -oP '"bytes":\K\d+' 2>/dev/null || echo "0")
+remote_count=$(echo "$REMOTE_FILES" | grep -oP '"count":\K\d+' 2>/dev/null | head -1 || true)
+remote_count=${remote_count:-0}
+remote_bytes=$(echo "$REMOTE_FILES" | grep -oP '"bytes":\K\d+' 2>/dev/null | head -1 || true)
+remote_bytes=${remote_bytes:-0}
 remote_size=$(numfmt --to=iec "$remote_bytes" 2>/dev/null || echo "${remote_bytes}B")
 
 if [ "$remote_count" -eq 0 ] && [ -z "$DRY_RUN" ]; then
