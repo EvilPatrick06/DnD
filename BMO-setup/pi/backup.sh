@@ -100,6 +100,19 @@ if ! $RCLONE lsd "${REMOTE}:" --max-depth 0 > /dev/null 2>&1; then
     exit 1
 fi
 
+# Verify rclone can WRITE to the remote (read-only tokens pass the above check)
+TEST_FILE=$(mktemp)
+echo "backup-write-test $(date)" > "$TEST_FILE"
+if ! $RCLONE copyto "$TEST_FILE" "${REMOTE}:${REMOTE_BASE}/.write-test" 2>/dev/null; then
+    log "ERROR: Cannot write to rclone remote '$REMOTE' — read-only or permission denied"
+    discord_notify 16711680 "❌ BMO Backup Failed" "Cannot write to Google Drive — check permissions. Run: rclone config reconnect gdrive:"
+    rm -f "$TEST_FILE"
+    exit 1
+fi
+$RCLONE deletefile "${REMOTE}:${REMOTE_BASE}/.write-test" 2>/dev/null || true
+rm -f "$TEST_FILE"
+log "Pre-flight: read + write access verified"
+
 log "═══════════════════════════════════════════════════"
 log "Starting full system backup ($DATE_TAG)"
 [ -n "$DRY_RUN" ] && log "DRY RUN — no changes will be made"
@@ -149,39 +162,58 @@ for entry in "${BACKUP_PARTITIONS[@]}"; do
 
     log "Backing up $mount_point → ${BACKUP_DIR}/$label (direct upload)..."
 
-    # Build rclone filter args
-    FILTER_ARGS=""
+    # Build rclone filter file (avoids shell glob expansion of ** patterns)
+    FILTER_FILE="$BMO_DIR/data/rclone-filters.txt"
+    > "$FILTER_FILE"
     if [ "$mount_point" = "/" ]; then
         for exc in "${EXCLUDES[@]}"; do
-            FILTER_ARGS="$FILTER_ARGS --exclude=$exc"
+            echo "- $exc" >> "$FILTER_FILE"
         done
     fi
 
-    # Sync directly from filesystem to Google Drive (no local staging)
+    # Copy directly from filesystem to Google Drive (no local staging)
     > "$RCLONE_LOG"
-    if $RCLONE sync "$mount_point/" "${REMOTE}:${BACKUP_DIR}/$label/" \
-        $FILTER_ARGS \
+    RC=0
+    $RCLONE copy "$mount_point/" "${REMOTE}:${BACKUP_DIR}/$label/" \
+        --filter-from "$FILTER_FILE" \
         --transfers 4 \
         --checkers 8 \
         --retries 3 \
         --low-level-retries 3 \
-        --stats 0 \
         --log-file="$RCLONE_LOG" \
         --log-level INFO \
+        --stats 30s \
         --stats-one-line-date \
+        --stats-log-level NOTICE \
         $DRY_RUN \
-        2>&1; then
-        log "  rclone sync for $label completed"
+        2>&1 || RC=$?
+
+    if [ "$RC" -eq 0 ]; then
+        log "  rclone copy for $label completed (exit 0)"
     else
-        rc=$?
-        log "  ERROR: rclone sync for $label failed (exit code $rc)"
+        log "  ERROR: rclone copy for $label failed (exit code $RC)"
         log "  rclone log tail:"
-        tail -5 "$RCLONE_LOG" | while read -r line; do log "    $line"; done
+        tail -10 "$RCLONE_LOG" | while read -r line; do log "    $line"; done
         ((ERRORS++)) || true
     fi
 
-    # Count transferred files from rclone log
-    transferred=$(grep -c "^.*: Copied (new)$\|^.*: Copied (replaced existing)$\|^.*: Updated modification time$" "$RCLONE_LOG" 2>/dev/null || echo 0)
+    # Per-partition verification: check files actually landed on Drive
+    part_info=$($RCLONE size "${REMOTE}:${BACKUP_DIR}/$label/" --json 2>/dev/null || echo '{}')
+    part_count=$(echo "$part_info" | grep -oP '"count":\K\d+' 2>/dev/null || echo "0")
+    part_bytes=$(echo "$part_info" | grep -oP '"bytes":\K\d+' 2>/dev/null || echo "0")
+    part_size=$(numfmt --to=iec "$part_bytes" 2>/dev/null || echo "${part_bytes}B")
+
+    if [ "$part_count" -eq 0 ] && [ -z "$DRY_RUN" ]; then
+        log "  ERROR: $label has 0 files on Drive after copy!"
+        log "  rclone log (last 20 lines):"
+        tail -20 "$RCLONE_LOG" | while read -r line; do log "    $line"; done
+        ((ERRORS++)) || true
+    else
+        log "  $label: $part_count files ($part_size) on Drive"
+    fi
+
+    # Count transferred files from rclone log (match multiple rclone log formats)
+    transferred=$(grep -cE ": (Copied|Transferred|Updated)" "$RCLONE_LOG" 2>/dev/null || echo 0)
     TOTAL_TRANSFERRED=$((TOTAL_TRANSFERRED + transferred))
 
     log "  $label: $transferred files transferred to Drive"
@@ -197,18 +229,23 @@ done
 # ── Verify upload ─────────────────────────────────────────────────
 
 log "Verifying backup on Google Drive..."
-REMOTE_DIRS=$($RCLONE lsd "${REMOTE}:${BACKUP_DIR}/" 2>/dev/null | wc -l)
-if [ "$REMOTE_DIRS" -eq 0 ] && [ -z "$DRY_RUN" ]; then
-    log "ERROR: Verification failed — backup directory is empty on Google Drive!"
+REMOTE_FILES=$($RCLONE size "${REMOTE}:${BACKUP_DIR}/" --json 2>/dev/null || echo '{}')
+remote_count=$(echo "$REMOTE_FILES" | grep -oP '"count":\K\d+' 2>/dev/null || echo "0")
+remote_bytes=$(echo "$REMOTE_FILES" | grep -oP '"bytes":\K\d+' 2>/dev/null || echo "0")
+remote_size=$(numfmt --to=iec "$remote_bytes" 2>/dev/null || echo "${remote_bytes}B")
+
+if [ "$remote_count" -eq 0 ] && [ -z "$DRY_RUN" ]; then
+    log "ERROR: Verification FAILED — 0 files on Drive at ${BACKUP_DIR}!"
+    log "Dumping full rclone log:"
+    cat "$RCLONE_LOG" | while read -r line; do log "  $line"; done
+    ((ERRORS++)) || true
+elif [ "$remote_count" -lt 100 ] && [ -z "$DRY_RUN" ]; then
+    log "WARNING: Only $remote_count files on Drive — expected thousands"
     ((ERRORS++)) || true
 else
-    REMOTE_FILES=$($RCLONE size "${REMOTE}:${BACKUP_DIR}/" --json 2>/dev/null)
-    remote_count=$(echo "$REMOTE_FILES" | grep -oP '"count":\K\d+' 2>/dev/null || echo "?")
-    remote_bytes=$(echo "$REMOTE_FILES" | grep -oP '"bytes":\K\d+' 2>/dev/null || echo "0")
-    remote_size=$(numfmt --to=iec "$remote_bytes" 2>/dev/null || echo "${remote_bytes}B")
     log "  Verified: $remote_count files, $remote_size on Drive"
-    TOTAL_SIZE=$remote_bytes
 fi
+TOTAL_SIZE=$remote_bytes
 
 # ── Upload manifest + logs ────────────────────────────────────────
 
@@ -223,13 +260,15 @@ TOTAL_SIZE_HUMAN=$(numfmt --to=iec "$TOTAL_SIZE" 2>/dev/null || echo "${TOTAL_SI
 DURATION=$SECONDS
 
 if [ "$ERRORS" -gt 0 ]; then
-    log "Backup completed with $ERRORS error(s) — $TOTAL_TRANSFERRED files uploaded in ${DURATION}s"
-    discord_notify 16744448 "⚠️ BMO Backup Completed (with errors)" \
-        "$TOTAL_TRANSFERRED files uploaded\\n$ERRORS error(s) — check logs\\nTotal: $TOTAL_SIZE_HUMAN\\nDuration: ${DURATION}s"
+    log "Backup FAILED — $ERRORS error(s), $remote_count files on Drive, ${DURATION}s"
+    # Include rclone log tail in Discord for debugging
+    LOG_TAIL=$(tail -5 "$RCLONE_LOG" 2>/dev/null | head -3 | tr '\n' ' ' | cut -c1-200)
+    discord_notify 16711680 "❌ BMO Backup Failed" \
+        "$ERRORS error(s)\\n$remote_count files on Drive ($remote_size)\\nLog: $LOG_TAIL\\nDuration: ${DURATION}s"
 else
-    log "Backup complete — $TOTAL_TRANSFERRED files uploaded, $TOTAL_SIZE_HUMAN in ${DURATION}s"
+    log "Backup complete — $remote_count files, $TOTAL_SIZE_HUMAN on Drive in ${DURATION}s"
     discord_notify 65280 "✅ BMO Backup Complete" \
-        "$TOTAL_TRANSFERRED files uploaded ($TOTAL_SIZE_HUMAN)\\nTarget: ${BACKUP_DIR}\\nDuration: ${DURATION}s"
+        "$remote_count files on Drive ($TOTAL_SIZE_HUMAN)\\n$TOTAL_TRANSFERRED new/changed files\\nTarget: ${BACKUP_DIR}\\nDuration: ${DURATION}s"
 fi
 
 log "═══════════════════════════════════════════════════"
