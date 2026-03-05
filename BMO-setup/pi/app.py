@@ -11,6 +11,7 @@ Usage:
 import asyncio
 import json
 import os
+import re
 import secrets
 import subprocess
 import threading
@@ -327,6 +328,25 @@ def api_status_summary():
 
 # ── Chat API ─────────────────────────────────────────────────────────
 
+def _strip_markdown(text: str) -> str:
+    """Remove markdown formatting so the web UI shows plain English."""
+    # Remove bold/italic markers
+    text = re.sub(r'\*{1,3}(.+?)\*{1,3}', r'\1', text)
+    text = re.sub(r'_{1,3}(.+?)_{1,3}', r'\1', text)
+    # Remove headers
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Remove inline code
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    # Remove code fences
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    # Remove link syntax [text](url) → text
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    # Remove bullet markers (-, *, +) at line start
+    text = re.sub(r'^[\s]*[-*+]\s+', '• ', text, flags=re.MULTILINE)
+    # Collapse multiple blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     data = request.json or {}
@@ -340,6 +360,7 @@ def api_chat():
     _save_chat_message({"role": "user", "text": message, "speaker": speaker, "ts": time.time()})
 
     result = agent.chat(message, speaker=speaker)
+    result["text"] = _strip_markdown(result["text"])
 
     # Save assistant response immediately
     _save_chat_message({"role": "assistant", "text": result["text"], "ts": time.time()})

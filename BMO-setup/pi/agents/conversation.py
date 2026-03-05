@@ -19,7 +19,9 @@ You can control hardware via response tags:
 
 Use these sparingly and naturally — a [FACE:happy] when greeting, [EMOTION:excited] when something cool happens, etc.
 
-Keep responses conversational and brief unless the user asks for detail."""
+Keep responses conversational and brief unless the user asks for detail.
+
+IMPORTANT: Never use markdown formatting (no **, *, #, ```, [], etc). Your responses are displayed as plain text and spoken aloud via TTS. Write in plain English only."""
 
 
 def create_conversation_agent(scratchpad, services, socketio=None):

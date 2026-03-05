@@ -43,7 +43,8 @@ PIHOLE_API_PASSWORD = os.environ.get("PIHOLE_API_PASSWORD", "bmo-ads-begone")
 HEALTH_CHECKS = {
     "ollama_local": {"url": "http://localhost:11434/api/tags", "timeout": 3},
     "peerjs": {"url": "http://localhost:9000/myapp", "timeout": 3},
-    "bmo_app": {"url": "http://localhost:5000/health", "timeout": 3},
+    # "bmo_app" self-check removed: causes gevent deadlock when monitoring
+    # thread blocks on HTTP to the same Flask app it's running inside of.
 }
 
 # Cloud API health checks (checked separately with auth headers)
