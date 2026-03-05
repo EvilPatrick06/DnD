@@ -895,7 +895,7 @@ class BmoAgent:
             results.append(cmd_result)
 
         # Append informational command results to the spoken text
-        INFORMATIONAL_ACTIONS = {"timer_list", "calendar_today", "calendar_week", "weather", "device_list", "bmo_status"}
+        INFORMATIONAL_ACTIONS = {"timer_list", "calendar_today", "calendar_week", "weather", "device_list", "bmo_status", "led_get_state"}
         for r in results:
             if r.get("success") and r.get("action") in INFORMATIONAL_ACTIONS and r.get("result"):
                 text = f"{text}\n{r['result']}" if text.strip() else r["result"]
@@ -1144,6 +1144,11 @@ class BmoAgent:
             "tv_power": self._handle_tv_power,
             "tv_mute": self._handle_tv_mute,
             "device_list": self._handle_device_list,
+            # LED
+            "led_set_color": self._handle_led_set_color,
+            "led_set_mode": self._handle_led_set_mode,
+            "led_set_brightness": self._handle_led_set_brightness,
+            "led_get_state": self._handle_led_get_state,
             # Calendar
             "calendar_today": self._handle_calendar_today,
             "calendar_week": self._handle_calendar_week,
@@ -1406,6 +1411,42 @@ class BmoAgent:
                 return home.get_devices()
             return f"Failed to list devices: {err}"
         return data
+
+    # ── LED Handlers ─────────────────────────────────────────────────
+
+    def _handle_led_set_color(self, params):
+        led = self.services.get("led_controller")
+        if not led:
+            return "LED controller not available"
+        name = params.get("color")
+        if name:
+            ok = led.set_color_by_name(name)
+            return f"Set LED color to {name}" if ok else f"Unknown color '{name}'"
+        r, g, b = params.get("r", 0), params.get("g", 0), params.get("b", 0)
+        led.set_color(r, g, b)
+        return f"Set LED color to RGB({r}, {g}, {b})"
+
+    def _handle_led_set_mode(self, params):
+        led = self.services.get("led_controller")
+        if not led:
+            return "LED controller not available"
+        mode = params.get("mode", "")
+        ok = led.set_mode(mode)
+        return f"Set LED mode to {mode}" if ok else f"Unknown mode '{mode}'"
+
+    def _handle_led_set_brightness(self, params):
+        led = self.services.get("led_controller")
+        if not led:
+            return "LED controller not available"
+        level = params.get("brightness", 100)
+        led.set_brightness(level)
+        return f"Set LED brightness to {level}%"
+
+    def _handle_led_get_state(self, params):
+        led = self.services.get("led_controller")
+        if not led:
+            return "LED controller not available"
+        return led.get_full_state()
 
     # ── Calendar Handlers ────────────────────────────────────────────
 

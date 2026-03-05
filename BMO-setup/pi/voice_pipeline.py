@@ -353,24 +353,49 @@ class VoicePipeline:
         finally:
             os.unlink(temp_path)
 
+    def listen_for_followup(self, timeout: float = 10.0):
+        """Listen briefly for a user response after proactive speech.
+
+        Opens a short listen window (default 10s) for a single response.
+        Used after notifications, announcements, or other BMO-initiated speech.
+        """
+        if not self._running:
+            return
+
+        def _listen():
+            self._emit("status", {"state": "follow_up"})
+            heard = self._wait_for_speech(timeout)
+            if heard:
+                response = self._process_one_turn(is_follow_up=True)
+                if response and response != "":
+                    # Got a substantive response — enter full conversation mode
+                    self._follow_up_loop()
+                    return
+            self._emit("status", {"state": "idle"})
+
+        threading.Thread(target=_listen, daemon=True).start()
+
     def _follow_up_loop(self):
-        """Listen for follow-up speech without wake word. Exits on silence or 1-min inactivity."""
+        """Listen for follow-up speech without wake word. Exits on silence or inactivity."""
         FOLLOW_UP_WAIT = 6.0  # seconds to wait for user to start speaking per turn
-        INACTIVITY_TIMEOUT = 30.0  # total seconds of silence before ending conversation
+        BASE_TIMEOUT = 30.0   # inactivity timeout for first exchanges
+        EXTENDED_TIMEOUT = 45.0  # extended timeout after 2+ exchanges
         import time as _time
         last_activity = _time.monotonic()
+        exchange_count = 0
 
         self._emit("conversation_mode", {"active": True})
 
         while self._running:
-            print("[conv] Listening for follow-up...")
+            timeout = EXTENDED_TIMEOUT if exchange_count >= 2 else BASE_TIMEOUT
+            print(f"[conv] Listening for follow-up (timeout={timeout}s, exchanges={exchange_count})...")
             self._emit("status", {"state": "follow_up"})
 
             # Wait for speech energy within the follow-up window
             heard_speech = self._wait_for_speech(FOLLOW_UP_WAIT)
             if not heard_speech:
                 elapsed = _time.monotonic() - last_activity
-                if elapsed >= INACTIVITY_TIMEOUT:
+                if elapsed >= timeout:
                     print("[conv] Inactivity timeout — back to wake word mode")
                     self._emit("status", {"state": "idle"})
                     self._emit("conversation_mode", {"active": False})
@@ -393,6 +418,7 @@ class VoicePipeline:
                 self._emit("conversation_mode", {"active": False})
                 return
 
+            exchange_count += 1
             last_activity = _time.monotonic()
             # Response was spoken — loop back and listen for another follow-up
 

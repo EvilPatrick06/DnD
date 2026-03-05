@@ -13,6 +13,8 @@ EXPLICIT_PREFIXES = {
     "!dm": "dnd_dm",
     "!music": "music",
     "!home": "smart_home",
+    "!led": "smart_home",
+    "!lights": "smart_home",
     "!timer": "timer",
     "!alarm": "timer",
     "!calendar": "calendar",
@@ -58,7 +60,9 @@ KEYWORD_PATTERNS: dict[str, list[str]] = {
     "smart_home": [
         "turn on the", "turn off the", "cast to tv", "open netflix",
         "open youtube", "skip intro", "tv volume", "pause tv", "resume tv",
-        "chromecast", "smart light", "led color",
+        "chromecast", "smart light", "led color", "set the lights",
+        "change lights", "led mode", "rainbow mode", "breathing mode",
+        "led brightness", "light color", "turn on lights", "turn off lights",
     ],
     "timer": [
         "set a timer", "set an alarm", "cancel timer", "cancel alarm",
