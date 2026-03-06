@@ -194,7 +194,8 @@ class DMBot(commands.Bot):
         intents.voice_states = True
         intents.members = True
 
-        super().__init__(command_prefix="!", intents=intents)
+        guild_ids = [int(GUILD_ID)] if GUILD_ID else None
+        super().__init__(command_prefix="!", intents=intents, debug_guilds=guild_ids)
         self.session = DMSession()
         self._guild_id: Optional[int] = int(GUILD_ID) if GUILD_ID else None
         self._voice_listen_task: Optional[asyncio.Task] = None
@@ -202,22 +203,6 @@ class DMBot(commands.Bot):
         self._campaign_memory = None
         self._campaign_name = None
         self._session_id = None
-
-    async def setup_hook(self) -> None:
-        """Register slash commands on startup."""
-        self.tree.add_command(dm_group)
-        self.tree.add_command(roll_cmd)
-        self.tree.add_command(initiative_cmd)
-        self.tree.add_command(recap_cmd)
-
-        if self._guild_id:
-            guild = discord.Object(id=self._guild_id)
-            self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            _log("Slash commands synced to guild %s", self._guild_id)
-        else:
-            await self.tree.sync()
-            _log("Slash commands synced globally")
 
     async def on_ready(self) -> None:
         _log("DM Bot ready as %s (ID: %s)", self.user, self.user.id if self.user else "?")
@@ -574,33 +559,33 @@ def get_dm_bot() -> Optional[DMBot]:
 
 # ── Slash Commands ───────────────────────────────────────────────────
 
-dm_group = app_commands.Group(name="dm", description="D&D Dungeon Master commands")
+dm_group = discord.SlashCommandGroup("dm", "D&D Dungeon Master commands")
 
 
 @dm_group.command(name="start", description="Start a DM session — BMO joins the Dungeon voice channel")
-async def dm_start(interaction: discord.Interaction) -> None:
-    bot = interaction.client
+async def dm_start(ctx: discord.ApplicationContext) -> None:
+    bot = ctx.bot
     if not isinstance(bot, DMBot):
-        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        await ctx.respond("Bot not initialized.", ephemeral=True)
         return
 
     if bot.session.active:
-        await interaction.response.send_message(
+        await ctx.respond(
             "A session is already active! Use `/dm stop` first.", ephemeral=True
         )
         return
 
-    await interaction.response.defer()
+    await ctx.defer()
 
-    guild = interaction.guild
+    guild = ctx.guild
     if not guild:
-        await interaction.followup.send("This command must be used in a server.")
+        await ctx.followup.send("This command must be used in a server.")
         return
 
     # Find the Dungeon voice channel
     dungeon_channel = await bot.find_dungeon_channel(guild)
     if not dungeon_channel:
-        await interaction.followup.send(
+        await ctx.followup.send(
             f"Could not find a voice channel named **{DUNGEON_CHANNEL_NAME}**.\n"
             "Please create one first!"
         )
@@ -609,12 +594,12 @@ async def dm_start(interaction: discord.Interaction) -> None:
     # Join voice channel
     vc = await bot.join_voice(dungeon_channel)
     if not vc:
-        await interaction.followup.send("Failed to join the voice channel.")
+        await ctx.followup.send("Failed to join the voice channel.")
         return
 
     # Initialize session
     bot.session.active = True
-    bot.session.text_channel_id = interaction.channel_id
+    bot.session.text_channel_id = ctx.channel_id
     bot.session.start_time = datetime.now(timezone.utc)
     bot.session.messages.clear()
     bot.session.combat_log.clear()
@@ -661,26 +646,26 @@ async def dm_start(interaction: discord.Interaction) -> None:
         name="Players", value=players_str, inline=True,
     )
     embed.set_footer(text="Speak in voice or type here • /dm stop to end session")
-    await interaction.followup.send(embed=embed)
+    await ctx.followup.send(embed=embed)
 
     # Speak the greeting via TTS
     await bot._speak(greeting, emotion="excited")
 
-    _log("Session started by %s", interaction.user.display_name)
+    _log("Session started by %s", ctx.author.display_name)
 
 
 @dm_group.command(name="stop", description="End the DM session — recap and leave voice")
-async def dm_stop(interaction: discord.Interaction) -> None:
-    bot = interaction.client
+async def dm_stop(ctx: discord.ApplicationContext) -> None:
+    bot = ctx.bot
     if not isinstance(bot, DMBot):
-        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        await ctx.respond("Bot not initialized.", ephemeral=True)
         return
 
     if not bot.session.active:
-        await interaction.response.send_message("No active session to end.", ephemeral=True)
+        await ctx.respond("No active session to end.", ephemeral=True)
         return
 
-    await interaction.response.defer()
+    await ctx.defer()
 
     # Calculate duration
     duration_str = "Unknown"
@@ -733,19 +718,21 @@ async def dm_stop(interaction: discord.Interaction) -> None:
         embed.add_field(name="Session Recap", value=recap_text, inline=False)
 
     bot.session.reset()
-    await interaction.followup.send(embed=embed)
-    _log("Session ended by %s", interaction.user.display_name)
+    await ctx.followup.send(embed=embed)
+    _log("Session ended by %s", ctx.author.display_name)
 
 
 # ── Slash Command: /roll ─────────────────────────────────────────────
 
-@app_commands.command(name="roll", description="Roll dice (e.g. 2d6+5, 1d20, 4d8 fire)")
-@app_commands.describe(expression="Dice expression like 2d6+5, 1d20, 4d8 fire")
-async def roll_cmd(interaction: discord.Interaction, expression: str) -> None:
+@discord.slash_command(name="roll", description="Roll dice (e.g. 2d6+5, 1d20, 4d8 fire)")
+async def roll_cmd(
+    ctx: discord.ApplicationContext,
+    expression: discord.Option(str, description="Dice expression like 2d6+5, 1d20, 4d8 fire"),
+) -> None:
     try:
         result = roll_dice(expression)
     except Exception as e:
-        await interaction.response.send_message(
+        await ctx.respond(
             f"Invalid dice expression: `{expression}` ({e})", ephemeral=True
         )
         return
@@ -779,28 +766,28 @@ async def roll_cmd(interaction: discord.Interaction, expression: str) -> None:
         color=discord.Color.blue(),
     )
     embed.add_field(name="Rolls", value=f"[{rolls_str}]", inline=True)
-    embed.set_footer(text=f"Rolled by {interaction.user.display_name}")
-    await interaction.response.send_message(embed=embed)
+    embed.set_footer(text=f"Rolled by {ctx.author.display_name}")
+    await ctx.respond(embed=embed)
 
     # Log to session
-    bot = interaction.client
+    bot = ctx.bot
     if isinstance(bot, DMBot) and bot.session.active:
-        log_entry = f"{interaction.user.display_name} rolled {expression}: {total} [{rolls_str}]"
+        log_entry = f"{ctx.author.display_name} rolled {expression}: {total} [{rolls_str}]"
         bot.session.add_message("user", log_entry)
         bot.session.combat_log.append(log_entry)
 
 
 # ── Slash Command: /initiative ───────────────────────────────────────
 
-@app_commands.command(name="initiative", description="Start initiative tracking for combat")
-async def initiative_cmd(interaction: discord.Interaction) -> None:
-    bot = interaction.client
+@discord.slash_command(name="initiative", description="Start initiative tracking for combat")
+async def initiative_cmd(ctx: discord.ApplicationContext) -> None:
+    bot = ctx.bot
     if not isinstance(bot, DMBot):
-        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        await ctx.respond("Bot not initialized.", ephemeral=True)
         return
 
     if not bot.session.active:
-        await interaction.response.send_message(
+        await ctx.respond(
             "No active session. Use `/dm start` first.", ephemeral=True
         )
         return
@@ -820,7 +807,7 @@ async def initiative_cmd(interaction: discord.Interaction) -> None:
         color=discord.Color.red(),
     )
     embed.set_footer(text="Round 1 — Combat has begun!")
-    await interaction.response.send_message(embed=embed)
+    await ctx.respond(embed=embed)
 
     # Log
     bot.session.add_message("assistant", "Initiative has been called! Combat begins — Round 1!")
@@ -829,30 +816,30 @@ async def initiative_cmd(interaction: discord.Interaction) -> None:
     # Announce in voice
     await bot._speak("Roll for initiative! Combat has begun!", emotion="excited")
 
-    _log("Initiative started by %s", interaction.user.display_name)
+    _log("Initiative started by %s", ctx.author.display_name)
 
 
 # ── Slash Command: /recap ────────────────────────────────────────────
 
-@app_commands.command(name="recap", description="Generate an AI summary of the session so far")
-async def recap_cmd(interaction: discord.Interaction) -> None:
-    bot = interaction.client
+@discord.slash_command(name="recap", description="Generate an AI summary of the session so far")
+async def recap_cmd(ctx: discord.ApplicationContext) -> None:
+    bot = ctx.bot
     if not isinstance(bot, DMBot):
-        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        await ctx.respond("Bot not initialized.", ephemeral=True)
         return
 
     if not bot.session.active or not bot.session.combat_log:
-        await interaction.response.send_message(
+        await ctx.respond(
             "No active session or nothing to recap yet. Start a session with `/dm start`.",
             ephemeral=True,
         )
         return
 
-    await interaction.response.defer()
+    await ctx.defer()
 
     recap_text = await _generate_recap(bot.session)
     if not recap_text:
-        await interaction.followup.send("Could not generate a recap at this time.")
+        await ctx.followup.send("Could not generate a recap at this time.")
         return
 
     if len(recap_text) > 4000:
@@ -864,7 +851,7 @@ async def recap_cmd(interaction: discord.Interaction) -> None:
         color=discord.Color.purple(),
     )
     embed.set_footer(text=f"Recap of {len(bot.session.combat_log)} events")
-    await interaction.followup.send(embed=embed)
+    await ctx.followup.send(embed=embed)
 
 
 # ── Recap Generation ─────────────────────────────────────────────────
@@ -915,6 +902,12 @@ async def _run_dm_bot() -> None:
         return
 
     _bot = DMBot()
+
+    # Register slash commands (py-cord)
+    _bot.add_application_command(dm_group)
+    _bot.add_application_command(roll_cmd)
+    _bot.add_application_command(initiative_cmd)
+    _bot.add_application_command(recap_cmd)
 
     try:
         await _bot.start(BOT_TOKEN)

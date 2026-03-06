@@ -23,7 +23,6 @@ import time
 from typing import Optional
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 
 from cloud_providers import cloud_chat, fish_audio_tts, groq_stt
@@ -266,32 +265,6 @@ async def _ai_respond(channel_id: int, user_text: str) -> str:
     return response
 
 
-# ── Voice Receive (Listen) ───────────────────────────────────────────
-
-
-class VoiceListener(discord.AudioSink):
-    """Collects raw PCM audio from a single user for transcription."""
-
-    def __init__(self, bot: "SocialBot") -> None:
-        super().__init__()
-        self.bot = bot
-        # user_id -> list of PCM bytes chunks
-        self._buffers: dict[int, list[bytes]] = {}
-        self._speaking: dict[int, bool] = {}
-
-    def write(self, user: Optional[discord.Member], data: discord.VoiceData) -> None:
-        if user is None or user.bot:
-            return
-        uid = user.id
-        if uid not in self._buffers:
-            self._buffers[uid] = []
-        self._buffers[uid].append(data.pcm)
-
-    def cleanup(self) -> None:
-        self._buffers.clear()
-        self._speaking.clear()
-
-
 # ── Bot Class ────────────────────────────────────────────────────────
 
 
@@ -310,29 +283,10 @@ class SocialBot(commands.Bot):
         intents.voice_states = True
         intents.members = True
 
-        super().__init__(command_prefix="!", intents=intents)
+        guild_ids = [int(GUILD_ID)] if GUILD_ID else None
+        super().__init__(command_prefix="!", intents=intents, debug_guilds=guild_ids)
         self._guild_id: Optional[int] = int(GUILD_ID) if GUILD_ID else None
         self._voice_listen_tasks: dict[int, asyncio.Task] = {}
-
-    async def setup_hook(self) -> None:
-        """Register slash commands on startup."""
-        self.tree.add_command(_play_cmd)
-        self.tree.add_command(_skip_cmd)
-        self.tree.add_command(_queue_cmd)
-        self.tree.add_command(_stop_cmd)
-        self.tree.add_command(_volume_cmd)
-        self.tree.add_command(_ask_cmd)
-        self.tree.add_command(_join_cmd)
-        self.tree.add_command(_leave_cmd)
-
-        if self._guild_id:
-            guild = discord.Object(id=self._guild_id)
-            self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            logger.info("Social bot commands synced to guild %s", self._guild_id)
-        else:
-            await self.tree.sync()
-            logger.info("Social bot commands synced globally")
 
     async def on_ready(self) -> None:
         logger.info("Social bot ready as %s (ID: %s)", self.user, self.user.id if self.user else "?")
@@ -567,22 +521,24 @@ async def _play_next(guild_id: int) -> None:
 # ── Slash Commands ───────────────────────────────────────────────────
 
 
-@app_commands.command(name="play", description="Search and play music in your voice channel")
-@app_commands.describe(query="Song name or YouTube URL to play")
-async def _play_cmd(interaction: discord.Interaction, query: str) -> None:
+@discord.slash_command(name="play", description="Search and play music in your voice channel")
+async def _play_cmd(
+    ctx: discord.ApplicationContext,
+    query: discord.Option(str, description="Song name or YouTube URL to play"),
+) -> None:
     # Must be in a voice channel
-    if not interaction.user or not hasattr(interaction.user, "voice") or not interaction.user.voice:
-        await interaction.response.send_message("You need to be in a voice channel! 🎧", ephemeral=True)
+    if not ctx.author or not hasattr(ctx.author, "voice") or not ctx.author.voice:
+        await ctx.respond("You need to be in a voice channel! 🎧", ephemeral=True)
         return
 
-    voice_channel = interaction.user.voice.channel
-    if not voice_channel or not interaction.guild:
-        await interaction.response.send_message("Couldn't find your voice channel!", ephemeral=True)
+    voice_channel = ctx.author.voice.channel
+    if not voice_channel or not ctx.guild:
+        await ctx.respond("Couldn't find your voice channel!", ephemeral=True)
         return
 
-    await interaction.response.defer()
+    await ctx.defer()
 
-    guild_id = interaction.guild.id
+    guild_id = ctx.guild.id
     queue = _get_queue(guild_id)
 
     # Connect to voice if not already
@@ -590,7 +546,7 @@ async def _play_cmd(interaction: discord.Interaction, query: str) -> None:
         try:
             queue.voice_client = await voice_channel.connect()
         except Exception as e:
-            await interaction.followup.send(f"Couldn't join voice channel: {e}")
+            await ctx.followup.send(f"Couldn't join voice channel: {e}")
             return
     elif queue.voice_client.channel != voice_channel:
         await queue.voice_client.move_to(voice_channel)
@@ -599,10 +555,10 @@ async def _play_cmd(interaction: discord.Interaction, query: str) -> None:
     loop = asyncio.get_running_loop()
     track = await loop.run_in_executor(None, lambda: _search_youtube(query))
     if not track:
-        await interaction.followup.send(f"Couldn't find anything for: **{query}** 😢")
+        await ctx.followup.send(f"Couldn't find anything for: **{query}** 😢")
         return
 
-    track["requester"] = interaction.user.display_name
+    track["requester"] = ctx.author.display_name
 
     # If something is playing, add to queue
     if queue.voice_client.is_playing():
@@ -617,14 +573,14 @@ async def _play_cmd(interaction: discord.Interaction, query: str) -> None:
         embed.add_field(name="Requested by", value=track["requester"], inline=True)
         if track.get("thumbnail"):
             embed.set_thumbnail(url=track["thumbnail"])
-        await interaction.followup.send(embed=embed)
+        await ctx.followup.send(embed=embed)
         return
 
     # Play immediately
     queue.current = track
     audio_url = await loop.run_in_executor(None, lambda: _extract_audio_url(track["webpage_url"]))
     if not audio_url:
-        await interaction.followup.send("Couldn't extract audio for that track 😢")
+        await ctx.followup.send("Couldn't extract audio for that track 😢")
         return
 
     source = discord.FFmpegPCMAudio(audio_url, **FFMPEG_OPTIONS)
@@ -647,38 +603,38 @@ async def _play_cmd(interaction: discord.Interaction, query: str) -> None:
     embed.add_field(name="Requested by", value=track["requester"], inline=True)
     if track.get("thumbnail"):
         embed.set_thumbnail(url=track["thumbnail"])
-    await interaction.followup.send(embed=embed)
+    await ctx.followup.send(embed=embed)
 
     # Start listening in VC if bot supports it
     if _bot:
         await _bot.start_listening(guild_id)
 
 
-@app_commands.command(name="skip", description="Skip the current track")
-async def _skip_cmd(interaction: discord.Interaction) -> None:
-    if not interaction.guild:
-        await interaction.response.send_message("This command only works in a server!", ephemeral=True)
+@discord.slash_command(name="skip", description="Skip the current track")
+async def _skip_cmd(ctx: discord.ApplicationContext) -> None:
+    if not ctx.guild:
+        await ctx.respond("This command only works in a server!", ephemeral=True)
         return
 
-    queue = _get_queue(interaction.guild.id)
+    queue = _get_queue(ctx.guild.id)
     vc = queue.voice_client
     if not vc or not vc.is_playing():
-        await interaction.response.send_message("Nothing is playing right now! 🤷", ephemeral=True)
+        await ctx.respond("Nothing is playing right now! 🤷", ephemeral=True)
         return
 
     skipped = queue.current
     vc.stop()  # Triggers after_play callback which plays next
     title = skipped["title"] if skipped else "current track"
-    await interaction.response.send_message(f"⏭️ Skipped **{title}**")
+    await ctx.respond(f"⏭️ Skipped **{title}**")
 
 
-@app_commands.command(name="queue", description="Show the current music queue")
-async def _queue_cmd(interaction: discord.Interaction) -> None:
-    if not interaction.guild:
-        await interaction.response.send_message("This command only works in a server!", ephemeral=True)
+@discord.slash_command(name="queue", description="Show the current music queue")
+async def _queue_cmd(ctx: discord.ApplicationContext) -> None:
+    if not ctx.guild:
+        await ctx.respond("This command only works in a server!", ephemeral=True)
         return
 
-    queue = _get_queue(interaction.guild.id)
+    queue = _get_queue(ctx.guild.id)
 
     embed = discord.Embed(title="Music Queue 🎶", color=0x7B68EE)
 
@@ -702,33 +658,35 @@ async def _queue_cmd(interaction: discord.Interaction) -> None:
         embed.description = "The queue is empty! Use `/play` to add some tunes 🎵"
 
     embed.set_footer(text=f"Volume: {int(queue.volume * 100)}%")
-    await interaction.response.send_message(embed=embed)
+    await ctx.respond(embed=embed)
 
 
-@app_commands.command(name="stop", description="Stop music and clear the queue")
-async def _stop_cmd(interaction: discord.Interaction) -> None:
-    if not interaction.guild:
-        await interaction.response.send_message("This command only works in a server!", ephemeral=True)
+@discord.slash_command(name="stop", description="Stop music and clear the queue")
+async def _stop_cmd(ctx: discord.ApplicationContext) -> None:
+    if not ctx.guild:
+        await ctx.respond("This command only works in a server!", ephemeral=True)
         return
 
-    queue = _get_queue(interaction.guild.id)
+    queue = _get_queue(ctx.guild.id)
     queue.clear()
     vc = queue.voice_client
     if vc and vc.is_playing():
         vc.stop()
 
-    await interaction.response.send_message("⏹️ Music stopped and queue cleared!")
+    await ctx.respond("⏹️ Music stopped and queue cleared!")
 
 
-@app_commands.command(name="volume", description="Set the music volume")
-@app_commands.describe(level="Volume level from 0 to 100")
-async def _volume_cmd(interaction: discord.Interaction, level: int) -> None:
-    if not interaction.guild:
-        await interaction.response.send_message("This command only works in a server!", ephemeral=True)
+@discord.slash_command(name="volume", description="Set the music volume")
+async def _volume_cmd(
+    ctx: discord.ApplicationContext,
+    level: discord.Option(int, description="Volume level from 0 to 100"),
+) -> None:
+    if not ctx.guild:
+        await ctx.respond("This command only works in a server!", ephemeral=True)
         return
 
     level = max(0, min(100, level))
-    queue = _get_queue(interaction.guild.id)
+    queue = _get_queue(ctx.guild.id)
     queue.volume = level / 100.0
 
     # Update volume on current source if playing
@@ -736,47 +694,49 @@ async def _volume_cmd(interaction: discord.Interaction, level: int) -> None:
     if vc and vc.source and isinstance(vc.source, discord.PCMVolumeTransformer):
         vc.source.volume = queue.volume
 
-    await interaction.response.send_message(f"🔊 Volume set to **{level}%**")
+    await ctx.respond(f"🔊 Volume set to **{level}%**")
 
 
-@app_commands.command(name="ask", description="Ask BMO anything!")
-@app_commands.describe(question="Your question for BMO")
-async def _ask_cmd(interaction: discord.Interaction, question: str) -> None:
-    await interaction.response.defer()
+@discord.slash_command(name="ask", description="Ask BMO anything!")
+async def _ask_cmd(
+    ctx: discord.ApplicationContext,
+    question: discord.Option(str, description="Your question for BMO"),
+) -> None:
+    await ctx.defer()
 
-    channel_id = interaction.channel_id or 0
+    channel_id = ctx.channel_id or 0
     try:
         response = await _ai_respond(channel_id, question)
         # Split long responses
         if len(response) <= 1990:
-            await interaction.followup.send(response)
+            await ctx.followup.send(response)
         else:
             for i in range(0, len(response), 1990):
-                await interaction.followup.send(response[i:i + 1990])
+                await ctx.followup.send(response[i:i + 1990])
 
         # If in VC, also speak the response (abbreviated)
-        if interaction.guild and _bot:
-            queue = _get_queue(interaction.guild.id)
+        if ctx.guild and _bot:
+            queue = _get_queue(ctx.guild.id)
             if queue.voice_client and queue.voice_client.is_connected() and not queue.voice_client.is_playing():
                 tts_text = response[:200] if len(response) > 200 else response
-                await _bot.speak_in_vc(interaction.guild.id, tts_text)
+                await _bot.speak_in_vc(ctx.guild.id, tts_text)
     except Exception as e:
         logger.error("Ask command failed: %s", e)
-        await interaction.followup.send("Beep boop... something went wrong! Try again? 🤖")
+        await ctx.followup.send("Beep boop... something went wrong! Try again? 🤖")
 
 
-@app_commands.command(name="join", description="Join your voice channel")
-async def _join_cmd(interaction: discord.Interaction) -> None:
-    if not interaction.user or not hasattr(interaction.user, "voice") or not interaction.user.voice:
-        await interaction.response.send_message("You need to be in a voice channel! 🎧", ephemeral=True)
+@discord.slash_command(name="join", description="Join your voice channel")
+async def _join_cmd(ctx: discord.ApplicationContext) -> None:
+    if not ctx.author or not hasattr(ctx.author, "voice") or not ctx.author.voice:
+        await ctx.respond("You need to be in a voice channel! 🎧", ephemeral=True)
         return
 
-    voice_channel = interaction.user.voice.channel
-    if not voice_channel or not interaction.guild:
-        await interaction.response.send_message("Couldn't find your voice channel!", ephemeral=True)
+    voice_channel = ctx.author.voice.channel
+    if not voice_channel or not ctx.guild:
+        await ctx.respond("Couldn't find your voice channel!", ephemeral=True)
         return
 
-    guild_id = interaction.guild.id
+    guild_id = ctx.guild.id
     queue = _get_queue(guild_id)
 
     try:
@@ -785,21 +745,21 @@ async def _join_cmd(interaction: discord.Interaction) -> None:
         else:
             queue.voice_client = await voice_channel.connect()
 
-        await interaction.response.send_message(f"Joined **{voice_channel.name}**! 🎤")
+        await ctx.respond(f"Joined **{voice_channel.name}**! 🎤")
 
         if _bot:
             await _bot.start_listening(guild_id)
     except Exception as e:
-        await interaction.response.send_message(f"Couldn't join: {e}", ephemeral=True)
+        await ctx.respond(f"Couldn't join: {e}", ephemeral=True)
 
 
-@app_commands.command(name="leave", description="Leave the voice channel")
-async def _leave_cmd(interaction: discord.Interaction) -> None:
-    if not interaction.guild:
-        await interaction.response.send_message("This command only works in a server!", ephemeral=True)
+@discord.slash_command(name="leave", description="Leave the voice channel")
+async def _leave_cmd(ctx: discord.ApplicationContext) -> None:
+    if not ctx.guild:
+        await ctx.respond("This command only works in a server!", ephemeral=True)
         return
 
-    guild_id = interaction.guild.id
+    guild_id = ctx.guild.id
     queue = _get_queue(guild_id)
 
     if _bot:
@@ -811,9 +771,9 @@ async def _leave_cmd(interaction: discord.Interaction) -> None:
     if vc and vc.is_connected():
         await vc.disconnect()
         queue.voice_client = None
-        await interaction.response.send_message("👋 See ya later!")
+        await ctx.respond("👋 See ya later!")
     else:
-        await interaction.response.send_message("I'm not in a voice channel! 🤷", ephemeral=True)
+        await ctx.respond("I'm not in a voice channel! 🤷", ephemeral=True)
 
 
 # ── Bot Startup ──────────────────────────────────────────────────────
@@ -828,6 +788,16 @@ async def _run_social_bot() -> None:
         return
 
     _bot = SocialBot()
+
+    # Register slash commands (py-cord)
+    _bot.add_application_command(_play_cmd)
+    _bot.add_application_command(_skip_cmd)
+    _bot.add_application_command(_queue_cmd)
+    _bot.add_application_command(_stop_cmd)
+    _bot.add_application_command(_volume_cmd)
+    _bot.add_application_command(_ask_cmd)
+    _bot.add_application_command(_join_cmd)
+    _bot.add_application_command(_leave_cmd)
 
     try:
         await _bot.start(BOT_TOKEN)
