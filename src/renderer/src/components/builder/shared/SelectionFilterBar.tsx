@@ -1,4 +1,4 @@
-import rarityOptionsJson from '../../../../public/data/ui/rarity-options.json'
+import rarityOptionsJson from '@data/ui/rarity-options.json'
 import { load5eRarityOptions } from '../../../services/data-provider'
 import type { Rarity } from '../../../types/character-common'
 

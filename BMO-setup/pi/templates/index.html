@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <title>BMO</title>
   <script src="/static/js/tailwind.js"></script>
   <script src="/static/js/socket.io.min.js"></script>
@@ -42,21 +43,21 @@
         <span x-show="unreadNotifications > 0"
               class="absolute -top-1 -right-1 bg-accent text-surface-dark text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center"
               x-text="unreadNotifications"></span>
+        <!-- Notification History Dropdown -->
+        <div x-show="showNotifications" @click.away="showNotifications = false"
+             class="absolute top-8 right-0 w-64 bg-surface border border-surface-light rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+          <template x-for="(n, i) in notificationHistory" :key="i">
+            <div class="px-3 py-2 border-b border-surface-light last:border-0 text-xs">
+              <span x-text="n.text"></span>
+              <span class="text-text-dim ml-1" x-text="n.time"></span>
+            </div>
+          </template>
+          <div x-show="notificationHistory.length === 0" class="px-3 py-4 text-xs text-text-dim text-center">No notifications</div>
+        </div>
       </div>
       <span class="w-2 h-2 rounded-full" :class="statusColor"></span>
     </div>
   </header>
-  <!-- Notification History Dropdown -->
-  <div x-show="showNotifications" @click.away="showNotifications = false"
-       class="absolute top-10 right-2 w-64 bg-surface border border-surface-light rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-    <template x-for="(n, i) in notificationHistory" :key="i">
-      <div class="px-3 py-2 border-b border-surface-light last:border-0 text-xs">
-        <span x-text="n.text"></span>
-        <span class="text-text-dim ml-1" x-text="n.time"></span>
-      </div>
-    </template>
-    <div x-show="notificationHistory.length === 0" class="px-3 py-4 text-xs text-text-dim text-center">No notifications</div>
-  </div>
 
   <!-- Content Area -->
   <main class="flex-1 overflow-hidden min-h-0 relative">
@@ -111,7 +112,7 @@
       </div>
       <!-- Now Playing card -->
       <div x-show="musicState.song" class="bg-surface-light rounded-lg px-3 py-2 flex items-center gap-2 cursor-pointer" @click="tab = 'music'">
-        <img :src="musicState.song?.thumbnail" class="w-10 h-10 rounded object-cover shrink-0" x-show="musicState.song?.thumbnail">
+        <img :src="musicState.song?.thumbnail" class="w-10 h-10 rounded object-cover shrink-0" x-show="musicState.song?.thumbnail" referrerpolicy="no-referrer">
         <div class="flex-1 min-w-0">
           <div class="text-[10px] text-text-dim uppercase tracking-wider">Now Playing</div>
           <div class="text-xs font-medium truncate" x-text="musicState.song?.title"></div>
@@ -224,7 +225,7 @@
             :class="players.length > 0 ? 'pt-1' : ''">
         <input x-model="chatInput" type="text" :placeholder="activePlayer ? (activePlayer + ': What do you do?') : statusText"
                class="flex-1 bg-surface-light rounded-lg px-3 py-2 text-sm text-text outline-none focus:ring-1 focus:ring-accent">
-        <button type="button" @click="showCameraOverlay = true"
+        <button type="button" @click="showCameraOverlay = true; visionResult = ''"
                 class="bg-surface-light hover:bg-accent/20 text-text-muted px-3 py-2 rounded-lg text-sm">&#x1F4F7;</button>
         <button type="submit" class="bg-accent hover:bg-accent-light text-surface-dark px-4 py-2 rounded-lg text-sm font-medium">Send</button>
       </form>
@@ -262,7 +263,7 @@
           <!-- Playlist search results -->
           <template x-for="(pl, i) in playlistResults" :key="'pl'+i">
             <div @click="fetchPlaylist(pl.browseId)" class="w-full flex items-center gap-2 p-2 rounded-lg bg-surface-light hover:bg-accent/20 cursor-pointer group">
-              <img :src="pl.thumbnail" class="w-10 h-10 rounded object-cover shrink-0" x-show="pl.thumbnail">
+              <img :src="pl.thumbnail" class="w-10 h-10 rounded object-cover shrink-0" x-show="pl.thumbnail" referrerpolicy="no-referrer">
               <div class="flex-1 min-w-0">
                 <div class="text-sm truncate" x-text="pl.title"></div>
                 <div class="text-xs text-text-muted truncate" x-text="pl.author"></div>
@@ -275,7 +276,7 @@
             <div class="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-accent/20 group"
                  :class="musicState.song?.videoId === song.videoId ? 'bg-accent/10 border border-accent/30' : 'bg-surface-light'">
               <div class="relative w-10 h-10 shrink-0">
-                <img :src="song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="song.thumbnail">
+                <img :src="song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="song.thumbnail" referrerpolicy="no-referrer">
                 <!-- Playing animation overlay for current song -->
                 <div x-show="musicState.song?.videoId === song.videoId && musicState.is_playing"
                      @click="musicCmd('pause')"
@@ -344,7 +345,7 @@
             <template x-for="(entry, i) in musicHistory" :key="'h'+i">
               <div class="w-full flex items-center gap-2 p-2 rounded-lg bg-surface-light hover:bg-accent/20 group">
                 <div class="relative w-10 h-10 shrink-0">
-                  <img :src="entry.song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="entry.song.thumbnail">
+                  <img :src="entry.song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="entry.song.thumbnail" referrerpolicy="no-referrer">
                   <button @click="playSongInline(entry.song)"
                           class="absolute inset-0 flex items-center justify-center bg-black/50 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="6 3 21 12 6 21"/></svg>
@@ -373,7 +374,7 @@
         <!-- Mini player bar (shown when a song is playing) -->
         <div x-show="musicState.song" @click="musicResults = []; playlistResults = []"
              class="shrink-0 flex items-center gap-2 p-2 mt-1 rounded-lg bg-surface-light border border-white/10 cursor-pointer">
-          <img :src="musicState.song?.thumbnail" class="w-9 h-9 rounded object-cover" x-show="musicState.song?.thumbnail">
+          <img :src="musicState.song?.thumbnail" class="w-9 h-9 rounded object-cover" x-show="musicState.song?.thumbnail" referrerpolicy="no-referrer">
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium truncate" x-text="musicState.song?.title"></div>
             <div class="text-[10px] text-text-muted truncate" x-text="musicState.song?.artist"></div>
@@ -418,7 +419,7 @@
             <div class="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-accent/20 group"
                  :class="musicState.song?.videoId === entry.song.videoId ? 'bg-accent/10 border border-accent/30' : 'bg-surface-light'">
               <div class="relative w-10 h-10 shrink-0">
-                <img :src="entry.song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="entry.song.thumbnail">
+                <img :src="entry.song.thumbnail" class="w-10 h-10 rounded object-cover" x-show="entry.song.thumbnail" referrerpolicy="no-referrer">
                 <div x-show="musicState.song?.videoId === entry.song.videoId && musicState.is_playing"
                      @click="musicCmd('pause')"
                      class="absolute inset-0 flex items-center justify-center bg-black/60 rounded cursor-pointer">
@@ -473,7 +474,7 @@
         <!-- Mini player bar -->
         <div x-show="musicState.song" @click="showHistory = false"
              class="shrink-0 flex items-center gap-2 p-2 mt-1 rounded-lg bg-surface-light border border-white/10 cursor-pointer">
-          <img :src="musicState.song?.thumbnail" class="w-9 h-9 rounded object-cover" x-show="musicState.song?.thumbnail">
+          <img :src="musicState.song?.thumbnail" class="w-9 h-9 rounded object-cover" x-show="musicState.song?.thumbnail" referrerpolicy="no-referrer">
           <div class="flex-1 min-w-0">
             <div class="text-xs font-medium truncate" x-text="musicState.song?.title"></div>
             <div class="text-[10px] text-text-muted truncate" x-text="musicState.song?.artist"></div>
@@ -518,7 +519,7 @@
             <div class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg group"
                  :class="qi === musicState.queue_index ? 'bg-accent/15 border border-accent/30' : 'bg-surface-light hover:bg-accent/10'">
               <span class="text-[10px] text-text-dim w-4 text-right shrink-0" x-text="qi + 1"></span>
-              <img :src="qSong.thumbnail" class="w-9 h-9 rounded object-cover shrink-0" x-show="qSong.thumbnail">
+              <img :src="qSong.thumbnail" class="w-9 h-9 rounded object-cover shrink-0" x-show="qSong.thumbnail" referrerpolicy="no-referrer">
               <div class="flex-1 min-w-0 cursor-pointer" @click="playSong(qSong)">
                 <div class="text-xs truncate" :class="qi === musicState.queue_index ? 'text-accent font-medium' : ''" x-text="qSong.title"></div>
                 <div class="text-[10px] text-text-muted truncate" x-text="qSong.artist"></div>
@@ -559,7 +560,7 @@
       <div x-show="albumView" class="absolute inset-0 z-[15] bg-surface-dark flex flex-col">
         <!-- Album header -->
         <div class="flex items-center gap-3 p-2 shrink-0">
-          <img :src="albumView?.thumbnail" class="w-16 h-16 rounded-lg object-cover shadow-lg shrink-0" x-show="albumView?.thumbnail">
+          <img :src="albumView?.thumbnail" class="w-16 h-16 rounded-lg object-cover shadow-lg shrink-0" x-show="albumView?.thumbnail" referrerpolicy="no-referrer">
           <div class="flex-1 min-w-0">
             <div class="font-medium text-sm truncate" x-text="albumView?.title"></div>
             <div class="text-xs text-text-muted truncate" x-text="(albumView?.artist || '') + (albumView?.year ? ' \u2022 ' + albumView.year : '') + (albumView?.trackCount ? ' \u2022 ' + albumView.trackCount + ' tracks' : '')"></div>
@@ -615,8 +616,28 @@
         </button>
       </div>
 
-      <!-- Idle state — most played + recently played cards -->
+      <!-- Idle state — recently played + most played cards -->
       <div x-show="!musicState.song" class="h-full overflow-y-auto">
+        <!-- Recently Played -->
+        <template x-if="musicHistory.length > 0">
+          <div class="mb-2">
+            <h3 class="text-xs font-medium text-text-dim uppercase tracking-wide mb-1.5">Recently Played</h3>
+            <div class="grid grid-cols-4 gap-1.5">
+              <template x-for="(entry, i) in musicHistory.slice(0, 4)" :key="'rp'+i">
+                <button @click="playSongInline(entry.song)" class="group flex flex-col gap-1 p-1.5 rounded-lg bg-surface-light hover:bg-accent/20 transition-colors">
+                  <div class="relative w-full h-[72px]">
+                    <img :src="entry.song.thumbnail" class="w-full h-full rounded object-cover" referrerpolicy="no-referrer">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6 3 21 12 6 21"/></svg>
+                    </div>
+                  </div>
+                  <div class="w-full text-[10px] truncate" x-text="entry.song.title"></div>
+                  <div class="w-full text-[9px] text-text-dim truncate -mt-0.5" x-text="entry.song.artist"></div>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
         <!-- Most Played -->
         <template x-if="musicMostPlayed.length > 0">
           <div class="mb-2">
@@ -625,33 +646,13 @@
               <template x-for="(song, i) in musicMostPlayed.slice(0, 4)" :key="'mp'+i">
                 <button @click="playSongInline(song)" class="group flex flex-col gap-1 p-1.5 rounded-lg bg-surface-light hover:bg-accent/20 transition-colors">
                   <div class="relative w-full h-[72px]">
-                    <img :src="song.thumbnail" class="w-full h-full rounded object-cover">
+                    <img :src="song.thumbnail" class="w-full h-full rounded object-cover" referrerpolicy="no-referrer">
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6 3 21 12 6 21"/></svg>
                     </div>
                   </div>
                   <div class="w-full text-[10px] truncate" x-text="song.title"></div>
                   <div class="w-full text-[9px] text-text-dim truncate -mt-0.5" x-text="song.artist"></div>
-                </button>
-              </template>
-            </div>
-          </div>
-        </template>
-        <!-- Recently Played -->
-        <template x-if="musicHistory.length > 0">
-          <div>
-            <h3 class="text-xs font-medium text-text-dim uppercase tracking-wide mb-1.5">Recently Played</h3>
-            <div class="grid grid-cols-4 gap-1.5">
-              <template x-for="(entry, i) in musicHistory.slice(0, 4)" :key="'rp'+i">
-                <button @click="playSongInline(entry.song)" class="group flex flex-col gap-1 p-1.5 rounded-lg bg-surface-light hover:bg-accent/20 transition-colors">
-                  <div class="relative w-full h-[72px]">
-                    <img :src="entry.song.thumbnail" class="w-full h-full rounded object-cover">
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6 3 21 12 6 21"/></svg>
-                    </div>
-                  </div>
-                  <div class="w-full text-[10px] truncate" x-text="entry.song.title"></div>
-                  <div class="w-full text-[9px] text-text-dim truncate -mt-0.5" x-text="entry.song.artist"></div>
                 </button>
               </template>
             </div>
@@ -679,7 +680,7 @@
       <div x-show="musicState.song" class="h-full flex flex-col items-center justify-between py-1">
         <!-- Song info: art + text side by side -->
         <div class="flex items-center gap-3 w-full max-w-xs">
-          <img :src="musicState.song?.thumbnail" class="w-20 h-20 rounded-lg object-cover shadow-lg shrink-0" x-show="musicState.song?.thumbnail">
+          <img :src="musicState.song?.thumbnail" class="w-20 h-20 rounded-lg object-cover shadow-lg shrink-0" x-show="musicState.song?.thumbnail" referrerpolicy="no-referrer">
           <div class="min-w-0">
             <div class="font-medium text-sm leading-tight truncate" x-text="musicState.song?.title"></div>
             <div class="text-xs text-text-muted truncate mt-0.5" x-text="musicState.song?.artist"></div>
@@ -737,18 +738,6 @@
             <span x-show="musicState.repeat === 'one'" class="absolute -top-0.5 -right-0.5 text-[9px] font-bold text-accent">1</span>
           </button>
         </div>
-        <!-- Volume slider -->
-        <div class="flex items-center gap-2 w-full max-w-xs">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-dim shrink-0">
-            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-          </svg>
-          <input type="range" min="0" max="100" :value="musicState.volume"
-                 @input="setVolume(parseInt($event.target.value))"
-                 class="flex-1 h-1 accent-amber-500 cursor-pointer">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-dim shrink-0">
-            <path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.08"/>
-          </svg>
-        </div>
         <!-- Album link -->
         <div x-show="musicState.song?.albumId" class="flex items-center justify-center">
           <button @click="fetchAlbum(musicState.song.albumId)"
@@ -781,30 +770,6 @@
                   class="absolute -top-1.5 -right-1.5 bg-accent text-surface-dark text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
                   x-text="musicState.queue_length"></span>
           </button>
-          <div class="relative" x-data="{ deviceOpen: false }">
-            <button @click="deviceOpen = !deviceOpen"
-                    class="flex items-center gap-1 bg-surface-light text-text-muted text-[11px] rounded px-2 py-1 hover:bg-white/10 transition-colors max-w-[200px]">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.08"/>
-              </svg>
-              <span class="truncate" x-text="musicState.output_device || 'Select device'"></span>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" class="shrink-0 opacity-50">
-                <polygon points="12 8 6 14 18 14"/>
-              </svg>
-            </button>
-            <div x-show="deviceOpen" x-cloak @click.away="deviceOpen = false"
-                 x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-1"
-                 class="absolute bottom-full left-0 mb-1 w-72 bg-surface-dark border border-white/10 rounded-lg shadow-xl overflow-y-auto max-h-48 z-50">
-              <template x-for="d in musicDevices" :key="d.name">
-                <button @click="castMusic(d.name); musicState.output_device = d.name; deviceOpen = false"
-                        class="w-full text-left text-xs px-3 py-2 hover:bg-accent/20 transition-colors truncate"
-                        :class="musicState.output_device === d.name ? 'text-accent bg-accent/10' : 'text-text-muted'">
-                  <span x-text="d.label"></span>
-                </button>
-              </template>
-            </div>
-          </div>
         </div>
       </div>
       </div><!-- /relative container -->
@@ -827,6 +792,22 @@
       <!-- Offline banner -->
       <div x-show="calOffline" x-transition class="bg-amber-900/40 border border-amber-600/30 rounded-lg px-3 py-1.5 mb-1 text-xs text-amber-300 text-center">
         Offline &mdash; changes will sync when connected
+        <button @click="startCalendarAuth()" class="ml-2 px-2 py-0.5 bg-accent/80 hover:bg-accent text-black rounded text-xs font-semibold">
+          Authorize Calendar
+        </button>
+      </div>
+
+      <!-- Calendar Auth Modal -->
+      <div x-show="calAuthUrl" x-transition class="bg-surface-light rounded-lg p-3 mb-1 space-y-2 text-xs">
+        <p class="text-text-muted">1. Click the link below to authorize BMO with Google Calendar:</p>
+        <a :href="calAuthUrl" target="_blank" class="block text-accent underline break-all text-[10px]" x-text="calAuthUrl"></a>
+        <p class="text-amber-400">2. After clicking "Allow", the page will say "refused to connect" — that's normal!</p>
+        <p class="text-text-muted">3. Copy the <b>entire URL</b> from the address bar (starts with http://localhost?code=...) and paste it below:</p>
+        <div class="flex gap-1">
+          <input x-model="calAuthCode" type="text" placeholder="Paste full URL from address bar"
+                 class="flex-1 bg-surface rounded px-2 py-1 text-xs text-text outline-none focus:ring-1 focus:ring-accent">
+          <button @click="submitCalendarAuth()" class="px-2 py-1 bg-accent hover:bg-accent/80 text-black rounded text-xs font-semibold">Submit</button>
+        </div>
       </div>
 
       <!-- Add Event Form -->
@@ -963,7 +944,7 @@
 
       <!-- Event List -->
       <div class="flex-1 overflow-y-auto space-y-1.5">
-        <template x-for="(event, i) in calEvents" :key="event.id || i">
+        <template x-for="(event, i) in getFilteredCalEvents()" :key="event.id || i">
           <div @click="startEditEvent(event)" class="bg-surface-light rounded-lg px-3 py-2 border-l-3 border-accent group cursor-pointer hover:bg-surface-light/80">
             <div class="flex justify-between items-start">
               <div class="font-medium text-sm" x-text="event.summary"></div>
@@ -977,7 +958,8 @@
             <div x-show="event.location" class="text-xs text-text-dim mt-0.5" x-text="event.location"></div>
           </div>
         </template>
-        <div x-show="calEvents.length === 0" class="text-center text-text-muted py-8">No events</div>
+        <div x-show="getFilteredCalEvents().length === 0 && calDays === 1" class="text-center text-text-muted py-8">It looks like you are free today 🎉</div>
+        <div x-show="getFilteredCalEvents().length === 0 && calDays !== 1" class="text-center text-text-muted py-8">No events</div>
       </div>
     </div>
 
@@ -1214,46 +1196,55 @@
       <!-- LED Controls -->
       <div class="bg-surface-light rounded-lg p-3">
         <h3 class="text-sm font-bold mb-2">💡 RGB Lights</h3>
-        <div class="flex flex-wrap gap-2 mb-2">
-          <template x-for="m in ['off', 'static', 'breathing', 'rainbow', 'chase']" :key="m">
-            <button @click="setLedMode(m)" class="px-3 py-1 rounded text-xs capitalize"
-                    :class="ledState.mode === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m"></button>
-          </template>
-        </div>
-        <div class="flex items-center gap-2 mb-2">
-          <label class="text-xs text-text-muted">Color:</label>
-          <input type="color" x-model="ledColorHex" @change="setLedColor()" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
-          <div class="w-6 h-6 rounded-full border border-surface" :style="`background: ${ledColorHex}`"></div>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-text-muted">Brightness:</label>
-          <input type="range" min="0" max="100" :value="ledState.brightness" @change="setLedBrightness($event.target.value)"
-                 class="flex-1 accent-accent">
-          <span class="text-xs text-text-muted w-8 text-right" x-text="ledState.brightness + '%'"></span>
-        </div>
+        <template x-if="ledState">
+          <div>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <template x-for="m in ['off', 'static', 'breathing', 'rainbow', 'chase']" :key="m">
+                <button @click="setLedMode(m)" class="px-3 py-1 rounded text-xs capitalize"
+                        :class="ledState.mode === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m"></button>
+              </template>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <label class="text-xs text-text-muted">Color:</label>
+              <input type="color" x-model="ledColorHex" @change="setLedColor()" class="w-8 h-8 rounded cursor-pointer border-0 bg-transparent">
+              <div class="w-6 h-6 rounded-full border border-surface" :style="`background: ${ledColorHex}`"></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-xs text-text-muted">Brightness:</label>
+              <input type="range" min="0" max="100" :value="ledState.brightness" @change="setLedBrightness($event.target.value)"
+                     class="flex-1 accent-accent">
+              <span class="text-xs text-text-muted w-8 text-right" x-text="ledState.brightness + '%'"></span>
+            </div>
+          </div>
+        </template>
+        <p x-show="!ledState" class="text-xs text-text-dim text-center py-2">Loading...</p>
       </div>
 
       <!-- Volume Controls -->
       <div class="bg-surface-light rounded-lg p-3">
         <h3 class="text-sm font-bold mb-2">🔊 Volume</h3>
-        <template x-for="cat in ['music', 'voice', 'effects', 'notifications']" :key="cat">
-          <div class="flex items-center gap-2 mb-1.5">
-            <label class="text-xs text-text-muted w-20 capitalize" x-text="cat"></label>
-            <input type="range" min="0" max="100" :value="volumeLevels[cat]"
-                   @change="setVolume(cat, $event.target.value)"
-                   class="flex-1 accent-accent">
-            <span class="text-xs text-text-muted w-8 text-right" x-text="volumeLevels[cat]"></span>
+        <template x-if="volumeLevels">
+          <div>
+            <template x-for="cat in ['system', 'music', 'voice', 'effects', 'notifications', 'alarms']" :key="cat">
+              <div class="flex items-center gap-2 mb-1.5" :class="cat === 'system' ? 'pb-1.5 mb-2 border-b border-surface' : ''">
+                <label class="text-xs text-text-muted w-20 capitalize" x-text="cat === 'system' ? '🔈 master' : cat"></label>
+                <input type="range" min="0" :max="cat === 'system' ? 150 : 100" x-model.number="volumeLevels[cat]"
+                       @input="setVolume(cat, $event.target.value)"
+                       class="flex-1 accent-accent">
+                <input type="number" min="0" :max="cat === 'system' ? 150 : 100"
+                       x-model.number="volumeLevels[cat]"
+                       @change="setVolume(cat, $event.target.value)"
+                       class="w-10 text-xs text-text-muted text-right bg-transparent border border-surface rounded px-1 py-0.5 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]">
+              </div>
+            </template>
           </div>
         </template>
+        <p x-show="!volumeLevels" class="text-xs text-text-dim text-center py-2">Loading...</p>
       </div>
 
       <!-- Scene Modes -->
       <div class="bg-surface-light rounded-lg p-3">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-bold">🎬 Scene Modes</h3>
-          <button x-show="activeScene" @click="deactivateScene()"
-                  class="text-xs text-red-400 hover:text-red-300">⏹ Exit Mode</button>
-        </div>
+        <h3 class="text-sm font-bold mb-2">🎬 Scene Modes</h3>
         <div class="grid grid-cols-2 gap-2">
           <template x-for="s in scenes" :key="s.name">
             <button @click="s.active ? deactivateScene() : activateScene(s.name)"
@@ -1265,24 +1256,34 @@
         <p x-show="scenes.length === 0" class="text-xs text-text-dim text-center py-2">No scenes available</p>
       </div>
 
-      <!-- Audio Output -->
+      <!-- Music Audio Output -->
       <div class="bg-surface-light rounded-lg p-3">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-bold">🔈 Audio Output</h3>
-          <button @click="fetchAudioDevices()" class="text-xs text-accent">Refresh</button>
+          <h3 class="text-sm font-bold">🎵 Music Audio Output</h3>
+          <button @click="fetchAudioDevices(); fetchMusicDevices()" class="text-xs text-accent">Refresh</button>
         </div>
+        <p class="text-[10px] text-text-dim mb-2">Where music plays — Pi sinks, Bluetooth, or Chromecast</p>
         <div class="space-y-1.5 mb-2">
-          <template x-for="d in audioDevices" :key="d.pw_id || d.id">
-            <button @click="setAudioOutput(d.description || d.name)"
+          <!-- Pi sinks -->
+          <template x-for="d in audioDevices" :key="'mao-' + (d.pw_id || d.id)">
+            <button @click="setAudioOutput(d.pw_id || d.id)"
                     class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
-                    :class="d.is_default ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
-              <span x-text="d.is_default ? '🔊' : '🔇'" class="text-sm"></span>
-              <span class="flex-1 truncate" x-text="d.description || d.name"></span>
-              <span x-show="d.is_default" class="text-[9px] text-accent">DEFAULT</span>
+                    :class="(d.is_default && (!musicState.output_device || musicState.output_device === 'pi')) ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="(d.is_default && (!musicState.output_device || musicState.output_device === 'pi')) ? '🔊' : '🔇'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="(d.description || d.name) + ' (Pi)'"></span>
+            </button>
+          </template>
+          <!-- Chromecast / network devices -->
+          <template x-for="d in musicDevices.filter(d => d.type !== 'pi')" :key="'mao-cast-' + d.name">
+            <button @click="castMusic(d.name)"
+                    class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
+                    :class="musicState.output_device === d.name ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="musicState.output_device === d.name ? '📺' : '📡'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="d.label"></span>
             </button>
           </template>
         </div>
-        <p x-show="audioDevices.length === 0" class="text-xs text-text-dim text-center py-1">No audio devices found</p>
+        <p x-show="audioDevices.length === 0 && musicDevices.length === 0" class="text-xs text-text-dim text-center py-1">No audio devices found</p>
 
         <!-- Bluetooth -->
         <div class="border-t border-surface pt-2 mt-2">
@@ -1328,14 +1329,125 @@
         </div>
       </div>
 
-    </div>
+      <!-- BMO Voice Output -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">🗣️ BMO Voice Output</h3>
+          <button @click="fetchAudioDevices()" class="text-xs text-accent">Refresh</button>
+        </div>
+        <p class="text-[10px] text-text-dim mb-2">Where BMO speaks — Pi sinks, Bluetooth, or laptop speakers</p>
+        <div class="space-y-1.5">
+          <!-- Pi sinks -->
+          <template x-for="d in audioDevices" :key="'tts-' + (d.pw_id || d.id)">
+            <button @click="setTtsOutput('pi', d.pw_id || d.id)"
+                    class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
+                    :class="ttsOutput === 'pi' && !ttsLaptopDevice ? (d.is_default ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light') : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="ttsOutput === 'pi' && d.is_default && !ttsLaptopDevice ? '🔊' : '🔇'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="(d.description || d.name) + ' (Pi)'"></span>
+            </button>
+          </template>
+          <!-- Laptop devices (from browser enumerateDevices) -->
+          <template x-for="d in laptopAudioDevices" :key="'tts-lap-' + d.deviceId">
+            <button @click="setTtsOutput('browser', null, d.deviceId)"
+                    class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
+                    :class="ttsOutput === 'browser' && ttsLaptopDevice === d.deviceId ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="ttsOutput === 'browser' && ttsLaptopDevice === d.deviceId ? '🔊' : '💻'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="d.label + ' (Laptop)'"></span>
+            </button>
+          </template>
+          <button x-show="laptopAudioDevices.length === 0" @click="enumerateLaptopDevices()"
+                  class="w-full text-left px-3 py-1.5 rounded text-xs bg-surface text-accent hover:bg-surface-light">
+            🔄 Load laptop audio devices
+          </button>
+        </div>
+        <!-- Bluetooth for voice -->
+        <div class="border-t border-surface pt-2 mt-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-text-muted">Bluetooth</span>
+            <button @click="btScan()" :disabled="btScanning"
+                    class="text-xs px-2 py-0.5 rounded bg-surface text-accent disabled:opacity-50"
+                    x-text="btScanning ? 'Scanning...' : '🔍 Scan'"></button>
+          </div>
+          <div class="space-y-1">
+            <template x-for="bt in btDevices" :key="'tts-bt-' + bt.address">
+              <div class="flex items-center gap-2 bg-surface rounded px-2 py-1">
+                <span class="text-xs flex-1 truncate" x-text="bt.name || bt.address"></span>
+                <button @click="btPair(bt.address)" class="text-[10px] text-accent">Pair</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
 
+      <!-- Microphone Input -->
+      <div class="bg-surface-light rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold">🎤 Microphone Input</h3>
+          <button @click="fetchMicInputs()" class="text-xs text-accent">Refresh</button>
+        </div>
+        <p class="text-[10px] text-text-dim mb-2">Which mic BMO listens on — Pi sources, Bluetooth, or laptop</p>
+        <div class="space-y-1.5">
+          <!-- Pi sources -->
+          <template x-for="d in micInputs" :key="'mic-' + (d.pw_id || d.id)">
+            <button @click="setMicInput(d.pw_id || d.id)"
+                    class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
+                    :class="d.is_default ? 'bg-accent/20 text-accent border border-accent/30' : 'bg-surface text-text-muted hover:bg-surface-light'">
+              <span x-text="d.is_default ? '🎤' : '🎙️'" class="text-sm"></span>
+              <span class="flex-1 truncate" x-text="(d.description || d.name) + ' (Pi)'"></span>
+            </button>
+          </template>
+          <!-- Laptop mic devices -->
+          <template x-for="d in laptopMicDevices" :key="'mic-lap-' + d.deviceId">
+            <button class="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 bg-surface text-text-muted hover:bg-surface-light">
+              <span>💻</span>
+              <span class="flex-1 truncate" x-text="d.label + ' (Laptop)'"></span>
+              <span class="text-[9px] text-text-dim">Stream N/A</span>
+            </button>
+          </template>
+          <div x-show="micInputs.length === 0 && laptopMicDevices.length === 0" class="text-xs text-text-dim text-center py-2">No mic sources found</div>
+        </div>
+        <!-- Bluetooth for mic -->
+        <div class="border-t border-surface pt-2 mt-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-text-muted">Bluetooth Mics</span>
+            <button @click="btScan()" :disabled="btScanning"
+                    class="text-xs px-2 py-0.5 rounded bg-surface text-accent disabled:opacity-50"
+                    x-text="btScanning ? 'Scanning...' : '🔍 Scan'"></button>
+          </div>
+          <div class="space-y-1">
+            <template x-for="bt in btDevices" :key="'mic-bt-' + bt.address">
+              <div class="flex items-center gap-2 bg-surface rounded px-2 py-1">
+                <span class="text-xs flex-1 truncate" x-text="bt.name || bt.address"></span>
+                <button @click="btPair(bt.address)" class="text-[10px] text-accent">Pair</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Browser Permissions (hidden when already granted) -->
+      <div x-show="!browserMicGranted" class="bg-surface-light rounded-lg p-3">
+        <h3 class="text-sm font-bold mb-2">🔐 Browser Permissions</h3>
+        <p class="text-[10px] text-text-dim mb-2">Grant browser access to laptop mic/audio. Requires Chrome flag:</p>
+        <div class="flex items-center gap-1 mb-2">
+          <code class="text-accent text-[10px] bg-surface px-2 py-1 rounded flex-1 truncate">chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>
+          <button @click="(() => { const t='chrome://flags/#unsafely-treat-insecure-origin-as-secure'; const el=document.createElement('textarea'); el.value=t; el.style.position='fixed'; el.style.left='-9999px'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); showNotification('Copied to clipboard!', 'success'); })()"
+                  class="text-xs px-2 py-1 rounded bg-surface text-accent hover:bg-surface-light shrink-0">📋 Copy</button>
+        </div>
+        <p class="text-[9px] text-text-dim mb-2">Copy the flag URL above → paste in Chrome address bar → add <code class="text-accent">http://10.10.20.242:5000</code> → Enable → Relaunch</p>
+        <button @click="requestBrowserMicPermission()"
+                class="w-full text-left px-3 py-1.5 rounded text-xs bg-surface text-accent hover:bg-surface-light flex items-center gap-2">
+          <span>🎤</span> <span x-text="browserMicGranted ? '✅ Microphone access granted' : 'Grant Microphone Access'"></span>
+        </button>
+      </div>
+
+    </div>
   </main>
 
   <!-- Now-Playing Mini Bar (global, shown on non-music tabs when music is playing) -->
   <div x-show="musicState.song && tab !== 'music'" x-transition
        class="h-9 shrink-0 bg-surface border-t border-surface-light flex items-center gap-2 px-2 z-10">
-    <img :src="musicState.song?.thumbnail" class="w-7 h-7 rounded object-cover" x-show="musicState.song?.thumbnail">
+    <img :src="musicState.song?.thumbnail" class="w-7 h-7 rounded object-cover" x-show="musicState.song?.thumbnail" referrerpolicy="no-referrer">
     <div class="flex-1 min-w-0 cursor-pointer" @click="tab = 'music'">
       <div class="text-[11px] font-medium truncate" x-text="musicState.song?.title"></div>
       <div class="text-[9px] text-text-muted truncate" x-text="musicState.song?.artist"></div>
@@ -1382,9 +1494,9 @@
   <div x-cloak x-show="showCameraOverlay" x-transition style="display:none"
        class="fixed inset-0 bg-surface-dark z-40 flex flex-col">
     <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden min-h-0">
-      <img src="/api/camera/stream" class="w-full h-full object-cover" x-show="cameraActive" @error="cameraActive=false">
+      <img src="/api/camera/stream" class="w-full h-full object-contain" x-show="cameraActive" @error="cameraActive=false">
       <div x-show="!cameraActive" class="text-text-muted">Camera offline</div>
-      <div x-show="visionResult" class="absolute bottom-0 left-0 right-0 bg-surface-dark/80 p-2 text-xs" x-text="visionResult"></div>
+      <div x-show="visionResult" class="absolute bottom-0 left-0 right-0 bg-surface-dark/80 p-3 text-sm max-h-[40%] overflow-y-auto break-words whitespace-pre-wrap" x-text="visionResult"></div>
     </div>
     <div class="flex gap-2 p-2 justify-center border-t border-surface-light shrink-0">
       <button @click="cameraSnap()" class="bg-surface-light hover:bg-accent/20 px-4 py-2 rounded-lg text-sm">Snap</button>

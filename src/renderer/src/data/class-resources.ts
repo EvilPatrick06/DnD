@@ -1,4 +1,4 @@
-import classResourcesJson from '../../public/data/5e/game/mechanics/class-resources.json'
+import classResourcesJson from '@data/5e/game/mechanics/class-resources.json'
 import { load5eClassResources } from '../services/data-provider'
 import type { ClassResource } from '../types/character-common'
 import type { ResourceDefinition, ResourceScaling } from '../types/data'

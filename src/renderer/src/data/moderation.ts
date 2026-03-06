@@ -1,4 +1,4 @@
-import moderationJson from '../../public/data/5e/game/ai/moderation.json'
+import moderationJson from '@data/5e/game/ai/moderation.json'
 import { load5eModeration } from '../services/data-provider'
 
 export const DEFAULT_BLOCKED_WORDS: string[] = moderationJson.blockedWords

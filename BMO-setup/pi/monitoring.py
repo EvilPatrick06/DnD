@@ -264,6 +264,13 @@ class HealthChecker:
         self._running = False
         self._thread: threading.Thread | None = None
 
+        # Reuse a single requests.Session to avoid leaking file descriptors.
+        # Each standalone requests.get() creates a new urllib3 connection pool
+        # that may not close promptly under gevent monkey-patching.
+        self._session: "requests.Session | None" = None
+        if REQUESTS_AVAILABLE:
+            self._session = requests.Session()
+
         # Current service status: service_name → {status, last_check, message, response_time}
         self._service_status: dict[str, dict] = {}
 
@@ -417,7 +424,7 @@ class HealthChecker:
 
     def _check_http_service(self, name: str, config: dict):
         """Check a single HTTP service endpoint."""
-        if not REQUESTS_AVAILABLE:
+        if not self._session:
             self._service_status[name] = {
                 "status": "unknown",
                 "last_check": time.time(),
@@ -433,7 +440,7 @@ class HealthChecker:
         try:
             start = time.monotonic()
             headers = config.get("headers", {})
-            r = requests.get(url, timeout=timeout, headers=headers)
+            r = self._session.get(url, timeout=timeout, headers=headers)
             elapsed = round(time.monotonic() - start, 3)
 
             if r.status_code == 200:
@@ -696,7 +703,7 @@ class HealthChecker:
 
     def _check_pihole(self):
         """Check Pi-hole DNS health: API reachable, blocking active, gravity status."""
-        if not REQUESTS_AVAILABLE:
+        if not self._session:
             return
 
         now = time.time()
@@ -707,7 +714,7 @@ class HealthChecker:
         if sid:
             # Test if session is still valid
             try:
-                r = requests.get(f"{pihole_api}/dns/blocking", headers={"sid": sid}, timeout=3)
+                r = self._session.get(f"{pihole_api}/dns/blocking", headers={"sid": sid}, timeout=3)
                 if r.status_code == 401:
                     sid = ""  # expired, re-auth below
             except Exception:
@@ -715,7 +722,7 @@ class HealthChecker:
 
         if not sid:
             try:
-                r = requests.post(
+                r = self._session.post(
                     f"{pihole_api}/auth",
                     json={"password": PIHOLE_API_PASSWORD},
                     timeout=5,
@@ -751,7 +758,7 @@ class HealthChecker:
         # 2. Check blocking status and stats
         try:
             # Get blocking state
-            r_block = requests.get(
+            r_block = self._session.get(
                 f"{pihole_api}/dns/blocking",
                 headers={"sid": sid},
                 timeout=5,
@@ -772,7 +779,7 @@ class HealthChecker:
                     return
 
             # Get gravity stats
-            r_ftl = requests.get(
+            r_ftl = self._session.get(
                 f"{pihole_api}/info/ftl",
                 headers={"sid": sid},
                 timeout=5,
@@ -781,19 +788,6 @@ class HealthChecker:
                 ftl = r_ftl.json().get("ftl", {})
                 gravity_count = ftl.get("database", {}).get("gravity", 0)
                 num_lists = ftl.get("database", {}).get("lists", 0)
-
-                if gravity_count < 1000:
-                    self._service_status["pihole"] = {
-                        "status": "degraded", "last_check": now,
-                        "message": f"Only {gravity_count:,} domains — gravity may have failed",
-                        "response_time": None,
-                    }
-                    self._emit_alert(
-                        Severity.WARNING, "pihole",
-                        f"🛡️ Pi-hole gravity low: only {gravity_count:,} domains blocked — "
-                        "blocklists may have failed. Run: docker exec bmo-pihole pihole -g",
-                    )
-                    return
 
                 self._service_status["pihole"] = {
                     "status": "up", "last_check": now,
@@ -809,7 +803,7 @@ class HealthChecker:
         # 3. Check for inaccessible blocklists
         # Pi-hole v6 status: 1=new/pending, 2=OK, 3=inaccessible, 4=disabled
         try:
-            r = requests.get(
+            r = self._session.get(
                 f"{pihole_api}/lists?type=block",
                 headers={"sid": sid},
                 timeout=10,
@@ -1053,11 +1047,11 @@ class HealthChecker:
 
         any_reachable = False
         for name, url in targets:
-            if not REQUESTS_AVAILABLE:
+            if not self._session:
                 break
             try:
                 start = time.monotonic()
-                r = requests.get(url, timeout=5)
+                r = self._session.get(url, timeout=5)
                 elapsed = round(time.monotonic() - start, 3)
                 if r.status_code == 200:
                     any_reachable = True

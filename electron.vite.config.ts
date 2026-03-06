@@ -14,6 +14,20 @@ function analyzePlugin(): Plugin | null {
   return visualizer({ open: true, filename: 'bundle-stats.html', gzipSize: true }) as Plugin
 }
 
+/** Suppress Vite 7 warnings about JSON imports from public dir (loaded via @data alias). */
+function suppressPublicDirWarnings(): Plugin {
+  return {
+    name: 'suppress-public-dir-warnings',
+    configResolved(config) {
+      const originalWarn = config.logger.warn
+      config.logger.warn = (msg, options) => {
+        if (typeof msg === 'string' && msg.includes('Assets in public directory cannot be imported')) return
+        originalWarn(msg, options)
+      }
+    }
+  }
+}
+
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()]
@@ -24,13 +38,14 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
-        '@renderer': resolve('src/renderer/src')
+        '@renderer': resolve('src/renderer/src'),
+        '@data': resolve('src/renderer/public/data')
       }
     },
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version)
     },
-    plugins: [react(), tailwindcss(), analyzePlugin()].filter(Boolean) as Plugin[],
+    plugins: [react(), tailwindcss(), suppressPublicDirWarnings(), analyzePlugin()].filter(Boolean) as Plugin[],
     build: {
       rollupOptions: {
         output: {

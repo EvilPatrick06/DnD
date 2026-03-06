@@ -3,7 +3,7 @@
 // Uses the Web Notification API (available in the Electron renderer process).
 // ---------------------------------------------------------------------------
 
-import templatesJson from '../../public/data/ui/notification-templates.json'
+import templatesJson from '@data/ui/notification-templates.json'
 import { load5eNotificationTemplates } from './data-provider'
 
 export type NotificationEvent =

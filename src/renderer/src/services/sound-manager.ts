@@ -7,7 +7,7 @@
  * Module-level state with exported functions.
  */
 
-import soundEventsJson from '../../public/data/audio/sound-events.json'
+import soundEventsJson from '@data/audio/sound-events.json'
 import { logger } from '../utils/logger'
 import { load5eAmbientTracks, load5eSoundEvents } from './data-provider'
 import {

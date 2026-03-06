@@ -1,6 +1,6 @@
 {
   "name": "dnd-vtt",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "D&D Virtual Tabletop - Desktop app for online Dungeons & Dragons",
   "main": "./out/main/index.js",
   "scripts": {
@@ -120,6 +120,7 @@
     "diff": "^8.0.3",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
+    "electron-devtools-installer": "^4.0.0",
     "electron-vite": "^5.0.0",
     "fast-levenshtein": "^3.0.0",
     "happy-dom": "^20.7.0",

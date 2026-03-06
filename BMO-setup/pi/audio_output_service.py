@@ -129,6 +129,14 @@ class AudioOutputService:
                 return s
         return sinks[0] if sinks else None
 
+    def get_default_source(self) -> "AudioDevice | None":
+        """Get the current default audio input device (source)."""
+        sources = self.list_sources()
+        for s in sources:
+            if s.is_default:
+                return s
+        return sources[0] if sources else None
+
     # ── Output Switching ────────────────────────────────────────────
 
     def set_default_output(self, pw_id: int) -> bool:
@@ -138,6 +146,15 @@ class AudioOutputService:
             print(f"[audio] Failed to set default sink {pw_id}: {err}")
             return False
         print(f"[audio] Default output set to device {pw_id}")
+        return True
+
+    def set_default_input(self, pw_id: int) -> bool:
+        """Set the default audio input device (source) for the whole system."""
+        rc, _, err = _run(["wpctl", "set-default", str(pw_id)])
+        if rc != 0:
+            print(f"[audio] Failed to set default source {pw_id}: {err}")
+            return False
+        print(f"[audio] Default input set to device {pw_id}")
         return True
 
     def set_function_output(self, function: str, pw_id: int) -> bool:
@@ -193,22 +210,64 @@ class AudioOutputService:
 
     def bluetooth_scan(self, duration: int = 10) -> list[dict]:
         """Scan for Bluetooth audio devices. Returns list of {address, name}."""
-        # Power on and start scan
-        _run(["bluetoothctl", "power", "on"])
-        _run(["bluetoothctl", "scan", "on"], timeout=2)
-        time.sleep(min(duration, 15))
-        _run(["bluetoothctl", "scan", "off"], timeout=2)
+        import subprocess as sp
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
 
-        # Get discovered devices
-        rc, out, _ = _run(["bluetoothctl", "devices"])
-        if rc != 0:
+        # Run scan in a persistent bluetoothctl process and parse results in-session
+        try:
+            proc = sp.Popen(
+                ["bluetoothctl"],
+                stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE,
+                text=True, env=env,
+            )
+            proc.stdin.write("power on\n")
+            proc.stdin.flush()
+            time.sleep(0.5)
+            proc.stdin.write("scan on\n")
+            proc.stdin.flush()
+            time.sleep(min(duration, 15))
+            # Ask for device list inside the same session that ran the scan
+            proc.stdin.write("devices\n")
+            proc.stdin.flush()
+            time.sleep(1)
+            proc.stdin.write("scan off\n")
+            proc.stdin.flush()
+            time.sleep(0.5)
+            proc.stdin.write("quit\n")
+            proc.stdin.flush()
+            out, _ = proc.communicate(timeout=5)
+        except Exception as e:
+            print(f"[bt] Scan process error: {e}")
+            try:
+                proc.kill()
+            except Exception:
+                pass
             return []
 
+        # Parse "Device XX:XX:XX:XX:XX:XX Name" lines (not [NEW]/[CHG] lines)
         devices = []
-        for line in out.strip().split("\n"):
-            match = re.match(r"Device\s+([0-9A-Fa-f:]+)\s+(.+)", line.strip())
-            if match:
-                devices.append({"address": match.group(1), "name": match.group(2)})
+        seen = set()
+        for line in out.split("\n"):
+            line = line.strip()
+            # Match plain "Device" lines (from the `devices` command), not [NEW]/[CHG]
+            if line.startswith("Device "):
+                match = re.match(r"Device\s+([0-9A-Fa-f:]+)\s+(.+)", line)
+                if match:
+                    addr = match.group(1)
+                    name = match.group(2).strip()
+                    if addr in seen:
+                        continue
+                    seen.add(addr)
+                    # Skip unresolved: name is MAC with dashes (e.g. 02-71-88-FB-A6-B3)
+                    if re.fullmatch(r"[0-9A-Fa-f]{2}(-[0-9A-Fa-f]{2}){5}", name):
+                        continue
+                    # Skip if name is just the MAC with colons
+                    if name.upper() == addr.upper():
+                        continue
+                    devices.append({"address": addr, "name": name})
+        print(f"[bt] Scan found {len(devices)} named devices")
         return devices
 
     def bluetooth_pair(self, address: str) -> tuple[bool, str]:
@@ -226,6 +285,18 @@ class AudioOutputService:
         rc, _, err = _run(["bluetoothctl", "connect", address], timeout=15)
         if rc != 0:
             return False, f"Connect failed: {err}"
+
+        # Auto-set BT device as default audio sink after connect
+        import time as _t
+        _t.sleep(3)  # wait for PipeWire to register the new BT sink
+        for sink in self.list_sinks():
+            if address.replace(":", "_").upper() in sink.name.upper() or \
+               (sink.description and sink.description != "Built-in Audio Digital Stereo (HDMI)"):
+                # Found the BT sink — check it's new (not HDMI)
+                if "bluez" in sink.name.lower() or sink.pw_id != self.get_default_sink().pw_id:
+                    self.set_default_output(sink.pw_id)
+                    print(f"[audio] Auto-set BT device {sink.description} as default")
+                    break
 
         return True, f"Connected to {address}"
 

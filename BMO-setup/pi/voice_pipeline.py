@@ -32,7 +32,7 @@ EDGE_TTS_VOICE = "en-US-AnaNeural"  # Young/playful voice for BMO
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
-SILENCE_THRESHOLD = 2500      # RMS threshold for silence detection (ambient ~2000 with TV/fans)
+SILENCE_THRESHOLD = 600       # RMS threshold for silence detection
 SILENCE_DURATION = 0.8        # Seconds of silence to stop recording
 MAX_RECORD_SECONDS = 10       # Max recording length
 WAKE_WORDS = ["hey_jarvis"]   # openwakeword fallback model
@@ -95,6 +95,17 @@ class VoicePipeline:
 
         # Audio state
         self._audio_queue = queue.Queue()
+        self._is_speaking = False
+
+        # Silero VAD model (lazy-loaded)
+        self._silero_vad = None
+        self._silero_vad_tried = False
+
+        # Adaptive ambient noise level (calibrated during wake word listening)
+        self._ambient_rms_avg = 0.0
+
+        # Streaming chat callback: if set, returns a generator of text chunks
+        self._chat_stream_callback = None
 
     # ── Model Loading (local fallback models) ─────────────────────────
 
@@ -115,6 +126,52 @@ class VoicePipeline:
             from resemblyzer import VoiceEncoder
             self._speaker_encoder = VoiceEncoder()
         return self._speaker_encoder
+
+    def _load_silero_vad(self):
+        """Load Silero VAD model for speech detection. ~1MB, runs on CPU in <1ms."""
+        if self._silero_vad is not None:
+            return self._silero_vad
+        if self._silero_vad_tried:
+            return None
+        self._silero_vad_tried = True
+        try:
+            import torch
+            import torchaudio  # noqa: F401 — required by silero
+            model, utils = torch.hub.load(
+                repo_or_dir='snakers4/silero-vad',
+                model='silero_vad',
+                force_reload=False,
+                trust_repo=True,
+            )
+            self._silero_vad = model
+            print("[vad] Silero VAD loaded")
+        except Exception as e:
+            print(f"[vad] Silero VAD not available ({e}), using energy-only")
+        return self._silero_vad
+
+    def _silero_check_speech(self, audio_int16: np.ndarray) -> float:
+        """Run Silero VAD on audio chunk. Returns max speech probability 0.0-1.0."""
+        vad = self._load_silero_vad()
+        if vad is None:
+            return 1.0  # No VAD = assume speech (fall back to energy-only)
+        try:
+            import torch
+            # Silero v5 expects 512-sample (32ms) windows at 16kHz
+            audio_f32 = audio_int16.flatten().astype(np.float32) / 32768.0
+            window = 512
+            max_prob = 0.0
+            # Process in 512-sample windows, take max probability
+            for i in range(0, len(audio_f32) - window + 1, window):
+                chunk = torch.from_numpy(audio_f32[i:i + window])
+                prob = vad(chunk, SAMPLE_RATE).item()
+                if prob > max_prob:
+                    max_prob = prob
+                if max_prob > 0.5:
+                    break  # Early exit — speech confirmed
+            return max_prob
+        except Exception as e:
+            print(f"[vad] Silero error: {e}")
+            return 1.0
 
     def _load_voice_profiles(self):
         if os.path.exists(VOICE_PROFILES_PATH):
@@ -137,16 +194,21 @@ class VoicePipeline:
         self._running = False
 
     def _wake_word_loop(self):
-        """Listen for 'hey bmo' using energy-based VAD + quick STT check."""
+        """Listen for 'hey bmo' using adaptive energy VAD + Silero VAD + quick STT check."""
         chunk_size = 1280  # 80ms at 16kHz
         ring_buffer = []   # rolling 2-second buffer
         max_ring_chunks = int(2.0 * SAMPLE_RATE / chunk_size)  # ~2s of audio
-        energy_threshold = 5000  # RMS energy — lowered for mic gain 35/62 (was 8000 at gain 62)
+        # Adaptive energy threshold: calibrated from ambient noise on startup.
+        # Starts high (2500) and auto-adjusts using a rolling average of ambient RMS.
+        energy_threshold = 2500
+        ambient_rms_avg = 0.0  # exponential moving average of ambient noise
+        ambient_alpha = 0.02   # smoothing factor (slow adaptation)
+        ENERGY_HEADROOM = 1.8  # speech must be this × ambient to trigger
         cooldown_until = 0.0
         consecutive_active = 0
-        ACTIVE_CHUNKS_NEEDED = 5  # ~400ms of sustained loud speech before checking
+        ACTIVE_CHUNKS_NEEDED = 6  # ~480ms of sustained speech before STT check
 
-        print("[wake] Listening for 'hey BMO'...")
+        print("[wake] Listening for 'hey BMO' (adaptive energy threshold)...")
         self._wake_triggered = False
         while self._running:
             try:
@@ -168,6 +230,11 @@ class VoicePipeline:
                            energy_threshold, cooldown_until, consecutive_active,
                            active_needed):
         """One cycle of wake word listening. Exits when wake detected."""
+        # Adaptive threshold state — mutable via nonlocal
+        ambient_rms_avg = getattr(self, '_ambient_rms_avg', 0.0)
+        ambient_alpha = 0.02
+        ENERGY_HEADROOM = 1.8
+
         def audio_callback(indata, frames, time_info, status):
             if status:
                 print(f"[audio] {status}")
@@ -193,39 +260,57 @@ class VoicePipeline:
 
                 # Check energy level
                 rms = np.sqrt(np.mean(chunk.astype(np.float32) ** 2))
-                if rms > energy_threshold:
-                    consecutive_active += 1
-                else:
+
+                # Adaptive ambient noise tracking: update when chunk is quiet
+                # (below current threshold = ambient noise, not speech)
+                if rms < energy_threshold:
+                    if ambient_rms_avg == 0.0:
+                        ambient_rms_avg = rms  # seed on first quiet chunk
+                    else:
+                        ambient_rms_avg = ambient_alpha * rms + (1 - ambient_alpha) * ambient_rms_avg
+                    # Update threshold: must be well above ambient
+                    energy_threshold = max(800, ambient_rms_avg * ENERGY_HEADROOM)
+                    self._ambient_rms_avg = ambient_rms_avg
                     consecutive_active = 0
                     continue
+
+                # RMS above threshold — potential speech
+                consecutive_active += 1
 
                 now = time.time()
                 if consecutive_active < active_needed or now < cooldown_until:
                     continue
 
-                # Grab last ~2s of audio and run quick STT
-                audio_bytes = np.concatenate(ring_buffer).tobytes()
-                cooldown_until = now + 4.0
+                # Grab last ~2s of audio for analysis
+                ring_audio = np.concatenate(ring_buffer)
+                cooldown_until = now + 6.0  # 6s cooldown between STT checks
                 consecutive_active = 0
 
+                # Silero VAD check — confirm it's actually speech, not just noise
+                speech_prob = self._silero_check_speech(ring_audio)
+                if speech_prob < 0.3:
+                    print(f"[wake] Silero rejected (prob={speech_prob:.2f})")
+                    continue
+
                 try:
+                    audio_bytes = ring_audio.tobytes()
                     wav_buf = self._pcm_to_wav(audio_bytes)
                     text = self._quick_stt(wav_buf)
-                    text_lower = (text or "").lower().strip()
+                    if not text:
+                        continue  # Filtered as hallucination or no speech
+                    text_lower = text.lower().strip()
                     print(f"[wake] STT check: '{text_lower}'")
                     has_bmo = any(
                         re.search(r'\b' + re.escape(v) + r'\b', text_lower)
                         for v in WAKE_VARIANTS
                     )
-                    # Require a greeting word near BMO to filter TV audio
+                    # Require a greeting word near BMO to filter noise/TV audio.
+                    # Single-word "bmo" is too easily hallucinated by Whisper on silence.
                     has_greeting = bool(re.search(
-                        r'\b(hey|hi|yo|okay|ok|oh)\b', text_lower
+                        r'\b(hey|hi|yo|okay|ok)\b', text_lower
                     ))
-                    word_count = len(text_lower.split())
-                    # Accept: "hey bmo", "hi bmo", "yo bmo" (greeting + bmo)
-                    # Accept: just "bmo" alone (1 word only — deliberate wake)
-                    # Reject: TV sentences containing "bmo" without greeting
-                    is_wake = has_bmo and (has_greeting or word_count <= 1)
+                    # Must have both BMO name + greeting prefix
+                    is_wake = has_bmo and has_greeting
                     if is_wake:
                         print(f"[wake] Detected 'hey BMO' in: {text}")
                         self._emit("status", {"state": "listening"})
@@ -249,28 +334,57 @@ class VoicePipeline:
             wf.writeframes(pcm_bytes)
         return buf.getvalue()
 
+    # Common Whisper hallucinations on silence/ambient noise
+    _WHISPER_HALLUCINATIONS = frozenset({
+        "", ".", "so", "the", "i", "a", "hey", "hey.", "oh", "oh.", "okay",
+        "okay.", "thank you", "thank you.", "thanks", "thanks.", "bye",
+        "hmm", "uh", "um", "mm", "you", "it", "is", "no", "yes",
+        "bmo", "bmo.", "demo", "nemo",
+    })
+
     def _quick_stt(self, wav_bytes: bytes) -> str:
-        """Quick STT for wake word detection — uses Groq Whisper."""
+        """Quick STT for wake word detection — uses Groq Whisper.
+
+        Returns empty string if the result looks like a hallucination
+        (very short text that Whisper commonly produces from silence).
+        """
+        text = ""
         try:
             from cloud_providers import groq_stt, GROQ_API_KEY
             if GROQ_API_KEY:
                 result = groq_stt(wav_bytes, prompt="Hey BMO.")
-                return result.get("text", "")
+                text = result.get("text", "")
+                # Check no_speech_prob from segments — high = likely hallucination
+                segments = result.get("segments", [])
+                if segments:
+                    avg_no_speech = sum(s.get("no_speech_probability", 0) for s in segments) / len(segments)
+                    if avg_no_speech > 0.5:
+                        print(f"[wake] Rejected (no_speech_prob={avg_no_speech:.2f}): '{text}'")
+                        return ""
         except Exception:
             pass
-        # Fallback to local whisper
-        try:
-            model = self._load_whisper()
-            import tempfile, os
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                f.write(wav_bytes)
-                tmp = f.name
-            segments, _ = model.transcribe(tmp, language="en", beam_size=1,
-                                           vad_filter=False)
-            os.unlink(tmp)
-            return " ".join(s.text for s in segments).strip()
-        except Exception:
+
+        if not text:
+            # Fallback to local whisper
+            try:
+                model = self._load_whisper()
+                import tempfile, os
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                    f.write(wav_bytes)
+                    tmp = f.name
+                segments, _ = model.transcribe(tmp, language="en", beam_size=1,
+                                               vad_filter=False)
+                os.unlink(tmp)
+                text = " ".join(s.text for s in segments).strip()
+            except Exception:
+                return ""
+
+        # Filter common single-word hallucinations
+        cleaned = text.strip().lower().rstrip(".,!?")
+        if cleaned in self._WHISPER_HALLUCINATIONS:
             return ""
+
+        return text
 
     def _on_wake(self):
         """Called when wake word is detected. Records, transcribes, processes, then listens for follow-ups."""
@@ -291,10 +405,86 @@ class VoicePipeline:
             return
         threading.Thread(target=self._follow_up_loop, daemon=True).start()
 
+    def _stream_and_speak(self, text_gen) -> str:
+        """Consume LLM text stream, buffer sentences, TTS each as it completes.
+
+        Starts speaking the first sentence while the LLM is still generating
+        the rest, cutting perceived latency significantly.
+        Returns the full response text.
+        """
+        self._emit("status", {"state": "speaking"})
+        self._is_speaking = True
+        self._speak_volume = None
+
+        full_text = ""
+        try:
+            buffer = ""
+            sentences_spoken = 0
+
+            for chunk in text_gen:
+                full_text += chunk
+                buffer += chunk
+
+                # Extract complete sentences (. ! ? followed by space or newline)
+                while True:
+                    match = re.search(r'[.!?][\s\n]', buffer)
+                    if not match:
+                        break
+                    end = match.end()
+                    sentence = buffer[:end].strip()
+                    buffer = buffer[end:]
+                    if sentence:
+                        tts_text = self._strip_markdown(sentence)
+                        print(f"[stream] Sentence {sentences_spoken + 1}: {tts_text[:60]}...")
+                        try:
+                            self._cloud_speak(tts_text)
+                        except Exception:
+                            try:
+                                self._edge_speak(tts_text)
+                            except Exception as e:
+                                print(f"[stream] TTS failed: {e}")
+                        sentences_spoken += 1
+
+            # Speak any remaining text in buffer
+            remaining = buffer.strip()
+            if remaining:
+                tts_text = self._strip_markdown(remaining)
+                if not tts_text:
+                    return full_text
+                print(f"[stream] Final: {tts_text[:60]}...")
+                try:
+                    self._cloud_speak(tts_text)
+                except Exception:
+                    try:
+                        self._edge_speak(tts_text)
+                    except Exception as e:
+                        print(f"[stream] TTS failed: {e}")
+
+            return full_text
+        except Exception as e:
+            print(f"[stream] Error: {e}")
+            return full_text
+        finally:
+            self._is_speaking = False
+            time.sleep(0.5)
+            while not self._audio_queue.empty():
+                try:
+                    self._audio_queue.get_nowait()
+                except queue.Empty:
+                    break
+            self._emit("status", {"state": "idle"})
+
     def _process_one_turn(self, is_follow_up: bool = False) -> str | None:
         """Record, transcribe, get response, speak it. Returns response text or None."""
         audio_data = self.record_until_silence()
         if audio_data is None:
+            self._emit("status", {"state": "idle"})
+            return None
+
+        # Silero VAD check — reject recordings that are just noise, not speech
+        speech_prob = self._silero_check_speech(audio_data)
+        if speech_prob < 0.3:
+            print(f"[conv] Silero rejected recording (prob={speech_prob:.2f})")
             self._emit("status", {"state": "idle"})
             return None
 
@@ -316,11 +506,24 @@ class VoicePipeline:
             print(f"[stt] {speaker}: {text}")
             self._emit("transcription", {"speaker": speaker, "text": text})
 
-            # Check for conversation-ending phrases (only during follow-ups)
+            # Check for conversation-ending phrases
             text_lower = text.lower().strip().rstrip(".")
             is_closing = text_lower in ("goodbye", "bye", "good night", "goodnight",
                               "that's all", "thanks bmo", "thank you bmo",
                               "never mind", "nevermind", "stop")
+
+            # Use streaming path for non-closing turns (faster response)
+            if self._chat_stream_callback and not is_closing:
+                try:
+                    text_gen = self._chat_stream_callback(text, speaker)
+                    response = self._stream_and_speak(text_gen)
+                    if response:
+                        self._emit("response", {"text": response, "speaker": speaker})
+                        return response
+                except Exception as e:
+                    print(f"[stream] Streaming failed ({e}), falling back to sync")
+
+            # Sync path: closing phrases and fallback
             if is_follow_up and is_closing:
                 print("[conv] User ended conversation")
                 if self._chat_callback:
@@ -425,9 +628,11 @@ class VoicePipeline:
     def _wait_for_speech(self, timeout: float) -> bool:
         """Wait up to `timeout` seconds for speech energy. Returns True if speech detected."""
         chunk_size = 1280
-        energy_threshold = 5000
+        # Use adaptive ambient level if available, otherwise start at 2500
+        ambient = getattr(self, '_ambient_rms_avg', 0.0)
+        energy_threshold = max(800, ambient * 1.8) if ambient > 0 else 2500
         consecutive_active = 0
-        needed = 3  # ~240ms of sustained speech
+        needed = 4  # ~320ms of sustained speech
 
         def audio_callback(indata, frames, time_info, status):
             self._audio_queue.put(indata.copy())
@@ -453,6 +658,11 @@ class VoicePipeline:
                 if rms > energy_threshold:
                     consecutive_active += 1
                     if consecutive_active >= needed:
+                        # Silero VAD double-check before confirming speech
+                        speech_prob = self._silero_check_speech(chunk)
+                        if speech_prob < 0.3:
+                            consecutive_active = 0
+                            continue
                         # Drain queue so record_until_silence starts clean
                         while not self._audio_queue.empty():
                             self._audio_queue.get_nowait()
@@ -463,10 +673,14 @@ class VoicePipeline:
 
     @staticmethod
     def _strip_markdown(text: str) -> str:
-        """Strip markdown formatting before TTS."""
+        """Strip markdown formatting and hardware tags before TTS."""
+        # Remove hardware control tags: [FACE:x], [LED:x], [EMOTION:x], [SOUND:x], [MUSIC:x], [NPC:x]
+        text = re.sub(r'\[(?:FACE|LED|EMOTION|SOUND|MUSIC|NPC):[^\]]*\]', '', text)
         text = re.sub(r'\*+', '', text)
         text = re.sub(r'#+\s*', '', text)
         text = re.sub(r'`[^`]*`', lambda m: m.group(0).strip('`'), text)
+        # Clean up extra whitespace from removed tags
+        text = re.sub(r'  +', ' ', text).strip()
         return text
 
     # ── Recording ────────────────────────────────────────────────────
@@ -512,7 +726,19 @@ class VoicePipeline:
         if not started_speaking:
             return None
 
-        return np.concatenate(chunks)
+        audio = np.concatenate(chunks)
+
+        # Validate recording has real speech energy, not just ambient noise.
+        # If max RMS of any chunk never significantly exceeded ambient, discard.
+        max_rms = max(
+            np.sqrt(np.mean(c.astype(np.float32) ** 2))
+            for c in chunks
+        ) if chunks else 0
+        if max_rms < SILENCE_THRESHOLD * 1.5:
+            print(f"[record] Discarded — max RMS {max_rms:.0f} too low (need {SILENCE_THRESHOLD * 1.5:.0f})")
+            return None
+
+        return audio
 
     def record_clip(self, duration: float = 10.0) -> str:
         """Record a fixed-duration clip and save to a temp file. Returns file path."""
@@ -566,6 +792,7 @@ class VoicePipeline:
             volume: Playback volume 0-100 (default: None = use ffplay default)
         """
         self._emit("status", {"state": "speaking"})
+        self._is_speaking = True
         self._speak_volume = volume
 
         if emotion:
@@ -588,14 +815,40 @@ class VoicePipeline:
         except Exception as e:
             print(f"[tts] All TTS failed: {e}")
         finally:
+            self._is_speaking = False
+            # Brief cooldown so mic doesn't pick up speaker echo/reverb
+            time.sleep(0.5)
+            # Drain any audio captured during TTS playback
+            while not self._audio_queue.empty():
+                try:
+                    self._audio_queue.get_nowait()
+                except queue.Empty:
+                    break
             self._emit("status", {"state": "idle"})
 
     def _play_audio(self, path: str):
-        """Play an audio file through speakers via ffplay."""
+        """Play an audio file — via ffplay (Pi) or emit URL to browser."""
         import os as _os
         file_size = _os.path.getsize(path)
         vol = getattr(self, "_speak_volume", None)
         vol_pct = f" @ {vol}%" if vol is not None else ""
+
+        # Check if browser output is configured (set by app.py)
+        tts_output = getattr(self, "_tts_output_mode", "pi")
+        if tts_output == "browser" and self.socketio:
+            filename = _os.path.basename(path)
+            url = f"/api/tts/audio/{filename}"
+            print(f"[tts] Sending {file_size} bytes to browser: {url}")
+            self.socketio.emit("tts_audio", {"url": url, "volume": vol})
+            # Don't delete file immediately — browser needs time to fetch it
+            # Schedule cleanup after 30s
+            def _cleanup():
+                time.sleep(30)
+                if _os.path.exists(path):
+                    _os.unlink(path)
+            threading.Thread(target=_cleanup, daemon=True).start()
+            return
+
         print(f"[tts] Playing {file_size} bytes via ffplay{vol_pct}...")
         env = os.environ.copy()
         env["XDG_RUNTIME_DIR"] = "/run/user/1000"
@@ -624,8 +877,10 @@ class VoicePipeline:
             asyncio.run(communicate.save(temp_path))
             self._play_audio(temp_path)
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            # Browser mode handles its own cleanup via _play_audio
+            if getattr(self, "_tts_output_mode", "pi") != "browser":
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
 
     def _split_tts_chunks(self, text: str, max_chars: int = 500) -> list[str]:
         """Split text into TTS-friendly chunks at sentence boundaries."""
@@ -647,25 +902,61 @@ class VoicePipeline:
         return chunks or [text]
 
     def _cloud_speak(self, text: str, speaker: str = "bmo_calm"):
-        """Generate speech via Fish Audio API and play locally."""
-        from cloud_providers import FISH_AUDIO_VOICE_ID
-        chunks = self._split_tts_chunks(text)
-        for i, chunk in enumerate(chunks):
-            audio_bytes = fish_audio_tts(chunk, voice_id=FISH_AUDIO_VOICE_ID)
-            if len(chunks) > 1:
-                print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio (chunk {i+1}/{len(chunks)})")
-            else:
-                print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio")
+        """Generate speech via Fish Audio API with pipelined playback.
 
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        Splits text into sentence-sized chunks and overlaps TTS generation
+        of the next chunk with playback of the current one, so the user
+        hears audio ~3s sooner on multi-sentence responses.
+        """
+        from concurrent.futures import ThreadPoolExecutor, Future
+        from cloud_providers import FISH_AUDIO_VOICE_ID
+
+        chunks = self._split_tts_chunks(text, max_chars=200)
+
+        if len(chunks) <= 1:
+            # Single chunk — no pipelining needed
+            audio_bytes = fish_audio_tts(chunks[0], voice_id=FISH_AUDIO_VOICE_ID)
+            print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio")
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
                 f.write(audio_bytes)
                 f.flush()
                 temp_path = f.name
-
             try:
                 self._play_audio(temp_path)
             finally:
-                os.unlink(temp_path)
+                if getattr(self, "_tts_output_mode", "pi") != "browser":
+                    os.unlink(temp_path)
+            return
+
+        # Pipeline: generate chunk N+1 while playing chunk N
+        is_browser = getattr(self, "_tts_output_mode", "pi") == "browser"
+
+        def _generate(chunk_text):
+            return fish_audio_tts(chunk_text, voice_id=FISH_AUDIO_VOICE_ID)
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            # Start generating first chunk
+            next_future: Future = pool.submit(_generate, chunks[0])
+
+            for i, chunk in enumerate(chunks):
+                # Wait for current chunk's audio
+                audio_bytes = next_future.result()
+                print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio ({i+1}/{len(chunks)})")
+
+                # Start generating NEXT chunk in parallel with playback
+                if i + 1 < len(chunks):
+                    next_future = pool.submit(_generate, chunks[i + 1])
+
+                # Save and play current chunk
+                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                    f.write(audio_bytes)
+                    f.flush()
+                    temp_path = f.name
+                try:
+                    self._play_audio(temp_path)
+                finally:
+                    if not is_browser:
+                        os.unlink(temp_path)
 
     def _local_speak(self, text: str):
         """Generate speech with local Piper TTS + pitch shift (fallback)."""

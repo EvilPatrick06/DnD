@@ -4,7 +4,7 @@
  * on :root to dynamically switch themes at runtime.
  */
 
-import themesJson from '../../public/data/ui/themes.json'
+import themesJson from '@data/ui/themes.json'
 import { load5eThemes, type ThemesFile } from './data-provider'
 
 type _ThemesFile = ThemesFile

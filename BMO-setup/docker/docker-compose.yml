@@ -49,6 +49,29 @@ services:
       timeout: 5s
       retries: 3
 
+  # TURN relay server — routes all VTT WebRTC traffic through the Pi
+  coturn:
+    image: coturn/coturn:latest
+    container_name: bmo-coturn
+    restart: unless-stopped
+    network_mode: host
+    command: >
+      -n
+      --listening-port=3478
+      --min-port=49152
+      --max-port=49200
+      --realm=dndvtt
+      --user=dndvtt:dndvtt-relay
+      --lt-cred-mech
+      --fingerprint
+      --no-tls
+      --no-dtls
+      --log-file=stdout
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
   # Pi-hole — DNS-level ad blocker (laptop, TV, phone only — not network-wide)
   pihole:
     image: pihole/pihole:latest

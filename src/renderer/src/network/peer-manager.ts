@@ -8,29 +8,28 @@ export { generateInviteCode } from '../utils/invite-code'
 let peer: Peer | null = null
 let localPeerId: string | null = null
 
-// Default ICE servers — Cloudflare TURN + Google STUN
-// Cloudflare Calls provides free TURN relay for NAT traversal
-// Configure TURN credentials in Cloudflare dashboard → Calls → TURN Keys
+// Pi relay server — all multiplayer traffic routes through the Pi
+const PI_HOST = '10.10.20.242'
+
+// ICE servers — Pi coturn TURN relay (forces all traffic through Pi)
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
-  { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'stun:stun.l.google.com:19302' },
   {
-    urls: 'turn:turn.cloudflare.com:3478?transport=udp',
-    username: '', // Set via setIceConfig() with Cloudflare Calls TURN credentials
-    credential: ''
+    urls: `turn:${PI_HOST}:3478?transport=udp`,
+    username: 'dndvtt',
+    credential: 'dndvtt-relay'
   },
   {
-    urls: 'turns:turn.cloudflare.com:5349?transport=tcp',
-    username: '',
-    credential: ''
+    urls: `turn:${PI_HOST}:3478?transport=tcp`,
+    username: 'dndvtt',
+    credential: 'dndvtt-relay'
   }
 ]
 
-// Custom PeerJS signaling server (Pi via Cloudflare Tunnel)
-let customSignalingHost: string | null = null
-let customSignalingPort: number | null = null
-let customSignalingPath: string = '/'
-let customSignalingSecure: boolean = true
+// PeerJS signaling server on the Pi (Docker container, port 9000)
+let customSignalingHost: string | null = PI_HOST
+let customSignalingPort: number | null = 9000
+let customSignalingPath: string = '/myapp'
+let customSignalingSecure: boolean = false
 
 /**
  * Configure a custom PeerJS signaling server (e.g. Pi via Cloudflare Tunnel).
@@ -56,16 +55,17 @@ export function setSignalingServer(host: string, port?: number, path?: string, s
 }
 
 /**
- * Reset signaling server to PeerJS cloud default.
+ * Reset signaling server to Pi default.
  */
 export function resetSignalingServer(): void {
-  customSignalingHost = null
-  customSignalingPort = null
-  customSignalingPath = '/'
-  customSignalingSecure = true
+  customSignalingHost = PI_HOST
+  customSignalingPort = 9000
+  customSignalingPath = '/myapp'
+  customSignalingSecure = false
 }
 
 let iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
+let forceRelay = true
 
 /**
  * Override ICE server configuration (e.g. with user-configured TURN servers).
@@ -90,6 +90,22 @@ export function resetIceConfig(): void {
 }
 
 /**
+ * Force all WebRTC traffic through TURN relay (no direct P2P).
+ * When true, sets iceTransportPolicy to 'relay' so all data routes through
+ * the configured TURN server (e.g. coturn on the Pi).
+ */
+export function setForceRelay(relay: boolean): void {
+  forceRelay = relay
+}
+
+/**
+ * Get the current force-relay setting.
+ */
+export function getForceRelay(): boolean {
+  return forceRelay
+}
+
+/**
  * Create a new PeerJS instance. If a customId is provided, it will be used
  * as the peer ID (used by the host with the invite code). Otherwise PeerJS
  * assigns a random ID.
@@ -103,7 +119,10 @@ export function createPeer(customId?: string): Promise<Peer> {
 
     const options: Record<string, unknown> = {
       debug: import.meta.env.DEV ? 2 : 0,
-      config: { iceServers }
+      config: {
+        iceServers,
+        ...(forceRelay && { iceTransportPolicy: 'relay' })
+      }
     }
 
     // Use custom signaling server if configured (Pi via Cloudflare Tunnel)

@@ -5,9 +5,9 @@ import time
 
 import requests
 
-# Colorado Springs coordinates
-LATITUDE = 38.8339
-LONGITUDE = -104.8214
+# Briargate, Colorado Springs coordinates
+LATITUDE = 38.9364
+LONGITUDE = -104.7595
 TIMEZONE = "America/Denver"
 
 # WMO Weather codes → descriptions and icons

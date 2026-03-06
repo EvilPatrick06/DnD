@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import lightingTravelData from '../../../../public/data/5e/game/mechanics/lighting-travel.json'
+import lightingTravelData from '@data/5e/game/mechanics/lighting-travel.json'
 import { load5eLightingTravel } from '../../../services/data-provider'
 import { useGameStore } from '../../../stores/use-game-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'

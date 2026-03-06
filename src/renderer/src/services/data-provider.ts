@@ -1,5 +1,3 @@
-// CDN provider available as an optional fallback for map images and remote game data
-
 import { useDataStore } from '../stores/use-data-store'
 import { getSystem } from '../systems/registry'
 import type { BuildSlotCategory, DetailField, SelectableOption } from '../types/character-common'
@@ -47,7 +45,6 @@ import type {
   SpeciesData,
   SpeciesResourcesFile,
   SpeciesSpellsFile,
-  SpeciesTrait,
   SpellData,
   SubclassData,
   ThemesFile,
@@ -78,11 +75,8 @@ type _MountStatBlock = MountStatBlock
 type _VehicleStatBlock = VehicleStatBlock
 
 import { logger } from '../utils/logger'
-import cdnProvider from './cdn-provider'
-
 import { DATA_PATHS } from './data-paths'
 export { DATA_PATHS }
-export { cdnProvider }
 
 // Re-export world/data types for consumers that access them through data-provider
 export type {
@@ -341,8 +335,20 @@ export async function getOptionsForSlot(
         return []
       }
       case 'class': {
-        const classes = await load5eClasses()
-        return classes.map(classToOption)
+        try {
+          const classes = await load5eClasses()
+          const valid = classes.filter((cls) => {
+            if (!cls?.coreTraits) {
+              logger.warn('[DataProvider] Class entry missing coreTraits:', JSON.stringify(cls).slice(0, 200))
+              return false
+            }
+            return true
+          })
+          return valid.map(classToOption)
+        } catch (error) {
+          logger.error('[DataProvider] Failed to load classes:', error)
+          return []
+        }
       }
       case 'background': {
         const bgs = await load5eBackgrounds()
@@ -469,7 +475,6 @@ interface IndexEntry {
 
 async function loadFromIndex<T extends { id?: string }>(indexPath: string): Promise<T[]> {
   const index = await loadJson<IndexEntry[]>(indexPath)
-  const basePath = indexPath.substring(0, indexPath.lastIndexOf('/') + 1).replace('./data/5e/', '')
   const results = await Promise.all(
     index
       .filter((entry) => entry.path)

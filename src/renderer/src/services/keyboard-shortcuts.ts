@@ -1,6 +1,6 @@
 // keyboard-shortcuts.ts — Global keyboard shortcut manager for the game view
 
-import shortcutsJson from '../../public/data/ui/keyboard-shortcuts.json'
+import shortcutsJson from '@data/ui/keyboard-shortcuts.json'
 import { type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
 import { load5eKeyboardShortcuts } from './data-provider'
 

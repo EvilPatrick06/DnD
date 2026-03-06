@@ -7,7 +7,7 @@ import GlobalSettingsButton from './components/ui/GlobalSettingsButton'
 import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
-import { cdnProvider, preloadAllData } from './services/data-provider'
+import { preloadAllData } from './services/data-provider'
 import { loadShortcutDefinitions } from './services/keyboard-shortcuts'
 import * as NotificationService from './services/notification-service'
 import { loadTemplates as loadNotificationTemplates } from './services/notification-service'
@@ -46,9 +46,6 @@ function App(): JSX.Element {
     initSoundManager()
     preloadEssential()
     preloadAllData()
-
-    // Probe CDN availability for optional remote asset fallback
-    cdnProvider.isAvailable()
 
     // Warm caches for module-level data loaders so they are referenced as used exports.
     // These are fire-and-forget; errors are non-fatal (data-provider caches handle fallback).

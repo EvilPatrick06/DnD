@@ -1,4 +1,4 @@
-import speciesResourcesJson from '../../public/data/5e/game/mechanics/species-resources.json'
+import speciesResourcesJson from '@data/5e/game/mechanics/species-resources.json'
 import { load5eSpeciesResources } from '../services/data-provider'
 import type { ClassResource } from '../types/character-common'
 import type { ResourceDefinition, ResourceScaling } from '../types/data'

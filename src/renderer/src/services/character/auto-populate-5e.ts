@@ -1,4 +1,4 @@
-import speciesSpellsJson from '../../../public/data/5e/character/species-spells.json'
+import speciesSpellsJson from '@data/5e/character/species-spells.json'
 import type { Character5e } from '../../types/character-5e'
 import type { AbilityName, SpellEntry } from '../../types/character-common'
 import { load5eSpeciesSpells } from '../data-provider'

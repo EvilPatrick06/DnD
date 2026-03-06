@@ -8,6 +8,9 @@ Usage:
     python app.py
 """
 
+from gevent import monkey
+monkey.patch_all()
+
 import asyncio
 import json
 import os
@@ -17,12 +20,22 @@ import subprocess
 import threading
 import time
 
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request, send_from_directory
 from flask_socketio import SocketIO
 
 # ── App Setup ────────────────────────────────────────────────────────
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+
+@app.after_request
+def _no_cache(response):
+    """Prevent browser from caching HTML/JS/CSS so updates are served immediately."""
+    if "text/html" in response.content_type or "javascript" in response.content_type or "text/css" in response.content_type:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 
 def _get_secret_key() -> str:
@@ -92,6 +105,9 @@ def init_services():
     try:
         from voice_pipeline import VoicePipeline
         voice = VoicePipeline(socketio=socketio)
+        saved_voice_vol = _load_setting("volume.voice", None)
+        if saved_voice_vol is not None:
+            voice._speak_volume = int(saved_voice_vol)
         service_map["voice"] = voice
         print("[bmo]   Voice pipeline: OK")
     except Exception as e:
@@ -133,10 +149,19 @@ def init_services():
     except Exception as e:
         print(f"[bmo]   Weather: SKIPPED ({e})")
 
+    # Audio output routing (before music so music can use it)
+    try:
+        from audio_output_service import AudioOutputService
+        audio_service = AudioOutputService()
+        service_map["audio"] = audio_service
+        print("[bmo]   Audio output: OK")
+    except Exception as e:
+        print(f"[bmo]   Audio output: SKIPPED ({e})")
+
     # Music (requires ytmusicapi/vlc)
     try:
         from music_service import MusicService
-        music = MusicService(smart_home=smart_home, socketio=socketio)
+        music = MusicService(smart_home=smart_home, socketio=socketio, audio_service=audio_service)
         service_map["music"] = music
         print("[bmo]   Music: OK")
     except Exception as e:
@@ -147,6 +172,9 @@ def init_services():
         from timer_service import TimerService
         timers = TimerService(voice_pipeline=voice, socketio=socketio,
                               agent_fn=lambda: agent)
+        saved_alarm_vol = _load_setting("volume.alarms", None)
+        if saved_alarm_vol is not None:
+            timers.alarm_volume = int(saved_alarm_vol)
         service_map["timers"] = timers
         print("[bmo]   Timers: OK")
     except Exception as e:
@@ -165,6 +193,18 @@ def init_services():
         calendar.start_polling()
     if weather:
         weather.start_polling()
+    # Boost mic gain for cross-room pickup (PipeWire, persists until reboot)
+    try:
+        subprocess.run(
+            ["wpctl", "set-volume", "@DEFAULT_SOURCE@", "1.5"],
+            capture_output=True, timeout=3,
+            env={**os.environ, "XDG_RUNTIME_DIR": "/run/user/1000",
+                 "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus"},
+        )
+        print("[bmo]   Mic gain: 150%")
+    except Exception as e:
+        print(f"[bmo]   Mic gain set failed: {e}")
+
     if voice:
         print("[bmo]   Starting voice listener...")
         def _voice_chat(text, speaker="unknown"):
@@ -176,6 +216,16 @@ def init_services():
                 print(f"[voice] Chat error: {e}")
                 return ""
         voice._chat_callback = _voice_chat
+
+        def _voice_chat_stream(text, speaker="unknown"):
+            """Streaming voice chat — yields text chunks for faster TTS start."""
+            try:
+                return agent.chat_stream(text, speaker=speaker)
+            except Exception as e:
+                print(f"[voice] Stream chat error: {e}")
+                return iter([])
+        voice._chat_stream_callback = _voice_chat_stream
+
         voice.start_listening()
 
     # Load notes from disk
@@ -217,16 +267,64 @@ def init_services():
     except Exception as e:
         print(f"[bmo]   Notifications: SKIPPED ({e})")
 
-    # Audio output routing
-    try:
-        from audio_output_service import AudioOutputService
-        audio_service = AudioOutputService()
-        service_map["audio"] = audio_service
-        print("[bmo]   Audio output: OK")
-    except Exception as e:
-        print(f"[bmo]   Audio output: SKIPPED ({e})")
-
     # Scene mode engine
+    def _scene_tv_send_key(key):
+        if _tv_remote or os.path.exists(_TV_CERTFILE):
+            r = _tv_cmd("send_key", key=key)
+            if r.get("error"):
+                print(f"[scene] TV key failed: {r['error']}")
+
+    def _scene_tv_launch(app_name):
+        url = TV_APPS.get(app_name, "")
+        if url and (_tv_remote or os.path.exists(_TV_CERTFILE)):
+            r = _tv_cmd("launch_app", uri=url)
+            if r.get("error"):
+                print(f"[scene] TV launch failed: {r['error']}")
+
+    def _scene_tv_power_on():
+        """Turn TV on only if it's currently off (queries live status)."""
+        global _tv_is_on
+        if not (_tv_remote or os.path.exists(_TV_CERTFILE)):
+            print("[scene] TV not connected — pair first")
+            return False
+        status = _tv_cmd("status")
+        is_on = status.get("is_on")
+        if is_on is True:
+            print("[scene] TV already on, skipping POWER")
+            return True
+        r = _tv_cmd("send_key", key="POWER")
+        if not r.get("error"):
+            _tv_is_on = True
+            print("[scene] TV powered on")
+            return True
+        print(f"[scene] TV power on failed: {r.get('error')}")
+        return False
+
+    def _scene_tv_power_off():
+        """Turn TV off only if it's currently on (queries live status)."""
+        global _tv_is_on
+        if not (_tv_remote or os.path.exists(_TV_CERTFILE)):
+            print("[scene] TV not connected — pair first")
+            return False
+        status = _tv_cmd("status")
+        is_on = status.get("is_on")
+        if is_on is False:
+            print("[scene] TV already off, skipping POWER")
+            return True
+        r = _tv_cmd("send_key", key="POWER")
+        if not r.get("error"):
+            _tv_is_on = False
+            print("[scene] TV powered off")
+            return True
+        print(f"[scene] TV power off failed: {r.get('error')}")
+        return False
+
+    service_map["tv_send_key"] = _scene_tv_send_key
+    service_map["tv_launch"] = _scene_tv_launch
+    service_map["tv_is_on"] = lambda: _tv_is_on
+    service_map["tv_power_on"] = _scene_tv_power_on
+    service_map["tv_power_off"] = _scene_tv_power_off
+
     try:
         from scene_service import SceneService
         scene_service = SceneService(services=service_map, socketio=socketio)
@@ -234,6 +332,12 @@ def init_services():
         print("[bmo]   Scene engine: OK")
     except Exception as e:
         print(f"[bmo]   Scene engine: SKIPPED ({e})")
+
+    # Restore system (PipeWire) volume from saved settings
+    saved_sys_vol = _load_setting("volume.system", None)
+    if saved_sys_vol is not None:
+        _set_system_volume(int(saved_sys_vol))
+        print(f"[bmo]   System volume restored: {saved_sys_vol}%")
 
     print("[bmo] All services initialized!")
 
@@ -605,7 +709,7 @@ def api_music_seek():
 @app.route("/api/music/volume", methods=["POST"])
 def api_music_volume():
     data = request.json or {}
-    music.set_volume(data.get("level", 50))
+    music.set_volume(data.get("volume", data.get("level", 50)))
     return jsonify({"ok": True})
 
 
@@ -624,15 +728,6 @@ def api_music_cast():
     data = request.json or {}
     music.set_output_device(data.get("device", "pi"))
     return jsonify({"ok": True})
-
-
-@app.route("/api/music/stream-url")
-def api_music_stream_url():
-    """Return the current audio stream URL for laptop web UI playback."""
-    url = music.get_laptop_stream_url()
-    if url:
-        return jsonify({"url": url})
-    return jsonify({"url": None})
 
 
 @app.route("/api/music/shuffle", methods=["POST"])
@@ -725,8 +820,11 @@ def api_music_lyrics(video_id):
 @app.route("/api/calendar/events")
 def api_calendar_events():
     days = int(request.args.get("days", 7))
-    events = calendar.get_upcoming_events(days_ahead=days)
-    return jsonify(events)
+    try:
+        events = calendar.get_upcoming_events(days_ahead=days)
+        return jsonify({"events": events})
+    except RuntimeError:
+        return jsonify({"offline": True, "events": [], "needs_auth": True})
 
 
 @app.route("/api/calendar/today")
@@ -781,6 +879,63 @@ def api_calendar_delete(event_id):
     return jsonify({"ok": True})
 
 
+@app.route("/api/calendar/auth/url")
+def api_calendar_auth_url():
+    """Generate OAuth URL for Google Calendar authorization."""
+    try:
+        from google_auth_oauthlib.flow import Flow
+        creds_path = os.path.expanduser("~/bmo/config/credentials.json")
+        flow = Flow.from_client_secrets_file(
+            creds_path,
+            scopes=["https://www.googleapis.com/auth/calendar"],
+            redirect_uri="http://localhost/",
+        )
+        auth_url, state = flow.authorization_url(
+            access_type="offline", prompt="consent",
+        )
+        app.config["_cal_auth_flow"] = flow
+        return jsonify({"url": auth_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/calendar/auth/callback", methods=["POST"])
+def api_calendar_auth_callback():
+    """Exchange auth code for token and save it. User pastes the full redirect URL or just the code."""
+    raw = (request.json or {}).get("code", "").strip()
+    if not raw:
+        return jsonify({"error": "No code provided"}), 400
+    try:
+        import urllib.parse
+        token_path = os.path.expanduser("~/bmo/config/token.json")
+
+        # Reuse the flow from auth URL generation (has PKCE code_verifier)
+        flow = app.config.get("_cal_auth_flow")
+        if not flow:
+            return jsonify({"error": "No auth session — click Authorize Calendar first"}), 400
+
+        # User may paste full redirect URL or just the code
+        if "code=" in raw:
+            parsed = urllib.parse.urlparse(raw)
+            params = urllib.parse.parse_qs(parsed.query)
+            code = params.get("code", [raw])[0]
+        else:
+            code = raw
+        print(f"[calendar] Exchanging auth code: {code[:20]}...")
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        with open(token_path, "w") as f:
+            f.write(creds.to_json())
+        # Reset calendar service to pick up new token
+        calendar._service = None
+        calendar._cache = []
+        app.config.pop("_cal_auth_flow", None)
+        return jsonify({"ok": True, "message": "Calendar authorized!"})
+    except Exception as e:
+        print(f"[calendar] Auth failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ── Camera API ───────────────────────────────────────────────────────
 
 @app.route("/api/camera/stream")
@@ -801,8 +956,22 @@ def api_camera_snapshot():
 def api_camera_describe():
     data = request.json or {}
     prompt = data.get("prompt", "What do you see?")
-    description = camera.describe_scene(prompt)
-    return jsonify({"description": description})
+
+    def _do_describe():
+        print("[vision] Starting describe thread...")
+        try:
+            description = camera.describe_scene(prompt)
+            print(f"[vision] Got: {description[:80]}...")
+        except Exception as e:
+            import traceback
+            print(f"[vision] Error: {e}")
+            traceback.print_exc()
+            description = "Gemini vision failed or you are offline"
+        socketio.emit("vision_result", {"description": description})
+        print("[vision] Emitted vision_result")
+
+    threading.Thread(target=_do_describe, daemon=True).start()
+    return jsonify({"ok": True, "message": "Describing..."})
 
 
 @app.route("/api/camera/faces")
@@ -887,6 +1056,17 @@ def api_alarm_snooze(alarm_id):
     return jsonify({"ok": True})
 
 
+@app.route("/api/alarms/volume", methods=["GET", "POST"])
+def api_alarm_volume():
+    """Get or set alarm volume. None = use system volume."""
+    if request.method == "GET":
+        return jsonify({"volume": timers.alarm_volume})
+    data = request.json or {}
+    vol = data.get("volume")  # None or int 0-100
+    timers.alarm_volume = int(vol) if vol is not None else None
+    return jsonify({"ok": True, "volume": timers.alarm_volume})
+
+
 # ── LED API ──────────────────────────────────────────────────────────
 
 @app.route("/api/led/wake", methods=["POST"])
@@ -956,20 +1136,55 @@ def api_led_status():
 
 # ── Volume API ───────────────────────────────────────────────────────
 
+def _get_system_volume() -> int:
+    """Read PipeWire system volume as 0-100 integer."""
+    try:
+        import subprocess
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        r = subprocess.run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"],
+                           capture_output=True, text=True, timeout=5, env=env)
+        # Output: "Volume: 0.25" or "Volume: 0.25 [MUTED]"
+        parts = r.stdout.strip().split()
+        if len(parts) >= 2:
+            return int(float(parts[1]) * 100)
+    except Exception:
+        pass
+    return _load_setting("volume.system", 25)
+
+
+def _set_system_volume(level: int):
+    """Set PipeWire system volume (0-100)."""
+    try:
+        import subprocess
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        vol = max(0.0, min(1.5, level / 100.0))  # allow up to 150% for extra headroom
+        subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", str(vol)],
+                       capture_output=True, timeout=5, env=env)
+    except Exception as e:
+        print(f"[volume] Failed to set system volume: {e}")
+
+
 @app.route("/api/volume")
 def api_volume_get():
     """Get all volume levels."""
-    music_vol = 50
+    music_vol = _load_setting("volume.music", 50)
     if music:
         try:
-            music_vol = music._player.audio_get_volume() if music._player else 50
+            live_vol = music._player.audio_get_volume() if music._player else -1
+            if live_vol > 0:
+                music_vol = live_vol
         except Exception:
-            music_vol = _load_setting("volume.music", 50)
+            pass
+    alarm_vol = timers.alarm_volume if timers and timers.alarm_volume is not None else _load_setting("volume.alarms", 80)
     return jsonify({
+        "system": _get_system_volume(),
         "music": music_vol,
         "voice": getattr(voice, "_speak_volume", 80) if voice else 80,
         "effects": _load_setting("volume.effects", 80),
         "notifications": _load_setting("volume.notifications", 80),
+        "alarms": alarm_vol,
     })
 
 
@@ -978,9 +1193,12 @@ def api_volume_set():
     """Set volume for a specific category."""
     data = request.json or {}
     category = data.get("category", "")
-    level = max(0, min(100, data.get("level", 50)))
+    max_level = 150 if category == "system" else 100
+    level = max(0, min(max_level, data.get("level", 50)))
 
-    if category == "music" and music:
+    if category == "system":
+        _set_system_volume(level)
+    elif category == "music" and music:
         music.set_volume(level)
     elif category == "voice" and voice:
         voice._speak_volume = level
@@ -988,6 +1206,8 @@ def api_volume_set():
         pass  # Sound effects volume applied at play time
     elif category == "notifications":
         pass  # Notification volume applied at announce time
+    elif category == "alarms" and timers:
+        timers.alarm_volume = level
     else:
         return jsonify({"ok": False, "error": f"Unknown category: {category}"})
 
@@ -1031,14 +1251,40 @@ def api_audio_set_output():
     return jsonify({"ok": ok})
 
 
-@app.route("/api/audio/bluetooth/scan", methods=["POST"])
-def api_audio_bt_scan():
-    """Scan for Bluetooth devices. Body: {duration: 10}."""
+@app.route("/api/audio/inputs")
+def api_audio_inputs():
+    """List active audio input devices (sources)."""
     if not audio_service:
         return jsonify({"error": "Audio service not available"}), 503
-    duration = (request.json or {}).get("duration", 10)
-    devices = audio_service.bluetooth_scan(duration=duration)
-    return jsonify({"devices": devices})
+    sources = audio_service.list_sources()
+    return jsonify({"sources": [s.to_dict() for s in sources]})
+
+
+@app.route("/api/audio/input", methods=["POST"])
+def api_audio_set_input():
+    """Set the default audio input device. Body: {device_id}."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    device_id = (request.json or {}).get("device_id")
+    if device_id is None:
+        return jsonify({"error": "device_id required"}), 400
+    ok = audio_service.set_default_input(int(device_id))
+    return jsonify({"ok": ok})
+
+
+@app.route("/api/audio/bluetooth/scan", methods=["POST"])
+def api_audio_bt_scan():
+    """Scan for Bluetooth devices. Returns immediately, emits results via socket."""
+    if not audio_service:
+        return jsonify({"error": "Audio service not available"}), 503
+    duration = (request.get_json(silent=True) or {}).get("duration", 10)
+
+    def _scan():
+        devices = audio_service.bluetooth_scan(duration=duration)
+        socketio.emit("bt_scan_result", {"devices": devices})
+
+    threading.Thread(target=_scan, daemon=True).start()
+    return jsonify({"ok": True, "message": "Scanning..."})
 
 
 @app.route("/api/audio/bluetooth/pair", methods=["POST"])
@@ -1065,6 +1311,42 @@ def api_audio_bt_disconnect():
     return jsonify({"ok": ok, "message": msg})
 
 
+# Global TTS output setting: "pi" (local ffplay) or "browser" (serve to web client)
+_tts_output = "pi"
+# Queue of TTS audio files waiting to be played in browser
+_tts_browser_queue: list[str] = []
+
+
+@app.route("/api/tts/output", methods=["GET"])
+def api_tts_output_get():
+    """Get current TTS output target."""
+    return jsonify({"output": _tts_output})
+
+
+@app.route("/api/tts/output", methods=["POST"])
+def api_tts_output_set():
+    """Set TTS output target. Body: {output: "pi" | "browser"}."""
+    global _tts_output
+    data = request.json or {}
+    output = data.get("output", "pi")
+    if output not in ("pi", "browser"):
+        return jsonify({"error": "Invalid output, must be 'pi' or 'browser'"}), 400
+    _tts_output = output
+    # Update voice pipeline's output mode
+    if voice:
+        voice._tts_output_mode = output
+    print(f"[tts] Output set to: {output}")
+    return jsonify({"ok": True, "output": output})
+
+
+@app.route("/api/tts/audio/<path:filename>")
+def api_tts_audio_file(filename):
+    """Serve a TTS audio file for browser playback."""
+    import tempfile
+    tts_dir = tempfile.gettempdir()
+    return send_from_directory(tts_dir, filename)
+
+
 # ── Scene Mode Endpoints ─────────────────────────────────────────────
 
 @app.route("/api/scenes")
@@ -1083,8 +1365,18 @@ def api_scene_activate():
     name = (request.json or {}).get("scene", "")
     if not name:
         return jsonify({"error": "scene name required"}), 400
-    ok, msg = scene_service.activate(name)
-    return jsonify({"ok": ok, "message": msg}), 200 if ok else 400
+    print(f"[scene-api] Activating scene: {name}")
+
+    def _do_activate():
+        try:
+            scene_service.activate(name)
+        except Exception as e:
+            print(f"[scene-api] Activate failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+    threading.Thread(target=_do_activate, daemon=True).start()
+    return jsonify({"ok": True, "message": f"Activating {name}..."})
 
 
 @app.route("/api/scene/deactivate", methods=["POST"])
@@ -1092,8 +1384,17 @@ def api_scene_deactivate():
     """Deactivate current scene and restore previous state."""
     if not scene_service:
         return jsonify({"error": "Scene service not available"}), 503
-    ok, msg = scene_service.deactivate()
-    return jsonify({"ok": ok, "message": msg}), 200 if ok else 400
+
+    def _do_deactivate():
+        try:
+            scene_service.deactivate()
+        except Exception as e:
+            print(f"[scene-api] Deactivate failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+    threading.Thread(target=_do_deactivate, daemon=True).start()
+    return jsonify({"ok": True, "message": "Deactivating..."})
 
 
 def _load_setting(key: str, default=None):
@@ -1403,95 +1704,102 @@ TV_APPS = {
 }
 
 
-def _ensure_tv_loop():
-    """Create the asyncio event loop for TV operations if not already running."""
-    global _tv_loop
-    if _tv_loop and _tv_loop.is_running():
-        return
-    _tv_loop = asyncio.new_event_loop()
+_tv_loop = None
+_tv_loop_thread = None
 
-    def _run():
-        asyncio.set_event_loop(_tv_loop)
-        _tv_loop.run_forever()
-
-    threading.Thread(target=_run, daemon=True).start()
-    time.sleep(0.1)
+# Path to the standalone TV worker script (runs outside gevent)
+_TV_WORKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tv_worker.py")
+_TV_PYTHON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "venv", "bin", "python3")
+_tv_proc = None
+_tv_proc_lock = threading.Lock()
 
 
-def _tv_run(coro, timeout=10):
-    """Run an async coroutine on the TV event loop from sync Flask context."""
-    if not _tv_loop:
-        _ensure_tv_loop()
-    future = asyncio.run_coroutine_threadsafe(coro, _tv_loop)
-    return future.result(timeout=timeout)
+def _ensure_tv_worker():
+    """Start the long-lived TV worker subprocess if not running."""
+    global _tv_proc
+    with _tv_proc_lock:
+        if _tv_proc is not None and _tv_proc.poll() is None:
+            return True
+        try:
+            config = json.dumps({
+                "certfile": _TV_CERTFILE,
+                "keyfile": _TV_KEYFILE,
+                "host": TV_IP,
+            })
+            _tv_proc = subprocess.Popen(
+                [_TV_PYTHON, _TV_WORKER, config],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+            )
+            return True
+        except Exception as e:
+            print(f"[tv] Failed to start worker: {e}")
+            _tv_proc = None
+            return False
+
+
+def _tv_cmd(action, **kwargs):
+    """Send a command to the long-lived TV worker and get the response."""
+    global _tv_proc
+    if not _ensure_tv_worker():
+        return {"error": "TV worker not running"}
+    cmd_data = {"action": action, **kwargs}
+    try:
+        with _tv_proc_lock:
+            if _tv_proc is None or _tv_proc.poll() is not None:
+                _tv_proc = None
+                if not _ensure_tv_worker():
+                    return {"error": "TV worker died"}
+            _tv_proc.stdin.write(json.dumps(cmd_data) + "\n")
+            _tv_proc.stdin.flush()
+            line = _tv_proc.stdout.readline().strip()
+            if line:
+                return json.loads(line)
+            return {"error": "TV worker returned empty response"}
+    except (BrokenPipeError, OSError):
+        _tv_proc = None
+        return {"error": "TV worker connection lost"}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def init_tv_remote():
-    """Try to connect to TV using existing certs."""
-    global _tv_remote
-    try:
-        from androidtvremote2 import AndroidTVRemote
+    """Try to connect to TV using existing certs (persistent worker)."""
+    global _tv_remote, _tv_is_on
+    if not os.path.exists(_TV_CERTFILE) or not os.path.exists(_TV_KEYFILE):
+        print("[tv] No cert files found — pair via the TV tab first")
+        return
 
-        if not os.path.exists(_TV_CERTFILE) or not os.path.exists(_TV_KEYFILE):
-            print("[tv] No cert files found — pair via the TV tab first")
-            return
+    if not _ensure_tv_worker():
+        print("[tv] Could not start TV worker")
+        return
 
-        _ensure_tv_loop()
+    result = _tv_cmd("connect_test")
+    if result.get("ok"):
+        _tv_remote = True
+        _tv_is_on = result.get("is_on")
+        print(f"[tv] Connected to TV at {TV_IP} (is_on={_tv_is_on})")
+    else:
+        print(f"[tv] Connection failed: {result.get('error', '?')} — try pairing via the TV tab")
 
-        async def _connect():
-            global _tv_remote
-            remote = AndroidTVRemote(
-                client_name="BMO",
-                certfile=_TV_CERTFILE,
-                keyfile=_TV_KEYFILE,
-                host=TV_IP,
-            )
-            await asyncio.wait_for(remote.async_connect(), timeout=5)
-            _tv_remote = remote
-            def _on_is_on(is_on):
-                global _tv_is_on
-                _tv_is_on = is_on
-                print(f"[tv] TV is {'on' if is_on else 'off (standby)'}")
-            remote.add_is_on_updated_callback(_on_is_on)
-            print(f"[tv] Connected to TV at {TV_IP}")
-            remote.keep_reconnecting()
-
-        _tv_run(_connect(), timeout=5)
-    except ImportError:
-        print("[tv] androidtvremote2 not installed — TV remote disabled")
-    except TimeoutError:
-        print("[tv] Connection timed out — TV may be off")
-    except Exception as e:
-        print(f"[tv] Connection failed: {e} — try pairing via the TV tab")
-
-    # Background task: retry TV connection every 30s if not connected
+    # Background task: retry TV connection every 60s if not connected
     def _tv_bg_reconnect():
+        global _tv_remote, _tv_is_on
         import time as _time
         while True:
-            _time.sleep(30)
+            _time.sleep(60)
             if _tv_remote is None:
                 try:
-                    import asyncio
-                    async def _reconn():
-                        global _tv_remote
-                        from androidtvremote2 import AndroidTVRemote
-                        r = AndroidTVRemote(
-                            client_name="BMO",
-                            certfile=_TV_CERTFILE, keyfile=_TV_KEYFILE, host=TV_IP,
-                        )
-                        await asyncio.wait_for(r.async_connect(), timeout=5)
-                        _tv_remote = r
-                        r.keep_reconnecting()
-                        def _on_is_on_bg(is_on):
-                            global _tv_is_on
-                            _tv_is_on = is_on
-                            print(f"[tv] TV is {'on' if is_on else 'off (standby)'}")
-                        r.add_is_on_updated_callback(_on_is_on_bg)
+                    r = _tv_cmd("connect_test")
+                    if r.get("ok"):
+                        _tv_remote = True
+                        _tv_is_on = r.get("is_on")
                         print(f"[tv] Background reconnect OK — {TV_IP}")
-                    _tv_run(_reconn(), timeout=5)
                 except Exception:
                     pass
-    import threading
     threading.Thread(target=_tv_bg_reconnect, daemon=True).start()
 
 
@@ -1499,70 +1807,45 @@ def init_tv_remote():
 @app.route("/api/tv/status")
 def api_tv_status():
     connected = _tv_remote is not None
-    current_app = ""
-    if _tv_remote:
-        try:
-            current_app = _tv_remote.current_app or ""
-        except Exception:
-            pass
     needs_pairing = not os.path.exists(_TV_CERTFILE)
+    # Quick connect test if we think we're connected
+    current_app = ""
+    if connected:
+        r = _tv_cmd("connect_test")
+        if r.get("ok"):
+            current_app = r.get("current_app", "")
+        else:
+            connected = False
     return jsonify({"connected": connected, "current_app": current_app, "needs_pairing": needs_pairing})
 
 
 @app.route("/api/tv/pair/start", methods=["POST"])
 def api_tv_pair_start():
     """Start pairing — TV will show a PIN code."""
-    global _tv_pairing_remote
-    try:
-        from androidtvremote2 import AndroidTVRemote
-
-        _ensure_tv_loop()
-
-        async def _start():
-            global _tv_pairing_remote
-            remote = AndroidTVRemote(
-                client_name="BMO",
-                certfile=_TV_CERTFILE,
-                keyfile=_TV_KEYFILE,
-                host=TV_IP,
-            )
-            await remote.async_generate_cert_if_missing()
-            await remote.async_start_pairing()
-            _tv_pairing_remote = remote
-
-        _tv_run(_start())
-        return jsonify({"ok": True, "message": "Check your TV for a PIN code"})
-    except Exception as e:
-        print(f"[tv] Pairing start failed: {e}")
-        return jsonify({"error": str(e)}), 500
+    result = _tv_cmd("pair_start")
+    if result.get("error"):
+        print(f"[tv] Pairing start failed: {result['error']}")
+        return jsonify(result), 500
+    print("[tv] Pairing started — TV should show PIN")
+    return jsonify(result)
 
 
 @app.route("/api/tv/pair/finish", methods=["POST"])
 def api_tv_pair_finish():
     """Finish pairing with the PIN shown on TV, then connect."""
-    global _tv_remote, _tv_pairing_remote
+    global _tv_remote
     data = request.json or {}
     pin = data.get("pin", "")
     if not pin:
         return jsonify({"error": "No PIN provided"}), 400
-    if not _tv_pairing_remote:
-        return jsonify({"error": "No pairing in progress — start pairing first"}), 400
 
-    try:
-        async def _finish():
-            global _tv_remote, _tv_pairing_remote
-            await _tv_pairing_remote.async_finish_pairing(pin)
-            await _tv_pairing_remote.async_connect()
-            _tv_remote = _tv_pairing_remote
-            _tv_pairing_remote = None
-
-        _tv_run(_finish())
-        print(f"[tv] Paired and connected to TV at {TV_IP}!")
-        return jsonify({"ok": True, "message": "Paired and connected!"})
-    except Exception as e:
-        _tv_pairing_remote = None
-        print(f"[tv] Pairing finish failed: {e}")
-        return jsonify({"error": str(e)}), 500
+    result = _tv_cmd("pair_finish", pin=pin)
+    if result.get("error"):
+        print(f"[tv] Pairing finish failed: {result['error']}")
+        return jsonify(result), 500
+    _tv_remote = True
+    print(f"[tv] Paired and connected to TV at {TV_IP}!")
+    return jsonify(result)
 
 
 @app.route("/api/tv/key", methods=["POST"])
@@ -1570,13 +1853,12 @@ def api_tv_key():
     data = request.json or {}
     key = data.get("key", "")
     mapped = TV_KEYS.get(key, key)
-    if _tv_remote:
-        try:
-            _tv_remote.send_key_command(mapped)
-            return jsonify({"ok": True})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    result = _tv_cmd("send_key", key=mapped)
+    if result.get("error"):
+        return jsonify(result), 500
+    return jsonify(result)
 
 
 @app.route("/api/tv/launch", methods=["POST"])
@@ -1586,13 +1868,12 @@ def api_tv_launch():
     url = TV_APPS.get(app_name, "")
     if not url:
         return jsonify({"error": f"Unknown app: {app_name}"}), 400
-    if _tv_remote:
-        try:
-            _tv_remote.send_launch_app_command(url)
-            return jsonify({"ok": True})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    result = _tv_cmd("launch_app", uri=url)
+    if result.get("error"):
+        return jsonify(result), 500
+    return jsonify(result)
 
 
 @app.route("/api/tv/volume", methods=["POST"])
@@ -1600,50 +1881,40 @@ def api_tv_volume():
     data = request.json or {}
     level = data.get("level")
     direction = data.get("direction", "up")
-    if _tv_remote:
-        try:
-            if level is not None:
-                # Set to specific volume level
-                import time as _time
-                vol = _tv_remote.volume_info
-                if not vol:
-                    return jsonify({"error": "Cannot read current volume"}), 500
-                current = vol["level"] if isinstance(vol, dict) else vol.level
-                max_vol = vol["max"] if isinstance(vol, dict) else vol.max
-                target = int(level * max_vol / 100) if level <= 100 else level
-                target = max(0, min(target, max_vol))
-                diff = target - current
-                key = "VOLUME_UP" if diff > 0 else "VOLUME_DOWN"
-                for _ in range(abs(diff)):
-                    _tv_remote.send_key_command(key)
-                    _time.sleep(0.05)
-                return jsonify({"ok": True, "level": target, "max": max_vol})
-            else:
-                key_map = {"up": "VOLUME_UP", "down": "VOLUME_DOWN", "mute": "VOLUME_MUTE"}
-                key = key_map.get(direction, "VOLUME_UP")
-                _tv_remote.send_key_command(key)
-                return jsonify({"ok": True})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    if level is not None:
+        # Volume level setting: send multiple volume key presses
+        key = "VOLUME_UP" if level > 50 else "VOLUME_DOWN"
+        result = _tv_cmd("send_key", key=key)
+        return jsonify(result) if not result.get("error") else (jsonify(result), 500)
+    else:
+        key_map = {"up": "VOLUME_UP", "down": "VOLUME_DOWN", "mute": "VOLUME_MUTE"}
+        key = key_map.get(direction, "VOLUME_UP")
+        result = _tv_cmd("send_key", key=key)
+        return jsonify(result) if not result.get("error") else (jsonify(result), 500)
 
 
 @app.route("/api/tv/power", methods=["POST"])
 def api_tv_power():
-    if _tv_remote:
-        try:
-            data = request.get_json(silent=True) or {}
-            state = data.get("state", "toggle")
-            # Skip if TV is already in the desired state
-            if state == "on" and _tv_is_on:
-                return jsonify({"ok": True, "already": True, "is_on": True})
-            if state == "off" and not _tv_is_on:
-                return jsonify({"ok": True, "already": True, "is_on": False})
-            _tv_remote.send_key_command("POWER")
-            return jsonify({"ok": True, "state": state})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected \u2014 pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    data = request.json or {}
+    state = data.get("state", "toggle")
+
+    if state == "on":
+        # Check if TV is already on to avoid toggling it off
+        status = _tv_cmd("status")
+        if status.get("is_on") is True:
+            return jsonify({"ok": True, "message": "TV already on"})
+    elif state == "off":
+        # Check if TV is already off to avoid toggling it on
+        status = _tv_cmd("status")
+        if status.get("is_on") is False:
+            return jsonify({"ok": True, "message": "TV already off"})
+
+    result = _tv_cmd("send_key", key="POWER")
+    return jsonify(result) if not result.get("error") else (jsonify(result), 500)
 
 
 @app.route("/api/tv/navigate", methods=["POST"])
@@ -1652,25 +1923,19 @@ def api_tv_navigate():
     data = request.json or {}
     direction = data.get("direction", "select")
     mapped = TV_KEYS.get(direction, direction)
-    if _tv_remote:
-        try:
-            _tv_remote.send_key_command(mapped)
-            return jsonify({"ok": True})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    result = _tv_cmd("send_key", key=mapped)
+    return jsonify(result) if not result.get("error") else (jsonify(result), 500)
 
 
 @app.route("/api/tv/mute", methods=["POST"])
 def api_tv_mute():
     """Toggle mute."""
-    if _tv_remote:
-        try:
-            _tv_remote.send_key_command("VOLUME_MUTE")
-            return jsonify({"ok": True})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-    return jsonify({"error": "TV not connected — pair first"}), 503
+    if not os.path.exists(_TV_CERTFILE):
+        return jsonify({"error": "TV not paired — pair first"}), 503
+    result = _tv_cmd("send_key", key="VOLUME_MUTE")
+    return jsonify(result) if not result.get("error") else (jsonify(result), 500)
 
 
 @app.route("/api/tv/apps")

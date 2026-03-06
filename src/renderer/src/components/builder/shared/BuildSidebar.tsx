@@ -75,7 +75,7 @@ export default function BuildSidebar(): JSX.Element {
               } else if (slot.category === 'expertise') {
                 useBuilderStore.setState({ customModal: 'expertise', activeExpertiseSlotId: slotId })
               } else {
-                useBuilderStore.setState({ activeAsiSlotId: null })
+                useBuilderStore.setState({ activeAsiSlotId: null, customModal: null })
                 openSelectionModal(slotId)
               }
             }}

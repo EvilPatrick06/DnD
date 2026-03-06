@@ -1,4 +1,4 @@
-"""BMO Music Service — YouTube Music search + yt-dlp streaming + VLC/Chromecast/laptop playback."""
+"""BMO Music Service — YouTube Music search + yt-dlp streaming + VLC/Chromecast playback."""
 
 import json
 import os
@@ -10,20 +10,21 @@ from ytmusicapi import YTMusic
 
 STREAM_URL_TTL = 18000  # 5 hours — re-extract before expiry
 HISTORY_FILE = os.path.expanduser("~/bmo/data/music_history.json")
+PLAY_COUNTS_FILE = os.path.expanduser("~/bmo/data/play_counts.json")
 MAX_HISTORY = 100
 
 # Valid output device names
-OUTPUT_PI = "pi"       # Local VLC playback through Pi speakers
+OUTPUT_PI = "pi"       # Local VLC playback through Pi speakers / any Pi sink
 OUTPUT_TV = "tv"       # Chromecast to TV
-OUTPUT_LAPTOP = "laptop"  # Stream URL exposed via Flask for web UI <audio> playback
 
 
 class MusicService:
-    """Manages music search, queue, and playback (local VLC + Chromecast + laptop streaming)."""
+    """Manages music search, queue, and playback (local VLC + Chromecast)."""
 
-    def __init__(self, smart_home=None, socketio=None):
+    def __init__(self, smart_home=None, socketio=None, audio_service=None):
         self.smart_home = smart_home
         self.socketio = socketio
+        self._audio_service = audio_service
 
         # YT Music search
         self._ytmusic = YTMusic()
@@ -48,12 +49,11 @@ class MusicService:
         self._prefetch_url: str | None = None
         self._prefetch_index: int = -1
 
-        # Laptop streaming state — the raw audio URL the web UI <audio> element plays
-        self._laptop_stream_url: str | None = None
-
         # Play history
         self.history: list[dict] = []
+        self.play_counts: dict[str, int] = {}
         self._load_history()
+        self._load_play_counts()
 
     # ── Output Device Property ───────────────────────────────────────
 
@@ -64,7 +64,7 @@ class MusicService:
     @output_device.setter
     def output_device(self, value: str):
         """Validate and set the output device."""
-        valid = {OUTPUT_PI, OUTPUT_TV, OUTPUT_LAPTOP}
+        valid = {OUTPUT_PI, OUTPUT_TV}
         if value not in valid:
             print(f"[music] Invalid output device '{value}', keeping '{self._output_device}'")
             return
@@ -119,9 +119,6 @@ class MusicService:
                 self._player.play()
             elif self._output_device == OUTPUT_TV:
                 self._cast_play()
-            elif self._output_device == OUTPUT_LAPTOP:
-                # Laptop resumes by the web UI unpausing its <audio> element
-                pass
             self._emit_state()
             return
 
@@ -147,10 +144,6 @@ class MusicService:
             self._player.play()
         elif self._output_device == OUTPUT_TV:
             self._cast_play_media(song)
-        elif self._output_device == OUTPUT_LAPTOP:
-            # Store the stream URL — web UI polls get_state() and plays via <audio>
-            self._laptop_stream_url = url
-            print(f"[music] Laptop stream ready: {song.get('title', '?')}")
 
         self._record_play(song)
         self._start_monitor()
@@ -170,9 +163,6 @@ class MusicService:
             self._player.pause()
         elif self._output_device == OUTPUT_TV:
             self._cast_pause()
-        elif self._output_device == OUTPUT_LAPTOP:
-            # Laptop pause/resume is handled by the web UI <audio> element
-            pass
         self._emit_state()
 
     def stop(self):
@@ -187,8 +177,6 @@ class MusicService:
             self._player.stop()
         elif self._output_device == OUTPUT_TV:
             self._cast_stop()
-        elif self._output_device == OUTPUT_LAPTOP:
-            self._laptop_stream_url = None
 
     def next_track(self):
         """Skip to next track in queue."""
@@ -223,9 +211,6 @@ class MusicService:
             self._player.set_time(int(position_sec * 1000))
         elif self._output_device == OUTPUT_TV:
             self._cast_seek(position_sec)
-        elif self._output_device == OUTPUT_LAPTOP:
-            # Laptop seek is handled by the web UI <audio> element
-            pass
         self._emit_state()
 
     def set_volume(self, volume: int):
@@ -235,14 +220,11 @@ class MusicService:
         elif self._output_device == OUTPUT_TV:
             if self.smart_home:
                 self.smart_home.set_volume(self._output_device, volume / 100.0)
-        elif self._output_device == OUTPUT_LAPTOP:
-            # Laptop volume is controlled by the web UI <audio> element
-            pass
 
     # ── Output Device ────────────────────────────────────────────────
 
     def set_output_device(self, device: str):
-        """Switch output between 'pi', 'tv', and 'laptop'.
+        """Switch output between 'pi', 'tv', or a PipeWire sink ID (e.g. '83').
 
         Stops playback on the current device. If a song was playing,
         resumes it on the new device automatically.
@@ -250,10 +232,15 @@ class MusicService:
         if device == self._output_device:
             return
 
-        valid = {OUTPUT_PI, OUTPUT_TV, OUTPUT_LAPTOP}
-        if device not in valid:
+        # Accept 'pi', 'tv', or a numeric PipeWire sink ID
+        if device not in {OUTPUT_PI, OUTPUT_TV} and not device.isdigit():
             print(f"[music] Invalid device '{device}', ignoring")
             return
+
+        # If a numeric sink ID, set it as default PipeWire sink and use Pi playback
+        if device.isdigit() and self._audio_service:
+            self._audio_service.set_default_output(int(device))
+            device = OUTPUT_PI
 
         was_playing = self.current_song is not None
         song_to_resume = self.current_song
@@ -273,22 +260,11 @@ class MusicService:
             self._emit_state()
 
     def get_devices(self) -> list[dict]:
-        """List available output devices."""
-        return [
-            {"name": OUTPUT_PI, "label": "Pi Speakers"},
-            {"name": OUTPUT_TV, "label": "TV (Chromecast)"},
-            {"name": OUTPUT_LAPTOP, "label": "Laptop (Web UI)"},
-        ]
-
-    def get_laptop_stream_url(self) -> str | None:
-        """Return the current audio stream URL for the web UI <audio> element.
-
-        Only relevant when output_device is 'laptop'. The web UI polls this
-        via GET /api/music/stream-url and sets it as the <audio> src.
-        """
-        if self._output_device != OUTPUT_LAPTOP:
-            return None
-        return self._laptop_stream_url
+        """List non-Pi output devices (Chromecast/TV only if discovered)."""
+        devices = []
+        if self.smart_home and self.smart_home.get_devices():
+            devices.append({"name": OUTPUT_TV, "label": "TV (Chromecast)", "is_default": False, "type": "tv"})
+        return devices
 
     # ── State ────────────────────────────────────────────────────────
 
@@ -307,11 +283,6 @@ class MusicService:
                 duration = self.current_song.get("duration_sec", 0)
         elif self._output_device == OUTPUT_TV:
             is_playing = self.current_song is not None
-            # Cast state would come from PyChromecast media controller
-            if self.current_song:
-                duration = self.current_song.get("duration_sec", 0)
-        elif self._output_device == OUTPUT_LAPTOP:
-            is_playing = self._laptop_stream_url is not None and self.current_song is not None
             if self.current_song:
                 duration = self.current_song.get("duration_sec", 0)
 
@@ -320,17 +291,13 @@ class MusicService:
             "is_playing": is_playing,
             "position": round(position, 1),
             "duration": round(duration, 1),
-            "volume": self._player.audio_get_volume() if self._output_device == OUTPUT_PI else 50,
+            "volume": max(0, self._player.audio_get_volume()) if self._output_device == OUTPUT_PI else 50,
             "output_device": self._output_device,
             "queue_length": len(self.queue),
             "queue_index": self.queue_index,
             "shuffle": self.shuffle,
             "repeat": self.repeat,
         }
-
-        # Include stream URL when in laptop mode so the web UI can play it
-        if self._output_device == OUTPUT_LAPTOP and self._laptop_stream_url:
-            state_dict["stream_url"] = self._laptop_stream_url
 
         return state_dict
 
@@ -401,8 +368,7 @@ class MusicService:
                         self.play(self.current_song, add_to_queue=False)
                     else:
                         self.next_track()
-            # TV and laptop auto-advance is handled by their respective clients
-            # (Chromecast media controller / web UI 'ended' event via WebSocket)
+            # TV auto-advance is handled by Chromecast media controller
             time.sleep(1)
 
     def _prefetch_next(self):
@@ -457,7 +423,30 @@ class MusicService:
         try:
             if os.path.exists(HISTORY_FILE):
                 with open(HISTORY_FILE, "r") as f:
-                    self.history = json.load(f)[:MAX_HISTORY]
+                    raw = json.load(f)[:MAX_HISTORY]
+                # Seed play counts from raw history before dedup
+                for entry in raw:
+                    vid = entry.get("song", {}).get("videoId", "")
+                    if vid and vid not in self.play_counts:
+                        count = sum(1 for e in raw if e.get("song", {}).get("videoId") == vid)
+                        if count > 0:
+                            self.play_counts[vid] = count
+                if self.play_counts:
+                    self._save_play_counts()
+                # Deduplicate on load (keep first occurrence = most recent)
+                seen = set()
+                deduped = []
+                for entry in raw:
+                    vid = entry.get("song", {}).get("videoId", "")
+                    if vid and vid in seen:
+                        continue
+                    if vid:
+                        seen.add(vid)
+                    deduped.append(entry)
+                self.history = deduped
+                if len(deduped) < len(raw):
+                    print(f"[music] Deduped history: {len(raw)} → {len(deduped)}")
+                    self._save_history()
                 print(f"[music] Loaded {len(self.history)} history entries")
         except Exception as e:
             print(f"[music] Failed to load history: {e}")
@@ -471,33 +460,59 @@ class MusicService:
         except Exception as e:
             print(f"[music] Failed to save history: {e}")
 
+    def _load_play_counts(self):
+        try:
+            if os.path.exists(PLAY_COUNTS_FILE):
+                with open(PLAY_COUNTS_FILE, "r") as f:
+                    self.play_counts = json.load(f)
+                print(f"[music] Loaded {len(self.play_counts)} play counts")
+        except Exception as e:
+            print(f"[music] Failed to load play counts: {e}")
+            self.play_counts = {}
+
+    def _save_play_counts(self):
+        try:
+            os.makedirs(os.path.dirname(PLAY_COUNTS_FILE), exist_ok=True)
+            with open(PLAY_COUNTS_FILE, "w") as f:
+                json.dump(self.play_counts, f)
+        except Exception as e:
+            print(f"[music] Failed to save play counts: {e}")
+
     def _record_play(self, song: dict):
-        """Record a song play in history."""
+        """Record a song play in history (deduplicated — most recent play only)."""
         clean = {k: v for k, v in song.items() if not k.startswith("_") and k != "stream_url"}
-        if not self.history or self.history[0].get("song", {}).get("videoId") != clean.get("videoId"):
-            self.history.insert(0, {"song": clean, "played_at": time.time()})
-            if len(self.history) > MAX_HISTORY:
-                self.history = self.history[:MAX_HISTORY]
-            self._save_history()
+        vid = clean.get("videoId")
+        # Remove any existing entry for this song
+        if vid:
+            self.history = [e for e in self.history if e.get("song", {}).get("videoId") != vid]
+            self.play_counts[vid] = self.play_counts.get(vid, 0) + 1
+            self._save_play_counts()
+        self.history.insert(0, {"song": clean, "played_at": time.time()})
+        if len(self.history) > MAX_HISTORY:
+            self.history = self.history[:MAX_HISTORY]
+        self._save_history()
 
     def get_history(self) -> list[dict]:
         """Return play history."""
         return self.history
 
     def get_most_played(self) -> list[dict]:
-        """Return top songs by play count from history."""
-        if not self.history:
+        """Return top songs by play count."""
+        if not self.play_counts or not self.history:
             return []
-        counts: dict[str, dict] = {}
+        # Build a map of videoId → song info from history
+        song_map: dict[str, dict] = {}
         for entry in self.history:
             vid = entry.get("song", {}).get("videoId", "")
-            if not vid:
-                continue
-            if vid not in counts:
-                counts[vid] = {"song": entry["song"], "count": 0}
-            counts[vid]["count"] += 1
-        ranked = sorted(counts.values(), key=lambda x: x["count"], reverse=True)
-        return [r["song"] for r in ranked[:4]]
+            if vid and vid not in song_map:
+                song_map[vid] = entry["song"]
+        # Rank by play count, only include songs we have info for
+        ranked = sorted(
+            [(vid, count) for vid, count in self.play_counts.items() if vid in song_map and count >= 1],
+            key=lambda x: x[1],
+            reverse=True,
+        )
+        return [song_map[vid] for vid, _ in ranked[:4]]
 
     # ── Album / Playlist / Lyrics ────────────────────────────────────
 

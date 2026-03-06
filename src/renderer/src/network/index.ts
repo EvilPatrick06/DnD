@@ -40,11 +40,13 @@ export {
   createPeer,
   destroyPeer,
   generateInviteCode,
+  getForceRelay,
   getIceConfig,
   getPeer,
   getPeerId,
   resetIceConfig,
   resetSignalingServer,
+  setForceRelay,
   setIceConfig,
   setSignalingServer
 } from './peer-manager'

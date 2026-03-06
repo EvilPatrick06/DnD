@@ -16,7 +16,7 @@ import time
 import requests
 import ollama as ollama_client
 
-from cloud_providers import cloud_chat, PRIMARY_MODEL, ROUTER_MODEL, DND_MODEL
+from cloud_providers import cloud_chat, gemini_chat_stream, groq_llm_chat_stream, PRIMARY_MODEL, ROUTER_MODEL, DND_MODEL
 from dev_tools import dispatch_tool, get_tool_descriptions, MAX_TOOL_CALLS_PER_TURN
 from voice_personality import parse_response_tags
 from agents.settings import init_settings, get_settings
@@ -164,6 +164,41 @@ def llm_chat(messages: list[dict], options: dict | None = None,
             _cloud_available = False
 
     return _local_chat(messages, options)
+
+
+def llm_chat_stream(messages: list[dict], options: dict | None = None,
+                    model: str = "", agent_name: str = ""):
+    """Stream LLM response, yielding text chunks. For voice pipeline speedup.
+
+    Supports streaming for Gemini and Groq LLM models.
+    Falls back to non-streaming for Claude/Ollama (yields full response as single chunk).
+    """
+    if not model:
+        model = _select_model(agent_name, messages)
+
+    temperature = (options or {}).get("temperature", 0.8)
+    max_tokens = (options or {}).get("num_predict", 2048)
+
+    if _check_cloud_available():
+        if model.startswith("gemini"):
+            try:
+                yield from gemini_chat_stream(messages, model=model,
+                                              temperature=temperature,
+                                              max_tokens=max_tokens)
+                return
+            except Exception as e:
+                print(f"[agent] Gemini streaming failed ({e}), falling back")
+        elif model.startswith("llama") or model.startswith("mixtral") or model.startswith("groq-"):
+            try:
+                yield from groq_llm_chat_stream(messages, model=model,
+                                                 temperature=temperature,
+                                                 max_tokens=max_tokens)
+                return
+            except Exception as e:
+                print(f"[agent] Groq LLM streaming failed ({e}), falling back")
+
+    # Non-streamable model or fallback — yield full response
+    yield llm_chat(messages, options, model=model, agent_name=agent_name)
 
 
 _rag_engine = None
@@ -911,6 +946,93 @@ class BmoAgent:
             "tags": tags,
             "agent_used": agent_used,
         }
+
+    # ── Streaming Chat (for voice pipeline speed) ──────────────────
+
+    def chat_stream(self, user_message: str, speaker: str = "unknown"):
+        """Generator yielding text chunks for voice pipeline streaming.
+
+        For conversation agent, streams from the LLM token by token.
+        For other agents, yields full response as a single chunk.
+        Handles history management, command parsing, and execution.
+        """
+        # Handle pending confirmations (non-streamable)
+        if self._pending_confirmations and user_message.lower().strip() in (
+            "yes", "y", "confirm", "do it"
+        ):
+            result = self._execute_pending_confirmation(speaker)
+            yield result.get("text", "")
+            return
+
+        # Add time and speaker context (same as chat())
+        now = datetime.datetime.now()
+        time_str = now.strftime("%I:%M %p, %A %B %d %Y")
+        if speaker != "unknown":
+            context_msg = f"[Time: {time_str}] [Speaker: {speaker}] {user_message}"
+        else:
+            context_msg = f"[Time: {time_str}] {user_message}"
+
+        self.conversation_history.append({"role": "user", "content": context_msg})
+        if len(self.conversation_history) > self._max_history:
+            self.conversation_history = self.conversation_history[-self._max_history:]
+
+        threshold = self.settings.get("ui.auto_compact_threshold", 150)
+        if threshold > 0 and len(self.conversation_history) >= threshold:
+            self.compact()
+
+        # Route to agent
+        agent_name = self.orchestrator.router.route(user_message)
+        self.orchestrator._emit("agent_selected", {
+            "agent": agent_name,
+            "display_name": self.orchestrator._get_display_name(agent_name),
+            "speaker": speaker,
+        })
+
+        # Stream conversation agent directly via LLM streaming
+        if agent_name == "conversation" and not self.orchestrator.is_plan_mode:
+            agent = self.orchestrator.agents.get("conversation")
+            if agent:
+                system_prompt = agent._build_system_prompt(None)
+                messages = [{"role": "system", "content": system_prompt}]
+                messages.extend(self.conversation_history[-20:])
+
+                full_text = ""
+                try:
+                    for chunk in llm_chat_stream(messages, agent_name=agent_name):
+                        full_text += chunk
+                        yield chunk
+                except Exception as e:
+                    print(f"[agent] Stream error: {e}")
+                    if not full_text:
+                        full_text = f"Oh no, BMO's words got jumbled... ({e})"
+                        yield full_text
+
+                self.conversation_history.append({"role": "assistant", "content": full_text})
+                # Parse and execute commands from full response
+                text, commands = self._parse_response(full_text)
+                for cmd in commands:
+                    self._execute_command(cmd)
+                return
+
+        # Non-streamable agent: run through orchestrator, yield full response
+        try:
+            result = self.orchestrator.handle(
+                message=user_message, speaker=speaker,
+                history=self.conversation_history, services=self.services,
+            )
+            reply = result.get("text", "")
+            agent_name = result.get("agent_used", agent_name)
+        except Exception as e:
+            reply = f"Oh no! BMO's brain is fuzzy right now... ({e})"
+
+        self.conversation_history.append({"role": "assistant", "content": reply})
+        text, commands = self._parse_response(reply)
+        for cmd in commands:
+            self._execute_command(cmd)
+
+        tags = parse_response_tags(text)
+        text = tags.pop("clean_text", text)
+        yield text
 
     # ── Confirmation Handling (shared across agents) ────────────────
 

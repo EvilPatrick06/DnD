@@ -150,6 +150,7 @@ class TimerService:
         self.voice = voice_pipeline
         self.socketio = socketio
         self.agent_fn = agent_fn  # callable that returns the agent instance
+        self.alarm_volume = None  # None = use system volume (no override)
         self._timers: dict[str, Timer] = {}
         self._alarms: dict[str, Alarm] = {}
         self._running = False
@@ -340,7 +341,7 @@ class TimerService:
         self._emit("timer_fired", {"id": timer.id, "label": timer.label, "message": msg})
 
         if self.voice:
-            self.voice.speak(msg, volume=85)
+            self.voice.speak(msg, volume=self.alarm_volume)
             if hasattr(self.voice, 'start_conversation'):
                 self.voice.start_conversation()
 
@@ -359,7 +360,7 @@ class TimerService:
                 "type": "alarm", "tag": alarm.tag, "repeat": alarm.repeat,
             })
             if self.voice:
-                self.voice.speak(msg, volume=85)
+                self.voice.speak(msg, volume=self.alarm_volume)
                 if hasattr(self.voice, 'start_conversation'):
                     self.voice.start_conversation()
         else:
@@ -370,7 +371,7 @@ class TimerService:
                 "type": "alarm", "tag": alarm.tag, "repeat": alarm.repeat,
             })
             if self.voice:
-                self.voice.speak(msg, volume=85)
+                self.voice.speak(msg, volume=self.alarm_volume)
                 if hasattr(self.voice, 'start_conversation'):
                     self.voice.start_conversation()
 
@@ -417,7 +418,7 @@ class TimerService:
 
         print(f"[alarm] Wake-up message: {msg[:80]}...")
         if self.voice:
-            self.voice.speak(msg, volume=85)
+            self.voice.speak(msg, volume=self.alarm_volume)
             if hasattr(self.voice, 'start_conversation'):
                 self.voice.start_conversation()
 
@@ -537,7 +538,7 @@ class TimerService:
                     print(f"[timer] EXPIRED DURING DOWNTIME: {item['label']}")
                     self._emit("timer_fired", {"id": item["id"], "label": item["label"], "message": msg})
                     if self.voice:
-                        threading.Timer(2.0, lambda m=msg: self.voice.speak(m, volume=85)).start()
+                        threading.Timer(2.0, lambda m=msg: self.voice.speak(m, volume=self.alarm_volume)).start()
                     continue
 
                 timer = Timer(item["duration"], item["label"])

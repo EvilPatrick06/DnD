@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand'
 import { getOptionsForSlot, load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
+import { addToast } from '../../../hooks/use-toast'
 import { filterOptions } from '../../../types/builder'
 import type { SelectableOption } from '../../../types/character-common'
 import { logger } from '../../../utils/logger'
@@ -10,9 +11,15 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
 
   openSelectionModal: async (slotId) => {
     const { gameSystem, buildSlots } = get()
-    if (!gameSystem) return
+    if (!gameSystem) {
+      logger.warn('[Builder] openSelectionModal: no gameSystem')
+      return
+    }
     const slot = buildSlots.find((s) => s.id === slotId)
-    if (!slot) return
+    if (!slot) {
+      logger.warn('[Builder] openSelectionModal: slot not found', slotId)
+      return
+    }
 
     // Build context for filtering (e.g. selected class for subclass/class-feat filtering)
     const classSlot = buildSlots.find((s) => s.category === 'class')
@@ -29,9 +36,13 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
       allOptions = await getOptionsForSlot(gameSystem, slot.category, context)
     } catch (err) {
       logger.error('[Builder] Failed to load options for slot', slotId, err)
+      addToast('Failed to load options for ' + slot.label, 'warning')
       return
     }
-    if (allOptions.length === 0) return // Don't open empty modals
+    if (allOptions.length === 0) {
+      logger.warn('[Builder] openSelectionModal: no options loaded for', slotId)
+      return
+    }
 
     // Filter out already-selected options from other slots of the same category
     const selectedIds = new Set(
@@ -43,7 +54,10 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
         .map((s) => s.selectedId!)
     )
     const options = selectedIds.size > 0 ? allOptions.filter((o) => !selectedIds.has(o.id)) : allOptions
-    if (options.length === 0) return
+    if (options.length === 0) {
+      logger.warn('[Builder] openSelectionModal: all options filtered out for', slotId)
+      return
+    }
 
     set({
       selectionModal: {

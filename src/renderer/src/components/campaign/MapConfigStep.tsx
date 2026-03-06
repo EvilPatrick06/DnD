@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import builtInMapsJson from '../../../public/data/5e/world/built-in-maps.json'
+import builtInMapsJson from '@data/5e/world/built-in-maps.json'
 import { load5eBuiltInMaps } from '../../services/data-provider'
 import type { GameMap } from '../../types/map'
 import { Button, Input } from '../ui'
@@ -24,27 +24,30 @@ export default function MapConfigStep({ maps, campaignId, onChange, adventureMap
   const [newGridSize, setNewGridSize] = useState(40)
   const [dragOver, setDragOver] = useState(false)
 
-  const createMapEntry = (name: string, gridSize: number): GameMap => ({
-    id: crypto.randomUUID(),
-    name,
-    campaignId,
-    imagePath: '',
-    width: 1920,
-    height: 1080,
-    grid: {
-      enabled: true,
-      cellSize: gridSize,
-      offsetX: 0,
-      offsetY: 0,
-      color: '#ffffff',
-      opacity: 0.2,
-      type: 'square'
-    },
-    tokens: [],
-    fogOfWar: { enabled: false, revealedCells: [] },
-    terrain: [],
-    createdAt: new Date().toISOString()
-  })
+  const createMapEntry = useCallback(
+    (name: string, gridSize: number): GameMap => ({
+      id: crypto.randomUUID(),
+      name,
+      campaignId,
+      imagePath: '',
+      width: 1920,
+      height: 1080,
+      grid: {
+        enabled: true,
+        cellSize: gridSize,
+        offsetX: 0,
+        offsetY: 0,
+        color: '#ffffff',
+        opacity: 0.2,
+        type: 'square'
+      },
+      tokens: [],
+      fogOfWar: { enabled: false, revealedCells: [] },
+      terrain: [],
+      createdAt: new Date().toISOString()
+    }),
+    [campaignId]
+  )
 
   const handleAddCustomMap = (): void => {
     if (!newMapName.trim()) return

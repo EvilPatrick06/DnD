@@ -64,6 +64,17 @@ def _gemini_model_id(model: str) -> str:
     return mapping.get(model, model)
 
 
+def _gemini_thinking_budget(model: str) -> int | None:
+    """Return thinkingBudget for a model, or None to use default.
+
+    Gemini 3 Flash: disable thinking (budget=0) — faster with equal quality
+    for conversational use. Other models: leave default.
+    """
+    if "flash" in model and ("3-flash" in model or "3.1-flash" in model):
+        return 0
+    return None
+
+
 def gemini_chat(messages: list[dict], model: str = "",
                 temperature: float = 0.8, max_tokens: int = 2048) -> str:
     """Chat with Gemini API. Accepts OpenAI-style messages."""
@@ -84,12 +95,17 @@ def gemini_chat(messages: list[dict], model: str = "",
                 "parts": [{"text": msg["content"]}],
             })
 
+    gen_config = {
+        "temperature": temperature,
+        "maxOutputTokens": max_tokens,
+    }
+    thinking_budget = _gemini_thinking_budget(model)
+    if thinking_budget is not None:
+        gen_config["thinkingConfig"] = {"thinkingBudget": thinking_budget}
+
     payload = {
         "contents": contents,
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_tokens,
-        },
+        "generationConfig": gen_config,
     }
     if system_instruction:
         payload["systemInstruction"] = {
@@ -120,6 +136,67 @@ def gemini_chat(messages: list[dict], model: str = "",
         parts = candidates[0].get("content", {}).get("parts", [])
         return "".join(p.get("text", "") for p in parts)
     return ""
+
+
+def gemini_chat_stream(messages: list[dict], model: str = "",
+                       temperature: float = 0.8, max_tokens: int = 2048):
+    """Stream Gemini response, yielding text chunks as they arrive.
+
+    Same interface as gemini_chat but yields partial text strings.
+    Used by the voice pipeline to start TTS before the full response is ready.
+    """
+    model = model or PRIMARY_MODEL
+    model_id = _gemini_model_id(model)
+
+    system_instruction = None
+    contents = []
+    for msg in messages:
+        role = msg["role"]
+        if role == "system":
+            system_instruction = msg["content"]
+        else:
+            gemini_role = "model" if role == "assistant" else "user"
+            contents.append({
+                "role": gemini_role,
+                "parts": [{"text": msg["content"]}],
+            })
+
+    gen_config = {
+        "temperature": temperature,
+        "maxOutputTokens": max_tokens,
+    }
+    thinking_budget = _gemini_thinking_budget(model)
+    if thinking_budget is not None:
+        gen_config["thinkingConfig"] = {"thinkingBudget": thinking_budget}
+
+    payload = {
+        "contents": contents,
+        "generationConfig": gen_config,
+    }
+    if system_instruction:
+        payload["systemInstruction"] = {
+            "parts": [{"text": system_instruction}],
+        }
+
+    url = f"{GEMINI_BASE}/models/{model_id}:streamGenerateContent?key={GEMINI_API_KEY}&alt=sse"
+
+    r = _gemini_session.post(url, json=payload, timeout=120, stream=True)
+    r.raise_for_status()
+
+    for line in r.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data: "):
+            continue
+        try:
+            data = json.loads(line[6:])
+            candidates = data.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                for part in parts:
+                    text = part.get("text", "")
+                    if text:
+                        yield text
+        except (json.JSONDecodeError, KeyError):
+            continue
 
 
 # ── Anthropic (Claude) Provider ───────────────────────────────────────────
@@ -190,9 +267,79 @@ def cloud_chat(messages: list[dict], model: str = "",
         return gemini_chat(messages, model, temperature, max_tokens)
     elif model.startswith("claude"):
         return claude_chat(messages, model, temperature, max_tokens)
+    elif model.startswith("llama") or model.startswith("mixtral") or model.startswith("groq-"):
+        return groq_llm_chat(messages, model, temperature, max_tokens)
     else:
         # Default to Gemini primary
         return gemini_chat(messages, PRIMARY_MODEL, temperature, max_tokens)
+
+
+# ── Groq LLM (Llama, Mixtral) ───────────────────────────────────────────
+
+_groq_llm_session = requests.Session()
+
+
+def groq_llm_chat(messages: list[dict], model: str = "llama-3.3-70b-versatile",
+                  temperature: float = 0.8, max_tokens: int = 2048) -> str:
+    """Chat with Groq LLM API. OpenAI-compatible endpoint."""
+    # Strip "groq-" prefix if present
+    if model.startswith("groq-"):
+        model = model[5:]
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+
+    r = _groq_llm_session.post(f"{GROQ_BASE}/chat/completions",
+                                json=payload, headers=headers, timeout=60)
+    r.raise_for_status()
+    data = r.json()
+    return data["choices"][0]["message"]["content"]
+
+
+def groq_llm_chat_stream(messages: list[dict], model: str = "llama-3.3-70b-versatile",
+                         temperature: float = 0.8, max_tokens: int = 2048):
+    """Stream Groq LLM response, yielding text chunks."""
+    if model.startswith("groq-"):
+        model = model[5:]
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+
+    r = _groq_llm_session.post(f"{GROQ_BASE}/chat/completions",
+                                json=payload, headers=headers, timeout=60, stream=True)
+    r.raise_for_status()
+
+    for line in r.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data: "):
+            continue
+        data_str = line[6:]
+        if data_str.strip() == "[DONE]":
+            break
+        try:
+            data = json.loads(data_str)
+            delta = data["choices"][0].get("delta", {})
+            text = delta.get("content", "")
+            if text:
+                yield text
+        except (json.JSONDecodeError, KeyError, IndexError):
+            continue
 
 
 # ── Groq STT (Whisper) ───────────────────────────────────────────────────
@@ -235,7 +382,7 @@ def groq_stt(audio_bytes: bytes, language: str = "en", prompt: str = "") -> dict
 
 
 def fish_audio_tts(text: str, voice_id: str = "",
-                   format: str = "wav") -> bytes:
+                   format: str = "mp3") -> bytes:
     """Generate speech using Fish Audio API.
 
     Args:

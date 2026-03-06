@@ -56,14 +56,15 @@ function createWindow(): void {
     logToFile('WARN', `Failed to load app icon from: ${iconPath}`)
   }
 
-  // Content Security Policy
+  // Content Security Policy — relax inline restrictions in dev for Vite HMR
+  const devConnect = is.dev ? ' ws://localhost:5173 http://localhost:5173' : ''
+  const inlinePolicy = is.dev ? " 'unsafe-inline' 'unsafe-eval'" : ''
+  const csp = `default-src 'self' plugin:; script-src 'self' plugin:${inlinePolicy}; worker-src 'self' blob:; style-src 'self' plugin:${inlinePolicy}; connect-src 'self' plugin: wss://0.peerjs.com https://0.peerjs.com${devConnect}; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:`
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self' plugin:; script-src 'self' plugin:; worker-src 'self' blob:; style-src 'self' plugin:; connect-src 'self' plugin: wss://0.peerjs.com https://0.peerjs.com; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:"
-        ]
+        'Content-Security-Policy': [csp]
       }
     })
   })
@@ -108,8 +109,19 @@ app.on('second-instance', () => {
   }
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   app.setAppUserModelId('com.dnd-vtt.app')
+
+  // Install React DevTools in dev mode
+  if (is.dev) {
+    try {
+      const { default: installExtension, REACT_DEVELOPER_TOOLS } = await import('electron-devtools-installer')
+      await installExtension(REACT_DEVELOPER_TOOLS)
+      logToFile('INFO', 'React DevTools installed')
+    } catch (err) {
+      logToFile('WARN', `Failed to install React DevTools: ${err}`)
+    }
+  }
 
   registerPluginProtocol()
   registerIpcHandlers()

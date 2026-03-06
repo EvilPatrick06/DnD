@@ -48,8 +48,19 @@ class CameraService:
         self._motion_thread = None
         self._prev_frame = None
         self._lock = threading.Lock()
+        # Thread-based frame capture for gevent compatibility
+        self._latest_frame = None
+        self._frame_event = threading.Event()
+        self._capture_thread = None
+        self._capture_running = False
 
         os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
+
+        # Start camera eagerly so stream is ready immediately
+        try:
+            self.start()
+        except Exception as e:
+            print(f"[camera] Init failed: {e}")
 
     # ── Camera Lifecycle ─────────────────────────────────────────────
 
@@ -58,37 +69,84 @@ class CameraService:
         if self._camera is not None:
             return
 
-        # Try picamera2 first
+        # Check if a Pi Camera (CSI) is actually connected before trying picamera2
+        _has_pi_camera = False
         try:
-            from picamera2 import Picamera2
-
-            cam = Picamera2()
-            config = cam.create_still_configuration(
-                main={"size": (1280, 960), "format": "RGB888"},
-                lores={"size": (640, 480), "format": "RGB888"},
+            import subprocess
+            result = subprocess.run(
+                ["rpicam-hello", "--list-cameras"],
+                capture_output=True, text=True, timeout=5,
             )
-            cam.configure(config)
-            cam.start()
-            time.sleep(1)  # Warm-up
-            self._camera = cam
-            self._backend = "picamera2"
-            print("[camera] Using picamera2 backend")
-            return
-        except (ImportError, RuntimeError) as e:
-            print(f"[camera] picamera2 unavailable ({e}), trying OpenCV USB fallback")
+            _has_pi_camera = "No cameras" not in result.stdout
+        except Exception:
+            pass
 
-        # Fallback to OpenCV USB webcam
+        if _has_pi_camera:
+            try:
+                from picamera2 import Picamera2
+
+                cam = Picamera2()
+                config = cam.create_still_configuration(
+                    main={"size": (1920, 1080), "format": "RGB888"},
+                    lores={"size": (640, 480), "format": "RGB888"},
+                )
+                cam.configure(config)
+                cam.start()
+                time.sleep(1)
+                self._camera = cam
+                self._backend = "picamera2"
+                print("[camera] Using Pi Camera (picamera2)")
+                self._start_capture_thread()
+                return
+            except (ImportError, RuntimeError) as e:
+                print(f"[camera] picamera2 failed ({e}), trying USB fallback")
+        else:
+            print("[camera] No Pi Camera detected, using USB webcam")
+
+        # Fallback to OpenCV USB webcam (Elgato Facecam 4K)
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             raise RuntimeError("No camera available: picamera2 failed and no USB webcam found")
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+        # Elgato Facecam 4K via USB2: 1080p MJPG, 16:9 aspect
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap.set(cv2.CAP_PROP_FPS, 30)
         self._camera = cap
         self._backend = "opencv"
-        print("[camera] Using OpenCV USB webcam backend")
+        print("[camera] Using Elgato Facecam 4K (USB2, 1920x1080 MJPG)")
+        self._start_capture_thread()
+
+    def _start_capture_thread(self):
+        """Start background thread that continuously captures frames."""
+        if self._capture_thread and self._capture_running:
+            return
+        self._capture_running = True
+        self._capture_thread = threading.Thread(
+            target=self._capture_loop, daemon=True, name="camera-capture"
+        )
+        self._capture_thread.start()
+
+    def _capture_loop(self):
+        """Background loop: reads frames from camera, stores latest."""
+        while self._capture_running and self._camera is not None:
+            try:
+                if self._backend == "opencv":
+                    ok, frame = self._camera.read()
+                    if ok:
+                        self._latest_frame = frame
+                        self._frame_event.set()
+                else:
+                    frame_rgb = self._camera.capture_array("lores")
+                    self._latest_frame = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+                    self._frame_event.set()
+            except Exception:
+                pass
+            time.sleep(0.033)  # ~30 FPS capture rate
 
     def stop(self):
         """Stop the camera."""
+        self._capture_running = False
         self.stop_motion_detection()
         if self._camera:
             if self._backend == "opencv":
@@ -100,6 +158,9 @@ class CameraService:
 
     def capture_frame(self) -> np.ndarray:
         """Capture a single frame from the camera. Returns BGR numpy array."""
+        # Use buffered frame from capture thread if available
+        if self._latest_frame is not None:
+            return self._latest_frame.copy()
         if self._camera is None:
             self.start()
         if self._backend == "opencv":
@@ -115,7 +176,9 @@ class CameraService:
         if self._camera is None:
             self.start()
         if self._backend == "opencv":
-            success, frame = self._camera.read()
+            # For OpenCV, read directly for freshest full-res frame
+            with self._lock:
+                success, frame = self._camera.read()
             if not success:
                 raise RuntimeError("Failed to capture frame from USB webcam")
             return frame
@@ -127,13 +190,16 @@ class CameraService:
     def generate_mjpeg(self):
         """Generator that yields MJPEG frames for Flask streaming response."""
         while True:
-            frame = self.capture_frame()
-            _, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n"
-            )
-            time.sleep(0.1)  # ~10 FPS
+            if self._latest_frame is not None:
+                _, jpeg = cv2.imencode(
+                    ".jpg", self._latest_frame,
+                    [cv2.IMWRITE_JPEG_QUALITY, 80],
+                )
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n"
+                )
+            time.sleep(0.067)  # ~15 FPS
 
     # ── Snapshots ────────────────────────────────────────────────────
 
@@ -211,8 +277,12 @@ class CameraService:
 
     def _load_yolo(self):
         if self._yolo is None:
-            from ultralytics import YOLO
-            self._yolo = YOLO("yolov8n.pt")
+            try:
+                from ultralytics import YOLO
+                self._yolo = YOLO("yolov8n.pt")
+            except ImportError:
+                print("[vision] ultralytics not installed, YOLO detection unavailable")
+                return None
         return self._yolo
 
     def detect_objects(self, frame: np.ndarray = None) -> list[dict]:
@@ -251,6 +321,8 @@ class CameraService:
     def _local_detect_objects(self, frame: np.ndarray) -> list[dict]:
         """Detect with local YOLOv8-Nano (fallback, lower accuracy)."""
         model = self._load_yolo()
+        if model is None:
+            return []
         results = model(frame, verbose=False)
 
         detections = []
@@ -287,62 +359,39 @@ class CameraService:
     # ── Vision Description (Cloud LLM → local Ollama → detection fallback) ──
 
     def describe_scene(self, prompt: str = "What do you see?") -> str:
-        """Describe what the camera sees using LLM vision.
-
-        Routes to Google Cloud Vision first, falls back to local Ollama,
-        then falls back to object detection + face recognition text summary.
-        """
+        """Describe what the camera sees using Gemini vision API."""
         frame = self.capture_frame()
-
-        if _check_cloud():
-            try:
-                return self._cloud_describe(frame, prompt)
-            except Exception as e:
-                print(f"[vision] Cloud describe failed ({e}), trying local")
-
-        # Try local Ollama
-        try:
-            return self._local_describe(frame, prompt)
-        except Exception as e:
-            print(f"[vision] Local describe failed ({e}), using detection fallback")
-
-        # Fallback: combine detection + face recognition into text
-        return self._detection_fallback(frame)
-
-    def _cloud_describe(self, frame: np.ndarray, prompt: str) -> str:
-        """Send frame to Google Cloud Vision API for scene description."""
         _, jpeg = cv2.imencode(".jpg", frame)
-        result = google_vision_describe(jpeg.tobytes())
-        # Build description from labels + text annotations
-        labels = [a.get("description", "") for a in result.get("labelAnnotations", [])]
-        text = result.get("fullTextAnnotation", {}).get("text", "")
-        parts = []
-        if labels:
-            parts.append(f"I see: {', '.join(labels[:10])}")
-        if text:
-            parts.append(f"Text visible: {text[:200]}")
-        return " | ".join(parts) if parts else "Cloud vision returned no results"
+        return self._gemini_describe(jpeg.tobytes(), prompt)
 
-    def _local_describe(self, frame: np.ndarray, prompt: str) -> str:
-        """Describe with local Ollama vision model."""
-        import ollama as ollama_client
+    def _gemini_describe(self, image_bytes: bytes, prompt: str) -> str:
+        """Send image to Gemini API for scene description."""
+        import base64
+        import requests as req
+        from cloud_providers import GEMINI_API_KEY, GEMINI_BASE
 
-        temp_path = os.path.join(DATA_DIR, "vision_temp.jpg")
-        cv2.imwrite(temp_path, frame)
+        if not GEMINI_API_KEY:
+            raise RuntimeError("Gemini vision failed — no API key configured")
 
-        try:
-            response = ollama_client.chat(
-                model="bmo",
-                messages=[{
-                    "role": "user",
-                    "content": prompt,
-                    "images": [temp_path],
-                }],
-            )
-            return response["message"]["content"]
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+        b64 = base64.b64encode(image_bytes).decode("utf-8")
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": "image/jpeg", "data": b64}},
+                ],
+            }],
+            "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1024},
+        }
+        url = f"{GEMINI_BASE}/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+        r = req.post(url, json=payload, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        candidates = data.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            return "".join(p.get("text", "") for p in parts)
+        return "No description available"
 
     def _detection_fallback(self, frame: np.ndarray) -> str:
         """Build a text description from object detection + face recognition."""

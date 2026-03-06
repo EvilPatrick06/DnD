@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import diceColorsJson from '../../../../public/data/ui/dice-colors.json'
+import diceColorsJson from '@data/ui/dice-colors.json'
 import { load5eDiceColors } from '../../../services/data-provider'
 import {
   computeFaceNormalsFromGeo as genComputeFaceNormals,

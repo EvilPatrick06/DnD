@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import languageD12Json from '../../../../public/data/5e/character/language-d12-table.json'
+import languageD12Json from '@data/5e/character/language-d12-table.json'
 import { LANGUAGE_DESCRIPTIONS } from '../../../data/language-descriptions'
 import { load5eLanguageD12Table } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'

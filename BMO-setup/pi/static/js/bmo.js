@@ -10,6 +10,7 @@ function loadPlacesAPI(apiKey) {
   const script = document.createElement('script');
   script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=_onPlacesReady`;
   script.async = true;
+  script.onerror = () => console.warn('Failed to load Google Places API');
   document.head.appendChild(script);
 }
 
@@ -23,25 +24,27 @@ const _autocompleteInstances = {};
 function initPlacesAutocomplete(inputId, onSelect) {
   const el = document.getElementById(inputId);
   if (!el) return;
-  // Skip if already initialized on this element
   if (_autocompleteInstances[inputId]) return;
 
   function attach() {
     if (!window.google?.maps?.places) return;
-    const ac = new google.maps.places.Autocomplete(el, {
-      types: ['establishment', 'geocode'],
-      fields: ['formatted_address', 'name', 'geometry'],
-    });
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
-      const value = place.name && place.formatted_address
-        ? `${place.name}, ${place.formatted_address}`
-        : place.formatted_address || place.name || '';
-      if (onSelect) onSelect(value);
-      el.value = value;
-      el.dispatchEvent(new Event('input'));
-    });
-    _autocompleteInstances[inputId] = ac;
+    try {
+      const ac = new google.maps.places.Autocomplete(el, {
+        fields: ['formatted_address', 'name'],
+      });
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        const value = place.name && place.formatted_address
+          ? `${place.name}, ${place.formatted_address}`
+          : place.formatted_address || place.name || '';
+        if (onSelect) onSelect(value);
+        el.value = value;
+        el.dispatchEvent(new Event('input'));
+      });
+      _autocompleteInstances[inputId] = ac;
+    } catch (e) {
+      console.warn('Places autocomplete failed:', e);
+    }
   }
 
   if (window.google?.maps?.places) {
@@ -100,9 +103,20 @@ function bmo() {
     showQueue: false,
     albumView: null,
 
+    // TTS output
+    ttsOutput: 'pi',
+    ttsLaptopDevice: null,
+    laptopAudioDevices: [],
+    laptopMicDevices: [],
+    browserMicGranted: false,
+    _ttsAudio: null,
+    micInputs: [],
+
     // Calendar
     calEvents: [],
     calOffline: false,
+    calAuthUrl: '',
+    calAuthCode: '',
     calDays: 7,
     showEventForm: false,
     newEvent: {
@@ -189,9 +203,9 @@ function bmo() {
     tvPairPin: '',
 
     // Controls tab state
-    ledState: { color: { r: 0, g: 255, b: 0 }, mode: 'breathing', brightness: 100, custom: false },
-    ledColorHex: '#00ff00',
-    volumeLevels: { music: 50, voice: 80, effects: 80, notifications: 80 },
+    ledState: null,
+    ledColorHex: '#000000',
+    volumeLevels: null,
     systemStatus: null,
     conversationActive: false,
     kdeNotifications: [],
@@ -241,6 +255,19 @@ function bmo() {
         }
       } catch {}
 
+      // Restore laptop devices from localStorage
+      try {
+        const audioDevs = localStorage.getItem('bmo_laptop_audio');
+        const micDevs = localStorage.getItem('bmo_laptop_mic');
+        if (audioDevs) this.laptopAudioDevices = JSON.parse(audioDevs);
+        if (micDevs) this.laptopMicDevices = JSON.parse(micDevs);
+        if (localStorage.getItem('bmo_mic_granted')) {
+          this.browserMicGranted = true;
+          // Re-enumerate in background to refresh device list
+          this.enumerateLaptopDevices();
+        }
+      } catch {}
+
       // Restore chat from last session
       this.loadChatHistory();
 
@@ -267,6 +294,15 @@ function bmo() {
 
       // Watch calendar tab for day changes
       this.$watch('calDays', () => this.fetchCalendar());
+
+      // Clear overlays when switching tabs
+      this.$watch('tab', () => {
+        this.musicResults = [];
+        this.playlistResults = [];
+        this.musicSearchFocused = false;
+        // Hide Google Places autocomplete dropdown
+        document.querySelectorAll('.pac-container').forEach(el => el.style.display = 'none');
+      });
 
       // Swipe navigation
       this.initSwipe();
@@ -350,7 +386,12 @@ function bmo() {
 
     setupSocket() {
       this.socket.on('weather_update', (data) => { this.weather = data; });
-      this.socket.on('music_state', (data) => { this.musicState = data; });
+      this.socket.on('music_state', (data) => {
+        // Preserve saved volume if incoming state has 0 (VLC reports 0 when idle)
+        if (!data.volume && this.musicState.volume > 0) data.volume = this.musicState.volume;
+        this.musicState = data;
+        if (this.volumeLevels && data.volume > 0) this.volumeLevels.music = data.volume;
+      });
       this.socket.on('next_event', (data) => { this.nextEvent = data; });
       this.socket.on('timers_tick', (data) => { this.timerItems = data; });
       this.socket.on('status', (data) => { this.status = data.state; });
@@ -364,6 +405,9 @@ function bmo() {
       });
 
       this.socket.on('transcription', (data) => {
+        // Deduplicate: skip if last message has same text (voice echo of typed message)
+        const last = this.messages[this.messages.length - 1];
+        if (last && last.role === 'user' && last.text === data.text) return;
         this.messages.push({ role: 'user', text: data.text, speaker: data.speaker });
         this.scrollChat();
         if (this.tab !== 'chat') this.tab = 'chat';
@@ -383,6 +427,19 @@ function bmo() {
 
       this.socket.on('motion_detected', (data) => {
         this.showNotification(`Motion: ${data.description}`);
+      });
+
+      this.socket.on('bt_scan_result', (data) => {
+        this.btDevices = data.devices || [];
+        this.btScanning = false;
+      });
+
+      this.socket.on('vision_result', (data) => {
+        this.visionResult = data.description || 'No description';
+      });
+
+      this.socket.on('tts_audio', (data) => {
+        this._playTtsInBrowser(data.url, data.volume);
       });
 
       // ── Agent system events ────────────────────────────
@@ -450,13 +507,23 @@ function bmo() {
           this.ledColorHex = `#${r}${g}${b}`;
         }
       });
-      this.socket.on('volume_update', (data) => { this.volumeLevels = data; });
+      this.socket.on('volume_update', (data) => {
+        if (this.volumeLevels && data.category) {
+          this.volumeLevels[data.category] = data.level;
+        }
+      });
       this.socket.on('conversation_mode', (data) => { this.conversationActive = data.active; });
       this.socket.on('scene_change', (data) => {
         this.activeScene = data.scene;
-        this.fetchScenes();
+        this.scenes = this.scenes.map(s => ({ ...s, active: s.name === data.scene }));
       });
       this.socket.on('notification', (data) => {
+        // BMO system toast (from scenes, errors, etc.) — has 'message' but no 'app'/'title'
+        if (data.message && !data.app && !data.title) {
+          this.showNotification(data.message, data.type || 'info');
+          return;
+        }
+        // KDE phone notification
         this.kdeNotifications.unshift(data);
         if (this.kdeNotifications.length > 100) this.kdeNotifications.length = 100;
       });
@@ -858,12 +925,14 @@ function bmo() {
       this.fetchMusicState();
     },
 
-    setVolume(vol) {
-      this.musicState.volume = vol;
+    setMusicVolume(vol) {
+      const v = parseInt(vol);
+      this.musicState.volume = v;
+      if (this.volumeLevels) this.volumeLevels.music = v;
       fetch('/api/music/volume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ volume: vol }),
+        body: JSON.stringify({ volume: v }),
       });
     },
 
@@ -890,7 +959,14 @@ function bmo() {
     async fetchMusicState() {
       try {
         const res = await fetch('/api/music/state');
-        this.musicState = await res.json();
+        const state = await res.json();
+        // Volume is managed locally — always preserve current slider value
+        if (this.musicState.volume !== undefined) {
+          state.volume = this.musicState.volume;
+        }
+        this.musicState = state;
+        // Sync settings slider
+        if (this.volumeLevels) this.volumeLevels.music = this.musicState.volume;
       } catch {}
     },
 
@@ -1007,21 +1083,32 @@ function bmo() {
 
     // ── Calendar ──────────────────────────────────────────────
 
+    getFilteredCalEvents() {
+      if (this.calDays !== 1) return this.calEvents;
+      // Day mode: only show today's events
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+      return this.calEvents.filter(e => {
+        const start = (e.start || '').slice(0, 10);
+        const date = (e.date || '').slice(0, 10);
+        return start === today || date === today;
+      });
+    },
+
     async fetchCalendar() {
       try {
         const res = await fetch(`/api/calendar/events?days=${this.calDays}`);
         const data = await res.json();
         if (!res.ok) {
+          console.warn('[cal] API error:', res.status, data);
           this.calOffline = true;
           return;
         }
-        this.calOffline = data.offline || false;
-        this.calEvents = data.events || [];
+        this.calOffline = false;
+        this.calEvents = data.events || data || [];
         if (this.calEvents.length > 0) this.nextEvent = this.calEvents[0];
-        // Save to localStorage for instant offline access
         try { localStorage.setItem('bmo_cal_events', JSON.stringify(this.calEvents)); } catch {}
       } catch (e) {
-        // Server unreachable — load from localStorage, show offline
+        console.warn('[cal] fetch failed:', e);
         this.calOffline = true;
         if (this.calEvents.length === 0) {
           try {
@@ -1029,6 +1116,44 @@ function bmo() {
             if (cached) this.calEvents = JSON.parse(cached);
           } catch {}
         }
+      }
+    },
+
+    async startCalendarAuth() {
+      try {
+        const res = await fetch('/api/calendar/auth/url');
+        const data = await res.json();
+        if (data.url) {
+          this.calAuthUrl = data.url;
+          this.calAuthCode = '';
+        } else {
+          this.showNotification(data.error || 'Failed to get auth URL', 'error');
+        }
+      } catch (e) {
+        this.showNotification('Failed to start calendar auth', 'error');
+      }
+    },
+
+    async submitCalendarAuth() {
+      if (!this.calAuthCode.trim()) return;
+      try {
+        const res = await fetch('/api/calendar/auth/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: this.calAuthCode.trim() }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          this.calAuthUrl = '';
+          this.calAuthCode = '';
+          this.calOffline = false;
+          this.showNotification('Calendar authorized!', 'success');
+          await this.fetchCalendar();
+        } else {
+          this.showNotification(data.error || 'Auth failed', 'error');
+        }
+      } catch (e) {
+        this.showNotification('Auth submission failed', 'error');
       }
     },
 
@@ -1255,13 +1380,12 @@ function bmo() {
     async cameraDescribe() {
       this.visionResult = 'Looking...';
       try {
-        const res = await fetch('/api/camera/describe', {
+        await fetch('/api/camera/describe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: 'What do you see? Describe briefly.' }),
         });
-        const data = await res.json();
-        this.visionResult = data.description;
+        // Result arrives via vision_result socket event
       } catch {
         this.visionResult = 'Could not describe scene';
       }
@@ -1833,7 +1957,7 @@ function bmo() {
 
     async fetchControlsData() {
       try {
-        const [ledRes, volRes, statusRes, notifRes, notifSettRes, scenesRes, audioRes] = await Promise.all([
+        const [ledRes, volRes, statusRes, notifRes, notifSettRes, scenesRes, audioRes, ttsOutRes] = await Promise.all([
           fetch('/api/led/status'),
           fetch('/api/volume'),
           fetch('/api/status/summary'),
@@ -1841,6 +1965,7 @@ function bmo() {
           fetch('/api/notifications/settings'),
           fetch('/api/scenes'),
           fetch('/api/audio/devices'),
+          fetch('/api/tts/output'),
         ]);
         if (ledRes.ok) {
           const d = await ledRes.json();
@@ -1852,7 +1977,12 @@ function bmo() {
             this.ledColorHex = `#${r}${g}${b}`;
           }
         }
-        if (volRes.ok) this.volumeLevels = await volRes.json();
+        if (volRes.ok) {
+          const vols = await volRes.json();
+          // Sync musicState volume from saved settings (API is source of truth)
+          if (vols.music !== undefined) this.musicState.volume = vols.music;
+          this.volumeLevels = vols;
+        }
         if (statusRes.ok) this.systemStatus = await statusRes.json();
         if (notifRes.ok) {
           const nd = await notifRes.json();
@@ -1868,6 +1998,12 @@ function bmo() {
           const ad = await audioRes.json();
           this.audioDevices = ad.sinks || ad.devices || [];
         }
+        if (ttsOutRes.ok) {
+          const td = await ttsOutRes.json();
+          this.ttsOutput = td.output || 'pi';
+        }
+        // Laptop devices loaded on demand via button click
+        this.fetchMicInputs();
       } catch {}
     },
 
@@ -1884,19 +2020,25 @@ function bmo() {
 
     async activateScene(name) {
       try {
-        await fetch('/api/scene/activate', {
+        const r = await fetch('/api/scene/activate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scene: name }),
         });
-        this.activeScene = name;
+        if (r.ok) {
+          this.activeScene = name;
+          this.scenes = this.scenes.map(s => ({ ...s, active: s.name === name }));
+        }
       } catch {}
     },
 
     async deactivateScene() {
       try {
-        await fetch('/api/scene/deactivate', { method: 'POST' });
-        this.activeScene = null;
+        const r = await fetch('/api/scene/deactivate', { method: 'POST' });
+        if (r.ok) {
+          this.activeScene = null;
+          this.scenes = this.scenes.map(s => ({ ...s, active: false }));
+        }
       } catch {}
     },
 
@@ -1910,13 +2052,14 @@ function bmo() {
       } catch {}
     },
 
-    async setAudioOutput(deviceName) {
+    async setAudioOutput(deviceId) {
       try {
         await fetch('/api/audio/output', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ function: 'all', device_name: deviceName }),
+          body: JSON.stringify({ function: 'all', device_id: deviceId }),
         });
+        this.musicState.output_device = 'pi'; // back to Pi output
         this.fetchAudioDevices();
       } catch {}
     },
@@ -1925,13 +2068,13 @@ function bmo() {
       this.btScanning = true;
       this.btDevices = [];
       try {
-        const r = await fetch('/api/audio/bluetooth/scan', { method: 'POST' });
-        if (r.ok) {
-          const d = await r.json();
-          this.btDevices = d.devices || [];
-        }
-      } catch {}
-      this.btScanning = false;
+        await fetch('/api/audio/bluetooth/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration: 8 }),
+        });
+        // Results arrive via bt_scan_result socket event
+      } catch { this.btScanning = false; }
     },
 
     async btPair(address) {
@@ -1941,11 +2084,16 @@ function bmo() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ address }),
         });
-        if (r.ok) {
+        const data = await r.json();
+        if (data.ok) {
           this.showNotification('Bluetooth paired!');
           this.fetchAudioDevices();
+        } else {
+          this.showNotification(data.message || 'Pair failed', 'error');
         }
-      } catch {}
+      } catch {
+        this.showNotification('Pair request failed', 'error');
+      }
     },
 
     async btDisconnect(address) {
@@ -1956,6 +2104,106 @@ function bmo() {
           body: JSON.stringify({ address }),
         });
         this.fetchAudioDevices();
+      } catch {}
+    },
+
+    // ── TTS Output ──────────────────────────────────────────
+    async enumerateLaptopDevices() {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop()));
+        this.browserMicGranted = true;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        this.laptopAudioDevices = devices
+          .filter(d => d.kind === 'audiooutput' && d.deviceId !== '')
+          .map(d => ({ deviceId: d.deviceId, label: d.label || `Speaker ${d.deviceId.slice(0,8)}` }));
+        this.laptopMicDevices = devices
+          .filter(d => d.kind === 'audioinput' && d.deviceId !== '')
+          .map(d => ({ deviceId: d.deviceId, label: d.label || `Mic ${d.deviceId.slice(0,8)}` }));
+        // Persist to localStorage
+        try {
+          localStorage.setItem('bmo_laptop_audio', JSON.stringify(this.laptopAudioDevices));
+          localStorage.setItem('bmo_laptop_mic', JSON.stringify(this.laptopMicDevices));
+          localStorage.setItem('bmo_mic_granted', '1');
+        } catch {}
+      } catch (e) {
+        console.warn('Cannot enumerate devices:', e);
+        this.showNotification('Allow microphone access when prompted to load laptop devices', 'warning');
+      }
+    },
+
+    async requestBrowserMicPermission() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        this.browserMicGranted = true;
+        this.showNotification('Microphone access granted!', 'success');
+        this.enumerateLaptopDevices();
+      } catch (e) {
+        console.warn('Mic permission denied:', e);
+        this.showNotification('Microphone access denied. Check browser permissions or enable Chrome secure origin flag.', 'warning');
+      }
+    },
+
+    setMusicLaptopOutput(deviceId) {
+      this.showNotification('Laptop music output requires Chrome secure origin flag', 'warning');
+    },
+
+    async setTtsOutput(mode, piSinkId, laptopDeviceId) {
+      this.ttsOutput = mode;
+      this.ttsLaptopDevice = laptopDeviceId || null;
+      if (mode === 'pi' && piSinkId) {
+        // Set the Pi sink as default
+        await fetch('/api/audio/output', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ function: 'all', device_id: piSinkId }),
+        });
+        this.fetchAudioDevices();
+      }
+      await fetch('/api/tts/output', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ output: mode }),
+      });
+    },
+
+    _playTtsInBrowser(url, volume) {
+      if (!this._ttsAudio) {
+        this._ttsAudio = new Audio();
+      }
+      const audio = this._ttsAudio;
+      audio.src = url;
+      if (volume != null) audio.volume = Math.min(1, volume / 100);
+      // Route to selected laptop device if supported
+      if (this.ttsLaptopDevice && audio.setSinkId) {
+        audio.setSinkId(this.ttsLaptopDevice).then(() => audio.play()).catch(() => audio.play());
+      } else {
+        audio.play();
+      }
+    },
+
+    // ── Mic Input ───────────────────────────────────────────
+    async fetchMicInputs() {
+      try {
+        const res = await fetch('/api/audio/inputs');
+        if (res.ok) {
+          const data = await res.json();
+          this.micInputs = data.sources || [];
+        }
+      } catch {}
+    },
+
+    async setMicInput(deviceId) {
+      try {
+        const res = await fetch('/api/audio/input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_id: deviceId }),
+        });
+        if (res.ok) {
+          this.showNotification('Mic input changed', 'success');
+          await this.fetchMicInputs();
+        }
       } catch {}
     },
 
@@ -1974,31 +2222,44 @@ function bmo() {
     },
 
     async setLedMode(mode) {
+      const target = this.ledState.mode === mode ? 'off' : mode;
       try {
-        await fetch('/api/led/mode', {
+        const r = await fetch('/api/led/mode', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode }),
+          body: JSON.stringify({ mode: target }),
         });
+        if (r.ok) this.ledState.mode = target;
       } catch {}
     },
 
     async setLedBrightness(val) {
       try {
-        await fetch('/api/led/brightness', {
+        const r = await fetch('/api/led/brightness', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ brightness: parseInt(val) }),
         });
+        if (r.ok) this.ledState.brightness = parseInt(val);
       } catch {}
     },
 
     async setVolume(category, level) {
+      const val = parseInt(level);
+      if (this.volumeLevels) this.volumeLevels[category] = val;
+      if (category === 'music') {
+        this.musicState.volume = val;
+        fetch('/api/music/volume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ volume: val }),
+        }).catch(() => {});
+      }
       try {
         await fetch('/api/volume', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category, level: parseInt(level) }),
+          body: JSON.stringify({ category, level: val }),
         });
       } catch {}
     },

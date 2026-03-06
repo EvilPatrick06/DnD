@@ -11,13 +11,7 @@ import type { ValidationResult } from '../network'
 
 type _ValidationResult = ValidationResult
 
-import {
-  AnyPayloadSchema,
-  NetworkMessageEnvelopeSchema,
-  PAYLOAD_SCHEMAS,
-  resetSignalingServer,
-  setSignalingServer
-} from '../network'
+
 import type { AutoSaveConfig, SaveVersion } from '../services/io/auto-save'
 
 type _AutoSaveConfig = AutoSaveConfig
@@ -474,9 +468,6 @@ export default function SettingsPage(): JSX.Element {
   // Notification settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => NotificationService.getConfig().enabled)
 
-  // Network / signaling server settings
-  const [signalingUrl, setSignalingUrl] = useState('')
-
   // Auto-save settings
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => AutoSave.getConfig().enabled)
   const [autoSaveInterval, setAutoSaveInterval] = useState(() => AutoSave.getConfig().intervalMs / 60000)
@@ -821,49 +812,6 @@ export default function SettingsPage(): JSX.Element {
           >
             Test Notification
           </button>
-        </Section>
-
-        {/* Network */}
-        <Section title="Network">
-          <div className="space-y-4">
-            <p className="text-xs text-gray-400">
-              Configure a custom signaling server for P2P connections. Leave blank to use the default PeerJS server.
-              Network protocol validates {Object.keys(PAYLOAD_SCHEMAS).length} message types with{' '}
-              {Object.keys(NetworkMessageEnvelopeSchema.shape).length}-field envelopes (
-              {AnyPayloadSchema ? 'with fallback' : 'strict'} validation).
-            </p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={signalingUrl}
-                onChange={(e) => setSignalingUrl(e.target.value)}
-                placeholder="wss://your-signaling-server.example.com"
-                className="flex-1 px-3 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded text-gray-300 placeholder-gray-600"
-              />
-              <button
-                onClick={() => {
-                  if (signalingUrl.trim()) {
-                    setSignalingServer(signalingUrl.trim())
-                    addToast('Signaling server updated', 'success')
-                  }
-                }}
-                disabled={!signalingUrl.trim()}
-                className="px-3 py-1.5 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-40 transition-colors cursor-pointer"
-              >
-                Apply
-              </button>
-              <button
-                onClick={() => {
-                  resetSignalingServer()
-                  setSignalingUrl('')
-                  addToast('Signaling server reset to default', 'info')
-                }}
-                className="px-3 py-1.5 text-sm rounded-lg border border-gray-700 text-gray-300 hover:border-amber-600 hover:text-amber-400 transition-colors cursor-pointer"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
         </Section>
 
         {/* Auto-Save */}

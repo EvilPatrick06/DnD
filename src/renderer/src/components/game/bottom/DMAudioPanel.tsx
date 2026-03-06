@@ -26,7 +26,7 @@ interface CustomAudioEntry {
   volume: number
 }
 
-import ambientTracksJson from '../../../../public/data/audio/ambient-tracks.json'
+import ambientTracksJson from '@data/audio/ambient-tracks.json'
 import { load5eAmbientTracks } from '../../../services/data-provider'
 import { logger } from '../../../utils/logger'
 

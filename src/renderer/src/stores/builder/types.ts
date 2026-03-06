@@ -1,5 +1,5 @@
-import abilityScoreConfigJson from '../../../public/data/5e/character/ability-score-config.json'
-import presetIconsJson from '../../../public/data/5e/character/preset-icons.json'
+import abilityScoreConfigJson from '@data/5e/character/ability-score-config.json'
+import presetIconsJson from '@data/5e/character/preset-icons.json'
 import { load5eAbilityScoreConfig, load5ePresetIcons } from '../../services/data-provider'
 import type { BuilderPhase, ContentTab, SelectionModalState } from '../../types/builder'
 import type { Character } from '../../types/character'

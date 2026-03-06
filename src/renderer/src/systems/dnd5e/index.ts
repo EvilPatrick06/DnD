@@ -135,8 +135,7 @@ export const dnd5ePlugin: GameSystemPlugin = {
   async getStartingGold(_classId: string, backgroundId: string): Promise<Currency> {
     try {
       const backgrounds = await load5eBackgrounds()
-      const bg = backgrounds.find((b) => b.id === backgroundId)
-      const gold = 10
+      const gold = backgrounds.find((b) => b.id === backgroundId)?.startingGold ?? 10
       return { cp: 0, sp: 0, gp: gold, pp: 0, ep: 0 }
     } catch (error) {
       logger.error('[dnd5e] Failed to load starting gold:', error)
