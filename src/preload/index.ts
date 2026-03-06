@@ -346,7 +346,14 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_STORAGE_SET, pluginId, key, value),
     storageDelete: (pluginId: string, key: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_STORAGE_DELETE, pluginId, key)
-  }
+  },
+
+  // BMO Pi Bridge
+  bmoStartDm: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.BMO_START_DM, campaignId),
+  bmoStopDm: () => ipcRenderer.invoke(IPC_CHANNELS.BMO_STOP_DM),
+  bmoNarrate: (text: string, npc?: string, emotion?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.BMO_NARRATE, text, npc, emotion),
+  bmoDmStatus: () => ipcRenderer.invoke(IPC_CHANNELS.BMO_STATUS)
 }
 
 if (process.contextIsolated) {

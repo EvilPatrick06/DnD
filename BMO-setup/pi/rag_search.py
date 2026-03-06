@@ -67,7 +67,7 @@ STOP_WORDS = {
 }
 
 # Valid domains for access control
-VALID_DOMAINS = {"dnd", "personal", "projects"}
+VALID_DOMAINS = {"dnd", "personal", "projects", "anime", "games", "movies", "music"}
 
 # ── Tokenization ───────────────────────────────────────────────────────────
 

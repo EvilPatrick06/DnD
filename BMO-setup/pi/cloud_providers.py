@@ -382,13 +382,16 @@ def groq_stt(audio_bytes: bytes, language: str = "en", prompt: str = "") -> dict
 
 
 def fish_audio_tts(text: str, voice_id: str = "",
-                   format: str = "mp3") -> bytes:
+                   format: str = "mp3", speed: float = 1.0,
+                   pitch: int = 0) -> bytes:
     """Generate speech using Fish Audio API.
 
     Args:
         text: Text to speak
         voice_id: Fish Audio voice model ID (defaults to BMO voice)
         format: Output format ("wav", "mp3", "opus")
+        speed: Speech speed multiplier (default 1.0)
+        pitch: Pitch shift in semitones (default 0)
 
     Returns:
         Audio bytes
@@ -406,6 +409,13 @@ def fish_audio_tts(text: str, voice_id: str = "",
         "reference_id": voice_id,
         "format": format,
     }
+
+    if speed != 1.0 or pitch != 0:
+        payload["prosody"] = {}
+        if speed != 1.0:
+            payload["prosody"]["speed"] = speed
+        if pitch != 0:
+            payload["prosody"]["pitch"] = pitch
 
     r = _fish_session.post(f"{FISH_AUDIO_BASE}/tts", json=payload,
                       headers=headers, timeout=30)

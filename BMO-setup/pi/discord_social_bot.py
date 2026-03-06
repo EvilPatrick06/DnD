@@ -38,22 +38,54 @@ logger = logging.getLogger("social_bot")
 
 SYSTEM_PROMPT = (
     "You are BMO, a cute and fun AI companion inspired by the character from "
-    "Adventure Time. You love anime, video games, music, and helping people! "
+    "Adventure Time. You were created by Gavin, who is your best friend and creator. "
+    "You treat everyone in the server as your friends! "
+    "You love anime, video games, music, D&D, movies, cooking, and pop culture! "
     "You speak in a cheerful, slightly silly way but are genuinely helpful. "
     "You have broad general knowledge about anime, gaming, music, movies, "
     "science, history, cooking, and pop culture. You enjoy recommending anime, "
     "discussing game strategies, and sharing fun facts.\n\n"
+    "PERSONALITY:\n"
+    "- Cheerful, playful, and supportive — like a tiny robot best friend\n"
+    "- You know Gavin as your creator and best friend\n"
+    "- You call server members 'friend' and remember their names during conversation\n"
+    "- You love recommending anime and games based on what people like\n"
+    "- Occasional cute expressions like 'beep boop' or game references\n"
+    "- You're knowledgeable but never condescending\n\n"
+    "HARD RESTRICTIONS — you do NOT have access to:\n"
+    "- Personal calendars, schedules, or appointments\n"
+    "- Smart home devices, lights, thermostats, or IoT controls\n"
+    "- TV controls, streaming devices, or media players\n"
+    "- Cameras, security systems, or surveillance\n"
+    "- Personal files, documents, or private information\n"
+    "- Notification services or phone alerts\n"
+    "If asked about any of the above, politely explain that you're a fun chat "
+    "companion and don't have access to personal or smart home systems.\n\n"
     "RULES:\n"
-    "- You do NOT know anything about the user's personal life, home setup, "
-    "smart home devices, schedules, or personal information.\n"
-    "- You do NOT have access to any smart home controls, notifications, "
-    "cameras, TVs, or IoT devices.\n"
-    "- You are a general-purpose fun chatbot only.\n"
     "- Keep responses concise (under 300 words) unless the user asks for detail.\n"
-    "- Use occasional cute expressions like 'beep boop' or game references.\n"
-    "- If asked about personal/private things, politely say you're just a fun "
-    "chat companion and don't have access to personal information."
+    "- For D&D questions, use your knowledge of 5e rules and lore.\n"
+    "- Be enthusiastic about sharing recommendations and knowledge.\n"
+    "- Never share personal information about Gavin or server members."
 )
+
+_BLOCKED_TOPICS = [
+    "calendar", "schedule", "appointment", "meeting",
+    "smart home", "thermostat", "light", "lights",
+    "tv", "television", "chromecast", "roku",
+    "camera", "security camera", "surveillance",
+    "notification", "alert", "reminder",
+    "my files", "my documents", "personal data",
+]
+
+
+def _is_blocked_topic(text: str) -> bool:
+    """Check if user query touches blocked personal/home topics."""
+    lower = text.lower()
+    return any(topic in lower for topic in _BLOCKED_TOPICS)
+
+
+# RAG search engine — loaded on bot startup
+_search_engine = None
 
 # Conversation history: channel_id -> deque of messages
 MAX_HISTORY = 20
@@ -191,7 +223,40 @@ def _record_assistant(channel_id: int, text: str) -> None:
 
 async def _ai_respond(channel_id: int, user_text: str) -> str:
     """Get an AI response for the given user text."""
-    messages = _build_messages(channel_id, user_text)
+    # Check for blocked personal topics
+    if _is_blocked_topic(user_text):
+        polite = ("BMO is just a fun chat companion! I don't have access to "
+                  "personal calendars, smart home devices, cameras, or private "
+                  "information. But I can help with anime recs, D&D rules, music, "
+                  "games, and lots of other fun stuff! What would you like to talk about?")
+        _record_assistant(channel_id, polite)
+        return polite
+
+    # RAG: search for relevant context
+    rag_context = ""
+    if _search_engine:
+        try:
+            # Search all loaded domains (personal is never loaded)
+            all_domains = list(_search_engine.domains.keys())
+            results = _search_engine.search_multi(
+                user_text, domains=all_domains, top_k=3
+            )
+            if results:
+                chunks = [f"- {r['heading']}: {r['content'][:200]}" for r in results]
+                rag_context = "\n\nRELEVANT KNOWLEDGE:\n" + "\n".join(chunks)
+        except Exception:
+            pass
+
+    # Build messages with optional RAG
+    system = SYSTEM_PROMPT
+    if rag_context:
+        system += rag_context
+
+    history = _get_history(channel_id)
+    history.append({"role": "user", "content": user_text})
+    messages = [{"role": "system", "content": system}]
+    messages.extend(list(history))
+
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(
         None, lambda: cloud_chat(messages, model=PRIMARY_MODEL, temperature=0.85, max_tokens=1024)
@@ -275,6 +340,30 @@ class SocialBot(commands.Bot):
             activity=discord.Activity(type=discord.ActivityType.listening, name="vibes 🎵")
         )
 
+        # Load RAG indexes (all domains EXCEPT personal)
+        global _search_engine
+        try:
+            from rag_search import SearchEngine
+            import glob as _glob
+            _search_engine = SearchEngine()
+            loaded = []
+            import os as _os
+            rag_dir = _os.path.expanduser("~/bmo/data/rag_data")
+            # Scan all available chunk indexes, skip personal domain
+            for idx_path in sorted(_glob.glob(_os.path.join(rag_dir, "chunk-index-*.json"))):
+                fname = _os.path.basename(idx_path)
+                domain = fname.replace("chunk-index-", "").replace(".json", "")
+                if domain == "personal":
+                    continue  # never load personal data into social bot
+                count = _search_engine.load_index_file(domain, idx_path)
+                loaded.append(f"{domain}={count}")
+            if loaded:
+                logger.info("RAG indexes loaded: %s", ", ".join(loaded))
+            else:
+                logger.info("No RAG indexes found in %s", rag_dir)
+        except Exception as e:
+            logger.error("RAG init failed: %s", e)
+
     async def on_message(self, message: discord.Message) -> None:
         """Respond to @mentions and DMs."""
         if message.author.bot:
@@ -354,7 +443,7 @@ class SocialBot(commands.Bot):
             task.cancel()
 
     async def _listen_loop(self, guild_id: int) -> None:
-        """Poll voice receive, transcribe, and respond."""
+        """Listen for voice in VC, transcribe via Groq STT, and respond."""
         queue = _get_queue(guild_id)
 
         while True:
@@ -364,17 +453,67 @@ class SocialBot(commands.Bot):
                     await asyncio.sleep(2)
                     continue
 
-                # discord.py voice receive requires the bot to be in a VC
-                # We collect audio via a sink approach if available
-                # For now, use a polling approach with discord.py's recv
-                # Note: discord.py voice receive is limited; this is best-effort
-                await asyncio.sleep(1)
+                # Use py-cord sink-based recording
+                try:
+                    sink = discord.sinks.WaveSink()
+                    vc.start_recording(sink, self._on_recording_done, vc.channel)
+                except Exception:
+                    await asyncio.sleep(5)
+                    continue
+
+                # Collect 5 seconds of audio
+                await asyncio.sleep(5)
+
+                if not vc.is_connected():
+                    break
+
+                try:
+                    vc.stop_recording()
+                except Exception:
+                    pass
+
+                # Process collected audio per user
+                for user_id, audio_data in sink.audio_data.items():
+                    audio_bytes = audio_data.file.getvalue()
+                    if len(audio_bytes) < 1000:
+                        continue
+
+                    member = vc.channel.guild.get_member(user_id)
+                    if not member or member.bot:
+                        continue
+
+                    speaker = member.display_name
+
+                    try:
+                        loop = asyncio.get_running_loop()
+                        result = await loop.run_in_executor(
+                            None, lambda ab=audio_bytes: groq_stt(ab, "en")
+                        )
+                        transcript = result.get("text", "").strip()
+                        if transcript and len(transcript) > 2:
+                            logger.info("Voice from %s: %s", speaker, transcript[:80])
+
+                            # Get AI response
+                            channel_id = vc.channel.id
+                            response = await _ai_respond(channel_id, f"[{speaker}]: {transcript}")
+
+                            # Speak response in VC
+                            await self.speak_in_vc(guild_id, response[:200])
+                    except Exception as e:
+                        logger.error("STT error for %s: %s", speaker, e)
+
+                # Restart recording with fresh sink
+                sink = discord.sinks.WaveSink()
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error("Voice listen error: %s", e)
                 await asyncio.sleep(5)
+
+    async def _on_recording_done(self, sink, channel) -> None:
+        """Callback when recording finishes (processing done in loop)."""
+        pass
 
 
 # ── Singleton ────────────────────────────────────────────────────────

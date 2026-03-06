@@ -40,6 +40,7 @@ export interface AiDmConfig {
   enabled: boolean
   ollamaModel?: string
   ollamaUrl?: string
+  discordBridge?: boolean
 }
 
 export interface CampaignMetrics {

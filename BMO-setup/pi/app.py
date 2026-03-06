@@ -76,13 +76,14 @@ health_checker = None
 notifier = None
 audio_service = None
 scene_service = None
+oled_face = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier, audio_service, scene_service
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier, audio_service, scene_service, oled_face
 
     from agent import BmoAgent
 
@@ -100,6 +101,17 @@ def init_services():
         print("[bmo]   LED controller: OK")
     except Exception as e:
         print(f"[bmo]   LED controller: SKIPPED ({e})")
+
+    # OLED face display
+    oled_face = None
+    try:
+        from oled_face import OledFace
+        oled_face = OledFace(socketio=socketio)
+        oled_face.start()
+        service_map["oled_face"] = oled_face
+        print("[bmo]   OLED face: OK")
+    except Exception as e:
+        print(f"[bmo]   OLED face: SKIPPED ({e})")
 
     # Voice pipeline (requires pyaudio/mic hardware)
     try:
@@ -228,6 +240,25 @@ def init_services():
 
         voice.start_listening()
 
+    if voice:
+        # Wire voice state → OLED + LED sync
+        _original_voice_emit = voice._emit
+        _VOICE_STATE_TO_EXPRESSION = {
+            "listening": "listening",
+            "thinking": "thinking",
+            "speaking": "speaking",
+            "idle": "idle",
+            "follow_up": "listening",
+        }
+        def _voice_emit_with_oled(event, data):
+            _original_voice_emit(event, data)
+            if event == "status":
+                state = data.get("state", "")
+                expression = _VOICE_STATE_TO_EXPRESSION.get(state)
+                if expression:
+                    _sync_expression(expression)
+        voice._emit = _voice_emit_with_oled
+
     # Load notes from disk
     _load_notes()
 
@@ -340,6 +371,17 @@ def init_services():
         print(f"[bmo]   System volume restored: {saved_sys_vol}%")
 
     print("[bmo] All services initialized!")
+
+
+def _sync_expression(expression: str):
+    """Sync OLED face + LED controller to match expression, emit to web clients."""
+    if oled_face:
+        oled_face.set_expression(expression)
+    if led_controller:
+        from led_controller import led_state_for_expression
+        led_state = led_state_for_expression(expression)
+        led_controller.set_state(led_state)
+    socketio.emit("expression", {"expression": expression})
 
 
 # ── Pages ────────────────────────────────────────────────────────────
@@ -1132,6 +1174,177 @@ def api_led_status():
     if not led_controller:
         return jsonify({"ok": False, "error": "LED controller not available"})
     return jsonify({"ok": True, **led_controller.get_full_state()})
+
+
+# ── OLED Face API ────────────────────────────────────────────────────
+
+@app.route("/api/oled/expression")
+def api_oled_expression_get():
+    """Get current OLED expression."""
+    expr = oled_face.current_expression if oled_face else "idle"
+    return jsonify({"expression": expr})
+
+
+@app.route("/api/oled/expression", methods=["POST"])
+def api_oled_expression_set():
+    """Set OLED expression (syncs LED too)."""
+    data = request.json or {}
+    expression = data.get("expression", "idle")
+    _sync_expression(expression)
+    return jsonify({"ok": True, "expression": expression})
+
+
+# ── Discord DM Bot Bridge API ─────────────────────────────────────
+
+@app.route("/api/discord/dm/start", methods=["POST"])
+def api_discord_dm_start():
+    """Tell the DM bot to start a session (join Dungeon VC)."""
+    data = request.json or {}
+    campaign_id = data.get("campaign_id", "vtt_campaign")
+
+    try:
+        from discord_dm_bot import get_dm_bot
+        bot = get_dm_bot()
+        if not bot:
+            return jsonify({"error": "DM bot not running"}), 503
+
+        if bot.session.active:
+            return jsonify({"error": "Session already active"}), 409
+
+        # Find guild and dungeon channel, then start session via asyncio
+        import asyncio
+
+        async def _start():
+            for guild in bot.guilds:
+                channel = await bot.find_dungeon_channel(guild)
+                if channel:
+                    vc = await bot.join_voice(channel)
+                    if vc:
+                        bot.session.active = True
+                        bot.session.text_channel_id = None
+                        from datetime import datetime, timezone
+                        bot.session.start_time = datetime.now(timezone.utc)
+                        bot.session.messages.clear()
+                        bot.session.combat_log.clear()
+
+                        if bot._campaign_memory:
+                            bot._campaign_name = campaign_id
+                            bot._session_id = bot._campaign_memory.start_session(campaign_id)
+
+                        for member in channel.members:
+                            if not member.bot:
+                                bot.session.players.add(member.display_name)
+
+                        await bot.start_voice_listen()
+
+                        greeting = "BMO is ready to be your Dungeon Master! The adventure begins!"
+                        await bot._speak(greeting, emotion="excited")
+                        return True
+            return False
+
+        future = asyncio.run_coroutine_threadsafe(_start(), bot.loop)
+        result = future.result(timeout=15)
+
+        if result:
+            return jsonify({"ok": True, "campaign_id": campaign_id})
+        return jsonify({"error": "Could not find Dungeon voice channel"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/discord/dm/stop", methods=["POST"])
+def api_discord_dm_stop():
+    """Tell the DM bot to stop the session."""
+    try:
+        from discord_dm_bot import get_dm_bot
+        bot = get_dm_bot()
+        if not bot or not bot.session.active:
+            return jsonify({"error": "No active session"}), 404
+
+        import asyncio
+
+        async def _stop():
+            from discord_dm_bot import _generate_recap
+            recap = await _generate_recap(bot.session)
+
+            if bot._campaign_memory and bot._session_id and recap:
+                bot._campaign_memory.end_session(bot._session_id, recap)
+
+            farewell = "The adventure concludes for now. Until next time, friends!"
+            await bot._speak(farewell, emotion="happy")
+
+            vc = bot.session.voice_client
+            if vc and vc.is_connected():
+                while vc.is_playing():
+                    await asyncio.sleep(0.1)
+
+            await bot.leave_voice()
+            bot.session.reset()
+            bot._campaign_name = None
+            bot._session_id = None
+            return recap
+
+        future = asyncio.run_coroutine_threadsafe(_stop(), bot.loop)
+        recap = future.result(timeout=30)
+
+        return jsonify({"ok": True, "recap": recap or ""})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/discord/dm/narrate", methods=["POST"])
+def api_discord_dm_narrate():
+    """Forward narration text to the DM bot for TTS in Discord VC."""
+    data = request.json or {}
+    text = data.get("text", "")
+    npc = data.get("npc")
+    emotion = data.get("emotion")
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    try:
+        from discord_dm_bot import get_dm_bot
+        bot = get_dm_bot()
+        if not bot or not bot.session.active:
+            return jsonify({"error": "No active DM session"}), 404
+
+        import asyncio
+        future = asyncio.run_coroutine_threadsafe(
+            bot._speak(text, npc=npc, emotion=emotion), bot.loop
+        )
+        future.result(timeout=15)
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/discord/dm/status")
+def api_discord_dm_status():
+    """Get the current DM bot session status."""
+    try:
+        from discord_dm_bot import get_dm_bot
+        bot = get_dm_bot()
+        if not bot:
+            return jsonify({"running": False, "active": False})
+
+        session = bot.session
+        status = {
+            "running": True,
+            "active": session.active,
+            "players": sorted(session.players) if session.players else [],
+            "start_time": session.start_time.isoformat() if session.start_time else None,
+            "message_count": len(session.messages),
+            "combat_log_count": len(session.combat_log),
+            "initiative_round": session.initiative_round,
+        }
+        return jsonify(status)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ── Volume API ───────────────────────────────────────────────────────
@@ -2258,6 +2471,11 @@ def on_connect(auth=None):
                 socketio.emit("next_event", next_event)
     except Exception as e:
         print(f"[ws] Calendar init failed: {e}")
+    try:
+        expr = oled_face.current_expression if oled_face else "idle"
+        socketio.emit("expression", {"expression": expr})
+    except Exception as e:
+        print(f"[ws] Expression init failed: {e}")
 
 
 @socketio.on("chat_message")
@@ -2271,10 +2489,12 @@ def on_chat_message(data):
         _save_chat_message({"role": "user", "text": message, "speaker": speaker, "ts": time.time()})
 
         emit("status", {"state": "thinking"})
+        _sync_expression("thinking")
 
         result = agent.chat(message, speaker=speaker)
 
         emit("status", {"state": "yapping"})
+        _sync_expression("speaking")
 
         # Save assistant response immediately
         _save_chat_message({"role": "assistant", "text": result["text"], "ts": time.time()})
@@ -2284,11 +2504,13 @@ def on_chat_message(data):
         # Speak the response
         if voice:
             threading.Thread(target=voice.speak, args=(result["text"],), daemon=True).start()
+        _sync_expression("idle")
     except Exception as e:
         print(f"[chat] ERROR in chat_message handler: {e}")
         import traceback
         traceback.print_exc()
         emit("chat_response", {"text": f"Something went wrong: {e}", "speaker": speaker, "commands_executed": []})
+        _sync_expression("error")
 
 
 @socketio.on("scratchpad_read")

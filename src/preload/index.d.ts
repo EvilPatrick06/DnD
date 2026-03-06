@@ -495,6 +495,11 @@ declare global {
         game: GameDataAPI
         plugins: PluginAPI
         getVersion: () => Promise<string>
+        // BMO Pi Bridge
+        bmoStartDm: (campaignId: string) => Promise<{ ok?: boolean; error?: string }>
+        bmoStopDm: () => Promise<{ ok?: boolean; error?: string; recap?: string }>
+        bmoNarrate: (text: string, npc?: string, emotion?: string) => Promise<{ ok?: boolean; error?: string }>
+        bmoDmStatus: () => Promise<{ running: boolean; active: boolean; players: string[] }>
       }
   }
 }

@@ -283,7 +283,7 @@ class VoicePipeline:
 
                 # Grab last ~2s of audio for analysis
                 ring_audio = np.concatenate(ring_buffer)
-                cooldown_until = now + 6.0  # 6s cooldown between STT checks
+                cooldown_until = now + 3.0  # 3s cooldown between STT checks
                 consecutive_active = 0
 
                 # Silero VAD check — confirm it's actually speech, not just noise
@@ -300,17 +300,10 @@ class VoicePipeline:
                         continue  # Filtered as hallucination or no speech
                     text_lower = text.lower().strip()
                     print(f"[wake] STT check: '{text_lower}'")
-                    has_bmo = any(
+                    is_wake = any(
                         re.search(r'\b' + re.escape(v) + r'\b', text_lower)
                         for v in WAKE_VARIANTS
                     )
-                    # Require a greeting word near BMO to filter noise/TV audio.
-                    # Single-word "bmo" is too easily hallucinated by Whisper on silence.
-                    has_greeting = bool(re.search(
-                        r'\b(hey|hi|yo|okay|ok)\b', text_lower
-                    ))
-                    # Must have both BMO name + greeting prefix
-                    is_wake = has_bmo and has_greeting
                     if is_wake:
                         print(f"[wake] Detected 'hey BMO' in: {text}")
                         self._emit("status", {"state": "listening"})
@@ -336,10 +329,9 @@ class VoicePipeline:
 
     # Common Whisper hallucinations on silence/ambient noise
     _WHISPER_HALLUCINATIONS = frozenset({
-        "", ".", "so", "the", "i", "a", "hey", "hey.", "oh", "oh.", "okay",
+        "", ".", "so", "the", "i", "a", "oh", "oh.", "okay",
         "okay.", "thank you", "thank you.", "thanks", "thanks.", "bye",
         "hmm", "uh", "um", "mm", "you", "it", "is", "no", "yes",
-        "bmo", "bmo.", "demo", "nemo",
     })
 
     def _quick_stt(self, wav_bytes: bytes) -> str:

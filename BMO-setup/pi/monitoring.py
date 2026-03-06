@@ -398,7 +398,8 @@ class HealthChecker:
         "fish_audio_api": "🔊 Fish Audio API (text-to-speech)",
         "svc_bmo": "🏠 BMO systemd service",
         "svc_docker": "🐳 Docker engine",
-        "svc_oled": "📺 OLED stats display",
+        "svc_bmo-dm-bot": "🐉 DM Discord Bot",
+        "svc_bmo-social-bot": "🎵 Social Discord Bot",
         "svc_lightdm": "🖥️ Display manager",
         "net_wlan0": "📶 Wi-Fi (wlan0)",
         "net_eth0": "🔌 Ethernet (eth0)",
@@ -871,7 +872,7 @@ class HealthChecker:
     # ── Systemd Service Checks ───────────────────────────────────────
 
     _CRITICAL_SERVICES = ["bmo", "docker"]
-    _MONITORED_SERVICES = ["bmo", "docker", "oled-stats", "lightdm"]
+    _MONITORED_SERVICES = ["bmo", "docker", "bmo-dm-bot", "bmo-social-bot", "lightdm"]
 
     def _check_systemd_services(self):
         """Check critical systemd service units are active."""

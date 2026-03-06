@@ -24,6 +24,21 @@ NPC_VOICES: dict[str, str] = {
     "tavern_keeper": os.environ.get("FISH_AUDIO_NPC_TAVERN_KEEPER", ""),
 }
 
+# ── NPC Prosody Profiles (speed/pitch modulation on BMO's voice) ────
+# Single Fish Audio voice (BMO) with pitch/speed adjustments per character.
+# Replaces separate voice IDs — all characters use the same cloned voice.
+
+NPC_PROSODY: dict[str, dict] = {
+    "gruff_dwarf": {"speed": 0.85, "pitch": -4},
+    "mysterious_elf": {"speed": 1.0, "pitch": 2},
+    "booming_dragon": {"speed": 0.7, "pitch": -8},
+    "whispery_rogue": {"speed": 1.15, "pitch": 1},
+    "elderly_wizard": {"speed": 0.9, "pitch": -2},
+    "cheerful_bard": {"speed": 1.1, "pitch": 3},
+    "stern_guard": {"speed": 0.9, "pitch": -3},
+    "tavern_keeper": {"speed": 0.95, "pitch": -1},
+}
+
 # ── BMO Emotion Voice Mapping (Fish Audio voice IDs per emotion) ──────
 # Default all to the main FISH_AUDIO_VOICE_ID; override per-emotion later
 # once different emotion voice clones are uploaded to Fish Audio.
@@ -179,6 +194,38 @@ def get_speaker_file(npc: str | None = None, emotion: str | None = None) -> str:
     if emotion and emotion in BMO_EMOTIONS:
         return BMO_EMOTIONS[emotion]
     return BMO_EMOTIONS["calm"]
+
+
+def get_prosody(npc: str | None = None, emotion: str | None = None) -> dict:
+    """Get prosody settings (speed/pitch) for NPC voice modulation.
+
+    Uses NPC_PROSODY profiles for character-specific voice modulation.
+    Returns a dict with 'speed' and 'pitch' keys.
+
+    Args:
+        npc: NPC archetype name (e.g. 'gruff_dwarf')
+        emotion: BMO emotion name (influences speed slightly)
+
+    Returns:
+        {"speed": float, "pitch": int} — defaults to {"speed": 1.0, "pitch": 0}
+    """
+    if npc and npc in NPC_PROSODY:
+        return dict(NPC_PROSODY[npc])
+
+    # Emotion-based speed adjustments (subtle)
+    emotion_speed = {
+        "excited": 1.1,
+        "dramatic": 0.9,
+        "sleepy": 0.85,
+        "calm": 0.95,
+        "happy": 1.05,
+        "sad": 0.9,
+        "sassy": 1.05,
+    }
+    if emotion and emotion in emotion_speed:
+        return {"speed": emotion_speed[emotion], "pitch": 0}
+
+    return {"speed": 1.0, "pitch": 0}
 
 
 # ── Morning Routine ──────────────────────────────────────────────────

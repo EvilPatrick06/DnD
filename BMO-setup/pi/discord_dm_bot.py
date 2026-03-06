@@ -25,12 +25,11 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 
 from cloud_providers import cloud_chat, fish_audio_tts, groq_stt, DND_MODEL
 from dnd_engine import roll_dice
-from voice_personality import NPC_VOICES, get_speaker_file, parse_response_tags
+from voice_personality import NPC_PROSODY, get_prosody, parse_response_tags
 
 # ── Configuration ────────────────────────────────────────────────────
 
@@ -60,26 +59,27 @@ def _log(msg: str, *args) -> None:
 
 SYSTEM_PROMPT = """\
 You are BMO, the Dungeon Master! You are a cute, helpful, and enthusiastic AI \
-companion inspired by BMO from Adventure Time — but right now you are running a \
+companion inspired by BMO from Adventure Time — but right now you are narrating a \
 Dungeons & Dragons 5th Edition game for your friends.
 
 PERSONALITY:
+- You narrate in third person, like an audiobook narrator ("The goblin lunges forward...")
+- You voice NPCs using pitch/speed modulation — use [NPC:archetype] tags
 - Cute and encouraging, but you take the GAME seriously
 - You narrate with vivid, immersive descriptions
-- You do distinct NPC voices — use [NPC:archetype] tags to signal voice changes
 - You occasionally say adorable BMO-isms ("BMO thinks the goblin looks nervous!")
 - You celebrate player creativity and clever solutions
 - You are fair but not afraid to challenge players
 
-VOICE TAGS — include these in your responses to control TTS voice selection:
-- [NPC:gruff_dwarf] — for dwarves, orcs, tough characters
-- [NPC:mysterious_elf] — for elves, fey, ethereal characters
-- [NPC:booming_dragon] — for dragons, giants, powerful beings
-- [NPC:whispery_rogue] — for thieves, spies, shadowy characters
-- [NPC:elderly_wizard] — for wizards, sages, scholars
-- [NPC:cheerful_bard] — for bards, merchants, friendly NPCs
-- [NPC:stern_guard] — for guards, soldiers, authority figures
-- [NPC:tavern_keeper] — for innkeepers, commoners, shopkeeps
+VOICE MODULATION — include these tags for pitch/speed control (same BMO voice, modulated):
+- [NPC:gruff_dwarf] — slower, deeper (dwarves, orcs, tough characters)
+- [NPC:mysterious_elf] — normal speed, slightly higher (elves, fey)
+- [NPC:booming_dragon] — very slow, very deep (dragons, giants)
+- [NPC:whispery_rogue] — faster, slightly higher (thieves, spies)
+- [NPC:elderly_wizard] — slower, slightly deeper (wizards, sages)
+- [NPC:cheerful_bard] — faster, higher (bards, merchants, friendly NPCs)
+- [NPC:stern_guard] — slower, deeper (guards, soldiers)
+- [NPC:tavern_keeper] — slightly slower, slightly deeper (innkeepers, commoners)
 - [EMOTION:dramatic] — for epic narration moments
 - [EMOTION:excited] — for combat and action
 - [EMOTION:calm] — for peaceful scenes and exposition
@@ -198,6 +198,10 @@ class DMBot(commands.Bot):
         self.session = DMSession()
         self._guild_id: Optional[int] = int(GUILD_ID) if GUILD_ID else None
         self._voice_listen_task: Optional[asyncio.Task] = None
+        self._search_engine = None
+        self._campaign_memory = None
+        self._campaign_name = None
+        self._session_id = None
 
     async def setup_hook(self) -> None:
         """Register slash commands on startup."""
@@ -223,6 +227,28 @@ class DMBot(commands.Bot):
                 name="Dungeons & Dragons 🐉",
             )
         )
+
+        # Load D&D RAG index
+        try:
+            from rag_search import SearchEngine
+            import glob as _glob
+            self._search_engine = SearchEngine()
+            rag_dir = os.path.expanduser("~/bmo/data/rag_data")
+            index_path = os.path.join(rag_dir, "chunk-index-dnd.json")
+            if os.path.exists(index_path):
+                count = self._search_engine.load_index_file("dnd", index_path)
+                _log("RAG index loaded: %d chunks", count)
+            else:
+                _log("No RAG index found at %s", index_path)
+        except Exception as e:
+            _log("RAG search init failed: %s", e)
+
+        try:
+            from campaign_memory import CampaignMemory
+            self._campaign_memory = CampaignMemory()
+            _log("Campaign memory initialized")
+        except Exception as e:
+            _log("Campaign memory init failed: %s", e)
 
     async def on_voice_state_update(
         self,
@@ -282,9 +308,32 @@ class DMBot(commands.Bot):
         self.session.add_message("user", user_msg)
         self.session.combat_log.append(user_msg)
 
+        # RAG: search D&D knowledge for relevant context
+        rag_context = ""
+        if self._search_engine:
+            try:
+                results = self._search_engine.search(text, domain="dnd", top_k=3)
+                if results:
+                    chunks = [f"- {r['heading']}: {r['content'][:200]}" for r in results]
+                    rag_context = "\n\nRELEVANT D&D RULES/LORE:\n" + "\n".join(chunks)
+            except Exception as e:
+                _log("RAG search failed: %s", e)
+
+        # Build system prompt with RAG and campaign context
+        system_content = SYSTEM_PROMPT
+        if rag_context:
+            system_content += rag_context
+        if self._campaign_memory and self._campaign_name:
+            try:
+                dm_ctx = self._campaign_memory.build_dm_context(self._campaign_name)
+                if dm_ctx:
+                    system_content += "\n\nCAMPAIGN MEMORY:\n" + dm_ctx
+            except Exception as e:
+                _log("Campaign context build failed: %s", e)
+
         # Build messages for AI
         ai_messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_content},
             *self.session.messages,
         ]
 
@@ -335,15 +384,16 @@ class DMBot(commands.Bot):
             _log("TTS rate limited, skipping voice for: %s", text[:40])
             return
 
-        # Select voice based on NPC/emotion tags
-        voice_id = get_speaker_file(npc=npc, emotion=emotion)
+        # Get prosody settings for voice modulation
+        prosody = get_prosody(npc=npc, emotion=emotion)
 
         # Truncate long text for TTS (voice should be concise)
         tts_text = text[:500] if len(text) > 500 else text
 
         try:
             audio_bytes = await asyncio.to_thread(
-                fish_audio_tts, tts_text, voice_id, "wav"
+                fish_audio_tts, tts_text, "", "wav",
+                prosody.get("speed", 1.0), prosody.get("pitch", 0)
             )
             self.session.mark_tts()
         except Exception as e:
@@ -571,6 +621,15 @@ async def dm_start(interaction: discord.Interaction) -> None:
     bot.session.initiative_order.clear()
     bot.session.initiative_round = 0
 
+    # Start campaign memory session
+    if bot._campaign_memory:
+        try:
+            bot._campaign_name = "discord_campaign"
+            bot._session_id = bot._campaign_memory.start_session(bot._campaign_name)
+            _log("Campaign memory session started: %d", bot._session_id)
+        except Exception as e:
+            _log("Campaign memory session start failed: %s", e)
+
     # Track players already in the voice channel
     for member in dungeon_channel.members:
         if not member.bot:
@@ -633,6 +692,16 @@ async def dm_stop(interaction: discord.Interaction) -> None:
 
     # Generate recap
     recap_text = await _generate_recap(bot.session)
+
+    # Save recap to campaign memory
+    if bot._campaign_memory and bot._session_id and recap_text:
+        try:
+            bot._campaign_memory.end_session(bot._session_id, recap_text)
+            _log("Campaign memory session ended with recap")
+        except Exception as e:
+            _log("Campaign memory save failed: %s", e)
+    bot._campaign_name = None
+    bot._session_id = None
 
     # Farewell
     farewell = "Thank you for playing with BMO! That was an amazing adventure! See you next time, friends! 🌟"

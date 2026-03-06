@@ -429,4 +429,26 @@ export function registerAiHandlers(): void {
       return { success: false, error: (error as Error).message }
     }
   })
+
+  // ── BMO Pi Bridge ──
+
+  ipcMain.handle(IPC_CHANNELS.BMO_START_DM, async (_e, campaignId: string) => {
+    const { startDiscordDm } = await import('../bmo-bridge')
+    return startDiscordDm(campaignId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BMO_STOP_DM, async () => {
+    const { stopDiscordDm } = await import('../bmo-bridge')
+    return stopDiscordDm()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BMO_NARRATE, async (_e, text: string, npc?: string, emotion?: string) => {
+    const { sendNarration } = await import('../bmo-bridge')
+    return sendNarration(text, npc, emotion)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BMO_STATUS, async () => {
+    const { getDmStatus } = await import('../bmo-bridge')
+    return getDmStatus()
+  })
 }

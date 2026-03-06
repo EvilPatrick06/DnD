@@ -162,7 +162,13 @@ export const IPC_CHANNELS = {
   // === Plugin Storage (per-plugin key-value) ===
   PLUGIN_STORAGE_GET: 'plugin:storage-get',
   PLUGIN_STORAGE_SET: 'plugin:storage-set',
-  PLUGIN_STORAGE_DELETE: 'plugin:storage-delete'
+  PLUGIN_STORAGE_DELETE: 'plugin:storage-delete',
+
+  // === BMO Pi Bridge ===
+  BMO_START_DM: 'bmo:start-dm',
+  BMO_STOP_DM: 'bmo:stop-dm',
+  BMO_NARRATE: 'bmo:narrate',
+  BMO_STATUS: 'bmo:status'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
