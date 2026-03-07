@@ -5,6 +5,7 @@ import { ErrorBoundary, ShortcutsOverlay, Spinner, ToastContainer } from './comp
 import ColorblindFilters from './components/ui/ColorblindFilters'
 import GlobalSettingsButton from './components/ui/GlobalSettingsButton'
 import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
+import UpdatePrompt from './components/ui/UpdatePrompt'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
 import { preloadAllData } from './services/data-provider'
@@ -143,6 +144,7 @@ function App(): JSX.Element {
       <ScreenReaderAnnouncer />
       <DiceOverlay />
       <ToastContainer />
+      <UpdatePrompt />
       <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <GlobalSettingsButton />
       <ErrorBoundary>
