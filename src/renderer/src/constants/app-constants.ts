@@ -43,5 +43,11 @@ export const HEARTBEAT_INTERVAL_MS = 15_000
 export const HEARTBEAT_TIMEOUT_MS = 45_000
 export const HEARTBEAT_REMOVE_MS = 120_000
 
+// Cloud ICE servers (fallback when Pi is unreachable)
+export const CLOUD_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  { urls: 'stun:stun.l.google.com:19302' }
+]
+
 // AI / Ollama
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434'

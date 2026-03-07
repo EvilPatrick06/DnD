@@ -12,6 +12,7 @@ import {
   onHostMessage,
   onPeerJoined,
   onPeerLeft,
+  resetToDefaults,
   sendClientMessage,
   sendToPeer,
   setGameStateProvider,
@@ -112,6 +113,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
     setGameStateProvider(null)
     clearListenerCleanups()
     stopHosting()
+    resetToDefaults()
     set({
       role: 'none',
       connectionState: 'disconnected',
@@ -204,6 +206,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
       get().stopHosting()
     } else if (role === 'client') {
       clientDisconnect()
+      resetToDefaults()
       set({
         role: 'none',
         connectionState: 'disconnected',

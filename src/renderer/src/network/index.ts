@@ -37,6 +37,7 @@ export {
 export { createMessageRouter } from './message-handler'
 // Peer manager
 export {
+  configureForCloud,
   createPeer,
   destroyPeer,
   generateInviteCode,
@@ -46,6 +47,7 @@ export {
   getPeerId,
   resetIceConfig,
   resetSignalingServer,
+  resetToDefaults,
   setForceRelay,
   setIceConfig,
   setSignalingServer

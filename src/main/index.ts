@@ -58,8 +58,9 @@ function createWindow(): void {
 
   // Content Security Policy — relax inline restrictions in dev for Vite HMR
   const devConnect = is.dev ? ' ws://localhost:5173 http://localhost:5173' : ''
+  const piConnect = ' ws://10.10.20.242:* http://10.10.20.242:*'
   const inlinePolicy = is.dev ? " 'unsafe-inline' 'unsafe-eval'" : ''
-  const csp = `default-src 'self' plugin:; script-src 'self' plugin:${inlinePolicy}; worker-src 'self' blob:; style-src 'self' plugin:${inlinePolicy}; connect-src 'self' plugin: wss://0.peerjs.com https://0.peerjs.com${devConnect}; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:`
+  const csp = `default-src 'self' plugin:; script-src 'self' plugin:${inlinePolicy}; worker-src 'self' blob:; style-src 'self' plugin:${inlinePolicy}; connect-src 'self' plugin: wss://0.peerjs.com https://0.peerjs.com${piConnect}${devConnect}; img-src 'self' data: blob: plugin:; media-src 'self' blob: plugin:; font-src 'self' plugin:`
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { BackButton, Button, Card, ConfirmDialog } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
+import { configureForCloud } from '../network'
 import { exportCampaignToFile } from '../services/io/campaign-io'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
 import { useCampaignStore } from '../stores/use-campaign-store'
@@ -31,6 +32,7 @@ export default function CampaignDetailPage(): JSX.Element {
   const { campaigns, loading, loadCampaigns, deleteCampaign, saveCampaign } = useCampaignStore()
   const { hostGame } = useNetworkStore()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showCloudFallback, setShowCloudFallback] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [starting, setStarting] = useState(false)
   const [linkedMonster, setLinkedMonster] = useState<MonsterStatBlock | null>(null)
@@ -62,6 +64,28 @@ export default function CampaignDetailPage(): JSX.Element {
       navigate(`/lobby/${campaign.id}`)
     } catch (error) {
       logger.error('Failed to start game:', error)
+      addToast('Could not connect to local server', 'error')
+      setStarting(false)
+      setShowCloudFallback(true)
+    }
+  }
+
+  const handleCloudFallback = async (): Promise<void> => {
+    if (!campaign) return
+    setShowCloudFallback(false)
+    setStarting(true)
+    try {
+      const networkState = useNetworkStore.getState()
+      if (networkState.role !== 'none') {
+        networkState.disconnect()
+      }
+      configureForCloud()
+      addToast('Connecting via cloud servers...', 'info')
+      await hostGame('Dungeon Master', campaign.inviteCode)
+      navigate(`/lobby/${campaign.id}`)
+    } catch (error) {
+      logger.error('Failed to start game via cloud:', error)
+      addToast('Cloud connection also failed. Check your internet.', 'error')
       setStarting(false)
     }
   }
@@ -306,6 +330,17 @@ export default function CampaignDetailPage(): JSX.Element {
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showCloudFallback}
+        title="Local Server Unreachable"
+        message="The local relay server could not be reached. Would you like to host using cloud servers instead? Players will connect via the public internet."
+        confirmLabel="Use Cloud"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={handleCloudFallback}
+        onCancel={() => setShowCloudFallback(false)}
       />
     </div>
   )

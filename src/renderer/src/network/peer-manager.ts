@@ -1,5 +1,5 @@
 import Peer from 'peerjs'
-import { PEER_CREATION_TIMEOUT_MS } from '../constants'
+import { CLOUD_ICE_SERVERS, PEER_CREATION_TIMEOUT_MS } from '../constants'
 import { logger } from '../utils/logger'
 
 export { generateInviteCode } from '../utils/invite-code'
@@ -103,6 +103,29 @@ export function setForceRelay(relay: boolean): void {
  */
 export function getForceRelay(): boolean {
   return forceRelay
+}
+
+/**
+ * Configure networking for cloud-based hosting (PeerJS cloud + public STUN).
+ * Used as fallback when the Pi signaling server is unreachable.
+ */
+export function configureForCloud(): void {
+  customSignalingHost = null
+  customSignalingPort = null
+  customSignalingPath = '/'
+  customSignalingSecure = true
+  iceServers = CLOUD_ICE_SERVERS
+  forceRelay = false
+}
+
+/**
+ * Reset all networking config back to Pi defaults.
+ * Called when a session ends so the next session tries Pi first.
+ */
+export function resetToDefaults(): void {
+  resetSignalingServer()
+  resetIceConfig()
+  forceRelay = true
 }
 
 /**
