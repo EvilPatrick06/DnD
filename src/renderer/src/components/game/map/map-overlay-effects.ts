@@ -6,8 +6,9 @@ import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap } from '../../../types/map'
 import { type AoEConfig, clearAoEOverlay, drawAoEOverlay } from './aoe-overlay'
+import { clearDrawingLayer, drawDrawings } from './drawing-layer'
 import { destroyFogAnimation, drawFogOfWar, initFogAnimation } from './fog-overlay'
-import { drawGrid } from './grid-layer'
+import { drawGrid, drawGridLabels } from './grid-layer'
 import { drawLightingOverlay, type LightingConfig } from './lighting-overlay'
 import { clearMovementOverlay, drawMovementOverlay, drawTerrainOverlay } from './movement-overlay'
 import { drawWalls } from './wall-layer'
@@ -18,10 +19,12 @@ export interface OverlayRefs {
   containerRef: React.RefObject<HTMLDivElement | null>
   appRef: React.RefObject<Application | null>
   gridGraphicsRef: React.RefObject<Graphics | null>
+  gridLabelContainerRef: React.RefObject<import('pixi.js').Container | null>
   fogGraphicsRef: React.RefObject<Graphics | null>
   wallGraphicsRef: React.RefObject<Graphics | null>
   lightingGraphicsRef: React.RefObject<Graphics | null>
   terrainOverlayRef: React.RefObject<Graphics | null>
+  drawingGraphicsRef: React.RefObject<Graphics | null>
   aoeOverlayRef: React.RefObject<Graphics | null>
   moveOverlayRef: React.RefObject<Graphics | null>
   weatherOverlayRef: React.RefObject<WeatherOverlayLayer | null>
@@ -54,6 +57,11 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
   useEffect(() => {
     if (!initialized || !refs.gridGraphicsRef.current || !map) return
     drawGrid(refs.gridGraphicsRef.current, map.grid, map.width, map.height)
+
+    // Render grid coordinate labels
+    if (refs.gridLabelContainerRef.current) {
+      drawGridLabels(refs.gridLabelContainerRef.current, map.grid, map.width, map.height, refs.zoomRef.current)
+    }
 
     if (!map.imagePath && !refs.bgSpriteRef.current) {
       const container = refs.containerRef.current
@@ -155,6 +163,17 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
       refs.terrainOverlayRef.current.clear()
     }
   }, [initialized, map?.terrain, map?.grid.cellSize, map, refs])
+
+  // Draw map annotations/drawings
+  useEffect(() => {
+    if (!initialized || !refs.drawingGraphicsRef.current || !map) return
+    const drawings = map.drawings ?? []
+    if (drawings.length > 0) {
+      drawDrawings(refs.drawingGraphicsRef.current, drawings, isHost)
+    } else {
+      clearDrawingLayer(refs.drawingGraphicsRef.current)
+    }
+  }, [initialized, map?.drawings, isHost, map, refs])
 
   // Draw AoE overlay
   useEffect(() => {

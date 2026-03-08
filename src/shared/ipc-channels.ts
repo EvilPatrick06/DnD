@@ -168,7 +168,13 @@ export const IPC_CHANNELS = {
   BMO_START_DM: 'bmo:start-dm',
   BMO_STOP_DM: 'bmo:stop-dm',
   BMO_NARRATE: 'bmo:narrate',
-  BMO_STATUS: 'bmo:status'
+  BMO_STATUS: 'bmo:status',
+
+  // === Map Library ===
+  MAP_LIBRARY_SAVE: 'map-library:save',
+  MAP_LIBRARY_LIST: 'map-library:list',
+  MAP_LIBRARY_GET: 'map-library:get',
+  MAP_LIBRARY_DELETE: 'map-library:delete'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

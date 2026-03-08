@@ -476,6 +476,20 @@ interface PluginAPI {
   storageDelete: (pluginId: string, key: string) => Promise<{ success: boolean }>
 }
 
+interface MapLibraryEntry {
+  id: string
+  name: string
+  data: Record<string, unknown>
+  savedAt: string
+}
+
+interface MapLibraryAPI {
+  save: (id: string, name: string, data: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
+  list: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; savedAt: string }>; error?: string }>
+  get: (id: string) => Promise<{ success: boolean; data?: MapLibraryEntry; error?: string }>
+  delete: (id: string) => Promise<{ success: boolean; error?: string }>
+}
+
 declare global {
   interface Window {
     api: CharacterAPI &
@@ -493,6 +507,7 @@ declare global {
         ai: AiAPI
         update: UpdateAPI
         game: GameDataAPI
+        mapLibrary: MapLibraryAPI
         plugins: PluginAPI
         getVersion: () => Promise<string>
         // BMO Pi Bridge

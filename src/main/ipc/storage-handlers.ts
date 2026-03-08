@@ -28,6 +28,12 @@ import {
   loadHomebrewEntries,
   saveHomebrewEntry
 } from '../storage/homebrew-storage'
+import {
+  deleteMapFromLibrary,
+  getMapFromLibrary,
+  listMapLibrary,
+  saveMapToLibrary
+} from '../storage/map-library-storage'
 import { type AppSettings, loadSettings, saveSettings } from '../storage/settings-storage'
 
 // Ensure imported types are used for type-safety
@@ -223,5 +229,26 @@ export function registerStorageHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, async (_event, settings: AppSettings) => {
     await saveSettings(settings)
     return { success: true }
+  })
+
+  // --- Map Library storage ---
+
+  ipcMain.handle(
+    IPC_CHANNELS.MAP_LIBRARY_SAVE,
+    async (_event, id: string, name: string, data: Record<string, unknown>) => {
+      return saveMapToLibrary(id, name, data)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.MAP_LIBRARY_LIST, async () => {
+    return listMapLibrary()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.MAP_LIBRARY_GET, async (_event, id: string) => {
+    return getMapFromLibrary(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.MAP_LIBRARY_DELETE, async (_event, id: string) => {
+    return deleteMapFromLibrary(id)
   })
 }

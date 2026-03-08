@@ -6,10 +6,13 @@ import { WeatherOverlayLayer } from './weather-overlay'
 export interface MapLayers {
   world: Container
   gridGraphics: Graphics
+  gridLabelContainer: Container
   terrainOverlay: Graphics
+  drawingGraphics: Graphics
   moveOverlay: Graphics
   aoeOverlay: Graphics
   tokenContainer: Container
+  pingGraphics: Graphics
   fogGraphics: Graphics
   lightingGraphics: Graphics
   wallGraphics: Graphics
@@ -87,12 +90,22 @@ export function createMapLayers(app: Application): MapLayers {
   gridGraphics.label = 'grid'
   world.addChild(gridGraphics)
 
-  // Terrain overlay layer (above grid, below tokens)
+  // Grid coordinate labels (above grid, below terrain)
+  const gridLabelContainer = new Container()
+  gridLabelContainer.label = 'grid-labels'
+  world.addChild(gridLabelContainer)
+
+  // Terrain overlay layer (above grid labels, below tokens)
   const terrainOverlay = new Graphics()
   terrainOverlay.label = 'terrain'
   world.addChild(terrainOverlay)
 
-  // Movement overlay layer (above terrain, below tokens)
+  // Drawing/annotation layer (above terrain, below movement)
+  const drawingGraphics = new Graphics()
+  drawingGraphics.label = 'drawings'
+  world.addChild(drawingGraphics)
+
+  // Movement overlay layer (above drawings, below tokens)
   const moveOverlay = new Graphics()
   moveOverlay.label = 'movement'
   world.addChild(moveOverlay)
@@ -106,6 +119,11 @@ export function createMapLayers(app: Application): MapLayers {
   const tokenContainer = new Container()
   tokenContainer.label = 'tokens'
   world.addChild(tokenContainer)
+
+  // Ping overlay (above tokens, below fog)
+  const pingGraphics = new Graphics()
+  pingGraphics.label = 'pings'
+  world.addChild(pingGraphics)
 
   // Fog layer (above tokens for players, but DM can see through)
   const fogGraphics = new Graphics()
@@ -136,10 +154,13 @@ export function createMapLayers(app: Application): MapLayers {
   return {
     world,
     gridGraphics,
+    gridLabelContainer,
     terrainOverlay,
+    drawingGraphics,
     moveOverlay,
     aoeOverlay,
     tokenContainer,
+    pingGraphics,
     fogGraphics,
     lightingGraphics,
     wallGraphics,

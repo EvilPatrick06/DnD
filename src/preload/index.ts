@@ -331,6 +331,15 @@ const api = {
     loadModeration: () => ipcRenderer.invoke(IPC_CHANNELS.GAME_LOAD_JSON, 'data/5e/game/ai/moderation.json')
   },
 
+  // Map Library
+  mapLibrary: {
+    save: (id: string, name: string, data: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MAP_LIBRARY_SAVE, id, name, data),
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.MAP_LIBRARY_LIST),
+    get: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.MAP_LIBRARY_GET, id),
+    delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.MAP_LIBRARY_DELETE, id)
+  },
+
   // Plugins
   plugins: {
     scan: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_SCAN),

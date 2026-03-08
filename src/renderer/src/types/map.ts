@@ -12,6 +12,7 @@ export interface GameMap {
   fogOfWar: FogOfWarData
   wallSegments?: WallSegment[]
   terrain: TerrainCell[]
+  drawings?: DrawingData[]
   floors?: Array<{ id: string; name: string }>
   audioEmitters?: Array<{
     id: string
@@ -54,7 +55,7 @@ export interface GridSettings {
   offsetY: number
   color: string
   opacity: number
-  type: 'square' | 'hex'
+  type: 'square' | 'hex' | 'hex-flat' | 'hex-pointy'
 }
 
 export interface MapToken {
@@ -141,4 +142,21 @@ export interface FogOfWarData {
   exploredCells?: Array<{ x: number; y: number }>
   /** DM toggle for automatic vision-driven fog reveal */
   dynamicFogEnabled?: boolean
+}
+
+// ─── Drawing / Annotation ─────────────────────────────────────
+
+export type DrawingToolType = 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text'
+
+export interface DrawingData {
+  id: string
+  type: DrawingToolType
+  /** Points in pixel coordinates. For free: many points; line: 2; rect: 2 (topLeft, bottomRight); circle: 2 (center, edge) */
+  points: Array<{ x: number; y: number }>
+  color: string
+  strokeWidth: number
+  /** Text content for 'draw-text' type */
+  text?: string
+  /** Whether this drawing is visible to players (DM can create hidden annotations) */
+  visibleToPlayers?: boolean
 }

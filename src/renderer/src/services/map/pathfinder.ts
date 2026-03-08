@@ -6,10 +6,13 @@
  * - Terrain costs: difficult terrain = 2x, water without swim speed = 2x, etc.
  * - Movement budget: stops path when budget exhausted
  * - Diagonal movement: all diagonals cost 5ft (standard D&D 5e)
+ * - Hex grid support: 6 neighbors instead of 8 for hex grids
  */
 
-import type { TerrainCell, WallSegment } from '../../types/map'
+import type { GridSettings, TerrainCell, WallSegment } from '../../types/map'
 import type { DiagonalRule, TokenSpeeds } from '../combat/combat-rules'
+
+type GridType = GridSettings['type']
 
 interface PathNode {
   x: number
@@ -34,7 +37,7 @@ export interface PathResult {
  * Walls are defined by grid-edge coordinates (e.g. wall from (2,0) to (2,3) blocks
  * movement across the x=2 grid line).
  */
-function isMovementBlockedByWall(
+export function isMovementBlockedByWall(
   fromX: number,
   fromY: number,
   toX: number,
@@ -148,6 +151,58 @@ function stepCost(toX: number, toY: number, terrain: TerrainCell[], tokenSpeeds?
 }
 
 /**
+ * Get hex neighbors for a given cell. Hex grids have 6 neighbors.
+ * For flat-top hexes: odd columns are offset down.
+ * For pointy-top hexes: odd rows are offset right.
+ */
+function getHexNeighbors(x: number, y: number, gridType: GridType): Array<{ dx: number; dy: number }> {
+  if (gridType === 'hex' || gridType === 'hex-flat') {
+    // Flat-top hex: odd columns offset down
+    if (x % 2 === 0) {
+      return [
+        { dx: 1, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 },
+        { dx: -1, dy: -1 },
+        { dx: 0, dy: -1 }
+      ]
+    }
+    return [
+      { dx: 1, dy: 0 },
+      { dx: 1, dy: 1 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 1 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: -1 }
+    ]
+  }
+  // Pointy-top hex: odd rows offset right
+  if (y % 2 === 0) {
+    return [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 1 },
+      { dx: -1, dy: 0 },
+      { dx: -1, dy: -1 }
+    ]
+  }
+  return [
+    { dx: 1, dy: -1 },
+    { dx: 1, dy: 0 },
+    { dx: 1, dy: 1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: -1 }
+  ]
+}
+
+function isHexGrid(gridType?: GridType): boolean {
+  return gridType === 'hex' || gridType === 'hex-flat' || gridType === 'hex-pointy'
+}
+
+/**
  * Find the shortest path from start to goal using A* with wall blocking.
  *
  * @param startX - Starting grid X
@@ -172,7 +227,8 @@ export function findPath(
   terrain: TerrainCell[],
   movementBudget = 0,
   tokenSpeeds?: TokenSpeeds,
-  diagonalRule: DiagonalRule = 'standard'
+  diagonalRule: DiagonalRule = 'standard',
+  gridType?: GridType
 ): PathResult {
   if (startX === goalX && startY === goalY) {
     return { path: [{ x: startX, y: startY }], totalCost: 0, reachedGoal: true }
@@ -208,10 +264,22 @@ export function findPath(
       return buildResult(current, true)
     }
 
-    // Explore 8 neighbors
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue
+    // Explore neighbors (8 for square, 6 for hex)
+    const hexMode = isHexGrid(gridType)
+    const neighbors = hexMode
+      ? getHexNeighbors(current.x, current.y, gridType!)
+      : [
+          { dx: -1, dy: -1 },
+          { dx: -1, dy: 0 },
+          { dx: -1, dy: 1 },
+          { dx: 0, dy: -1 },
+          { dx: 0, dy: 1 },
+          { dx: 1, dy: -1 },
+          { dx: 1, dy: 0 },
+          { dx: 1, dy: 1 }
+        ]
+
+    for (const { dx, dy } of neighbors) {
         const nx = current.x + dx
         const ny = current.y + dy
 
@@ -223,8 +291,8 @@ export function findPath(
         // Check wall blocking
         if (isMovementBlockedByWall(current.x, current.y, nx, ny, walls)) continue
 
-        // Calculate base cost considering diagonal rule
-        const isDiagonal = dx !== 0 && dy !== 0
+        // Hex grids have no diagonals — all moves cost 5ft
+        const isDiagonal = !hexMode && dx !== 0 && dy !== 0
         let newDiagCount = current.diagCount
         let baseCost = 5
         if (isDiagonal && diagonalRule === 'alternate') {
@@ -250,7 +318,6 @@ export function findPath(
           diagCount: newDiagCount
         }
         open.set(nKey, node)
-      }
     }
   }
 
@@ -281,7 +348,8 @@ export function getReachableCellsWithWalls(
   gridHeight: number,
   walls: WallSegment[],
   tokenSpeeds?: TokenSpeeds,
-  diagonalRule: DiagonalRule = 'standard'
+  diagonalRule: DiagonalRule = 'standard',
+  gridType?: GridType
 ): Array<{ x: number; y: number; cost: number }> {
   const reachable: Array<{ x: number; y: number; cost: number }> = []
   const visited = new Map<string, number>()
@@ -289,13 +357,25 @@ export function getReachableCellsWithWalls(
     { x: startX, y: startY, costSoFar: 0, diagCount: 0 }
   ]
   visited.set(`${startX},${startY}`, 0)
+  const hexMode = isHexGrid(gridType)
 
   while (queue.length > 0) {
     const { x, y, costSoFar, diagCount } = queue.shift()!
 
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue
+    const neighbors = hexMode
+      ? getHexNeighbors(x, y, gridType!)
+      : [
+          { dx: -1, dy: -1 },
+          { dx: -1, dy: 0 },
+          { dx: -1, dy: 1 },
+          { dx: 0, dy: -1 },
+          { dx: 0, dy: 1 },
+          { dx: 1, dy: -1 },
+          { dx: 1, dy: 0 },
+          { dx: 1, dy: 1 }
+        ]
+
+    for (const { dx, dy } of neighbors) {
         const nx = x + dx
         const ny = y + dy
 
@@ -304,7 +384,7 @@ export function getReachableCellsWithWalls(
         // Check wall blocking
         if (isMovementBlockedByWall(x, y, nx, ny, walls)) continue
 
-        const isDiagonal = dx !== 0 && dy !== 0
+        const isDiagonal = !hexMode && dx !== 0 && dy !== 0
         let newDiagCount = diagCount
         let baseCost = 5
         if (isDiagonal && diagonalRule === 'alternate') {
@@ -324,7 +404,6 @@ export function getReachableCellsWithWalls(
         visited.set(key, totalCost)
         reachable.push({ x: nx, y: ny, cost: totalCost })
         queue.push({ x: nx, y: ny, costSoFar: totalCost, diagCount: newDiagCount })
-      }
     }
   }
 

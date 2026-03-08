@@ -2,8 +2,14 @@ import 'pixi.js/unsafe-eval' // CSP-compatible PixiJS shaders (must be before an
 import { Application, Assets, type Container, type Graphics, Sprite } from 'pixi.js'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
-// Map utilities: calculateZoomToFit for fitting all tokens in view, getGridLabel for A1-style grid labels
-import { calculateZoomToFit, getGridLabel, type MapPing } from '../../../services/map/map-utils'
+import {
+  calculateZoomToFit,
+  createPing,
+  getActivePings,
+  getGridLabel,
+  getPingAnimation,
+  type MapPing
+} from '../../../services/map/map-utils'
 
 type _MapPing = MapPing
 
@@ -45,6 +51,7 @@ import { clearMeasurement } from './measurement-tool'
 // Re-export map-utils functions so they are available to map subsystem consumers
 export { calculateZoomToFit, getGridLabel }
 
+import { animateTokenMove, destroyTokenAnimations } from './token-animation'
 import { createTokenSprite } from './token-sprite'
 import type { WeatherOverlayLayer } from './weather-overlay'
 
@@ -53,6 +60,7 @@ const FloorSelector = lazy(() => import('./FloorSelector'))
 interface MapCanvasProps {
   map: GameMap | null
   isHost: boolean
+  myCharacterId?: string | null
   selectedTokenId: string | null
   activeTool: 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill'
   fogBrushSize: number
@@ -75,6 +83,7 @@ interface MapCanvasProps {
 export default function MapCanvas({
   map,
   isHost,
+  myCharacterId,
   selectedTokenId,
   activeTool,
   fogBrushSize: _fogBrushSize,
@@ -82,7 +91,7 @@ export default function MapCanvas({
   onTokenSelect,
   onCellClick,
   onWallPlace,
-  onDoorToggle: _onDoorToggle,
+  onDoorToggle,
   turnState,
   isInitiativeMode,
   activeAoE,
@@ -94,10 +103,13 @@ export default function MapCanvas({
   const appRef = useRef<Application | null>(null)
   const worldRef = useRef<Container | null>(null)
   const gridGraphicsRef = useRef<Graphics | null>(null)
+  const gridLabelContainerRef = useRef<Container | null>(null)
   const fogGraphicsRef = useRef<Graphics | null>(null)
   const tokenContainerRef = useRef<Container | null>(null)
+  const pingGraphicsRef = useRef<Graphics | null>(null)
   const measureGraphicsRef = useRef<Graphics | null>(null)
   const moveOverlayRef = useRef<Graphics | null>(null)
+  const drawingGraphicsRef = useRef<Graphics | null>(null)
   const terrainOverlayRef = useRef<Graphics | null>(null)
   const aoeOverlayRef = useRef<Graphics | null>(null)
   const bgSpriteRef = useRef<Sprite | null>(null)
@@ -189,10 +201,13 @@ export default function MapCanvas({
       const layers: MapLayers = createMapLayers(app)
       worldRef.current = layers.world
       gridGraphicsRef.current = layers.gridGraphics
+      gridLabelContainerRef.current = layers.gridLabelContainer
       terrainOverlayRef.current = layers.terrainOverlay
+      drawingGraphicsRef.current = layers.drawingGraphics
       moveOverlayRef.current = layers.moveOverlay
       aoeOverlayRef.current = layers.aoeOverlay
       tokenContainerRef.current = layers.tokenContainer
+      pingGraphicsRef.current = layers.pingGraphics
       fogGraphicsRef.current = layers.fogGraphics
       lightingGraphicsRef.current = layers.lightingGraphics
       wallGraphicsRef.current = layers.wallGraphics
@@ -219,6 +234,7 @@ export default function MapCanvas({
         weatherOverlayRef.current = null
       }
       destroyFogAnimation()
+      destroyTokenAnimations()
       try {
         app.destroy(true, { children: true })
       } catch {
@@ -301,10 +317,12 @@ export default function MapCanvas({
       containerRef,
       appRef,
       gridGraphicsRef,
+      gridLabelContainerRef,
       fogGraphicsRef,
       wallGraphicsRef,
       lightingGraphicsRef,
       terrainOverlayRef,
+      drawingGraphicsRef,
       aoeOverlayRef,
       moveOverlayRef,
       weatherOverlayRef,
@@ -359,9 +377,24 @@ export default function MapCanvas({
       }
       const lighting = getLightingAtPoint(tokenCenter, lightSourcesForBadge, ambientLight, map.grid.cellSize)
 
-      const key = `${token.gridX},${token.gridY},${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost}`
+      // Split key: position and appearance are tracked separately for animation
+      const posKey = `${token.gridX},${token.gridY}`
+      const appearanceKey = `${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost}`
+      const key = `${posKey},${appearanceKey}`
       const cached = cache.get(token.id)
       if (cached && cached.key === key) continue
+
+      // If only position changed, animate the existing sprite
+      const cachedPosKey = cached?.key.split(',').slice(0, 2).join(',')
+      const cachedAppearanceKey = cached?.key.split(',').slice(2).join(',')
+      if (cached && cachedPosKey !== posKey && cachedAppearanceKey === appearanceKey && appRef.current) {
+        const targetX = token.gridX * map.grid.cellSize
+        const targetY = token.gridY * map.grid.cellSize
+        animateTokenMove(appRef.current, token.id, cached.sprite, targetX, targetY)
+        cache.set(token.id, { sprite: cached.sprite, key })
+        continue
+      }
+
       if (cached) {
         container.removeChild(cached.sprite)
         cached.sprite.destroy({ children: true })
@@ -374,6 +407,8 @@ export default function MapCanvas({
         e.stopPropagation()
         onTokenSelect(token.id)
         if (!isHost && token.entityType !== 'player') return
+        // Block players from dragging tokens that don't belong to them
+        if (!isHost && myCharacterId && token.entityId !== myCharacterId) return
         const worldPos = worldRef.current?.toLocal(e.global)
         if (!worldPos) return
         dragRef.current = {
@@ -406,6 +441,7 @@ export default function MapCanvas({
     map,
     selectedTokenId,
     isHost,
+    myCharacterId,
     activeTool,
     onTokenSelect,
     activeEntityId,
@@ -457,6 +493,7 @@ export default function MapCanvas({
       refs: eventRefs,
       map,
       activeTool,
+      isHost,
       isInitiativeMode,
       turnState,
       applyTransform,
@@ -464,11 +501,13 @@ export default function MapCanvas({
       onTokenSelect,
       onCellClick,
       onWallPlace,
+      onDoorToggle,
       renderTokens
     })
   }, [
     map,
     activeTool,
+    isHost,
     applyTransform,
     onTokenMove,
     onTokenSelect,
@@ -476,6 +515,7 @@ export default function MapCanvas({
     renderTokens,
     isInitiativeMode,
     onWallPlace,
+    onDoorToggle,
     turnState
   ])
 
@@ -506,6 +546,50 @@ export default function MapCanvas({
     applyTransform()
     clearCenterRequest()
   }, [centerOnEntityId, map, applyTransform, clearCenterRequest])
+
+  // Ping rendering — animate active pings on the map
+  useEffect(() => {
+    if (!initialized || !pingGraphicsRef.current || !appRef.current) return
+    const gfx = pingGraphicsRef.current
+    const app = appRef.current
+
+    const renderPings = (): void => {
+      gfx.clear()
+      const pings = getActivePings()
+      for (const ping of pings) {
+        const anim = getPingAnimation(ping)
+        if (!anim) continue
+        gfx.setStrokeStyle({ width: 3, color: ping.color, alpha: anim.opacity })
+        gfx.circle(ping.x, ping.y, 15 * anim.scale)
+        gfx.stroke()
+        // Inner dot
+        gfx.circle(ping.x, ping.y, 4)
+        gfx.fill({ color: ping.color, alpha: anim.opacity })
+      }
+    }
+
+    app.ticker.add(renderPings)
+    return () => {
+      app.ticker.remove(renderPings)
+      gfx.clear()
+    }
+  }, [initialized])
+
+  // Double-click to ping at location
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || !map) return
+    const handler = (e: MouseEvent): void => {
+      const rect = el.getBoundingClientRect()
+      const canvasX = e.clientX - rect.left
+      const canvasY = e.clientY - rect.top
+      const worldX = (canvasX - panRef.current.x) / zoomRef.current
+      const worldY = (canvasY - panRef.current.y) / zoomRef.current
+      createPing(worldX, worldY, isHost ? 'DM' : 'Player')
+    }
+    el.addEventListener('dblclick', handler)
+    return () => el.removeEventListener('dblclick', handler)
+  }, [map, isHost])
 
   const pendingPlacement = useGameStore((s) => s.pendingPlacement)
   const handleResetView = useCallback((): void => {

@@ -3,6 +3,7 @@ import type { ActiveLightSource, CombatTimerConfig } from '../../types/campaign'
 import type { Handout, InGameTimeState, SidebarEntry } from '../../types/game-state'
 import { createCombatLogSlice } from './combat-log-slice'
 import { createConditionsSlice } from './conditions-slice'
+import { createDrawingSlice } from './drawing-slice'
 import { createEffectsSlice } from './effects-slice'
 import { createFogSlice } from './fog-slice'
 import { createInitiativeSlice } from './initiative-slice'
@@ -33,6 +34,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
     ...createTimeSlice(...a),
     ...createEffectsSlice(...a),
     ...createVisionSlice(...a),
+    ...createDrawingSlice(...a),
     ...createJournalSlice(...a),
 
     // --- Reaction prompt ---

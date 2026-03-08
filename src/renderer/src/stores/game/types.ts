@@ -279,6 +279,12 @@ export interface VisionSliceState {
   setDynamicFogEnabled: (mapId: string, enabled: boolean) => void
 }
 
+export interface DrawingSliceState {
+  addDrawing: (mapId: string, drawing: import('../../types/map').DrawingData) => void
+  removeDrawing: (mapId: string, drawingId: string) => void
+  clearDrawings: (mapId: string) => void
+}
+
 export interface JournalSliceState {
   sharedJournal: SharedJournalEntry[]
   addJournalEntry: (entry: SharedJournalEntry) => void
@@ -367,6 +373,7 @@ export type GameStoreState = GameState &
   ConditionsSliceState &
   FogSliceState &
   VisionSliceState &
+  DrawingSliceState &
   SidebarSliceState &
   TimerSliceState &
   CombatLogSliceState &

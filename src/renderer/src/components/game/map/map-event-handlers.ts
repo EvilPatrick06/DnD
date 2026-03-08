@@ -1,10 +1,12 @@
 import { type Container, Graphics } from 'pixi.js'
 import { canMoveToPosition } from '../../../services/combat/combat-rules'
+import { isMovementBlockedByWall } from '../../../services/map/pathfinder'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap, MapToken } from '../../../types/map'
+import { pixelToHex } from './grid-layer'
 import { drawMeasurement } from './measurement-tool'
-import { findNearbyWallEndpoint } from './wall-layer'
+import { findNearbyWallEndpoint, hitTestDoorHandle } from './wall-layer'
 
 // ── Shared ref interfaces ─────────────────────────────────────────────────────
 
@@ -149,6 +151,7 @@ interface MouseHandlerOptions {
   refs: MapEventRefs
   map: GameMap | null
   activeTool: ActiveTool
+  isHost: boolean
   isInitiativeMode: boolean | undefined
   turnState: TurnState | null | undefined
   applyTransform: () => void
@@ -156,12 +159,13 @@ interface MouseHandlerOptions {
   onTokenSelect: (tokenId: string | null) => void
   onCellClick: (gridX: number, gridY: number) => void
   onWallPlace?: (x1: number, y1: number, x2: number, y2: number) => void
+  onDoorToggle?: (wallId: string) => void
   renderTokens: () => void
 }
 
 export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): () => void {
-  const { refs, map, activeTool, isInitiativeMode, turnState, applyTransform } = opts
-  const { onTokenMove, onTokenSelect, onCellClick, onWallPlace, renderTokens } = opts
+  const { refs, map, activeTool, isHost, isInitiativeMode, turnState, applyTransform } = opts
+  const { onTokenMove, onTokenSelect, onCellClick, onWallPlace, onDoorToggle, renderTokens } = opts
 
   const onMouseDown = (e: MouseEvent): void => {
     // Middle button or space+left for panning
@@ -228,6 +232,18 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       if (activeTool === 'token' || activeTool === 'terrain') {
         onCellClick(gridX, gridY)
         return
+      }
+
+      // Door toggle: DM clicks on a door handle to open/close it
+      if (activeTool === 'select' && isHost && onDoorToggle) {
+        const walls = map.wallSegments ?? []
+        if (walls.length > 0) {
+          const doorWall = hitTestDoorHandle(worldX, worldY, walls, map.grid)
+          if (doorWall) {
+            onDoorToggle(doorWall.id)
+            return
+          }
+        }
       }
 
       if (activeTool === 'select' && !refs.drag.current) {
@@ -317,11 +333,41 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
       const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
 
-      const newGridX = Math.round((worldX - refs.drag.current.offsetX) / map.grid.cellSize)
-      const newGridY = Math.round((worldY - refs.drag.current.offsetY) / map.grid.cellSize)
+      let newGridX: number
+      let newGridY: number
+      const gridType = map.grid.type
+      if (gridType === 'hex' || gridType === 'hex-flat' || gridType === 'hex-pointy') {
+        const orientation = gridType === 'hex-pointy' ? 'pointy' : 'flat'
+        const hex = pixelToHex(
+          worldX - refs.drag.current.offsetX,
+          worldY - refs.drag.current.offsetY,
+          map.grid.cellSize,
+          map.grid.offsetX,
+          map.grid.offsetY,
+          orientation
+        )
+        newGridX = hex.col
+        newGridY = hex.row
+      } else {
+        newGridX = Math.round((worldX - refs.drag.current.offsetX) / map.grid.cellSize)
+        newGridY = Math.round((worldY - refs.drag.current.offsetY) / map.grid.cellSize)
+      }
 
       if (newGridX !== refs.drag.current.startGridX || newGridY !== refs.drag.current.startGridY) {
-        if (isInitiativeMode && turnState) {
+        // Check if walls block this movement
+        const walls = map.wallSegments ?? []
+        if (
+          walls.length > 0 &&
+          isMovementBlockedByWall(
+            refs.drag.current.startGridX,
+            refs.drag.current.startGridY,
+            newGridX,
+            newGridY,
+            walls
+          )
+        ) {
+          renderTokens()
+        } else if (isInitiativeMode && turnState) {
           const moveCheck = canMoveToPosition(
             refs.drag.current.startGridX,
             refs.drag.current.startGridY,
