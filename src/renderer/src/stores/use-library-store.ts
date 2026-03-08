@@ -2,6 +2,24 @@ import { create } from 'zustand'
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
 import { logger } from '../utils/logger'
 
+// Load recently viewed from localStorage
+function loadRecentlyViewed(): LibraryItem[] {
+  try {
+    const raw = localStorage.getItem('library-recent')
+    if (raw) return JSON.parse(raw) as LibraryItem[]
+  } catch { /* ignore */ }
+  return []
+}
+
+// Load favorites from localStorage
+function loadFavorites(): Set<string> {
+  try {
+    const raw = localStorage.getItem('library-favorites')
+    if (raw) return new Set(JSON.parse(raw) as string[])
+  } catch { /* ignore */ }
+  return new Set()
+}
+
 interface LibraryState {
   selectedCategory: LibraryCategory | null
   searchQuery: string
@@ -9,6 +27,8 @@ interface LibraryState {
   homebrewEntries: HomebrewEntry[]
   loading: boolean
   homebrewLoaded: boolean
+  recentlyViewed: LibraryItem[]
+  favorites: Set<string>
 
   setCategory: (category: LibraryCategory | null) => void
   setSearchQuery: (query: string) => void
@@ -18,6 +38,10 @@ interface LibraryState {
   loadHomebrew: () => Promise<void>
   saveHomebrewEntry: (entry: HomebrewEntry) => Promise<boolean>
   deleteHomebrewEntry: (category: string, id: string) => Promise<boolean>
+
+  addToRecentlyViewed: (item: LibraryItem) => void
+  toggleFavorite: (itemId: string) => void
+  isFavorite: (itemId: string) => boolean
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
@@ -27,6 +51,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   homebrewEntries: [],
   loading: false,
   homebrewLoaded: false,
+  recentlyViewed: loadRecentlyViewed(),
+  favorites: loadFavorites(),
 
   setCategory: (category) => set({ selectedCategory: category }),
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -79,5 +105,31 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       logger.error('Failed to delete homebrew entry:', err)
       return false
     }
-  }
+  },
+
+  addToRecentlyViewed: (item) => {
+    const { recentlyViewed } = get()
+    const filtered = recentlyViewed.filter((r) => r.id !== item.id)
+    const next = [item, ...filtered].slice(0, 20)
+    set({ recentlyViewed: next })
+    try {
+      localStorage.setItem('library-recent', JSON.stringify(next))
+    } catch { /* ignore */ }
+  },
+
+  toggleFavorite: (itemId) => {
+    const { favorites } = get()
+    const next = new Set(favorites)
+    if (next.has(itemId)) {
+      next.delete(itemId)
+    } else {
+      next.add(itemId)
+    }
+    set({ favorites: next })
+    try {
+      localStorage.setItem('library-favorites', JSON.stringify([...next]))
+    } catch { /* ignore */ }
+  },
+
+  isFavorite: (itemId) => get().favorites.has(itemId)
 }))

@@ -5,6 +5,7 @@ export type LibraryCategory =
   | 'monsters'
   | 'creatures'
   | 'npcs'
+  | 'companions'
   | 'spells'
   | 'invocations'
   | 'metamagic'
@@ -24,6 +25,8 @@ export type LibraryCategory =
   | 'mounts'
   | 'siege-equipment'
   | 'trinkets'
+  | 'light-sources'
+  | 'sentient-items'
   | 'settlements'
   | 'crafting'
   | 'downtime'
@@ -33,6 +36,11 @@ export type LibraryCategory =
   | 'poisons'
   | 'diseases'
   | 'curses'
+  | 'adventure-seeds'
+  | 'calendars'
+  | 'deities'
+  | 'planes'
+  | 'npc-names'
   | 'encounter-presets'
   | 'treasure-tables'
   | 'random-tables'
@@ -43,8 +51,12 @@ export type LibraryCategory =
   | 'skills'
   | 'fighting-styles'
   | 'sounds'
+  | 'portraits'
+  | 'maps'
+  | 'shop-templates'
 
 export type LibraryGroup =
+  | 'core-books'
   | 'my-content'
   | 'bestiary'
   | 'spellbook'
@@ -90,12 +102,19 @@ export interface LibraryItem {
 
 export const LIBRARY_GROUPS: LibraryGroupDef[] = [
   {
+    id: 'core-books',
+    label: 'Core Books',
+    categories: []
+  },
+  {
     id: 'my-content',
     label: 'My Content',
     categories: [
       { id: 'characters', label: 'Characters', group: 'my-content', source: 'user', icon: '🧙' },
       { id: 'campaigns', label: 'Campaigns', group: 'my-content', source: 'user', icon: '📜' },
-      { id: 'bastions', label: 'Bastions', group: 'my-content', source: 'user', icon: '🏰' }
+      { id: 'bastions', label: 'Bastions', group: 'my-content', source: 'user', icon: '🏰' },
+      { id: 'portraits', label: 'Portraits & Icons', group: 'my-content', source: 'user', icon: '🖼️' },
+      { id: 'shop-templates', label: 'Shop Templates', group: 'my-content', source: 'user', icon: '🏪' }
     ]
   },
   {
@@ -104,7 +123,8 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
     categories: [
       { id: 'monsters', label: 'Monsters', group: 'bestiary', source: 'mixed', icon: '👹' },
       { id: 'creatures', label: 'Creatures', group: 'bestiary', source: 'mixed', icon: '🐉' },
-      { id: 'npcs', label: 'NPCs', group: 'bestiary', source: 'mixed', icon: '👤' }
+      { id: 'npcs', label: 'NPCs', group: 'bestiary', source: 'mixed', icon: '👤' },
+      { id: 'companions', label: 'Companions', group: 'bestiary', source: 'mixed', icon: '🐾' }
     ]
   },
   {
@@ -148,7 +168,9 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
       { id: 'vehicles', label: 'Vehicles', group: 'equipment-items', source: 'mixed', icon: '🚢' },
       { id: 'mounts', label: 'Mounts', group: 'equipment-items', source: 'mixed', icon: '🐴' },
       { id: 'siege-equipment', label: 'Siege Equipment', group: 'equipment-items', source: 'mixed', icon: '💣' },
-      { id: 'trinkets', label: 'Trinkets', group: 'equipment-items', source: 'mixed', icon: '📿' }
+      { id: 'trinkets', label: 'Trinkets', group: 'equipment-items', source: 'mixed', icon: '📿' },
+      { id: 'light-sources', label: 'Light Sources', group: 'equipment-items', source: 'static', icon: '🔦' },
+      { id: 'sentient-items', label: 'Sentient Items', group: 'equipment-items', source: 'static', icon: '🗡️' }
     ]
   },
   {
@@ -179,7 +201,13 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
         icon: '🌪️'
       },
       { id: 'crafting', label: 'Crafting', group: 'world-building', source: 'mixed', icon: '🔨' },
-      { id: 'downtime', label: 'Downtime', group: 'world-building', source: 'mixed', icon: '🏖️' }
+      { id: 'downtime', label: 'Downtime', group: 'world-building', source: 'mixed', icon: '🏖️' },
+      { id: 'maps', label: 'Maps', group: 'world-building', source: 'mixed', icon: '🗺️' },
+      { id: 'adventure-seeds', label: 'Adventure Seeds', group: 'world-building', source: 'static', icon: '🌱' },
+      { id: 'calendars', label: 'Calendar Systems', group: 'world-building', source: 'static', icon: '📅' },
+      { id: 'deities', label: 'Deities & Pantheons', group: 'world-building', source: 'static', icon: '⛪' },
+      { id: 'planes', label: 'Planes of Existence', group: 'world-building', source: 'static', icon: '🌌' },
+      { id: 'npc-names', label: 'NPC Names', group: 'world-building', source: 'static', icon: '📛' }
     ]
   },
   {

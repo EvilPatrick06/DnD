@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   HomebrewCreateModal,
   LibraryCategoryGrid,
   LibraryDetailModal,
+  LibraryFilterBar,
   LibraryItemList,
   LibrarySidebar
 } from '../components/library'
 import { BackButton, Button, EmptyState, Skeleton } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
 import { exportEntities, importEntities, reIdItems } from '../services/io/entity-io'
-import { loadCategoryItems, summarizeItem } from '../services/library-service'
+import { loadCategoryItems, searchAllCategories, summarizeItem } from '../services/library-service'
+import {
+  filterItems,
+  getFilterConfigs,
+  getSortOptions,
+  sortItems,
+  type SortDirection,
+  type SortField
+} from '../services/library-sort-filter'
 import { useLibraryStore } from '../stores/use-library-store'
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
 import { getAllCategories, getCategoryDef, LIBRARY_GROUPS } from '../types/library'
@@ -18,10 +27,17 @@ import type { MonsterStatBlock } from '../types/monster'
 import { logger } from '../utils/logger'
 
 const BESTIARY_CATEGORIES = new Set<LibraryCategory>(['monsters', 'creatures', 'npcs'])
+const NAV_CATEGORIES = new Set<LibraryCategory>(['characters', 'campaigns', 'bastions'])
+const NAV_ROUTES: Record<string, string> = {
+  characters: '/create-character',
+  campaigns: '/create-campaign',
+  bastions: '/create-bastion'
+}
 
 export default function LibraryPage(): JSX.Element {
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('from') || '/'
+  const navigate = useNavigate()
 
   const {
     selectedCategory,
@@ -34,7 +50,11 @@ export default function LibraryPage(): JSX.Element {
     homebrewEntries,
     loadHomebrew,
     saveHomebrewEntry,
-    deleteHomebrewEntry
+    deleteHomebrewEntry,
+    recentlyViewed,
+    addToRecentlyViewed,
+    favorites,
+    toggleFavorite
   } = useLibraryStore()
 
   const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null)
@@ -47,6 +67,16 @@ export default function LibraryPage(): JSX.Element {
   const [exporting, setExporting] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   const [debouncedSearch, setDebouncedSearch] = useState(search)
+  const [showFavorites, setShowFavorites] = useState(false)
+
+  // Sort/filter state
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({})
+
+  // Global search results
+  const [globalSearchResults, setGlobalSearchResults] = useState<LibraryItem[]>([])
+  const [globalSearching, setGlobalSearching] = useState(false)
 
   // Debounce search input (300ms)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -80,6 +110,13 @@ export default function LibraryPage(): JSX.Element {
   // Item counts per category (homebrew only for now — static counts are too expensive to load all at once)
   const itemCounts = homebrewCounts
 
+  // Reset sort/filter when category changes
+  useEffect(() => {
+    setSortField('name')
+    setSortDirection('asc')
+    setActiveFilters({})
+  }, [selectedCategory])
+
   // Load official items when category changes (not on homebrew changes)
   const [officialItems, setOfficialItems] = useState<LibraryItem[]>([])
   useEffect(() => {
@@ -102,6 +139,26 @@ export default function LibraryPage(): JSX.Element {
     }
   }, [selectedCategory, setItems, setLoading])
 
+  // Global search when no category is selected
+  useEffect(() => {
+    if (selectedCategory || !debouncedSearch.trim()) {
+      setGlobalSearchResults([])
+      return
+    }
+    let cancelled = false
+    setGlobalSearching(true)
+    searchAllCategories(debouncedSearch, homebrewEntries)
+      .then((results) => {
+        if (!cancelled) setGlobalSearchResults(results)
+      })
+      .finally(() => {
+        if (!cancelled) setGlobalSearching(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCategory, debouncedSearch, homebrewEntries])
+
   // Merge official items with homebrew items for current category
   const mergedItems = useMemo(() => {
     if (!selectedCategory) return officialItems
@@ -123,20 +180,66 @@ export default function LibraryPage(): JSX.Element {
     setItems(mergedItems)
   }, [mergedItems, setItems])
 
-  // Filter items by debounced search
+  // Apply sort + filter + search
   const filteredItems = useMemo(() => {
-    if (!debouncedSearch.trim()) return mergedItems
-    const q = debouncedSearch.toLowerCase()
-    return mergedItems.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
-  }, [mergedItems, debouncedSearch])
+    let items = mergedItems
+
+    // Apply active filters
+    items = filterItems(items, activeFilters)
+
+    // Apply sort
+    items = sortItems(items, sortField, sortDirection)
+
+    // Apply search filter
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase()
+      items = items.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
+    }
+
+    return items
+  }, [mergedItems, debouncedSearch, sortField, sortDirection, activeFilters])
+
+  // Favorites items
+  const favoriteItems = useMemo(() => {
+    if (!showFavorites) return []
+    return recentlyViewed.length > 0 || mergedItems.length > 0
+      ? [...mergedItems, ...recentlyViewed].filter((item) => favorites.has(item.id))
+      : []
+  }, [showFavorites, favorites, mergedItems, recentlyViewed])
+
+  // Sort/filter config for current category
+  const sortOptions = useMemo(
+    () => (selectedCategory ? getSortOptions(selectedCategory) : [{ field: 'name' as SortField, label: 'Name' }]),
+    [selectedCategory]
+  )
+  const filterConfigs = useMemo(
+    () => (selectedCategory ? getFilterConfigs(selectedCategory, mergedItems) : []),
+    [selectedCategory, mergedItems]
+  )
 
   const handleSelectCategory = useCallback(
     (cat: LibraryCategory | null) => {
       setCategory(cat)
       setSelectedItem(null)
       setSearch('')
+      setShowFavorites(false)
     },
     [setCategory, setSearch]
+  )
+
+  const handleSelectFavorites = useCallback(() => {
+    setCategory(null)
+    setShowFavorites(true)
+    setSelectedItem(null)
+    setSearch('')
+  }, [setCategory, setSearch])
+
+  const handleSelectItem = useCallback(
+    (item: LibraryItem) => {
+      setSelectedItem(item)
+      addToRecentlyViewed(item)
+    },
+    [addToRecentlyViewed]
   )
 
   const handleCloneAsHomebrew = useCallback((item: LibraryItem) => {
@@ -211,7 +314,18 @@ export default function LibraryPage(): JSX.Element {
     }
   }, [filteredItems])
 
+  const handleCreateButton = useCallback(() => {
+    if (selectedCategory && NAV_CATEGORIES.has(selectedCategory)) {
+      navigate(NAV_ROUTES[selectedCategory])
+    } else if (selectedCategory) {
+      setHomebrewModal({ category: selectedCategory })
+    }
+  }, [selectedCategory, navigate])
+
   const catDef = selectedCategory ? getCategoryDef(selectedCategory) : null
+
+  // Items to display in the list depending on mode
+  const displayItems = showFavorites ? favoriteItems : selectedCategory ? filteredItems : globalSearchResults
 
   if (initialLoading) {
     return (
@@ -248,25 +362,23 @@ export default function LibraryPage(): JSX.Element {
             </Button>
           )}
           {selectedCategory && (
-            <Button variant="primary" onClick={() => setHomebrewModal({ category: selectedCategory })}>
-              Create Custom
+            <Button variant="primary" onClick={handleCreateButton}>
+              {NAV_CATEGORIES.has(selectedCategory) ? 'Create' : 'Create Custom'}
             </Button>
           )}
         </div>
       </div>
 
-      {/* Search bar */}
-      {selectedCategory && (
-        <div className="mb-4">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${catDef?.label ?? selectedCategory}...`}
-            className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
-          />
-        </div>
-      )}
+      {/* Search bar — always visible */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={selectedCategory ? `Search ${catDef?.label ?? selectedCategory}...` : 'Search all categories...'}
+          className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-amber-500"
+        />
+      </div>
 
       {/* Content */}
       <div className="flex gap-0 flex-1 min-h-0 border border-gray-800 rounded-lg overflow-hidden">
@@ -275,13 +387,114 @@ export default function LibraryPage(): JSX.Element {
           selectedCategory={selectedCategory}
           onSelectCategory={handleSelectCategory}
           homebrewCounts={homebrewCounts}
+          onSelectFavorites={handleSelectFavorites}
+          isFavoritesSelected={showFavorites}
         />
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-h-0">
-          {!selectedCategory ? (
+          {/* Filter bar when category selected */}
+          {selectedCategory && (
+            <LibraryFilterBar
+              sortOptions={sortOptions}
+              filterConfigs={filterConfigs}
+              currentSort={{ field: sortField, direction: sortDirection }}
+              currentFilters={activeFilters}
+              onSortChange={(field, dir) => {
+                setSortField(field)
+                setSortDirection(dir)
+              }}
+              onFilterChange={setActiveFilters}
+            />
+          )}
+
+          {showFavorites ? (
+            // Favorites mode
+            favoriteItems.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center p-6">
+                <EmptyState
+                  title="No favorites yet"
+                  description="Click the ☆ star on any item to add it to your favorites."
+                />
+              </div>
+            ) : (
+              <LibraryItemList
+                items={favoriteItems}
+                loading={false}
+                onSelectItem={handleSelectItem}
+                onCreateNew={() => {}}
+                categoryLabel="Favorites"
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+              />
+            )
+          ) : !selectedCategory ? (
+            // No category selected
             <div className="flex-1 overflow-y-auto p-6">
-              <LibraryCategoryGrid onSelectCategory={handleSelectCategory} itemCounts={itemCounts} />
+              {/* Global search results */}
+              {debouncedSearch.trim() ? (
+                globalSearching ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 rounded" />
+                    ))}
+                  </div>
+                ) : globalSearchResults.length === 0 ? (
+                  <EmptyState
+                    title="No results found"
+                    description={`No items match "${debouncedSearch}" across all categories.`}
+                  />
+                ) : (
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-200 mb-3">
+                      Search Results ({globalSearchResults.length})
+                    </h2>
+                    <LibraryItemList
+                      items={globalSearchResults}
+                      loading={false}
+                      onSelectItem={handleSelectItem}
+                      onCreateNew={() => {}}
+                      categoryLabel="Search Results"
+                      favorites={favorites}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
+                )
+              ) : (
+                <>
+                  {/* Recently Viewed */}
+                  {recentlyViewed.length > 0 && (
+                    <section className="mb-8">
+                      <h2 className="text-lg font-bold text-gray-200 mb-3 border-b border-gray-800 pb-2">
+                        Recently Viewed
+                      </h2>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                        {recentlyViewed.slice(0, 10).map((item) => {
+                          const def = getCategoryDef(item.category)
+                          return (
+                            <button
+                              key={`recent-${item.id}`}
+                              onClick={() => handleSelectItem(item)}
+                              className="group flex flex-col items-center gap-1 p-3 rounded-lg border border-gray-800
+                                bg-gray-900/50 hover:bg-gray-800/80 hover:border-amber-600/50
+                                transition-all duration-200 cursor-pointer text-center"
+                            >
+                              <span className="text-lg">{def?.icon ?? '📄'}</span>
+                              <span className="text-xs font-medium text-gray-200 group-hover:text-amber-400 transition-colors truncate w-full">
+                                {item.name}
+                              </span>
+                              <span className="text-[10px] text-gray-500">{def?.label ?? item.category}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Category grid */}
+                  <LibraryCategoryGrid onSelectCategory={handleSelectCategory} itemCounts={itemCounts} />
+                </>
+              )}
             </div>
           ) : loading && filteredItems.length === 0 ? (
             <div className="flex-1 p-6 space-y-3">
@@ -300,9 +513,12 @@ export default function LibraryPage(): JSX.Element {
             <LibraryItemList
               items={filteredItems}
               loading={loading}
-              onSelectItem={setSelectedItem}
-              onCreateNew={() => setHomebrewModal({ category: selectedCategory })}
+              onSelectItem={handleSelectItem}
+              onCreateNew={handleCreateButton}
               categoryLabel={catDef?.label ?? selectedCategory}
+              category={selectedCategory}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
             />
           )}
         </div>

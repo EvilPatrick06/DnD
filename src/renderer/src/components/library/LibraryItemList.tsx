@@ -1,7 +1,9 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef } from 'react'
-import type { LibraryItem } from '../../types/library'
+import type { LibraryCategory, LibraryItem } from '../../types/library'
 import { getCategoryDef } from '../../types/library'
+import AudioPlayerItem from './AudioPlayerItem'
+import ImagePreviewItem from './ImagePreviewItem'
 
 interface LibraryItemListProps {
   items: LibraryItem[]
@@ -9,6 +11,9 @@ interface LibraryItemListProps {
   onSelectItem: (item: LibraryItem) => void
   onCreateNew: () => void
   categoryLabel: string
+  category?: LibraryCategory | null
+  favorites?: Set<string>
+  onToggleFavorite?: (itemId: string) => void
 }
 
 export default function LibraryItemList({
@@ -16,7 +21,10 @@ export default function LibraryItemList({
   loading,
   onSelectItem,
   onCreateNew,
-  categoryLabel
+  categoryLabel,
+  category,
+  favorites,
+  onToggleFavorite
 }: LibraryItemListProps): JSX.Element {
   const parentRef = useRef<HTMLDivElement>(null)
 
@@ -75,6 +83,7 @@ export default function LibraryItemList({
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index]
           const catDef = getCategoryDef(item.category)
+          const isFav = favorites?.has(item.id) ?? false
           return (
             <div
               key={virtualRow.key}
@@ -88,35 +97,61 @@ export default function LibraryItemList({
                 transform: `translateY(${virtualRow.start}px)`
               }}
             >
-              <button
-                onClick={() => onSelectItem(item)}
-                className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-800/50
-                  hover:bg-gray-800/40 transition-colors cursor-pointer group"
-              >
-                {catDef && <span className="text-lg leading-none flex-shrink-0">{catDef.icon}</span>}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-100 group-hover:text-amber-400 transition-colors truncate">
-                      {item.name}
-                    </span>
-                    {item.source === 'homebrew' && (
-                      <span className="text-[10px] bg-purple-600/30 text-purple-300 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                        Homebrew
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">{item.summary}</p>
-                </div>
-                <svg
-                  className="w-4 h-4 text-gray-600 group-hover:text-gray-400 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              {category === 'sounds' ? (
+                <AudioPlayerItem
+                  item={{ id: item.id, name: item.name, data: item.data }}
+                  onClick={() => onSelectItem(item)}
+                />
+              ) : category === 'portraits' ? (
+                <ImagePreviewItem
+                  item={{ id: item.id, name: item.name, data: item.data }}
+                  onClick={() => onSelectItem(item)}
+                />
+              ) : (
+                <button
+                  onClick={() => onSelectItem(item)}
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-800/50
+                    hover:bg-gray-800/40 transition-colors cursor-pointer group"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+                  {catDef && <span className="text-lg leading-none flex-shrink-0">{catDef.icon}</span>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-100 group-hover:text-amber-400 transition-colors truncate">
+                        {item.name}
+                      </span>
+                      {item.source === 'homebrew' && (
+                        <span className="text-[10px] bg-purple-600/30 text-purple-300 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                          Homebrew
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{item.summary}</p>
+                  </div>
+                  {onToggleFavorite && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleFavorite(item.id)
+                      }}
+                      className={`text-lg flex-shrink-0 transition-colors cursor-pointer ${
+                        isFav ? 'text-amber-400' : 'text-gray-600 hover:text-gray-400'
+                      }`}
+                      title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {isFav ? '★' : '☆'}
+                    </button>
+                  )}
+                  <svg
+                    className="w-4 h-4 text-gray-600 group-hover:text-gray-400 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
             </div>
           )
         })}
