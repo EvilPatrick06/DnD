@@ -324,6 +324,11 @@ function buildNetworkGameState(): NetworkGameState {
     handouts: gs.handouts,
     shopOpen: gs.shopOpen,
     shopName: gs.shopName,
-    shopInventory: gs.shopInventory
+    shopInventory: gs.shopInventory,
+    customEffects: gs.customEffects,
+    placedTraps: gs.placedTraps,
+    sessionLog: gs.sessionLog,
+    combatLog: gs.combatLog,
+    partyVisionCells: gs.partyVisionCells
   }
 }

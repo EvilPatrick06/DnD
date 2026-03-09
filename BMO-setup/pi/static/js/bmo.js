@@ -59,13 +59,13 @@ function bmo() {
     // Tabs
     tab: 'home',
     tabs: [
-      { id: 'tv', icon: '\u{1F4FA}' },
-      { id: 'chat', icon: '\u{1F4AC}' },
-      { id: 'home', icon: '\u{1F3E0}' },
-      { id: 'music', icon: '\u{1F3B5}' },
-      { id: 'calendar', icon: '\u{1F4C5}' },
-      { id: 'timers', icon: '\u23F1' },
-      { id: 'controls', icon: '\u2699' },
+      { id: 'tv', icon: '\u{1F4FA}', label: 'TV' },
+      { id: 'chat', icon: '\u{1F4AC}', label: 'Chat' },
+      { id: 'home', icon: '\u{1F3E0}', label: 'Home' },
+      { id: 'music', icon: '\u{1F3B5}', label: 'Music' },
+      { id: 'calendar', icon: '\u{1F4C5}', label: 'Cal' },
+      { id: 'timers', icon: '\u23F1', label: 'Timers' },
+      { id: 'controls', icon: '\u2699', label: 'Settings' },
     ],
 
     // Clock
@@ -94,7 +94,7 @@ function bmo() {
     musicState: {
       song: null, is_playing: false, position: 0, duration: 0,
       volume: 50, output_device: 'pi', queue: [], queue_length: 0,
-      queue_index: -1, shuffle: false, repeat: 'off',
+      queue_index: -1, shuffle: false, repeat: 'off', autoplay: true,
     },
     musicDevices: [{ name: 'pi', label: 'Pi Speakers' }],
     musicHistory: [],
@@ -201,6 +201,11 @@ function bmo() {
     tvConnected: false,
     tvPairing: false,
     tvPairPin: '',
+    tvAutoSkip: false,
+    tvCurrentApp: '',
+    tvVolumeLevel: -1,
+    tvMediaTitle: '',
+    tvMediaArtist: '',
 
     // Controls tab state
     ledState: null,
@@ -214,12 +219,22 @@ function bmo() {
     // Scene modes
     scenes: [],
     activeScene: null,
+    sceneEditing: null,
+    sceneForm: { label: '', rgb_off: false, rgb_mode: '', rgb_color: [0, 0, 0], rgb_brightness: 100, tv_on: false, tv_off: false, tv_app: '', music_stop: false, music_playlist: '' },
+
+    // Smart home devices
+    smartDevices: [],
+    smartDeviceExpanded: null,
 
     // Audio devices
     audioDevices: [],
     audioStatus: {},
+    audioRouting: {},
     btScanning: false,
     btDevices: [],
+
+    // Blocklist input
+    blocklistInput: '',
 
     // Swipe animation direction
     swipeDirection: '',
@@ -234,6 +249,42 @@ function bmo() {
     _touchStartX: 0,
     _touchStartY: 0,
 
+    // Voice settings (Phase 6)
+    voiceSettings: { wake_enabled: true, silence_threshold: 600, vad_sensitivity: 1.8, tts_provider: 'auto', wake_variants: [] },
+
+    // Agent/Model picker (Phase 7)
+    selectedAgent: 'auto',
+    selectedModel: 'auto',
+    showAgentPicker: false,
+
+    // Ambient/idle mode
+    ambientActive: false,
+    ambientMode: 'clock',  // 'clock', 'now_playing', 'bmo_face'
+    _idleTimer: null,
+    _idleTimeout: 300000,  // 5 minutes
+
+    // Lists
+    lists: {},
+    activeList: '',
+    newListName: '',
+    newListItemText: '',
+
+    // Alerts
+    recentAlerts: [],
+    alertToast: null,
+    _alertToastTimer: null,
+
+    // Routines
+    routines: [],
+
+    // Personality
+    personalitySettings: { enabled: true, chattiness: 'medium' },
+
+    // Games
+    gameActive: false,
+    currentGame: null,
+    gameState: {},
+
     // ── Init ──────────────────────────────────────────────────
 
     init() {
@@ -243,8 +294,8 @@ function bmo() {
       this.socket = io();
       this.setupSocket();
 
-      // Stop any playing music on page load (refresh = fresh start)
-      fetch('/api/music/stop', { method: 'POST' });
+      // Fetch current music state on page load (preserve playback across reloads)
+      this.fetchMusicState();
 
       // Load cached calendar instantly from localStorage (before any server call)
       try {
@@ -291,6 +342,8 @@ function bmo() {
       setInterval(() => { if (this.timerItems.length > 0 || this.tab === 'timers') this.fetchTimers(); }, 1000);
       // Poll calendar every 5 min
       setInterval(() => this.fetchCalendar(), 300000);
+      // Poll TV status every 5s when TV tab is active
+      setInterval(() => { if (this.tab === 'tv' && this.tvConnected) this.fetchTvStatus(); }, 5000);
 
       // Watch calendar tab for day changes
       this.$watch('calDays', () => this.fetchCalendar());
@@ -307,10 +360,22 @@ function bmo() {
       // Swipe navigation
       this.initSwipe();
 
+      // Idle timer for ambient mode
+      this.resetIdleTimer();
+      document.addEventListener('touchstart', () => this.resetIdleTimer(), { passive: true });
+      document.addEventListener('mousedown', () => this.resetIdleTimer());
+      document.addEventListener('keydown', () => this.resetIdleTimer());
+
+      // Fetch new service data
+      this.fetchLists();
+      this.fetchRoutines();
+      this.fetchAlerts();
+
       // Load Google Places API
       fetch('/api/config').then(r => r.json()).then(c => {
         if (c.maps_api_key) loadPlacesAPI(c.maps_api_key);
       }).catch(() => {});
+
     },
 
     // ── Swipe ─────────────────────────────────────────────────
@@ -335,14 +400,41 @@ function bmo() {
         }
       }, { passive: true });
 
-      // Mouse drag for desktop testing — skip if touch already handled it
+      // Mouse/touch-as-mouse drag — vertical scroll + horizontal tab swipe
       let mouseDown = false;
+      let scrollTarget = null;
+      let lastY = 0;
+      let dragged = false;
+
       main.addEventListener('mousedown', (e) => {
         if (usedTouch) return;
         if (e.target.closest('input, button, select, textarea, a')) return;
         mouseDown = true;
+        dragged = false;
         this._touchStartX = e.clientX;
         this._touchStartY = e.clientY;
+        lastY = e.clientY;
+        // Find nearest scrollable ancestor of the target
+        scrollTarget = null;
+        let el = e.target;
+        while (el && el !== main) {
+          if (el.scrollHeight > el.clientHeight && getComputedStyle(el).overflowY !== 'hidden' && getComputedStyle(el).overflowY !== 'visible') {
+            scrollTarget = el;
+            break;
+          }
+          el = el.parentElement;
+        }
+        e.preventDefault();
+      });
+
+      main.addEventListener('mousemove', (e) => {
+        if (!mouseDown) return;
+        const dy = e.clientY - lastY;
+        if (scrollTarget && Math.abs(dy) > 1) {
+          scrollTarget.scrollTop -= dy;
+          dragged = true;
+        }
+        lastY = e.clientY;
       });
 
       main.addEventListener('mouseup', (e) => {
@@ -354,6 +446,7 @@ function bmo() {
         if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
           this.swipeTab(dx < 0 ? 1 : -1);
         }
+        scrollTarget = null;
       });
     },
 
@@ -389,6 +482,13 @@ function bmo() {
       this.socket.on('music_state', (data) => {
         // Preserve saved volume if incoming state has 0 (VLC reports 0 when idle)
         if (!data.volume && this.musicState.volume > 0) data.volume = this.musicState.volume;
+        // Refresh history/most-played when song changes (e.g. autoplay)
+        const oldVid = this.musicState.song?.videoId;
+        const newVid = data.song?.videoId;
+        if (newVid && newVid !== oldVid) {
+          this.fetchMusicHistory();
+          this.fetchMostPlayed();
+        }
         this.musicState = data;
         if (this.volumeLevels && data.volume > 0) this.volumeLevels.music = data.volume;
       });
@@ -517,6 +617,9 @@ function bmo() {
         this.activeScene = data.scene;
         this.scenes = this.scenes.map(s => ({ ...s, active: s.name === data.scene }));
       });
+      this.socket.on('scenes_updated', (data) => {
+        if (data.scenes) this.scenes = data.scenes;
+      });
       this.socket.on('notification', (data) => {
         // BMO system toast (from scenes, errors, etc.) — has 'message' but no 'app'/'title'
         if (data.message && !data.app && !data.title) {
@@ -528,6 +631,31 @@ function bmo() {
         if (this.kdeNotifications.length > 100) this.kdeNotifications.length = 100;
       });
       this.socket.on('notification_settings', (data) => { this.notifSettings = data; });
+      this.socket.on('audio_routing_update', (data) => { this.audioRouting = data; });
+
+      // Proactive alerts
+      this.socket.on('proactive_alert', (data) => {
+        this.showAlertToast(data);
+      });
+      this.socket.on('recent_alerts', (data) => {
+        this.recentAlerts = data;
+      });
+
+      // Routine events
+      this.socket.on('routine_triggered', (data) => {
+        this.showNotification(`Running routine: ${data.name}`);
+      });
+      this.socket.on('routine_done', (data) => {
+        this.showNotification(`Routine complete: ${data.name}`);
+      });
+
+      // Personality quips
+      this.socket.on('bmo_quip', (data) => {
+        if (data.text) {
+          this.messages.push({ role: 'assistant', text: data.text });
+          this.scrollChat();
+        }
+      });
     },
 
     // ── Plan mode helpers ─────────────────────────────────
@@ -590,7 +718,10 @@ function bmo() {
       this.chatInput = '';
       this.status = 'thinking';
       this.scrollChat();
-      this.socket.emit('chat_message', { message: displayMsg, speaker });
+      const payload = { message: displayMsg, speaker };
+      if (this.selectedAgent && this.selectedAgent !== 'auto') payload.agent = this.selectedAgent;
+      if (this.selectedModel && this.selectedModel !== 'auto') payload.model = this.selectedModel;
+      this.socket.emit('chat_message', payload);
     },
 
     async handleSlashCommand(cmd) {
@@ -1811,12 +1942,42 @@ function bmo() {
 
     tvNeedsPairing: false,
 
+    _tvAppNames: {
+      'com.google.android.youtube.tv': 'YouTube',
+      'com.netflix.ninja': 'Netflix',
+      'com.amazon.amazonvideo.livingroom': 'Prime Video',
+      'https://app.primevideo.com': 'Prime Video',
+      'crunchyroll://': 'Crunchyroll',
+      'com.crunchyroll.crunchyroid': 'Crunchyroll',
+      'tv.twitch.android.app': 'Twitch',
+      'com.plexapp.android': 'Plex',
+      'com.google.android.tvlauncher': 'Home',
+      'com.spocky.projengmenu': 'Home',
+      'com.android.vending': 'Play Store',
+      'com.disney.disneyplus': 'Disney+',
+      'com.hulu.plus': 'Hulu',
+      'com.spotify.tv.android': 'Spotify',
+    },
+
+    tvAppDisplayName(pkg) {
+      if (!pkg) return '';
+      if (this._tvAppNames[pkg]) return this._tvAppNames[pkg];
+      // Fallback: extract last part of package name and capitalize
+      const parts = pkg.split('.');
+      const last = parts[parts.length - 1];
+      return last.charAt(0).toUpperCase() + last.slice(1);
+    },
+
     async fetchTvStatus() {
       try {
         const res = await fetch('/api/tv/status');
         const data = await res.json();
         this.tvConnected = data.connected;
         this.tvNeedsPairing = data.needs_pairing || false;
+        this.tvCurrentApp = data.current_app || '';
+        this.tvVolumeLevel = data.volume_level !== undefined ? data.volume_level : -1;
+        this.tvMediaTitle = data.media_title || '';
+        this.tvMediaArtist = data.media_artist || '';
       } catch {}
     },
 
@@ -1894,6 +2055,21 @@ function bmo() {
     async tvPower() {
       try {
         await fetch('/api/tv/power', { method: 'POST' });
+      } catch {}
+    },
+
+    async tvInput() {
+      try {
+        await fetch('/api/tv/input', { method: 'POST' });
+      } catch {}
+    },
+
+    async tvToggleAutoSkip() {
+      try {
+        const res = await fetch('/api/tv/auto-skip', { method: 'POST' });
+        const data = await res.json();
+        this.tvAutoSkip = data.enabled;
+        this.showNotification(data.enabled ? 'Auto-skip enabled' : 'Auto-skip disabled');
       } catch {}
     },
 
@@ -2004,6 +2180,9 @@ function bmo() {
         }
         // Laptop devices loaded on demand via button click
         this.fetchMicInputs();
+        this.fetchAudioRouting();
+        this.fetchSmartDevices();
+        this.fetchVoiceSettings();
       } catch {}
     },
 
@@ -2039,6 +2218,105 @@ function bmo() {
           this.activeScene = null;
           this.scenes = this.scenes.map(s => ({ ...s, active: false }));
         }
+      } catch {}
+    },
+
+    openSceneEditor(scene) {
+      if (scene) {
+        // Editing an existing custom scene
+        this.sceneEditing = scene.name;
+        this.sceneForm = {
+          label: scene.label || '',
+          rgb_off: !!scene.rgb_off,
+          rgb_mode: scene.rgb_mode || '',
+          rgb_color: scene.rgb_color || [0, 0, 0],
+          rgb_brightness: scene.rgb_brightness ?? 100,
+          tv_on: !!scene.tv_on,
+          tv_off: !!scene.tv_off,
+          tv_app: scene.tv_app || '',
+          music_stop: !!scene.music_stop,
+          music_playlist: scene.music_playlist || '',
+        };
+      } else {
+        // Creating a new scene
+        this.sceneEditing = 'new';
+        this.sceneForm = {
+          label: '', rgb_off: false, rgb_mode: '', rgb_color: [0, 0, 0],
+          rgb_brightness: 100, tv_on: false, tv_off: false, tv_app: '',
+          music_stop: false, music_playlist: '',
+        };
+      }
+    },
+
+    async saveScene() {
+      if (!this.sceneForm.label.trim()) {
+        this.showNotification('Scene name is required');
+        return;
+      }
+      const config = { ...this.sceneForm };
+      try {
+        if (this.sceneEditing === 'new') {
+          const name = config.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+          await fetch('/api/scene/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, config }),
+          });
+          this.showNotification('Scene created!');
+        } else {
+          await fetch(`/api/scene/${encodeURIComponent(this.sceneEditing)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config }),
+          });
+          this.showNotification('Scene updated!');
+        }
+        this.sceneEditing = null;
+        this.fetchScenes();
+      } catch {
+        this.showNotification('Failed to save scene');
+      }
+    },
+
+    async deleteScene(name) {
+      try {
+        await fetch(`/api/scene/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        this.sceneEditing = null;
+        this.showNotification('Scene deleted');
+        this.fetchScenes();
+      } catch {
+        this.showNotification('Failed to delete scene');
+      }
+    },
+
+    // ── Smart Home Devices ──────────────────────────────────
+
+    async fetchSmartDevices() {
+      try {
+        const res = await fetch('/api/devices');
+        const data = await res.json();
+        this.smartDevices = Array.isArray(data) ? data : (data.devices || []);
+      } catch {}
+    },
+
+    async smartDeviceAction(name, action, body) {
+      try {
+        await fetch(`/api/devices/${encodeURIComponent(name)}/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body || {}),
+        });
+        this.fetchSmartDevices();
+      } catch {}
+    },
+
+    async smartDeviceVolume(name, level) {
+      try {
+        await fetch(`/api/devices/${encodeURIComponent(name)}/volume`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level: parseInt(level) / 100 }),
+        });
       } catch {}
     },
 
@@ -2284,11 +2562,313 @@ function bmo() {
       } catch {}
     },
 
+    async refreshNotifDevices() {
+      try {
+        const res = await fetch('/api/notifications/devices/refresh', { method: 'POST' });
+        if (res.ok) {
+          this.notifSettings = await res.json();
+          this.showNotification('Devices refreshed');
+        }
+      } catch {}
+    },
+
+    async toggleNotifications() {
+      try {
+        const res = await fetch('/api/notifications/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !this.notifSettings.enabled }),
+        });
+        if (res.ok) {
+          this.notifSettings = await res.json();
+        }
+      } catch {}
+    },
+
+    async addToBlocklist() {
+      const app = this.blocklistInput.trim();
+      if (!app) return;
+      const blocklist = [...(this.notifSettings.blocklist || []), app];
+      try {
+        const res = await fetch('/api/notifications/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blocklist }),
+        });
+        if (res.ok) {
+          this.notifSettings = await res.json();
+          this.blocklistInput = '';
+        }
+      } catch {}
+    },
+
+    async removeFromBlocklist(app) {
+      const blocklist = (this.notifSettings.blocklist || []).filter(a => a !== app);
+      try {
+        const res = await fetch('/api/notifications/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blocklist }),
+        });
+        if (res.ok) {
+          this.notifSettings = await res.json();
+        }
+      } catch {}
+    },
+
+    // ── Audio Routing ──────────────────────────────────────────
+
+    async fetchAudioRouting() {
+      try {
+        const res = await fetch('/api/audio/status');
+        if (res.ok) {
+          const data = await res.json();
+          this.audioRouting = data.routing || {};
+          // Also update audioDevices from the status response
+          if (data.sinks || data.devices) {
+            this.audioDevices = data.sinks || data.devices || [];
+          }
+        }
+      } catch {}
+    },
+
+    async setFunctionOutput(func, deviceId) {
+      try {
+        await fetch('/api/audio/output', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ function: func, device_id: parseInt(deviceId) }),
+        });
+        this.fetchAudioRouting();
+      } catch {}
+    },
+
     async refreshStatus() {
       try {
         const res = await fetch('/api/status/summary');
         if (res.ok) this.systemStatus = await res.json();
       } catch {}
+    },
+
+    // ── Voice Settings (Phase 6) ────────────────────────────
+
+    async fetchVoiceSettings() {
+      try {
+        const res = await fetch('/api/voice/settings');
+        if (res.ok) this.voiceSettings = await res.json();
+      } catch {}
+    },
+
+    async updateVoiceSetting(key, value) {
+      this.voiceSettings[key] = value;
+      try {
+        await fetch('/api/voice/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [key]: value }),
+        });
+      } catch {}
+    },
+
+    async toggleWakeWord() {
+      const enabled = !this.voiceSettings.wake_enabled;
+      this.voiceSettings.wake_enabled = enabled;
+      try {
+        await fetch('/api/voice/wake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled }),
+        });
+      } catch {}
+    },
+
+    // ── Ambient/Idle Mode ────────────────────────────────────
+
+    resetIdleTimer() {
+      if (this.ambientActive) {
+        this.ambientActive = false;
+      }
+      clearTimeout(this._idleTimer);
+      this._idleTimer = setTimeout(() => this.enterAmbient(), this._idleTimeout);
+    },
+
+    enterAmbient() {
+      if (this.musicState.is_playing && this.musicState.song) {
+        this.ambientMode = 'now_playing';
+      } else {
+        this.ambientMode = 'clock';
+      }
+      this.ambientActive = true;
+    },
+
+    exitAmbient() {
+      this.ambientActive = false;
+      this.resetIdleTimer();
+    },
+
+    // ── Lists ────────────────────────────────────────────────
+
+    async fetchLists() {
+      try {
+        const res = await fetch('/api/lists');
+        const data = await res.json();
+        this.lists = data.lists || {};
+        if (!this.activeList && Object.keys(this.lists).length > 0) {
+          this.activeList = Object.keys(this.lists)[0];
+        }
+      } catch (e) {
+        console.warn('[bmo] Failed to fetch lists:', e);
+      }
+    },
+
+    async createList() {
+      const name = this.newListName.trim();
+      if (!name) return;
+      try {
+        await fetch('/api/lists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+        this.newListName = '';
+        this.activeList = name.toLowerCase().replace(/\s+/g, '_');
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to create list:', e);
+      }
+    },
+
+    async deleteList(name) {
+      try {
+        await fetch(`/api/lists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        if (this.activeList === name) this.activeList = '';
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to delete list:', e);
+      }
+    },
+
+    async addListItem(listName) {
+      const text = this.newListItemText.trim();
+      if (!text) return;
+      try {
+        await fetch(`/api/lists/${encodeURIComponent(listName)}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        this.newListItemText = '';
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to add list item:', e);
+      }
+    },
+
+    async removeListItem(listName, itemId) {
+      try {
+        await fetch(`/api/lists/${encodeURIComponent(listName)}/items/${itemId}`, { method: 'DELETE' });
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to remove list item:', e);
+      }
+    },
+
+    async checkListItem(listName, itemId, done) {
+      try {
+        await fetch(`/api/lists/${encodeURIComponent(listName)}/items/${itemId}/check`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done }),
+        });
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to check list item:', e);
+      }
+    },
+
+    async clearList(listName, doneOnly) {
+      try {
+        await fetch(`/api/lists/${encodeURIComponent(listName)}/clear`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done_only: doneOnly }),
+        });
+        await this.fetchLists();
+      } catch (e) {
+        console.warn('[bmo] Failed to clear list:', e);
+      }
+    },
+
+    // ── Alerts ───────────────────────────────────────────────
+
+    async fetchAlerts() {
+      try {
+        const res = await fetch('/api/alerts/history?limit=20');
+        const data = await res.json();
+        this.recentAlerts = data.alerts || [];
+      } catch (e) {
+        console.warn('[bmo] Failed to fetch alerts:', e);
+      }
+    },
+
+    showAlertToast(alert) {
+      this.alertToast = alert;
+      clearTimeout(this._alertToastTimer);
+      const duration = alert.priority === 'low' ? 5000 : alert.priority === 'medium' ? 10000 : 0;
+      if (duration > 0) {
+        this._alertToastTimer = setTimeout(() => { this.alertToast = null; }, duration);
+      }
+      // Add to recent list
+      this.recentAlerts.unshift(alert);
+      if (this.recentAlerts.length > 20) this.recentAlerts.length = 20;
+    },
+
+    dismissAlertToast() {
+      this.alertToast = null;
+      clearTimeout(this._alertToastTimer);
+    },
+
+    // ── Routines ─────────────────────────────────────────────
+
+    async fetchRoutines() {
+      try {
+        const res = await fetch('/api/routines');
+        const data = await res.json();
+        this.routines = data.routines || [];
+      } catch (e) {
+        console.warn('[bmo] Failed to fetch routines:', e);
+      }
+    },
+
+    async triggerRoutine(id) {
+      try {
+        await fetch(`/api/routines/${id}/trigger`, { method: 'POST' });
+        this.showNotification('Routine triggered!');
+      } catch (e) {
+        console.warn('[bmo] Failed to trigger routine:', e);
+      }
+    },
+
+    async toggleRoutine(id, enabled) {
+      try {
+        await fetch(`/api/routines/${id}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled }),
+        });
+        await this.fetchRoutines();
+      } catch (e) {
+        console.warn('[bmo] Failed to toggle routine:', e);
+      }
+    },
+
+    async deleteRoutine(id) {
+      try {
+        await fetch(`/api/routines/${id}`, { method: 'DELETE' });
+        await this.fetchRoutines();
+      } catch (e) {
+        console.warn('[bmo] Failed to delete routine:', e);
+      }
     },
   };
 }

@@ -71,8 +71,20 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     if (!initiative || initiative.entries.length === 0) return
 
     const { entries, currentIndex } = initiative
-    const nextIndex = (currentIndex + 1) % entries.length
-    const newRound = nextIndex === 0 ? initiative.round + 1 : initiative.round
+
+    // Find next non-delaying entity
+    let nextIndex = (currentIndex + 1) % entries.length
+    let loopCount = 0
+    while (entries[nextIndex]?.isDelaying && loopCount < entries.length) {
+      nextIndex = (nextIndex + 1) % entries.length
+      loopCount++
+    }
+    // All entities are delaying — just advance normally
+    if (loopCount >= entries.length) {
+      nextIndex = (currentIndex + 1) % entries.length
+    }
+
+    const newRound = nextIndex <= currentIndex ? initiative.round + 1 : initiative.round
 
     // Emit turn-end for current entity
     if (pluginEventBus.hasSubscribers('game:turn-end')) {
@@ -98,7 +110,8 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     const speed = existingTs?.movementMax ?? 30
 
     // Auto-advance 6 seconds when a new round begins (5e: 1 round = 6 seconds)
-    const newInGameTime = nextIndex === 0 && inGameTime ? { totalSeconds: inGameTime.totalSeconds + 6 } : inGameTime
+    const isNewRound = newRound > initiative.round
+    const newInGameTime = isNewRound && inGameTime ? { totalSeconds: inGameTime.totalSeconds + 6 } : inGameTime
 
     // Initialize attack tracker for the next entity's turn
     // Default to 1 (single attack) — actual extra attacks are resolved by combat-resolver
@@ -143,12 +156,12 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
         })
       }
     }
-    if (nextIndex === 0 && pluginEventBus.hasSubscribers('game:round-end')) {
+    if (isNewRound && pluginEventBus.hasSubscribers('game:round-end')) {
       pluginEventBus.emit('game:round-end', { round: newRound - 1 })
     }
 
     // Trigger lair action prompt at the start of a new round
-    if (nextIndex === 0) {
+    if (isNewRound) {
       const lairEntry = entries.find((e) => e.inLair && e.lairActions && e.lairActions.length > 0)
       if (lairEntry) {
         set({
@@ -161,7 +174,7 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     }
 
     // Auto-countdown round-based conditions
-    if (nextIndex === 0) {
+    if (isNewRound) {
       const currentConditions = get().conditions
       const expired: EntityCondition[] = []
       const remaining: EntityCondition[] = []
@@ -185,6 +198,20 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
             isSystem: true
           })
         }
+      }
+    }
+
+    // Clear all isDelaying flags at the start of a new round
+    // (entities that never un-delayed lose their turn)
+    if (isNewRound) {
+      const currentInit = get().initiative
+      if (currentInit) {
+        const clearedEntries = currentInit.entries.map((e) =>
+          e.isDelaying ? { ...e, isDelaying: false } : e
+        )
+        set({
+          initiative: { ...currentInit, entries: clearedEntries }
+        })
       }
     }
   },
@@ -282,6 +309,106 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
         entries,
         currentIndex: newCurrentIndex >= 0 ? newCurrentIndex : 0
       }
+    })
+  },
+
+  delayTurn: (entityId: string) => {
+    const { initiative } = get()
+    if (!initiative) return
+
+    const entryIndex = initiative.entries.findIndex((e) => e.entityId === entityId)
+    if (entryIndex < 0) return
+
+    // Mark as delaying
+    const updatedEntries = initiative.entries.map((e) =>
+      e.entityId === entityId ? { ...e, isDelaying: true, isActive: false } : e
+    )
+    set({
+      initiative: { ...initiative, entries: updatedEntries }
+    })
+
+    // Advance to next turn
+    get().nextTurn()
+  },
+
+  undelay: (entityId: string) => {
+    const { initiative } = get()
+    if (!initiative) return
+
+    const entryIndex = initiative.entries.findIndex((e) => e.entityId === entityId)
+    if (entryIndex < 0) return
+
+    // Insert the entity back at the current position by clearing delay flag
+    const updatedEntries = initiative.entries.map((e) =>
+      e.entityId === entityId ? { ...e, isDelaying: false } : e
+    )
+
+    // Reorder: move the un-delayed entity to just after the current active entry
+    const currentIdx = initiative.currentIndex
+    const fromIdx = updatedEntries.findIndex((e) => e.entityId === entityId)
+    if (fromIdx >= 0 && fromIdx !== currentIdx + 1) {
+      const [moved] = updatedEntries.splice(fromIdx, 1)
+      if (moved) {
+        const insertAt = fromIdx < currentIdx ? currentIdx : currentIdx + 1
+        updatedEntries.splice(insertAt, 0, moved)
+      }
+    }
+
+    // Recalculate currentIndex since entries shifted
+    const activeEntry = initiative.entries[initiative.currentIndex]
+    const newCurrentIndex = updatedEntries.findIndex((e) => e.id === activeEntry?.id)
+
+    set({
+      initiative: {
+        ...initiative,
+        entries: updatedEntries,
+        currentIndex: newCurrentIndex >= 0 ? newCurrentIndex : initiative.currentIndex
+      }
+    })
+  },
+
+  readyAction: (entityId: string, trigger: string, action: string) => {
+    const { initiative } = get()
+    if (!initiative) return
+
+    // Set the ready action on the entry
+    const updatedEntries = initiative.entries.map((e) =>
+      e.entityId === entityId ? { ...e, readyAction: { trigger, action } } : e
+    )
+    set({
+      initiative: { ...initiative, entries: updatedEntries }
+    })
+
+    // Readying an action uses the action and ends the turn
+    get().useAction(entityId)
+    get().nextTurn()
+  },
+
+  triggerReadyAction: (entityId: string) => {
+    const { initiative } = get()
+    if (!initiative) return
+
+    const entry = initiative.entries.find((e) => e.entityId === entityId)
+    if (!entry?.readyAction) return
+
+    // Clear the readied action after triggering
+    const updatedEntries = initiative.entries.map((e) =>
+      e.entityId === entityId ? { ...e, readyAction: undefined } : e
+    )
+    set({
+      initiative: { ...initiative, entries: updatedEntries }
+    })
+  },
+
+  clearReady: (entityId: string) => {
+    const { initiative } = get()
+    if (!initiative) return
+
+    const updatedEntries = initiative.entries.map((e) =>
+      e.entityId === entityId ? { ...e, readyAction: undefined } : e
+    )
+    set({
+      initiative: { ...initiative, entries: updatedEntries }
     })
   },
 

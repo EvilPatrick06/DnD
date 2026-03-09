@@ -16,7 +16,7 @@ import { registerStorageHandlers } from './storage-handlers'
 // only operate on user-selected locations or the app's own data directory.
 // Values are timestamps for TTL expiry.
 const dialogAllowedPaths = new Map<string, number>()
-const DIALOG_PATH_TTL = 60_000 // 60 seconds
+const DIALOG_PATH_TTL = 300_000 // 5 minutes
 
 function addDialogPath(p: string): void {
   dialogAllowedPaths.set(resolve(p), Date.now())

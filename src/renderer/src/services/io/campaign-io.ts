@@ -2,15 +2,10 @@ import type { Campaign } from '../../types/campaign'
 
 /**
  * Serialize a campaign to a portable JSON string.
- * Strips player data and journal entries for privacy.
+ * Preserves all campaign data including players and journal entries.
  */
 export function exportCampaign(campaign: Campaign): string {
-  const exportable = {
-    ...campaign,
-    players: [],
-    journal: { entries: [] }
-  }
-  return JSON.stringify(exportable, null, 2)
+  return JSON.stringify(campaign, null, 2)
 }
 
 /**

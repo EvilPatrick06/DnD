@@ -1,6 +1,17 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastion-storage'
+import {
+  type BookConfig,
+  type BookData,
+  addBook,
+  importBook,
+  loadBookConfig,
+  loadBookData,
+  readBookFile,
+  removeBook,
+  saveBookData
+} from '../storage/book-storage'
 import { deleteCampaign, loadCampaign, loadCampaigns, saveCampaign } from '../storage/campaign-storage'
 import {
   type CharacterVersion,
@@ -28,6 +39,7 @@ import {
   loadHomebrewEntries,
   saveHomebrewEntry
 } from '../storage/homebrew-storage'
+import { deleteImage, getImage, listImages, saveImage } from '../storage/image-library-storage'
 import {
   deleteMapFromLibrary,
   getMapFromLibrary,
@@ -35,6 +47,12 @@ import {
   saveMapToLibrary
 } from '../storage/map-library-storage'
 import { type AppSettings, loadSettings, saveSettings } from '../storage/settings-storage'
+import {
+  deleteShopTemplate,
+  getShopTemplate,
+  listShopTemplates,
+  saveShopTemplate
+} from '../storage/shop-storage'
 
 // Ensure imported types are used for type-safety
 type _CharacterVersion = CharacterVersion
@@ -250,5 +268,84 @@ export function registerStorageHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.MAP_LIBRARY_DELETE, async (_event, id: string) => {
     return deleteMapFromLibrary(id)
+  })
+
+  // --- Shop Template storage ---
+
+  ipcMain.handle(
+    IPC_CHANNELS.SHOP_TEMPLATE_SAVE,
+    async (_event, template: { id: string; name: string; inventory: unknown[]; markup: number }) => {
+      return saveShopTemplate(template)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.SHOP_TEMPLATE_LIST, async () => {
+    return listShopTemplates()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SHOP_TEMPLATE_GET, async (_event, id: string) => {
+    return getShopTemplate(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SHOP_TEMPLATE_DELETE, async (_event, id: string) => {
+    return deleteShopTemplate(id)
+  })
+
+  // --- Image Library storage ---
+
+  ipcMain.handle(
+    IPC_CHANNELS.IMAGE_LIBRARY_SAVE,
+    async (_event, id: string, name: string, buffer: ArrayBuffer, extension: string) => {
+      return saveImage(id, name, Buffer.from(buffer), extension)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.IMAGE_LIBRARY_LIST, async () => {
+    return listImages()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.IMAGE_LIBRARY_GET, async (_event, id: string) => {
+    return getImage(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.IMAGE_LIBRARY_DELETE, async (_event, id: string) => {
+    return deleteImage(id)
+  })
+
+  // --- Book storage ---
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_LOAD_CONFIG, async () => {
+    return loadBookConfig()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_ADD, async (_event, config: BookConfig) => {
+    return addBook(config)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_REMOVE, async (_event, bookId: string) => {
+    return removeBook(bookId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_IMPORT, async (_event, sourcePath: string, title: string, bookId: string) => {
+    return importBook(sourcePath, title, bookId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_READ_FILE, async (_event, filePath: string) => {
+    const result = await readBookFile(filePath)
+    if (result.success && result.data) {
+      // Must slice to the Buffer's actual range — Buffer.buffer returns the shared pool ArrayBuffer
+      const buf = result.data
+      const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+      return { success: true, data: arrayBuffer }
+    }
+    return { success: false, error: result.error }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_LOAD_DATA, async (_event, bookId: string) => {
+    return loadBookData(bookId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.BOOK_SAVE_DATA, async (_event, bookId: string, data: BookData) => {
+    return saveBookData(bookId, data)
   })
 }

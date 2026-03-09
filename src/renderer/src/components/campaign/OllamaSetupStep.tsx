@@ -38,6 +38,16 @@ export default function OllamaSetupStep({
   const [installedModels, setInstalledModels] = useState<string[]>([])
   const progressListenerRegistered = useRef(false)
 
+  // Validate Ollama URL format
+  const isValidUrl = useCallback((url: string): boolean => {
+    try {
+      const parsed = new URL(url)
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }, [])
+
   // Detect Ollama status
   const detectStatus = useCallback(async () => {
     setSetupPhase('detecting')
@@ -283,8 +293,17 @@ export default function OllamaSetupStep({
                 value={ollamaUrl}
                 onChange={(e) => onChange({ enabled, ollamaModel, ollamaUrl: e.target.value })}
                 placeholder="http://localhost:11434"
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className={`w-full bg-gray-800 border rounded px-3 py-2 text-sm focus:outline-none ${
+                  ollamaUrl && !isValidUrl(ollamaUrl)
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-gray-700 focus:border-amber-500'
+                }`}
               />
+              {ollamaUrl && !isValidUrl(ollamaUrl) && (
+                <p className="text-red-400 text-xs mt-1">
+                  Please enter a valid URL (e.g. http://localhost:11434)
+                </p>
+              )}
               <p className="text-gray-500 text-xs mt-1">
                 Default: http://localhost:11434. Change this to point to a remote GPU server.
               </p>

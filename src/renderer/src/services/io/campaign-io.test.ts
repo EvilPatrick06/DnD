@@ -50,11 +50,11 @@ const minimalCampaign: Campaign = {
 
 describe('campaign-io', () => {
   describe('exportCampaign', () => {
-    it('strips players and journal entries', () => {
+    it('preserves players and journal entries', () => {
       const exported = exportCampaign(minimalCampaign)
       const parsed = JSON.parse(exported)
-      expect(parsed.players).toEqual([])
-      expect(parsed.journal).toEqual({ entries: [] })
+      expect(parsed.players).toEqual(minimalCampaign.players)
+      expect(parsed.journal).toEqual(minimalCampaign.journal)
     })
   })
 
@@ -65,8 +65,8 @@ describe('campaign-io', () => {
       expect(imported.id).toBe(minimalCampaign.id)
       expect(imported.name).toBe(minimalCampaign.name)
       expect(imported.system).toBe(minimalCampaign.system)
-      expect(imported.players).toEqual([])
-      expect(imported.journal.entries).toEqual([])
+      expect(imported.players).toEqual(minimalCampaign.players)
+      expect(imported.journal.entries).toEqual(minimalCampaign.journal.entries)
     })
 
     it('throws on missing required field', () => {

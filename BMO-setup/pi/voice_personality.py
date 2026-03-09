@@ -53,6 +53,9 @@ BMO_EMOTIONS: dict[str, str] = {
     "excited": os.environ.get("FISH_AUDIO_BMO_EXCITED", _DEFAULT_VOICE),
     "sassy": os.environ.get("FISH_AUDIO_BMO_SASSY", _DEFAULT_VOICE),
     "sad": os.environ.get("FISH_AUDIO_BMO_SAD", _DEFAULT_VOICE),
+    "scared": os.environ.get("FISH_AUDIO_BMO_SCARED", _DEFAULT_VOICE),
+    "mischievous": os.environ.get("FISH_AUDIO_BMO_MISCHIEVOUS", _DEFAULT_VOICE),
+    "shy": os.environ.get("FISH_AUDIO_BMO_SHY", _DEFAULT_VOICE),
 }
 
 # Shorthand emotion tags that map to canonical emotion names
@@ -64,6 +67,9 @@ _EMOTION_ALIASES: dict[str, str] = {
     "excited": "excited",
     "sassy": "sassy",
     "sad": "sad",
+    "scared": "scared",
+    "mischievous": "mischievous",
+    "shy": "shy",
     # Uppercase shorthand tags like [HAPPY], [DRAMATIC]
     "HAPPY": "happy",
     "CALM": "calm",
@@ -72,6 +78,9 @@ _EMOTION_ALIASES: dict[str, str] = {
     "EXCITED": "excited",
     "SASSY": "sassy",
     "SAD": "sad",
+    "SCARED": "scared",
+    "MISCHIEVOUS": "mischievous",
+    "SHY": "shy",
 }
 
 

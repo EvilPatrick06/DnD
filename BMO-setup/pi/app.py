@@ -77,13 +77,17 @@ notifier = None
 audio_service = None
 scene_service = None
 oled_face = None
+list_service = None
+alert_service = None
+routine_service = None
+personality_engine = None
 
 
 def init_services():
     """Initialize all services. Called once on startup.
     Gracefully skips hardware-dependent services when running on non-Pi platforms.
     """
-    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier, audio_service, scene_service, oled_face
+    global voice, camera, calendar, music, smart_home, weather, timers, agent, led_controller, health_checker, notifier, audio_service, scene_service, oled_face, list_service, alert_service, routine_service, personality_engine
 
     from agent import BmoAgent
 
@@ -222,6 +226,17 @@ def init_services():
         def _voice_chat(text, speaker="unknown"):
             """Process voice input through the chat agent."""
             try:
+                # Check routine voice triggers first
+                if routine_service:
+                    triggered = routine_service.check_voice_trigger(text)
+                    if triggered:
+                        routine_service.trigger_routine(triggered["id"])
+                        return f"Running {triggered.get('name', 'unknown')} routine!"
+                # Check personality Easter eggs
+                if personality_engine:
+                    easter_egg = personality_engine.check_easter_egg(text)
+                    if easter_egg:
+                        return easter_egg
                 result = agent.chat(text, speaker=speaker)
                 return result.get("text", "")
             except Exception as e:
@@ -257,6 +272,29 @@ def init_services():
                 expression = _VOICE_STATE_TO_EXPRESSION.get(state)
                 if expression:
                     _sync_expression(expression)
+            # Save voice transcriptions (user messages) to chat history
+            elif event == "transcription":
+                _save_chat_message({
+                    "role": "user",
+                    "text": data.get("text", ""),
+                    "speaker": data.get("speaker", "unknown"),
+                    "ts": time.time(),
+                })
+            # Save voice responses (assistant messages) to chat history
+            # and emit as chat_response so the frontend shows them
+            elif event == "response":
+                response_text = data.get("text", "")
+                if response_text:
+                    _save_chat_message({
+                        "role": "assistant",
+                        "text": response_text,
+                        "ts": time.time(),
+                    })
+                    socketio.emit("chat_response", {
+                        "text": response_text,
+                        "speaker": data.get("speaker", ""),
+                        "agent_used": "",
+                    })
         voice._emit = _voice_emit_with_oled
 
     # Load notes from disk
@@ -363,6 +401,64 @@ def init_services():
         print("[bmo]   Scene engine: OK")
     except Exception as e:
         print(f"[bmo]   Scene engine: SKIPPED ({e})")
+
+    # List service
+    try:
+        from list_service import ListService
+        list_service = ListService()
+        service_map["lists"] = list_service
+        print("[bmo]   List service: OK")
+    except Exception as e:
+        print(f"[bmo]   List service: SKIPPED ({e})")
+
+    # Alert service
+    try:
+        from alert_service import AlertService
+        alert_service = AlertService(voice_pipeline=voice, socketio=socketio)
+        service_map["alerts"] = alert_service
+        print("[bmo]   Alert service: OK")
+        # Wire alert service into existing services (created earlier)
+        if weather:
+            weather.alert_service = alert_service
+        if calendar:
+            calendar.alert_service = alert_service
+        if notifier:
+            notifier.alert_service = alert_service
+    except Exception as e:
+        print(f"[bmo]   Alert service: SKIPPED ({e})")
+
+    # Routine service
+    try:
+        from routine_service import RoutineService
+        routine_service = RoutineService(
+            agent=lambda: agent,
+            voice=voice,
+            socketio=socketio,
+        )
+        service_map["routines"] = routine_service
+        print("[bmo]   Routine service: OK")
+    except Exception as e:
+        print(f"[bmo]   Routine service: SKIPPED ({e})")
+
+    # Start routine scheduler
+    if routine_service:
+        routine_service.start()
+        print("[bmo]   Routine scheduler: started")
+
+    # Personality engine
+    try:
+        from personality_engine import PersonalityEngine
+        personality_engine = PersonalityEngine(
+            voice=voice,
+            socketio=socketio,
+            music_service=music,
+            weather_service=weather,
+        )
+        personality_engine.start()
+        service_map["personality"] = personality_engine
+        print("[bmo]   Personality engine: OK")
+    except Exception as e:
+        print(f"[bmo]   Personality engine: SKIPPED ({e})")
 
     # Restore system (PipeWire) volume from saved settings
     saved_sys_vol = _load_setting("volume.system", None)
@@ -785,6 +881,12 @@ def api_music_repeat():
     return jsonify({"repeat": music.repeat})
 
 
+@app.route("/api/music/autoplay", methods=["POST"])
+def api_music_autoplay():
+    music.autoplay = not music.autoplay
+    return jsonify({"autoplay": music.autoplay})
+
+
 @app.route("/api/music/queue/add", methods=["POST"])
 def api_music_queue_add():
     data = request.json or {}
@@ -1042,6 +1144,65 @@ def api_camera_motion():
     else:
         camera.stop_motion_detection()
     return jsonify({"ok": True})
+
+
+# ── Voice Enrollment API ──────────────────────────────────────────────
+
+@app.route("/api/voice/enroll", methods=["POST"])
+def api_voice_enroll():
+    """Record audio and enroll a speaker by name.
+
+    JSON body: {"name": "Gavin", "duration": 5}
+    Records `duration` seconds of audio from the mic, then enrolls the speaker.
+    Call this 3 times with different speech samples for best accuracy.
+    """
+    if not voice:
+        return jsonify({"error": "Voice pipeline not available"}), 503
+
+    data = request.json or {}
+    name = data.get("name", "").strip()
+    duration = data.get("duration", 5)
+    if not name:
+        return jsonify({"error": "Name is required"}), 400
+
+    try:
+        clip_path = voice.record_clip(duration=duration)
+        # Validate clip has actual speech
+        import numpy as _np
+        import wave as _wave
+        with open(clip_path, "rb") as f:
+            with _wave.open(f, "rb") as wf:
+                raw = wf.readframes(wf.getnframes())
+                audio = _np.frombuffer(raw, dtype=_np.int16)
+        if not voice._validate_enrollment_clip(audio):
+            if os.path.exists(clip_path):
+                os.unlink(clip_path)
+            return jsonify({"error": "Not enough speech detected. Speak louder or closer and try again."}), 422
+        voice.enroll_speaker(name, [clip_path])
+        if os.path.exists(clip_path):
+            os.unlink(clip_path)
+        return jsonify({"ok": True, "name": name, "profiles": voice.get_enrolled_speakers()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voice/profiles")
+def api_voice_profiles():
+    """List all enrolled voice profiles."""
+    if not voice:
+        return jsonify({"profiles": []})
+    return jsonify({"profiles": voice.get_enrolled_speakers()})
+
+
+@app.route("/api/voice/profiles/<name>", methods=["DELETE"])
+def api_voice_profile_delete(name):
+    """Remove a voice profile by name."""
+    if not voice:
+        return jsonify({"error": "Voice pipeline not available"}), 503
+    removed = voice.remove_speaker(name)
+    if removed:
+        return jsonify({"ok": True, "profiles": voice.get_enrolled_speakers()})
+    return jsonify({"error": f"Profile '{name}' not found"}), 404
 
 
 # ── Timer API ────────────────────────────────────────────────────────
@@ -1610,6 +1771,55 @@ def api_scene_deactivate():
     return jsonify({"ok": True, "message": "Deactivating..."})
 
 
+@app.route("/api/scene/create", methods=["POST"])
+def api_scene_create():
+    """Create a custom scene. Body: {name: str, config: {...}}."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    data = request.json or {}
+    name = data.get("name", "").strip()
+    config = data.get("config", {})
+    if not name:
+        return jsonify({"error": "Scene name required"}), 400
+    try:
+        ok, msg = scene_service.create_scene(name, config)
+        if ok:
+            return jsonify({"ok": True, "message": msg})
+        return jsonify({"error": msg}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/scene/<name>", methods=["PUT"])
+def api_scene_update(name):
+    """Update a custom scene. Body: {config: {...}}."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    data = request.json or {}
+    config = data.get("config", {})
+    try:
+        ok, msg = scene_service.update_scene(name, config)
+        if ok:
+            return jsonify({"ok": True, "message": msg})
+        return jsonify({"error": msg}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/scene/<name>", methods=["DELETE"])
+def api_scene_delete(name):
+    """Delete a custom scene."""
+    if not scene_service:
+        return jsonify({"error": "Scene service not available"}), 503
+    try:
+        ok, msg = scene_service.delete_scene(name)
+        if ok:
+            return jsonify({"ok": True, "message": msg})
+        return jsonify({"error": msg}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def _load_setting(key: str, default=None):
     """Load a dotted key from data/settings.json."""
     try:
@@ -1671,6 +1881,85 @@ def api_device_volume(device_name):
     data = request.json or {}
     smart_home.set_volume(device_name, data.get("level", 0.5))
     return jsonify({"ok": True})
+
+
+@app.route("/api/devices/<device_name>/play", methods=["POST"])
+def api_device_play(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        smart_home.play(device_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/<device_name>/pause", methods=["POST"])
+def api_device_pause(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        smart_home.pause(device_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/<device_name>/stop", methods=["POST"])
+def api_device_stop(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        smart_home.stop(device_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/<device_name>/mute", methods=["POST"])
+def api_device_mute(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        data = request.json or {}
+        smart_home.mute(device_name, data.get("muted", True))
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/<device_name>/launch", methods=["POST"])
+def api_device_launch(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        data = request.json or {}
+        smart_home.launch_app(device_name, data.get("app_id", ""))
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/<device_name>/quit", methods=["POST"])
+def api_device_quit(device_name):
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        smart_home.quit_app(device_name)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/devices/refresh", methods=["POST"])
+def api_devices_refresh():
+    if not smart_home:
+        return jsonify({"error": "Smart home not available"}), 503
+    try:
+        smart_home.start_discovery()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ── Chat Persistence ─────────────────────────────────────────────────
@@ -1884,6 +2173,229 @@ def api_notes_delete(note_id):
     return jsonify({"ok": True})
 
 
+# ── List API ────────────────────────────────────────────────────────
+
+@app.route("/api/lists")
+def api_lists():
+    """Get all lists."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    return jsonify({"lists": list_service.get_all_lists()})
+
+
+@app.route("/api/lists", methods=["POST"])
+def api_lists_create():
+    """Create a new list. Body: {name: str}."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    data = request.json or {}
+    name = data.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "List name required"}), 400
+    lst = list_service.create_list(name)
+    return jsonify(lst)
+
+
+@app.route("/api/lists/<name>")
+def api_list_get(name):
+    """Get a specific list."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    lst = list_service.get_list(name)
+    if lst is None:
+        return jsonify({"error": f"List '{name}' not found"}), 404
+    return jsonify(lst)
+
+
+@app.route("/api/lists/<name>", methods=["DELETE"])
+def api_list_delete(name):
+    """Delete a list."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    if list_service.delete_list(name):
+        return jsonify({"ok": True})
+    return jsonify({"error": f"List '{name}' not found"}), 404
+
+
+@app.route("/api/lists/<name>/items", methods=["POST"])
+def api_list_add_item(name):
+    """Add item to a list. Body: {text: str}."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    data = request.json or {}
+    text = data.get("text", "").strip()
+    if not text:
+        return jsonify({"error": "Item text required"}), 400
+    item = list_service.add_item(name, text)
+    return jsonify(item)
+
+
+@app.route("/api/lists/<name>/items/<item_id>", methods=["DELETE"])
+def api_list_remove_item(name, item_id):
+    """Remove item from a list."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    if list_service.remove_item(name, item_id):
+        return jsonify({"ok": True})
+    return jsonify({"error": "Item not found"}), 404
+
+
+@app.route("/api/lists/<name>/items/<item_id>/check", methods=["POST"])
+def api_list_check_item(name, item_id):
+    """Toggle item done status. Body: {done: bool}."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    data = request.json or {}
+    done = data.get("done", True)
+    if list_service.check_item(name, item_id, done):
+        return jsonify({"ok": True})
+    return jsonify({"error": "Item not found"}), 404
+
+
+@app.route("/api/lists/<name>/clear", methods=["POST"])
+def api_list_clear(name):
+    """Clear a list. Body: {done_only: bool}."""
+    if not list_service:
+        return jsonify({"error": "List service not available"}), 503
+    data = request.json or {}
+    done_only = data.get("done_only", False)
+    list_service.clear_list(name, done_only=done_only)
+    return jsonify({"ok": True})
+
+
+# ── Alert API ───────────────────────────────────────────────────────
+
+@app.route("/api/alerts/history")
+def api_alerts_history():
+    """Get recent alert history."""
+    if not alert_service:
+        return jsonify({"error": "Alert service not available"}), 503
+    limit = request.args.get("limit", 50, type=int)
+    return jsonify({"alerts": alert_service.get_history(limit)})
+
+
+@app.route("/api/alerts/config")
+def api_alerts_config():
+    """Get alert configuration."""
+    if not alert_service:
+        return jsonify({"error": "Alert service not available"}), 503
+    return jsonify(alert_service.get_config())
+
+
+@app.route("/api/alerts/config", methods=["POST"])
+def api_alerts_config_update():
+    """Update alert configuration. Body: partial config dict."""
+    if not alert_service:
+        return jsonify({"error": "Alert service not available"}), 503
+    data = request.json or {}
+    alert_service.update_config(data)
+    return jsonify(alert_service.get_config())
+
+
+@app.route("/api/alerts/send", methods=["POST"])
+def api_alerts_send():
+    """Send a test alert. Body: {source, title, body, priority}."""
+    if not alert_service:
+        return jsonify({"error": "Alert service not available"}), 503
+    data = request.json or {}
+    alert_service.send_alert(
+        source=data.get("source", "test"),
+        title=data.get("title", "Test Alert"),
+        body=data.get("body", ""),
+        priority=data.get("priority", "medium"),
+    )
+    return jsonify({"ok": True})
+
+
+# ── Routine API ─────────────────────────────────────────────────────
+
+@app.route("/api/routines")
+def api_routines():
+    """List all routines."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    return jsonify({"routines": routine_service.get_all()})
+
+
+@app.route("/api/routines", methods=["POST"])
+def api_routines_create():
+    """Create a new routine. Body: routine schema dict."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    data = request.json or {}
+    routine = routine_service.create_routine(
+        name=data.get("name", ""),
+        triggers=data.get("triggers", []),
+        actions=data.get("actions", []),
+        conditions=data.get("conditions"),
+    )
+    return jsonify(routine)
+
+
+@app.route("/api/routines/<routine_id>", methods=["PUT"])
+def api_routines_update(routine_id):
+    """Update a routine. Body: partial update dict."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    data = request.json or {}
+    routine = routine_service.update_routine(routine_id, **data)
+    if routine:
+        return jsonify(routine)
+    return jsonify({"error": "Routine not found"}), 404
+
+
+@app.route("/api/routines/<routine_id>", methods=["DELETE"])
+def api_routines_delete(routine_id):
+    """Delete a routine."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    if routine_service.delete_routine(routine_id):
+        return jsonify({"ok": True})
+    return jsonify({"error": "Routine not found"}), 404
+
+
+@app.route("/api/routines/<routine_id>/trigger", methods=["POST"])
+def api_routines_trigger(routine_id):
+    """Manually trigger a routine."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    if routine_service.trigger_routine(routine_id):
+        return jsonify({"ok": True})
+    return jsonify({"error": "Routine not found or disabled"}), 404
+
+
+@app.route("/api/routines/<routine_id>/toggle", methods=["POST"])
+def api_routines_toggle(routine_id):
+    """Enable/disable a routine."""
+    if not routine_service:
+        return jsonify({"error": "Routine service not available"}), 503
+    data = request.json or {}
+    enabled = data.get("enabled", True)
+    if routine_service.enable_routine(routine_id, enabled):
+        return jsonify({"ok": True, "enabled": enabled})
+    return jsonify({"error": "Routine not found"}), 404
+
+
+# ── Personality API ─────────────────────────────────────────────────
+
+@app.route("/api/personality/settings")
+def api_personality_settings():
+    """Get personality engine settings."""
+    if not personality_engine:
+        return jsonify({"error": "Personality engine not available"}), 503
+    return jsonify(personality_engine.get_settings())
+
+
+@app.route("/api/personality/settings", methods=["POST"])
+def api_personality_settings_update():
+    """Update personality settings. Body: partial settings dict."""
+    if not personality_engine:
+        return jsonify({"error": "Personality engine not available"}), 503
+    data = request.json or {}
+    personality_engine.update_settings(updates=data)
+    return jsonify(personality_engine.get_settings())
+
+
 # ── TV Remote API ────────────────────────────────────────────────────
 
 _tv_remote = None
@@ -1904,14 +2416,14 @@ TV_KEYS = {
     "previous": "MEDIA_PREVIOUS", "next": "MEDIA_NEXT",
     "forward": "MEDIA_NEXT",  # alias
     "power": "POWER", "volume_up": "VOLUME_UP", "volume_down": "VOLUME_DOWN", "mute": "VOLUME_MUTE",
-    "input": "TV_INPUT",
+    "input": "TV_INPUT", "settings": "SETTINGS",
 }
 
 TV_APPS = {
     "youtube": "com.google.android.youtube.tv",
     "netflix": "com.netflix.ninja",
     "prime": "https://app.primevideo.com",
-    "crunchyroll": "crunchyroll://",
+    "crunchyroll": "com.crunchyroll.crunchyroid",
     "twitch": "tv.twitch.android.app",
     "plex": "com.plexapp.android",
 }
@@ -1982,6 +2494,16 @@ def _tv_cmd(action, **kwargs):
 def init_tv_remote():
     """Try to connect to TV using existing certs (persistent worker)."""
     global _tv_remote, _tv_is_on
+    # Connect ADB for media title queries
+    try:
+        subprocess.run(
+            ["adb", "connect", f"{TV_IP}:5555"],
+            capture_output=True, timeout=5,
+        )
+        print(f"[tv] ADB connected to {TV_IP}:5555")
+    except Exception as e:
+        print(f"[tv] ADB connect failed: {e}")
+
     if not os.path.exists(_TV_CERTFILE) or not os.path.exists(_TV_KEYFILE):
         print("[tv] No cert files found — pair via the TV tab first")
         return
@@ -2017,19 +2539,149 @@ def init_tv_remote():
 
 
 
+_tv_media_cache = {"title": "", "artist": "", "app": "", "ts": 0}
+
+
+def _parse_media_description(desc: str) -> tuple[str, str]:
+    """Parse media_session description field: 'title, artist, album'.
+
+    The description format is 3 comma-separated fields (title, subtitle, description).
+    Trailing 'null' or empty fields are stripped first, then we split from the RIGHT
+    to avoid breaking titles that contain commas (e.g. 'Training, Part 1').
+    """
+    # Strip trailing null/empty fields from right
+    # e.g. "Make It! Training, Part 1, null, " -> "Make It! Training, Part 1"
+    while desc.endswith(", ") or desc.endswith(","):
+        desc = desc.rstrip(", ").rstrip(",")
+    parts = [p.strip() for p in desc.rsplit(", ", 2)]
+    # Filter nulls
+    parts = [p if p != "null" else "" for p in parts]
+    if len(parts) == 3:
+        return parts[0], parts[1]  # title, artist (ignore album/description)
+    elif len(parts) == 2:
+        return parts[0], parts[1]
+    elif len(parts) == 1:
+        return parts[0], ""
+    return "", ""
+
+
+def _get_tv_media_title(current_app: str = "") -> dict:
+    """Query ADB for currently playing media title. Cached for 3s.
+
+    Only returns media info if the media session belongs to the current
+    foreground app. Stale sessions from background apps are ignored.
+    """
+    now = time.time()
+    if now - _tv_media_cache["ts"] < 3:
+        return {"title": _tv_media_cache["title"], "artist": _tv_media_cache["artist"]}
+    try:
+        # Get media_session: package, state, and description for each session
+        r = subprocess.run(
+            ["adb", "-s", f"{TV_IP}:5555", "shell",
+             "dumpsys media_session | grep -E 'package=|state=PlaybackState|description='"],
+            capture_output=True, text=True, timeout=3,
+        )
+        lines = r.stdout.strip().split("\n")
+        pkg = ""
+        is_playing = False
+        session_title = ""
+        session_artist = ""
+        matched = False
+        for line in lines:
+            line = line.strip()
+            if line.startswith("package="):
+                pkg = line.split("=", 1)[1].strip()
+                is_playing = False
+            elif "state=PlaybackState" in line:
+                is_playing = "state=3" in line or "state=2" in line
+            elif "description=" in line and is_playing:
+                # Only use this session if it belongs to the foreground app
+                if current_app and pkg != current_app:
+                    is_playing = False
+                    continue
+                desc = line.split("description=", 1)[1].strip()
+                session_title, session_artist = _parse_media_description(desc)
+                matched = True
+                break
+
+        if not matched:
+            # No active playback from the foreground app — clear stale titles
+            _tv_media_cache.update({"title": "", "artist": "", "app": "", "ts": now})
+            return {"title": "", "artist": ""}
+
+        # Got a title from media_session description
+        if session_title:
+            _tv_media_cache.update({"title": session_title, "artist": session_artist, "app": pkg, "ts": now})
+            return {"title": session_title, "artist": session_artist}
+
+        # Null description (Plex does this) — try notification for this specific app
+        if pkg:
+            try:
+                r2 = subprocess.run(
+                    ["adb", "-s", f"{TV_IP}:5555", "shell",
+                     "dumpsys notification --noredact | grep -E "
+                     f"'pkg={pkg}|android\\.title=|android\\.text='"],
+                    capture_output=True, text=True, timeout=3,
+                )
+                lines2 = r2.stdout.strip().split("\n")
+                in_app = False
+                notif_title = ""
+                for line2 in lines2:
+                    line2 = line2.strip()
+                    if f"pkg={pkg}" in line2:
+                        in_app = True
+                        notif_title = ""
+                    elif in_app and "android.title=" in line2:
+                        m = line2.split("(", 1)
+                        if len(m) > 1:
+                            notif_title = m[1].rstrip(")")
+                    elif in_app and "android.text=" in line2:
+                        notif_text = ""
+                        m = line2.split("(", 1)
+                        if len(m) > 1:
+                            notif_text = m[1].rstrip(")")
+                        if notif_title and notif_title != "null":
+                            artist = notif_text if notif_text and notif_text != "null" else ""
+                            _tv_media_cache.update({"title": notif_title, "artist": artist, "app": pkg, "ts": now})
+                            return {"title": notif_title, "artist": artist}
+                        in_app = False
+            except Exception:
+                pass
+
+        # Active playback but no title found — keep cached if same app, else clear
+        if pkg == _tv_media_cache.get("app"):
+            _tv_media_cache["ts"] = now
+        else:
+            _tv_media_cache.update({"title": "", "artist": "", "app": pkg, "ts": now})
+    except Exception:
+        pass
+    return {"title": _tv_media_cache["title"], "artist": _tv_media_cache["artist"]}
+
+
 @app.route("/api/tv/status")
 def api_tv_status():
     connected = _tv_remote is not None
     needs_pairing = not os.path.exists(_TV_CERTFILE)
     # Quick connect test if we think we're connected
     current_app = ""
+    volume_level = -1
     if connected:
         r = _tv_cmd("connect_test")
         if r.get("ok"):
             current_app = r.get("current_app", "")
+            volume_level = r.get("volume_level", -1)
         else:
             connected = False
-    return jsonify({"connected": connected, "current_app": current_app, "needs_pairing": needs_pairing})
+    # Get media title via ADB
+    media = _get_tv_media_title(current_app) if connected else {"title": "", "artist": ""}
+    return jsonify({
+        "connected": connected,
+        "current_app": current_app,
+        "volume_level": volume_level,
+        "media_title": media["title"],
+        "media_artist": media["artist"],
+        "needs_pairing": needs_pairing,
+    })
 
 
 @app.route("/api/tv/pair/start", methods=["POST"])
@@ -2130,6 +2782,33 @@ def api_tv_power():
     return jsonify(result) if not result.get("error") else (jsonify(result), 500)
 
 
+_HDMI1_URI = ("content://android.media.tv/passthrough/"
+              "com.realtek.tv.passthrough/.hdmiinput.HDMITvInputService/HW151519232")
+
+
+@app.route("/api/tv/input", methods=["POST"])
+def api_tv_input():
+    """Switch TV to HDMI 1 via Live TV passthrough URI."""
+    try:
+        subprocess.run(
+            f"adb -s {TV_IP}:5555 shell am force-stop com.android.tv",
+            shell=True, capture_output=True, text=True, timeout=5,
+        )
+        time.sleep(1)
+        r = subprocess.run(
+            f"adb -s {TV_IP}:5555 shell 'am start -a android.intent.action.VIEW"
+            f" -d content://android.media.tv/passthrough/"
+            f"com.realtek.tv.passthrough%2F.hdmiinput.HDMITvInputService%2FHW151519232"
+            f" -n com.android.tv/.MainActivity -f 0x10020000 --ei from_launcher 1'",
+            shell=True, capture_output=True, text=True, timeout=10,
+        )
+        if r.returncode == 0:
+            return jsonify({"ok": True})
+        return jsonify({"error": f"ADB failed: {r.stderr.strip()}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/tv/navigate", methods=["POST"])
 def api_tv_navigate():
     """D-pad navigation: up, down, left, right, select, back, home."""
@@ -2155,6 +2834,58 @@ def api_tv_mute():
 def api_tv_apps():
     """List available TV apps."""
     return jsonify({"apps": list(TV_APPS.keys())})
+
+
+# ── TV Auto-Skip ──────────────────────────────────────────────────────
+
+_tv_auto_skip = False
+_tv_auto_skip_thread = None
+
+
+def _auto_skip_loop():
+    """Background thread that periodically checks for skip buttons via ADB uiautomator."""
+    global _tv_auto_skip
+    while _tv_auto_skip:
+        try:
+            result = subprocess.run(
+                ["adb", "shell", "uiautomator", "dump", "/dev/tty"],
+                capture_output=True, text=True, timeout=5,
+            )
+            xml = result.stdout or ""
+            # Look for common skip button patterns
+            skip_match = re.search(
+                r'text="(Skip|Skip Ad|Skip Ads|Skip Intro)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"',
+                xml,
+            )
+            if skip_match:
+                x1, y1, x2, y2 = int(skip_match.group(2)), int(skip_match.group(3)), int(skip_match.group(4)), int(skip_match.group(5))
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                subprocess.run(["adb", "shell", "input", "tap", str(cx), str(cy)], timeout=3)
+                print(f"[tv-autoskip] Tapped skip button at ({cx}, {cy})")
+        except Exception as e:
+            print(f"[tv-autoskip] Error: {e}")
+        time.sleep(3)
+
+
+@app.route("/api/tv/auto-skip", methods=["GET"])
+def api_tv_auto_skip_get():
+    """Get auto-skip state."""
+    return jsonify({"enabled": _tv_auto_skip})
+
+
+@app.route("/api/tv/auto-skip", methods=["POST"])
+def api_tv_auto_skip_toggle():
+    """Toggle auto-skip feature."""
+    global _tv_auto_skip, _tv_auto_skip_thread
+    _tv_auto_skip = not _tv_auto_skip
+    if _tv_auto_skip:
+        if _tv_auto_skip_thread is None or not _tv_auto_skip_thread.is_alive():
+            _tv_auto_skip_thread = threading.Thread(target=_auto_skip_loop, daemon=True)
+            _tv_auto_skip_thread.start()
+            print("[tv-autoskip] Started auto-skip thread")
+    else:
+        print("[tv-autoskip] Stopped auto-skip")
+    return jsonify({"enabled": _tv_auto_skip})
 
 
 # ── Notification API ─────────────────────────────────────────────────
@@ -2187,6 +2918,21 @@ def api_notification_settings_update():
         if socketio:
             socketio.emit("notification_settings", settings)
         return jsonify(settings)
+    return jsonify({"error": "Notification service not available"}), 503
+
+
+@app.route("/api/notifications/devices/refresh", methods=["POST"])
+def api_notification_devices_refresh():
+    """Re-discover KDE Connect devices."""
+    if notifier:
+        try:
+            notifier._discover_devices()
+            settings = notifier.get_settings()
+            if socketio:
+                socketio.emit("notification_settings", settings)
+            return jsonify(settings)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     return jsonify({"error": "Notification service not available"}), 503
 
 
@@ -2442,6 +3188,70 @@ def api_chat_compact():
     return jsonify({"error": "Agent not initialized"}), 500
 
 
+# ── Voice Settings API ──────────────────────────────────────────────
+
+@app.route("/api/voice/settings")
+def api_voice_settings():
+    """Get voice pipeline settings."""
+    if not voice:
+        return jsonify({"error": "Voice pipeline not available"}), 503
+    return jsonify(voice.get_voice_settings())
+
+
+@app.route("/api/voice/settings", methods=["POST"])
+def api_voice_settings_update():
+    """Update voice settings. Body: partial dict of settings."""
+    if not voice:
+        return jsonify({"error": "Voice pipeline not available"}), 503
+    data = request.json or {}
+    for key, value in data.items():
+        voice.update_voice_setting(key, value)
+    return jsonify({"ok": True, **voice.get_voice_settings()})
+
+
+@app.route("/api/voice/wake", methods=["POST"])
+def api_voice_wake():
+    """Enable/disable wake word listening."""
+    if not voice:
+        return jsonify({"error": "Voice pipeline not available"}), 503
+    data = request.json or {}
+    enabled = data.get("enabled", True)
+    voice.update_voice_setting("wake_enabled", enabled)
+    if enabled:
+        voice.start_listening()
+    else:
+        voice.stop_listening()
+    return jsonify({"ok": True, "wake_enabled": enabled})
+
+
+# ── AI/Agent Controls API ──────────────────────────────────────────
+
+@app.route("/api/models")
+def api_models():
+    """List available models with tiers."""
+    models = [
+        {"id": "flash", "name": "Flash", "tier": "fast", "description": "Quick responses"},
+        {"id": "pro", "name": "Pro", "tier": "balanced", "description": "General purpose"},
+        {"id": "opus", "name": "Opus", "tier": "premium", "description": "Creative & complex"},
+        {"id": "local", "name": "Local", "tier": "offline", "description": "Ollama fallback"},
+    ]
+    return jsonify({"models": models})
+
+
+@app.route("/api/model", methods=["POST"])
+def api_model_set():
+    """Set session-level model override."""
+    if not agent:
+        return jsonify({"error": "Agent not available"}), 503
+    data = request.json or {}
+    model_id = data.get("model")
+    if model_id == "auto" or model_id is None:
+        agent._model_override = None
+    else:
+        agent._model_override = model_id
+    return jsonify({"ok": True, "model": model_id})
+
+
 # ── WebSocket Events ────────────────────────────────────────────────
 
 @socketio.on("connect")
@@ -2476,6 +3286,13 @@ def on_connect(auth=None):
         socketio.emit("expression", {"expression": expr})
     except Exception as e:
         print(f"[ws] Expression init failed: {e}")
+    try:
+        if alert_service:
+            recent = alert_service.get_history(5)
+            if recent:
+                socketio.emit("recent_alerts", recent)
+    except Exception as e:
+        print(f"[ws] Alerts init failed: {e}")
 
 
 @socketio.on("chat_message")
@@ -2483,6 +3300,8 @@ def on_chat_message(data):
     from flask_socketio import emit
     message = data.get("message", "")
     speaker = data.get("speaker", "unknown")
+    agent_override = data.get("agent")  # Phase 7: optional agent override
+    model_override = data.get("model")  # Phase 7: optional model override
 
     try:
         # Save user message immediately
@@ -2491,7 +3310,16 @@ def on_chat_message(data):
         emit("status", {"state": "thinking"})
         _sync_expression("thinking")
 
+        # Apply temporary model override if specified
+        prev_model_override = getattr(agent, '_model_override', None)
+        if model_override and model_override != "auto":
+            agent._model_override = model_override
+
         result = agent.chat(message, speaker=speaker)
+
+        # Restore previous model override
+        if model_override and model_override != "auto":
+            agent._model_override = prev_model_override
 
         emit("status", {"state": "yapping"})
         _sync_expression("speaking")
@@ -2553,5 +3381,11 @@ def on_disconnect():
 
 if __name__ == "__main__":
     init_services()
+    # Restore music playback from last session (if any)
+    if music:
+        try:
+            music.restore_playback()
+        except Exception as e:
+            print(f"[bmo] Music restore failed: {e}")
     print("[bmo] BMO is ready! Access at http://0.0.0.0:5000")
     socketio.run(app, host="0.0.0.0", port=5000, debug=False)

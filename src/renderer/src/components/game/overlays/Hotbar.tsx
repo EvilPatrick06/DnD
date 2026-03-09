@@ -346,7 +346,11 @@ export default function Hotbar({ characterId, onExecuteMacro }: HotbarProps): JS
 
   return (
     <>
-      <div className="flex items-center gap-1 px-2 py-1 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl">
+      <div
+        role="toolbar"
+        aria-label="Quick action hotbar"
+        className="flex items-center gap-1 px-2 py-1 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl"
+      >
         {hotbar.map((slot, index) => (
           <div
             key={index}
@@ -368,6 +372,11 @@ export default function Hotbar({ characterId, onExecuteMacro }: HotbarProps): JS
               slot
                 ? `${slot.name}\n${slot.command}\n\nClick to execute · Right-click to edit`
                 : `Slot ${SLOT_LABELS[index]} (empty)\nClick or right-click to assign`
+            }
+            aria-label={
+              slot
+                ? `Hotbar slot ${SLOT_LABELS[index]}: ${slot.name}`
+                : `Hotbar slot ${SLOT_LABELS[index]}: empty`
             }
           >
             {slot ? (

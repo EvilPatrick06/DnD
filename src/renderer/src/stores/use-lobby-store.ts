@@ -10,6 +10,55 @@ function getNetworkStore(): typeof import('./use-network-store').useNetworkStore
   return (require('./use-network-store') as typeof import('./use-network-store')).useNetworkStore
 }
 
+// --- Persistence helpers ---
+
+const DICE_COLORS_KEY = 'lobby-dice-colors'
+const CHAT_HISTORY_KEY_PREFIX = 'lobby-chat-'
+const MAX_PERSISTED_MESSAGES = 100
+const MAX_WHISPER_HISTORY = 50
+
+function loadPersistedDiceColors(): DiceColors | null {
+  try {
+    const raw = localStorage.getItem(DICE_COLORS_KEY)
+    if (raw) return JSON.parse(raw) as DiceColors
+  } catch {
+    // Ignore parse errors
+  }
+  return null
+}
+
+function persistDiceColors(colors: DiceColors): void {
+  try {
+    localStorage.setItem(DICE_COLORS_KEY, JSON.stringify(colors))
+  } catch {
+    // localStorage may be full
+  }
+}
+
+function loadPersistedChatHistory(campaignId: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`)
+    if (raw) {
+      const messages = JSON.parse(raw) as ChatMessage[]
+      return Array.isArray(messages) ? messages.slice(-MAX_PERSISTED_MESSAGES) : []
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return []
+}
+
+function persistChatHistory(campaignId: string, messages: ChatMessage[]): void {
+  try {
+    const toSave = messages
+      .filter((m) => !m.isFile) // Don't persist file messages (large base64 data)
+      .slice(-MAX_PERSISTED_MESSAGES)
+    localStorage.setItem(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`, JSON.stringify(toSave))
+  } catch {
+    // localStorage may be full
+  }
+}
+
 export interface LobbyPlayer {
   peerId: string
   displayName: string
@@ -49,6 +98,7 @@ interface LobbyState {
   slowModeSeconds: number
   fileSharingEnabled: boolean
   chatMutedUntil: number | null // timestamp (ms) until which local player is chat-muted
+  whisperHistory: ChatMessage[]
 
   setCampaignId: (id: string | null) => void
   addPlayer: (player: LobbyPlayer) => void
@@ -66,6 +116,9 @@ interface LobbyState {
   setChatMutedUntil: (timestamp: number | null) => void
   setDiceColors: (peerId: string, colors: DiceColors) => void
   getLocalDiceColors: (localPeerId?: string | null) => DiceColors
+  loadChatHistory: (campaignId: string) => void
+  clearChatHistory: () => void
+  addWhisper: (msg: ChatMessage) => void
   reset: () => void
 }
 
@@ -85,6 +138,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
   slowModeSeconds: 0,
   fileSharingEnabled: true,
   chatMutedUntil: null,
+  whisperHistory: [],
 
   setCampaignId: (id) => set({ campaignId: id }),
 
@@ -156,6 +210,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     set((state) => ({
       chatMessages: [...state.chatMessages, msg].slice(-500)
     }))
+    // Persist chat history when we have a campaign
+    const { campaignId, chatMessages } = get()
+    if (campaignId) {
+      persistChatHistory(campaignId, chatMessages)
+    }
   },
 
   sendChat: (content) => {
@@ -237,6 +296,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
         isSystem: false
       }
       get().addChatMessage(msg)
+      get().addWhisper(msg)
 
       if (isNetworked) {
         // Find the target peer by display name (case-insensitive)
@@ -248,6 +308,16 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
             targetPeerId: target.peerId,
             targetName: target.displayName
           })
+        } else {
+          // Also try matching against lobby players
+          const lobbyTarget = get().players.find((p) => p.displayName.toLowerCase() === targetName.toLowerCase())
+          if (lobbyTarget) {
+            sendMessage('chat:whisper', {
+              message: whisperContent,
+              targetPeerId: lobbyTarget.peerId,
+              targetName: lobbyTarget.displayName
+            })
+          }
         }
       }
       return
@@ -304,6 +374,8 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     set((state) => ({
       players: state.players.map((p) => (p.peerId === peerId ? { ...p, diceColors: colors } : p))
     }))
+    // Persist dice colors for local player
+    persistDiceColors(colors)
   },
 
   getLocalDiceColors: (localPeerId?: string | null) => {
@@ -312,7 +384,32 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       (localPeerId ? players.find((p) => p.peerId === localPeerId) : undefined) ??
       players.find((p) => p.isHost) ??
       (players.length > 0 ? players[0] : undefined)
-    return localPlayer?.diceColors || DEFAULT_DICE_COLORS
+    return localPlayer?.diceColors || loadPersistedDiceColors() || DEFAULT_DICE_COLORS
+  },
+
+  loadChatHistory: (campaignId: string) => {
+    const messages = loadPersistedChatHistory(campaignId)
+    if (messages.length > 0) {
+      set({ chatMessages: messages })
+    }
+  },
+
+  clearChatHistory: () => {
+    const { campaignId } = get()
+    set({ chatMessages: [] })
+    if (campaignId) {
+      try {
+        localStorage.removeItem(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`)
+      } catch {
+        // Ignore
+      }
+    }
+  },
+
+  addWhisper: (msg: ChatMessage) => {
+    set((state) => ({
+      whisperHistory: [...state.whisperHistory, msg].slice(-MAX_WHISPER_HISTORY)
+    }))
   },
 
   reset: () =>
@@ -325,6 +422,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       remoteCharacters: {},
       slowModeSeconds: 0,
       fileSharingEnabled: true,
-      chatMutedUntil: null
+      chatMutedUntil: null,
+      whisperHistory: []
     })
 }))

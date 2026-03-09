@@ -53,6 +53,7 @@ export const MESSAGE_TYPES = [
   'chat:message',
   'chat:file',
   'chat:whisper',
+  'chat:whisper-received',
   'chat:announcement',
   'player:color-change',
   'player:time-request',
@@ -246,6 +247,11 @@ export interface WhisperPlayerPayload {
   targetPeerId: string
   targetName: string
   message: string
+}
+
+export interface WhisperReceivedPayload {
+  messageId: string
+  originalSenderId: string
 }
 
 export interface TimeRequestPayload {

@@ -5,6 +5,7 @@ import { initFromSavedConfig } from './ai/ai-service'
 import { registerIpcHandlers } from './ipc'
 import { logToFile } from './log'
 import { registerPluginProtocol, registerPluginScheme } from './plugins/plugin-protocol'
+import { registerCoreBooks } from './storage/book-storage'
 import { registerUpdateHandlers } from './updater'
 
 // ── Unhandled Error Handlers ──
@@ -128,6 +129,7 @@ app.whenReady().then(async () => {
   registerIpcHandlers()
   registerUpdateHandlers()
   initFromSavedConfig()
+  registerCoreBooks()
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)

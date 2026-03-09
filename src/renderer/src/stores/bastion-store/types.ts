@@ -63,6 +63,10 @@ export interface FacilitySliceState {
   addCreature: (bastionId: string, facilityId: string, creature: MenagerieCreature) => void
   removeCreature: (bastionId: string, facilityId: string, creatureName: string) => void
   updateNotes: (bastionId: string, notes: string) => void
+  updateBastionMetadata: (bastionId: string, updates: Partial<Bastion>) => void
+  rollBackTurn: (bastionId: string, turnNumber: number) => void
+  clearConstruction: (bastionId: string, projectId: string) => void
+  reassignDefenders: (bastionId: string, defenderId: string, newFacilityId: string) => void
 }
 
 export interface EventSliceState {

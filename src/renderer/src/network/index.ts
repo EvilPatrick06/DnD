@@ -57,6 +57,8 @@ export type { ValidationResult } from './schemas'
 export { AnyPayloadSchema, NetworkMessageEnvelopeSchema, PAYLOAD_SCHEMAS, validateNetworkMessage } from './schemas'
 // Types (from message-types via types barrel)
 export type {
+  AnnouncementPayload,
+  BanPayload,
   BuyItemPayload,
   CharacterSelectPayload,
   CharacterUpdatePayload,
@@ -69,12 +71,15 @@ export type {
   ConnectionState,
   DiceResultPayload,
   DiceRevealPayload,
+  DiceRoll3dPayload,
   DiceRollHiddenPayload,
   DiceRollPayload,
   FileSharingPayload,
   FogRevealPayload,
   GameStateFullPayload,
   HaggleRequestPayload,
+  HaggleResponsePayload,
+  HandoutPayload,
   HandoutSharePayload,
   InitiativeUpdatePayload,
   InspectRequestPayload,
@@ -85,9 +90,12 @@ export type {
   JournalSyncPayload,
   JournalUpdatePayload,
   KickPayload,
+  LootAwardPayload,
   MacroPushPayload,
   MapChangePayload,
+  MapPingPayload,
   MessageType,
+  MoveDeclarePayload,
   NarrationPayload,
   NetworkGameState,
   NetworkMap,
@@ -118,6 +126,7 @@ export type {
   TurnEndPayload,
   TypingPayload,
   WhisperPayload,
-  WhisperPlayerPayload
+  WhisperPlayerPayload,
+  XpAwardPayload
 } from './types'
 export { PLAYER_COLORS } from './types'

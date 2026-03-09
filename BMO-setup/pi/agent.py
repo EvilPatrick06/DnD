@@ -285,6 +285,7 @@ Available actions:
 - weather: {} — Get current weather
 - identify_face: {} — Identify who's in front of the camera
 - identify_voice: {} — Identify who's speaking
+- enroll_voice: {"name": "Gavin", "duration": 5} — REQUIRED when someone says "learn my voice", "remember my voice", "enroll my voice", or introduces themselves wanting voice recognition. This records audio from the mic and saves a voiceprint. You MUST emit this command block — without it, no recording happens. Tell the user to keep talking while you record.
 - read_file: {"path": "monsters/goblin.json"} — Read a file from the D&D 5e data directory
 - list_dir: {"path": "monsters"} — List files in a D&D 5e data subdirectory
 - bmo_status: {} — Check BMO's own status: service health, Pi stats, internet, Docker. Use when user asks "what's your status?", "how are you?", "are you ok?", "is everything running?", "is the internet up?", "any issues?"
@@ -722,6 +723,7 @@ class BmoAgent:
         self.socketio = socketio
         self.conversation_history: list[dict] = []
         self._pending_confirmations: list[dict] = []  # Destructive ops awaiting user OK
+        self._model_override = None  # Session-level model override (Phase 7)
 
         # Initialize hierarchical settings system
         self.settings = init_settings()
@@ -830,6 +832,16 @@ class BmoAgent:
 
         # Update max_history if changed
         self._max_history = s.get("ui.max_history", 200)
+
+    # ── Model Override (Phase 7) ─────────────────────────────────────
+
+    @property
+    def model_override(self):
+        return self._model_override
+
+    @model_override.setter
+    def model_override(self, value):
+        self._model_override = value
 
     # ── Context Compression ──────────────────────────────────────────
 
@@ -1295,6 +1307,7 @@ class BmoAgent:
             "weather": self._handle_weather,
             "identify_face": self._handle_identify_face,
             "identify_voice": self._handle_identify_voice,
+            "enroll_voice": self._handle_enroll_voice,
             # File access (D&D data)
             "read_file": self._handle_read_file,
             "list_dir": self._handle_list_dir,
@@ -1867,6 +1880,27 @@ class BmoAgent:
 
     def _handle_identify_voice(self, params):
         return "Voice identification happens automatically during speech input"
+
+    def _handle_enroll_voice(self, params):
+        """Enroll a speaker's voice. BMO records a clip and saves the voice profile.
+
+        Params: {"name": "Gavin", "duration": 5}
+        """
+        voice_svc = self.services.get("voice")
+        if not voice_svc:
+            return "Voice pipeline is not available right now."
+        name = params.get("name", "").strip()
+        if not name:
+            return "I need a name to enroll. Tell me your name!"
+        duration = params.get("duration", 5)
+        try:
+            clip_path = voice_svc.record_clip(duration=duration)
+            voice_svc.enroll_speaker(name, [clip_path])
+            if os.path.exists(clip_path):
+                os.unlink(clip_path)
+            return f"I've enrolled {name}'s voice! I'll recognize you next time."
+        except Exception as e:
+            return f"Voice enrollment failed: {e}"
 
     def _handle_bmo_status(self, params):
         """Return BMO's self-awareness status summary."""

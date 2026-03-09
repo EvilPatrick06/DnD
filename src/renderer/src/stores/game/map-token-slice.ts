@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand'
+import type { GameMap } from '../../types/map'
 import type { MapToken } from '../../types/map'
 import { logger } from '../../utils/logger'
 import type { GameStoreState, MapTokenSliceState } from './types'
@@ -12,6 +13,36 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
 
   addMap: (map) => {
     set((state) => ({ maps: [...state.maps, map] }))
+  },
+
+  deleteMap: (mapId: string) => {
+    set((state) => {
+      const filtered = state.maps.filter((m) => m.id !== mapId)
+      const newActiveMapId =
+        state.activeMapId === mapId ? (filtered.length > 0 ? filtered[0].id : null) : state.activeMapId
+      return { maps: filtered, activeMapId: newActiveMapId }
+    })
+  },
+
+  updateMap: (mapId: string, updates: Partial<GameMap>) => {
+    set((state) => ({
+      maps: state.maps.map((m) => (m.id === mapId ? { ...m, ...updates } : m))
+    }))
+  },
+
+  duplicateMap: (mapId: string) => {
+    const state = get()
+    const original = state.maps.find((m) => m.id === mapId)
+    if (!original) return null
+
+    const newMap: GameMap = {
+      ...structuredClone(original),
+      id: crypto.randomUUID(),
+      name: `${original.name} (Copy)`,
+      createdAt: new Date().toISOString()
+    }
+    set((s) => ({ maps: [...s.maps, newMap] }))
+    return newMap
   },
 
   // --- Token actions ---

@@ -15,6 +15,14 @@ export type ReactionTrigger =
   | 'sentinel' // Enemy attacks ally within 5ft
   | 'war-caster' // OA can be spell instead of weapon
   | 'hellish-rebuke' // After taking damage
+  | 'silvery-barbs' // Creature within 60ft succeeds on attack/save/ability check
+  | 'uncanny-dodge' // Halve damage from an attack you can see
+  | 'deflect-missiles' // Reduce ranged weapon attack damage
+
+export interface ReactionResult {
+  success: boolean
+  description: string
+}
 
 export interface ReactionPrompt {
   id: string
@@ -173,6 +181,27 @@ export function getAvailableReactions(
       }
       break
     }
+
+    case 'silvery-barbs': {
+      if (hasSpell('Silvery Barbs') && hasSpellSlots) {
+        reactions.push('Silvery Barbs')
+      }
+      break
+    }
+
+    case 'uncanny-dodge': {
+      if (hasFeature('Uncanny Dodge')) {
+        reactions.push('Uncanny Dodge')
+      }
+      break
+    }
+
+    case 'deflect-missiles': {
+      if (hasFeature('Deflect Missiles')) {
+        reactions.push('Deflect Missiles')
+      }
+      break
+    }
   }
 
   return reactions
@@ -305,4 +334,118 @@ export function checkCounterspell(
   }
 
   return prompts
+}
+
+// ─── Silvery Barbs Detection ─────────────────────────────────
+
+/** Silvery Barbs range in feet. */
+const SILVERY_BARBS_RANGE_FT = 60
+
+/**
+ * Check whether a creature succeeding on an attack, save, or ability check
+ * triggers Silvery Barbs from nearby enemies.
+ */
+export function checkSilveryBarbs(
+  succeedingEntityId: string,
+  succeedingEntityName: string,
+  succeedingX: number,
+  succeedingY: number,
+  successType: 'attack' | 'save' | 'ability-check',
+  nearbyEnemies: Array<{
+    entityId: string
+    entityName: string
+    x: number
+    y: number
+    hasSilveryBarbs: boolean
+    hasSpellSlots: boolean
+  }>,
+  cellSizeFt: number
+): ReactionPrompt[] {
+  const prompts: ReactionPrompt[] = []
+  const rangeCells = SILVERY_BARBS_RANGE_FT / cellSizeFt
+
+  for (const enemy of nearbyEnemies) {
+    if (!enemy.hasSilveryBarbs || !enemy.hasSpellSlots) continue
+
+    const dist = gridDistance(succeedingX, succeedingY, enemy.x, enemy.y)
+    if (dist <= rangeCells) {
+      const distFt = Math.round(dist * cellSizeFt)
+
+      prompts.push({
+        id: makePromptId(),
+        entityId: enemy.entityId,
+        entityName: enemy.entityName,
+        trigger: 'silvery-barbs',
+        triggerDescription: `${succeedingEntityName} succeeds on ${successType === 'ability-check' ? 'an ability check' : `a ${successType}`} ${distFt}ft away`,
+        sourceEntityId: succeedingEntityId,
+        sourceEntityName: succeedingEntityName,
+        availableReactions: ['Silvery Barbs'],
+        expiresInMs: DEFAULT_EXPIRE_MS
+      })
+    }
+  }
+
+  return prompts
+}
+
+// ─── Reaction Execution ──────────────────────────────────────
+
+/**
+ * Execute a chosen reaction: marks the entity's reaction as used and
+ * returns a result describing what happened.
+ */
+export function executeReaction(
+  prompt: ReactionPrompt,
+  chosenReaction: string,
+  turnStates: Record<string, TurnState>
+): ReactionResult {
+  const ts = turnStates[prompt.entityId]
+  if (!ts) {
+    return { success: false, description: `${prompt.entityName} has no active turn state` }
+  }
+
+  if (ts.reactionUsed) {
+    return { success: false, description: `${prompt.entityName} has already used their reaction this round` }
+  }
+
+  if (!prompt.availableReactions.includes(chosenReaction)) {
+    return { success: false, description: `${chosenReaction} is not available for ${prompt.entityName}` }
+  }
+
+  // Mark reaction as used (caller is responsible for persisting via useReaction)
+  return {
+    success: true,
+    description: `${prompt.entityName} uses ${chosenReaction} in response to: ${prompt.triggerDescription}`
+  }
+}
+
+// ─── Multiple Reaction Resolution ────────────────────────────
+
+/**
+ * Sort multiple reaction prompts by initiative order so they resolve
+ * in the correct sequence. An optional DM override order takes priority.
+ */
+export function resolveMultipleReactions(
+  prompts: ReactionPrompt[],
+  initiativeOrder: Array<{ entityId: string; total: number }>,
+  dmOverrideOrder?: string[]
+): ReactionPrompt[] {
+  if (prompts.length <= 1) return prompts
+
+  if (dmOverrideOrder && dmOverrideOrder.length > 0) {
+    const orderMap = new Map(dmOverrideOrder.map((id, i) => [id, i]))
+    return [...prompts].sort((a, b) => {
+      const ai = orderMap.get(a.entityId) ?? Number.MAX_SAFE_INTEGER
+      const bi = orderMap.get(b.entityId) ?? Number.MAX_SAFE_INTEGER
+      return ai - bi
+    })
+  }
+
+  // Sort by initiative total (higher goes first)
+  const initMap = new Map(initiativeOrder.map((e) => [e.entityId, e.total]))
+  return [...prompts].sort((a, b) => {
+    const ai = initMap.get(a.entityId) ?? -Infinity
+    const bi = initMap.get(b.entityId) ?? -Infinity
+    return bi - ai
+  })
 }

@@ -245,6 +245,14 @@ def handle_slash_command(cmd: str, agent, event_handler: CLIEventHandler) -> boo
         _do_compact(agent)
         return True
 
+    if lower.startswith("/enroll"):
+        _do_voice_enroll(cmd)
+        return True
+
+    if lower == "/voices":
+        _show_voice_profiles()
+        return True
+
     if lower in ("/quit", "/exit", "/q"):
         raise SystemExit(0)
 
@@ -622,6 +630,129 @@ def _clear_memory():
         _print_dim("Memory module not available.")
 
 
+def _do_voice_enroll(cmd: str):
+    """Handle /enroll <name> — record 3 clips and enroll a voice profile via the local API."""
+    import requests as _req
+
+    parts = cmd.strip().split(maxsplit=1)
+    if len(parts) < 2 or not parts[1].strip():
+        _print_error("Usage: /enroll <name>")
+        _print_dim("Example: /enroll Gavin")
+        return
+
+    name = parts[1].strip()
+    base_url = "http://localhost:5000"
+    num_clips = 4
+    min_good = 3
+    duration = 5
+
+    prompts = [
+        f"Clip 1/{num_clips}: Say something natural, like 'Hey BMO, what's the weather today?'",
+        f"Clip 2/{num_clips}: Try 'BMO, tell me a joke or play some music.'",
+        f"Clip 3/{num_clips}: Say anything — 'Good morning BMO, set a timer for five minutes.'",
+        f"Clip 4/{num_clips}: One more — 'Hey BMO, turn off the lights and play some jazz.'",
+    ]
+
+    if HAS_RICH:
+        console.print(f"\n  [accent]Voice Enrollment: {name}[/accent]")
+        console.print(f"  Recording {num_clips} clips of {duration}s each.\n")
+    else:
+        print(f"\n  Voice Enrollment: {name}")
+        print(f"  Recording {num_clips} clips of {duration}s each.\n")
+
+    good_clips = 0
+    max_retries = 2
+
+    for i in range(num_clips):
+        if HAS_RICH:
+            console.print(f"  [bmo]{prompts[i]}[/bmo]")
+        else:
+            print(f"  {prompts[i]}")
+
+        for attempt in range(1 + max_retries):
+            if attempt > 0:
+                _print_dim("  Let's try that one again. Speak clearly and close to the mic.")
+
+            try:
+                input("  Press Enter when ready...")
+            except (EOFError, KeyboardInterrupt):
+                print("\n  Enrollment cancelled.")
+                return
+
+            if HAS_RICH:
+                with console.status(f"  [bmo]Recording {duration}s...[/bmo]", spinner="dots"):
+                    try:
+                        resp = _req.post(f"{base_url}/api/voice/enroll",
+                                         json={"name": name, "duration": duration},
+                                         timeout=30)
+                    except Exception as e:
+                        _print_error(f"API call failed: {e}")
+                        return
+            else:
+                print(f"  Recording {duration}s...")
+                try:
+                    resp = _req.post(f"{base_url}/api/voice/enroll",
+                                     json={"name": name, "duration": duration},
+                                     timeout=30)
+                except Exception as e:
+                    _print_error(f"API call failed: {e}")
+                    return
+
+            if resp.ok:
+                good_clips += 1
+                if HAS_RICH:
+                    console.print(f"  [step.done]✓ Clip {i + 1} recorded[/step.done]")
+                else:
+                    print(f"  ✓ Clip {i + 1} recorded")
+                print()
+                break
+            elif resp.status_code == 422:
+                _print_error(resp.json().get("error", "Not enough speech detected."))
+                if attempt == max_retries:
+                    _print_dim(f"  Skipping clip {i + 1} after {max_retries + 1} attempts.")
+                    print()
+            else:
+                _print_error(f"Enrollment failed: {resp.json().get('error', resp.text)}")
+                return
+
+    if good_clips < min_good:
+        _print_error(f"Only got {good_clips} good clip(s). Need at least {min_good}. Please try /enroll {name} again.")
+        return
+
+    profiles = resp.json().get("profiles", [])
+    if HAS_RICH:
+        console.print(f"  [step.done]✓ {name} enrolled from {good_clips} clips![/step.done] Profiles: {', '.join(profiles)}\n")
+    else:
+        print(f"  ✓ {name} enrolled from {good_clips} clips! Profiles: {', '.join(profiles)}\n")
+
+
+def _show_voice_profiles():
+    """Show enrolled voice profiles via the API."""
+    import requests as _req
+    try:
+        resp = _req.get("http://localhost:5000/api/voice/profiles", timeout=5)
+        profiles = resp.json().get("profiles", [])
+    except Exception as e:
+        _print_error(f"Could not reach BMO API: {e}")
+        return
+
+    if not profiles:
+        _print_dim("No voice profiles enrolled. Use /enroll <name> to add one.")
+        return
+
+    if HAS_RICH:
+        table = Table(title="Voice Profiles", show_header=True, header_style="bold cyan")
+        table.add_column("Name", style="accent")
+        for name in profiles:
+            table.add_row(name)
+        console.print(table)
+    else:
+        print("\nVoice Profiles:")
+        for name in profiles:
+            print(f"  - {name}")
+        print()
+
+
 def _do_compact(agent):
     """Run context compression."""
     if not agent:
@@ -658,6 +789,8 @@ def _show_help():
         table.add_row("/commands", "List custom slash commands")
         table.add_row("/memory", "Show auto-memory contents")
         table.add_row("/memory clear", "Clear project memory")
+        table.add_row("/enroll <name>", "Enroll a voice profile (records 3 clips)")
+        table.add_row("/voices", "List enrolled voice profiles")
         table.add_row("/compact", "Compress conversation history")
         table.add_row("/quit", "Exit BMO CLI")
         table.add_row("", "")
@@ -686,6 +819,8 @@ def _show_help():
         print("  /commands                   List custom slash commands")
         print("  /memory                     Show auto-memory contents")
         print("  /memory clear               Clear project memory")
+        print("  /enroll <name>              Enroll a voice profile (records 3 clips)")
+        print("  /voices                     List enrolled voice profiles")
         print("  /compact                    Compress conversation history")
         print("  /quit                       Exit BMO CLI")
         print()

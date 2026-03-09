@@ -18,17 +18,28 @@ Environment variables:
 
 import asyncio
 import io
+import json
 import os
+import random
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
+# Load opus for voice support (required on Pi)
+if not discord.opus.is_loaded():
+    try:
+        discord.opus.load_opus("libopus.so.0")
+    except Exception:
+        pass
+
 from cloud_providers import cloud_chat, fish_audio_tts, groq_stt, DND_MODEL
-from dnd_engine import roll_dice
+from dnd_engine import roll_dice, calculate_encounter_difficulty
 from voice_personality import NPC_PROSODY, get_prosody, parse_response_tags
 
 # ── Configuration ────────────────────────────────────────────────────
@@ -37,7 +48,7 @@ BOT_TOKEN = os.environ.get("DISCORD_DM_BOT_TOKEN", "")
 GUILD_ID = os.environ.get("DISCORD_GUILD_ID", "")
 DM_MODEL = os.environ.get("BMO_DND_MODEL", DND_MODEL)
 
-DUNGEON_CHANNEL_NAME = "🗺️ | Dungeon"
+DUNGEON_CHANNEL_NAME = "\U0001f5fa\ufe0f | Dungeon"
 
 # TTS rate limit: minimum seconds between TTS calls
 TTS_COOLDOWN = 3.0
@@ -53,6 +64,154 @@ def _log(msg: str, *args) -> None:
     """Log to stdout with [dm-bot] prefix."""
     text = msg % args if args else msg
     print(f"{LOG_PREFIX} {text}", flush=True)
+
+
+# ── Data Directory ───────────────────────────────────────────────────
+
+DATA_DIR = Path.home() / "bmo" / "data" / "5e"
+
+
+def _load_json(filename: str) -> list | dict:
+    """Load a JSON file from the data directory, returning [] or {} on failure."""
+    path = DATA_DIR / filename
+    if not path.exists():
+        _log("Data file not found: %s", path)
+        return [] if filename != "random-tables.json" and filename != "treasure-tables.json" else {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _log("Loaded %s (%s entries)", filename, len(data) if isinstance(data, list) else "dict")
+        return data
+    except Exception as e:
+        _log("Failed to load %s: %s", filename, e)
+        return [] if filename != "random-tables.json" and filename != "treasure-tables.json" else {}
+
+
+def _fuzzy_find(name: str, items: list[dict], key: str = "name") -> dict | None:
+    """Find an item by name: exact → startswith → substring → None."""
+    name_lower = name.lower().strip()
+    if not name_lower or not items:
+        return None
+
+    # Exact match (case-insensitive)
+    for item in items:
+        if item.get(key, "").lower() == name_lower:
+            return item
+
+    # Starts with
+    for item in items:
+        if item.get(key, "").lower().startswith(name_lower):
+            return item
+
+    # Substring
+    for item in items:
+        if name_lower in item.get(key, "").lower():
+            return item
+
+    return None
+
+
+# ── Spell School Colors ─────────────────────────────────────────────
+
+SCHOOL_COLORS = {
+    "evocation": 0xE74C3C,       # red
+    "necromancy": 0x71368A,      # dark purple
+    "abjuration": 0x3498DB,     # blue
+    "transmutation": 0x2ECC71,  # green
+    "divination": 0x1ABC9C,     # teal
+    "enchantment": 0xE91E63,    # pink
+    "illusion": 0x9B59B6,       # purple
+    "conjuration": 0xF1C40F,    # gold
+}
+
+RARITY_COLORS = {
+    "common": 0x808080,
+    "uncommon": 0x1EFF00,
+    "rare": 0x0070DD,
+    "very rare": 0xA335EE,
+    "legendary": 0xFF8000,
+    "artifact": 0xE6CC80,
+}
+
+
+# ── NPC Generator Data ──────────────────────────────────────────────
+
+NPC_RACES = [
+    "Human", "Elf", "Dwarf", "Halfling", "Gnome",
+    "Half-Orc", "Half-Elf", "Tiefling", "Dragonborn", "Goliath",
+]
+
+NPC_CLASSES = [
+    "Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk",
+    "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard",
+]
+
+NPC_FIRST_NAMES = [
+    "Aldric", "Bran", "Cedric", "Dara", "Elara", "Finn", "Gwen",
+    "Haldor", "Isolde", "Jorin", "Kira", "Lyra", "Maren", "Nyx",
+    "Orin", "Petra", "Quinn", "Rowan", "Seren", "Theron", "Uma",
+    "Vex", "Wren", "Xara", "Yara", "Zephyr", "Ashka", "Brim",
+    "Calla", "Dorin", "Eira", "Fael", "Grim", "Henna", "Idris",
+    "Jael", "Kael", "Lira", "Milo", "Nessa", "Orla", "Pike",
+]
+
+# ── Tavern Generator Data ───────────────────────────────────────────
+
+TAVERN_ADJECTIVES = [
+    "Rusty", "Golden", "Silver", "Drunken", "Wandering",
+    "Prancing", "Sleeping", "Roaring", "Broken", "Laughing",
+    "Crimson", "Gilded", "Shadowy", "Jolly", "Wailing",
+    "Merry", "Howling", "Crooked", "Lucky", "Staggering",
+]
+
+TAVERN_NOUNS = [
+    "Dragon", "Griffin", "Unicorn", "Pony", "Giant",
+    "Stag", "Goblin", "Barrel", "Tankard", "Crown",
+    "Sword", "Shield", "Hammer", "Serpent", "Phoenix",
+    "Boar", "Raven", "Wolf", "Lion", "Wizard",
+]
+
+TAVERN_FOODS = [
+    "Hearty beef stew with crusty bread — 5 sp",
+    "Roasted whole chicken with herbs — 8 sp",
+    "Mushroom and leek pie — 3 sp",
+    "Grilled trout with lemon butter — 6 sp",
+    "Shepherd's pie with root vegetables — 4 sp",
+    "Venison sausages with mustard — 5 sp",
+    "Cheese and onion soup — 2 sp",
+    "Spiced lamb shanks — 1 gp",
+    "Fresh baked apple tart — 3 sp",
+    "Bowl of thick porridge with honey — 1 sp",
+]
+
+TAVERN_DRINKS = [
+    "House ale — 4 cp",
+    "Dwarven stout (strong!) — 1 sp",
+    "Elven wine (crisp and floral) — 5 sp",
+    "Honey mead — 3 sp",
+    "Cheap grog — 2 cp",
+    "Dragon's Breath whiskey — 1 gp",
+    "Mulled cider — 3 cp",
+    "Halfling herb tea — 2 cp",
+]
+
+TAVERN_RUMORS = [
+    "Travelers say a dragon was spotted near the mountains to the north.",
+    "The old mine outside town has been making strange noises at night.",
+    "A merchant caravan went missing on the eastern road last week.",
+    "The mayor has been acting strangely since visiting the ancient ruins.",
+    "Goblins have been raiding farms on the outskirts — bolder than usual.",
+    "A mysterious stranger has been asking questions about the old temple.",
+    "The river has been running red near the swamp — nobody knows why.",
+    "The blacksmith found a strange glowing ore in a recent shipment.",
+    "They say the graveyard keeper talks to the dead... and they answer.",
+    "A noble is offering a reward for the return of a stolen family heirloom.",
+    "Wolves in the forest have grown unnaturally large and aggressive.",
+    "An underground fighting ring has opened beneath the warehouse district.",
+    "The local wizard's tower has been emitting colorful smoke for three days.",
+    "A ghost ship was seen on the lake during the last full moon.",
+    "The thieves' guild is recruiting — they left a calling card at the inn.",
+]
 
 
 # ── System Prompt ────────────────────────────────────────────────────
@@ -172,7 +331,7 @@ class DMSession:
             {"role": "assistant", "content": "Understood, BMO remembers the story so far! Let's continue the adventure."},
             *recent_messages,
         ]
-        _log("Compressed conversation context: %d → %d messages", len(old_messages) + len(recent_messages), len(self.messages))
+        _log("Compressed conversation context: %d -> %d messages", len(old_messages) + len(recent_messages), len(self.messages))
 
     def can_tts(self) -> bool:
         """Check if enough time has passed since last TTS call."""
@@ -181,6 +340,194 @@ class DMSession:
     def mark_tts(self) -> None:
         """Record that a TTS call was just made."""
         self._last_tts_time = time.time()
+
+
+# ── Slash Command Group (dm start/stop/status) ──────────────────────
+
+dm_group = app_commands.Group(name="dm", description="D&D Dungeon Master commands")
+
+
+@dm_group.command(name="start", description="Start a DM session — BMO joins the Dungeon voice channel")
+async def dm_start(interaction: discord.Interaction) -> None:
+    bot: DMBot = interaction.client
+
+    if bot.session.active:
+        await interaction.response.send_message("A session is already active! Use `/dm stop` first.", ephemeral=True)
+        return
+
+    await interaction.response.defer()
+
+    guild = interaction.guild
+    if not guild:
+        await interaction.followup.send("This command must be used in a server.")
+        return
+
+    # Find the Dungeon voice channel
+    dungeon_channel = await bot.find_dungeon_channel(guild)
+    if not dungeon_channel:
+        await interaction.followup.send(
+            f"Could not find a voice channel named **{DUNGEON_CHANNEL_NAME}**.\n"
+            "Please create one first!"
+        )
+        return
+
+    # Join voice channel
+    vc = await bot.join_voice(dungeon_channel)
+    if not vc:
+        await interaction.followup.send("Failed to join the voice channel.")
+        return
+
+    # Initialize session
+    bot.session.active = True
+    bot.session.text_channel_id = interaction.channel_id
+    bot.session.start_time = datetime.now(timezone.utc)
+    bot.session.messages.clear()
+    bot.session.combat_log.clear()
+    bot.session.initiative_order.clear()
+    bot.session.initiative_round = 0
+
+    # Start campaign memory session
+    if bot._campaign_memory:
+        try:
+            bot._campaign_name = "discord_campaign"
+            bot._session_id = bot._campaign_memory.start_session(bot._campaign_name)
+            _log("Campaign memory session started: %d", bot._session_id)
+        except Exception as e:
+            _log("Campaign memory session start failed: %s", e)
+
+    # Track players already in the voice channel
+    for member in dungeon_channel.members:
+        if not member.bot:
+            bot.session.players.add(member.display_name)
+
+    # Greeting
+    players_str = ", ".join(sorted(bot.session.players)) if bot.session.players else "adventurers"
+    greeting = (
+        f"Hello {players_str}! BMO is your Dungeon Master today! "
+        "BMO has prepared an amazing adventure for you. "
+        "Tell BMO about your characters and what kind of adventure you want, "
+        "or BMO can start with a classic tavern scene! \U0001f3b2\U0001f409"
+    )
+
+    bot.session.add_message("assistant", greeting)
+
+    embed = discord.Embed(
+        title="\u2694\ufe0f D&D Session Started!",
+        description=greeting,
+        color=discord.Color.gold(),
+    )
+    embed.add_field(
+        name="Voice Channel", value=f"<#{dungeon_channel.id}>", inline=True
+    )
+    embed.add_field(
+        name="Players", value=players_str, inline=True,
+    )
+    embed.set_footer(text="Speak in voice or type here \u2022 /dm stop to end session")
+    await interaction.followup.send(embed=embed)
+
+    # Speak the greeting via TTS
+    await bot._speak(greeting, emotion="excited")
+
+    _log("Session started by %s", interaction.user.display_name)
+
+
+@dm_group.command(name="stop", description="End the DM session — recap and leave voice")
+async def dm_stop(interaction: discord.Interaction) -> None:
+    bot: DMBot = interaction.client
+
+    if not bot.session.active:
+        await interaction.response.send_message("No active session to end.", ephemeral=True)
+        return
+
+    await interaction.response.defer()
+
+    # Calculate duration
+    duration_str = "Unknown"
+    if bot.session.start_time:
+        elapsed = datetime.now(timezone.utc) - bot.session.start_time
+        hours, remainder = divmod(int(elapsed.total_seconds()), 3600)
+        minutes, _ = divmod(remainder, 60)
+        duration_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+    # Generate recap
+    recap_text = await _generate_recap(bot.session)
+
+    # Save recap to campaign memory
+    if bot._campaign_memory and bot._session_id and recap_text:
+        try:
+            bot._campaign_memory.end_session(bot._session_id, recap_text)
+            _log("Campaign memory session ended with recap")
+        except Exception as e:
+            _log("Campaign memory save failed: %s", e)
+    bot._campaign_name = None
+    bot._session_id = None
+
+    # Farewell
+    farewell = "Thank you for playing with BMO! That was an amazing adventure! See you next time, friends! \U0001f31f"
+    await bot._speak(farewell, emotion="happy")
+
+    # Wait for farewell to finish playing
+    vc = bot.session.voice_client
+    if vc and vc.is_connected():
+        while vc.is_playing():
+            await asyncio.sleep(0.1)
+
+    # Leave voice
+    await bot.leave_voice()
+
+    # Build embed
+    players_str = ", ".join(sorted(bot.session.players)) if bot.session.players else "No players"
+
+    embed = discord.Embed(
+        title="\U0001f4dc D&D Session Ended",
+        description="Thanks for playing! BMO had so much fun!",
+        color=discord.Color.dark_gold(),
+    )
+    embed.add_field(name="Duration", value=duration_str, inline=True)
+    embed.add_field(name="Players", value=players_str, inline=True)
+
+    if recap_text:
+        if len(recap_text) > 1024:
+            recap_text = recap_text[:1021] + "..."
+        embed.add_field(name="Session Recap", value=recap_text, inline=False)
+
+    bot.session.reset()
+    await interaction.followup.send(embed=embed)
+    _log("Session ended by %s", interaction.user.display_name)
+
+
+@dm_group.command(name="status", description="Show current DM session info")
+async def dm_status(interaction: discord.Interaction) -> None:
+    bot: DMBot = interaction.client
+
+    if not bot.session.active:
+        await interaction.response.send_message("No active session.", ephemeral=True)
+        return
+
+    duration_str = "Unknown"
+    if bot.session.start_time:
+        elapsed = datetime.now(timezone.utc) - bot.session.start_time
+        hours, remainder = divmod(int(elapsed.total_seconds()), 3600)
+        minutes, _ = divmod(remainder, 60)
+        duration_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+    players_str = ", ".join(sorted(bot.session.players)) if bot.session.players else "No players"
+
+    embed = discord.Embed(
+        title="\U0001f3b2 DM Session Status",
+        color=discord.Color.green(),
+    )
+    embed.add_field(name="Duration", value=duration_str, inline=True)
+    embed.add_field(name="Players", value=players_str, inline=True)
+    embed.add_field(name="Messages", value=str(len(bot.session.messages)), inline=True)
+    if bot.session.initiative_round > 0:
+        embed.add_field(name="Combat Round", value=str(bot.session.initiative_round), inline=True)
+
+    vc = bot.session.voice_client
+    voice_status = "Connected" if vc and vc.is_connected() else "Disconnected"
+    embed.add_field(name="Voice", value=voice_status, inline=True)
+
+    await interaction.response.send_message(embed=embed)
 
 
 # ── Bot Class ────────────────────────────────────────────────────────
@@ -194,29 +541,65 @@ class DMBot(commands.Bot):
         intents.voice_states = True
         intents.members = True
 
-        guild_ids = [int(GUILD_ID)] if GUILD_ID else None
-        super().__init__(command_prefix="!", intents=intents, debug_guilds=guild_ids)
+        super().__init__(command_prefix="!", intents=intents)
         self.session = DMSession()
         self._guild_id: Optional[int] = int(GUILD_ID) if GUILD_ID else None
-        self._voice_listen_task: Optional[asyncio.Task] = None
         self._search_engine = None
         self._campaign_memory = None
         self._campaign_name = None
         self._session_id = None
+
+        # D&D data (loaded in on_ready)
+        self._spells: list[dict] = []
+        self._magic_items: list[dict] = []
+        self._conditions: list[dict] = []
+        self._treasure_tables: dict = {}
+        self._random_tables: dict = {}
+        self._encounter_presets: list[dict] = []
+
+        # Register slash commands
+        self.tree.add_command(dm_group)
+        for cmd in [
+            _roll_cmd, _initiative_cmd, _recap_cmd,
+            _spell_cmd, _item_cmd, _condition_cmd, _loot_cmd,
+            _npc_cmd, _encounter_cmd, _tavern_cmd, _monster_cmd,
+        ]:
+            self.tree.add_command(cmd)
+
+    async def setup_hook(self) -> None:
+        """Sync slash commands on bot startup."""
+        if self._guild_id:
+            guild = discord.Object(id=self._guild_id)
+            self.tree.copy_global_to(guild=guild)
+            await self.tree.sync(guild=guild)
+        else:
+            await self.tree.sync()
+        _log("Slash commands synced to guild %s", self._guild_id)
+
+        @self.tree.error
+        async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
+            _log("Command /%s failed: %s", interaction.command.name if interaction.command else "?", error, exc_info=error)
+            try:
+                msg = f"Something went wrong: {error}"
+                if interaction.response.is_done():
+                    await interaction.followup.send(msg, ephemeral=True)
+                else:
+                    await interaction.response.send_message(msg, ephemeral=True)
+            except discord.HTTPException:
+                pass
 
     async def on_ready(self) -> None:
         _log("DM Bot ready as %s (ID: %s)", self.user, self.user.id if self.user else "?")
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.playing,
-                name="Dungeons & Dragons 🐉",
+                name="Dungeons & Dragons \U0001f409",
             )
         )
 
         # Load D&D RAG index
         try:
             from rag_search import SearchEngine
-            import glob as _glob
             self._search_engine = SearchEngine()
             rag_dir = os.path.expanduser("~/bmo/data/rag_data")
             index_path = os.path.join(rag_dir, "chunk-index-dnd.json")
@@ -234,6 +617,14 @@ class DMBot(commands.Bot):
             _log("Campaign memory initialized")
         except Exception as e:
             _log("Campaign memory init failed: %s", e)
+
+        # Load D&D JSON data for lookup commands
+        self._spells = _load_json("spells.json")
+        self._magic_items = _load_json("magic-items.json")
+        self._conditions = _load_json("conditions.json")
+        self._treasure_tables = _load_json("treasure-tables.json")
+        self._random_tables = _load_json("random-tables.json")
+        self._encounter_presets = _load_json("encounter-presets.json")
 
     async def on_voice_state_update(
         self,
@@ -254,6 +645,13 @@ class DMBot(commands.Bot):
             if not member.bot:
                 self.session.players.discard(member.display_name)
                 _log("Player left: %s", member.display_name)
+
+                # Auto-disconnect when no humans remain
+                vc = self.session.voice_client
+                if vc and vc.is_connected() and vc.channel:
+                    humans = [m for m in vc.channel.members if not m.bot]
+                    if not humans:
+                        asyncio.ensure_future(self._auto_leave_if_empty())
 
     async def on_message(self, message: discord.Message) -> None:
         """Respond to text messages in the session text channel."""
@@ -408,117 +806,10 @@ class DMBot(commands.Bot):
         except Exception as e:
             _log("Failed to play audio: %s", e)
 
-    # ── Voice Listening (STT) ──────────────────────────────────────
-
-    async def start_voice_listen(self) -> None:
-        """Start listening in voice channel and transcribing player speech."""
-        vc = self.session.voice_client
-        if not vc or not vc.is_connected():
-            return
-
-        if self._voice_listen_task and not self._voice_listen_task.done():
-            return
-
-        self._voice_listen_task = asyncio.create_task(self._voice_listen_loop())
-        _log("Voice listening started")
-
-    async def stop_voice_listen(self) -> None:
-        """Stop listening in voice channel."""
-        if self._voice_listen_task and not self._voice_listen_task.done():
-            self._voice_listen_task.cancel()
-            try:
-                await self._voice_listen_task
-            except asyncio.CancelledError:
-                pass
-        self._voice_listen_task = None
-        _log("Voice listening stopped")
-
-    async def _voice_listen_loop(self) -> None:
-        """Listen for voice data and transcribe via Groq STT."""
-        vc = self.session.voice_client
-        if not vc:
-            return
-
-        sink = discord.sinks.WaveSink()
-        try:
-            vc.start_recording(sink, self._on_recording_done, vc.channel)
-        except Exception as e:
-            _log("Failed to start voice recording: %s", e)
-            return
-
-        # Record in intervals — collect audio then transcribe
-        try:
-            while self.session.active and vc.is_connected():
-                await asyncio.sleep(5)  # collect 5s of audio
-
-                if not vc.is_connected():
-                    break
-
-                # Stop and restart recording to get a chunk
-                try:
-                    vc.stop_recording()
-                except Exception:
-                    pass
-
-                # Process collected audio
-                for user_id, audio_data in sink.audio_data.items():
-                    audio_bytes = audio_data.file.getvalue()
-                    if len(audio_bytes) < 1000:
-                        continue  # skip silence/noise
-
-                    # Find the member who spoke
-                    member = vc.channel.guild.get_member(user_id)
-                    if not member or member.bot:
-                        continue
-
-                    player_name = member.display_name
-
-                    try:
-                        result = await asyncio.to_thread(
-                            groq_stt, audio_bytes, "en",
-                            "D&D dungeons dragons fantasy adventure combat spell"
-                        )
-                        transcript = result.get("text", "").strip()
-                        if transcript and len(transcript) > 2:
-                            _log("Voice from %s: %s", player_name, transcript[:80])
-
-                            # Find a text channel to respond in
-                            text_channel = None
-                            if self.session.text_channel_id:
-                                text_channel = self.get_channel(self.session.text_channel_id)
-
-                            if text_channel:
-                                await self._handle_player_input(
-                                    player_name, transcript, text_channel
-                                )
-                    except Exception as e:
-                        _log("STT error for %s: %s", player_name, e)
-
-                # Reset sink and restart recording
-                sink = discord.sinks.WaveSink()
-                try:
-                    vc.start_recording(sink, self._on_recording_done, vc.channel)
-                except Exception:
-                    break
-
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            _log("Voice listen loop error: %s", e)
-        finally:
-            try:
-                vc.stop_recording()
-            except Exception:
-                pass
-
-    async def _on_recording_done(self, sink: discord.sinks.WaveSink, channel: discord.VoiceChannel) -> None:
-        """Callback when recording finishes (no-op, processing done in loop)."""
-        pass
-
     # ── Voice Channel Management ───────────────────────────────────
 
     async def find_dungeon_channel(self, guild: discord.Guild) -> Optional[discord.VoiceChannel]:
-        """Find the '🗺️ | Dungeon' voice channel in the guild."""
+        """Find the Dungeon voice channel in the guild."""
         for channel in guild.voice_channels:
             if channel.name == DUNGEON_CHANNEL_NAME:
                 return channel
@@ -538,7 +829,6 @@ class DMBot(commands.Bot):
 
     async def leave_voice(self) -> None:
         """Leave the current voice channel."""
-        await self.stop_voice_listen()
         vc = self.session.voice_client
         if vc and vc.is_connected():
             await vc.disconnect()
@@ -546,195 +836,35 @@ class DMBot(commands.Bot):
         self.session.voice_client = None
         self.session.voice_channel_id = None
 
+    async def _auto_leave_if_empty(self) -> None:
+        """Wait 30s then leave voice + end session if still no humans."""
+        await asyncio.sleep(30)
 
-# ── Singleton ────────────────────────────────────────────────────────
+        vc = self.session.voice_client
+        if not vc or not vc.is_connected() or not vc.channel:
+            return
+        humans = [m for m in vc.channel.members if not m.bot]
+        if humans:
+            return
 
-_bot: Optional[DMBot] = None
-
-
-def get_dm_bot() -> Optional[DMBot]:
-    """Get the running DM bot instance."""
-    return _bot
-
-
-# ── Slash Commands ───────────────────────────────────────────────────
-
-dm_group = discord.SlashCommandGroup("dm", "D&D Dungeon Master commands")
-
-
-@dm_group.command(name="start", description="Start a DM session — BMO joins the Dungeon voice channel")
-async def dm_start(ctx: discord.ApplicationContext) -> None:
-    bot = ctx.bot
-    if not isinstance(bot, DMBot):
-        await ctx.respond("Bot not initialized.", ephemeral=True)
-        return
-
-    if bot.session.active:
-        await ctx.respond(
-            "A session is already active! Use `/dm stop` first.", ephemeral=True
-        )
-        return
-
-    await ctx.defer()
-
-    guild = ctx.guild
-    if not guild:
-        await ctx.followup.send("This command must be used in a server.")
-        return
-
-    # Find the Dungeon voice channel
-    dungeon_channel = await bot.find_dungeon_channel(guild)
-    if not dungeon_channel:
-        await ctx.followup.send(
-            f"Could not find a voice channel named **{DUNGEON_CHANNEL_NAME}**.\n"
-            "Please create one first!"
-        )
-        return
-
-    # Join voice channel
-    vc = await bot.join_voice(dungeon_channel)
-    if not vc:
-        await ctx.followup.send("Failed to join the voice channel.")
-        return
-
-    # Initialize session
-    bot.session.active = True
-    bot.session.text_channel_id = ctx.channel_id
-    bot.session.start_time = datetime.now(timezone.utc)
-    bot.session.messages.clear()
-    bot.session.combat_log.clear()
-    bot.session.initiative_order.clear()
-    bot.session.initiative_round = 0
-
-    # Start campaign memory session
-    if bot._campaign_memory:
-        try:
-            bot._campaign_name = "discord_campaign"
-            bot._session_id = bot._campaign_memory.start_session(bot._campaign_name)
-            _log("Campaign memory session started: %d", bot._session_id)
-        except Exception as e:
-            _log("Campaign memory session start failed: %s", e)
-
-    # Track players already in the voice channel
-    for member in dungeon_channel.members:
-        if not member.bot:
-            bot.session.players.add(member.display_name)
-
-    # Start voice listening
-    await bot.start_voice_listen()
-
-    # Greeting
-    players_str = ", ".join(sorted(bot.session.players)) if bot.session.players else "adventurers"
-    greeting = (
-        f"Hello {players_str}! BMO is your Dungeon Master today! "
-        "BMO has prepared an amazing adventure for you. "
-        "Tell BMO about your characters and what kind of adventure you want, "
-        "or BMO can start with a classic tavern scene! 🎲🐉"
-    )
-
-    bot.session.add_message("assistant", greeting)
-
-    embed = discord.Embed(
-        title="⚔️ D&D Session Started!",
-        description=greeting,
-        color=discord.Color.gold(),
-    )
-    embed.add_field(
-        name="Voice Channel", value=f"<#{dungeon_channel.id}>", inline=True
-    )
-    embed.add_field(
-        name="Players", value=players_str, inline=True,
-    )
-    embed.set_footer(text="Speak in voice or type here • /dm stop to end session")
-    await ctx.followup.send(embed=embed)
-
-    # Speak the greeting via TTS
-    await bot._speak(greeting, emotion="excited")
-
-    _log("Session started by %s", ctx.author.display_name)
+        _log("Auto-ending session — no humans remaining")
+        await self.leave_voice()
+        self.session.reset()
 
 
-@dm_group.command(name="stop", description="End the DM session — recap and leave voice")
-async def dm_stop(ctx: discord.ApplicationContext) -> None:
-    bot = ctx.bot
-    if not isinstance(bot, DMBot):
-        await ctx.respond("Bot not initialized.", ephemeral=True)
-        return
-
-    if not bot.session.active:
-        await ctx.respond("No active session to end.", ephemeral=True)
-        return
-
-    await ctx.defer()
-
-    # Calculate duration
-    duration_str = "Unknown"
-    if bot.session.start_time:
-        elapsed = datetime.now(timezone.utc) - bot.session.start_time
-        hours, remainder = divmod(int(elapsed.total_seconds()), 3600)
-        minutes, _ = divmod(remainder, 60)
-        duration_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
-
-    # Generate recap
-    recap_text = await _generate_recap(bot.session)
-
-    # Save recap to campaign memory
-    if bot._campaign_memory and bot._session_id and recap_text:
-        try:
-            bot._campaign_memory.end_session(bot._session_id, recap_text)
-            _log("Campaign memory session ended with recap")
-        except Exception as e:
-            _log("Campaign memory save failed: %s", e)
-    bot._campaign_name = None
-    bot._session_id = None
-
-    # Farewell
-    farewell = "Thank you for playing with BMO! That was an amazing adventure! See you next time, friends! 🌟"
-    await bot._speak(farewell, emotion="happy")
-
-    # Wait for farewell to finish playing
-    vc = bot.session.voice_client
-    if vc and vc.is_connected():
-        while vc.is_playing():
-            await asyncio.sleep(0.1)
-
-    # Leave voice
-    await bot.leave_voice()
-
-    # Build embed
-    players_str = ", ".join(sorted(bot.session.players)) if bot.session.players else "No players"
-
-    embed = discord.Embed(
-        title="📜 D&D Session Ended",
-        description="Thanks for playing! BMO had so much fun!",
-        color=discord.Color.dark_gold(),
-    )
-    embed.add_field(name="Duration", value=duration_str, inline=True)
-    embed.add_field(name="Players", value=players_str, inline=True)
-
-    if recap_text:
-        if len(recap_text) > 1024:
-            recap_text = recap_text[:1021] + "..."
-        embed.add_field(name="Session Recap", value=recap_text, inline=False)
-
-    bot.session.reset()
-    await ctx.followup.send(embed=embed)
-    _log("Session ended by %s", ctx.author.display_name)
+# ── Standalone Slash Commands ────────────────────────────────────────
 
 
-# ── Slash Command: /roll ─────────────────────────────────────────────
-
-@discord.slash_command(name="roll", description="Roll dice (e.g. 2d6+5, 1d20, 4d8 fire)")
-async def roll_cmd(
-    ctx: discord.ApplicationContext,
-    expression: discord.Option(str, description="Dice expression like 2d6+5, 1d20, 4d8 fire"),
+@app_commands.command(name="roll", description="Roll dice (e.g. 2d6+5, 1d20, 4d8 fire)")
+@app_commands.describe(expression="Dice expression like 2d6+5, 1d20, 4d8 fire")
+async def _roll_cmd(
+    interaction: discord.Interaction,
+    expression: str,
 ) -> None:
     try:
         result = roll_dice(expression)
     except Exception as e:
-        await ctx.respond(
-            f"Invalid dice expression: `{expression}` ({e})", ephemeral=True
-        )
+        await interaction.response.send_message(f"Invalid dice expression: `{expression}` ({e})", ephemeral=True)
         return
 
     total = result["total"]
@@ -745,15 +875,15 @@ async def roll_cmd(
     # Emoji based on d20 results
     if "d20" in expr.lower():
         if any(r == 20 for r in rolls):
-            emoji = "🌟"
+            emoji = "\U0001f31f"
         elif any(r == 1 for r in rolls):
-            emoji = "💀"
+            emoji = "\U0001f480"
         elif total >= 15:
-            emoji = "🎯"
+            emoji = "\U0001f3af"
         else:
-            emoji = "🎲"
+            emoji = "\U0001f3b2"
     else:
-        emoji = "🎲"
+        emoji = "\U0001f3b2"
 
     rolls_str = ", ".join(str(r) for r in rolls) if rolls else "flat"
     description = f"**{total}** {emoji}"
@@ -766,30 +896,26 @@ async def roll_cmd(
         color=discord.Color.blue(),
     )
     embed.add_field(name="Rolls", value=f"[{rolls_str}]", inline=True)
-    embed.set_footer(text=f"Rolled by {ctx.author.display_name}")
-    await ctx.respond(embed=embed)
+    embed.set_footer(text=f"Rolled by {interaction.user.display_name}")
+    await interaction.response.send_message(embed=embed)
 
     # Log to session
-    bot = ctx.bot
+    bot = interaction.client
     if isinstance(bot, DMBot) and bot.session.active:
-        log_entry = f"{ctx.author.display_name} rolled {expression}: {total} [{rolls_str}]"
+        log_entry = f"{interaction.user.display_name} rolled {expression}: {total} [{rolls_str}]"
         bot.session.add_message("user", log_entry)
         bot.session.combat_log.append(log_entry)
 
 
-# ── Slash Command: /initiative ───────────────────────────────────────
-
-@discord.slash_command(name="initiative", description="Start initiative tracking for combat")
-async def initiative_cmd(ctx: discord.ApplicationContext) -> None:
-    bot = ctx.bot
+@app_commands.command(name="initiative", description="Start initiative tracking for combat")
+async def _initiative_cmd(interaction: discord.Interaction) -> None:
+    bot = interaction.client
     if not isinstance(bot, DMBot):
-        await ctx.respond("Bot not initialized.", ephemeral=True)
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
         return
 
     if not bot.session.active:
-        await ctx.respond(
-            "No active session. Use `/dm start` first.", ephemeral=True
-        )
+        await interaction.response.send_message("No active session. Use `/dm start` first.", ephemeral=True)
         return
 
     # Reset initiative
@@ -797,7 +923,7 @@ async def initiative_cmd(ctx: discord.ApplicationContext) -> None:
     bot.session.initiative_round = 1
 
     embed = discord.Embed(
-        title="⚔️ Roll for Initiative!",
+        title="\u2694\ufe0f Roll for Initiative!",
         description=(
             "Combat has begun! Everyone roll initiative!\n\n"
             "Use `/roll 1d20+<modifier>` to roll.\n"
@@ -806,52 +932,50 @@ async def initiative_cmd(ctx: discord.ApplicationContext) -> None:
         ),
         color=discord.Color.red(),
     )
-    embed.set_footer(text="Round 1 — Combat has begun!")
-    await ctx.respond(embed=embed)
+    embed.set_footer(text="Round 1 \u2014 Combat has begun!")
+    await interaction.response.send_message(embed=embed)
 
     # Log
-    bot.session.add_message("assistant", "Initiative has been called! Combat begins — Round 1!")
+    bot.session.add_message("assistant", "Initiative has been called! Combat begins \u2014 Round 1!")
     bot.session.combat_log.append("--- INITIATIVE CALLED (Round 1) ---")
 
     # Announce in voice
     await bot._speak("Roll for initiative! Combat has begun!", emotion="excited")
 
-    _log("Initiative started by %s", ctx.author.display_name)
+    _log("Initiative started by %s", interaction.user.display_name)
 
 
-# ── Slash Command: /recap ────────────────────────────────────────────
-
-@discord.slash_command(name="recap", description="Generate an AI summary of the session so far")
-async def recap_cmd(ctx: discord.ApplicationContext) -> None:
-    bot = ctx.bot
+@app_commands.command(name="recap", description="Generate an AI summary of the session so far")
+async def _recap_cmd(interaction: discord.Interaction) -> None:
+    bot = interaction.client
     if not isinstance(bot, DMBot):
-        await ctx.respond("Bot not initialized.", ephemeral=True)
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
         return
 
     if not bot.session.active or not bot.session.combat_log:
-        await ctx.respond(
+        await interaction.response.send_message(
             "No active session or nothing to recap yet. Start a session with `/dm start`.",
             ephemeral=True,
         )
         return
 
-    await ctx.defer()
+    await interaction.response.defer()
 
     recap_text = await _generate_recap(bot.session)
     if not recap_text:
-        await ctx.followup.send("Could not generate a recap at this time.")
+        await interaction.followup.send("Could not generate a recap at this time.")
         return
 
     if len(recap_text) > 4000:
         recap_text = recap_text[:3997] + "..."
 
     embed = discord.Embed(
-        title="📜 Previously, on our adventure...",
+        title="\U0001f4dc Previously, on our adventure...",
         description=recap_text,
         color=discord.Color.purple(),
     )
     embed.set_footer(text=f"Recap of {len(bot.session.combat_log)} events")
-    await ctx.followup.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
 # ── Recap Generation ─────────────────────────────────────────────────
@@ -891,6 +1015,523 @@ async def _generate_recap(session: DMSession) -> str:
         return ""
 
 
+# ── Phase 1: D&D Lookup Commands ─────────────────────────────────────
+
+
+def _spell_level_str(level: int) -> str:
+    """Format spell level for display."""
+    if level == 0:
+        return "Cantrip"
+    suffixes = {1: "st", 2: "nd", 3: "rd"}
+    return f"{level}{suffixes.get(level, 'th')} level"
+
+
+@app_commands.command(name="spell", description="Look up a D&D 5e spell by name")
+@app_commands.describe(name="Spell name to look up")
+async def _spell_cmd(
+    interaction: discord.Interaction,
+    name: str,
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._spells:
+        await interaction.response.send_message("Spell data is not loaded.", ephemeral=True)
+        return
+
+    spell = _fuzzy_find(name, bot._spells)
+    if not spell:
+        await interaction.response.send_message(f"No spell found matching **{name}**.", ephemeral=True)
+        return
+
+    school = spell.get("school", "Unknown")
+    color = SCHOOL_COLORS.get(school.lower(), 0x95A5A6)
+
+    description = spell.get("description", "No description available.")
+    if len(description) > 1024:
+        description = description[:1021] + "..."
+
+    level = spell.get("level", 0)
+    concentration = spell.get("concentration", False)
+    ritual = spell.get("ritual", False)
+
+    level_text = _spell_level_str(level)
+    if concentration:
+        level_text += " (Concentration)"
+    if ritual:
+        level_text += " (Ritual)"
+
+    embed = discord.Embed(
+        title=spell.get("name", name),
+        description=description,
+        color=color,
+    )
+    embed.add_field(name="Level", value=level_text, inline=True)
+    embed.add_field(name="School", value=school, inline=True)
+    embed.add_field(name="Casting Time", value=spell.get("castingTime", "—"), inline=True)
+    embed.add_field(name="Range", value=spell.get("range", "—"), inline=True)
+    embed.add_field(name="Duration", value=spell.get("duration", "—"), inline=True)
+    embed.add_field(name="Components", value=spell.get("components", "—"), inline=True)
+
+    classes = spell.get("classes", [])
+    if classes:
+        embed.add_field(name="Classes", value=", ".join(c.capitalize() for c in classes), inline=False)
+
+    higher = spell.get("higherLevels")
+    if higher:
+        if len(higher) > 1024:
+            higher = higher[:1021] + "..."
+        embed.add_field(name="At Higher Levels", value=higher, inline=False)
+
+    await interaction.response.send_message(embed=embed)
+
+
+@app_commands.command(name="item", description="Look up a D&D 5e magic item by name")
+@app_commands.describe(name="Magic item name to look up")
+async def _item_cmd(
+    interaction: discord.Interaction,
+    name: str,
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._magic_items:
+        await interaction.response.send_message("Magic item data is not loaded.", ephemeral=True)
+        return
+
+    item = _fuzzy_find(name, bot._magic_items)
+    if not item:
+        await interaction.response.send_message(f"No magic item found matching **{name}**.", ephemeral=True)
+        return
+
+    rarity = item.get("rarity", "unknown")
+    color = RARITY_COLORS.get(rarity.lower(), 0x95A5A6)
+
+    description = item.get("description", "No description available.")
+    if len(description) > 1024:
+        description = description[:1021] + "..."
+
+    embed = discord.Embed(
+        title=item.get("name", name),
+        description=description,
+        color=color,
+    )
+    embed.add_field(name="Rarity", value=rarity.capitalize(), inline=True)
+    embed.add_field(name="Type", value=item.get("type", "—").capitalize(), inline=True)
+    embed.add_field(name="Attunement", value="Yes" if item.get("attunement") else "No", inline=True)
+
+    cost = item.get("cost")
+    if cost:
+        embed.add_field(name="Cost", value=cost, inline=True)
+
+    await interaction.response.send_message(embed=embed)
+
+
+@app_commands.command(name="condition", description="Look up a D&D 5e condition")
+@app_commands.describe(name="Condition name to look up")
+async def _condition_cmd(
+    interaction: discord.Interaction,
+    name: str,
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._conditions:
+        await interaction.response.send_message("Condition data is not loaded.", ephemeral=True)
+        return
+
+    condition = _fuzzy_find(name, bot._conditions)
+    if not condition:
+        await interaction.response.send_message(f"No condition found matching **{name}**.", ephemeral=True)
+        return
+
+    description = condition.get("description", "No description available.")
+    if len(description) > 1024:
+        description = description[:1021] + "..."
+
+    embed = discord.Embed(
+        title=condition.get("name", name),
+        description=description,
+        color=0xE67E22,
+    )
+    await interaction.response.send_message(embed=embed)
+
+
+def _parse_cr_range(cr_range: str) -> tuple[int, int]:
+    """Parse a CR range string like '0-4' or '5-10' into (min, max)."""
+    parts = cr_range.split("-")
+    return int(parts[0]), int(parts[1])
+
+
+def _roll_loot_dice(dice_expr: str) -> int:
+    """Roll a dice expression like '3d6', '2d8x10', '2d4x100' and return the total."""
+    multiplier = 1
+    expr = dice_expr.lower().strip()
+
+    # Handle multiplier suffix like x10, x100
+    if "x" in expr:
+        expr_part, mult_part = expr.rsplit("x", 1)
+        multiplier = int(mult_part)
+        expr = expr_part.strip()
+
+    try:
+        result = roll_dice(expr)
+        return result["total"] * multiplier
+    except Exception:
+        return 0
+
+
+@app_commands.command(name="loot", description="Generate random treasure by CR")
+@app_commands.describe(
+    cr="Challenge Rating (0-30)",
+    loot_type="Treasure type",
+)
+@app_commands.choices(loot_type=[
+    app_commands.Choice(name="Individual", value="individual"),
+    app_commands.Choice(name="Hoard", value="hoard"),
+])
+async def _loot_cmd(
+    interaction: discord.Interaction,
+    cr: app_commands.Range[int, 0, 30],
+    loot_type: str = "individual",
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._treasure_tables:
+        await interaction.response.send_message("Treasure table data is not loaded.", ephemeral=True)
+        return
+
+    table = bot._treasure_tables.get(loot_type, [])
+    if not table:
+        await interaction.response.send_message(f"No treasure table found for type **{loot_type}**.", ephemeral=True)
+        return
+
+    # Find the right CR row
+    row = None
+    for entry in table:
+        cr_range = entry.get("crRange", "0-0")
+        cr_min, cr_max = _parse_cr_range(cr_range)
+        if cr_min <= cr <= cr_max:
+            row = entry
+            break
+
+    # Fall back to last row for high CRs
+    if not row and table:
+        row = table[-1]
+
+    if not row:
+        await interaction.response.send_message("Could not find a matching treasure table row.", ephemeral=True)
+        return
+
+    embed = discord.Embed(
+        title=f"{'Hoard' if loot_type == 'hoard' else 'Individual'} Treasure (CR {cr})",
+        color=0xF1C40F,
+    )
+
+    if loot_type == "individual":
+        dice_expr = row.get("amount", "1d6")
+        unit = row.get("unit", "gp")
+        total = _roll_loot_dice(dice_expr)
+        embed.add_field(name="Coins", value=f"**{total}** {unit} (rolled {dice_expr})", inline=False)
+
+    elif loot_type == "hoard":
+        # Roll coins
+        coin_expr = row.get("coins", "2d4x100")
+        coin_unit = row.get("coinsUnit", "gp")
+        coin_total = _roll_loot_dice(coin_expr)
+        embed.add_field(name="Coins", value=f"**{coin_total}** {coin_unit} (rolled {coin_expr})", inline=False)
+
+        # Roll magic items
+        magic_expr = row.get("magicItems", "0")
+        magic_count = 0
+        if magic_expr and magic_expr != "0":
+            magic_count = _roll_loot_dice(magic_expr)
+            if magic_count < 0:
+                magic_count = 0
+
+        if magic_count > 0 and bot._magic_items:
+            rarity_table = bot._treasure_tables.get("magicItemRarities", [])
+            items_found = []
+
+            for _ in range(magic_count):
+                # Determine rarity via d100
+                d100 = random.randint(1, 100)
+                rarity = "Common"
+                for r in rarity_table:
+                    if r.get("d100Min", 0) <= d100 <= r.get("d100Max", 100):
+                        rarity = r.get("rarity", "Common")
+                        break
+
+                # Pick a random item of that rarity
+                matching = [
+                    i for i in bot._magic_items
+                    if i.get("rarity", "").lower() == rarity.lower()
+                ]
+                if matching:
+                    chosen = random.choice(matching)
+                    items_found.append(f"- {chosen.get('name', '???')} ({rarity})")
+                else:
+                    items_found.append(f"- Random {rarity} item (no data)")
+
+            items_text = "\n".join(items_found[:10])
+            if len(items_found) > 10:
+                items_text += f"\n... and {len(items_found) - 10} more"
+            embed.add_field(
+                name=f"Magic Items ({magic_count})",
+                value=items_text,
+                inline=False,
+            )
+        else:
+            embed.add_field(name="Magic Items", value="None", inline=False)
+
+    embed.set_footer(text=f"CR range: {row.get('crRange', '?')}")
+    await interaction.response.send_message(embed=embed)
+
+
+# ── Phase 2: D&D Generator Commands ─────────────────────────────────
+
+
+def _generate_npc(random_tables: dict) -> dict:
+    """Generate a random NPC with traits."""
+    race = random.choice(NPC_RACES)
+    name = random.choice(NPC_FIRST_NAMES)
+    npc_class = random.choice(NPC_CLASSES)
+
+    traits = random_tables.get("npcTraits", {})
+    personality = random.choice(traits.get("personality", ["Friendly"]))
+    ideal = random.choice(traits.get("ideals", ["Justice"]))
+    bond = random.choice(traits.get("bonds", ["Loyal to friends"]))
+    flaw = random.choice(traits.get("flaws", ["Stubborn"]))
+    appearance = random.choice(traits.get("appearance", ["Unremarkable"]))
+
+    return {
+        "name": name,
+        "race": race,
+        "class": npc_class,
+        "personality": personality,
+        "ideal": ideal,
+        "bond": bond,
+        "flaw": flaw,
+        "appearance": appearance,
+    }
+
+
+@app_commands.command(name="npc", description="Generate a random D&D NPC")
+async def _npc_cmd(interaction: discord.Interaction) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    npc = _generate_npc(bot._random_tables)
+
+    embed = discord.Embed(
+        title=f"{npc['name']} — {npc['race']} {npc['class']}",
+        color=0x3498DB,
+    )
+    embed.add_field(name="Race", value=npc["race"], inline=True)
+    embed.add_field(name="Class", value=npc["class"], inline=True)
+    embed.add_field(name="Appearance", value=npc["appearance"], inline=False)
+    embed.add_field(name="Personality", value=npc["personality"], inline=True)
+    embed.add_field(name="Ideal", value=npc["ideal"], inline=True)
+    embed.add_field(name="Bond", value=npc["bond"], inline=False)
+    embed.add_field(name="Flaw", value=npc["flaw"], inline=False)
+    embed.set_footer(text="Randomly generated NPC")
+    await interaction.response.send_message(embed=embed)
+
+
+@app_commands.command(name="encounter", description="Generate a random encounter for your party")
+@app_commands.describe(
+    level="Average party level",
+    party_size="Number of party members",
+    difficulty="Encounter difficulty",
+)
+@app_commands.choices(difficulty=[
+    app_commands.Choice(name="Low", value="low"),
+    app_commands.Choice(name="Moderate", value="moderate"),
+    app_commands.Choice(name="High", value="high"),
+])
+async def _encounter_cmd(
+    interaction: discord.Interaction,
+    level: app_commands.Range[int, 1, 20],
+    party_size: app_commands.Range[int, 1, 10],
+    difficulty: str = "moderate",
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._encounter_presets:
+        await interaction.response.send_message("Encounter preset data is not loaded.", ephemeral=True)
+        return
+
+    # Filter presets by level range and difficulty
+    matching = []
+    for preset in bot._encounter_presets:
+        preset_diff = preset.get("difficulty", "moderate").lower()
+        level_range = preset.get("partyLevelRange", "1-20")
+        range_min, range_max = _parse_cr_range(level_range)
+
+        if preset_diff == difficulty.lower() and range_min <= level <= range_max:
+            matching.append(preset)
+
+    if not matching:
+        # Broaden search — any difficulty in level range
+        for preset in bot._encounter_presets:
+            level_range = preset.get("partyLevelRange", "1-20")
+            range_min, range_max = _parse_cr_range(level_range)
+            if range_min <= level <= range_max:
+                matching.append(preset)
+
+    if not matching:
+        await interaction.response.send_message(
+            f"No encounters found for level {level}, party size {party_size}, difficulty {difficulty}.",
+            ephemeral=True,
+        )
+        return
+
+    encounter = random.choice(matching)
+
+    # Format monsters
+    monsters = encounter.get("monsters", [])
+    monster_lines = []
+    for m in monsters:
+        count = m.get("count", 1)
+        monster_id = m.get("id", "unknown").replace("-", " ").title()
+        monster_lines.append(f"- {count}x {monster_id}")
+    monster_text = "\n".join(monster_lines) if monster_lines else "None specified"
+
+    embed = discord.Embed(
+        title=encounter.get("name", "Random Encounter"),
+        description=encounter.get("description", "A dangerous encounter!"),
+        color=0xE74C3C,
+    )
+    embed.add_field(name="Difficulty", value=encounter.get("difficulty", difficulty).capitalize(), inline=True)
+    embed.add_field(name="Environment", value=encounter.get("environment", "Any").capitalize(), inline=True)
+    embed.add_field(name="Party", value=f"{party_size} players, level {level}", inline=True)
+    embed.add_field(name="Monsters", value=monster_text, inline=False)
+
+    tactics = encounter.get("tactics")
+    if tactics:
+        if len(tactics) > 1024:
+            tactics = tactics[:1021] + "..."
+        embed.add_field(name="Tactics", value=tactics, inline=False)
+
+    treasure = encounter.get("treasureHint")
+    if treasure:
+        embed.add_field(name="Treasure Hint", value=treasure, inline=False)
+
+    embed.set_footer(text=f"Encounter ID: {encounter.get('id', '?')}")
+    await interaction.response.send_message(embed=embed)
+
+
+@app_commands.command(name="tavern", description="Generate a random tavern with menu and rumors")
+async def _tavern_cmd(interaction: discord.Interaction) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    # Generate tavern name
+    adj = random.choice(TAVERN_ADJECTIVES)
+    noun = random.choice(TAVERN_NOUNS)
+    tavern_name = f"The {adj} {noun}"
+
+    # Generate tavern keeper
+    keeper = _generate_npc(bot._random_tables)
+
+    # Pick random menu items
+    foods = random.sample(TAVERN_FOODS, min(3, len(TAVERN_FOODS)))
+    drinks = random.sample(TAVERN_DRINKS, min(2, len(TAVERN_DRINKS)))
+    menu = "\n".join(f"- {item}" for item in foods + drinks)
+
+    # Pick a rumor
+    rumor = random.choice(TAVERN_RUMORS)
+
+    embed = discord.Embed(
+        title=tavern_name,
+        description=f"A cozy establishment run by **{keeper['name']}**, a {keeper['race']} {keeper['class']}.",
+        color=0xE67E22,
+    )
+    embed.add_field(
+        name="Tavern Keeper",
+        value=f"**{keeper['name']}** — {keeper['race']} {keeper['class']}\n"
+              f"*{keeper['personality']}*, *{keeper['appearance']}*",
+        inline=False,
+    )
+    embed.add_field(name="Menu", value=menu, inline=False)
+    embed.add_field(name="Overheard Rumor", value=f"*\"{rumor}\"*", inline=False)
+    embed.set_footer(text="Randomly generated tavern")
+    await interaction.response.send_message(embed=embed)
+
+
+@app_commands.command(name="monster", description="Look up a D&D monster using BMO's knowledge base")
+@app_commands.describe(name="Monster name to look up")
+async def _monster_cmd(
+    interaction: discord.Interaction,
+    name: str,
+) -> None:
+    bot = interaction.client
+    if not isinstance(bot, DMBot):
+        await interaction.response.send_message("Bot not initialized.", ephemeral=True)
+        return
+
+    if not bot._search_engine:
+        await interaction.response.send_message("Monster knowledge base is not loaded.", ephemeral=True)
+        return
+
+    try:
+        results = bot._search_engine.search(name, domain="dnd", top_k=3)
+    except Exception as e:
+        _log("Monster search failed: %s", e)
+        await interaction.response.send_message(f"Search failed: {e}", ephemeral=True)
+        return
+
+    if not results:
+        await interaction.response.send_message(f"No results found for **{name}**.", ephemeral=True)
+        return
+
+    best = results[0]
+    heading = best.get("heading", name)
+    content = best.get("content", "No details available.")
+    if len(content) > 2048:
+        content = content[:2045] + "..."
+
+    embed = discord.Embed(
+        title=heading,
+        description=content,
+        color=0x992D22,
+    )
+
+    # Show additional matches if any
+    if len(results) > 1:
+        other_matches = ", ".join(r.get("heading", "?") for r in results[1:])
+        embed.add_field(name="See Also", value=other_matches, inline=False)
+
+    embed.set_footer(text="Source: BMO D&D Knowledge Base")
+    await interaction.response.send_message(embed=embed)
+
+
+# ── Singleton ────────────────────────────────────────────────────────
+
+_bot: Optional[DMBot] = None
+
+
+def get_dm_bot() -> Optional[DMBot]:
+    """Get the running DM bot instance."""
+    return _bot
+
+
 # ── Bot Startup ──────────────────────────────────────────────────────
 
 async def _run_dm_bot() -> None:
@@ -902,12 +1543,6 @@ async def _run_dm_bot() -> None:
         return
 
     _bot = DMBot()
-
-    # Register slash commands (py-cord)
-    _bot.add_application_command(dm_group)
-    _bot.add_application_command(roll_cmd)
-    _bot.add_application_command(initiative_cmd)
-    _bot.add_application_command(recap_cmd)
 
     try:
         await _bot.start(BOT_TOKEN)

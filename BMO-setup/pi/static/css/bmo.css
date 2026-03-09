@@ -28,6 +28,72 @@ body {
   flex-direction: column;
 }
 
+/* Mobile phones: fill screen, scale down elements */
+@media (max-width: 600px) {
+  html {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  body {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* dynamic viewport height — accounts for browser chrome */
+    border: none;
+    border-radius: 0;
+    flex-shrink: 1;
+  }
+  /* Smaller header/nav on phone */
+  header { height: 44px !important; font-size: 13px !important; }
+  nav { height: 50px !important; }
+  nav button, nav a { font-size: 11px !important; }
+  /* TV controls: stack vertically on narrow screens */
+  .tv-controls {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .tv-controls > div {
+    width: 260px !important;
+  }
+  .tv-controls button {
+    height: 56px !important;
+  }
+  /* Music now-playing: stack vertically on phone */
+  .now-playing {
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+    gap: 8px !important;
+  }
+  .now-playing .np-art {
+    height: auto !important;
+    width: 180px !important;
+    aspect-ratio: 1 !important;
+    flex-shrink: 0 !important;
+  }
+  .now-playing .flex-1 {
+    width: 100% !important;
+  }
+  /* Transport controls: wrap on narrow screens */
+  .now-playing .flex-1 > div:last-child {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+  /* Smaller min-height for touch targets on phone */
+  button, select, input {
+    min-height: 28px;
+  }
+}
+
+/* Desktop browsers: fill viewport */
+@media (min-width: 1025px) and (min-height: 601px) {
+  body {
+    width: 92vw;
+    height: 92vh;
+    border-radius: 12px;
+    border: 1px solid #374151;
+  }
+}
+
 /* Scrollbar styling for touch */
 ::-webkit-scrollbar {
   width: 4px;
@@ -149,3 +215,45 @@ button, select, input {
   0%, 100% { height: 8px; }
   50% { height: 14px; }
 }
+
+/* Touch feedback */
+button:active, [role="button"]:active {
+  transform: scale(0.95);
+  transition: transform 80ms ease;
+}
+
+/* Alert toast slide-in */
+[x-show="alertToast"] {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Ambient mode drift animation for burn-in prevention */
+@keyframes ambientDrift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(10px, -5px); }
+  50% { transform: translate(-5px, 10px); }
+  75% { transform: translate(-10px, -8px); }
+}
+
+.ambient-drift {
+  animation: ambientDrift 60s ease-in-out infinite;
+}
+
+/* Stagger animation for list items */
+@keyframes staggerFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-enter > * {
+  animation: staggerFadeIn 0.2s ease-out backwards;
+}
+.stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-enter > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-enter > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-enter > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-enter > *:nth-child(5) { animation-delay: 120ms; }
+
+/* Toggle switch transitions */
+button .translate-x-4 { transform: translateX(1rem); }
+button .translate-x-0\.5 { transform: translateX(0.125rem); }

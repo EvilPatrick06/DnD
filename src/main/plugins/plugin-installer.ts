@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { mkdir, rm } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { app } from 'electron'
@@ -32,11 +33,12 @@ async function extractZip(zipPath: string, destDir: string): Promise<void> {
  * Extracts to userData/plugins/<id>/ and validates the manifest.
  */
 export async function installFromZip(zipPath: string): Promise<StorageResult<string>> {
+  const tempId = randomUUID()
+  const tempDir = join(app.getPath('userData'), 'plugins', `_install-temp-${tempId}`)
   try {
     const pluginsDir = await getPluginsDir()
 
     // Extract to a temp directory first, then validate
-    const tempDir = join(app.getPath('userData'), 'plugins', '_install-temp')
     await rm(tempDir, { recursive: true, force: true })
 
     await extractZip(zipPath, tempDir)
@@ -88,7 +90,6 @@ export async function installFromZip(zipPath: string): Promise<StorageResult<str
     return { success: true, data: pluginId }
   } catch (err) {
     // Clean up temp on error
-    const tempDir = join(app.getPath('userData'), 'plugins', '_install-temp')
     await rm(tempDir, { recursive: true, force: true }).catch(() => {})
     return { success: false, error: `Installation failed: ${(err as Error).message}` }
   }

@@ -35,8 +35,15 @@ export interface PartyVisionResult {
 /**
  * Compute the union vision of all player tokens on a map.
  * Returns visibility polygons and the set of visible grid cells.
+ *
+ * When `lightSources` are provided, any light source visible to a party
+ * member extends the party's visible area by the light's bright + dim radius.
  */
-export function computePartyVision(map: GameMap, playerTokens: MapToken[]): PartyVisionResult {
+export function computePartyVision(
+  map: GameMap,
+  playerTokens: MapToken[],
+  lightSources?: LightSource[]
+): PartyVisionResult {
   if (playerTokens.length === 0) {
     return { partyPolygons: [], visibleCells: [] }
   }
@@ -74,6 +81,7 @@ export function computePartyVision(map: GameMap, playerTokens: MapToken[]): Part
   const gridCols = Math.ceil(pixelWidth / cellSize)
   const gridRows = Math.ceil(pixelHeight / cellSize)
   const visibleCells: Array<{ x: number; y: number }> = []
+  const visibleSet = new Set<string>()
 
   for (let col = 0; col < gridCols; col++) {
     for (let row = 0; row < gridRows; row++) {
@@ -93,6 +101,51 @@ export function computePartyVision(map: GameMap, playerTokens: MapToken[]): Part
 
       if (visible) {
         visibleCells.push({ x: col, y: row })
+        visibleSet.add(`${col},${row}`)
+      }
+    }
+  }
+
+  // Extend visibility with light sources visible to the party
+  if (lightSources && lightSources.length > 0) {
+    for (const source of lightSources) {
+      const sourcePixel: Point = {
+        x: source.x * cellSize,
+        y: source.y * cellSize
+      }
+
+      // Check if any party member can see this light source
+      let sourceVisible = false
+      for (const poly of partyPolygons) {
+        if (isPointVisible(sourcePixel, poly)) {
+          sourceVisible = true
+          break
+        }
+      }
+
+      if (!sourceVisible) continue
+
+      // Add all cells within the light's bright + dim radius
+      const totalRadiusCells = source.brightRadius + source.dimRadius
+      const minCol = Math.max(0, Math.floor(source.x - totalRadiusCells))
+      const maxCol = Math.min(gridCols - 1, Math.ceil(source.x + totalRadiusCells))
+      const minRow = Math.max(0, Math.floor(source.y - totalRadiusCells))
+      const maxRow = Math.min(gridRows - 1, Math.ceil(source.y + totalRadiusCells))
+
+      for (let col = minCol; col <= maxCol; col++) {
+        for (let row = minRow; row <= maxRow; row++) {
+          const key = `${col},${row}`
+          if (visibleSet.has(key)) continue
+
+          const dx = col + 0.5 - source.x
+          const dy = row + 0.5 - source.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+
+          if (dist <= totalRadiusCells) {
+            visibleCells.push({ x: col, y: row })
+            visibleSet.add(key)
+          }
+        }
       }
     }
   }

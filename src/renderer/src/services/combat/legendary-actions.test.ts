@@ -11,6 +11,7 @@ let mockInitiative: {
   entries: Array<{
     id: string
     legendaryResistances?: { remaining: number; max: number }
+    legendaryActions?: { used: number; maximum: number }
     inLair?: boolean
   }>
   currentIndex: number
@@ -60,7 +61,7 @@ describe('spendLegendaryAction', () => {
     expect(result.summary).toContain('No active initiative')
   })
 
-  it('returns failure when entry has no legendaryResistances', () => {
+  it('returns failure when entry has no legendaryActions', () => {
     mockInitiative = {
       entries: [{ id: 'dragon-1' }],
       currentIndex: 0
@@ -81,7 +82,7 @@ describe('spendLegendaryAction', () => {
 
   it('succeeds when legendary actions are available (cost 1)', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 3, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 0, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1', 1)
@@ -92,18 +93,18 @@ describe('spendLegendaryAction', () => {
 
   it('updates the initiative entry in the store', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 3, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 0, maximum: 3 } }],
       currentIndex: 0
     }
     spendLegendaryAction('dragon-1', 1)
     expect(mockUpdateInitiativeEntry).toHaveBeenCalledWith('dragon-1', {
-      legendaryResistances: { remaining: 2, max: 3 }
+      legendaryActions: { used: 1, maximum: 3 }
     })
   })
 
   it('handles cost of 2 correctly', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 3, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 0, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1', 2)
@@ -113,7 +114,7 @@ describe('spendLegendaryAction', () => {
 
   it('fails when cost exceeds remaining legendary actions', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 1, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 2, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1', 2)
@@ -124,7 +125,7 @@ describe('spendLegendaryAction', () => {
 
   it('defaults cost to 1', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 3, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 0, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1')
@@ -134,7 +135,7 @@ describe('spendLegendaryAction', () => {
 
   it('can spend the last legendary action', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 1, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 2, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1', 1)
@@ -144,7 +145,7 @@ describe('spendLegendaryAction', () => {
 
   it('fails when remaining is 0', () => {
     mockInitiative = {
-      entries: [{ id: 'dragon-1', legendaryResistances: { remaining: 0, max: 3 } }],
+      entries: [{ id: 'dragon-1', legendaryActions: { used: 3, maximum: 3 } }],
       currentIndex: 0
     }
     const result = spendLegendaryAction('dragon-1', 1)

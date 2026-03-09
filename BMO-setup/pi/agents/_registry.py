@@ -57,4 +57,13 @@ def create_all_agents(scratchpad: SharedScratchpad, services: dict[str, Any], so
     from agents.learning_agent import create_learning_agent
     agents.append(create_learning_agent(scratchpad, services, socketio))
 
+    from agents.list_agent import create_list_agent
+    agents.append(create_list_agent(scratchpad, services, socketio))
+
+    from agents.alert_agent import create_alert_agent
+    agents.append(create_alert_agent(scratchpad, services, socketio))
+
+    from agents.routine_agent import create_routine_agent
+    agents.append(create_routine_agent(scratchpad, services, socketio))
+
     return agents

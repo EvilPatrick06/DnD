@@ -10,7 +10,8 @@ vi.mock('node:fs/promises', () => ({
   mkdir: vi.fn(),
   readdir: vi.fn(() => []),
   unlink: vi.fn(),
-  access: vi.fn()
+  access: vi.fn(),
+  rm: vi.fn().mockResolvedValue(undefined)
 }))
 
 vi.mock('../../shared/utils/uuid', () => ({

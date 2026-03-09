@@ -93,6 +93,9 @@ export interface ShopSliceState {
 export interface MapTokenSliceState {
   setActiveMap: (mapId: string) => void
   addMap: (map: GameMap) => void
+  deleteMap: (mapId: string) => void
+  updateMap: (mapId: string, updates: Partial<GameMap>) => void
+  duplicateMap: (mapId: string) => GameMap | null
   addToken: (mapId: string, token: MapToken) => void
   moveToken: (mapId: string, tokenId: string, gridX: number, gridY: number) => void
   removeToken: (mapId: string, tokenId: string) => void
@@ -127,6 +130,11 @@ export interface InitiativeSliceState {
   updateInitiativeEntry: (entryId: string, updates: Partial<InitiativeEntry>) => void
   removeFromInitiative: (entryId: string) => void
   reorderInitiative: (fromIndex: number, toIndex: number) => void
+  delayTurn: (entityId: string) => void
+  undelay: (entityId: string) => void
+  readyAction: (entityId: string, trigger: string, action: string) => void
+  triggerReadyAction: (entityId: string) => void
+  clearReady: (entityId: string) => void
   initTurnState: (entityId: string, speed: number) => void
   useAction: (entityId: string) => void
   useBonusAction: (entityId: string) => void
@@ -275,6 +283,12 @@ export interface VisionSliceState {
   setPartyVisionCells: (cells: Array<{ x: number; y: number }>) => void
   /** Append auto-explored cells to a map's fogOfWar.exploredCells, deduplicating */
   addExploredCells: (mapId: string, cells: Array<{ x: number; y: number }>) => void
+  /** Remove specific explored cells from a map */
+  removeExploredCells: (mapId: string, cells: Array<{ x: number; y: number }>) => void
+  /** Reset all explored cells for a specific map */
+  clearVision: (mapId: string) => void
+  /** Reset all explored cells for all maps */
+  clearAllVision: () => void
   /** Toggle dynamic fog on a map */
   setDynamicFogEnabled: (mapId: string, enabled: boolean) => void
 }

@@ -101,14 +101,18 @@ export default function LibraryItemList({
                 <AudioPlayerItem
                   item={{ id: item.id, name: item.name, data: item.data }}
                   onClick={() => onSelectItem(item)}
+                  isFavorite={isFav}
+                  onToggleFavorite={onToggleFavorite}
                 />
               ) : category === 'portraits' ? (
                 <ImagePreviewItem
                   item={{ id: item.id, name: item.name, data: item.data }}
                   onClick={() => onSelectItem(item)}
+                  isFavorite={isFav}
+                  onToggleFavorite={onToggleFavorite}
                 />
               ) : (
-                <button
+                <div
                   onClick={() => onSelectItem(item)}
                   className="w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-800/50
                     hover:bg-gray-800/40 transition-colors cursor-pointer group"
@@ -150,7 +154,7 @@ export default function LibraryItemList({
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </div>
               )}
             </div>
           )

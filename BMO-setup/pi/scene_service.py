@@ -11,7 +11,7 @@ import time
 
 SETTINGS_PATH = os.path.join(os.path.dirname(__file__), "data", "settings.json")
 
-SCENES = {
+BUILTIN_SCENES = {
     "anime": {
         "label": "🎌 Anime Mode",
         "rgb_off": True,
@@ -42,6 +42,44 @@ SCENES = {
 }
 
 
+def _load_custom_scenes() -> dict:
+    """Load custom scenes from settings.json."""
+    try:
+        if os.path.exists(SETTINGS_PATH):
+            with open(SETTINGS_PATH, "r") as f:
+                settings = json.load(f)
+            return settings.get("custom_scenes", {})
+    except Exception as e:
+        print(f"[scene] Failed to load custom scenes: {e}")
+    return {}
+
+
+def _save_custom_scenes(custom: dict):
+    """Save custom scenes to settings.json."""
+    try:
+        os.makedirs(os.path.dirname(SETTINGS_PATH), exist_ok=True)
+        settings = {}
+        if os.path.exists(SETTINGS_PATH):
+            with open(SETTINGS_PATH, "r") as f:
+                settings = json.load(f)
+        settings["custom_scenes"] = custom
+        with open(SETTINGS_PATH, "w") as f:
+            json.dump(settings, f, indent=2)
+    except Exception as e:
+        print(f"[scene] Failed to save custom scenes: {e}")
+
+
+def _get_all_scenes() -> dict:
+    """Merge built-in and custom scenes. Custom scenes override builtins with same name."""
+    merged = dict(BUILTIN_SCENES)
+    merged.update(_load_custom_scenes())
+    return merged
+
+
+# Backward-compatible alias
+SCENES = BUILTIN_SCENES
+
+
 class SceneService:
     """Manages scene activation with state save/restore."""
 
@@ -56,14 +94,26 @@ class SceneService:
     # ── Public API ──────────────────────────────────────────────────
 
     def list_scenes(self) -> list[dict]:
-        """List all available scenes with active status."""
+        """List all available scenes (built-in + custom) with active status and full config."""
         result = []
-        for name, config in SCENES.items():
+        custom_scenes = _load_custom_scenes()
+        for name, config in BUILTIN_SCENES.items():
             result.append({
                 "name": name,
-                "label": config["label"],
+                "label": config.get("label", name),
                 "active": self._active_scene == name,
+                "is_builtin": True,
+                **config,
             })
+        for name, config in custom_scenes.items():
+            if name not in BUILTIN_SCENES:
+                result.append({
+                    "name": name,
+                    "label": config.get("label", name),
+                    "active": self._active_scene == name,
+                    "is_builtin": False,
+                    **config,
+                })
         return result
 
     def get_active(self) -> str | None:
@@ -73,8 +123,9 @@ class SceneService:
     def activate(self, scene_name: str) -> tuple[bool, str]:
         """Activate a scene. Saves current state first."""
         scene_name = scene_name.lower().strip()
-        if scene_name not in SCENES:
-            return False, f"Unknown scene: {scene_name}. Available: {', '.join(SCENES.keys())}"
+        all_scenes = _get_all_scenes()
+        if scene_name not in all_scenes:
+            return False, f"Unknown scene: {scene_name}. Available: {', '.join(all_scenes.keys())}"
 
         with self._lock:
             # If already in a scene, deactivate first (don't overwrite saved state)
@@ -89,7 +140,7 @@ class SceneService:
             self._save_state()
 
         # Apply scene settings
-        scene = SCENES[scene_name]
+        scene = all_scenes[scene_name]
         self._apply_scene(scene)
 
         if self._socketio:
@@ -103,7 +154,8 @@ class SceneService:
             if not self._active_scene:
                 return False, "No scene is active"
             scene_name = self._active_scene
-            label = SCENES.get(scene_name, {}).get("label", scene_name)
+            all_scenes = _get_all_scenes()
+            label = all_scenes.get(scene_name, {}).get("label", scene_name)
 
         self._apply_deactivation(skip_restore=False)
 
@@ -114,11 +166,70 @@ class SceneService:
 
     def get_status(self) -> dict:
         """Get full scene status for API."""
+        all_scenes = _get_all_scenes()
         return {
             "active": self._active_scene,
-            "label": SCENES.get(self._active_scene, {}).get("label") if self._active_scene else None,
+            "label": all_scenes.get(self._active_scene, {}).get("label") if self._active_scene else None,
             "scenes": self.list_scenes(),
         }
+
+    def get_scene(self, name: str) -> dict | None:
+        """Return full config for a scene."""
+        all_scenes = _get_all_scenes()
+        return all_scenes.get(name)
+
+    def create_scene(self, name: str, config: dict) -> tuple[bool, str]:
+        """Create a new custom scene."""
+        key = name.lower().strip().replace(" ", "_")
+        if key in BUILTIN_SCENES:
+            return False, f"Cannot overwrite built-in scene: {key}"
+        custom = _load_custom_scenes()
+        if key in custom:
+            return False, f"Scene '{key}' already exists — use update instead"
+        if "label" not in config:
+            config["label"] = name
+        custom[key] = config
+        _save_custom_scenes(custom)
+        print(f"[scene] Created custom scene: {key}")
+        if self._socketio:
+            self._socketio.emit("scenes_updated", {"scenes": self.list_scenes()})
+        return True, f"Scene '{config['label']}' created"
+
+    def update_scene(self, name: str, config: dict) -> tuple[bool, str]:
+        """Update an existing custom scene."""
+        key = name.lower().strip()
+        if key in BUILTIN_SCENES:
+            return False, f"Cannot modify built-in scene: {key}"
+        custom = _load_custom_scenes()
+        if key not in custom:
+            return False, f"Custom scene '{key}' not found"
+        if "label" not in config:
+            config["label"] = custom[key].get("label", name)
+        custom[key] = config
+        _save_custom_scenes(custom)
+        print(f"[scene] Updated custom scene: {key}")
+        if self._socketio:
+            self._socketio.emit("scenes_updated", {"scenes": self.list_scenes()})
+        return True, f"Scene '{config['label']}' updated"
+
+    def delete_scene(self, name: str) -> tuple[bool, str]:
+        """Delete a custom scene (cannot delete builtins)."""
+        key = name.lower().strip()
+        if key in BUILTIN_SCENES:
+            return False, f"Cannot delete built-in scene: {key}"
+        custom = _load_custom_scenes()
+        if key not in custom:
+            return False, f"Custom scene '{key}' not found"
+        label = custom[key].get("label", key)
+        del custom[key]
+        _save_custom_scenes(custom)
+        # If this scene was active, deactivate it
+        if self._active_scene == key:
+            self._apply_deactivation(skip_restore=False)
+        print(f"[scene] Deleted custom scene: {key}")
+        if self._socketio:
+            self._socketio.emit("scenes_updated", {"scenes": self.list_scenes()})
+        return True, f"Scene '{label}' deleted"
 
     # ── State Capture & Restore ─────────────────────────────────────
 
@@ -281,8 +392,15 @@ class SceneService:
 
     # ── Persistence ─────────────────────────────────────────────────
 
+    _MAX_SCENE_AGE = 4 * 3600  # 4 hours — auto-expire any scene after this
+
     def _load_state(self):
-        """Load active scene from settings.json (survives restarts mid-scene)."""
+        """Load active scene from settings.json (survives restarts mid-scene).
+
+        Auto-deactivates scenes that have been active too long:
+        - Bedtime: expires if it's daytime (6 AM - 8 PM)
+        - All scenes: expire after 4 hours
+        """
         try:
             if os.path.exists(SETTINGS_PATH):
                 with open(SETTINGS_PATH, "r") as f:
@@ -291,6 +409,29 @@ class SceneService:
                 self._active_scene = scene_data.get("active")
                 self._saved_state = scene_data.get("saved_state", {})
                 if self._active_scene:
+                    # Auto-expire bedtime during daytime hours
+                    if self._active_scene == "bedtime":
+                        import datetime
+                        hour = datetime.datetime.now().hour
+                        if 6 <= hour < 20:  # 6 AM to 8 PM
+                            print(f"[scene] Auto-expired bedtime mode (it's {hour}:00, daytime)")
+                            self._active_scene = None
+                            self._saved_state = {}
+                            self._save_state()
+                            return
+
+                    # Auto-expire any scene after 4 hours
+                    activated_at = scene_data.get("activated_at")
+                    if activated_at:
+                        age = time.time() - activated_at
+                        if age > self._MAX_SCENE_AGE:
+                            hours = age / 3600
+                            print(f"[scene] Auto-expired {self._active_scene} (active for {hours:.1f}h, max 4h)")
+                            self._active_scene = None
+                            self._saved_state = {}
+                            self._save_state()
+                            return
+
                     print(f"[scene] Restored active scene: {self._active_scene}")
         except Exception as e:
             print(f"[scene] Load state failed: {e}")
@@ -306,7 +447,14 @@ class SceneService:
             settings["scene"] = {
                 "active": self._active_scene,
                 "saved_state": self._saved_state,
+                "activated_at": settings.get("scene", {}).get("activated_at"),
             }
+            # Stamp activation time when a scene becomes active
+            if self._active_scene and not settings["scene"]["activated_at"]:
+                import time as _time
+                settings["scene"]["activated_at"] = _time.time()
+            elif not self._active_scene:
+                settings["scene"]["activated_at"] = None
             with open(SETTINGS_PATH, "w") as f:
                 json.dump(settings, f, indent=2)
         except Exception as e:

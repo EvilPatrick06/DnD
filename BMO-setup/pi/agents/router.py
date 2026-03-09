@@ -32,6 +32,9 @@ EXPLICIT_PREFIXES = {
     "!design": "design",
     "!learn": "learning",
     "!remember": "learning",
+    "!list": "list",
+    "!routine": "routine",
+    "!alert": "alert",
 }
 
 
@@ -123,6 +126,25 @@ KEYWORD_PATTERNS: dict[str, list[str]] = {
         "don't forget", "keep in mind", "recall what",
         "what do you know about me",
     ],
+    "list": [
+        "add to list", "shopping list", "todo list", "to-do list",
+        "what's on my list", "remove from list", "check off",
+        "my lists", "grocery list", "create list", "delete list",
+        "show list", "clear list",
+    ],
+    "routine": [
+        "routine", "automation", "good morning routine",
+        "bedtime routine", "create routine", "my routines",
+        "trigger routine", "run routine", "disable routine",
+    ],
+    "alert": [
+        "alert", "recent alerts", "alert settings", "quiet hours",
+        "notification settings", "alert history",
+    ],
+    "conversation": [
+        "learn my voice", "remember my voice", "enroll my voice",
+        "voice enrollment", "recognize my voice", "who am i",
+    ],
 }
 
 
@@ -149,7 +171,10 @@ Available agents:
 - review: Code review, PR feedback, quality analysis
 - design: UI/UX design, mockups, layout planning
 - learning: Saving user preferences, recalling past context, long-term memory
-- conversation: General chat, jokes, opinions, questions about BMO itself
+- list: Managing named lists (shopping, todo, grocery), adding/removing/checking items
+- routine: Creating, managing, triggering automation routines (morning, bedtime, leaving)
+- alert: Querying alert history, configuring alert settings, quiet hours
+- conversation: General chat, jokes, opinions, questions about BMO itself, voice enrollment ("learn my voice", "remember my voice", "my name is X" when about voice recognition)
 
 Respond with ONLY the agent name, nothing else.
 

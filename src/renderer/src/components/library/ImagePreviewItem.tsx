@@ -5,9 +5,11 @@ interface ImagePreviewItemProps {
     data: Record<string, unknown>
   }
   onClick?: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: (id: string) => void
 }
 
-export default function ImagePreviewItem({ item, onClick }: ImagePreviewItemProps): JSX.Element {
+export default function ImagePreviewItem({ item, onClick, isFavorite, onToggleFavorite }: ImagePreviewItemProps): JSX.Element {
   const imageData = (item.data.data as string) ?? (item.data.path as string) ?? ''
   const isDataUrl = imageData.startsWith('data:')
 
@@ -32,6 +34,22 @@ export default function ImagePreviewItem({ item, onClick }: ImagePreviewItemProp
         </span>
         <p className="text-xs text-gray-500 truncate mt-0.5">Portrait / Icon</p>
       </div>
+
+      {/* Favorite star */}
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleFavorite(item.id)
+          }}
+          className={`text-lg flex-shrink-0 transition-colors cursor-pointer ${
+            isFavorite ? 'text-amber-400' : 'text-gray-600 hover:text-gray-400'
+          }`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '★' : '☆'}
+        </button>
+      )}
 
       {/* Arrow */}
       <svg

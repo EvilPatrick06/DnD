@@ -19,32 +19,31 @@ export function spendLegendaryAction(
   if (!initiative) return { success: false, remaining: 0, summary: 'No active initiative.' }
 
   const entry = initiative.entries.find((e) => e.id === entryId)
-  if (!entry?.legendaryResistances) {
+  if (!entry?.legendaryActions) {
     return { success: false, remaining: 0, summary: 'This creature has no legendary actions.' }
   }
 
-  // Using legendaryResistances to track legendary action budget as well
-  // In real usage, a separate field would be ideal, but we reuse the existing field
-  const remaining = entry.legendaryResistances.remaining
+  const remaining = entry.legendaryActions.maximum - entry.legendaryActions.used
   if (remaining < cost) {
     return {
       success: false,
       remaining,
-      summary: `Not enough legendary actions remaining (${remaining}/${entry.legendaryResistances.max}).`
+      summary: `Not enough legendary actions remaining (${remaining}/${entry.legendaryActions.maximum}).`
     }
   }
 
   gameStore.updateInitiativeEntry(entryId, {
-    legendaryResistances: {
-      ...entry.legendaryResistances,
-      remaining: remaining - cost
+    legendaryActions: {
+      ...entry.legendaryActions,
+      used: entry.legendaryActions.used + cost
     }
   })
 
+  const newRemaining = remaining - cost
   return {
     success: true,
-    remaining: remaining - cost,
-    summary: `Legendary action used (cost: ${cost}). Remaining: ${remaining - cost}/${entry.legendaryResistances.max}`
+    remaining: newRemaining,
+    summary: `Legendary action used (cost: ${cost}). Remaining: ${newRemaining}/${entry.legendaryActions.maximum}`
   }
 }
 

@@ -7,9 +7,11 @@ interface AudioPlayerItemProps {
     data: Record<string, unknown>
   }
   onClick?: () => void
+  isFavorite?: boolean
+  onToggleFavorite?: (id: string) => void
 }
 
-export default function AudioPlayerItem({ item, onClick }: AudioPlayerItemProps): JSX.Element {
+export default function AudioPlayerItem({ item, onClick, isFavorite, onToggleFavorite }: AudioPlayerItemProps): JSX.Element {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -100,6 +102,22 @@ export default function AudioPlayerItem({ item, onClick }: AudioPlayerItemProps)
           )}
         </div>
       </div>
+
+      {/* Favorite star */}
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleFavorite(item.id)
+          }}
+          className={`text-lg flex-shrink-0 transition-colors cursor-pointer ${
+            isFavorite ? 'text-amber-400' : 'text-gray-600 hover:text-gray-400'
+          }`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '★' : '☆'}
+        </button>
+      )}
     </div>
   )
 }

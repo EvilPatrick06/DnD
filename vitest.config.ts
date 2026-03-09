@@ -16,7 +16,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@renderer': resolve(__dirname, 'src/renderer/src'),
-      '@data': resolve(__dirname, 'src/renderer/public/data')
+      '@data': resolve(__dirname, 'src/renderer/public/data'),
+      'pdfjs-dist': resolve(__dirname, 'src/__mocks__/pdfjs-dist.ts')
     }
   }
 })

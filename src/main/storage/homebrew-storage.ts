@@ -1,5 +1,6 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
 import type { StorageResult } from './types'
@@ -26,7 +27,7 @@ async function getCategoryDir(category: string): Promise<string> {
 
 export async function saveHomebrewEntry(entry: Record<string, unknown>): Promise<StorageResult<void>> {
   try {
-    const id = entry.id as string
+    let id = entry.id as string
     const type = entry.type as string
     if (!id || !type) {
       return { success: false, error: 'Entry must have id and type' }
@@ -36,7 +37,24 @@ export async function saveHomebrewEntry(entry: Record<string, unknown>): Promise
     }
     const dir = await getCategoryDir(type)
     const path = join(dir, `${id}.json`)
-    await writeFile(path, JSON.stringify(entry, null, 2), 'utf-8')
+
+    // Check if file already exists with a different entry to prevent overwrites
+    try {
+      await access(path)
+      // File exists — check if it's the same entry (update) or a collision
+      const existing = JSON.parse(await readFile(path, 'utf-8'))
+      if (existing.id === id && existing.name !== entry.name) {
+        // Different name = likely a different entry that collided; generate new ID
+        id = randomUUID()
+        entry = { ...entry, id }
+      }
+      // Same name = intentional update, allow overwrite
+    } catch {
+      // File doesn't exist — safe to write
+    }
+
+    const writePath = join(dir, `${id}.json`)
+    await writeFile(writePath, JSON.stringify(entry, null, 2), 'utf-8')
     return { success: true }
   } catch (err) {
     return { success: false, error: `Failed to save homebrew entry: ${(err as Error).message}` }

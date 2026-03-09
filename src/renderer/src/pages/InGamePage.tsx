@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import GameLayout from '../components/game/GameLayout'
 import { Spinner } from '../components/ui'
@@ -24,8 +24,6 @@ export default function InGamePage(): JSX.Element {
   const displayName = useNetworkStore((s) => s.displayName)
   const gameCampaignId = useGameStore((s) => s.campaignId)
   const loadGameState = useGameStore((s) => s.loadGameState)
-  const initiative = useGameStore((s) => s.initiative)
-  const nextTurn = useGameStore((s) => s.nextTurn)
   const [loading, setLoading] = useState(true)
   const [reconnectAttempt, setReconnectAttempt] = useState(0)
   const [showReconnect, setShowReconnect] = useState(false)
@@ -130,40 +128,6 @@ export default function InGamePage(): JSX.Element {
       bastionStore.saveBastion({ ...bastion, campaignId: campaign.id })
     }
   }, [campaign, characters])
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
-        return
-      }
-
-      if (effectiveDM) {
-        if (e.key === 'n' || e.key === 'N') {
-          if (initiative) {
-            nextTurn()
-          }
-        }
-      }
-
-      if (e.key === ' ' && initiative && effectiveDM) {
-        e.preventDefault()
-        nextTurn()
-      }
-
-      if (e.key === '/') {
-        e.preventDefault()
-        const chatInput = document.querySelector<HTMLInputElement>('[data-chat-input]')
-        chatInput?.focus()
-      }
-    },
-    [effectiveDM, initiative, nextTurn]
-  )
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
 
   if (!campaign && loading) {
     return (

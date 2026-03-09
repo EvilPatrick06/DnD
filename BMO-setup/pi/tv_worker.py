@@ -40,11 +40,17 @@ class TVWorker:
         try:
             if action == "connect_test":
                 await self.ensure_connected()
+                vol = -1
+                try:
+                    vol = self.remote.volume_level if hasattr(self.remote, "volume_level") else -1
+                except Exception:
+                    pass
                 return {
                     "ok": True,
                     "connected": True,
                     "is_on": self.is_on,
                     "current_app": self.remote.current_app or "",
+                    "volume_level": vol,
                 }
 
             elif action == "send_key":
@@ -87,6 +93,12 @@ class TVWorker:
 
             elif action == "status":
                 connected = self.remote is not None
+                vol = -1
+                if connected:
+                    try:
+                        vol = self.remote.volume_level if hasattr(self.remote, "volume_level") else -1
+                    except Exception:
+                        pass
                 return {
                     "ok": True,
                     "connected": connected,
@@ -94,6 +106,7 @@ class TVWorker:
                     "current_app": (
                         self.remote.current_app or "" if connected else ""
                     ),
+                    "volume_level": vol,
                 }
 
             elif action == "disconnect":

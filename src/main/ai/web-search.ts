@@ -58,7 +58,7 @@ export async function performWebSearch(query: string): Promise<WebSearchResult[]
     const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {
-      return [{ title: 'Search Error', snippet: `HTTP ${response.status}`, url: '' }]
+      throw new Error(`Web search failed: HTTP ${response.status}`)
     }
 
     const data = (await response.json()) as {

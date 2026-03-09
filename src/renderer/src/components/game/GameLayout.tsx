@@ -1,8 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useGameEffects } from '../../hooks/use-game-effects'
 import { useGameHandlers } from '../../hooks/use-game-handlers'
 import { useGameNetwork } from '../../hooks/use-game-network'
+import { useGameShortcuts } from '../../hooks/use-game-shortcuts'
 import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
 import { executeMacro } from '../../services/macro-engine'
@@ -19,7 +20,7 @@ import { is5eCharacter } from '../../types/character'
 import type { MapToken } from '../../types/map'
 import { getBuilderCreatePath } from '../../utils/character-routes'
 import { processDawnRecharge } from '../../utils/dawn-recharge'
-import { ErrorBoundary } from '../ui'
+import { ErrorBoundary, ModalErrorBoundary } from '../ui'
 import { announce } from '../ui/ScreenReaderAnnouncer'
 import DMBottomBar from './bottom/DMBottomBar'
 import PlayerBottomBar from './bottom/PlayerBottomBar'
@@ -445,6 +446,17 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     onPortalEntry: handlePortalEntry
   })
 
+  // Wire keyboard shortcuts to game actions
+  useGameShortcuts(effectiveIsDM, {
+    onEndTurn: handleEndTurn,
+    onToggleInitiative: () => setSidebarCollapsed((c) => !c),
+    onToggleJournal: () => setActiveModal((m) => (m === 'sharedJournal' ? null : 'sharedJournal')),
+    onOpenDice: () => setActiveModal((m) => (m === 'diceRoller' ? null : 'diceRoller')),
+    onCloseModal: () => setActiveModal(null),
+    onShowShortcuts: () => setActiveModal((m) => (m === 'shortcutRef' ? null : 'shortcutRef')),
+    onToggleMapEditor: () => setEditMapMode((v) => !v)
+  })
+
   if (leaving)
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gray-950 text-gray-100">
@@ -465,6 +477,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           key={mapKey}
           map={activeMap}
           isHost={effectiveIsDM}
+          myCharacterId={character?.id ?? null}
           selectedTokenId={null}
           activeTool={activeTool}
           fogBrushSize={fogBrushSize}
@@ -827,7 +840,8 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       )}
 
       {/* Modals */}
-      <GameModalDispatcher
+      <ModalErrorBoundary modalName="Game Modal" onClose={() => setActiveModal(null)}>
+        <GameModalDispatcher
         activeModal={activeModal}
         setActiveModal={setActiveModal}
         effectiveIsDM={effectiveIsDM}
@@ -853,6 +867,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
         handleWildShapeUseAdjust={handleWildShapeUseAdjust}
         localPeerId={lobbyPeerId ?? ''}
       />
+      </ModalErrorBoundary>
 
       {/* Character Inspect Modal (driven by store state, not activeModal) */}
       <InspectModalRenderer />

@@ -5,7 +5,8 @@
  */
 
 import { readFile, stat } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { isAbsolute, relative, resolve } from 'node:path'
+import { app } from 'electron'
 
 const FILE_READ_RE = /\[FILE_READ\]\s*([\s\S]*?)\s*\[\/FILE_READ\]/
 
@@ -53,9 +54,24 @@ export function stripFileRead(response: string): string {
   return response.replace(/\s*\[FILE_READ\][\s\S]*?\[\/FILE_READ\]\s*/g, '').trim()
 }
 
+/** Check whether a resolved path falls within the app's userData directory. */
+function isPathWithinUserData(resolvedPath: string): boolean {
+  const userData = resolve(app.getPath('userData'))
+  const rel = relative(userData, resolvedPath)
+  return !!rel && !rel.startsWith('..') && !isAbsolute(rel)
+}
+
 /** Read a file from disk with safety constraints. */
 export async function readRequestedFile(filePath: string): Promise<FileReadResult> {
   const resolved = resolve(filePath)
+
+  if (!isPathWithinUserData(resolved)) {
+    return {
+      success: false,
+      path: resolved,
+      error: 'Access denied: file reads are restricted to app data directories'
+    }
+  }
 
   try {
     const info = await stat(resolved)

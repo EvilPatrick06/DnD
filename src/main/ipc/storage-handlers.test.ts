@@ -142,9 +142,9 @@ describe('storage-handlers', () => {
     expect(registeredChannels).toContain(IPC_CHANNELS.LOAD_SETTINGS)
   })
 
-  it('should register exactly 31 handlers', () => {
+  it('should register exactly 46 handlers', () => {
     registerStorageHandlers()
-    expect(mockHandle).toHaveBeenCalledTimes(31)
+    expect(mockHandle).toHaveBeenCalledTimes(46)
   })
 
   describe('SAVE_CHARACTER handler', () => {

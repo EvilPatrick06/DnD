@@ -307,6 +307,10 @@ export function registerAiHandlers(): void {
   ipcMain.handle(
     IPC_CHANNELS.AI_LOG_NPC_INTERACTION,
     async (_event, campaignId: string, npcName: string, summary: string, attitudeAfter: string) => {
+      const validAttitudes = ['friendly', 'neutral', 'hostile'] as const
+      if (!validAttitudes.includes(attitudeAfter as (typeof validAttitudes)[number])) {
+        return { success: false, error: `Invalid attitude: ${attitudeAfter}` }
+      }
       const memMgr = getMemoryManager(campaignId)
       await memMgr.logNpcInteraction(npcName, summary, attitudeAfter as 'friendly' | 'neutral' | 'hostile')
       return { success: true }
@@ -323,6 +327,10 @@ export function registerAiHandlers(): void {
       relationship: string,
       disposition: string
     ) => {
+      const validDispositions = ['friendly', 'neutral', 'hostile'] as const
+      if (!validDispositions.includes(disposition as (typeof validDispositions)[number])) {
+        return { success: false, error: `Invalid disposition: ${disposition}` }
+      }
       const memMgr = getMemoryManager(campaignId)
       await memMgr.addNpcRelationship(
         npcName,

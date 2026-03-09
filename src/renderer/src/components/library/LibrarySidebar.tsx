@@ -9,6 +9,8 @@ interface LibrarySidebarProps {
   totalCounts?: Record<string, number>
   onSelectFavorites?: () => void
   isFavoritesSelected?: boolean
+  onSelectCoreBooks?: () => void
+  isCoreBooksSelected?: boolean
 }
 
 const ALWAYS_MY_CONTENT = new Set<LibraryCategory>(['characters', 'campaigns', 'bastions'])
@@ -19,9 +21,11 @@ export default function LibrarySidebar({
   homebrewCounts,
   totalCounts,
   onSelectFavorites,
-  isFavoritesSelected
+  isFavoritesSelected,
+  onSelectCoreBooks,
+  isCoreBooksSelected
 }: LibrarySidebarProps): JSX.Element {
-  const [expandedGroups, setExpandedGroups] = useState<Set<LibraryGroup>>(new Set(LIBRARY_GROUPS.map((g) => g.id)))
+  const [expandedGroups, setExpandedGroups] = useState<Set<LibraryGroup>>(new Set())
 
   // Compute dynamic My Content categories based on homebrew counts
   const dynamicMyContentCats = useMemo(() => {
@@ -68,6 +72,17 @@ export default function LibrarySidebar({
         >
           <span className="text-base leading-none">★</span>
           <span className="flex-1 truncate">Favorites</span>
+        </button>
+      )}
+
+      {onSelectCoreBooks && (
+        <button
+          onClick={onSelectCoreBooks}
+          className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors cursor-pointer
+            ${isCoreBooksSelected ? 'text-amber-400 bg-amber-900/20 border-r-2 border-amber-500' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'}`}
+        >
+          <span className="text-base leading-none">📚</span>
+          <span className="flex-1 truncate">Core Books</span>
         </button>
       )}
 

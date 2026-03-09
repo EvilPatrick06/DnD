@@ -188,9 +188,10 @@ export default function InitiativeControls({
               + Add Entry
             </button>
           )}
-          <div className="flex gap-1">
+          <div className="flex gap-1" role="group" aria-label="Initiative turn controls">
             <button
               onClick={onPrevTurn}
+              aria-label="Previous turn"
               className="flex-1 py-1.5 text-xs rounded-lg bg-gray-800 text-gray-400
                 hover:bg-gray-700 hover:text-gray-200 transition-colors cursor-pointer"
             >
@@ -198,6 +199,7 @@ export default function InitiativeControls({
             </button>
             <button
               onClick={onNextTurn}
+              aria-label="Next turn"
               className="flex-2 py-1.5 text-xs rounded-lg bg-amber-600 hover:bg-amber-500 text-white
                 font-semibold transition-colors cursor-pointer"
             >
@@ -205,6 +207,7 @@ export default function InitiativeControls({
             </button>
             <button
               onClick={onEndInitiative}
+              aria-label="End initiative"
               className="flex-1 py-1.5 text-xs rounded-lg bg-gray-800 text-gray-400
                 hover:bg-red-700 hover:text-white transition-colors cursor-pointer"
             >

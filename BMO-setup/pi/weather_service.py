@@ -48,11 +48,13 @@ POLL_INTERVAL = 1800  # 30 minutes
 class WeatherService:
     """Fetches weather data from Open-Meteo API with background caching."""
 
-    def __init__(self, socketio=None):
+    def __init__(self, socketio=None, alert_service=None):
         self.socketio = socketio
+        self.alert_service = alert_service
         self._cache: dict | None = None
         self._running = False
         self._poll_thread = None
+        self._last_weather_code = None
 
     # ── Fetch Weather ────────────────────────────────────────────────
 
@@ -134,7 +136,45 @@ class WeatherService:
         while self._running:
             weather = self._fetch()
             self._emit("weather_update", weather)
+            self._check_severe_weather(weather)
             time.sleep(POLL_INTERVAL)
+
+    def _check_severe_weather(self, weather: dict):
+        """Check for severe weather conditions and send alerts."""
+        if not self.alert_service or not weather or "error" in weather:
+            return
+        code = weather.get("weather_code", 0)
+        temp = weather.get("temperature", 50)
+        desc = weather.get("description", "")
+
+        # Only alert on weather code changes
+        if code == self._last_weather_code:
+            return
+        self._last_weather_code = code
+
+        # Severe weather codes: thunderstorms (95-99), heavy rain (65), heavy snow (75)
+        if code >= 95:
+            self.alert_service.send_alert(
+                "weather_warning",
+                f"Severe Weather: {desc}",
+                f"Current temperature: {temp}°F. Take precautions.",
+                priority="high",
+            )
+        elif code in (65, 67, 75, 82, 86):
+            self.alert_service.send_alert(
+                "weather_warning",
+                f"Weather Alert: {desc}",
+                f"Current temperature: {temp}°F.",
+                priority="medium",
+            )
+        # Extreme temperature alerts
+        elif temp <= 10 or temp >= 105:
+            self.alert_service.send_alert(
+                "weather_warning",
+                f"Extreme Temperature: {temp}°F",
+                f"Conditions: {desc}. Stay safe!",
+                priority="high",
+            )
 
     # ── Helpers ──────────────────────────────────────────────────────
 

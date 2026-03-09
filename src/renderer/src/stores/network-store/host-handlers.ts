@@ -1,15 +1,18 @@
 import type {
   BuyItemPayload,
   ColorChangePayload,
+  HaggleRequestPayload,
   InspectRequestPayload,
   JournalAddPayload,
   JournalDeletePayload,
   JournalUpdatePayload,
   MessageType,
+  MoveDeclarePayload,
   NetworkMessage,
   RollResultPayload,
   SellItemPayload,
   ShopItem,
+  TimeRequestPayload,
   TradeCancelPayload,
   TradeRequestPayload,
   TradeResponsePayload,
@@ -354,6 +357,43 @@ export function handleHostMessage(
           sequence: 0
         })
       }
+      break
+    }
+
+    case 'player:haggle-request': {
+      const payload = message.payload as HaggleRequestPayload
+      useLobbyStore.getState().addChatMessage({
+        id: `sys-haggle-req-${Date.now()}`,
+        senderId: message.senderId,
+        senderName: 'System',
+        content: `🏪 ${message.senderName} is haggling for ${payload.itemName} (Persuasion: ${payload.persuasionTotal})`,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      break
+    }
+
+    case 'player:move-declare': {
+      const _payload = message.payload as MoveDeclarePayload
+      broadcastExcluding(message, fromPeerId)
+      break
+    }
+
+    case 'player:time-request': {
+      const payload = message.payload as TimeRequestPayload
+      useLobbyStore.getState().addChatMessage({
+        id: `sys-time-req-${Date.now()}`,
+        senderId: message.senderId,
+        senderName: 'System',
+        content: `🕐 ${payload.requesterName} is requesting the current in-game time`,
+        timestamp: Date.now(),
+        isSystem: true
+      })
+      break
+    }
+
+    case 'player:typing': {
+      broadcastExcluding(message, fromPeerId)
       break
     }
 

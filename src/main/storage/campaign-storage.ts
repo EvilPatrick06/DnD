@@ -1,4 +1,4 @@
-import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, rm, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
@@ -101,6 +101,20 @@ export async function deleteCampaign(id: string): Promise<StorageResult<boolean>
       return { success: true, data: false }
     }
     await unlink(path)
+
+    // Cascade: remove all associated data
+    const userData = app.getPath('userData')
+    const cascadePaths = [
+      join(userData, 'campaigns', id),           // custom-audio, ai-context subdirs
+      join(userData, 'game-states', `${id}.json`),
+      join(userData, 'ai-conversations', `${id}.json`),
+      join(userData, 'bans', `${id}.json`)
+    ]
+    for (const p of cascadePaths) {
+      await rm(p, { recursive: true, force: true }).catch(() => {})
+    }
+
+    logToFile('INFO', `Campaign deleted with cascade: ${id}`)
     return { success: true, data: true }
   } catch (err) {
     return { success: false, error: `Failed to delete campaign: ${(err as Error).message}` }

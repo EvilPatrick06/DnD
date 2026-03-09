@@ -11,6 +11,7 @@ from ytmusicapi import YTMusic
 STREAM_URL_TTL = 18000  # 5 hours — re-extract before expiry
 HISTORY_FILE = os.path.expanduser("~/bmo/data/music_history.json")
 PLAY_COUNTS_FILE = os.path.expanduser("~/bmo/data/play_counts.json")
+PLAYBACK_STATE_FILE = os.path.expanduser("~/bmo/data/playback_state.json")
 MAX_HISTORY = 100
 
 # Valid output device names
@@ -40,6 +41,7 @@ class MusicService:
         self._output_device: str = OUTPUT_PI
         self.shuffle: bool = False
         self.repeat: str = "off"  # "off", "all", "one"
+        self.autoplay: bool = True  # When queue ends, play related songs
 
         # Auto-advance thread
         self._monitor_thread = None
@@ -52,8 +54,39 @@ class MusicService:
         # Play history
         self.history: list[dict] = []
         self.play_counts: dict[str, int] = {}
-        self._load_history()
         self._load_play_counts()
+        self._load_history()
+
+        # Restore playback state from last session (deferred until after init)
+        self._pending_restore = self._load_playback_state()
+
+    def restore_playback(self):
+        """Resume playback from saved state. Call after all services are ready."""
+        state = self._pending_restore
+        self._pending_restore = None
+        if not state:
+            return
+        try:
+            queue = state.get("queue", [])
+            index = state.get("queue_index", 0)
+            if not queue or index < 0 or index >= len(queue):
+                return
+            self.shuffle = state.get("shuffle", False)
+            self.repeat = state.get("repeat", "off")
+            self.autoplay = state.get("autoplay", True)
+            self.queue = queue
+            self.queue_index = index
+            was_paused = state.get("was_paused", False)
+            song = queue[index]
+            status = "paused" if was_paused else "playing"
+            print(f"[music] Restoring ({status}): {song.get('title', '?')} + {len(queue) - index - 1} queued")
+            self.play(song, add_to_queue=False)
+            if was_paused:
+                # Give VLC a moment to start, then pause it
+                time.sleep(0.5)
+                self.pause()
+        except Exception as e:
+            print(f"[music] Restore playback failed: {e}")
 
     # ── Output Device Property ───────────────────────────────────────
 
@@ -113,6 +146,7 @@ class MusicService:
 
     def play(self, song: dict | None = None, add_to_queue: bool = True):
         """Play a song. If song is None, resume current playback."""
+        print(f"[music] play() called — song={song.get('title') if song else None}, add_to_queue={add_to_queue}")
         if song is None:
             # Resume
             if self._output_device == OUTPUT_PI:
@@ -148,6 +182,7 @@ class MusicService:
         self._record_play(song)
         self._start_monitor()
         self._prefetch_next()
+        self._save_playback_state()
         self._emit_state()
 
     def play_queue(self, songs: list[dict]):
@@ -163,12 +198,14 @@ class MusicService:
             self._player.pause()
         elif self._output_device == OUTPUT_TV:
             self._cast_pause()
+        self._save_playback_state()
         self._emit_state()
 
     def stop(self):
         """Stop playback on the current output device."""
         self._stop_current_device()
         self.current_song = None
+        self._clear_playback_state()
         self._emit_state()
 
     def _stop_current_device(self):
@@ -180,6 +217,7 @@ class MusicService:
 
     def next_track(self):
         """Skip to next track in queue."""
+        print(f"[music] next_track() called — queue_index={self.queue_index}, queue_len={len(self.queue)}, repeat={self.repeat}, autoplay={self.autoplay}")
         if not self.queue:
             return
 
@@ -192,11 +230,70 @@ class MusicService:
         if self.queue_index >= len(self.queue):
             if self.repeat == "all":
                 self.queue_index = 0
+            elif self.autoplay:
+                self._autoplay_related()
+                return
             else:
                 self.stop()
                 return
 
         self.play(self.queue[self.queue_index], add_to_queue=False)
+
+    def _autoplay_related(self):
+        """Fetch related songs based on listening history and queue them."""
+        try:
+            # Use the last played song to seed the radio
+            seed_id = None
+            if self.current_song:
+                seed_id = self.current_song.get("videoId")
+            elif self.history:
+                seed_id = self.history[0].get("song", {}).get("videoId")
+
+            if not seed_id:
+                print("[music] Autoplay: no seed song, stopping")
+                self.stop()
+                return
+
+            print(f"[music] Autoplay: fetching related songs for {seed_id}")
+            watch = self._ytmusic.get_watch_playlist(seed_id, limit=10)
+            tracks = watch.get("tracks", [])
+
+            # Skip the first track (it's the seed song)
+            related = []
+            for t in tracks:
+                vid = t.get("videoId")
+                if not vid or vid == seed_id:
+                    continue
+                artists = ", ".join(a["name"] for a in t.get("artists", []))
+                thumbnails = t.get("thumbnail", [])
+                if isinstance(thumbnails, list):
+                    thumb = thumbnails[-1].get("url", "") if thumbnails else ""
+                elif isinstance(thumbnails, dict):
+                    thumb_list = thumbnails.get("thumbnails", [])
+                    thumb = thumb_list[-1].get("url", "") if thumb_list else ""
+                else:
+                    thumb = ""
+                related.append({
+                    "videoId": vid,
+                    "title": t.get("title", "Unknown"),
+                    "artist": artists,
+                    "duration": t.get("length", t.get("duration", "")),
+                    "thumbnail": thumb,
+                })
+
+            if not related:
+                print("[music] Autoplay: no related songs found, stopping")
+                self.stop()
+                return
+
+            # Add related songs to queue and play the first one
+            print(f"[music] Autoplay: queued {len(related)} related songs")
+            self.queue.extend(related)
+            self.queue_index = len(self.queue) - len(related)
+            self.play(self.queue[self.queue_index], add_to_queue=False)
+        except Exception as e:
+            print(f"[music] Autoplay failed: {e}")
+            self.stop()
 
     def previous_track(self):
         """Go to previous track in queue."""
@@ -297,6 +394,7 @@ class MusicService:
             "queue_index": self.queue_index,
             "shuffle": self.shuffle,
             "repeat": self.repeat,
+            "autoplay": self.autoplay,
         }
 
         return state_dict
@@ -360,10 +458,24 @@ class MusicService:
 
     def _monitor_loop(self):
         """Watch for track end and auto-advance."""
+        has_played = False  # Track if VLC actually started playing
+        last_state = None
         while self._running:
             if self._output_device == OUTPUT_PI:
                 state = self._player.get_state()
-                if state == vlc.State.Ended:
+                if state != last_state:
+                    print(f"[music][monitor] VLC state: {last_state} → {state} (has_played={has_played})")
+                    last_state = state
+                if state == vlc.State.Playing:
+                    has_played = True
+                elif state == vlc.State.Error:
+                    print("[music][monitor] VLC error — stopping")
+                    has_played = False
+                    self.current_song = None
+                    self._emit_state()
+                elif state == vlc.State.Ended and has_played:
+                    has_played = False  # Reset for next track
+                    print("[music][monitor] Track ended — advancing")
                     if self.repeat == "one":
                         self.play(self.current_song, add_to_queue=False)
                     else:
@@ -424,15 +536,6 @@ class MusicService:
             if os.path.exists(HISTORY_FILE):
                 with open(HISTORY_FILE, "r") as f:
                     raw = json.load(f)[:MAX_HISTORY]
-                # Seed play counts from raw history before dedup
-                for entry in raw:
-                    vid = entry.get("song", {}).get("videoId", "")
-                    if vid and vid not in self.play_counts:
-                        count = sum(1 for e in raw if e.get("song", {}).get("videoId") == vid)
-                        if count > 0:
-                            self.play_counts[vid] = count
-                if self.play_counts:
-                    self._save_play_counts()
                 # Deduplicate on load (keep first occurrence = most recent)
                 seen = set()
                 deduped = []
@@ -478,6 +581,53 @@ class MusicService:
         except Exception as e:
             print(f"[music] Failed to save play counts: {e}")
 
+    def _save_playback_state(self):
+        """Persist current queue + position so playback survives restarts."""
+        try:
+            # Strip stream URLs (they expire) — will re-extract on restore
+            clean_queue = []
+            for s in self.queue:
+                clean = {k: v for k, v in s.items() if k != "stream_url"}
+                clean_queue.append(clean)
+            # Check if currently paused
+            is_paused = False
+            if self._output_device == OUTPUT_PI:
+                is_paused = self._player.get_state() == vlc.State.Paused
+            state = {
+                "queue": clean_queue,
+                "queue_index": self.queue_index,
+                "shuffle": self.shuffle,
+                "repeat": self.repeat,
+                "autoplay": self.autoplay,
+                "was_paused": is_paused,
+            }
+            os.makedirs(os.path.dirname(PLAYBACK_STATE_FILE), exist_ok=True)
+            with open(PLAYBACK_STATE_FILE, "w") as f:
+                json.dump(state, f)
+        except Exception as e:
+            print(f"[music] Failed to save playback state: {e}")
+
+    def _load_playback_state(self) -> dict | None:
+        """Load saved playback state from disk."""
+        try:
+            if os.path.exists(PLAYBACK_STATE_FILE):
+                with open(PLAYBACK_STATE_FILE, "r") as f:
+                    state = json.load(f)
+                if state.get("queue"):
+                    print(f"[music] Found saved playback state: {len(state['queue'])} tracks")
+                    return state
+        except Exception as e:
+            print(f"[music] Failed to load playback state: {e}")
+        return None
+
+    def _clear_playback_state(self):
+        """Remove saved state file (called on explicit stop)."""
+        try:
+            if os.path.exists(PLAYBACK_STATE_FILE):
+                os.remove(PLAYBACK_STATE_FILE)
+        except Exception:
+            pass
+
     def _record_play(self, song: dict):
         """Record a song play in history (deduplicated — most recent play only)."""
         clean = {k: v for k, v in song.items() if not k.startswith("_") and k != "stream_url"}
@@ -497,7 +647,7 @@ class MusicService:
         return self.history
 
     def get_most_played(self) -> list[dict]:
-        """Return top songs by play count."""
+        """Return top songs by play count (only songs played 2+ times)."""
         if not self.play_counts or not self.history:
             return []
         # Build a map of videoId → song info from history
@@ -506,9 +656,9 @@ class MusicService:
             vid = entry.get("song", {}).get("videoId", "")
             if vid and vid not in song_map:
                 song_map[vid] = entry["song"]
-        # Rank by play count, only include songs we have info for
+        # Only include songs played more than once — otherwise it's just "recent" again
         ranked = sorted(
-            [(vid, count) for vid, count in self.play_counts.items() if vid in song_map and count >= 1],
+            [(vid, count) for vid, count in self.play_counts.items() if vid in song_map and count >= 2],
             key=lambda x: x[1],
             reverse=True,
         )

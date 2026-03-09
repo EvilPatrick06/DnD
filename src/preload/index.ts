@@ -340,6 +340,44 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.MAP_LIBRARY_DELETE, id)
   },
 
+  // Shop Templates
+  shopTemplates: {
+    save: (template: { id: string; name: string; inventory: unknown[]; markup: number }) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SHOP_TEMPLATE_SAVE, template),
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.SHOP_TEMPLATE_LIST),
+    get: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.SHOP_TEMPLATE_GET, id),
+    delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.SHOP_TEMPLATE_DELETE, id)
+  },
+
+  // Image Library
+  imageLibrary: {
+    save: (id: string, name: string, buffer: ArrayBuffer, extension: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.IMAGE_LIBRARY_SAVE, id, name, buffer, extension),
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.IMAGE_LIBRARY_LIST),
+    get: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.IMAGE_LIBRARY_GET, id),
+    delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.IMAGE_LIBRARY_DELETE, id)
+  },
+
+  // Books
+  books: {
+    loadConfig: () => ipcRenderer.invoke(IPC_CHANNELS.BOOK_LOAD_CONFIG),
+    add: (config: {
+      id: string
+      title: string
+      path: string
+      type: 'core' | 'custom'
+      coverPath?: string
+      addedAt: string
+    }) => ipcRenderer.invoke(IPC_CHANNELS.BOOK_ADD, config),
+    remove: (bookId: string) => ipcRenderer.invoke(IPC_CHANNELS.BOOK_REMOVE, bookId),
+    import: (sourcePath: string, title: string, bookId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BOOK_IMPORT, sourcePath, title, bookId),
+    readFile: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.BOOK_READ_FILE, filePath),
+    loadData: (bookId: string) => ipcRenderer.invoke(IPC_CHANNELS.BOOK_LOAD_DATA, bookId),
+    saveData: (bookId: string, data: { bookmarks: unknown[]; annotations: unknown[] }) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BOOK_SAVE_DATA, bookId, data)
+  },
+
   // Plugins
   plugins: {
     scan: () => ipcRenderer.invoke(IPC_CHANNELS.PLUGIN_SCAN),

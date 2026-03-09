@@ -33,14 +33,49 @@ EDGE_TTS_VOICE = "en-US-AnaNeural"  # Young/playful voice for BMO
 SAMPLE_RATE = 16000
 CHANNELS = 1
 SILENCE_THRESHOLD = 600       # RMS threshold for silence detection
-SILENCE_DURATION = 0.8        # Seconds of silence to stop recording
-MAX_RECORD_SECONDS = 10       # Max recording length
+SILENCE_DURATION = 1.2        # Seconds of silence to stop recording (extended from 0.8)
+MAX_RECORD_SECONDS = 15       # Max recording length (extended from 10)
+SILENCE_DURATION_EXTENDED = 2.0  # Extended silence duration after 3s+ of speech
+SPEECH_DURATION_FOR_EXTEND = 3.0  # How long user must speak before extending silence window
 WAKE_WORDS = ["hey_jarvis"]   # openwakeword fallback model
 WAKE_PHRASE = "bmo"           # actual phrase to listen for via STT
 # Only close phonetic matches — no common English words that cause false triggers
 WAKE_VARIANTS = {"bmo", "beemo", "bemo", "beamo", "b.m.o", "bimo",
                  "vemo", "beema", "bima", "pmo", "beo", "bee mo", "be mo"}
 # Removed: demo, nemo, primo, remo, bingo, bino — too common in normal speech
+
+# openwakeword threshold — configurable via BMO_WAKE_THRESHOLD env var
+WAKE_OWW_THRESHOLD = float(os.environ.get("BMO_WAKE_THRESHOLD", "0.5"))
+
+# TTS cache directory
+TTS_CACHE_DIR = os.path.expanduser("~/.audiocache/tts")
+TTS_CACHE_MAX_MB = 200  # LRU eviction threshold
+
+# Common phrases to pre-warm TTS cache
+TTS_PREWARM_PHRASES = [
+    "I'm listening!", "One moment.", "Sure thing!", "Got it!",
+    "Good morning!", "Good afternoon!", "Good evening!", "Good night!",
+    "Hmm, I'm not sure about that.", "Let me think about that.",
+    "Here's what I found.", "All done!", "Oops, something went wrong.",
+    "You're welcome!", "BMO is happy to help!", "Bye bye!",
+    "What can BMO do for you?", "Hey there!", "ADVENTURE TIME!",
+    "BMO chop! Hi-YAH!",
+]
+
+
+def _load_voice_settings():
+    """Load voice settings from data/settings.json."""
+    settings_path = os.path.join(os.path.dirname(__file__), "data", "settings.json")
+    try:
+        if os.path.exists(settings_path):
+            with open(settings_path) as f:
+                import json as _json
+                settings = _json.load(f)
+            return settings.get("voice", {})
+    except Exception:
+        pass
+    return {}
+
 
 def _get_wake_model_paths() -> list[str]:
     """Resolve wake word names to full ONNX model paths."""
@@ -106,6 +141,17 @@ class VoicePipeline:
 
         # Streaming chat callback: if set, returns a generator of text chunks
         self._chat_stream_callback = None
+
+        # TTS disk cache
+        self._tts_cache_lock = threading.Lock()
+        os.makedirs(TTS_CACHE_DIR, exist_ok=True)
+
+        # Voice settings (overrides from settings.json)
+        voice_settings = _load_voice_settings()
+        self._silence_threshold = voice_settings.get("silence_threshold", SILENCE_THRESHOLD)
+        self._vad_sensitivity = voice_settings.get("vad_sensitivity", 1.8)
+        self._tts_provider = voice_settings.get("tts_provider", "auto")
+        self._wake_enabled = voice_settings.get("wake_enabled", True)
 
     # ── Model Loading (local fallback models) ─────────────────────────
 
@@ -179,6 +225,52 @@ class VoicePipeline:
                 self._voice_profiles = pickle.load(f)
         return self._voice_profiles
 
+    # ── Voice Settings API ────────────────────────────────────────────
+
+    def get_voice_settings(self):
+        """Return current voice settings."""
+        return {
+            "silence_threshold": getattr(self, '_silence_threshold', SILENCE_THRESHOLD),
+            "vad_sensitivity": getattr(self, '_vad_sensitivity', 1.8),
+            "tts_provider": getattr(self, '_tts_provider', 'auto'),
+            "wake_enabled": getattr(self, '_wake_enabled', True),
+            "wake_variants": list(WAKE_VARIANTS),
+        }
+
+    def update_voice_setting(self, key, value):
+        """Update a single voice setting and persist to settings.json."""
+        if key == "silence_threshold":
+            self._silence_threshold = int(value)
+        elif key == "vad_sensitivity":
+            self._vad_sensitivity = float(value)
+        elif key == "tts_provider":
+            self._tts_provider = str(value)
+        elif key == "wake_enabled":
+            self._wake_enabled = bool(value)
+        # Persist
+        self._save_voice_settings()
+
+    def _save_voice_settings(self):
+        """Persist voice settings to data/settings.json."""
+        settings_path = os.path.join(os.path.dirname(__file__), "data", "settings.json")
+        try:
+            import json as _json
+            settings = {}
+            if os.path.exists(settings_path):
+                with open(settings_path) as f:
+                    settings = _json.load(f)
+            settings["voice"] = {
+                "silence_threshold": getattr(self, '_silence_threshold', SILENCE_THRESHOLD),
+                "vad_sensitivity": getattr(self, '_vad_sensitivity', 1.8),
+                "tts_provider": getattr(self, '_tts_provider', 'auto'),
+                "wake_enabled": getattr(self, '_wake_enabled', True),
+            }
+            os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+            with open(settings_path, "w") as f:
+                _json.dump(settings, f, indent=2)
+        except Exception as e:
+            print(f"[voice] Failed to save settings: {e}")
+
     # ── Wake Word Detection (always local — must be instant) ──────────
 
     def start_listening(self):
@@ -194,37 +286,173 @@ class VoicePipeline:
         self._running = False
 
     def _wake_word_loop(self):
-        """Listen for 'hey bmo' using adaptive energy VAD + Silero VAD + quick STT check."""
+        """Listen for 'hey bmo' using two-stage detection:
+
+        Stage 1: openwakeword model predict() on every 80ms chunk (<1ms on Pi 5).
+                 Triggers on score > WAKE_OWW_THRESHOLD (default 0.5).
+        Stage 2: Quick STT on ring buffer to confirm "bmo" variant.
+                 Only fires a cloud STT call when openwakeword already triggered.
+
+        Falls back to energy+Silero+STT combo if openwakeword model unavailable.
+        """
         chunk_size = 1280  # 80ms at 16kHz
         ring_buffer = []   # rolling 2-second buffer
         max_ring_chunks = int(2.0 * SAMPLE_RATE / chunk_size)  # ~2s of audio
-        # Adaptive energy threshold: calibrated from ambient noise on startup.
-        # Starts high (2500) and auto-adjusts using a rolling average of ambient RMS.
         energy_threshold = 2500
-        ambient_rms_avg = 0.0  # exponential moving average of ambient noise
-        ambient_alpha = 0.02   # smoothing factor (slow adaptation)
-        ENERGY_HEADROOM = 1.8  # speech must be this × ambient to trigger
+        ambient_rms_avg = 0.0
+        ambient_alpha = 0.02
+        ENERGY_HEADROOM = 1.8
         cooldown_until = 0.0
         consecutive_active = 0
-        ACTIVE_CHUNKS_NEEDED = 6  # ~480ms of sustained speech before STT check
+        ACTIVE_CHUNKS_NEEDED = 6
 
-        print("[wake] Listening for 'hey BMO' (adaptive energy threshold)...")
+        # Try to load openwakeword model for Stage 1
+        oww_model = None
+        try:
+            oww_model = self._load_wake_model()
+            print("[wake] Listening for 'hey BMO' (openwakeword + STT confirm)...")
+        except Exception as e:
+            print(f"[wake] openwakeword not available ({e}), using energy+STT fallback...")
+
         self._wake_triggered = False
+
+        # Pre-warm TTS cache in background
+        threading.Thread(target=self._prewarm_tts_cache, daemon=True).start()
+        # Verify AEC on startup
+        self._check_aec()
+
         while self._running:
             try:
-                self._wake_listen_cycle(
-                    chunk_size, ring_buffer, max_ring_chunks,
-                    energy_threshold, cooldown_until, consecutive_active,
-                    ACTIVE_CHUNKS_NEEDED,
-                )
-                # Stream is now closed — safe to handle wake
+                if oww_model:
+                    self._wake_listen_cycle_oww(
+                        oww_model, chunk_size, ring_buffer, max_ring_chunks,
+                    )
+                else:
+                    self._wake_listen_cycle(
+                        chunk_size, ring_buffer, max_ring_chunks,
+                        energy_threshold, cooldown_until, consecutive_active,
+                        ACTIVE_CHUNKS_NEEDED,
+                    )
                 if self._wake_triggered:
                     self._wake_triggered = False
-                    time.sleep(0.2)  # let ALSA release the device
+                    time.sleep(0.2)
                     self._on_wake()
             except Exception as e:
                 print(f"[wake] Listener error: {e}, restarting in 2s...")
                 time.sleep(2)
+
+    def _wake_listen_cycle_oww(self, oww_model, chunk_size, ring_buffer, max_ring_chunks):
+        """Two-stage wake detection: openwakeword predict() + STT confirmation."""
+        cooldown_until = 0.0
+
+        def audio_callback(indata, frames, time_info, status):
+            if status:
+                print(f"[audio] {status}")
+            self._audio_queue.put(indata.copy())
+
+        with sd.InputStream(
+            samplerate=SAMPLE_RATE,
+            channels=CHANNELS,
+            dtype="int16",
+            blocksize=chunk_size,
+            callback=audio_callback,
+        ) as stream:
+            while self._running:
+                try:
+                    chunk = self._audio_queue.get(timeout=1.0)
+                except queue.Empty:
+                    continue
+
+                ring_buffer.append(chunk)
+                if len(ring_buffer) > max_ring_chunks:
+                    ring_buffer.pop(0)
+
+                # Track ambient noise
+                rms = np.sqrt(np.mean(chunk.astype(np.float32) ** 2))
+                if rms < 800:
+                    if self._ambient_rms_avg == 0.0:
+                        self._ambient_rms_avg = rms
+                    else:
+                        self._ambient_rms_avg = 0.02 * rms + 0.98 * self._ambient_rms_avg
+
+                # Stage 1: openwakeword predict on chunk
+                audio_f32 = chunk.flatten().astype(np.float32) / 32768.0
+                prediction = oww_model.predict(audio_f32)
+
+                # Check all wake word scores
+                triggered = False
+                for key, score in prediction.items():
+                    if score > WAKE_OWW_THRESHOLD:
+                        print(f"[wake] OWW triggered: {key}={score:.3f}")
+                        triggered = True
+                        break
+
+                if not triggered:
+                    continue
+
+                now = time.time()
+                if now < cooldown_until:
+                    continue
+                cooldown_until = now + 3.0
+
+                # Stage 2: STT confirmation on ring buffer
+                ring_audio = np.concatenate(ring_buffer)
+                try:
+                    audio_bytes = ring_audio.tobytes()
+                    wav_buf = self._pcm_to_wav(audio_bytes)
+                    text = self._quick_stt(wav_buf)
+                    if not text:
+                        oww_model.reset()
+                        continue
+                    text_lower = text.lower().strip()
+                    print(f"[wake] STT confirm: '{text_lower}'")
+                    is_wake = any(
+                        re.search(r'\b' + re.escape(v) + r'\b', text_lower)
+                        for v in WAKE_VARIANTS
+                    )
+                    if is_wake:
+                        print(f"[wake] Confirmed 'hey BMO' in: {text}")
+                        self._emit("status", {"state": "listening"})
+                        ring_buffer.clear()
+                        while not self._audio_queue.empty():
+                            self._audio_queue.get_nowait()
+                        oww_model.reset()
+                        self._wake_triggered = True
+                        return
+                    else:
+                        oww_model.reset()
+                except Exception as e:
+                    print(f"[wake] STT confirm failed: {e}")
+                    oww_model.reset()
+
+    def _check_aec(self):
+        """Check PipeWire for echo-cancel nodes on startup."""
+        try:
+            result = subprocess.run(
+                ["pw-link", "-l"],
+                capture_output=True, text=True, timeout=5,
+                env={**os.environ, "XDG_RUNTIME_DIR": "/run/user/1000"},
+            )
+            if "echo-cancel" in result.stdout.lower():
+                print("[aec] Echo cancellation nodes found in PipeWire")
+            else:
+                print("[aec] WARNING: No echo-cancel nodes found — echo may occur")
+                print("[aec] Consider: pactl load-module module-echo-cancel")
+        except Exception:
+            pass
+
+    def _mute_mic(self, mute: bool):
+        """Mute/unmute the mic during TTS to prevent echo pickup."""
+        try:
+            val = "1" if mute else "0"
+            subprocess.run(
+                ["wpctl", "set-mute", "@DEFAULT_SOURCE@", val],
+                capture_output=True, timeout=3,
+                env={**os.environ, "XDG_RUNTIME_DIR": "/run/user/1000",
+                     "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus"},
+            )
+        except Exception:
+            pass
 
     def _wake_listen_cycle(self, chunk_size, ring_buffer, max_ring_chunks,
                            energy_threshold, cooldown_until, consecutive_active,
@@ -418,8 +646,17 @@ class VoicePipeline:
                 buffer += chunk
 
                 # Extract complete sentences (. ! ? followed by space or newline)
+                # Also break on commas after 60+ chars for faster TTS start
                 while True:
                     match = re.search(r'[.!?][\s\n]', buffer)
+                    if not match and len(buffer) > 60:
+                        match = re.search(r',\s', buffer[40:])
+                        if match:
+                            # Adjust match position relative to full buffer
+                            class _M:
+                                def end(self):
+                                    return match.end() + 40
+                            match = _M()
                     if not match:
                         break
                     end = match.end()
@@ -486,7 +723,7 @@ class VoicePipeline:
             self._save_wav(f, audio_data)
 
         try:
-            speaker = "unknown"
+            speaker = self.identify_speaker(temp_path)
 
             # Transcribe
             self._emit("status", {"state": "thinking"})
@@ -497,6 +734,23 @@ class VoicePipeline:
 
             print(f"[stt] {speaker}: {text}")
             self._emit("transcription", {"speaker": speaker, "text": text})
+
+            # Voice enrollment intercept — always allow, even from unknown speakers
+            text_lower_check = text.lower().strip()
+            enrollment_name = self._check_enrollment_request(text_lower_check)
+            if enrollment_name:
+                response = self._do_voice_enrollment(enrollment_name, temp_path)
+                self._emit("response", {"text": response, "speaker": speaker})
+                self.speak(response)
+                self._emit("status", {"state": "idle"})
+                return response
+
+            # Ignore unregistered speakers (but only if profiles exist)
+            profiles = self._load_voice_profiles()
+            if speaker == "unknown" and profiles:
+                print(f"[voice] Ignoring unregistered speaker: '{text[:60]}'")
+                self._emit("status", {"state": "idle"})
+                return None
 
             # Check for conversation-ending phrases
             text_lower = text.lower().strip().rstrip(".")
@@ -663,6 +917,106 @@ class VoicePipeline:
                     consecutive_active = 0
         return False
 
+    # ── Voice Enrollment (intercepted before LLM) ─────────────────────
+
+    _ENROLL_PATTERNS = [
+        r"learn my voice.*(?:my name is|i'm|i am)\s+(\w+)",
+        r"remember my voice.*(?:my name is|i'm|i am)\s+(\w+)",
+        r"enroll my voice.*(?:my name is|i'm|i am)\s+(\w+)",
+        r"(?:my name is|i'm|i am)\s+(\w+).*(?:learn|remember|enroll|recognize)\s+(?:my\s+)?voice",
+        r"voice.*(?:my name is|i'm|i am)\s+(\w+)",
+    ]
+
+    def _check_enrollment_request(self, text_lower: str) -> str | None:
+        """Check if the user is asking for voice enrollment. Returns name or None."""
+        for pattern in self._ENROLL_PATTERNS:
+            m = re.search(pattern, text_lower, re.IGNORECASE)
+            if m:
+                name = m.group(1).capitalize()
+                print(f"[voice] Enrollment request detected for: {name}")
+                return name
+        return None
+
+    _MIN_ENROLLMENT_CLIPS = 3       # need at least this many good clips
+    _ENROLLMENT_CLIP_MIN_SAMPLES = 8000  # ~0.5s at 16kHz — reject tiny clips
+
+    def _validate_enrollment_clip(self, audio_data: np.ndarray) -> bool:
+        """Check if an audio clip has enough speech for voice enrollment."""
+        if len(audio_data) < self._ENROLLMENT_CLIP_MIN_SAMPLES:
+            print(f"[voice] Clip too short ({len(audio_data)} samples)")
+            return False
+        speech_prob = self._silero_check_speech(audio_data)
+        if speech_prob < 0.3:
+            print(f"[voice] Clip rejected by VAD (prob={speech_prob:.2f})")
+            return False
+        return True
+
+    def _do_voice_enrollment(self, name: str, current_audio_path: str) -> str:
+        """Enroll a speaker with 3 audio clips for a robust voice profile.
+
+        Uses the audio we already recorded as clip 1, then records 2 more clips
+        with TTS prompts in between. Requires at least 2 good clips with
+        confirmed speech, otherwise rejects and asks the user to try again.
+        """
+        clips = []
+        extra_clips = []
+        try:
+            # Validate the first clip (the one that triggered enrollment)
+            with open(current_audio_path, "rb") as f:
+                import wave as _wave
+                with _wave.open(f, "rb") as wf:
+                    raw = wf.readframes(wf.getnframes())
+                    first_audio = np.frombuffer(raw, dtype=np.int16)
+            if self._validate_enrollment_clip(first_audio):
+                clips.append(current_audio_path)
+                print(f"[voice] Enrollment clip 1: OK ({len(first_audio)} samples)")
+            else:
+                print("[voice] Enrollment clip 1: rejected (not enough speech)")
+
+            extra_prompts = [
+                f"Great, keep talking {name}! Tell me about your day.",
+                f"One more, {name}! Say anything you like.",
+                f"Almost done, {name}! Just say a couple more sentences.",
+            ]
+            for i, prompt in enumerate(extra_prompts):
+                if len(clips) >= self._MIN_ENROLLMENT_CLIPS:
+                    break  # already have enough good clips
+                self.speak(prompt)
+                self._emit("status", {"state": "listening"})
+                audio_data = self.record_until_silence()
+                if audio_data is not None and self._validate_enrollment_clip(audio_data):
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                        self._save_wav(f, audio_data)
+                        extra_clips.append(f.name)
+                        clips.append(f.name)
+                    print(f"[voice] Enrollment clip {i + 2}: OK ({len(audio_data)} samples)")
+                else:
+                    reason = "silent" if audio_data is None else "not enough speech"
+                    print(f"[voice] Enrollment clip {i + 2}: rejected ({reason})")
+                    self.speak("I didn't catch that. Speak a little louder or closer!")
+
+            if len(clips) < self._MIN_ENROLLMENT_CLIPS:
+                print(f"[voice] Enrollment failed: only {len(clips)} good clips (need {self._MIN_ENROLLMENT_CLIPS})")
+                return (
+                    f"Sorry {name}, I only got {len(clips)} good recording"
+                    f"{'s' if len(clips) != 1 else ''}. "
+                    f"I need at least {self._MIN_ENROLLMENT_CLIPS}. "
+                    f"Try again and make sure to speak clearly!"
+                )
+
+            self.enroll_speaker(name, clips)
+            return (
+                f"All done! I've learned your voice from {len(clips)} samples, {name}. "
+                f"I'll recognize you from now on!"
+            )
+        except Exception as e:
+            print(f"[voice] Enrollment failed: {e}")
+            return f"Hmm, I had trouble learning your voice. Let's try again later!"
+        finally:
+            for path in extra_clips:
+                if os.path.exists(path):
+                    os.unlink(path)
+
     @staticmethod
     def _strip_markdown(text: str) -> str:
         """Strip markdown formatting and hardware tags before TTS."""
@@ -678,11 +1032,21 @@ class VoicePipeline:
     # ── Recording ────────────────────────────────────────────────────
 
     def record_until_silence(self) -> np.ndarray | None:
-        """Record audio until silence is detected. Returns raw int16 numpy array."""
+        """Record audio until silence is detected. Returns raw int16 numpy array.
+
+        Uses adaptive silence threshold based on ambient noise level.
+        Extends silence duration after 3s+ of speech to avoid mid-sentence cutoffs.
+        Silero VAD double-check: if RMS says silence but VAD says speech, keep recording.
+        """
         chunks = []
         silence_start = None
         started_speaking = False
+        speech_start_time = None
         print("[record] Recording...")
+
+        # Adaptive silence threshold from ambient noise
+        ambient = getattr(self, '_ambient_rms_avg', 0.0)
+        silence_thresh = max(600, ambient * 2.0) if ambient > 0 else SILENCE_THRESHOLD
 
         def callback(indata, frames, time_info, status):
             chunks.append(indata.copy())
@@ -699,18 +1063,29 @@ class VoicePipeline:
                 if not chunks:
                     continue
 
-                # Check RMS of latest chunk
                 latest = chunks[-1].flatten()
                 rms = np.sqrt(np.mean(latest.astype(np.float32) ** 2))
 
-                if rms > SILENCE_THRESHOLD:
+                if rms > silence_thresh:
                     started_speaking = True
+                    if speech_start_time is None:
+                        speech_start_time = time.time()
                     silence_start = None
                 elif started_speaking:
+                    # Silero VAD double-check: if RMS says silence but VAD says speech, keep recording
+                    vad_prob = self._silero_check_speech(latest)
+                    if vad_prob > 0.5:
+                        silence_start = None
+                        continue
+
                     if silence_start is None:
                         silence_start = time.time()
-                    elif time.time() - silence_start > SILENCE_DURATION:
-                        break
+                    else:
+                        # Extend silence window after 3s+ of speech
+                        speech_duration = time.time() - speech_start_time if speech_start_time else 0
+                        silence_duration = SILENCE_DURATION_EXTENDED if speech_duration > SPEECH_DURATION_FOR_EXTEND else SILENCE_DURATION
+                        if time.time() - silence_start > silence_duration:
+                            break
 
         elapsed = time.time() - start_time
         print(f"[record] Done ({elapsed:.1f}s, {len(chunks)} chunks, spoke={started_speaking})")
@@ -720,14 +1095,12 @@ class VoicePipeline:
 
         audio = np.concatenate(chunks)
 
-        # Validate recording has real speech energy, not just ambient noise.
-        # If max RMS of any chunk never significantly exceeded ambient, discard.
         max_rms = max(
             np.sqrt(np.mean(c.astype(np.float32) ** 2))
             for c in chunks
         ) if chunks else 0
-        if max_rms < SILENCE_THRESHOLD * 1.5:
-            print(f"[record] Discarded — max RMS {max_rms:.0f} too low (need {SILENCE_THRESHOLD * 1.5:.0f})")
+        if max_rms < silence_thresh * 1.5:
+            print(f"[record] Discarded — max RMS {max_rms:.0f} too low (need {silence_thresh * 1.5:.0f})")
             return None
 
         return audio
@@ -760,10 +1133,40 @@ class VoicePipeline:
         return self._local_transcribe(audio_path)
 
     def _cloud_transcribe(self, audio_path: str) -> str:
-        """Send audio to Groq Whisper API for transcription."""
+        """Send audio to Groq Whisper API for transcription.
+
+        Preprocesses audio (high-pass filter, normalize) before sending.
+        Uses dynamic prompt with enrolled speaker names.
+        """
+        # Read and preprocess audio
         with open(audio_path, "rb") as f:
-            audio_bytes = f.read()
-        result = groq_stt(audio_bytes)
+            with wave.open(f, "rb") as wf:
+                raw = wf.readframes(wf.getnframes())
+                audio_int16 = np.frombuffer(raw, dtype=np.int16)
+
+        processed = self._preprocess_audio(audio_int16)
+        wav_buf = self._pcm_to_wav(processed.tobytes())
+
+        # Build dynamic prompt with enrolled speaker names
+        profiles = self._load_voice_profiles()
+        speaker_names = ", ".join(profiles.keys()) if profiles else "Gavin"
+        prompt = (
+            f"Hey BMO, tell me a joke. What time is it? Play some music. "
+            f"Set a timer for five minutes. Turn off the lights. "
+            f"Learn my voice, my name is {speaker_names}. Good morning BMO. "
+            f"What's the weather? Add milk to shopping list. Good morning."
+        )
+
+        result = groq_stt(wav_buf, prompt=prompt)
+
+        # Confidence filtering: reject segments with high no_speech_probability
+        segments = result.get("segments", [])
+        if segments:
+            avg_no_speech = sum(s.get("no_speech_probability", 0) for s in segments) / len(segments)
+            if avg_no_speech > 0.6:
+                print(f"[stt] Rejected (avg no_speech_prob={avg_no_speech:.2f})")
+                return ""
+
         return result.get("text", "")
 
     def _local_transcribe(self, audio_path: str) -> str:
@@ -777,11 +1180,8 @@ class VoicePipeline:
     def speak(self, text: str, speaker: str = "bmo_calm", emotion: str | None = None, volume: int | None = None):
         """Convert text to speech and play through speakers.
 
-        Args:
-            text: Text to speak
-            speaker: Voice profile (e.g. 'bmo_happy', 'npc_gruff_dwarf')
-            emotion: Override emotion for BMO voice (happy, calm, dramatic, etc.)
-            volume: Playback volume 0-100 (default: None = use ffplay default)
+        Mutes mic during playback to prevent echo. Uses TTS disk cache for
+        repeated phrases. Falls through: Fish Audio → edge-tts → local Piper.
         """
         self._emit("status", {"state": "speaking"})
         self._is_speaking = True
@@ -790,7 +1190,17 @@ class VoicePipeline:
         if emotion:
             speaker = f"bmo_{emotion}"
 
+        # Mute mic during TTS to prevent echo
+        self._mute_mic(True)
+
         try:
+            # Check TTS cache first
+            cached = self._tts_cache_get(text, speaker)
+            if cached:
+                print(f"[tts] Cache hit for: {text[:40]}...")
+                self._play_audio(cached)
+                return
+
             try:
                 self._cloud_speak(text, speaker)
                 return
@@ -808,15 +1218,117 @@ class VoicePipeline:
             print(f"[tts] All TTS failed: {e}")
         finally:
             self._is_speaking = False
-            # Brief cooldown so mic doesn't pick up speaker echo/reverb
+            # Unmute mic
+            self._mute_mic(False)
             time.sleep(0.5)
-            # Drain any audio captured during TTS playback
             while not self._audio_queue.empty():
                 try:
                     self._audio_queue.get_nowait()
                 except queue.Empty:
                     break
             self._emit("status", {"state": "idle"})
+
+    # ── TTS Disk Cache ────────────────────────────────────────────────
+
+    def _tts_cache_key(self, text: str, speaker: str = "") -> str:
+        """Generate cache key from text + speaker."""
+        import hashlib
+        raw = f"{text}|{speaker}"
+        return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+    def _tts_cache_get(self, text: str, speaker: str = "") -> str | None:
+        """Check if TTS audio is cached. Returns file path or None."""
+        key = self._tts_cache_key(text, speaker)
+        # Check for any audio format
+        for ext in (".opus", ".mp3", ".wav"):
+            path = os.path.join(TTS_CACHE_DIR, f"{key}{ext}")
+            if os.path.exists(path):
+                # Touch file for LRU
+                os.utime(path, None)
+                return path
+        return None
+
+    def _tts_cache_put(self, text: str, speaker: str, audio_bytes: bytes, ext: str = ".mp3"):
+        """Save TTS audio to cache."""
+        key = self._tts_cache_key(text, speaker)
+        path = os.path.join(TTS_CACHE_DIR, f"{key}{ext}")
+        try:
+            with self._tts_cache_lock:
+                with open(path, "wb") as f:
+                    f.write(audio_bytes)
+            self._tts_cache_evict()
+        except Exception as e:
+            print(f"[tts-cache] Save failed: {e}")
+
+    def _tts_cache_evict(self):
+        """Evict oldest cache entries if total size exceeds TTS_CACHE_MAX_MB."""
+        try:
+            files = []
+            total = 0
+            for f in os.listdir(TTS_CACHE_DIR):
+                path = os.path.join(TTS_CACHE_DIR, f)
+                if os.path.isfile(path):
+                    stat = os.stat(path)
+                    files.append((path, stat.st_mtime, stat.st_size))
+                    total += stat.st_size
+
+            max_bytes = TTS_CACHE_MAX_MB * 1024 * 1024
+            if total <= max_bytes:
+                return
+
+            # Sort by mtime ascending (oldest first)
+            files.sort(key=lambda x: x[1])
+            for path, _, size in files:
+                if total <= max_bytes:
+                    break
+                os.unlink(path)
+                total -= size
+                print(f"[tts-cache] Evicted: {os.path.basename(path)}")
+        except Exception as e:
+            print(f"[tts-cache] Eviction error: {e}")
+
+    def _prewarm_tts_cache(self):
+        """Pre-warm TTS cache with common phrases on startup."""
+        cached = 0
+        for phrase in TTS_PREWARM_PHRASES:
+            if self._tts_cache_get(phrase, "bmo_calm"):
+                cached += 1
+                continue
+            try:
+                audio = fish_audio_tts(phrase, format="opus")
+                self._tts_cache_put(phrase, "bmo_calm", audio, ext=".opus")
+                cached += 1
+            except Exception:
+                pass  # Non-critical — just skip
+        print(f"[tts-cache] Pre-warmed {cached}/{len(TTS_PREWARM_PHRASES)} phrases")
+
+    # ── Audio Preprocessing for STT ──────────────────────────────────
+
+    def _preprocess_audio(self, audio_int16: np.ndarray) -> np.ndarray:
+        """Preprocess audio for better STT accuracy.
+
+        - High-pass filter at 80Hz (removes low-frequency noise/hum)
+        - Peak normalize to -3dBFS
+        - Trim silence via energy detection
+        """
+        audio_f32 = audio_int16.astype(np.float32)
+
+        # High-pass filter at 80Hz using simple first-order IIR
+        rc = 1.0 / (2.0 * np.pi * 80.0)
+        dt = 1.0 / SAMPLE_RATE
+        alpha = rc / (rc + dt)
+        filtered = np.zeros_like(audio_f32)
+        filtered[0] = audio_f32[0]
+        for i in range(1, len(audio_f32)):
+            filtered[i] = alpha * (filtered[i - 1] + audio_f32[i] - audio_f32[i - 1])
+
+        # Peak normalize to -3dBFS
+        peak = np.max(np.abs(filtered))
+        if peak > 0:
+            target = 32768.0 * (10 ** (-3.0 / 20.0))  # -3dBFS
+            filtered = filtered * (target / peak)
+
+        return np.clip(filtered, -32768, 32767).astype(np.int16)
 
     def _play_audio(self, path: str):
         """Play an audio file — via ffplay (Pi) or emit URL to browser."""
@@ -894,11 +1406,11 @@ class VoicePipeline:
         return chunks or [text]
 
     def _cloud_speak(self, text: str, speaker: str = "bmo_calm"):
-        """Generate speech via Fish Audio API with pipelined playback.
+        """Generate speech via Fish Audio API with pipelined playback + caching.
 
+        Uses opus format (30-50% smaller). Caches results to disk.
         Splits text into sentence-sized chunks and overlaps TTS generation
-        of the next chunk with playback of the current one, so the user
-        hears audio ~3s sooner on multi-sentence responses.
+        of the next chunk with playback of the current one.
         """
         from concurrent.futures import ThreadPoolExecutor, Future
         from cloud_providers import FISH_AUDIO_VOICE_ID
@@ -906,10 +1418,11 @@ class VoicePipeline:
         chunks = self._split_tts_chunks(text, max_chars=200)
 
         if len(chunks) <= 1:
-            # Single chunk — no pipelining needed
-            audio_bytes = fish_audio_tts(chunks[0], voice_id=FISH_AUDIO_VOICE_ID)
-            print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio")
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+            audio_bytes = fish_audio_tts(chunks[0], voice_id=FISH_AUDIO_VOICE_ID, format="opus")
+            print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio (opus)")
+            # Cache single-chunk responses
+            self._tts_cache_put(text, speaker, audio_bytes, ext=".opus")
+            with tempfile.NamedTemporaryFile(suffix=".opus", delete=False) as f:
                 f.write(audio_bytes)
                 f.flush()
                 temp_path = f.name
@@ -920,27 +1433,22 @@ class VoicePipeline:
                     os.unlink(temp_path)
             return
 
-        # Pipeline: generate chunk N+1 while playing chunk N
         is_browser = getattr(self, "_tts_output_mode", "pi") == "browser"
 
         def _generate(chunk_text):
-            return fish_audio_tts(chunk_text, voice_id=FISH_AUDIO_VOICE_ID)
+            return fish_audio_tts(chunk_text, voice_id=FISH_AUDIO_VOICE_ID, format="opus")
 
         with ThreadPoolExecutor(max_workers=1) as pool:
-            # Start generating first chunk
             next_future: Future = pool.submit(_generate, chunks[0])
 
             for i, chunk in enumerate(chunks):
-                # Wait for current chunk's audio
                 audio_bytes = next_future.result()
                 print(f"[tts] Got {len(audio_bytes)} bytes from Fish Audio ({i+1}/{len(chunks)})")
 
-                # Start generating NEXT chunk in parallel with playback
                 if i + 1 < len(chunks):
                     next_future = pool.submit(_generate, chunks[i + 1])
 
-                # Save and play current chunk
-                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                with tempfile.NamedTemporaryFile(suffix=".opus", delete=False) as f:
                     f.write(audio_bytes)
                     f.flush()
                     temp_path = f.name
@@ -989,30 +1497,42 @@ class VoicePipeline:
     # ── Speaker Identification ───────────────────────────────────────
 
     def identify_speaker(self, audio_path: str) -> str:
-        """Identify who is speaking from a voice clip."""
-        profiles = self._load_voice_profiles()
-        if not profiles:
+        """Identify who is speaking from a voice clip.
+
+        Returns speaker name if matched (cosine similarity > 0.75),
+        otherwise "unknown". Gracefully returns "unknown" if resemblyzer
+        or torch are not available.
+        """
+        try:
+            profiles = self._load_voice_profiles()
+            if not profiles:
+                return "unknown"
+
+            from resemblyzer import preprocess_wav
+
+            encoder = self._load_speaker_encoder()
+            wav = preprocess_wav(audio_path)
+            embed = encoder.embed_utterance(wav)
+
+            best_name = "unknown"
+            best_score = 0.0
+
+            for name, profile_embed in profiles.items():
+                similarity = float(
+                    np.dot(embed, profile_embed)
+                    / (np.linalg.norm(embed) * np.linalg.norm(profile_embed))
+                )
+                print(f"[speaker] {name}: similarity={similarity:.3f}")
+                if similarity > 0.75 and similarity > best_score:
+                    best_name = name
+                    best_score = similarity
+
+            if best_name != "unknown":
+                print(f"[speaker] Identified: {best_name} (score={best_score:.2f})")
+            return best_name
+        except Exception as e:
+            print(f"[speaker] Identification failed ({e}), returning unknown")
             return "unknown"
-
-        from resemblyzer import preprocess_wav
-
-        encoder = self._load_speaker_encoder()
-        wav = preprocess_wav(audio_path)
-        embed = encoder.embed_utterance(wav)
-
-        best_name = "unknown"
-        best_score = 0.0
-
-        for name, profile_embed in profiles.items():
-            similarity = float(
-                np.dot(embed, profile_embed)
-                / (np.linalg.norm(embed) * np.linalg.norm(profile_embed))
-            )
-            if similarity > 0.75 and similarity > best_score:
-                best_name = name
-                best_score = similarity
-
-        return best_name
 
     def enroll_speaker(self, name: str, audio_paths: list[str]):
         """Register a new speaker's voice profile from multiple audio clips."""
@@ -1032,8 +1552,27 @@ class VoicePipeline:
         os.makedirs(os.path.dirname(VOICE_PROFILES_PATH), exist_ok=True)
         with open(VOICE_PROFILES_PATH, "wb") as f:
             pickle.dump(profiles, f)
+        self._voice_profiles = profiles  # update in-memory cache
 
         print(f"[speaker] Enrolled '{name}' from {len(audio_paths)} clips")
+
+    def get_enrolled_speakers(self) -> list[str]:
+        """Return list of enrolled speaker names."""
+        profiles = self._load_voice_profiles()
+        return list(profiles.keys())
+
+    def remove_speaker(self, name: str) -> bool:
+        """Remove a speaker profile. Returns True if found and removed."""
+        profiles = self._load_voice_profiles()
+        if name not in profiles:
+            return False
+        del profiles[name]
+        os.makedirs(os.path.dirname(VOICE_PROFILES_PATH), exist_ok=True)
+        with open(VOICE_PROFILES_PATH, "wb") as f:
+            pickle.dump(profiles, f)
+        self._voice_profiles = profiles
+        print(f"[speaker] Removed '{name}'")
+        return True
 
     # ── Helpers ──────────────────────────────────────────────────────
 

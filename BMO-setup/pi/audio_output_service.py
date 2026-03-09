@@ -53,7 +53,10 @@ class AudioOutputService:
         self._lock = threading.Lock()
         # Per-function device assignments: function -> pw_id
         self._routing: dict[str, int | None] = {}
+        # Per-function device descriptions for resolving across reboots
+        self._routing_desc: dict[str, str | None] = {}
         self._load_routing()
+        self._resolve_and_apply_routing()
 
     # ── Device Enumeration ──────────────────────────────────────────
 
@@ -160,15 +163,24 @@ class AudioOutputService:
     def set_function_output(self, function: str, pw_id: int) -> bool:
         """Route a specific function's audio to a device.
 
-        For 'all', sets the system default which affects everything.
-        For individual functions, stores the routing preference.
-        The actual routing happens at playback time in each service.
+        Sets the system default AND moves active streams to the target sink.
         """
+        # Look up device description for persistent storage
+        desc = None
+        sink_name = None
+        for sink in self.list_sinks():
+            if sink.pw_id == pw_id:
+                desc = sink.description
+                sink_name = self._get_sink_node_name(pw_id)
+                break
+
         if function == "all":
             success = self.set_default_output(pw_id)
             if success:
+                self._move_all_streams(pw_id, sink_name)
                 with self._lock:
                     self._routing = {f: pw_id for f in AUDIO_FUNCTIONS if f != "all"}
+                    self._routing_desc = {f: desc for f in AUDIO_FUNCTIONS if f != "all"}
                     self._save_routing()
             return success
 
@@ -176,11 +188,61 @@ class AudioOutputService:
             print(f"[audio] Unknown function: {function}")
             return False
 
+        # Set as default and move streams so it takes effect immediately
+        self.set_default_output(pw_id)
+        self._move_all_streams(pw_id, sink_name)
+
         with self._lock:
             self._routing[function] = pw_id
+            self._routing_desc[function] = desc
             self._save_routing()
         print(f"[audio] {function} routed to device {pw_id}")
         return True
+
+    def _get_sink_node_name(self, pw_id: int) -> str | None:
+        """Get the PipeWire node.name for a sink (used by pactl)."""
+        try:
+            rc, out, _ = _run(["pw-dump"], timeout=5)
+            if rc != 0:
+                return None
+            import json as _json
+            nodes = _json.loads(out)
+            for n in nodes:
+                if n.get("id") == pw_id and n.get("type") == "PipeWire:Interface:Node":
+                    return n.get("info", {}).get("props", {}).get("node.name")
+        except Exception:
+            pass
+        return None
+
+    def _move_all_streams(self, pw_id: int, sink_name: str | None):
+        """Move all active playback streams to the target sink via pactl."""
+        if not sink_name:
+            sink_name = self._get_sink_node_name(pw_id)
+        if not sink_name:
+            print(f"[audio] Cannot resolve sink name for pw_id {pw_id}")
+            return
+
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        try:
+            r = subprocess.run(
+                ["pactl", "list", "sink-inputs", "short"],
+                capture_output=True, text=True, timeout=5, env=env,
+            )
+            if r.returncode != 0:
+                print(f"[audio] pactl list failed: {r.stderr}")
+                return
+            for line in r.stdout.strip().split("\n"):
+                if not line.strip():
+                    continue
+                stream_idx = line.split()[0]
+                rc, _, err = _run(["pactl", "move-sink-input", stream_idx, sink_name])
+                if rc == 0:
+                    print(f"[audio] Moved stream {stream_idx} → {sink_name}")
+                else:
+                    print(f"[audio] Failed to move stream {stream_idx}: {err}")
+        except Exception as e:
+            print(f"[audio] Stream move failed: {e}")
 
     def get_function_output(self, function: str) -> int | None:
         """Get the device ID assigned to a function, or None for system default."""
@@ -328,12 +390,48 @@ class AudioOutputService:
             if os.path.exists(SETTINGS_PATH):
                 with open(SETTINGS_PATH, "r") as f:
                     settings = json.load(f)
-                self._routing = settings.get("audio_routing", {})
+                raw = settings.get("audio_routing", {})
                 # Convert string keys to int values
-                self._routing = {k: int(v) for k, v in self._routing.items() if v is not None}
+                self._routing = {k: int(v) for k, v in raw.items() if v is not None}
+                # Load saved descriptions for re-resolving after reboot
+                self._routing_desc = settings.get("audio_routing_desc", {})
         except Exception as e:
             print(f"[audio] Failed to load routing: {e}")
             self._routing = {}
+            self._routing_desc = {}
+
+    def _resolve_and_apply_routing(self):
+        """Re-resolve saved device descriptions to current PW IDs after reboot."""
+        if not self._routing_desc:
+            return
+        try:
+            sinks = self.list_sinks()
+            if not sinks:
+                return
+            # Build description -> current pw_id map
+            desc_to_id = {s.description.lower(): s.pw_id for s in sinks}
+            updated = False
+            applied_default = False
+            for func, desc in self._routing_desc.items():
+                if not desc:
+                    continue
+                current_id = desc_to_id.get(desc.lower())
+                if current_id is not None:
+                    old_id = self._routing.get(func)
+                    if old_id != current_id:
+                        self._routing[func] = current_id
+                        updated = True
+                        print(f"[audio] Re-resolved {func}: '{desc}' -> pw_id {current_id} (was {old_id})")
+                    # Apply the first resolved device as system default
+                    if not applied_default:
+                        self.set_default_output(current_id)
+                        applied_default = True
+                else:
+                    print(f"[audio] Cannot resolve saved device for {func}: '{desc}' — not found in current sinks")
+            if updated:
+                self._save_routing()
+        except Exception as e:
+            print(f"[audio] Routing resolve failed: {e}")
 
     def _save_routing(self):
         """Save routing preferences to settings.json."""
@@ -344,6 +442,7 @@ class AudioOutputService:
                 with open(SETTINGS_PATH, "r") as f:
                     settings = json.load(f)
             settings["audio_routing"] = self._routing
+            settings["audio_routing_desc"] = self._routing_desc
             with open(SETTINGS_PATH, "w") as f:
                 json.dump(settings, f, indent=2)
         except Exception as e:

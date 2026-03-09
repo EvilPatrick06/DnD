@@ -35,6 +35,15 @@ class Expression(Enum):
     ALERT = "alert"
     COMBAT = "combat"
     SLEEPING = "sleeping"
+    LAUGHING = "laughing"
+    SCARED = "scared"
+    SURPRISED = "surprised"
+    LOVE = "love"
+    CONFUSED = "confused"
+    SINGING = "singing"
+    SHY = "shy"
+    WINK = "wink"
+    MISCHIEVOUS = "mischievous"
 
 
 class OledFace:
@@ -43,6 +52,29 @@ class OledFace:
     State machine for expressions. 10 FPS animation loop.
     Expressions are triggered by SocketIO events or direct API calls.
     """
+
+    # Priority order for expression debouncing — higher value wins
+    _EXPRESSION_PRIORITY = {
+        Expression.IDLE: 0,
+        Expression.SLEEPING: 0,
+        Expression.LISTENING: 1,
+        Expression.THINKING: 2,
+        Expression.SPEAKING: 3,
+        Expression.HAPPY: 2,
+        Expression.ERROR: 3,
+        Expression.ALERT: 3,
+        Expression.COMBAT: 2,
+        Expression.LAUGHING: 2,
+        Expression.SCARED: 3,
+        Expression.SURPRISED: 3,
+        Expression.LOVE: 2,
+        Expression.CONFUSED: 1,
+        Expression.SINGING: 2,
+        Expression.SHY: 1,
+        Expression.WINK: 2,
+        Expression.MISCHIEVOUS: 2,
+    }
+    _DEBOUNCE_MS = 200  # ignore changes within this window unless higher priority
 
     def __init__(self, socketio=None):
         self.socketio = socketio
@@ -58,6 +90,7 @@ class OledFace:
         self._alert_flash = False
         self._look_offset = 0  # -1=left, 0=center, 1=right for idle look-around
         self._look_timer = 0
+        self._last_expression_time = 0.0  # monotonic time of last expression change
 
     def start(self):
         """Initialize OLED and start the animation loop."""
@@ -85,12 +118,30 @@ class OledFace:
             self._device.hide()
 
     def set_expression(self, expression: str):
-        """Change BMO's expression. Accepts Expression enum value strings."""
+        """Change BMO's expression with debouncing.
+
+        Ignores expression changes that arrive within 200ms of the last change,
+        UNLESS the new expression has higher priority (speaking > thinking > listening > idle).
+        This prevents rapid state flicker while ensuring important transitions aren't dropped.
+        """
         try:
-            self._expression = Expression(expression)
+            new_expr = Expression(expression)
         except ValueError:
             print(f"[oled] Unknown expression: {expression}")
+            return
+
+        now = time.monotonic()
+        elapsed_ms = (now - self._last_expression_time) * 1000
+
+        if elapsed_ms < self._DEBOUNCE_MS:
+            new_pri = self._EXPRESSION_PRIORITY.get(new_expr, 0)
+            cur_pri = self._EXPRESSION_PRIORITY.get(self._expression, 0)
+            if new_pri <= cur_pri:
+                return  # debounced — lower or equal priority within window
+
+        self._expression = new_expr
         self._frame_counter = 0
+        self._last_expression_time = now
 
     @property
     def current_expression(self) -> str:
@@ -138,6 +189,24 @@ class OledFace:
             self._render_combat(draw)
         elif expr == Expression.SLEEPING:
             self._render_sleeping(draw)
+        elif expr == Expression.LAUGHING:
+            self._render_laughing(draw)
+        elif expr == Expression.SCARED:
+            self._render_scared(draw)
+        elif expr == Expression.SURPRISED:
+            self._render_surprised(draw)
+        elif expr == Expression.LOVE:
+            self._render_love(draw)
+        elif expr == Expression.CONFUSED:
+            self._render_confused(draw)
+        elif expr == Expression.SINGING:
+            self._render_singing(draw)
+        elif expr == Expression.SHY:
+            self._render_shy(draw)
+        elif expr == Expression.WINK:
+            self._render_wink(draw)
+        elif expr == Expression.MISCHIEVOUS:
+            self._render_mischievous(draw)
 
     # ── Expression Renderers ──────────────────────────────────────────
 
@@ -335,3 +404,158 @@ class OledFace:
             draw.line([x, y, x + size, y], fill=1)
             draw.line([x + size, y, x, y + size], fill=1)
             draw.line([x, y + size, x + size, y + size], fill=1)
+
+    def _render_laughing(self, draw):
+        """Squinted eyes + bouncing open mouth."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Squinted eyes (tight arcs)
+        draw.arc([33, 18, 52, 32], start=200, end=340, fill=1, width=2)
+        draw.arc([76, 18, 95, 32], start=200, end=340, fill=1, width=2)
+
+        # Bouncing wide-open mouth
+        bounce = (self._frame_counter % 6) - 3
+        mouth_y = 38 + abs(bounce)
+        draw.ellipse([44, mouth_y, 84, mouth_y + 16], outline=1, fill=0)
+
+    def _render_scared(self, draw):
+        """Wide eyes, small mouth, trembling outline."""
+        # Trembling outline
+        offset = 1 if self._frame_counter % 4 < 2 else -1
+        draw.rounded_rectangle([10 + offset, 4, 118 + offset, 60], radius=8, outline=1)
+
+        # Wide scared eyes
+        draw.ellipse([30, 12, 54, 36], outline=1, fill=1)
+        draw.ellipse([74, 12, 98, 36], outline=1, fill=1)
+        # Tiny pupils (high)
+        draw.ellipse([39, 16, 45, 22], outline=0, fill=0)
+        draw.ellipse([83, 16, 89, 22], outline=0, fill=0)
+
+        # Small O mouth
+        draw.ellipse([58, 44, 70, 54], outline=1, fill=0)
+
+    def _render_surprised(self, draw):
+        """Giant round eyes, O-mouth."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Giant round eyes
+        draw.ellipse([28, 10, 56, 38], outline=1, fill=1)
+        draw.ellipse([72, 10, 100, 38], outline=1, fill=1)
+        # Large pupils
+        draw.ellipse([37, 18, 47, 28], outline=0, fill=0)
+        draw.ellipse([81, 18, 91, 28], outline=0, fill=0)
+
+        # Big O mouth
+        draw.ellipse([52, 40, 76, 58], outline=1, fill=0)
+
+    def _render_love(self, draw):
+        """Heart-shaped eyes."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Heart-shaped eyes (two circles + triangle)
+        for cx in [42, 86]:
+            # Left bump
+            draw.ellipse([cx - 10, 14, cx, 26], fill=1)
+            # Right bump
+            draw.ellipse([cx, 14, cx + 10, 26], fill=1)
+            # Bottom point
+            draw.polygon([cx - 10, 22, cx + 10, 22, cx, 34], fill=1)
+
+        # Happy smile
+        draw.arc([40, 36, 88, 56], start=0, end=180, fill=1, width=2)
+
+    def _render_confused(self, draw):
+        """Asymmetric eyes, question mark."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Left eye: normal
+        draw.ellipse([35, 18, 50, 32], outline=1, fill=1)
+        draw.ellipse([40, 22, 45, 28], outline=0, fill=0)
+
+        # Right eye: smaller, higher (asymmetric)
+        draw.ellipse([82, 22, 93, 32], outline=1, fill=1)
+        draw.ellipse([85, 24, 90, 30], outline=0, fill=0)
+
+        # Raised eyebrow on right
+        draw.arc([80, 14, 96, 24], start=180, end=360, fill=1, width=1)
+
+        # Squiggly mouth
+        draw.arc([48, 42, 60, 52], start=0, end=180, fill=1, width=1)
+        draw.arc([60, 42, 72, 52], start=180, end=360, fill=1, width=1)
+
+        # Question mark in corner
+        draw.arc([104, 8, 116, 18], start=180, end=0, fill=1, width=1)
+        draw.line([110, 18, 110, 22], fill=1)
+        draw.point([110, 25], fill=1)
+
+    def _render_singing(self, draw):
+        """Musical notes floating upward."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Happy squinted eyes
+        draw.arc([33, 18, 52, 32], start=200, end=340, fill=1, width=2)
+        draw.arc([76, 18, 95, 32], start=200, end=340, fill=1, width=2)
+
+        # Open singing mouth (oval)
+        draw.ellipse([54, 38, 74, 52], outline=1, fill=0)
+
+        # Floating musical notes (animated upward)
+        phase = self._frame_counter % 20
+        for i, base_x in enumerate([100, 112, 18]):
+            y = 40 - (phase + i * 7) % 30
+            x = base_x
+            # Simple note: dot + stem
+            draw.ellipse([x, y, x + 4, y + 3], fill=1)
+            draw.line([x + 4, y, x + 4, y - 6], fill=1)
+
+    def _render_shy(self, draw):
+        """Downcast eyes, dithered blush circles."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Downcast eyes (looking down)
+        draw.ellipse([35, 20, 50, 34], outline=1, fill=1)
+        draw.ellipse([78, 20, 93, 34], outline=1, fill=1)
+        # Pupils looking down
+        draw.ellipse([39, 28, 46, 34], outline=0, fill=0)
+        draw.ellipse([82, 28, 89, 34], outline=0, fill=0)
+
+        # Dithered blush circles (checkerboard pattern for pixel art blush)
+        for cx, cy in [(30, 40), (98, 40)]:
+            for dx in range(-4, 5):
+                for dy in range(-3, 4):
+                    if (dx + dy) % 2 == 0 and dx * dx + dy * dy <= 16:
+                        draw.point([cx + dx, cy + dy], fill=1)
+
+        # Small smile
+        draw.arc([50, 40, 78, 52], start=0, end=180, fill=1, width=1)
+
+    def _render_wink(self, draw):
+        """One eye closed, slight smile."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Left eye: open
+        draw.ellipse([35, 18, 50, 32], outline=1, fill=1)
+        draw.ellipse([40, 22, 45, 28], outline=0, fill=0)
+
+        # Right eye: closed (wink) — arc
+        draw.arc([78, 22, 93, 30], start=0, end=180, fill=1, width=2)
+
+        # Slight smile (asymmetric — higher on wink side)
+        draw.arc([44, 38, 84, 54], start=0, end=180, fill=1, width=2)
+
+    def _render_mischievous(self, draw):
+        """Angled brows, narrowed eyes, wide grin."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Angled eyebrows (evil-ish)
+        draw.line([32, 20, 52, 16], fill=1, width=1)  # left brow angles up-right
+        draw.line([76, 16, 96, 20], fill=1, width=1)  # right brow angles up-left
+
+        # Narrowed eyes
+        draw.ellipse([35, 22, 50, 30], outline=1, fill=1)
+        draw.ellipse([78, 22, 93, 30], outline=1, fill=1)
+        draw.ellipse([40, 24, 45, 29], outline=0, fill=0)
+        draw.ellipse([83, 24, 88, 29], outline=0, fill=0)
+
+        # Wide mischievous grin
+        draw.arc([34, 34, 94, 58], start=0, end=180, fill=1, width=2)

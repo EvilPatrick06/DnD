@@ -5,6 +5,7 @@ import { ErrorBoundary, ShortcutsOverlay, Spinner, ToastContainer } from './comp
 import ColorblindFilters from './components/ui/ColorblindFilters'
 import GlobalSettingsButton from './components/ui/GlobalSettingsButton'
 import ScreenReaderAnnouncer from './components/ui/ScreenReaderAnnouncer'
+import SkipToContent from './components/ui/SkipToContent'
 import UpdatePrompt from './components/ui/UpdatePrompt'
 import { addToast } from './hooks/use-toast'
 import MainMenuPage from './pages/MainMenuPage'
@@ -140,6 +141,7 @@ function App(): JSX.Element {
 
   return (
     <div className="relative min-h-screen bg-gray-950 text-gray-100">
+      <SkipToContent />
       <ColorblindFilters />
       <ScreenReaderAnnouncer />
       <DiceOverlay />
@@ -147,8 +149,9 @@ function App(): JSX.Element {
       <UpdatePrompt />
       <ShortcutsOverlay open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <GlobalSettingsButton />
-      <ErrorBoundary>
-        <Suspense
+      <main id="main-content">
+        <ErrorBoundary>
+          <Suspense
           fallback={
             <div className="flex items-center justify-center h-screen">
               <Spinner size="lg" />
@@ -268,7 +271,8 @@ function App(): JSX.Element {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </main>
     </div>
   )
 }

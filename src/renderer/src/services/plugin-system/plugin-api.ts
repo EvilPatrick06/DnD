@@ -133,9 +133,14 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
 
   // --- Data API ---
   const data: PluginDataAPI = Object.freeze({
-    get: async (_category: string): Promise<unknown[]> => {
-      // Plugins can read data through the data store
-      // This is read-only access to the merged data pipeline
+    get: async (category: string): Promise<unknown[]> => {
+      // Lazy import to avoid circular dependency at module init
+      const { useDataStore } = await import('../../stores/use-data-store')
+      const cache = useDataStore.getState().cache
+      const entry = cache.get(category as Parameters<typeof cache.get>[0])
+      if (entry?.data) {
+        return Array.isArray(entry.data) ? entry.data : []
+      }
       return []
     }
   })
@@ -144,8 +149,19 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
   const game: PluginGameAPI = Object.freeze({
     getState: () => {
       requirePermission('game-events', 'game.getState()')
-      // Return a read-only snapshot of relevant game state
-      return {}
+      // Lazy import to avoid circular dependency at module init
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { useGameStore } = require('../../stores/use-game-store')
+      const s = useGameStore.getState()
+      return {
+        initiative: s.initiative ? structuredClone(s.initiative) : null,
+        round: s.round,
+        activeMapId: s.activeMapId,
+        conditions: structuredClone(s.conditions),
+        combatLog: structuredClone(s.combatLog),
+        turnMode: s.turnMode,
+        isPaused: s.isPaused
+      }
     }
   })
 
@@ -207,13 +223,26 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
   })
 
   // --- Sounds API ---
+  const soundRegistry = new Map<string, string[]>()
   const sounds: PluginSoundsAPI = Object.freeze({
-    register: (_eventName: string, _urls: string[]) => {
+    register: (eventName: string, urls: string[]) => {
       requirePermission('sounds', 'sounds.register()')
-      // Registration into the sound manager would happen here
+      soundRegistry.set(eventName, urls)
     },
-    play: (_eventName: string) => {
+    play: (eventName: string) => {
       requirePermission('sounds', 'sounds.play()')
+      const urls = soundRegistry.get(eventName)
+      if (!urls || urls.length === 0) return
+      const url = urls[Math.floor(Math.random() * urls.length)]
+      try {
+        const audio = new Audio(url)
+        audio.volume = 0.5
+        audio.play().catch(() => {
+          logger.warn(`[Plugin:${pluginId}] Failed to play sound "${eventName}"`)
+        })
+      } catch {
+        logger.warn(`[Plugin:${pluginId}] Invalid sound URL for "${eventName}"`)
+      }
     }
   })
 

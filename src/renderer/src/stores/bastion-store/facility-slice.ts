@@ -345,5 +345,91 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)
+  },
+
+  // ---- Metadata Operations ----
+
+  updateBastionMetadata: (bastionId, updates) => {
+    const bastion = getBastion(get().bastions, bastionId)
+    if (!bastion) return
+    const updated: Bastion = {
+      ...bastion,
+      ...updates,
+      id: bastion.id, // Prevent ID override
+      updatedAt: new Date().toISOString()
+    }
+    get().saveBastion(updated)
+  },
+
+  rollBackTurn: (bastionId, turnNumber) => {
+    const bastion = getBastion(get().bastions, bastionId)
+    if (!bastion) return
+
+    // Find the turn to roll back to
+    const turnIndex = bastion.turns.findIndex((t) => t.turnNumber === turnNumber)
+    if (turnIndex < 0) return
+
+    // Remove the specified turn and all subsequent turns
+    const keptTurns = bastion.turns.slice(0, turnIndex)
+
+    // Restore last bastion turn day from the most recent kept turn
+    const lastTurnDay = keptTurns.length > 0
+      ? bastion.inGameTime.lastBastionTurnDay // Keep current if there are still turns
+      : 0
+
+    // Clear current orders on facilities since we're rolling back
+    const clearedFacilities = bastion.specialFacilities.map((f) => ({
+      ...f,
+      currentOrder: null,
+      orderStartedAt: null
+    }))
+
+    const updated: Bastion = {
+      ...bastion,
+      turns: keptTurns,
+      specialFacilities: clearedFacilities,
+      inGameTime: { ...bastion.inGameTime, lastBastionTurnDay: lastTurnDay },
+      updatedAt: new Date().toISOString()
+    }
+    get().saveBastion(updated)
+  },
+
+  clearConstruction: (bastionId, projectId) => {
+    const bastion = getBastion(get().bastions, bastionId)
+    if (!bastion) return
+
+    const project = bastion.construction.find((p) => p.id === projectId)
+    if (!project) return
+
+    // Refund the gold cost
+    const updated: Bastion = {
+      ...bastion,
+      construction: bastion.construction.filter((p) => p.id !== projectId),
+      treasury: bastion.treasury + project.cost,
+      updatedAt: new Date().toISOString()
+    }
+    get().saveBastion(updated)
+  },
+
+  reassignDefenders: (bastionId, defenderId, newFacilityId) => {
+    const bastion = getBastion(get().bastions, bastionId)
+    if (!bastion) return
+
+    // Verify the defender exists
+    const defender = bastion.defenders.find((d) => d.id === defenderId)
+    if (!defender) return
+
+    // Verify the target facility exists and is a barrack
+    const targetFacility = bastion.specialFacilities.find((f) => f.id === newFacilityId)
+    if (!targetFacility) return
+
+    const updated: Bastion = {
+      ...bastion,
+      defenders: bastion.defenders.map((d) =>
+        d.id === defenderId ? { ...d, barrackId: newFacilityId } : d
+      ),
+      updatedAt: new Date().toISOString()
+    }
+    get().saveBastion(updated)
   }
 })

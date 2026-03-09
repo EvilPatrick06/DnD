@@ -74,6 +74,11 @@ export interface NetworkGameState {
   shopOpen?: boolean
   shopName?: string
   shopInventory?: ShopItem[]
+  customEffects?: unknown[]
+  placedTraps?: unknown[]
+  sessionLog?: unknown[]
+  combatLog?: unknown[]
+  partyVisionCells?: Array<{ x: number; y: number }>
 }
 
 export interface NetworkMap {

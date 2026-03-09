@@ -67,6 +67,7 @@ export default defineConfig({
             if (id.includes('node_modules/@aws-sdk')) return 'vendor-aws'
             if (id.includes('node_modules/@anthropic-ai')) return 'vendor-anthropic'
             if (id.includes('node_modules/peerjs')) return 'vendor-peerjs'
+            if (id.includes('node_modules/pdfjs-dist')) return 'vendor-pdfjs'
           }
         }
       }

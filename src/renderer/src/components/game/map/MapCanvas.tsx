@@ -659,12 +659,15 @@ export default function MapCanvas({
     <div
       className={`relative w-full h-full overflow-hidden bg-gray-900 ${pendingPlacement ? 'cursor-crosshair' : ''}`}
       onContextMenu={(e) => e.preventDefault()}
+      role="img"
+      aria-label="Game map canvas"
     >
       <div ref={containerRef} className="w-full h-full" />
       {map && (
         <button
           onClick={handleResetView}
           title="Reset View (Home)"
+          aria-label="Reset map view"
           className="absolute bottom-3 right-3 z-20 px-3 py-1.5 text-xs font-medium
             bg-gray-800/90 border border-gray-700 rounded-lg text-gray-400 hover:text-gray-200
             hover:bg-gray-700 transition-colors cursor-pointer backdrop-blur-sm"

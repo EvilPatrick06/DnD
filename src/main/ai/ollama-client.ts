@@ -136,7 +136,8 @@ export async function ollamaChatOnce(
   const res = await fetch(`${ollamaBaseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: apiMessages, stream: false })
+    body: JSON.stringify({ model, messages: apiMessages, stream: false }),
+    signal: AbortSignal.timeout(120_000)
   })
 
   if (!res.ok) {

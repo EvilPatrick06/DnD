@@ -490,6 +490,70 @@ interface MapLibraryAPI {
   delete: (id: string) => Promise<{ success: boolean; error?: string }>
 }
 
+interface ShopTemplateEntry {
+  id: string
+  name: string
+  inventory: unknown[]
+  markup: number
+  savedAt: string
+}
+
+interface ShopTemplateAPI {
+  save: (template: { id: string; name: string; inventory: unknown[]; markup: number }) => Promise<{ success: boolean; error?: string }>
+  list: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; markup: number; itemCount: number; savedAt: string }>; error?: string }>
+  get: (id: string) => Promise<{ success: boolean; data?: ShopTemplateEntry; error?: string }>
+  delete: (id: string) => Promise<{ success: boolean; error?: string }>
+}
+
+interface ImageLibraryAPI {
+  save: (id: string, name: string, buffer: ArrayBuffer, extension: string) => Promise<{ success: boolean; error?: string }>
+  list: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; fileName: string; savedAt: string }>; error?: string }>
+  get: (id: string) => Promise<{ success: boolean; data?: { path: string; name: string }; error?: string }>
+  delete: (id: string) => Promise<{ success: boolean; error?: string }>
+}
+
+interface BookConfigEntry {
+  id: string
+  title: string
+  path: string
+  type: 'core' | 'custom'
+  coverPath?: string
+  addedAt: string
+}
+
+interface BookmarkEntry {
+  id: string
+  bookId: string
+  page: number
+  label: string
+  color?: string
+  createdAt: string
+}
+
+interface AnnotationEntry {
+  id: string
+  bookId: string
+  page: number
+  text: string
+  highlight?: { x: number; y: number; width: number; height: number }
+  createdAt: string
+}
+
+interface BookDataEntry {
+  bookmarks: BookmarkEntry[]
+  annotations: AnnotationEntry[]
+}
+
+interface BooksAPI {
+  loadConfig: () => Promise<BookConfigEntry[]>
+  add: (config: BookConfigEntry) => Promise<{ success: boolean; error?: string }>
+  remove: (bookId: string) => Promise<{ success: boolean; error?: string }>
+  import: (sourcePath: string, title: string, bookId: string) => Promise<{ success: boolean; path?: string; error?: string }>
+  readFile: (filePath: string) => Promise<{ success: boolean; data?: ArrayBuffer; error?: string }>
+  loadData: (bookId: string) => Promise<BookDataEntry>
+  saveData: (bookId: string, data: BookDataEntry) => Promise<{ success: boolean; error?: string }>
+}
+
 declare global {
   interface Window {
     api: CharacterAPI &
@@ -508,6 +572,9 @@ declare global {
         update: UpdateAPI
         game: GameDataAPI
         mapLibrary: MapLibraryAPI
+        shopTemplates: ShopTemplateAPI
+        imageLibrary: ImageLibraryAPI
+        books: BooksAPI
         plugins: PluginAPI
         getVersion: () => Promise<string>
         // BMO Pi Bridge

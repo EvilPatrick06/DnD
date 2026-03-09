@@ -16,13 +16,15 @@ POLL_INTERVAL = 300  # 5 minutes
 class CalendarService:
     """Google Calendar API wrapper with background polling and event cache."""
 
-    def __init__(self, socketio=None):
+    def __init__(self, socketio=None, alert_service=None):
         self.socketio = socketio
+        self.alert_service = alert_service
         self._service = None
         self._cache = []
         self._cache_lock = threading.Lock()
         self._poll_thread = None
         self._running = False
+        self._alerted_events = set()  # event IDs already alerted for dedup
 
     # ── Auth ─────────────────────────────────────────────────────────
 
@@ -176,7 +178,7 @@ class CalendarService:
             print(f"[calendar] Cache refresh failed: {e}")
 
     def _check_reminders(self):
-        """Check if any events are starting within 15 minutes and emit reminders."""
+        """Check if any events are starting within 15 minutes and emit reminders + alerts."""
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         with self._cache_lock:
             for event in self._cache:
@@ -193,8 +195,21 @@ class CalendarService:
                             "minutes_until": minutes,
                             "start": event["start"],
                         })
+                        # Send alert (dedup by event ID)
+                        event_id = event.get("id", "")
+                        if self.alert_service and event_id and event_id not in self._alerted_events:
+                            self._alerted_events.add(event_id)
+                            self.alert_service.send_alert(
+                                "calendar_reminder",
+                                f"{event['summary']} in {minutes} minutes",
+                                f"Starts at {event.get('start', '')}",
+                                priority="high",
+                            )
                 except (ValueError, TypeError):
                     pass
+        # Clean up old alerted events (keep set manageable)
+        if len(self._alerted_events) > 100:
+            self._alerted_events = set(list(self._alerted_events)[-50:])
 
     # ── Helpers ──────────────────────────────────────────────────────
 

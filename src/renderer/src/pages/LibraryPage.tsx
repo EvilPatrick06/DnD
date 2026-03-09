@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
+  CoreBooksGrid,
   HomebrewCreateModal,
   LibraryCategoryGrid,
   LibraryDetailModal,
   LibraryFilterBar,
   LibraryItemList,
-  LibrarySidebar
+  LibrarySidebar,
+  PdfViewer
 } from '../components/library'
 import { BackButton, Button, EmptyState, Skeleton } from '../components/ui'
 import { addToast } from '../hooks/use-toast'
@@ -68,6 +70,8 @@ export default function LibraryPage(): JSX.Element {
   const [initialLoading, setInitialLoading] = useState(true)
   const [debouncedSearch, setDebouncedSearch] = useState(search)
   const [showFavorites, setShowFavorites] = useState(false)
+  const [showCoreBooks, setShowCoreBooks] = useState(false)
+  const [pdfViewer, setPdfViewer] = useState<{ bookId: string; filePath: string; title: string } | null>(null)
 
   // Sort/filter state
   const [sortField, setSortField] = useState<SortField>('name')
@@ -199,13 +203,37 @@ export default function LibraryPage(): JSX.Element {
     return items
   }, [mergedItems, debouncedSearch, sortField, sortDirection, activeFilters])
 
-  // Favorites items
-  const favoriteItems = useMemo(() => {
-    if (!showFavorites) return []
-    return recentlyViewed.length > 0 || mergedItems.length > 0
-      ? [...mergedItems, ...recentlyViewed].filter((item) => favorites.has(item.id))
-      : []
-  }, [showFavorites, favorites, mergedItems, recentlyViewed])
+  // Favorites items — load from all categories when favorites view is active
+  const [favoriteItems, setFavoriteItems] = useState<LibraryItem[]>([])
+  useEffect(() => {
+    if (!showFavorites || favorites.size === 0) {
+      setFavoriteItems([])
+      return
+    }
+    let cancelled = false
+    const allCats: LibraryCategory[] = [
+      'monsters', 'creatures', 'npcs', 'companions', 'spells', 'invocations', 'metamagic',
+      'classes', 'subclasses', 'species', 'backgrounds', 'feats', 'class-features',
+      'magic-items', 'equipment', 'weapons', 'armor', 'conditions', 'rules',
+      'encounter-presets', 'treasure-tables', 'random-tables', 'traps', 'hazards',
+      'poisons', 'diseases', 'supernatural-gifts', 'maps', 'portraits', 'sounds',
+      'deities', 'planes', 'adventure-seeds', 'calendars', 'npc-names',
+      'light-sources', 'sentient-items'
+    ] as LibraryCategory[]
+
+    Promise.all(
+      allCats.map((cat) => loadCategoryItems(cat, []).catch(() => [] as LibraryItem[]))
+    ).then((results) => {
+      if (cancelled) return
+      const allItems = results.flat()
+      const matched = allItems.filter((item) => favorites.has(item.id))
+      const recentMatched = recentlyViewed.filter(
+        (item) => favorites.has(item.id) && !matched.some((m) => m.id === item.id)
+      )
+      setFavoriteItems([...matched, ...recentMatched])
+    })
+    return () => { cancelled = true }
+  }, [showFavorites, favorites, homebrewEntries, recentlyViewed])
 
   // Sort/filter config for current category
   const sortOptions = useMemo(
@@ -223,6 +251,7 @@ export default function LibraryPage(): JSX.Element {
       setSelectedItem(null)
       setSearch('')
       setShowFavorites(false)
+      setShowCoreBooks(false)
     },
     [setCategory, setSearch]
   )
@@ -230,9 +259,25 @@ export default function LibraryPage(): JSX.Element {
   const handleSelectFavorites = useCallback(() => {
     setCategory(null)
     setShowFavorites(true)
+    setShowCoreBooks(false)
     setSelectedItem(null)
     setSearch('')
   }, [setCategory, setSearch])
+
+  const handleSelectCoreBooks = useCallback(() => {
+    setCategory(null)
+    setShowFavorites(false)
+    setShowCoreBooks(true)
+    setSelectedItem(null)
+    setSearch('')
+  }, [setCategory, setSearch])
+
+  const handleOpenBook = useCallback(
+    (book: { id: string; title: string; path: string }) => {
+      setPdfViewer({ bookId: book.id, filePath: book.path, title: book.title })
+    },
+    []
+  )
 
   const handleSelectItem = useCallback(
     (item: LibraryItem) => {
@@ -389,6 +434,8 @@ export default function LibraryPage(): JSX.Element {
           homebrewCounts={homebrewCounts}
           onSelectFavorites={handleSelectFavorites}
           isFavoritesSelected={showFavorites}
+          onSelectCoreBooks={handleSelectCoreBooks}
+          isCoreBooksSelected={showCoreBooks}
         />
 
         {/* Main area */}
@@ -428,6 +475,11 @@ export default function LibraryPage(): JSX.Element {
                 onToggleFavorite={toggleFavorite}
               />
             )
+          ) : showCoreBooks ? (
+            // Core Books mode
+            <div className="flex-1 overflow-y-auto">
+              <CoreBooksGrid onOpenBook={handleOpenBook} />
+            </div>
           ) : !selectedCategory ? (
             // No category selected
             <div className="flex-1 overflow-y-auto p-6">
@@ -541,6 +593,32 @@ export default function LibraryPage(): JSX.Element {
           existingItem={homebrewModal.existingItem}
           onSave={handleSaveHomebrew}
           onClose={() => setHomebrewModal(null)}
+        />
+      )}
+
+      {/* PDF Viewer overlay */}
+      {pdfViewer && (
+        <PdfViewer
+          bookId={pdfViewer.bookId}
+          filePath={pdfViewer.filePath}
+          title={pdfViewer.title}
+          onClose={() => setPdfViewer(null)}
+          onOpenBook={async (targetBookId, page) => {
+            try {
+              const configs = await window.api.books.loadConfig()
+              const book = configs.find((b: { id: string }) => b.id === targetBookId)
+              if (book) {
+                setPdfViewer({ bookId: book.id, filePath: book.path, title: book.title })
+                // Small delay so the new viewer mounts before we try to navigate
+                setTimeout(() => {
+                  const event = new CustomEvent('pdf-go-to-page', { detail: { page } })
+                  window.dispatchEvent(event)
+                }, 1000)
+              }
+            } catch {
+              addToast('Could not open referenced book', 'error')
+            }
+          }}
         />
       )}
     </div>

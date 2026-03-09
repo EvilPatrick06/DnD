@@ -80,6 +80,8 @@ export interface InitiativeEntry {
   lairActions?: Array<{ name: string; description: string }>
   delayedUntil?: number
   surprised?: boolean
+  isDelaying?: boolean
+  readyAction?: { trigger: string; action: string }
 }
 
 export interface RechargeAbility {

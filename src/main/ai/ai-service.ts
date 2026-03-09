@@ -71,8 +71,27 @@ type _AiIndexProgress = AiIndexProgress
 // Per-campaign conversation managers
 const conversations = new Map<string, ConversationManager>()
 
-// Active stream abort controllers
+// Active stream abort controllers with creation timestamps for TTL cleanup
 const activeStreams = new Map<string, AbortController>()
+const activeStreamTimestamps = new Map<string, number>()
+const STREAM_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+function removeStream(streamId: string): void {
+  activeStreams.delete(streamId)
+  activeStreamTimestamps.delete(streamId)
+}
+
+// Periodically clean up stale streams
+setInterval(() => {
+  const now = Date.now()
+  for (const [streamId, timestamp] of activeStreamTimestamps) {
+    if (now - timestamp > STREAM_TTL_MS) {
+      const controller = activeStreams.get(streamId)
+      if (controller) controller.abort()
+      removeStream(streamId)
+    }
+  }
+}, 60_000)
 
 const pendingWebSearchApprovals = new Map<string, PendingWebSearchApproval>()
 const WEB_SEARCH_APPROVAL_TIMEOUT_MS = 30_000
@@ -355,6 +374,7 @@ export function startChat(
   const streamId = `stream-${++streamCounter}`
   const abortController = new AbortController()
   activeStreams.set(streamId, abortController)
+  activeStreamTimestamps.set(streamId, Date.now())
 
   const conv = getConversation(request.campaignId)
   conv.setActiveCharacterIds(request.characterIds)
@@ -388,14 +408,14 @@ export function startChat(
         onDone: (text: string) => {
           clearPendingWebSearchApproval(streamId, false)
           fullText = text
-          activeStreams.delete(streamId)
+          removeStream(streamId)
 
           // Handle file read recursion
           handleStreamCompletion(fullText, request, conv, streamId, abortController, onChunk, onDone, onError, 0)
         },
         onError: (error: Error) => {
           clearPendingWebSearchApproval(streamId, false)
-          activeStreams.delete(streamId)
+          removeStream(streamId)
           onError(error.message)
         }
       }
@@ -404,13 +424,13 @@ export function startChat(
         (signal) => ollamaStreamChat(systemPrompt, messages, callbacks, currentConfig.ollamaModel, signal),
         abortController,
         (errMsg) => {
-          activeStreams.delete(streamId)
+          removeStream(streamId)
           onError(errMsg)
         }
       )
     } catch (error) {
       clearPendingWebSearchApproval(streamId, false)
-      activeStreams.delete(streamId)
+      removeStream(streamId)
       onError(error instanceof Error ? error.message : String(error))
     }
   })()
@@ -442,6 +462,7 @@ async function handleStreamCompletion(
 ): Promise<void> {
   const restreamConversation = async (): Promise<void> => {
     deps.activeStreams.set(streamId, abortController)
+    activeStreamTimestamps.set(streamId, Date.now())
     let nextFullText = ''
     const { systemPrompt: sp, messages: msgs } = await conv.getMessagesForApi('')
 
@@ -452,7 +473,7 @@ async function handleStreamCompletion(
       },
       onDone: (text: string) => {
         nextFullText = text
-        deps.activeStreams.delete(streamId)
+        removeStream(streamId)
         handleStreamCompletion(
           nextFullText,
           request,
@@ -468,7 +489,7 @@ async function handleStreamCompletion(
       },
       onError: (error: Error) => {
         clearPendingWebSearchApproval(streamId, false)
-        deps.activeStreams.delete(streamId)
+        removeStream(streamId)
         onError(error.message)
       }
     }
@@ -478,7 +499,7 @@ async function handleStreamCompletion(
       abortController,
       (errMsg) => {
         clearPendingWebSearchApproval(streamId, false)
-        deps.activeStreams.delete(streamId)
+        removeStream(streamId)
         onError(errMsg)
       }
     )
@@ -582,7 +603,7 @@ export function cancelChat(streamId: string): void {
   const controller = activeStreams.get(streamId)
   if (controller) {
     controller.abort()
-    activeStreams.delete(streamId)
+    removeStream(streamId)
   }
 }
 

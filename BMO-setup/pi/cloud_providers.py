@@ -358,7 +358,7 @@ def groq_stt(audio_bytes: bytes, language: str = "en", prompt: str = "") -> dict
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     files = {
         "file": ("audio.wav", io.BytesIO(audio_bytes), "audio/wav"),
-        "model": (None, "whisper-large-v3-turbo"),
+        "model": (None, "whisper-large-v3"),
         "language": (None, language),
         "response_format": (None, "verbose_json"),
     }

@@ -174,7 +174,28 @@ export const IPC_CHANNELS = {
   MAP_LIBRARY_SAVE: 'map-library:save',
   MAP_LIBRARY_LIST: 'map-library:list',
   MAP_LIBRARY_GET: 'map-library:get',
-  MAP_LIBRARY_DELETE: 'map-library:delete'
+  MAP_LIBRARY_DELETE: 'map-library:delete',
+
+  // === Shop Templates ===
+  SHOP_TEMPLATE_SAVE: 'shop-template:save',
+  SHOP_TEMPLATE_LIST: 'shop-template:list',
+  SHOP_TEMPLATE_GET: 'shop-template:get',
+  SHOP_TEMPLATE_DELETE: 'shop-template:delete',
+
+  // === Image Library ===
+  IMAGE_LIBRARY_SAVE: 'image-library:save',
+  IMAGE_LIBRARY_LIST: 'image-library:list',
+  IMAGE_LIBRARY_GET: 'image-library:get',
+  IMAGE_LIBRARY_DELETE: 'image-library:delete',
+
+  // === Books ===
+  BOOK_LOAD_CONFIG: 'book:load-config',
+  BOOK_ADD: 'book:add',
+  BOOK_REMOVE: 'book:remove',
+  BOOK_IMPORT: 'book:import',
+  BOOK_READ_FILE: 'book:read-file',
+  BOOK_LOAD_DATA: 'book:load-data',
+  BOOK_SAVE_DATA: 'book:save-data'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
