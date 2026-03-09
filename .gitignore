@@ -37,3 +37,4 @@ BMO-setup/pi-iam-credentials.txt
 BMO-setup/.env
 BMO-setup/pi/*.pem
 BMO-setup/config/.env
+BMO-setup/pi/config/credentials.json
