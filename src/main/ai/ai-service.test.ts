@@ -65,7 +65,14 @@ vi.mock('./ollama-client', () => ({
   listOllamaModels: vi.fn(async () => ['llama3.1', 'mistral']),
   ollamaChatOnce: vi.fn(async () => 'summary result'),
   ollamaStreamChat: vi.fn(),
-  setOllamaUrl: vi.fn()
+  setOllamaUrl: vi.fn(),
+  ollamaProvider: {
+    type: 'ollama',
+    streamChat: vi.fn(),
+    chatOnce: vi.fn(async () => 'summary result'),
+    isAvailable: vi.fn(async () => true),
+    listModels: vi.fn(async () => ['llama3.1', 'mistral'])
+  }
 }))
 
 vi.mock('./ollama-manager', () => ({
