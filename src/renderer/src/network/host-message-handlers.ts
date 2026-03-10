@@ -1,4 +1,5 @@
 import { FILE_SIZE_LIMIT, MAX_CHAT_LENGTH, MAX_DISPLAY_NAME_LENGTH } from '../constants'
+import { DEFAULT_BLOCKED_WORDS, filterMessage } from '../data/moderation'
 import { logger } from '../utils/logger'
 
 // Client message type allowlist — only these prefixes are permitted from non-host peers.
@@ -111,9 +112,6 @@ export function applyChatModeration(
   }
 
   if (moderationEnabled) {
-    // Lazy import to avoid circular dependency
-    const { DEFAULT_BLOCKED_WORDS, filterMessage } =
-      require('../data/moderation') as typeof import('../data/moderation')
     const payload = message.payload as { message: string }
     if (payload.message) {
       const wordList = customBlockedWords.length > 0 ? customBlockedWords : DEFAULT_BLOCKED_WORDS

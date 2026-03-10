@@ -3,24 +3,13 @@
  * Resolves entity names to IDs and validates grid coordinates.
  */
 
+import { getGameStore, getLobbyStore, getNetworkStore } from '../stores/store-accessors'
 import { logger } from '../utils/logger'
 import type { ActiveMap, DmAction, ExecutionResult, GameStoreSnapshot, StoreAccessors } from './game-actions/types'
 import { pluginEventBus } from './plugin-system/event-bus'
 
 // Re-export types for external consumers
 export type { DmAction, ExecutionFailure, ExecutionResult, GameStoreSnapshot } from './game-actions/types'
-
-// ── Lazy Store Accessors (stay in orchestrator to avoid circular deps) ──
-
-function getGameStore() {
-  return (require('../stores/use-game-store') as typeof import('../stores/use-game-store')).useGameStore
-}
-function getLobbyStore() {
-  return (require('../stores/use-lobby-store') as typeof import('../stores/use-lobby-store')).useLobbyStore
-}
-function getNetworkStore() {
-  return (require('../stores/use-network-store') as typeof import('../stores/use-network-store')).useNetworkStore
-}
 
 const stores: StoreAccessors = { getGameStore, getLobbyStore, getNetworkStore }
 
@@ -131,14 +120,7 @@ export function unregisterPluginDmAction(actionType: string): void {
  * actions are queued as pendingActions instead of executing immediately.
  * Pass `bypassApproval: true` to force execution (used when DM approves pending actions).
  */
-let _useAiDmStore: typeof import('../stores/use-ai-dm-store').useAiDmStore | null = null
-function getAiDmStore(): typeof import('../stores/use-ai-dm-store').useAiDmStore {
-  if (!_useAiDmStore) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _useAiDmStore = (require('../stores/use-ai-dm-store') as typeof import('../stores/use-ai-dm-store')).useAiDmStore
-  }
-  return _useAiDmStore
-}
+import { getAiDmStore } from '../stores/store-accessors'
 
 export function executeDmActions(actions: DmAction[], bypassApproval = false): ExecutionResult {
   if (!bypassApproval) {

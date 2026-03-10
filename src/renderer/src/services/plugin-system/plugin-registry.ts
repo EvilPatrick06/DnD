@@ -4,6 +4,9 @@
 // ============================================================================
 
 import type { PluginManifest } from '../../../../shared/plugin-types'
+import { useGameStore } from '../../stores/use-game-store'
+import { registerSystem, unregisterSystem } from '../../systems/registry'
+import type { GameSystemPlugin } from '../../systems/types'
 import { logger } from '../../utils/logger'
 import {
   type DmAction,
@@ -20,7 +23,8 @@ type _ExecutionResult = ExecutionResult
 type _GameStoreSnapshot = GameStoreSnapshot
 
 import { pluginEventBus } from './event-bus'
-import { createPluginAPI, type PluginAPI, type PluginCommandDef } from './plugin-api'
+import { createPluginAPI, type PluginAPI } from './plugin-api'
+import { getPluginCommandRegistry, getPluginUIRegistry } from './plugin-registry-data'
 
 export interface LoadedPlugin {
   id: string
@@ -32,48 +36,14 @@ export interface LoadedPlugin {
   }
   api?: PluginAPI
   errorMessage?: string
+  registeredGameSystem?: boolean
 }
 
-// --- Global registries for plugin contributions ---
+// --- Loaded plugins map; registry data lives in plugin-registry-data.ts ---
 
-interface PluginCommandEntry extends PluginCommandDef {
-  pluginId: string
-}
-
-interface PluginContextMenuItem {
-  pluginId: string
-  label: string
-  icon?: string
-  onClick: (tokenId: string) => void
-  dmOnly?: boolean
-}
-
-interface PluginBottomBarWidget {
-  pluginId: string
-  id: string
-  label: string
-  render: () => HTMLElement | null
-}
-
-interface PluginUIRegistry {
-  contextMenuItems: PluginContextMenuItem[]
-  bottomBarWidgets: PluginBottomBarWidget[]
-}
-
-const pluginCommandRegistry: PluginCommandEntry[] = []
-const pluginUIRegistry: PluginUIRegistry = {
-  contextMenuItems: [],
-  bottomBarWidgets: []
-}
 const loadedPlugins = new Map<string, LoadedPlugin>()
 
-export function getPluginCommandRegistry(): PluginCommandEntry[] {
-  return pluginCommandRegistry
-}
-
-export function getPluginUIRegistry(): PluginUIRegistry {
-  return pluginUIRegistry
-}
+export { getPluginCommandRegistry, getPluginUIRegistry } from './plugin-registry-data'
 
 export function getLoadedPlugins(): LoadedPlugin[] {
   return Array.from(loadedPlugins.values())
@@ -103,7 +73,6 @@ export async function loadPlugin(manifest: PluginManifest): Promise<LoadedPlugin
   }
 
   try {
-    // Load the plugin module via the custom protocol
     const moduleUrl = `plugin://${id}/${manifest.entry}`
     const module = await import(/* @vite-ignore */ moduleUrl)
 
@@ -111,12 +80,31 @@ export async function loadPlugin(manifest: PluginManifest): Promise<LoadedPlugin
       throw new Error('Plugin module must export an activate() function')
     }
 
-    const api = createPluginAPI(id, manifest)
+    const api = createPluginAPI(id, manifest, {
+      getGameState: () => useGameStore.getState()
+    })
     module.activate(api)
 
-    // Register a default plugin DM action handler if the plugin provides one
     if (typeof module.handleDmAction === 'function') {
       registerPluginDmAction(`plugin:${id}:action`, module.handleDmAction)
+    }
+
+    let registeredGameSystem = false
+
+    // Game-system plugins can export a gameSystemPlugin conforming to GameSystemPlugin
+    if (manifest.type === 'game-system' && module.gameSystemPlugin) {
+      try {
+        const gsp = module.gameSystemPlugin as GameSystemPlugin
+        if (typeof gsp.id === 'string' && typeof gsp.name === 'string') {
+          registerSystem(gsp)
+          registeredGameSystem = true
+          logger.info(`[PluginRegistry] Registered game system "${gsp.id}" from plugin "${id}"`)
+        } else {
+          logger.warn(`[PluginRegistry] Plugin "${id}" exports gameSystemPlugin without id/name`)
+        }
+      } catch (gsErr) {
+        logger.error(`[PluginRegistry] Failed to register game system from plugin "${id}":`, gsErr)
+      }
     }
 
     const loaded: LoadedPlugin = {
@@ -127,7 +115,8 @@ export async function loadPlugin(manifest: PluginManifest): Promise<LoadedPlugin
         activate: module.activate,
         deactivate: typeof module.deactivate === 'function' ? module.deactivate : undefined
       },
-      api
+      api,
+      registeredGameSystem
     }
     loadedPlugins.set(id, loaded)
     return loaded
@@ -161,15 +150,26 @@ export function unloadPlugin(id: string): void {
   unregisterPluginDmAction(`plugin:${id}:action`)
 
   // Remove registered commands
-  for (let i = pluginCommandRegistry.length - 1; i >= 0; i--) {
-    if (pluginCommandRegistry[i].pluginId === id) {
-      pluginCommandRegistry.splice(i, 1)
+  const cmdRegistry = getPluginCommandRegistry()
+  for (let i = cmdRegistry.length - 1; i >= 0; i--) {
+    if (cmdRegistry[i].pluginId === id) {
+      cmdRegistry.splice(i, 1)
     }
   }
 
   // Remove UI contributions
-  pluginUIRegistry.contextMenuItems = pluginUIRegistry.contextMenuItems.filter((item) => item.pluginId !== id)
-  pluginUIRegistry.bottomBarWidgets = pluginUIRegistry.bottomBarWidgets.filter((w) => w.pluginId !== id)
+  const uiRegistry = getPluginUIRegistry()
+  uiRegistry.contextMenuItems = uiRegistry.contextMenuItems.filter((item) => item.pluginId !== id)
+  uiRegistry.bottomBarWidgets = uiRegistry.bottomBarWidgets.filter((w) => w.pluginId !== id)
+
+  // Unregister game system if this plugin registered one
+  if (loaded.registeredGameSystem) {
+    try {
+      unregisterSystem(id)
+    } catch (err) {
+      logger.error(`[PluginRegistry] Error unregistering game system for plugin "${id}":`, err)
+    }
+  }
 
   loaded.status = 'unloaded'
   loadedPlugins.delete(id)

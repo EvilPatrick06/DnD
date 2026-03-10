@@ -1,10 +1,16 @@
 import type { StateCreator } from 'zustand'
+import { publishSystemChat } from '../../events/system-chat-bridge'
 import type { EntityCondition } from '../../types/game-state'
 import type { ConditionsSliceState, GameStoreState } from './types'
 
-// Lazy accessor to break circular dependency (game-store → conditions-slice → lobby-store → game-store)
-function getLobbyStore() {
-  return (require('../use-lobby-store') as typeof import('../use-lobby-store')).useLobbyStore
+function addExhaustionDeathMessage(entityName: string): void {
+  publishSystemChat({
+    senderId: 'system',
+    senderName: 'System',
+    content: `${entityName} dies from Exhaustion level 6!`,
+    timestamp: Date.now(),
+    isSystem: true
+  })
 }
 
 export const createConditionsSlice: StateCreator<GameStoreState, [], [], ConditionsSliceState> = (set, get) => ({
@@ -20,16 +26,7 @@ export const createConditionsSlice: StateCreator<GameStoreState, [], [], Conditi
           get().updateToken(map.id, token.id, { currentHP: 0 })
         }
       }
-      getLobbyStore()
-        .getState()
-        .addChatMessage({
-          id: crypto.randomUUID(),
-          senderId: 'system',
-          senderName: 'System',
-          content: `${condition.entityName} dies from Exhaustion level 6!`,
-          timestamp: Date.now(),
-          isSystem: true
-        })
+      addExhaustionDeathMessage(condition.entityName)
     }
   },
 
@@ -55,16 +52,7 @@ export const createConditionsSlice: StateCreator<GameStoreState, [], [], Conditi
             get().updateToken(map.id, token.id, { currentHP: 0 })
           }
         }
-        getLobbyStore()
-          .getState()
-          .addChatMessage({
-            id: crypto.randomUUID(),
-            senderId: 'system',
-            senderName: 'System',
-            content: `${updated.entityName} dies from Exhaustion level 6!`,
-            timestamp: Date.now(),
-            isSystem: true
-          })
+        addExhaustionDeathMessage(updated.entityName)
       }
     }
   }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { DiceColors } from '../components/game/dice3d'
 import { DEFAULT_DICE_COLORS } from '../components/game/dice3d'
 import { MAX_CHAT_LENGTH } from '../constants'
+import { subscribeToSystemChat } from '../events/system-chat-bridge'
 import { PLAYER_COLORS } from '../network/types'
 import { rollFormula } from '../services/dice/dice-engine'
 import type { Character } from '../types/character'
@@ -459,3 +460,11 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
       whisperHistory: []
     })
 }))
+
+// Wire system chat bridge: slices (e.g. conditions) can publish without depending on lobby
+subscribeToSystemChat((msg) => {
+  useLobbyStore.getState().addChatMessage({
+    id: crypto.randomUUID(),
+    ...msg
+  })
+})

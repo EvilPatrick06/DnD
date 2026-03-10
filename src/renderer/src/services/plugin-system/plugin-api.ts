@@ -6,8 +6,10 @@
 // ============================================================================
 
 import type { PluginManifest, PluginPermission } from '../../../../shared/plugin-types'
+import { registerGameSystem } from '../../types/game-system'
 import { logger } from '../../utils/logger'
 import { type AsyncEventHandler, type EventHandler, pluginEventBus } from './event-bus'
+import { getPluginCommandRegistry, getPluginUIRegistry } from './plugin-registry-data'
 
 export interface PluginEventsAPI {
   on: <T = unknown>(event: string, handler: EventHandler<T>, priority?: number) => void
@@ -37,6 +39,10 @@ export interface PluginGameAPI {
   getState: () => unknown
 }
 
+export interface CreatePluginAPIOptions {
+  getGameState?: () => unknown
+}
+
 export interface PluginStorageAPI {
   get: (key: string) => Promise<unknown>
   set: (key: string, value: unknown) => Promise<void>
@@ -64,6 +70,17 @@ export interface PluginSoundsAPI {
   play: (eventName: string) => void
 }
 
+export interface PluginGameSystemAPI {
+  registerConfig: (config: {
+    id: string
+    name: string
+    shortName: string
+    maxLevel: number
+    dataPath: string
+    referenceLabel: string
+  }) => void
+}
+
 export interface PluginAPI {
   id: string
   manifest: PluginManifest
@@ -75,13 +92,19 @@ export interface PluginAPI {
   ui: PluginUIAPI
   log: PluginLogAPI
   sounds: PluginSoundsAPI
+  gameSystem: PluginGameSystemAPI
 }
 
 /**
  * Create a frozen, scoped API object for a single plugin.
  * All operations are sandboxed to the plugin's ID and permissions.
+ * getGameState is injected by the registry to avoid circular imports.
  */
-export function createPluginAPI(pluginId: string, manifest: PluginManifest): PluginAPI {
+export function createPluginAPI(
+  pluginId: string,
+  manifest: PluginManifest,
+  options?: CreatePluginAPIOptions
+): PluginAPI {
   const permissions = new Set<PluginPermission>('permissions' in manifest ? manifest.permissions : [])
 
   function requirePermission(perm: PluginPermission, action: string): void {
@@ -115,18 +138,13 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
     register: (command: PluginCommandDef) => {
       requirePermission('commands', `commands.register("${command.name}")`)
       registeredCommands.push(command)
-      // Actual registration into the command system happens via the registry
-      const { getPluginCommandRegistry } = require('./plugin-registry')
       getPluginCommandRegistry().push({ ...command, pluginId })
     },
     unregister: (name: string) => {
       const idx = registeredCommands.findIndex((c) => c.name === name)
       if (idx >= 0) registeredCommands.splice(idx, 1)
-      const { getPluginCommandRegistry } = require('./plugin-registry')
       const registry = getPluginCommandRegistry()
-      const regIdx = registry.findIndex(
-        (c: { name: string; pluginId: string }) => c.name === name && c.pluginId === pluginId
-      )
+      const regIdx = registry.findIndex((c) => c.name === name && c.pluginId === pluginId)
       if (regIdx >= 0) registry.splice(regIdx, 1)
     }
   })
@@ -149,10 +167,19 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
   const game: PluginGameAPI = Object.freeze({
     getState: () => {
       requirePermission('game-events', 'game.getState()')
-      // Lazy import to avoid circular dependency at module init
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { useGameStore } = require('../../stores/use-game-store')
-      const s = useGameStore.getState()
+      const getGameState = options?.getGameState
+      if (!getGameState) {
+        throw new Error('Plugin game API requires getGameState to be provided by the registry')
+      }
+      const s = getGameState() as {
+        initiative: unknown
+        round: number
+        activeMapId: string | null
+        conditions: unknown[]
+        combatLog: unknown[]
+        turnMode: string
+        isPaused: boolean
+      }
       return {
         initiative: s.initiative ? structuredClone(s.initiative) : null,
         round: s.round,
@@ -203,14 +230,11 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
     }) => {
       requirePermission('ui-extensions', 'ui.registerContextMenuItem()')
       uiContextMenuItems.push(item)
-      // Store in the plugin store for rendering
-      const { getPluginUIRegistry } = require('./plugin-registry')
       getPluginUIRegistry().contextMenuItems.push({ ...item, pluginId })
     },
     registerBottomBarWidget: (widget: { id: string; label: string; render: () => HTMLElement | null }) => {
       requirePermission('ui-extensions', 'ui.registerBottomBarWidget()')
       uiBottomBarWidgets.push(widget)
-      const { getPluginUIRegistry } = require('./plugin-registry')
       getPluginUIRegistry().bottomBarWidgets.push({ ...widget, pluginId })
     }
   })
@@ -246,6 +270,17 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
     }
   })
 
+  // --- Game System API (only meaningful for game-system type plugins) ---
+  const gameSystemApi: PluginGameSystemAPI = Object.freeze({
+    registerConfig: (config) => {
+      if (manifest.type !== 'game-system') {
+        throw new Error(`Only game-system plugins can call gameSystem.registerConfig()`)
+      }
+      registerGameSystem(config)
+      logger.info(`[Plugin:${pluginId}] Registered game system config "${config.id}"`)
+    }
+  })
+
   return Object.freeze({
     id: pluginId,
     manifest,
@@ -256,6 +291,7 @@ export function createPluginAPI(pluginId: string, manifest: PluginManifest): Plu
     storage,
     ui,
     log,
-    sounds
+    sounds,
+    gameSystem: gameSystemApi
   })
 }

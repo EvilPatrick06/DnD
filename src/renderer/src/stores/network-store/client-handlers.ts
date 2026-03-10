@@ -45,8 +45,15 @@ import type {
   WhisperPlayerPayload,
   XpAwardPayload
 } from '../../network'
+import {
+  playAmbient as playAmbientSound,
+  play as playSound,
+  setAmbientVolume,
+  stopAmbient
+} from '../../services/sound-manager'
 import { useGameStore } from '../use-game-store'
 import { useLobbyStore } from '../use-lobby-store'
+import { useMacroStore } from '../use-macro-store'
 import type { NetworkState } from './index'
 
 /** Apply a partial game state update from the network */
@@ -455,7 +462,6 @@ export function handleClientMessage(
     // --- Macro sharing ---
     case 'dm:push-macros': {
       const payload = message.payload as MacroPushPayload
-      const { useMacroStore } = require('../use-macro-store') as typeof import('../use-macro-store')
       useMacroStore.getState().importMacros(payload.macros)
       useLobbyStore.getState().addChatMessage({
         id: `sys-macros-${Date.now()}`,
@@ -575,8 +581,7 @@ export function handleClientMessage(
     case 'dm:play-sound': {
       const payload = message.payload as PlaySoundPayload
       try {
-        const sm = require('../../services/sound-manager') as typeof import('../../services/sound-manager')
-        sm.play(payload.event as Parameters<typeof sm.play>[0])
+        playSound(payload.event as Parameters<typeof playSound>[0])
       } catch {
         // Sound system not available
       }
@@ -586,9 +591,8 @@ export function handleClientMessage(
     case 'dm:play-ambient': {
       const payload = message.payload as PlayAmbientPayload
       try {
-        const sm = require('../../services/sound-manager') as typeof import('../../services/sound-manager')
-        if (payload.volume != null) sm.setAmbientVolume(payload.volume)
-        sm.playAmbient(payload.ambient as Parameters<typeof sm.playAmbient>[0])
+        if (payload.volume != null) setAmbientVolume(payload.volume)
+        playAmbientSound(payload.ambient as Parameters<typeof playAmbientSound>[0])
       } catch {
         // Sound system not available
       }
@@ -597,8 +601,7 @@ export function handleClientMessage(
 
     case 'dm:stop-ambient': {
       try {
-        const sm = require('../../services/sound-manager') as typeof import('../../services/sound-manager')
-        sm.stopAmbient()
+        stopAmbient()
       } catch {
         // Sound system not available
       }

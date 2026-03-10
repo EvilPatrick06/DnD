@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MemoryRouter } from 'react-router'
+import './stores/register-stores'
 import App from './App'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import { initPluginSystem } from './services/plugin-system'
