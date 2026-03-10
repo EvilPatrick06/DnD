@@ -5,11 +5,11 @@ import type { Campaign, NPC } from '../../../../types/campaign'
 import type { InitiativeEntry } from '../../../../types/game-state'
 import type { GameMap, MapToken, TerrainCell } from '../../../../types/map'
 import { getSizeTokenDimensions } from '../../../../types/monster'
-import { DMNotepad, FogBrush, NPCManager, ShopPanel, TokenPlacer } from '../../dm'
+import { DMNotepad, FogBrush, NPCManager, RegionManager, ShopPanel, TokenPlacer } from '../../dm'
 import type { DmToolId } from '../../dm/DMToolbar'
 import GridControlPanel from '../../dm/GridControlPanel'
 
-export type RightPanel = 'tokens' | 'fog' | 'terrain' | 'npcs' | 'notes' | 'shop' | 'grid'
+export type RightPanel = 'tokens' | 'fog' | 'terrain' | 'regions' | 'npcs' | 'notes' | 'shop' | 'grid'
 
 interface MapEditorRightPanelProps {
   rightPanel: RightPanel
@@ -100,7 +100,7 @@ export default function MapEditorRightPanel({
   return (
     <div className="w-72 bg-gray-900/80 border-l border-gray-700 flex flex-col shrink-0">
       <div className="flex gap-0.5 p-1.5 border-b border-gray-800">
-        {(['tokens', 'fog', 'terrain', 'grid', 'npcs', 'notes', 'shop'] as const).map((tab) => (
+        {(['tokens', 'fog', 'terrain', 'regions', 'grid', 'npcs', 'notes', 'shop'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setRightPanel(tab)}
@@ -194,6 +194,7 @@ export default function MapEditorRightPanel({
             )}
           </div>
         )}
+        {rightPanel === 'regions' && <RegionManager activeMap={activeMap} />}
         {rightPanel === 'npcs' && (
           <NPCManager
             npcs={campaign.npcs}

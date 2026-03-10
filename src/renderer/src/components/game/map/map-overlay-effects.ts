@@ -9,6 +9,7 @@ import type { GameMap } from '../../../types/map'
 import { type AoEConfig, clearAoEOverlay, drawAoEOverlay } from './aoe-overlay'
 import type { AudioEmitterLayer } from './audio-emitter-overlay'
 import { clearDrawingLayer, drawDrawings } from './drawing-layer'
+import { drawRegions } from './region-layer'
 import { destroyFogAnimation, drawFogOfWar, initFogAnimation } from './fog-overlay'
 import { drawGrid, drawGridLabels } from './grid-layer'
 import { drawLightingOverlay, type LightingConfig } from './lighting-overlay'
@@ -26,6 +27,7 @@ export interface OverlayRefs {
   wallGraphicsRef: React.RefObject<Graphics | null>
   lightingGraphicsRef: React.RefObject<Graphics | null>
   terrainOverlayRef: React.RefObject<Graphics | null>
+  regionGraphicsRef: React.RefObject<Graphics | null>
   drawingGraphicsRef: React.RefObject<Graphics | null>
   aoeOverlayRef: React.RefObject<Graphics | null>
   moveOverlayRef: React.RefObject<Graphics | null>
@@ -178,6 +180,17 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
       refs.terrainOverlayRef.current.clear()
     }
   }, [initialized, map?.terrain, map?.grid.cellSize, map, refs, currentFloor])
+
+  // Draw scene regions
+  useEffect(() => {
+    if (!initialized || !refs.regionGraphicsRef.current || !map) return
+    const regions = map.regions ?? []
+    if (regions.length > 0) {
+      drawRegions(refs.regionGraphicsRef.current, regions, map.grid, isHost, currentFloor)
+    } else {
+      refs.regionGraphicsRef.current.clear()
+    }
+  }, [initialized, map?.regions, map?.grid, isHost, map, refs, currentFloor])
 
   // Draw map annotations/drawings (floor-filtered)
   useEffect(() => {

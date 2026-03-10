@@ -7,6 +7,7 @@ import {
   triggersOpportunityAttack
 } from '../services/combat/combat-rules'
 import { checkOpportunityAttack } from '../services/combat/reaction-tracker'
+import { processTokenRegionTriggers } from '../services/map/region-detection'
 import { buildMapLightSources, debouncedRecomputeVision } from '../services/map/vision-computation'
 import { getWeatherEffects, type WeatherType } from '../services/weather-mechanics'
 import { useGameStore } from '../stores/use-game-store'
@@ -363,6 +364,30 @@ export function useTokenMovement({
           targetGridX: destTerrain.portalTarget.gridX,
           targetGridY: destTerrain.portalTarget.gridY
         })
+      }
+
+      // Scene region trigger detection
+      const regions = activeMap.regions ?? []
+      if (regions.length > 0) {
+        processTokenRegionTriggers(
+          movingToken,
+          movingToken.gridX,
+          movingToken.gridY,
+          gridX,
+          gridY,
+          regions,
+          {
+            token: movingToken,
+            mapId: activeMap.id,
+            addChatMessage,
+            moveToken: gameStore.moveToken,
+            updateToken: gameStore.updateToken,
+            addCondition: gameStore.addCondition,
+            updateRegion: gameStore.updateRegion,
+            setActiveMap: gameStore.setActiveMap,
+            round: gameStore.round
+          }
+        )
       }
     },
     [activeMap, gameStore, teleportMove, addChatMessage, setOaPrompt, onPortalEntry]

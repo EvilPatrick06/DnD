@@ -68,6 +68,7 @@ vi.mock('./map-pixi-setup', () => ({
     world: {},
     gridGraphics: {},
     terrainOverlay: {},
+    regionGraphics: {},
     moveOverlay: {},
     aoeOverlay: {},
     tokenContainer: {},

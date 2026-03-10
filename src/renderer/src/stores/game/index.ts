@@ -10,6 +10,7 @@ import { createFogSlice } from './fog-slice'
 import { createInitiativeSlice } from './initiative-slice'
 import { createJournalSlice } from './journal-slice'
 import { createMapTokenSlice } from './map-token-slice'
+import { createRegionSlice } from './region-slice'
 import { createShopSlice } from './shop-slice'
 import { createSidebarSlice } from './sidebar-slice'
 import { createTimeSlice } from './time-slice'
@@ -37,6 +38,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
     ...createEffectsSlice(...a),
     ...createVisionSlice(...a),
     ...createDrawingSlice(...a),
+    ...createRegionSlice(...a),
     ...createJournalSlice(...a),
 
     // --- Reaction prompt ---
