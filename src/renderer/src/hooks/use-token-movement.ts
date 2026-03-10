@@ -56,6 +56,24 @@ interface UseTokenMovementReturn {
   handleConcentrationLost: (casterId: string) => void
 }
 
+function patchTokensForMountedMove(
+  tokens: GameMap['tokens'],
+  tokenId: string,
+  gridX: number,
+  gridY: number
+): GameMap['tokens'] {
+  const movedToken = tokens.find((token) => token.id === tokenId)
+  if (!movedToken) {
+    return tokens.map((token) => (token.id === tokenId ? { ...token, gridX, gridY } : token))
+  }
+
+  return tokens.map((token) =>
+    token.id === tokenId || (movedToken.riderId != null && token.entityId === movedToken.riderId)
+      ? { ...token, gridX, gridY }
+      : token
+  )
+}
+
 export function useTokenMovement({
   activeMap,
   teleportMove,
@@ -283,7 +301,7 @@ export function useTokenMovement({
 
       // Auto-reveal fog when dynamic fog is enabled (debounced to avoid perf spikes during drag)
       if (activeMap.fogOfWar.dynamicFogEnabled) {
-        const patchedTokens = activeMap.tokens.map((t) => (t.id === tokenId ? { ...t, gridX, gridY } : t))
+        const patchedTokens = patchTokensForMountedMove(activeMap.tokens, tokenId, gridX, gridY)
         const lightSources = buildMapLightSources(useGameStore.getState().activeLightSources, patchedTokens)
         debouncedRecomputeVision(
           activeMap,
@@ -346,7 +364,6 @@ export function useTokenMovement({
           targetGridY: destTerrain.portalTarget.gridY
         })
       }
-
     },
     [activeMap, gameStore, teleportMove, addChatMessage, setOaPrompt, onPortalEntry]
   )

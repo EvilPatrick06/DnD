@@ -3,17 +3,30 @@ import type { GameMap, MapToken } from '../../types/map'
 import { logger } from '../../utils/logger'
 import type { GameStoreState, MapTokenSliceState } from './types'
 
-function moveMountedPair(map: GameMap, tokenId: string, gridX: number, gridY: number): GameMap {
-  const movedToken = map.tokens.find((token) => token.id === tokenId)
-  if (!movedToken) return map
+function applyTokenUpdates(map: GameMap, tokenId: string, updates: Partial<MapToken>): GameMap {
+  const targetToken = map.tokens.find((token) => token.id === tokenId)
+  if (!targetToken) return map
 
-  const riderId = movedToken.riderId
+  const syncMountedPosition = updates.gridX !== undefined || updates.gridY !== undefined
+  const nextGridX = updates.gridX ?? targetToken.gridX
+  const nextGridY = updates.gridY ?? targetToken.gridY
+  const linkedRiderId = 'riderId' in updates ? updates.riderId : targetToken.riderId
 
   return {
     ...map,
-    tokens: map.tokens.map((token) =>
-      token.id === tokenId || (riderId != null && token.entityId === riderId) ? { ...token, gridX, gridY } : token
-    )
+    tokens: map.tokens.map((token) => {
+      if (token.id === tokenId) {
+        return syncMountedPosition
+          ? { ...token, ...updates, gridX: nextGridX, gridY: nextGridY }
+          : { ...token, ...updates }
+      }
+
+      if (syncMountedPosition && linkedRiderId != null && token.entityId === linkedRiderId) {
+        return { ...token, gridX: nextGridX, gridY: nextGridY }
+      }
+
+      return token
+    })
   }
 }
 
@@ -89,7 +102,7 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
 
   moveToken: (mapId: string, tokenId: string, gridX: number, gridY: number) => {
     set((state) => ({
-      maps: state.maps.map((m) => (m.id === mapId ? moveMountedPair(m, tokenId, gridX, gridY) : m))
+      maps: state.maps.map((m) => (m.id === mapId ? applyTokenUpdates(m, tokenId, { gridX, gridY }) : m))
     }))
   },
 
@@ -107,14 +120,7 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
       oldToken?.riderId && 'riderId' in updates && updates.riderId !== oldToken.riderId ? oldToken.riderId : undefined
 
     set((s) => ({
-      maps: s.maps.map((m) =>
-        m.id === mapId
-          ? {
-              ...m,
-              tokens: m.tokens.map((t) => (t.id === tokenId ? { ...t, ...updates } : t))
-            }
-          : m
-      )
+      maps: s.maps.map((m) => (m.id === mapId ? applyTokenUpdates(m, tokenId, updates) : m))
     }))
 
     if (removedRiderId) {

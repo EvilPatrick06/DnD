@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getTokenSizeCategory, isAdjacent } from '../../../services/combat/combat-rules'
 import {
   getPluginContextMenuItems,
   type PluginBottomBarWidget,
@@ -20,6 +21,7 @@ interface TokenContextMenuProps {
   isDM: boolean
   characterId?: string | null
   onClose: () => void
+  onOpenMountModal?: () => void
   onEditToken: (token: MapToken) => void
   onAddToInitiative: (token: MapToken) => void
 }
@@ -32,6 +34,7 @@ export default function TokenContextMenu({
   isDM,
   characterId,
   onClose,
+  onOpenMountModal,
   onEditToken,
   onAddToInitiative
 }: TokenContextMenuProps): JSX.Element | null {
@@ -41,6 +44,8 @@ export default function TokenContextMenu({
   const addSidebarEntry = useGameStore((s) => s.addSidebarEntry)
   const allies = useGameStore((s) => s.allies)
   const enemies = useGameStore((s) => s.enemies)
+  const maps = useGameStore((s) => s.maps)
+  const turnStates = useGameStore((s) => s.turnStates)
 
   // Close on click outside
   useEffect(() => {
@@ -67,9 +72,47 @@ export default function TokenContextMenu({
   const [showSetHP, setShowSetHP] = useState(false)
   const [hpValue, setHpValue] = useState(String(token.currentHP ?? 0))
 
+  const activeMap = maps.find((map) => map.id === mapId)
+  const currentCharacterToken = characterId
+    ? activeMap?.tokens.find((mapToken) => mapToken.entityId === characterId)
+    : null
+  const characterTurnState = characterId ? turnStates[characterId] : undefined
   const isOwnToken = !isDM && characterId != null && token.entityId === characterId
+  const isMounted = characterTurnState?.mountedOn != null
+  const isCurrentMount = characterId != null && token.riderId === characterId
 
-  if (!isDM && !isOwnToken) return null
+  const hasMountCandidate =
+    currentCharacterToken != null &&
+    activeMap?.tokens.some((candidate) => {
+      if (candidate.id === currentCharacterToken.id || candidate.riderId) return false
+      if (!isAdjacent(currentCharacterToken, candidate)) return false
+      return getTokenSizeCategory(candidate) > getTokenSizeCategory(currentCharacterToken)
+    }) === true
+
+  const isMountCandidate =
+    currentCharacterToken != null &&
+    token.id !== currentCharacterToken.id &&
+    token.riderId == null &&
+    !isMounted &&
+    isAdjacent(currentCharacterToken, token) &&
+    getTokenSizeCategory(token) > getTokenSizeCategory(currentCharacterToken)
+
+  const mountActionLabel =
+    characterId == null
+      ? null
+      : isOwnToken
+        ? isMounted
+          ? 'Unmount'
+          : hasMountCandidate
+            ? 'Mount'
+            : null
+        : isCurrentMount
+          ? 'Unmount'
+          : isMountCandidate
+            ? 'Mount'
+            : null
+
+  if (!isDM && !isOwnToken && mountActionLabel == null) return null
 
   const handleSetHP = (): void => {
     const val = parseInt(hpValue, 10)
@@ -91,6 +134,11 @@ export default function TokenContextMenu({
   }
 
   const handleApplyCondition = (): void => {
+    onClose()
+  }
+
+  const handleMountedCombatAction = (): void => {
+    onOpenMountModal?.()
     onClose()
   }
 
@@ -134,8 +182,10 @@ export default function TokenContextMenu({
     onClose()
   }
 
-  // Player view: limited context menu for own token only
-  if (!isDM && isOwnToken) {
+  // Player view: limited context menu for own token and mounted-combat interactions
+  if (!isDM) {
+    if (!isOwnToken && mountActionLabel == null) return null
+
     return (
       <div
         ref={menuRef}
@@ -145,25 +195,37 @@ export default function TokenContextMenu({
         {/* Token info header */}
         <div className="px-4 py-2 border-b border-gray-800">
           <div className="text-xs font-semibold text-gray-200">{token.label}</div>
-          {token.currentHP != null && (
+          {isOwnToken && token.currentHP != null && (
             <div className="text-[10px] text-gray-400 mt-0.5">
               HP: {token.currentHP}/{token.maxHP ?? '?'}
               {token.ac != null && <span className="ml-2">AC: {token.ac}</span>}
             </div>
           )}
         </div>
-        <button
-          onClick={handleAddToInitiative}
-          className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
-        >
-          Add to Initiative
-        </button>
-        <button
-          onClick={handleApplyCondition}
-          className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
-        >
-          Apply Condition
-        </button>
+        {isOwnToken && (
+          <button
+            onClick={handleAddToInitiative}
+            className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            Add to Initiative
+          </button>
+        )}
+        {isOwnToken && (
+          <button
+            onClick={handleApplyCondition}
+            className="w-full px-4 py-2 text-xs text-left text-gray-200 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            Apply Condition
+          </button>
+        )}
+        {mountActionLabel && (
+          <button
+            onClick={handleMountedCombatAction}
+            className="w-full px-4 py-2 text-xs text-left text-amber-300 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            {mountActionLabel}
+          </button>
+        )}
       </div>
     )
   }
@@ -222,6 +284,14 @@ export default function TokenContextMenu({
       >
         Apply Condition
       </button>
+      {mountActionLabel && (
+        <button
+          onClick={handleMountedCombatAction}
+          className="w-full px-4 py-2 text-xs text-left text-amber-300 hover:bg-gray-800 transition-colors cursor-pointer"
+        >
+          {mountActionLabel}
+        </button>
+      )}
       <div className="border-t border-gray-800 my-1" />
       {!isInAllies && (
         <button
