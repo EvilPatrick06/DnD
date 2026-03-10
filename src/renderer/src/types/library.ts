@@ -50,6 +50,10 @@ export type LibraryCategory =
   | 'languages'
   | 'skills'
   | 'fighting-styles'
+  | 'actions'
+  | 'cover'
+  | 'dcs'
+  | 'damage-types'
   | 'sounds'
   | 'portraits'
   | 'maps'
@@ -177,7 +181,11 @@ export const LIBRARY_GROUPS: LibraryGroupDef[] = [
     id: 'rules-reference',
     label: 'Rules Reference',
     categories: [
+      { id: 'actions', label: 'Actions', group: 'rules-reference', source: 'static', icon: '🏃' },
       { id: 'conditions', label: 'Conditions', group: 'rules-reference', source: 'static', icon: '🩹' },
+      { id: 'cover', label: 'Cover', group: 'rules-reference', source: 'static', icon: '🛡️' },
+      { id: 'damage-types', label: 'Damage Types', group: 'rules-reference', source: 'static', icon: '💥' },
+      { id: 'dcs', label: 'DCs', group: 'rules-reference', source: 'static', icon: '🎯' },
       { id: 'weapon-mastery', label: 'Weapon Mastery', group: 'rules-reference', source: 'static', icon: '⚔️' },
       { id: 'languages', label: 'Languages', group: 'rules-reference', source: 'static', icon: '🗣️' },
       { id: 'skills', label: 'Skills', group: 'rules-reference', source: 'static', icon: '🎯' }

@@ -55,6 +55,8 @@ function formatDuration(seconds: number | undefined): string {
   return `${Math.round(seconds / 60)} min`
 }
 
+import Fuse from 'fuse.js'
+
 export const SOUND_INVENTORY: { id: string; name: string; subcategory: string; path: string }[] = [
   // Ambient (14)
   { id: 'ambient-battle', name: 'Battle', subcategory: 'ambient', path: '/sounds/ambient/battle.mp3' },
@@ -710,6 +712,102 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
         data: { id: s.id, name: s.name, subcategory: s.subcategory, path: s.path }
       }))
     }
+    case 'actions': {
+      const ACTIONS_DATA = [
+        { name: 'Attack', description: 'Attack with a weapon or Unarmed Strike.' },
+        { name: 'Dash', description: 'Extra movement equal to your Speed for the rest of the turn.' },
+        {
+          name: 'Disengage',
+          description: "Your movement doesn't provoke Opportunity Attacks for the rest of the turn."
+        },
+        {
+          name: 'Dodge',
+          description:
+            'Attack rolls against you have Disadvantage; you have Advantage on DEX saves. Lost if Incapacitated or Speed is 0.'
+        },
+        {
+          name: 'Help',
+          description:
+            'Give an ally Advantage on their next ability check (within 10 ft) or attack roll (within 5 ft) before your next turn.'
+        },
+        { name: 'Hide', description: 'Make a Stealth check to become Hidden. DC = passive Perception of observers.' },
+        {
+          name: 'Influence',
+          description:
+            "Make a CHA check to alter a creature's attitude: Persuasion (Indifferent/Friendly), Deception, or Intimidation (Hostile)."
+        },
+        { name: 'Magic', description: 'Cast a spell, use a magic item, or use a magical feature.' },
+        {
+          name: 'Ready',
+          description: 'Choose a trigger and an action to take as a Reaction when that trigger occurs.'
+        },
+        { name: 'Search', description: 'Make a Perception or Investigation check to notice or find something.' },
+        {
+          name: 'Study',
+          description:
+            'Make an Arcana, History, Investigation, Nature, or Religion check to recall or analyze information.'
+        },
+        {
+          name: 'Utilize',
+          description: 'Use a non-magical object or tool, or interact with an object that requires an action.'
+        }
+      ]
+      return toLibraryItems(ACTIONS_DATA, category)
+    }
+    case 'cover': {
+      const COVER_DATA = [
+        {
+          name: 'Half Cover',
+          description: 'Target has +2 to AC and DEX saves. Blocked by obstacle covering at least half the target.'
+        },
+        {
+          name: 'Three-Quarters Cover',
+          description:
+            'Target has +5 to AC and DEX saves. Blocked by obstacle covering about three-quarters of the target.'
+        },
+        {
+          name: 'Total Cover',
+          description: "Target can't be targeted directly by attacks or spells. Completely concealed by an obstacle."
+        }
+      ]
+      return toLibraryItems(COVER_DATA, category)
+    }
+    case 'dcs': {
+      const DC_DATA = [
+        { name: 'Very Easy (DC 5)', description: 'A trivial task that almost anyone can accomplish.' },
+        { name: 'Easy (DC 10)', description: 'A task that most people can manage with little effort.' },
+        {
+          name: 'Medium (DC 15)',
+          description: 'A task requiring focused effort; adventurers succeed about half the time.'
+        },
+        { name: 'Hard (DC 20)', description: 'A task demanding significant skill or luck.' },
+        { name: 'Very Hard (DC 25)', description: 'A task achievable only by highly skilled or lucky individuals.' },
+        { name: 'Nearly Impossible (DC 30)', description: 'An extraordinary task at the limit of mortal ability.' }
+      ]
+      return toLibraryItems(DC_DATA, category)
+    }
+    case 'damage-types': {
+      const DAMAGE_TYPES = [
+        'acid',
+        'bludgeoning',
+        'cold',
+        'fire',
+        'force',
+        'lightning',
+        'necrotic',
+        'piercing',
+        'poison',
+        'psychic',
+        'radiant',
+        'slashing',
+        'thunder'
+      ]
+      const items = DAMAGE_TYPES.map((d) => ({
+        name: d.charAt(0).toUpperCase() + d.slice(1),
+        description: `${d.charAt(0).toUpperCase() + d.slice(1)} damage`
+      }))
+      return toLibraryItems(items, category)
+    }
     case 'conditions': {
       const data = await load5eConditions()
       return [...toLibraryItems(data as unknown as Record<string, unknown>[], category), ...hbItems]
@@ -911,9 +1009,11 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
 
 export async function searchAllCategories(query: string, homebrew: HomebrewEntry[]): Promise<LibraryItem[]> {
   if (!query.trim()) return []
-  const q = query.toLowerCase()
 
   const allCategories: LibraryCategory[] = [
+    'characters',
+    'campaigns',
+    'bastions',
     'monsters',
     'creatures',
     'npcs',
@@ -932,6 +1032,7 @@ export async function searchAllCategories(query: string, homebrew: HomebrewEntry
     'weapons',
     'armor',
     'gear',
+    'tools',
     'magic-items',
     'vehicles',
     'mounts',
@@ -949,7 +1050,14 @@ export async function searchAllCategories(query: string, homebrew: HomebrewEntry
     'crafting',
     'downtime',
     'encounter-presets',
+    'treasure-tables',
+    'random-tables',
+    'chase-tables',
     'conditions',
+    'actions',
+    'cover',
+    'dcs',
+    'damage-types',
     'weapon-mastery',
     'languages',
     'skills',
@@ -958,7 +1066,10 @@ export async function searchAllCategories(query: string, homebrew: HomebrewEntry
     'deities',
     'planes',
     'npc-names',
-    'sounds'
+    'sounds',
+    'maps',
+    'shop-templates',
+    'portraits'
   ]
 
   const results = await Promise.allSettled(allCategories.map((cat) => loadCategoryItems(cat, homebrew)))
@@ -966,11 +1077,19 @@ export async function searchAllCategories(query: string, homebrew: HomebrewEntry
   const allItems: LibraryItem[] = []
   for (const r of results) {
     if (r.status === 'fulfilled') {
-      allItems.push(
-        ...r.value.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
-      )
+      allItems.push(...r.value)
     }
   }
 
-  return allItems.slice(0, 100)
+  const fuse = new Fuse(allItems, {
+    keys: ['name', 'summary'],
+    threshold: 0.3,
+    distance: 100,
+    ignoreLocation: true
+  })
+
+  return fuse
+    .search(query)
+    .map((result) => result.item)
+    .slice(0, 100)
 }

@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
@@ -81,6 +82,19 @@ export default function LibraryPage(): JSX.Element {
   // Global search results
   const [globalSearchResults, setGlobalSearchResults] = useState<LibraryItem[]>([])
   const [globalSearching, setGlobalSearching] = useState(false)
+
+  // Apply sort + filter to global search results
+  const filteredGlobalItems = useMemo(() => {
+    let items = globalSearchResults
+
+    // Apply active filters
+    items = filterItems(items, activeFilters)
+
+    // Apply sort
+    items = sortItems(items, sortField, sortDirection)
+
+    return items
+  }, [globalSearchResults, sortField, sortDirection, activeFilters])
 
   // Debounce search input (300ms)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -216,8 +230,13 @@ export default function LibraryPage(): JSX.Element {
 
     // Apply search filter
     if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase()
-      items = items.filter((item) => item.name.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q))
+      const fuse = new Fuse(items, {
+        keys: ['name', 'summary'],
+        threshold: 0.3,
+        distance: 100,
+        ignoreLocation: true
+      })
+      items = fuse.search(debouncedSearch).map((result) => result.item)
     }
 
     return items
@@ -246,11 +265,24 @@ export default function LibraryPage(): JSX.Element {
       'feats',
       'class-features',
       'magic-items',
-      'equipment',
       'weapons',
       'armor',
+      'gear',
+      'tools',
+      'vehicles',
+      'mounts',
+      'siege-equipment',
+      'trinkets',
+      'light-sources',
+      'sentient-items',
       'conditions',
-      'rules',
+      'actions',
+      'cover',
+      'damage-types',
+      'dcs',
+      'weapon-mastery',
+      'languages',
+      'skills',
       'encounter-presets',
       'treasure-tables',
       'random-tables',
@@ -294,13 +326,10 @@ export default function LibraryPage(): JSX.Element {
   }, [showFavorites, favorites, recentlyViewed])
 
   // Sort/filter config for current category
-  const sortOptions = useMemo(
-    () => (selectedCategory ? getSortOptions(selectedCategory) : [{ field: 'name' as SortField, label: 'Name' }]),
-    [selectedCategory]
-  )
+  const sortOptions = useMemo(() => getSortOptions(selectedCategory ?? 'global'), [selectedCategory])
   const filterConfigs = useMemo(
-    () => (selectedCategory ? getFilterConfigs(selectedCategory, mergedItems) : []),
-    [selectedCategory, mergedItems]
+    () => getFilterConfigs(selectedCategory ?? 'global', selectedCategory ? mergedItems : globalSearchResults),
+    [selectedCategory, mergedItems, globalSearchResults]
   )
 
   const handleSelectCategory = useCallback(
@@ -495,8 +524,8 @@ export default function LibraryPage(): JSX.Element {
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Filter bar when category selected */}
-          {selectedCategory && (
+          {/* Filter bar when category selected or global search active */}
+          {(selectedCategory || (debouncedSearch.trim() && !showFavorites && !showCoreBooks)) && (
             <LibraryFilterBar
               sortOptions={sortOptions}
               filterConfigs={filterConfigs}
@@ -546,18 +575,18 @@ export default function LibraryPage(): JSX.Element {
                       <Skeleton key={i} className="h-12 rounded" />
                     ))}
                   </div>
-                ) : globalSearchResults.length === 0 ? (
+                ) : filteredGlobalItems.length === 0 ? (
                   <EmptyState
                     title="No results found"
-                    description={`No items match "${debouncedSearch}" across all categories.`}
+                    description={`No items match "${debouncedSearch}" across all categories with current filters.`}
                   />
                 ) : (
                   <div>
                     <h2 className="text-lg font-bold text-gray-200 mb-3">
-                      Search Results ({globalSearchResults.length})
+                      Search Results ({filteredGlobalItems.length})
                     </h2>
                     <LibraryItemList
-                      items={globalSearchResults}
+                      items={filteredGlobalItems}
                       loading={false}
                       onSelectItem={handleSelectItem}
                       onCreateNew={() => {}}

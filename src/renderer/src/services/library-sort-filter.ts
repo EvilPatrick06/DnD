@@ -49,7 +49,16 @@ function parseCost(cost: unknown): number {
   return value * (multipliers[match[2].toLowerCase()] ?? 1)
 }
 
-export function getSortOptions(category: LibraryCategory): SortOption[] {
+export function getSortOptions(category: LibraryCategory | 'global' | null): SortOption[] {
+  if (!category || category === 'global') {
+    return [
+      { field: 'name', label: 'Name' },
+      { field: 'type', label: 'Category' },
+      { field: 'level', label: 'Level' },
+      { field: 'cr', label: 'CR' }
+    ]
+  }
+
   switch (category) {
     case 'monsters':
     case 'creatures':
@@ -233,7 +242,7 @@ export function getSortOptions(category: LibraryCategory): SortOption[] {
   }
 }
 
-export function getFilterConfigs(category: LibraryCategory, items: LibraryItem[]): FilterConfig[] {
+export function getFilterConfigs(category: LibraryCategory | 'global' | null, items: LibraryItem[]): FilterConfig[] {
   const configs: FilterConfig[] = []
 
   // Source filter for all categories
@@ -249,6 +258,31 @@ export function getFilterConfigs(category: LibraryCategory, items: LibraryItem[]
   // Helper to extract unique sorted numeric values (as strings) from a data field
   const uniqueNumbers = (field: string): string[] =>
     [...new Set(items.map((i) => String(i.data[field] ?? '')).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
+
+  if (!category || category === 'global') {
+    // Global filters
+    const categories = [...new Set(items.map((i) => i.category))].sort()
+    if (categories.length > 1) configs.push({ field: 'category', label: 'Category', values: categories })
+
+    const rarities = [...new Set(items.map((i) => (i.data.rarity as string) ?? '').filter(Boolean))].sort(
+      (a, b) => (RARITY_ORDER[a.toLowerCase()] ?? 0) - (RARITY_ORDER[b.toLowerCase()] ?? 0)
+    )
+    if (rarities.length > 1) configs.push({ field: 'rarity', label: 'Rarity', values: rarities })
+
+    const levels = uniqueNumbers('level')
+    if (levels.length > 1) configs.push({ field: 'level', label: 'Level', values: levels })
+
+    const schools = uniqueStrings('school')
+    if (schools.length > 1) configs.push({ field: 'school', label: 'School', values: schools })
+
+    const types = uniqueStrings('type')
+    if (types.length > 1) configs.push({ field: 'type', label: 'Type', values: types })
+
+    const crs = uniqueStrings('cr')
+    if (crs.length > 1) configs.push({ field: 'cr', label: 'CR', values: crs })
+
+    return configs
+  }
 
   switch (category) {
     case 'monsters':
@@ -537,6 +571,8 @@ export function filterItems(items: LibraryItem[], filters: Record<string, string
     for (const [field, values] of activeFilters) {
       if (field === 'source') {
         if (!values.includes(item.source)) return false
+      } else if (field === 'category') {
+        if (!values.includes(item.category)) return false
       } else if (field === 'attunement') {
         const hasAttunement = item.data.attunement ? 'Yes' : 'No'
         if (!values.includes(hasAttunement)) return false

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import type { LibraryCategory, LibraryItem } from '../../types/library'
 import { getCategoryDef } from '../../types/library'
+import Modal from '../ui/Modal'
 
 interface LibraryDetailModalProps {
   item: LibraryItem
@@ -180,18 +181,10 @@ export default function LibraryDetailModal({
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose()
-    },
-    [onClose]
-  )
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={handleBackdropClick}>
-      <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-lg w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-5 border-b border-gray-800">
+    <Modal open={true} onClose={onClose} title={item.name} className="max-w-2xl !p-0 !overflow-hidden" hideHeader>
+      <div className="flex flex-col h-full max-h-[80vh]">
+        <div className="flex items-center justify-between p-5 border-b border-gray-800 shrink-0">
           <div className="flex items-center gap-3">
             {catDef && <span className="text-2xl">{catDef.icon}</span>}
             <div>
@@ -218,7 +211,7 @@ export default function LibraryDetailModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-5 min-h-0">
           <dl className="space-y-4">
             {fields.map(([key, value]) => (
               <React.Fragment key={key}>{renderField(formatLabel(key), value)}</React.Fragment>
@@ -226,7 +219,7 @@ export default function LibraryDetailModal({
           </dl>
         </div>
 
-        <div className="flex items-center gap-2 p-4 border-t border-gray-800">
+        <div className="flex items-center gap-2 p-4 border-t border-gray-800 shrink-0">
           {item.source === 'official' && (
             <button
               onClick={() => onCloneAsHomebrew(item)}
@@ -280,6 +273,6 @@ export default function LibraryDetailModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
