@@ -15,19 +15,22 @@ import { trigger3dDice } from '../dice3d'
 import DiceResult from '../dice3d/DiceResult'
 import SkillRollButton from '../player/SkillRollButton'
 import CommandAutocomplete from './CommandAutocomplete'
+import { renderChatContent } from '../../../utils/chat-links'
 
 const BottomChatMessage = memo(function BottomChatMessage({
   msg,
   isDM,
   onDispute,
   aiNarrationText,
-  onSpeakNarration
+  onSpeakNarration,
+  onLinkClick
 }: {
   msg: ChatMessage
   isDM: boolean
   onDispute?: (ruling: string) => void
   aiNarrationText?: string
   onSpeakNarration?: (text: string) => void
+  onLinkClick?: (category: string, name: string) => void
 }): JSX.Element {
   if (msg.isDiceRoll && msg.diceResult) {
     return (
@@ -70,14 +73,14 @@ const BottomChatMessage = memo(function BottomChatMessage({
     )
   }
   if (msg.isSystem) {
-    return <div className="text-sm text-gray-400 text-center py-0.5 font-sans">{msg.content}</div>
+    return <div className="text-sm text-gray-400 text-center py-0.5 font-sans">{renderChatContent(msg.content, onLinkClick)}</div>
   }
   return (
     <div className="py-0.5">
       <span className="text-xs font-medium font-sans" style={{ color: msg.senderColor || '#9CA3AF' }}>
         {msg.senderName}:
       </span>
-      <span className="text-sm text-gray-100 ml-1 font-sans">{msg.content}</span>
+      <span className="text-sm text-gray-100 ml-1 font-sans">{renderChatContent(msg.content, onLinkClick)}</span>
     </div>
   )
 })
@@ -90,6 +93,7 @@ interface ChatPanelProps {
   collapsed?: boolean
   onOpenModal?: (modal: string) => void
   onDispute?: (ruling: string) => void
+  onLinkClick?: (category: string, name: string) => void
 }
 
 export default function ChatPanel({
@@ -99,7 +103,8 @@ export default function ChatPanel({
   character,
   collapsed,
   onOpenModal,
-  onDispute
+  onDispute,
+  onLinkClick
 }: ChatPanelProps): JSX.Element {
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -290,6 +295,7 @@ export default function ChatPanel({
                     onDispute={onDispute}
                     aiNarrationText={msg.senderId === 'ai-dm' ? aiNarrationByTimestamp.get(msg.timestamp) : undefined}
                     onSpeakNarration={handleSpeakNarration}
+                    onLinkClick={onLinkClick}
                   />
                 </div>
               )

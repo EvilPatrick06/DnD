@@ -14,6 +14,7 @@ interface DMBottomBarProps {
   onToggleCollapse?: () => void
   onOpenModal?: (modal: string) => void
   onDispute?: (ruling: string) => void
+  onLinkClick?: (category: string, name: string) => void
 }
 
 export default function DMBottomBar({
@@ -23,7 +24,8 @@ export default function DMBottomBar({
   collapsed,
   onToggleCollapse,
   onOpenModal,
-  onDispute
+  onDispute,
+  onLinkClick
 }: DMBottomBarProps): JSX.Element {
   const handleOpenModal = (modal: string): void => {
     onOpenModal?.(modal)
@@ -73,6 +75,7 @@ export default function DMBottomBar({
             collapsed
             onOpenModal={onOpenModal}
             onDispute={onDispute}
+            onLinkClick={onLinkClick}
           />
         </div>
       ) : (
@@ -95,6 +98,7 @@ export default function DMBottomBar({
             campaign={campaign}
             onOpenModal={onOpenModal}
             onDispute={onDispute}
+            onLinkClick={onLinkClick}
           />
         </>
       )}

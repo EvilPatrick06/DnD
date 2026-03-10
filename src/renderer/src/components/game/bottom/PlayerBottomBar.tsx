@@ -39,6 +39,7 @@ interface PlayerBottomBarProps {
   collapsed?: boolean
   onToggleCollapse?: () => void
   onOpenModal?: (modal: string) => void
+  onLinkClick?: (category: string, name: string) => void
 }
 
 export default function PlayerBottomBar({
@@ -66,7 +67,8 @@ export default function PlayerBottomBar({
   campaign,
   collapsed,
   onToggleCollapse,
-  onOpenModal
+  onOpenModal,
+  onLinkClick
 }: PlayerBottomBarProps): JSX.Element {
   const navigate = useNavigate()
   const sendMessage = useNetworkStore((s) => s.sendMessage)
@@ -163,6 +165,7 @@ export default function PlayerBottomBar({
             character={character}
             collapsed
             onOpenModal={onOpenModal}
+            onLinkClick={onLinkClick}
           />
         </div>
       ) : (
@@ -462,6 +465,7 @@ export default function PlayerBottomBar({
               campaign={campaign}
               character={character}
               onOpenModal={onOpenModal}
+              onLinkClick={onLinkClick}
             />
           </div>
         </>

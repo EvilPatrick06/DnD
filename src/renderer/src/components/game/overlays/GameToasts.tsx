@@ -247,3 +247,105 @@ export function WallToolbar({ wallType, onSetWallType, onDone }: WallToolbarProp
     </div>
   )
 }
+
+// --- Drawing Toolbar ---
+interface DrawingToolbarProps {
+  activeTool: 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text'
+  strokeWidth: number
+  color: string
+  onSetTool: (tool: 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text') => void
+  onSetStrokeWidth: (width: number) => void
+  onSetColor: (color: string) => void
+  onClearDrawings?: () => void
+  isHost?: boolean
+}
+
+const DRAWING_TOOLS = [
+  { id: 'draw-free' as const, label: 'Free', icon: '✏️' },
+  { id: 'draw-line' as const, label: 'Line', icon: '📏' },
+  { id: 'draw-rect' as const, label: 'Rect', icon: '▭' },
+  { id: 'draw-circle' as const, label: 'Circle', icon: '○' },
+  { id: 'draw-text' as const, label: 'Text', icon: '📝' }
+] as const
+
+const DRAWING_COLORS = [
+  { value: '#ffffff', label: 'White' },
+  { value: '#ff0000', label: 'Red' },
+  { value: '#00ff00', label: 'Green' },
+  { value: '#0000ff', label: 'Blue' },
+  { value: '#ffff00', label: 'Yellow' },
+  { value: '#ff00ff', label: 'Magenta' },
+  { value: '#00ffff', label: 'Cyan' },
+  { value: '#000000', label: 'Black' }
+]
+
+export function DrawingToolbar({
+  activeTool,
+  strokeWidth,
+  color,
+  onSetTool,
+  onSetStrokeWidth,
+  onSetColor,
+  onClearDrawings,
+  isHost
+}: DrawingToolbarProps): JSX.Element {
+  return (
+    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 rounded-xl px-3 py-2">
+      {DRAWING_TOOLS.map((tool) => (
+        <button
+          key={tool.id}
+          onClick={() => onSetTool(tool.id)}
+          title={tool.label}
+          className={`px-2 py-1 text-sm rounded-lg cursor-pointer ${
+            activeTool === tool.id ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          {tool.icon}
+        </button>
+      ))}
+
+      <div className="border-l border-gray-700 h-5 mx-1" />
+
+      <span className="text-[10px] text-gray-400">Size:</span>
+      {[1, 2, 3, 5, 8].map((size) => (
+        <button
+          key={size}
+          onClick={() => onSetStrokeWidth(size)}
+          className={`w-6 h-6 text-[10px] rounded cursor-pointer ${
+            strokeWidth === size ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          {size}
+        </button>
+      ))}
+
+      <div className="border-l border-gray-700 h-5 mx-1" />
+
+      <span className="text-[10px] text-gray-400">Color:</span>
+      {DRAWING_COLORS.map((c) => (
+        <button
+          key={c.value}
+          onClick={() => onSetColor(c.value)}
+          title={c.label}
+          className={`w-6 h-6 rounded cursor-pointer border-2 ${
+            color === c.value ? 'border-amber-500' : 'border-gray-600'
+          }`}
+          style={{ backgroundColor: c.value }}
+        />
+      ))}
+
+      {isHost && onClearDrawings && (
+        <>
+          <div className="border-l border-gray-700 h-5 mx-1" />
+          <button
+            onClick={onClearDrawings}
+            title="Clear All Drawings"
+            className="px-2 py-1 text-xs rounded-lg bg-red-900/50 text-red-300 hover:bg-red-800/60 cursor-pointer"
+          >
+            🗑️ Clear
+          </button>
+        </>
+      )}
+    </div>
+  )
+}

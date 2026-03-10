@@ -9,6 +9,9 @@ import type {
   DiceRevealPayload,
   DiceRoll3dPayload,
   DiceRollHiddenPayload,
+  DrawingAddPayload,
+  DrawingsClearPayload,
+  DrawingRemovePayload,
   FileSharingPayload,
   FogRevealPayload,
   GameStateFullPayload,
@@ -258,6 +261,46 @@ export function handleClientMessage(
       } else {
         useGameStore.getState().hideFog(payload.mapId, payload.cells)
       }
+      break
+    }
+
+    case 'dm:drawing-add': {
+      const payload = message.payload as DrawingAddPayload
+      useGameStore.getState().addDrawing(payload.mapId, payload.drawing as import('../../types/map').DrawingData)
+      break
+    }
+
+    case 'dm:drawing-remove': {
+      const payload = message.payload as DrawingRemovePayload
+      useGameStore.getState().removeDrawing(payload.mapId, payload.drawingId)
+      break
+    }
+
+    case 'dm:drawings-clear': {
+      const payload = message.payload as DrawingsClearPayload
+      useGameStore.getState().clearDrawings(payload.mapId)
+      break
+    }
+
+    case 'dm:region-add': {
+      const payload = message.payload as { mapId: string; region: import('../../types/map').SceneRegion }
+      useGameStore.getState().addRegion(payload.mapId, payload.region)
+      break
+    }
+
+    case 'dm:region-remove': {
+      const payload = message.payload as { mapId: string; regionId: string }
+      useGameStore.getState().removeRegion(payload.mapId, payload.regionId)
+      break
+    }
+
+    case 'dm:region-update': {
+      const payload = message.payload as {
+        mapId: string
+        regionId: string
+        updates: Partial<import('../../types/map').SceneRegion>
+      }
+      useGameStore.getState().updateRegion(payload.mapId, payload.regionId, payload.updates)
       break
     }
 

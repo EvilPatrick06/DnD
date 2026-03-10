@@ -171,6 +171,55 @@ export function startGameSync(sendMessage: SendMessageFn): void {
             wallSegments: { mapId: map.id, segments: map.wallSegments }
           })
         }
+
+        if (map.regions !== prevMap.regions) {
+          for (const region of map.regions ?? []) {
+            if (!(prevMap.regions ?? []).some((r) => r.id === region.id)) {
+              sendMessage('dm:region-add', { mapId: map.id, region })
+            } else {
+              const prev = (prevMap.regions ?? []).find((r) => r.id === region.id)
+              if (prev && prev !== region) {
+                sendMessage('dm:region-update', { mapId: map.id, regionId: region.id, updates: region })
+              }
+            }
+          }
+          for (const prevRegion of prevMap.regions ?? []) {
+            if (!(map.regions ?? []).some((r) => r.id === prevRegion.id)) {
+              sendMessage('dm:region-remove', { mapId: map.id, regionId: prevRegion.id })
+            }
+          }
+        }
+
+        if (map.drawings !== prevMap.drawings) {
+          // Check for added drawings
+          for (const drawing of map.drawings ?? []) {
+            if (!(prevMap.drawings ?? []).some((d) => d.id === drawing.id)) {
+              sendMessage('dm:drawing-add', {
+                mapId: map.id,
+                drawing: {
+                  id: drawing.id,
+                  type: drawing.type,
+                  points: drawing.points,
+                  color: drawing.color,
+                  strokeWidth: drawing.strokeWidth,
+                  text: drawing.text,
+                  visibleToPlayers: drawing.visibleToPlayers,
+                  floor: drawing.floor
+                }
+              })
+            }
+          }
+
+          // Check for removed drawings
+          for (const prevDrawing of prevMap.drawings ?? []) {
+            if (!(map.drawings ?? []).some((d) => d.id === prevDrawing.id)) {
+              sendMessage('dm:drawing-remove', {
+                mapId: map.id,
+                drawingId: prevDrawing.id
+              })
+            }
+          }
+        }
       }
 
       // New maps added

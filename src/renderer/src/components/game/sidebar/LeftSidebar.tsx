@@ -17,8 +17,9 @@ import { getSizeTokenDimensions } from '../../../types/monster'
 import { getCharacterSheetPath } from '../../../utils/character-routes'
 import { NPCManager } from '../dm'
 import SidebarEntryList from './SidebarEntryList'
+import TablesPanel from './TablesPanel'
 
-type SectionId = 'characters' | 'bastions' | SidebarPanelType
+type SectionId = 'characters' | 'bastions' | 'tables' | SidebarPanelType
 
 interface LeftSidebarProps {
   campaign: Campaign
@@ -36,7 +37,8 @@ const SECTIONS: { id: SectionId; label: string; icon: string }[] = [
   { id: 'allies', label: 'Allies', icon: '\u{1F6E1}' },
   { id: 'enemies', label: 'Enemies', icon: '\u{2694}' },
   { id: 'places', label: 'Places', icon: '\u{1F3F0}' },
-  { id: 'bastions', label: 'Bastions', icon: '\u{1F3D7}' }
+  { id: 'bastions', label: 'Bastions', icon: '\u{1F3D7}' },
+  { id: 'tables', label: 'Tables', icon: '\u{1F3B2}' }
 ]
 
 export default function LeftSidebar({
@@ -277,6 +279,8 @@ export default function LeftSidebar({
             )}
           </div>
         )
+      case 'tables':
+        return <TablesPanel />
     }
   }
 

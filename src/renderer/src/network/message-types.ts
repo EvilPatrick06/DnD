@@ -50,6 +50,12 @@ export const MESSAGE_TYPES = [
   'dm:play-ambient',
   'dm:stop-ambient',
   'dm:vision-update',
+  'dm:drawing-add',
+  'dm:drawing-remove',
+  'dm:drawings-clear',
+  'dm:region-add',
+  'dm:region-remove',
+  'dm:region-update',
   'chat:message',
   'chat:file',
   'chat:whisper',
@@ -484,4 +490,27 @@ export interface InspectResponsePayload {
 
 export interface MacroPushPayload {
   macros: Array<{ id: string; name: string; command: string; icon?: string; color?: string }>
+}
+
+export interface DrawingAddPayload {
+  mapId: string
+  drawing: {
+    id: string
+    type: string
+    points: Array<{ x: number; y: number }>
+    color: string
+    strokeWidth: number
+    text?: string
+    visibleToPlayers?: boolean
+    floor?: number
+  }
+}
+
+export interface DrawingRemovePayload {
+  mapId: string
+  drawingId: string
+}
+
+export interface DrawingsClearPayload {
+  mapId: string
 }
