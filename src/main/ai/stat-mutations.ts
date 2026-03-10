@@ -1,24 +1,59 @@
+import { logToFile } from '../log'
 import { loadCharacter, saveCharacter } from '../storage/character-storage'
+import { repairJson, StatChangesBlockSchema, type ValidationIssue, validateStatChanges } from './ai-schemas'
 import type { MutationResult, StatChange } from './types'
 
 const STAT_CHANGES_RE = /\[STAT_CHANGES\]\s*([\s\S]*?)\s*\[\/STAT_CHANGES\]/
 
-/** Extract stat changes JSON from AI response text. */
-export function parseStatChanges(response: string): StatChange[] {
-  const match = response.match(STAT_CHANGES_RE)
-  if (!match) return []
+export interface StatChangeParseResult {
+  changes: StatChange[]
+  issues: ValidationIssue[]
+  rawJsonError?: string
+}
 
+/** Extract and validate stat changes JSON from AI response text. */
+export function parseStatChanges(response: string): StatChange[] {
+  return parseStatChangesDetailed(response).changes
+}
+
+/**
+ * Extract, repair, and schema-validate stat changes from AI response text.
+ * Returns both valid changes and detailed validation issues for logging.
+ */
+export function parseStatChangesDetailed(response: string): StatChangeParseResult {
+  const match = response.match(STAT_CHANGES_RE)
+  if (!match) return { changes: [], issues: [] }
+
+  const repaired = repairJson(match[1])
+
+  let rawItems: unknown[]
   try {
-    const parsed = JSON.parse(match[1])
-    if (parsed && Array.isArray(parsed.changes)) {
-      return parsed.changes.filter(
-        (c: unknown) => c && typeof c === 'object' && 'type' in (c as Record<string, unknown>)
+    const parsed = JSON.parse(repaired)
+    const block = StatChangesBlockSchema.safeParse(parsed)
+    if (!block.success) {
+      const err = `[STAT_CHANGES] block missing "changes" array: ${block.error.issues.map((i) => i.message).join(', ')}`
+      logToFile('WARN', `[AI Schema] ${err}`)
+      return { changes: [], issues: [], rawJsonError: err }
+    }
+    rawItems = block.data.changes
+  } catch (e) {
+    const err = `[STAT_CHANGES] JSON parse failed: ${e instanceof Error ? e.message : String(e)}`
+    logToFile('WARN', `[AI Schema] ${err}`)
+    return { changes: [], issues: [], rawJsonError: err }
+  }
+
+  const { valid, issues } = validateStatChanges(rawItems)
+
+  if (issues.length > 0) {
+    for (const issue of issues) {
+      logToFile(
+        'WARN',
+        `[AI Schema] Stat change [${issue.index}] rejected: ${issue.errors.join('; ')} — input: ${JSON.stringify(issue.input).slice(0, 200)}`
       )
     }
-  } catch {
-    // Malformed JSON
   }
-  return []
+
+  return { changes: valid as StatChange[], issues }
 }
 
 /** Remove the [STAT_CHANGES] block from response text for display. */

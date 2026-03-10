@@ -8,6 +8,7 @@ import { logger } from '../utils/logger'
 import type { ActiveMap, DmAction, ExecutionResult, GameStoreSnapshot, StoreAccessors } from './game-actions/types'
 import { pluginEventBus } from './plugin-system/event-bus'
 
+export { filterValidActions, validateActionsAgainstState } from './game-actions/action-validator'
 // Re-export types for external consumers
 export type { DmAction, ExecutionFailure, ExecutionResult, GameStoreSnapshot } from './game-actions/types'
 
@@ -121,6 +122,7 @@ export function unregisterPluginDmAction(actionType: string): void {
  * Pass `bypassApproval: true` to force execution (used when DM approves pending actions).
  */
 import { getAiDmStore } from '../stores/store-accessors'
+import { filterValidActions } from './game-actions/action-validator'
 
 export function executeDmActions(actions: DmAction[], bypassApproval = false): ExecutionResult {
   if (!bypassApproval) {
@@ -146,7 +148,13 @@ export function executeDmActions(actions: DmAction[], bypassApproval = false): E
   const gameStore = getGameStore().getState()
   const activeMap = gameStore.maps.find((m) => m.id === gameStore.activeMapId)
 
-  for (const action of actions) {
+  // Pre-execution validation: reject actions that are physically impossible
+  const { valid: validatedActions, rejected } = filterValidActions(actions, gameStore, activeMap)
+  for (const r of rejected) {
+    result.failed.push({ action: r.action, reason: r.reason ?? 'Failed game-state validation' })
+  }
+
+  for (const action of validatedActions) {
     try {
       // Emit before-action hook
       if (pluginEventBus.hasSubscribers('dm:before-action')) {

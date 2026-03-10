@@ -1,6 +1,9 @@
 // ── DM Action Types & Parser ──
 // Mirrors stat-mutations.ts pattern for game board actions
 
+import { logToFile } from '../log'
+import { DmActionsBlockSchema, repairJson, type ValidationIssue, validateDmActions } from './ai-schemas'
+
 const DM_ACTIONS_RE = /\[DM_ACTIONS\]\s*([\s\S]*?)\s*\[\/DM_ACTIONS\]/
 
 // ── Discriminated union of all DM actions ──
@@ -216,22 +219,55 @@ export type DmAction =
   // Handouts
   | { action: 'share_handout'; title: string; content: string; contentType?: 'text' | 'image' }
 
-/** Extract DM actions JSON from AI response text. */
-export function parseDmActions(response: string): DmAction[] {
-  const match = response.match(DM_ACTIONS_RE)
-  if (!match) return []
+export interface DmActionParseResult {
+  actions: DmAction[]
+  issues: ValidationIssue[]
+  rawJsonError?: string
+}
 
+/** Extract and validate DM actions JSON from AI response text. */
+export function parseDmActions(response: string): DmAction[] {
+  return parseDmActionsDetailed(response).actions
+}
+
+/**
+ * Extract, repair, and schema-validate DM actions from AI response text.
+ * Returns both valid actions and detailed validation issues for logging.
+ */
+export function parseDmActionsDetailed(response: string): DmActionParseResult {
+  const match = response.match(DM_ACTIONS_RE)
+  if (!match) return { actions: [], issues: [] }
+
+  const repaired = repairJson(match[1])
+
+  let rawItems: unknown[]
   try {
-    const parsed = JSON.parse(match[1])
-    if (parsed && Array.isArray(parsed.actions)) {
-      return parsed.actions.filter(
-        (a: unknown) => a && typeof a === 'object' && 'action' in (a as Record<string, unknown>)
+    const parsed = JSON.parse(repaired)
+    const block = DmActionsBlockSchema.safeParse(parsed)
+    if (!block.success) {
+      const err = `[DM_ACTIONS] block missing "actions" array: ${block.error.issues.map((i) => i.message).join(', ')}`
+      logToFile('WARN', `[AI Schema] ${err}`)
+      return { actions: [], issues: [], rawJsonError: err }
+    }
+    rawItems = block.data.actions
+  } catch (e) {
+    const err = `[DM_ACTIONS] JSON parse failed: ${e instanceof Error ? e.message : String(e)}`
+    logToFile('WARN', `[AI Schema] ${err}`)
+    return { actions: [], issues: [], rawJsonError: err }
+  }
+
+  const { valid, issues } = validateDmActions(rawItems)
+
+  if (issues.length > 0) {
+    for (const issue of issues) {
+      logToFile(
+        'WARN',
+        `[AI Schema] DM action [${issue.index}] rejected: ${issue.errors.join('; ')} — input: ${JSON.stringify(issue.input).slice(0, 200)}`
       )
     }
-  } catch {
-    // Malformed JSON — ignore
   }
-  return []
+
+  return { actions: valid as DmAction[], issues }
 }
 
 /** Remove the [DM_ACTIONS] block from response text for display. */

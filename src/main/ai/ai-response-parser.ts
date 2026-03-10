@@ -1,9 +1,10 @@
 import { logToFile } from '../log'
 import { saveConversation } from '../storage/ai-conversation-storage'
+import type { ValidationIssue } from './ai-schemas'
 import type { ConversationManager } from './conversation-manager'
-import { parseDmActions, stripDmActions } from './dm-actions'
+import { parseDmActionsDetailed, stripDmActions } from './dm-actions'
 import { getMemoryManager } from './memory-manager'
-import { parseStatChanges, stripStatChanges } from './stat-mutations'
+import { parseStatChangesDetailed, stripStatChanges } from './stat-mutations'
 import { cleanNarrativeText, hasViolations } from './tone-validator'
 import type { AiChatRequest, DmActionData, RuleCitation, StatChange } from './types'
 
@@ -29,6 +30,7 @@ export interface FinalizedResponse {
   statChanges: StatChange[]
   dmActions: DmActionData[]
   ruleCitations: RuleCitation[]
+  validationIssues: ValidationIssue[]
 }
 
 /**
@@ -48,10 +50,25 @@ export function finalizeAiResponse(
       cleaned = cleanNarrativeText(cleaned)
     }
 
-    const statChanges = parseStatChanges(cleaned)
-    const dmActions = parseDmActions(cleaned)
+    const statResult = parseStatChangesDetailed(cleaned)
+    const dmResult = parseDmActionsDetailed(cleaned)
     const ruleCitations = parseRuleCitations(cleaned)
     const displayText = stripRuleCitations(stripDmActions(stripStatChanges(cleaned)))
+
+    const allIssues = [...statResult.issues, ...dmResult.issues]
+    if (statResult.rawJsonError) {
+      allIssues.push({ index: -1, input: null, errors: [statResult.rawJsonError] })
+    }
+    if (dmResult.rawJsonError) {
+      allIssues.push({ index: -1, input: null, errors: [dmResult.rawJsonError] })
+    }
+
+    if (allIssues.length > 0) {
+      logToFile(
+        'WARN',
+        `[AI Schema] Response had ${allIssues.length} validation issue(s): ${allIssues.length} item(s) rejected`
+      )
+    }
 
     conv.addMessage('assistant', displayText)
 
@@ -68,10 +85,17 @@ export function finalizeAiResponse(
       // Non-fatal
     }
 
-    return { fullText: cleaned, displayText, statChanges, dmActions, ruleCitations }
+    return {
+      fullText: cleaned,
+      displayText,
+      statChanges: statResult.changes,
+      dmActions: dmResult.actions,
+      ruleCitations,
+      validationIssues: allIssues
+    }
   } catch (err) {
     logToFile('ERROR', '[AI] Error parsing AI response, delivering raw text:', String(err))
     conv.addMessage('assistant', fullText)
-    return { fullText, displayText: fullText, statChanges: [], dmActions: [], ruleCitations: [] }
+    return { fullText, displayText: fullText, statChanges: [], dmActions: [], ruleCitations: [], validationIssues: [] }
   }
 }
