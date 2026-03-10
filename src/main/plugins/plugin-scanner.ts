@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { app } from 'electron'
 import type { PluginManifest, PluginStatus } from '../../shared/plugin-types'
@@ -60,12 +60,40 @@ export function validateManifest(raw: unknown): { valid: boolean; manifest?: Plu
   return { valid: true, manifest: obj as unknown as PluginManifest }
 }
 
+/**
+ * Verify that a code plugin's entry file exists on disk and is within bounds.
+ * Returns an error string if invalid, undefined if OK.
+ */
+async function validateEntryFile(pluginDir: string, entry: string): Promise<string | undefined> {
+  const entryPath = resolve(join(pluginDir, entry))
+  if (!entryPath.startsWith(resolve(pluginDir))) {
+    return `Entry path traversal: ${entry}`
+  }
+  try {
+    await access(entryPath)
+  } catch {
+    return `Entry file not found: ${entry}`
+  }
+  return undefined
+}
+
 export async function scanPlugins(): Promise<StorageResult<PluginStatus[]>> {
   try {
     const pluginsDir = await getPluginsDir()
     const entries = await readdir(pluginsDir, { withFileTypes: true })
     const enabledIds = await getEnabledPluginIds()
     const results: PluginStatus[] = []
+
+    const stubManifest = (name: string) => ({
+      id: name,
+      name,
+      version: '0.0.0',
+      description: '',
+      author: '',
+      type: 'content-pack' as const,
+      gameSystem: 'dnd5e',
+      data: {}
+    })
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue
@@ -85,16 +113,7 @@ export async function scanPlugins(): Promise<StorageResult<PluginStatus[]>> {
         if (!validation.valid || !validation.manifest) {
           results.push({
             id: entry.name,
-            manifest: {
-              id: entry.name,
-              name: entry.name,
-              version: '0.0.0',
-              description: '',
-              author: '',
-              type: 'content-pack',
-              gameSystem: 'dnd5e',
-              data: {}
-            },
+            manifest: stubManifest(entry.name),
             enabled: false,
             loaded: false,
             error: validation.error ?? 'Invalid manifest'
@@ -102,25 +121,33 @@ export async function scanPlugins(): Promise<StorageResult<PluginStatus[]>> {
           continue
         }
 
+        const manifest = validation.manifest
+
+        // Validate entry file exists for code plugins
+        if ((manifest.type === 'plugin' || manifest.type === 'game-system') && 'entry' in manifest) {
+          const entryError = await validateEntryFile(pluginDir, manifest.entry)
+          if (entryError) {
+            results.push({
+              id: manifest.id,
+              manifest,
+              enabled: false,
+              loaded: false,
+              error: entryError
+            })
+            continue
+          }
+        }
+
         results.push({
-          id: validation.manifest.id,
-          manifest: validation.manifest,
-          enabled: enabledIds.has(validation.manifest.id),
+          id: manifest.id,
+          manifest,
+          enabled: enabledIds.has(manifest.id),
           loaded: false
         })
       } catch (err) {
         results.push({
           id: entry.name,
-          manifest: {
-            id: entry.name,
-            name: entry.name,
-            version: '0.0.0',
-            description: '',
-            author: '',
-            type: 'content-pack',
-            gameSystem: 'dnd5e',
-            data: {}
-          },
+          manifest: stubManifest(entry.name),
           enabled: false,
           loaded: false,
           error: `Failed to read manifest: ${(err as Error).message}`

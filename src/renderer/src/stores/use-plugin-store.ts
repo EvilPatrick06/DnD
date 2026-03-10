@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { PluginStatus } from '../../../shared/plugin-types'
-import { type LoadedPlugin, loadPlugin, unloadPlugin } from '../services/plugin-system/plugin-registry'
+import { getLoadedPlugin, type LoadedPlugin, loadPlugin, unloadPlugin } from '../services/plugin-system/plugin-registry'
+import { useDataStore } from './use-data-store'
 
-// Ensure imported type is used for type-safety
 type _LoadedPlugin = LoadedPlugin
 
 interface PluginStoreState {
@@ -12,7 +12,21 @@ interface PluginStoreState {
   initPlugins: () => Promise<void>
   enablePlugin: (id: string) => Promise<void>
   disablePlugin: (id: string) => Promise<void>
+  installPlugin: () => Promise<{ success: boolean; error?: string }>
+  uninstallPlugin: (id: string) => Promise<{ success: boolean; error?: string }>
   refreshPluginList: () => Promise<void>
+}
+
+function syncLoadedStatus(plugins: PluginStatus[]): PluginStatus[] {
+  return plugins.map((p) => {
+    const loaded = getLoadedPlugin(p.id)
+    if (!loaded) return p
+    return {
+      ...p,
+      loaded: loaded.status === 'loaded',
+      error: loaded.status === 'error' ? loaded.errorMessage : p.error
+    }
+  })
 }
 
 export const usePluginStore = create<PluginStoreState>((set, get) => ({
@@ -25,15 +39,16 @@ export const usePluginStore = create<PluginStoreState>((set, get) => ({
     try {
       const result = await window.api.plugins.scan()
       if (result.success && result.data) {
-        const plugins = result.data as unknown as PluginStatus[]
-        set({ plugins, initialized: true })
+        let plugins = result.data as unknown as PluginStatus[]
 
-        // Load enabled code plugins
         for (const plugin of plugins) {
           if (plugin.enabled && !plugin.error && plugin.manifest.type !== 'content-pack') {
             await loadPlugin(plugin.manifest)
           }
         }
+
+        plugins = syncLoadedStatus(plugins)
+        set({ plugins, initialized: true })
       } else {
         set({ initialized: true })
       }
@@ -48,20 +63,50 @@ export const usePluginStore = create<PluginStoreState>((set, get) => ({
     if (plugin && plugin.manifest.type !== 'content-pack') {
       await loadPlugin(plugin.manifest)
     }
+    useDataStore.getState().clearAll()
     await get().refreshPluginList()
   },
 
   disablePlugin: async (id: string) => {
     await window.api.plugins.disable(id)
     unloadPlugin(id)
+    useDataStore.getState().clearAll()
     await get().refreshPluginList()
+  },
+
+  installPlugin: async () => {
+    try {
+      const result = await window.api.plugins.install()
+      if (result.success) {
+        useDataStore.getState().clearAll()
+        await get().refreshPluginList()
+      }
+      return result
+    } catch {
+      return { success: false, error: 'Plugin installation failed' }
+    }
+  },
+
+  uninstallPlugin: async (id: string) => {
+    try {
+      unloadPlugin(id)
+      const result = await window.api.plugins.uninstall(id)
+      if (result.success) {
+        useDataStore.getState().clearAll()
+        await get().refreshPluginList()
+      }
+      return result
+    } catch {
+      return { success: false, error: 'Plugin uninstall failed' }
+    }
   },
 
   refreshPluginList: async () => {
     try {
       const result = await window.api.plugins.scan()
       if (result.success && result.data) {
-        set({ plugins: result.data as unknown as PluginStatus[] })
+        const plugins = syncLoadedStatus(result.data as unknown as PluginStatus[])
+        set({ plugins })
       }
     } catch {
       // scan failed silently

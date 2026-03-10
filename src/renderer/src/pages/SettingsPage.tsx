@@ -45,7 +45,7 @@ import { DISPLAY_NAME_KEY } from '../constants'
 import * as NotificationService from '../services/notification-service'
 import { getTheme, getThemeNames, setTheme, type ThemeName } from '../services/theme-manager'
 import { type ColorblindMode, type KeyCombo, useAccessibilityStore } from '../stores/use-accessibility-store'
-import { useDataStore } from '../stores/use-data-store'
+import { usePluginStore } from '../stores/use-plugin-store'
 import { getAllSystems, unregisterSystem } from '../systems/init'
 import type { UserProfile } from '../types/user'
 
@@ -263,45 +263,26 @@ function KeybindingEditor(): JSX.Element {
   )
 }
 
-interface PluginInfo {
-  id: string
-  manifest: Record<string, unknown>
-  enabled: boolean
-  loaded: boolean
-  error?: string
-}
-
 function PluginManager(): JSX.Element {
-  const [plugins, setPlugins] = useState<PluginInfo[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const refreshPlugins = useCallback(async () => {
-    try {
-      const result = await window.api.plugins.scan()
-      if (result.success && result.data) {
-        setPlugins(result.data)
-      }
-    } catch {
-      // scan failed silently
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const plugins = usePluginStore((s) => s.plugins)
+  const initialized = usePluginStore((s) => s.initialized)
+  const enablePlugin = usePluginStore((s) => s.enablePlugin)
+  const disablePlugin = usePluginStore((s) => s.disablePlugin)
+  const installPlugin = usePluginStore((s) => s.installPlugin)
+  const uninstallPlugin = usePluginStore((s) => s.uninstallPlugin)
+  const refreshPluginList = usePluginStore((s) => s.refreshPluginList)
 
   useEffect(() => {
-    refreshPlugins()
-  }, [refreshPlugins])
+    refreshPluginList()
+  }, [refreshPluginList])
 
-  const handleToggle = async (plugin: PluginInfo): Promise<void> => {
+  const handleToggle = async (plugin: (typeof plugins)[number]): Promise<void> => {
     try {
       if (plugin.enabled) {
-        await window.api.plugins.disable(plugin.id)
+        await disablePlugin(plugin.id)
       } else {
-        await window.api.plugins.enable(plugin.id)
+        await enablePlugin(plugin.id)
       }
-      // Clear data cache so plugin content reloads
-      useDataStore.getState().clearAll()
-      await refreshPlugins()
       addToast(`Plugin "${plugin.manifest.name}" ${plugin.enabled ? 'disabled' : 'enabled'}`, 'success')
     } catch {
       addToast('Failed to toggle plugin', 'error')
@@ -309,36 +290,24 @@ function PluginManager(): JSX.Element {
   }
 
   const handleInstall = async (): Promise<void> => {
-    try {
-      const result = await window.api.plugins.install()
-      if (result.success) {
-        addToast('Plugin installed', 'success')
-        useDataStore.getState().clearAll()
-        await refreshPlugins()
-      } else if (result.error !== 'Cancelled') {
-        addToast(result.error ?? 'Install failed', 'error')
-      }
-    } catch {
-      addToast('Plugin installation failed', 'error')
+    const result = await installPlugin()
+    if (result.success) {
+      addToast('Plugin installed', 'success')
+    } else if (result.error && result.error !== 'Cancelled') {
+      addToast(result.error, 'error')
     }
   }
 
-  const handleUninstall = async (plugin: PluginInfo): Promise<void> => {
-    try {
-      const result = await window.api.plugins.uninstall(plugin.id)
-      if (result.success) {
-        addToast(`Plugin "${plugin.manifest.name}" uninstalled`, 'success')
-        useDataStore.getState().clearAll()
-        await refreshPlugins()
-      } else {
-        addToast(result.error ?? 'Uninstall failed', 'error')
-      }
-    } catch {
-      addToast('Plugin uninstall failed', 'error')
+  const handleUninstall = async (plugin: (typeof plugins)[number]): Promise<void> => {
+    const result = await uninstallPlugin(plugin.id)
+    if (result.success) {
+      addToast(`Plugin "${plugin.manifest.name}" uninstalled`, 'success')
+    } else {
+      addToast(result.error ?? 'Uninstall failed', 'error')
     }
   }
 
-  if (loading) {
+  if (!initialized) {
     return <p className="text-xs text-gray-500">Scanning plugins...</p>
   }
 
@@ -372,22 +341,23 @@ function PluginManager(): JSX.Element {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-200 truncate">
-                  {String(plugin.manifest.name ?? plugin.id)}
-                </span>
-                <span className="text-[10px] text-gray-500 font-mono">v{String(plugin.manifest.version ?? '?')}</span>
+                <span className="text-sm font-medium text-gray-200 truncate">{plugin.manifest.name ?? plugin.id}</span>
+                <span className="text-[10px] text-gray-500 font-mono">v{plugin.manifest.version ?? '?'}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">
-                  {String(plugin.manifest.type ?? 'unknown')}
+                  {plugin.manifest.type}
                 </span>
+                {plugin.loaded && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-900/50 text-green-400">Loaded</span>
+                )}
                 {plugin.error && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-900/50 text-red-400">Error</span>
                 )}
               </div>
               {!!plugin.manifest.description && (
-                <p className="text-xs text-gray-400 mt-1 truncate">{String(plugin.manifest.description)}</p>
+                <p className="text-xs text-gray-400 mt-1 truncate">{plugin.manifest.description}</p>
               )}
               {!!plugin.manifest.author && (
-                <p className="text-[10px] text-gray-500 mt-0.5">by {String(plugin.manifest.author)}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">by {plugin.manifest.author}</p>
               )}
               {plugin.error && <p className="text-[10px] text-red-400 mt-1">{plugin.error}</p>}
             </div>
