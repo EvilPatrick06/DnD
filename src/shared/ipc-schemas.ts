@@ -1,8 +1,15 @@
 import { z } from 'zod'
 
+export const AiProviderTypeSchema = z.enum(['ollama', 'claude', 'openai', 'gemini'])
+
 export const AiConfigSchema = z.object({
-  ollamaModel: z.string(),
-  ollamaUrl: z.string()
+  provider: AiProviderTypeSchema.default('ollama'),
+  model: z.string(),
+  ollamaUrl: z.string().default('http://localhost:11434'),
+  claudeApiKey: z.string().optional(),
+  openaiApiKey: z.string().optional(),
+  geminiApiKey: z.string().optional(),
+  ollamaModel: z.string().optional()
 })
 
 export const ActiveCreatureSchema = z.object({

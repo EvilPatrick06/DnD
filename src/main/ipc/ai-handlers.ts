@@ -12,6 +12,7 @@ import type { AiConnectionStatus, StreamResult } from '../ai/ai-service'
 import * as aiService from '../ai/ai-service'
 import { buildContext, getLastTokenBreakdown, getSearchEngine } from '../ai/context-builder'
 import type { DmAction } from '../ai/dm-actions'
+import { type AiProviderType, CLOUD_MODELS } from '../ai/llm-provider'
 import { getMemoryManager } from '../ai/memory-manager'
 import {
   CURATED_MODELS,
@@ -33,6 +34,7 @@ import {
   updateOllama,
   type VramInfo
 } from '../ai/ollama-manager'
+import { getProvider } from '../ai/provider-registry'
 import type {
   AiChatRequest,
   AiConfig,
@@ -80,6 +82,41 @@ export function registerAiHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.AI_CHECK_PROVIDERS, async () => {
     return await aiService.checkProviders()
+  })
+
+  // ── Cloud Provider Models ──
+
+  ipcMain.handle(IPC_CHANNELS.AI_LIST_CLOUD_MODELS, async (_event, providerType: string) => {
+    if (providerType === 'ollama' || !(providerType in CLOUD_MODELS)) {
+      return []
+    }
+    return CLOUD_MODELS[providerType as keyof typeof CLOUD_MODELS]
+  })
+
+  ipcMain.handle(IPC_CHANNELS.AI_VALIDATE_API_KEY, async (_event, providerType: string, apiKey: string) => {
+    if (providerType === 'ollama') return { valid: true }
+
+    const validTypes: AiProviderType[] = ['claude', 'openai', 'gemini']
+    if (!validTypes.includes(providerType as AiProviderType)) {
+      return { valid: false, error: `Unknown provider: ${providerType}` }
+    }
+
+    try {
+      const provider = getProvider(providerType as AiProviderType)
+
+      const { setClaudeApiKey } = await import('../ai/claude-client')
+      const { setOpenAIApiKey } = await import('../ai/openai-client')
+      const { setGeminiApiKey } = await import('../ai/gemini-client')
+
+      if (providerType === 'claude') setClaudeApiKey(apiKey)
+      else if (providerType === 'openai') setOpenAIApiKey(apiKey)
+      else if (providerType === 'gemini') setGeminiApiKey(apiKey)
+
+      const available = await provider.isAvailable()
+      return { valid: available, error: available ? undefined : 'API key validation failed' }
+    } catch (error) {
+      return { valid: false, error: (error as Error).message }
+    }
   })
 
   // ── Index Building ──

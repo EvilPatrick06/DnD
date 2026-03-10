@@ -36,11 +36,19 @@ export interface LoreEntry {
   createdAt: string
 }
 
+export type AiProviderType = 'ollama' | 'claude' | 'openai' | 'gemini'
+
 export interface AiDmConfig {
   enabled: boolean
-  ollamaModel?: string
+  provider?: AiProviderType
+  model?: string
   ollamaUrl?: string
+  claudeApiKey?: string
+  openaiApiKey?: string
+  geminiApiKey?: string
   discordBridge?: boolean
+  /** @deprecated Use `model` instead */
+  ollamaModel?: string
 }
 
 export interface CampaignMetrics {

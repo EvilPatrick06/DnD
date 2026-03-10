@@ -79,6 +79,20 @@ vi.mock('./ollama-manager', () => ({
   OLLAMA_BASE_URL: 'http://localhost:11434'
 }))
 
+vi.mock('./provider-registry', () => ({
+  configureProviders: vi.fn(),
+  getActiveProvider: vi.fn(() => ({
+    type: 'ollama',
+    streamChat: vi.fn(),
+    chatOnce: vi.fn(async () => 'summary result'),
+    isAvailable: vi.fn(async () => true),
+    listModels: vi.fn(async () => ['llama3.1', 'mistral'])
+  })),
+  getActiveProviderType: vi.fn(() => 'ollama'),
+  getProviderContextBlurb: vi.fn(() => 'You are running via a local Ollama instance.'),
+  checkAllProviders: vi.fn(async () => ({ ollama: true, claude: false, openai: false, gemini: false }))
+}))
+
 vi.mock('./search-engine', () => ({
   SearchEngine: class {
     private count = 0
@@ -195,7 +209,7 @@ describe('ai-service', () => {
 
   describe('configure', () => {
     it('saves config to disk and sets ollama URL', () => {
-      configure({ ollamaModel: 'mistral', ollamaUrl: 'http://gpu-server:11434' })
+      configure({ provider: 'ollama', model: 'mistral', ollamaUrl: 'http://gpu-server:11434' })
 
       expect(setOllamaUrl).toHaveBeenCalledWith('http://gpu-server:11434')
       expect(writeFileSync).toHaveBeenCalledWith(
@@ -204,12 +218,12 @@ describe('ai-service', () => {
       )
     })
 
-    it('defaults ollamaModel to llama3.1 if not provided', () => {
-      configure({ ollamaModel: '', ollamaUrl: '' })
+    it('defaults model to llama3.1 if not provided', () => {
+      configure({ provider: 'ollama', model: '', ollamaUrl: '' })
 
       const writtenJson = (writeFileSync as ReturnType<typeof vi.fn>).mock.calls[0][1]
       const parsed = JSON.parse(writtenJson)
-      expect(parsed.ollamaModel).toBe('llama3.1')
+      expect(parsed.model).toBe('llama3.1')
     })
   })
 
@@ -217,20 +231,33 @@ describe('ai-service', () => {
     it('loads config from disk if file exists', () => {
       vi.mocked(existsSync).mockReturnValueOnce(true)
       vi.mocked(readFileSync).mockReturnValueOnce(
+        JSON.stringify({ provider: 'ollama', model: 'phi3', ollamaUrl: 'http://remote:11434' })
+      )
+
+      const config = getConfig()
+      expect(config.model).toBe('phi3')
+      expect(config.ollamaUrl).toBe('http://remote:11434')
+      expect(config.provider).toBe('ollama')
+    })
+
+    it('loads legacy config with ollamaModel field', () => {
+      vi.mocked(existsSync).mockReturnValueOnce(true)
+      vi.mocked(readFileSync).mockReturnValueOnce(
         JSON.stringify({ ollamaModel: 'phi3', ollamaUrl: 'http://remote:11434' })
       )
 
       const config = getConfig()
-      expect(config.ollamaModel).toBe('phi3')
-      expect(config.ollamaUrl).toBe('http://remote:11434')
+      expect(config.model).toBe('phi3')
+      expect(config.provider).toBe('ollama')
     })
 
     it('returns defaults if config file does not exist', () => {
       vi.mocked(existsSync).mockReturnValueOnce(false)
 
       const config = getConfig()
-      expect(config.ollamaModel).toBeDefined()
+      expect(config.model).toBeDefined()
       expect(config.ollamaUrl).toBeDefined()
+      expect(config.provider).toBe('ollama')
     })
 
     it('returns defaults if config file has invalid JSON', () => {
@@ -238,7 +265,7 @@ describe('ai-service', () => {
       vi.mocked(readFileSync).mockReturnValueOnce('not json')
 
       const config = getConfig()
-      expect(config.ollamaModel).toBeDefined()
+      expect(config.model).toBeDefined()
     })
   })
 

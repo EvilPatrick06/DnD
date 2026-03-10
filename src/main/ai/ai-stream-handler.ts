@@ -13,8 +13,7 @@ import {
   readRequestedFile,
   stripFileRead
 } from './file-reader'
-import { ollamaStreamChat } from './ollama-client'
-import type { AiChatRequest, DmActionData, RuleCitation, StatChange } from './types'
+import type { AiChatRequest, ChatMessage, DmActionData, RuleCitation, StatChange, StreamCallbacks } from './types'
 import { formatSearchResults, hasWebSearchTag, parseWebSearch, performWebSearch, stripWebSearch } from './web-search'
 
 // ── Web Search Approval ──
@@ -90,7 +89,14 @@ function sendWebSearchStatus(
 
 export interface StreamHandlerDeps {
   activeStreams: Map<string, AbortController>
-  ollamaModel: string
+  model: string
+  streamChat: (
+    systemPrompt: string,
+    messages: ChatMessage[],
+    callbacks: StreamCallbacks,
+    model: string,
+    abortSignal?: AbortSignal
+  ) => Promise<void>
   streamWithRetry: (
     streamFn: (signal: AbortSignal) => Promise<void>,
     abortController: AbortController,
@@ -154,7 +160,7 @@ export async function handleStreamCompletion(
     }
 
     await deps.streamWithRetry(
-      (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, deps.ollamaModel, signal),
+      (signal) => deps.streamChat(sp, msgs, nextCallbacks, deps.model, signal),
       abortController,
       (errMsg) => {
         clearPendingWebSearchApproval(streamId, false)

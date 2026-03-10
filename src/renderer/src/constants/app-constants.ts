@@ -51,3 +51,14 @@ export const CLOUD_ICE_SERVERS: RTCIceServer[] = [
 
 // AI / Ollama
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434'
+export const DEFAULT_AI_PROVIDER = 'ollama' as const
+export const DEFAULT_AI_MODEL = 'llama3.1'
+
+export const AI_PROVIDER_LABELS: Record<string, string> = {
+  ollama: 'Ollama (Local)',
+  claude: 'Claude (Anthropic)',
+  openai: 'OpenAI',
+  gemini: 'Gemini (Google)'
+}
+
+export const AI_PROVIDERS = ['ollama', 'claude', 'openai', 'gemini'] as const

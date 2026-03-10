@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import OllamaSetupStep from '../../components/campaign/OllamaSetupStep'
+import AiProviderSetup from '../../components/campaign/AiProviderSetup'
 import { Button, Card, Modal } from '../../components/ui'
-import { DEFAULT_OLLAMA_URL } from '../../constants'
-import type { Campaign } from '../../types/campaign'
+import { AI_PROVIDER_LABELS, DEFAULT_AI_MODEL, DEFAULT_AI_PROVIDER, DEFAULT_OLLAMA_URL } from '../../constants'
+import type { AiProviderType, Campaign } from '../../types/campaign'
 
 interface AiDmCardProps {
   campaign: Campaign
@@ -13,15 +13,26 @@ export default function AiDmCard({ campaign, saveCampaign }: AiDmCardProps): JSX
   const [showAiDmModal, setShowAiDmModal] = useState(false)
   const [aiDmConfig, setAiDmConfig] = useState<{
     enabled: boolean
-    ollamaModel: string
+    provider: AiProviderType
+    model: string
     ollamaUrl: string
-  }>({ enabled: false, ollamaModel: 'llama3.1', ollamaUrl: DEFAULT_OLLAMA_URL })
+    apiKey: string
+  }>({
+    enabled: false,
+    provider: DEFAULT_AI_PROVIDER,
+    model: DEFAULT_AI_MODEL,
+    ollamaUrl: DEFAULT_OLLAMA_URL,
+    apiKey: ''
+  })
 
   const openConfigure = (): void => {
+    const dm = campaign.aiDm
     setAiDmConfig({
-      enabled: campaign.aiDm?.enabled ?? false,
-      ollamaModel: campaign.aiDm?.ollamaModel ?? 'llama3.1',
-      ollamaUrl: campaign.aiDm?.ollamaUrl ?? DEFAULT_OLLAMA_URL
+      enabled: dm?.enabled ?? false,
+      provider: dm?.provider ?? DEFAULT_AI_PROVIDER,
+      model: dm?.model ?? dm?.ollamaModel ?? DEFAULT_AI_MODEL,
+      ollamaUrl: dm?.ollamaUrl ?? DEFAULT_OLLAMA_URL,
+      apiKey: dm?.claudeApiKey ?? dm?.openaiApiKey ?? dm?.geminiApiKey ?? ''
     })
     setShowAiDmModal(true)
   }
@@ -29,11 +40,16 @@ export default function AiDmCard({ campaign, saveCampaign }: AiDmCardProps): JSX
   const openEnable = (): void => {
     setAiDmConfig({
       enabled: true,
-      ollamaModel: 'llama3.1',
-      ollamaUrl: DEFAULT_OLLAMA_URL
+      provider: DEFAULT_AI_PROVIDER,
+      model: DEFAULT_AI_MODEL,
+      ollamaUrl: DEFAULT_OLLAMA_URL,
+      apiKey: ''
     })
     setShowAiDmModal(true)
   }
+
+  const providerLabel = AI_PROVIDER_LABELS[campaign.aiDm?.provider ?? 'ollama'] ?? 'Ollama'
+  const displayModel = campaign.aiDm?.model ?? campaign.aiDm?.ollamaModel ?? 'default'
 
   return (
     <>
@@ -42,8 +58,8 @@ export default function AiDmCard({ campaign, saveCampaign }: AiDmCardProps): JSX
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-300">Enabled</span>
-              <span className="text-xs text-gray-400">Ollama</span>
-              <span className="text-xs text-gray-500">{campaign.aiDm.ollamaModel ?? 'default'}</span>
+              <span className="text-xs text-gray-400">{providerLabel}</span>
+              <span className="text-xs text-gray-500">{displayModel}</span>
             </div>
             <button onClick={openConfigure} className="text-xs text-amber-400 hover:text-amber-300 cursor-pointer">
               Configure
@@ -59,14 +75,15 @@ export default function AiDmCard({ campaign, saveCampaign }: AiDmCardProps): JSX
         )}
       </Card>
 
-      {/* AI DM Config Modal */}
       <Modal open={showAiDmModal} onClose={() => setShowAiDmModal(false)} title="Configure AI Dungeon Master">
         <div className="max-h-[60vh] overflow-y-auto">
-          <OllamaSetupStep
+          <AiProviderSetup
             enabled={aiDmConfig.enabled}
-            ollamaModel={aiDmConfig.ollamaModel}
+            provider={aiDmConfig.provider}
+            model={aiDmConfig.model}
             ollamaUrl={aiDmConfig.ollamaUrl}
-            onOllamaReady={() => {}}
+            apiKey={aiDmConfig.apiKey}
+            onProviderReady={() => {}}
             onChange={(data) => setAiDmConfig(data)}
           />
         </div>
@@ -78,15 +95,23 @@ export default function AiDmCard({ campaign, saveCampaign }: AiDmCardProps): JSX
             onClick={async () => {
               const aiDm = {
                 enabled: aiDmConfig.enabled,
-                ollamaModel: aiDmConfig.ollamaModel,
-                ollamaUrl: aiDmConfig.ollamaUrl
+                provider: aiDmConfig.provider,
+                model: aiDmConfig.model,
+                ollamaUrl: aiDmConfig.ollamaUrl,
+                claudeApiKey: aiDmConfig.provider === 'claude' ? aiDmConfig.apiKey : undefined,
+                openaiApiKey: aiDmConfig.provider === 'openai' ? aiDmConfig.apiKey : undefined,
+                geminiApiKey: aiDmConfig.provider === 'gemini' ? aiDmConfig.apiKey : undefined
               }
               await saveCampaign({ ...campaign, aiDm, updatedAt: new Date().toISOString() })
               if (aiDmConfig.enabled) {
                 try {
                   await window.api.ai.configure({
-                    ollamaModel: aiDmConfig.ollamaModel,
-                    ollamaUrl: aiDmConfig.ollamaUrl
+                    provider: aiDmConfig.provider,
+                    model: aiDmConfig.model,
+                    ollamaUrl: aiDmConfig.ollamaUrl,
+                    claudeApiKey: aiDm.claudeApiKey,
+                    openaiApiKey: aiDm.openaiApiKey,
+                    geminiApiKey: aiDm.geminiApiKey
                   })
                 } catch {
                   /* ignore configure errors */

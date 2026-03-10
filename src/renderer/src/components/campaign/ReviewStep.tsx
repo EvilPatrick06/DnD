@@ -1,5 +1,6 @@
+import { AI_PROVIDER_LABELS } from '../../constants'
 import { PRESET_LABELS } from '../../data/calendar-presets'
-import type { CalendarConfig, CampaignType, CustomRule, TurnMode } from '../../types/campaign'
+import type { AiProviderType, CalendarConfig, CampaignType, CustomRule, TurnMode } from '../../types/campaign'
 import type { GameSystem } from '../../types/game-system'
 import { GAME_SYSTEMS } from '../../types/game-system'
 import type { GameMap } from '../../types/map'
@@ -7,7 +8,8 @@ import { Button, Card } from '../ui'
 import type { SessionZeroData } from './SessionZeroStep'
 
 interface AiDmSummary {
-  ollamaModel: string
+  provider: AiProviderType
+  model: string
   ollamaUrl: string
 }
 
@@ -149,9 +151,15 @@ export default function ReviewStep({
             <h3 className="text-lg font-semibold mb-3">AI Dungeon Master</h3>
             <div className="grid grid-cols-2 gap-y-2 text-sm">
               <span className="text-gray-400">Provider</span>
-              <span>Ollama ({aiDm.ollamaModel})</span>
-              <span className="text-gray-400">URL</span>
-              <span className="text-xs text-gray-300">{aiDm.ollamaUrl}</span>
+              <span>{AI_PROVIDER_LABELS[aiDm.provider] ?? aiDm.provider}</span>
+              <span className="text-gray-400">Model</span>
+              <span>{aiDm.model}</span>
+              {aiDm.provider === 'ollama' && (
+                <>
+                  <span className="text-gray-400">URL</span>
+                  <span className="text-xs text-gray-300">{aiDm.ollamaUrl}</span>
+                </>
+              )}
             </div>
           </Card>
         )}

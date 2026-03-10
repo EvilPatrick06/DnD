@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { DEFAULT_OLLAMA_URL } from '../../constants'
+import { DEFAULT_AI_MODEL, DEFAULT_AI_PROVIDER, DEFAULT_OLLAMA_URL } from '../../constants'
 import { addToast } from '../../hooks/use-toast'
 import { type Adventure, loadAdventures } from '../../services/adventure-loader'
 import { useCampaignStore } from '../../stores/use-campaign-store'
 import {
+  type AiProviderType,
   type CalendarConfig,
   type CampaignType,
   type CustomRule,
@@ -17,9 +18,9 @@ import type { GameMap } from '../../types/map'
 import { logger } from '../../utils/logger'
 import { Button } from '../ui'
 import { AdventureSelector, AudioStep, DetailsStep, MapConfigStep, ReviewStep, RulesStep, SystemStep } from '.'
+import AiProviderSetup from './AiProviderSetup'
 import type { CustomAudioEntry } from './AudioStep'
 import CalendarStep from './CalendarStep'
-import OllamaSetupStep from './OllamaSetupStep'
 import SessionZeroStep, { DEFAULT_SESSION_ZERO, type SessionZeroData } from './SessionZeroStep'
 import StartStep from './StartStep'
 
@@ -71,8 +72,10 @@ export default function CampaignWizard(): JSX.Element {
 
   // AI DM config
   const [aiEnabled, setAiEnabled] = useState(false)
-  const [aiOllamaModel, setAiOllamaModel] = useState('llama3.1')
+  const [aiProvider, setAiProvider] = useState<AiProviderType>(DEFAULT_AI_PROVIDER)
+  const [aiModel, setAiModel] = useState(DEFAULT_AI_MODEL)
   const [aiOllamaUrl, setAiOllamaUrl] = useState(DEFAULT_OLLAMA_URL)
+  const [aiApiKey, setAiApiKey] = useState('')
   const [ollamaReady, setOllamaReady] = useState(false)
 
   // For review step: resolve adventure name
@@ -240,8 +243,12 @@ export default function CampaignWizard(): JSX.Element {
         aiDm: aiEnabled
           ? {
               enabled: true,
-              ollamaModel: aiOllamaModel,
-              ollamaUrl: aiOllamaUrl
+              provider: aiProvider,
+              model: aiModel,
+              ollamaUrl: aiOllamaUrl,
+              claudeApiKey: aiProvider === 'claude' ? aiApiKey : undefined,
+              openaiApiKey: aiProvider === 'openai' ? aiApiKey : undefined,
+              geminiApiKey: aiProvider === 'gemini' ? aiApiKey : undefined
             }
           : undefined
       })
@@ -261,12 +268,15 @@ export default function CampaignWizard(): JSX.Element {
         await saveCampaign(updatedCampaign)
       }
 
-      // If AI DM enabled, configure Ollama
       if (aiEnabled) {
         try {
           await window.api.ai.configure({
-            ollamaModel: aiOllamaModel,
-            ollamaUrl: aiOllamaUrl
+            provider: aiProvider,
+            model: aiModel,
+            ollamaUrl: aiOllamaUrl,
+            claudeApiKey: aiProvider === 'claude' ? aiApiKey : undefined,
+            openaiApiKey: aiProvider === 'openai' ? aiApiKey : undefined,
+            geminiApiKey: aiProvider === 'gemini' ? aiApiKey : undefined
           })
         } catch (configErr) {
           logger.error('Failed to configure AI DM after campaign creation:', configErr)
@@ -329,15 +339,19 @@ export default function CampaignWizard(): JSX.Element {
       )}
 
       {step === 2 && (
-        <OllamaSetupStep
+        <AiProviderSetup
           enabled={aiEnabled}
-          ollamaModel={aiOllamaModel}
+          provider={aiProvider}
+          model={aiModel}
           ollamaUrl={aiOllamaUrl}
-          onOllamaReady={setOllamaReady}
+          apiKey={aiApiKey}
+          onProviderReady={setOllamaReady}
           onChange={(data) => {
             setAiEnabled(data.enabled)
-            setAiOllamaModel(data.ollamaModel)
+            setAiProvider(data.provider)
+            setAiModel(data.model)
             setAiOllamaUrl(data.ollamaUrl)
+            setAiApiKey(data.apiKey)
           }}
         />
       )}
@@ -405,7 +419,7 @@ export default function CampaignWizard(): JSX.Element {
           maps={maps}
           customAudioCount={customAudio.length}
           calendar={calendar}
-          aiDm={aiEnabled ? { ollamaModel: aiOllamaModel, ollamaUrl: aiOllamaUrl } : null}
+          aiDm={aiEnabled ? { provider: aiProvider, model: aiModel, ollamaUrl: aiOllamaUrl } : null}
           sessionZero={sessionZero}
           onSubmit={handleCreate}
           submitting={submitting}

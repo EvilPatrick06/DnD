@@ -3,32 +3,56 @@ import { ActiveCreatureSchema, AiChatRequestSchema, AiConfigSchema } from './ipc
 
 describe('ipc-schemas', () => {
   describe('AiConfigSchema', () => {
-    it('should accept valid config', () => {
+    it('should accept valid config with provider and model', () => {
       const result = AiConfigSchema.safeParse({
-        ollamaModel: 'llama3',
+        provider: 'ollama',
+        model: 'llama3',
         ollamaUrl: 'http://localhost:11434'
       })
       expect(result.success).toBe(true)
     })
 
-    it('should reject missing ollamaModel', () => {
+    it('should accept config with cloud provider', () => {
       const result = AiConfigSchema.safeParse({
+        provider: 'claude',
+        model: 'claude-3-5-sonnet-20241022',
+        claudeApiKey: 'sk-ant-test'
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('should default provider to ollama', () => {
+      const result = AiConfigSchema.safeParse({
+        model: 'llama3',
+        ollamaUrl: 'http://localhost:11434'
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.provider).toBe('ollama')
+      }
+    })
+
+    it('should reject missing model', () => {
+      const result = AiConfigSchema.safeParse({
+        provider: 'ollama',
         ollamaUrl: 'http://localhost:11434'
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject missing ollamaUrl', () => {
+    it('should reject non-string model', () => {
       const result = AiConfigSchema.safeParse({
-        ollamaModel: 'llama3'
+        provider: 'ollama',
+        model: 123,
+        ollamaUrl: 'http://localhost:11434'
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject non-string values', () => {
+    it('should reject invalid provider', () => {
       const result = AiConfigSchema.safeParse({
-        ollamaModel: 123,
-        ollamaUrl: true
+        provider: 'invalid',
+        model: 'llama3'
       })
       expect(result.success).toBe(false)
     })

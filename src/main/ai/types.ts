@@ -1,8 +1,16 @@
+import type { AiProviderType } from './llm-provider'
+
 // ── AI DM Types (Main Process) ──
 
 export interface AiConfig {
-  ollamaModel: string
+  provider: AiProviderType
+  model: string
   ollamaUrl: string
+  claudeApiKey?: string
+  openaiApiKey?: string
+  geminiApiKey?: string
+  /** @deprecated Use `model` instead. Kept for backward-compatible config loading. */
+  ollamaModel?: string
 }
 
 export interface ActiveCreatureInfo {
@@ -61,6 +69,9 @@ export interface AiIndexProgress {
 export interface ProviderStatus {
   ollama: boolean
   ollamaModels: string[]
+  claude: boolean
+  openai: boolean
+  gemini: boolean
 }
 
 export interface MutationResult {
