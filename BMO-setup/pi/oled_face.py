@@ -44,6 +44,8 @@ class Expression(Enum):
     SHY = "shy"
     WINK = "wink"
     MISCHIEVOUS = "mischievous"
+    WARMUP = "warmup"
+    CAPTURING = "capturing"
 
 
 class OledFace:
@@ -73,8 +75,20 @@ class OledFace:
         Expression.SHY: 1,
         Expression.WINK: 2,
         Expression.MISCHIEVOUS: 2,
+        Expression.WARMUP: 1,
+        Expression.CAPTURING: 2,
     }
-    _DEBOUNCE_MS = 200  # ignore changes within this window unless higher priority
+    _DEBOUNCE_MS = 200
+
+    # Variable FPS per expression state (brenpoly pattern)
+    _STATE_FPS = {
+        Expression.SPEAKING: 20,
+        Expression.LAUGHING: 15,
+        Expression.SINGING: 15,
+        Expression.IDLE: 5,
+        Expression.SLEEPING: 3,
+    }
+    _DEFAULT_FPS = 10
 
     def __init__(self, socketio=None):
         self.socketio = socketio
@@ -89,8 +103,11 @@ class OledFace:
         self._thinking_angle = 0
         self._alert_flash = False
         self._look_offset = 0  # -1=left, 0=center, 1=right for idle look-around
+        self._look_target = 0  # target for smooth interpolation
         self._look_timer = 0
-        self._last_expression_time = 0.0  # monotonic time of last expression change
+        self._last_expression_time = 0.0
+        self._audio_volume = 0  # 0-100, set externally for volume-reactive mouth
+        self._warmup_angle = 0
 
     def start(self):
         """Initialize OLED and start the animation loop."""
@@ -147,10 +164,14 @@ class OledFace:
     def current_expression(self) -> str:
         return self._expression.value
 
+    def set_audio_volume(self, volume: int):
+        """Set current audio volume (0-100) for volume-reactive mouth animation."""
+        self._audio_volume = max(0, min(100, volume))
+
     # ── Animation Loop ────────────────────────────────────────────────
 
     def _animation_loop(self):
-        """Main render loop at 10 FPS."""
+        """Main render loop with variable FPS per expression state."""
         while self._running:
             start = time.time()
 
@@ -163,8 +184,10 @@ class OledFace:
                 self._device.display(img)
 
             self._frame_counter += 1
+            fps = self._STATE_FPS.get(self._expression, self._DEFAULT_FPS)
+            target_delay = 1.0 / fps
             elapsed = time.time() - start
-            sleep_time = max(0, FRAME_DELAY - elapsed)
+            sleep_time = max(0, target_delay - elapsed)
             time.sleep(sleep_time)
 
     def _render_frame(self, draw: "ImageDraw.Draw"):
@@ -207,28 +230,38 @@ class OledFace:
             self._render_wink(draw)
         elif expr == Expression.MISCHIEVOUS:
             self._render_mischievous(draw)
+        elif expr == Expression.WARMUP:
+            self._render_warmup(draw)
+        elif expr == Expression.CAPTURING:
+            self._render_capturing(draw)
 
     # ── Expression Renderers ──────────────────────────────────────────
 
     def _render_idle(self, draw):
-        """Neutral face with slow blink and occasional look-around."""
-        # Blink every ~4 seconds (40 frames at 10 FPS)
+        """Neutral face with slow blink and smooth look-around."""
+        # Blink every ~8 seconds at 5 FPS (40 frames)
         self._blink_timer += 1
         if self._blink_timer >= 40:
             self._blink_state = True
-            if self._blink_timer >= 43:  # Blink lasts 3 frames
+            if self._blink_timer >= 42:
                 self._blink_state = False
                 self._blink_timer = 0
 
-        # Look-around every ~8 seconds (80 frames)
+        # Smooth look-around: pick a new target every ~16s, interpolate toward it
         self._look_timer += 1
         if self._look_timer >= 80:
             import random
-            self._look_offset = random.choice([-1, 0, 0, 1])
+            self._look_target = random.choice([-1, 0, 0, 1])
             if self._look_timer >= 100:
-                self._look_offset = 0
+                self._look_target = 0
                 self._look_timer = 0
-        pupil_shift = self._look_offset * 3
+        # Smooth interpolation toward target (0.15 per frame)
+        diff = self._look_target - self._look_offset
+        if abs(diff) > 0.05:
+            self._look_offset += diff * 0.15
+        else:
+            self._look_offset = self._look_target
+        pupil_shift = int(self._look_offset * 3)
 
         # Face outline
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
@@ -304,23 +337,22 @@ class OledFace:
             draw.ellipse([x - size, y - size, x + size, y + size], fill=1)
 
     def _render_speaking(self, draw):
-        """Happy eyes with animated mouth synced to speaking state."""
+        """Happy eyes with volume-reactive mouth animation."""
         draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
 
-        # Happy eyes (slight squint, upward arcs)
         draw.arc([33, 16, 52, 34], start=200, end=340, fill=1, width=2)
         draw.arc([76, 16, 95, 34], start=200, end=340, fill=1, width=2)
 
-        # Animated mouth — cycles through shapes
-        self._mouth_state = (self._frame_counter // 2) % 4
-        if self._mouth_state == 0:
-            draw.line([52, 44, 76, 44], fill=1, width=1)  # Closed
-        elif self._mouth_state == 1:
-            draw.ellipse([54, 40, 74, 48], outline=1, fill=0)  # Small open
-        elif self._mouth_state == 2:
-            draw.ellipse([50, 38, 78, 52], outline=1, fill=0)  # Wide open
-        elif self._mouth_state == 3:
-            draw.ellipse([54, 40, 74, 48], outline=1, fill=0)  # Small open
+        # Volume-reactive mouth: audio_volume drives mouth size
+        vol = self._audio_volume
+        if vol < 10:
+            draw.line([52, 44, 76, 44], fill=1, width=1)
+        elif vol < 40:
+            draw.ellipse([54, 40, 74, 48], outline=1, fill=0)
+        elif vol < 70:
+            draw.ellipse([52, 38, 76, 50], outline=1, fill=0)
+        else:
+            draw.ellipse([50, 36, 78, 52], outline=1, fill=0)
 
     def _render_happy(self, draw):
         """Smile with squinted eyes."""
@@ -559,3 +591,47 @@ class OledFace:
 
         # Wide mischievous grin
         draw.arc([34, 34, 94, 58], start=0, end=180, fill=1, width=2)
+
+    def _render_warmup(self, draw):
+        """Boot/loading animation with spinning arc and pulsing dots."""
+        import math
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Sleepy half-closed eyes
+        draw.line([35, 25, 50, 25], fill=1, width=2)
+        draw.line([78, 25, 93, 25], fill=1, width=2)
+
+        # Spinning loading arc
+        self._warmup_angle += 15
+        start = self._warmup_angle % 360
+        draw.arc([44, 34, 84, 58], start=start, end=start + 90, fill=1, width=2)
+
+        # Pulsing dots below eyes
+        phase = (self._frame_counter % 20) / 20.0
+        for i in range(3):
+            alpha = (phase + i * 0.33) % 1.0
+            if alpha < 0.5:
+                x = 52 + i * 12
+                draw.ellipse([x, 30, x + 3, 33], fill=1)
+
+    def _render_capturing(self, draw):
+        """Camera viewfinder frame when taking a photo."""
+        draw.rounded_rectangle([10, 4, 118, 60], radius=8, outline=1)
+
+        # Wide alert eyes
+        draw.ellipse([32, 14, 52, 34], outline=1, fill=1)
+        draw.ellipse([76, 14, 96, 34], outline=1, fill=1)
+        draw.ellipse([38, 20, 46, 28], outline=0, fill=0)
+        draw.ellipse([82, 20, 90, 28], outline=0, fill=0)
+
+        # Camera icon in center-bottom
+        draw.rectangle([54, 40, 74, 52], outline=1)
+        draw.ellipse([60, 42, 68, 50], outline=1)
+
+        # Viewfinder corner brackets (flashing)
+        if self._frame_counter % 6 < 3:
+            for x1, y1, x2, y2 in [(12, 6, 20, 6), (12, 6, 12, 14),
+                                     (116, 6, 108, 6), (116, 6, 116, 14),
+                                     (12, 58, 20, 58), (12, 58, 12, 50),
+                                     (116, 58, 108, 58), (116, 58, 116, 50)]:
+                draw.line([x1, y1, x2, y2], fill=1, width=1)

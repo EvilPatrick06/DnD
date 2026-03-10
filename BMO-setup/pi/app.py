@@ -95,6 +95,9 @@ def init_services():
 
     service_map = {}
 
+    # Show warmup face during initialization
+    # (oled_face gets set below, so we set warmup after OLED init)
+
     # LED controller (RGB LEDs)
     led_controller = None
     try:
@@ -113,7 +116,8 @@ def init_services():
         oled_face = OledFace(socketio=socketio)
         oled_face.start()
         service_map["oled_face"] = oled_face
-        print("[bmo]   OLED face: OK")
+        oled_face.set_expression("warmup")
+        print("[bmo]   OLED face: OK (warmup)")
     except Exception as e:
         print(f"[bmo]   OLED face: SKIPPED ({e})")
 
@@ -467,6 +471,19 @@ def init_services():
         print(f"[bmo]   System volume restored: {saved_sys_vol}%")
 
     print("[bmo] All services initialized!")
+
+    # Warm up Ollama models at startup (brenpoly pattern: keep_alive=-1 preloads into RAM)
+    try:
+        import ollama as _ollama
+        from agent import LOCAL_MODEL
+        _ollama.generate(model=LOCAL_MODEL, prompt="", keep_alive=-1)
+        print(f"[bmo]   Ollama model warmed up: {LOCAL_MODEL}")
+    except Exception as e:
+        print(f"[bmo]   Ollama warmup skipped: {e}")
+
+    # Set OLED to warmup expression during init, then idle
+    if oled_face:
+        oled_face.set_expression("idle")
 
 
 def _sync_expression(expression: str):

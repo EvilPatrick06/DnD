@@ -130,6 +130,31 @@ class SoundEffects:
         """Enable or disable sound effects."""
         self._enabled = enabled
 
+    def start_thinking_loop(self):
+        """Start a looping thinking sound that plays every 5 seconds.
+
+        Stops when stop_thinking_loop() is called. Interruptible — checks
+        the stop flag every 100ms instead of blocking for the full interval.
+        """
+        self._thinking_active = threading.Event()
+        self._thinking_active.set()
+        threading.Thread(target=self._thinking_loop, daemon=True).start()
+
+    def stop_thinking_loop(self):
+        """Stop the thinking sound loop immediately."""
+        if hasattr(self, '_thinking_active'):
+            self._thinking_active.clear()
+
+    def _thinking_loop(self):
+        import time
+        time.sleep(0.5)
+        while self._thinking_active.is_set():
+            self.play("boop")
+            for _ in range(50):
+                if not self._thinking_active.is_set():
+                    return
+                time.sleep(0.1)
+
     @property
     def available_events(self) -> list[str]:
         """List all available sound event names."""
