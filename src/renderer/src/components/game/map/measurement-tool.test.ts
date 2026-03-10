@@ -37,6 +37,19 @@ function makeGraphics() {
   }
 }
 
+const drawMeasurementWithOptions = drawMeasurement as unknown as (
+  graphics: unknown,
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  cellSize: number,
+  options: {
+    gridType?: 'square' | 'hex' | 'hex-flat' | 'hex-pointy'
+    offsetX?: number
+    offsetY?: number
+    diagonalRule?: 'standard' | 'alternate'
+  }
+) => void
+
 // ─── Tests ────────────────────────────────────────────────────
 
 describe('drawMeasurement', () => {
@@ -82,6 +95,35 @@ describe('drawMeasurement', () => {
     drawMeasurement(gfx as never, { x: 0, y: 0 }, { x: 70, y: 0 }, 70)
     const callArgs = vi.mocked(Text).mock.calls.at(-1)?.[0] as { text: string } | undefined
     expect(callArgs?.text).toMatch(/5 ft/)
+  })
+
+  it('uses 5/10/5 diagonal measurement for square grids', async () => {
+    const { Text } = await import('pixi.js')
+    const gfx = makeGraphics()
+
+    drawMeasurementWithOptions(gfx, { x: 0, y: 0 }, { x: 280, y: 280 }, 70, {
+      gridType: 'square',
+      diagonalRule: 'alternate',
+      offsetX: 0,
+      offsetY: 0
+    })
+
+    const callArgs = vi.mocked(Text).mock.calls.at(-1)?.[0] as { text: string } | undefined
+    expect(callArgs?.text).toMatch(/30 ft/)
+  })
+
+  it('uses hex cell distance instead of Euclidean distance', async () => {
+    const { Text } = await import('pixi.js')
+    const gfx = makeGraphics()
+
+    drawMeasurementWithOptions(gfx, { x: 0, y: 0 }, { x: 0, y: 120 }, 40, {
+      gridType: 'hex-pointy',
+      offsetX: 0,
+      offsetY: 0
+    })
+
+    const callArgs = vi.mocked(Text).mock.calls.at(-1)?.[0] as { text: string } | undefined
+    expect(callArgs?.text).toMatch(/10 ft/)
   })
 
   it('removes old children before adding new label', () => {

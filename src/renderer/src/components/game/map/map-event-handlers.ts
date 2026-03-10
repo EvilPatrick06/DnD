@@ -303,12 +303,19 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       const canvasY = e.clientY - rect.top
       const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
       const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
+      const diagonalRule = useGameStore.getState().diagonalRule
 
       drawMeasurement(
         refs.measureGraphics.current,
         refs.measureStart.current,
         { x: worldX, y: worldY },
-        map.grid.cellSize
+        map.grid.cellSize,
+        {
+          gridType: map.grid.type,
+          offsetX: map.grid.offsetX,
+          offsetY: map.grid.offsetY,
+          diagonalRule
+        }
       )
     }
   }

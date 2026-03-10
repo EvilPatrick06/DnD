@@ -1,5 +1,6 @@
 import type { Application, Graphics } from 'pixi.js'
 import type { FogOfWarData, GridSettings } from '../../../types/map'
+import { getHexCenter } from './grid-layer'
 
 // ─── Fog Animation State ─────────────────────────────────────
 
@@ -114,48 +115,33 @@ export function drawFogOfWar(
 
   if (!fog.enabled) return
 
-  const { cellSize, offsetX, offsetY } = gridSettings
-
   // Build sets for fast lookup
   const revealedSet = new Set<string>(fog.revealedCells.map((c) => `${c.x},${c.y}`))
   const exploredSet = new Set<string>((fog.exploredCells ?? []).map((c) => `${c.x},${c.y}`))
   const visionSet = partyVisionCells ? new Set<string>(partyVisionCells.map((c) => `${c.x},${c.y}`)) : null
-
-  // Calculate grid bounds
-  const cols = Math.ceil((mapWidth - (offsetX % cellSize)) / cellSize) + 1
-  const rows = Math.ceil((mapHeight - (offsetY % cellSize)) / cellSize) + 1
-  const startCol = -Math.ceil((offsetX % cellSize) / cellSize)
-  const startRow = -Math.ceil((offsetY % cellSize) / cellSize)
 
   // Build per-cell target alpha map for three-state fog
   // - Currently visible (in visionSet OR revealedSet): alpha 0
   // - Explored (in exploredSet but NOT currently visible): alpha EXPLORED_ALPHA (0.4)
   // - Unexplored (neither): alpha FOG_TARGET_ALPHA (0.75)
   const cellTargets = new Map<string, number>()
-  for (let col = startCol; col < cols; col++) {
-    for (let row = startRow; row < rows; row++) {
-      const key = `${col},${row}`
+  for (const { col, row } of getVisibleGridCells(gridSettings, mapWidth, mapHeight)) {
+    const key = `${col},${row}`
 
-      const x = (offsetX % cellSize) + col * cellSize
-      const y = (offsetY % cellSize) + row * cellSize
-      if (x + cellSize < 0 || y + cellSize < 0) continue
-      if (x > mapWidth || y > mapHeight) continue
+    // DM-revealed cells are always clear
+    if (revealedSet.has(key)) continue
 
-      // DM-revealed cells are always clear
-      if (revealedSet.has(key)) continue
+    // Currently visible via party vision = clear
+    if (visionSet?.has(key)) continue
 
-      // Currently visible via party vision = clear
-      if (visionSet?.has(key)) continue
-
-      // Explored but not currently visible = dimmed
-      if (exploredSet.has(key)) {
-        cellTargets.set(key, EXPLORED_ALPHA)
-        continue
-      }
-
-      // Unexplored = full fog
-      cellTargets.set(key, FOG_TARGET_ALPHA)
+    // Explored but not currently visible = dimmed
+    if (exploredSet.has(key)) {
+      cellTargets.set(key, EXPLORED_ALPHA)
+      continue
     }
+
+    // Unexplored = full fog
+    cellTargets.set(key, FOG_TARGET_ALPHA)
   }
 
   // If animation is active, update alpha targets and let ticker handle rendering
@@ -216,9 +202,7 @@ export function drawFogOfWar(
 
   // Draw full fog cells
   for (const { col, row } of fullFogCells) {
-    const x = (offsetX % cellSize) + col * cellSize
-    const y = (offsetY % cellSize) + row * cellSize
-    graphics.rect(x, y, cellSize, cellSize)
+    drawGridCellShape(graphics, gridSettings, col, row)
   }
   if (fullFogCells.length > 0) {
     graphics.fill({ color: 0x000000, alpha: FOG_TARGET_ALPHA })
@@ -226,9 +210,7 @@ export function drawFogOfWar(
 
   // Draw explored fog cells
   for (const { col, row } of exploredFogCells) {
-    const x = (offsetX % cellSize) + col * cellSize
-    const y = (offsetY % cellSize) + row * cellSize
-    graphics.rect(x, y, cellSize, cellSize)
+    drawGridCellShape(graphics, gridSettings, col, row)
   }
   if (exploredFogCells.length > 0) {
     graphics.fill({ color: 0x000000, alpha: EXPLORED_ALPHA })
@@ -247,8 +229,6 @@ function redrawFogFromAlphas(
   mapHeight: number
 ): void {
   graphics.clear()
-
-  const { cellSize, offsetX, offsetY } = gridSettings
 
   // Bucket alphas to reduce draw calls (10 buckets)
   const BUCKET_COUNT = 10
@@ -269,14 +249,108 @@ function redrawFogFromAlphas(
     const bucketAlpha = (b / BUCKET_COUNT) * FOG_TARGET_ALPHA
 
     for (const { col, row } of cells) {
-      const x = (offsetX % cellSize) + col * cellSize
-      const y = (offsetY % cellSize) + row * cellSize
-
-      if (x + cellSize < 0 || y + cellSize < 0) continue
-      if (x > mapWidth || y > mapHeight) continue
-
-      graphics.rect(x, y, cellSize, cellSize)
+      if (!isGridCellVisible(gridSettings, mapWidth, mapHeight, col, row)) continue
+      drawGridCellShape(graphics, gridSettings, col, row)
     }
     graphics.fill({ color: 0x000000, alpha: bucketAlpha })
   }
+}
+
+function getVisibleGridCells(
+  gridSettings: GridSettings,
+  mapWidth: number,
+  mapHeight: number
+): Array<{ col: number; row: number }> {
+  const { cellSize, offsetX, offsetY, type } = gridSettings
+
+  if (type === 'hex' || type === 'hex-flat' || type === 'hex-pointy') {
+    const orientation = type === 'hex-pointy' ? 'pointy' : 'flat'
+    const hexWidth = orientation === 'flat' ? cellSize * 2 : Math.sqrt(3) * cellSize
+    const hexHeight = orientation === 'flat' ? Math.sqrt(3) * cellSize : cellSize * 2
+    const horizSpacing = orientation === 'flat' ? hexWidth * 0.75 : hexWidth
+    const vertSpacing = orientation === 'flat' ? hexHeight : hexHeight * 0.75
+    const cols = Math.ceil((mapWidth - offsetX + hexWidth) / horizSpacing) + 1
+    const rows = Math.ceil((mapHeight - offsetY + hexHeight) / vertSpacing) + 1
+    const cells: Array<{ col: number; row: number }> = []
+
+    for (let col = 0; col < cols; col++) {
+      for (let row = 0; row < rows; row++) {
+        if (isGridCellVisible(gridSettings, mapWidth, mapHeight, col, row)) {
+          cells.push({ col, row })
+        }
+      }
+    }
+
+    return cells
+  }
+
+  const cols = Math.ceil((mapWidth - (offsetX % cellSize)) / cellSize) + 1
+  const rows = Math.ceil((mapHeight - (offsetY % cellSize)) / cellSize) + 1
+  const startCol = -Math.ceil((offsetX % cellSize) / cellSize)
+  const startRow = -Math.ceil((offsetY % cellSize) / cellSize)
+  const cells: Array<{ col: number; row: number }> = []
+
+  for (let col = startCol; col < cols; col++) {
+    for (let row = startRow; row < rows; row++) {
+      if (isGridCellVisible(gridSettings, mapWidth, mapHeight, col, row)) {
+        cells.push({ col, row })
+      }
+    }
+  }
+
+  return cells
+}
+
+function isGridCellVisible(
+  gridSettings: GridSettings,
+  mapWidth: number,
+  mapHeight: number,
+  col: number,
+  row: number
+): boolean {
+  const { cellSize, offsetX, offsetY, type } = gridSettings
+
+  if (type === 'hex' || type === 'hex-flat' || type === 'hex-pointy') {
+    const orientation = type === 'hex-pointy' ? 'pointy' : 'flat'
+    const center = getHexCenter(col, row, cellSize, offsetX, offsetY, orientation)
+    const halfWidth = orientation === 'flat' ? cellSize : (Math.sqrt(3) * cellSize) / 2
+    const halfHeight = orientation === 'flat' ? (Math.sqrt(3) * cellSize) / 2 : cellSize
+    if (center.x + halfWidth < 0 || center.y + halfHeight < 0) return false
+    if (center.x - halfWidth > mapWidth || center.y - halfHeight > mapHeight) return false
+    return true
+  }
+
+  const x = (offsetX % cellSize) + col * cellSize
+  const y = (offsetY % cellSize) + row * cellSize
+  if (x + cellSize < 0 || y + cellSize < 0) return false
+  if (x > mapWidth || y > mapHeight) return false
+  return true
+}
+
+function drawGridCellShape(graphics: Graphics, gridSettings: GridSettings, col: number, row: number): void {
+  const { cellSize, offsetX, offsetY, type } = gridSettings
+
+  if (type === 'hex' || type === 'hex-flat' || type === 'hex-pointy') {
+    const orientation = type === 'hex-pointy' ? 'pointy' : 'flat'
+    const center = getHexCenter(col, row, cellSize, offsetX, offsetY, orientation)
+    const angleOffset = orientation === 'flat' ? 0 : Math.PI / 6
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i + angleOffset
+      const x = center.x + cellSize * Math.cos(angle)
+      const y = center.y + cellSize * Math.sin(angle)
+      if (i === 0) {
+        graphics.moveTo(x, y)
+      } else {
+        graphics.lineTo(x, y)
+      }
+    }
+
+    graphics.closePath()
+    return
+  }
+
+  const x = (offsetX % cellSize) + col * cellSize
+  const y = (offsetY % cellSize) + row * cellSize
+  graphics.rect(x, y, cellSize, cellSize)
 }

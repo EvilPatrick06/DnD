@@ -4,6 +4,9 @@ import { destroyFogAnimation, drawFogOfWar } from './fog-overlay'
 function makeMockGraphics() {
   return {
     clear: vi.fn().mockReturnThis(),
+    moveTo: vi.fn().mockReturnThis(),
+    lineTo: vi.fn().mockReturnThis(),
+    closePath: vi.fn().mockReturnThis(),
     rect: vi.fn().mockReturnThis(),
     fill: vi.fn().mockReturnThis(),
     stroke: vi.fn().mockReturnThis()
@@ -33,6 +36,11 @@ const BASE_GRID = {
   color: '#555555',
   opacity: 0.5,
   type: 'square' as const
+}
+
+const HEX_GRID = {
+  ...BASE_GRID,
+  type: 'hex-flat' as const
 }
 
 const FOG_DISABLED = {
@@ -128,6 +136,15 @@ describe('drawFogOfWar — no animation (static)', () => {
 
     // With more revealed cells (via party vision), fewer fog rects should be drawn
     expect(callsWithVision).toBeLessThanOrEqual(callsWithoutVision)
+  })
+
+  it('draws hex-shaped fog cells for hex grids', () => {
+    const gfx = makeMockGraphics()
+    drawFogOfWar(gfx as never, FOG_ALL_HIDDEN, HEX_GRID, 200, 200)
+    expect(gfx.rect).not.toHaveBeenCalled()
+    expect(gfx.moveTo).toHaveBeenCalled()
+    expect(gfx.lineTo).toHaveBeenCalled()
+    expect(gfx.closePath).toHaveBeenCalled()
   })
 })
 
