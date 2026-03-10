@@ -1,11 +1,37 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.stubGlobal('window', { api: { storage: {}, game: {} } })
 
 import type { ChatMessage, LobbyPlayer } from './use-lobby-store'
 import { useLobbyStore } from './use-lobby-store'
+import { useNetworkStore } from './use-network-store'
 
 describe('useLobbyStore', () => {
+  const storageState = new Map<string, string>()
+  vi.stubGlobal('localStorage', {
+    getItem: vi.fn((key: string) => (storageState.has(key) ? (storageState.get(key) ?? null) : null)),
+    setItem: vi.fn((key: string, value: string) => {
+      storageState.set(key, value)
+    }),
+    removeItem: vi.fn((key: string) => {
+      storageState.delete(key)
+    }),
+    clear: vi.fn(() => {
+      storageState.clear()
+    })
+  })
+
+  beforeEach(() => {
+    useLobbyStore.getState().reset()
+    localStorage.clear()
+    useNetworkStore.setState({
+      role: 'none',
+      localPeerId: null,
+      displayName: '',
+      peers: []
+    })
+  })
+
   it('can be imported', async () => {
     const mod = await import('./use-lobby-store')
     expect(mod).toBeDefined()
@@ -136,5 +162,38 @@ describe('useLobbyStore', () => {
     expect(diceMsg.isDiceRoll).toBe(true)
     expect(diceMsg.diceResult?.formula).toBe('1d20')
     expect(diceMsg.diceResult?.total).toBe(17)
+  })
+
+  it('only persists dice colors for local player updates', () => {
+    const setItemSpy = vi.mocked(localStorage.setItem)
+    useNetworkStore.setState({ localPeerId: 'peer-local' })
+    const localColors = { primary: '#111111', secondary: '#222222' }
+    const remoteColors = { primary: '#aaaaaa', secondary: '#bbbbbb' }
+
+    useLobbyStore.getState().setDiceColors('peer-remote', remoteColors)
+    expect(setItemSpy).not.toHaveBeenCalled()
+
+    useLobbyStore.getState().setDiceColors('peer-local', localColors)
+    expect(setItemSpy).toHaveBeenCalledTimes(1)
+    expect(setItemSpy).toHaveBeenCalledWith('lobby-dice-colors', JSON.stringify(localColors))
+  })
+
+  it('loads chat history safely when storage is malformed or mixed', () => {
+    const campaignId = 'camp-1'
+    const validMessage: ChatMessage = {
+      id: 'msg-valid-1',
+      senderId: 'peer-1',
+      senderName: 'Valid User',
+      content: 'hello',
+      timestamp: Date.now(),
+      isSystem: false
+    }
+
+    localStorage.setItem(`lobby-chat-${campaignId}`, JSON.stringify([validMessage, 42, null, { bad: true }]))
+    useLobbyStore.getState().loadChatHistory(campaignId)
+    expect(useLobbyStore.getState().chatMessages).toEqual([validMessage])
+
+    localStorage.setItem(`lobby-chat-${campaignId}`, '{not-json')
+    expect(() => useLobbyStore.getState().loadChatHistory(campaignId)).not.toThrow()
   })
 })

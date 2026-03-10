@@ -5,9 +5,14 @@ import { MAX_CHAT_LENGTH } from '../constants'
 import { PLAYER_COLORS } from '../network/types'
 import { rollFormula } from '../services/dice/dice-engine'
 import type { Character } from '../types/character'
+import { useNetworkStore } from './use-network-store'
 
-function getNetworkStore(): typeof import('./use-network-store').useNetworkStore {
-  return (require('./use-network-store') as typeof import('./use-network-store')).useNetworkStore
+function getLocalPeerId(): string | null {
+  try {
+    return useNetworkStore.getState().localPeerId
+  } catch {
+    return null
+  }
 }
 
 // --- Persistence helpers ---
@@ -17,35 +22,61 @@ const CHAT_HISTORY_KEY_PREFIX = 'lobby-chat-'
 const MAX_PERSISTED_MESSAGES = 100
 const MAX_WHISPER_HISTORY = 50
 
+function safeStorageGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeStorageSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // localStorage may be full or unavailable
+  }
+}
+
+function isChatMessage(value: unknown): value is ChatMessage {
+  if (!value || typeof value !== 'object') return false
+  const msg = value as Partial<ChatMessage>
+  return (
+    typeof msg.id === 'string' &&
+    typeof msg.senderId === 'string' &&
+    typeof msg.senderName === 'string' &&
+    typeof msg.content === 'string' &&
+    typeof msg.timestamp === 'number' &&
+    typeof msg.isSystem === 'boolean'
+  )
+}
+
 function loadPersistedDiceColors(): DiceColors | null {
   try {
-    const raw = localStorage.getItem(DICE_COLORS_KEY)
-    if (raw) return JSON.parse(raw) as DiceColors
+    const raw = safeStorageGet(DICE_COLORS_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as DiceColors
   } catch {
-    // Ignore parse errors
+    return null
   }
-  return null
 }
 
 function persistDiceColors(colors: DiceColors): void {
-  try {
-    localStorage.setItem(DICE_COLORS_KEY, JSON.stringify(colors))
-  } catch {
-    // localStorage may be full
-  }
+  safeStorageSet(DICE_COLORS_KEY, JSON.stringify(colors))
 }
 
 function loadPersistedChatHistory(campaignId: string): ChatMessage[] {
   try {
-    const raw = localStorage.getItem(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`)
-    if (raw) {
-      const messages = JSON.parse(raw) as ChatMessage[]
-      return Array.isArray(messages) ? messages.slice(-MAX_PERSISTED_MESSAGES) : []
-    }
+    const raw = safeStorageGet(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`)
+    if (!raw || raw.trim() === '') return []
+
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+
+    return parsed.filter(isChatMessage).slice(-MAX_PERSISTED_MESSAGES)
   } catch {
-    // Ignore parse errors
+    return []
   }
-  return []
 }
 
 function persistChatHistory(campaignId: string, messages: ChatMessage[]): void {
@@ -53,9 +84,9 @@ function persistChatHistory(campaignId: string, messages: ChatMessage[]): void {
     const toSave = messages
       .filter((m) => !m.isFile) // Don't persist file messages (large base64 data)
       .slice(-MAX_PERSISTED_MESSAGES)
-    localStorage.setItem(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`, JSON.stringify(toSave))
+    safeStorageSet(`${CHAT_HISTORY_KEY_PREFIX}${campaignId}`, JSON.stringify(toSave))
   } catch {
-    // localStorage may be full
+    // Keep runtime resilient if input data is malformed
   }
 }
 
@@ -221,7 +252,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     const trimmed = content.trim().slice(0, MAX_CHAT_LENGTH)
     if (!trimmed) return
 
-    const { role, sendMessage } = getNetworkStore().getState()
+    const { role, sendMessage } = useNetworkStore.getState()
     const isNetworked = role === 'host' || role === 'client'
 
     // Handle /roll command
@@ -300,7 +331,7 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
 
       if (isNetworked) {
         // Find the target peer by display name (case-insensitive)
-        const peers = getNetworkStore().getState().peers
+        const peers = useNetworkStore.getState().peers
         const target = peers.find((p) => p.displayName.toLowerCase() === targetName.toLowerCase())
         if (target) {
           sendMessage('chat:whisper', {
@@ -374,8 +405,10 @@ export const useLobbyStore = create<LobbyState>((set, get) => ({
     set((state) => ({
       players: state.players.map((p) => (p.peerId === peerId ? { ...p, diceColors: colors } : p))
     }))
-    // Persist dice colors for local player
-    persistDiceColors(colors)
+    const localPeerId = getLocalPeerId()
+    if (localPeerId && peerId === localPeerId) {
+      persistDiceColors(colors)
+    }
   },
 
   getLocalDiceColors: (localPeerId?: string | null) => {
