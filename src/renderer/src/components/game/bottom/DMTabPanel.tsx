@@ -2,6 +2,7 @@ import dmTabsJson from '@data/ui/dm-tabs.json'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { load5eDmTabs } from '../../../services/data-provider'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
+import { useNarrationTtsStore } from '../../../stores/use-narration-tts-store'
 import type { Campaign } from '../../../types/campaign'
 
 const DMAudioPanel = lazy(() => import('./DMAudioPanel'))
@@ -46,6 +47,8 @@ export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap
   const cancelStream = useAiDmStore((s) => s.cancelStream)
   const dmApprovalRequired = useAiDmStore((s) => s.dmApprovalRequired)
   const setDmApprovalRequired = useAiDmStore((s) => s.setDmApprovalRequired)
+  const narrationTtsEnabled = useNarrationTtsStore((s) => s.enabled)
+  const setNarrationTtsEnabled = useNarrationTtsStore((s) => s.setEnabled)
 
   // Token budget state (for AI DM tab)
   const [tokenBudget, setTokenBudget] = useState<{
@@ -199,6 +202,13 @@ export default function DMTabPanel({ onOpenModal, campaign, onDispute, onEditMap
                   title="Require DM approval before AI DM actions take effect"
                 >
                   DM Approval {dmApprovalRequired ? 'ON' : 'OFF'}
+                </button>
+                <button
+                  className={narrationTtsEnabled ? toggleOnClass : toggleOffClass}
+                  onClick={() => setNarrationTtsEnabled(!narrationTtsEnabled)}
+                  title="Send clean AI narration to BMO over the Discord DM bridge"
+                >
+                  Speak Narration {narrationTtsEnabled ? 'ON' : 'OFF'}
                 </button>
                 <button
                   className={btnClass}

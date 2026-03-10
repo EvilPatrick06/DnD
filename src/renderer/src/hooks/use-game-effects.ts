@@ -1,13 +1,16 @@
-import { type MutableRefObject, useEffect } from 'react'
+import { type MutableRefObject, useCallback, useEffect } from 'react'
 import type { MessageType, TypingPayload } from '../network'
 import { startGameSync, stopGameSync } from '../network'
+import { pushDmAlert } from '../components/game/overlays/DmAlertTray'
 import { startAiMemorySync, stopAiMemorySync } from '../services/io/ai-memory-sync'
+import { speakNarrationThroughBmo } from '../services/bmo-narration'
 import { loadPersistedGameState, startAutoSave, stopAutoSave } from '../services/io/game-auto-save'
 import { init as initSounds } from '../services/sound-manager'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
 import { useGameStore } from '../stores/use-game-store'
 import type { ChatMessage } from '../stores/use-lobby-store'
 import { useLobbyStore } from '../stores/use-lobby-store'
+import { useNarrationTtsStore } from '../stores/use-narration-tts-store'
 import type { Campaign } from '../types/campaign'
 import type { GameMap, MapToken } from '../types/map'
 
@@ -31,6 +34,20 @@ export function useGameEffects({
   setIsFullscreen
 }: UseGameEffectsOptions): void {
   const aiDmStore = useAiDmStore()
+  const narrationTtsEnabled = useNarrationTtsStore((s) => s.enabled)
+
+  const narrateThroughBmo = useCallback(
+    (text: string): void => {
+      if (!narrationTtsEnabled || !text.trim()) return
+
+      void speakNarrationThroughBmo(text).then((result) => {
+        if (!result.success) {
+          pushDmAlert('error', `BMO narration failed: ${result.error ?? 'Unknown error'}`)
+        }
+      })
+    },
+    [narrationTtsEnabled]
+  )
 
   // Add "Game session started" message on mount (once)
   useEffect(() => {
@@ -123,6 +140,7 @@ export function useGameEffects({
         senderId: 'ai-dm',
         senderName: 'AI Dungeon Master'
       })
+      narrateThroughBmo(lastAssistant.content)
     }
 
     // Get character IDs — prefer lobby players, fall back to campaign players (solo mode)
@@ -272,6 +290,8 @@ export function useGameEffects({
       senderName: 'AI Dungeon Master'
     })
 
+    narrateThroughBmo(lastMsg.content)
+
     // Apply stat changes if any
     if (lastMsg.statChanges && lastMsg.statChanges.length > 0) {
       const creatureChanges = lastMsg.statChanges.filter((c: { type: string }) => c.type.startsWith('creature_'))
@@ -350,6 +370,7 @@ export function useGameEffects({
     campaign.aiDm?.enabled,
     campaign.id,
     isDM, // Broadcast to clients
+    narrateThroughBmo,
     sendMessage
   ])
 

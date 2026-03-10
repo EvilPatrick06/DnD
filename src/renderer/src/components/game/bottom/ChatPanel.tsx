@@ -1,6 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { addToast } from '../../../hooks/use-toast'
 import { type CommandContext, executeCommand } from '../../../services/chat-commands'
+import { speakNarrationThroughBmo } from '../../../services/bmo-narration'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
 import type { ChatMessage } from '../../../stores/use-lobby-store'
 import { useLobbyStore } from '../../../stores/use-lobby-store'
@@ -17,11 +19,15 @@ import CommandAutocomplete from './CommandAutocomplete'
 const BottomChatMessage = memo(function BottomChatMessage({
   msg,
   isDM,
-  onDispute
+  onDispute,
+  aiNarrationText,
+  onSpeakNarration
 }: {
   msg: ChatMessage
   isDM: boolean
   onDispute?: (ruling: string) => void
+  aiNarrationText?: string
+  onSpeakNarration?: (text: string) => void
 }): JSX.Element {
   if (msg.isDiceRoll && msg.diceResult) {
     return (
@@ -38,15 +44,26 @@ const BottomChatMessage = memo(function BottomChatMessage({
       <div className="py-1 pl-2 border-l-2 border-amber-500/50 group">
         <div className="flex items-start justify-between">
           <span className="text-[10px] font-semibold text-amber-400 block mb-0.5">Dungeon Master</span>
-          {isDM && onDispute && (
-            <button
-              onClick={() => onDispute(msg.content)}
-              className="text-[9px] text-gray-600 hover:text-amber-400 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Dispute this ruling"
-            >
-              Dispute
-            </button>
-          )}
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isDM && aiNarrationText && onSpeakNarration && (
+              <button
+                onClick={() => onSpeakNarration(aiNarrationText)}
+                className="text-[9px] text-gray-600 hover:text-amber-400 cursor-pointer"
+                title="Speak this narration through BMO"
+              >
+                Speak
+              </button>
+            )}
+            {isDM && onDispute && (
+              <button
+                onClick={() => onDispute(msg.content)}
+                className="text-[9px] text-gray-600 hover:text-amber-400 cursor-pointer"
+                title="Dispute this ruling"
+              >
+                Dispute
+              </button>
+            )}
+          </div>
         </div>
         <span className="text-sm text-gray-100 font-sans">{msg.content}</span>
       </div>
@@ -98,6 +115,16 @@ export default function ChatPanel({
   const aiEnabled = useAiDmStore((s) => s.enabled)
   const aiLastError = useAiDmStore((s) => s.lastError)
   const aiMessages = useAiDmStore((s) => s.messages)
+
+  const aiNarrationByTimestamp = useMemo(() => {
+    const narrationMap = new Map<number, string>()
+    for (const message of aiMessages) {
+      if (message.role === 'assistant' && message.content.trim()) {
+        narrationMap.set(message.timestamp, message.content)
+      }
+    }
+    return narrationMap
+  }, [aiMessages])
 
   const virtualizer = useVirtualizer({
     count: chatMessages.length,
@@ -199,6 +226,13 @@ export default function ChatPanel({
     inputRef.current?.focus()
   }
 
+  const handleSpeakNarration = async (text: string): Promise<void> => {
+    const result = await speakNarrationThroughBmo(text)
+    if (!result.success) {
+      addToast(result.error ?? 'Failed to send narration to BMO', 'error')
+    }
+  }
+
   if (collapsed) {
     return (
       <div className="flex items-center gap-1 w-full">
@@ -250,7 +284,13 @@ export default function ChatPanel({
                     transform: `translateY(${virtualItem.start}px)`
                   }}
                 >
-                  <BottomChatMessage msg={msg} isDM={isDM} onDispute={onDispute} />
+                  <BottomChatMessage
+                    msg={msg}
+                    isDM={isDM}
+                    onDispute={onDispute}
+                    aiNarrationText={msg.senderId === 'ai-dm' ? aiNarrationByTimestamp.get(msg.timestamp) : undefined}
+                    onSpeakNarration={handleSpeakNarration}
+                  />
                 </div>
               )
             })}
