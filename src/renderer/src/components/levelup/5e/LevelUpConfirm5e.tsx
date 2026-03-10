@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { addToast } from '../../../hooks/use-toast'
 import { load5eInvocations, load5eMetamagic } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { ClassData, InvocationData, MetamagicData } from '../../../types/data'
+import { logger } from '../../../utils/logger'
 
 export function meetsPrerequisites(
   character: Character5e,
@@ -140,7 +142,11 @@ export function InvocationSection5e({
   useEffect(() => {
     load5eInvocations()
       .then(setAllInvocations)
-      .catch(() => setAllInvocations([]))
+      .catch((err) => {
+        logger.error('Failed to load invocations', err)
+        addToast('Failed to load invocations', 'error')
+        setAllInvocations([])
+      })
   }, [])
 
   const warlockLevel = getWarlockClassLevel(character, targetLevel, classLevelChoices)
@@ -326,7 +332,11 @@ export function MetamagicSection5e({
   useEffect(() => {
     load5eMetamagic()
       .then(setAllMetamagic)
-      .catch(() => setAllMetamagic([]))
+      .catch((err) => {
+        logger.error('Failed to load metamagic', err)
+        addToast('Failed to load metamagic', 'error')
+        setAllMetamagic([])
+      })
   }, [])
 
   const sorcererLevel = getSorcererClassLevel(character, targetLevel, classLevelChoices)

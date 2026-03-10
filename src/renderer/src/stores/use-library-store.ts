@@ -7,7 +7,9 @@ function loadRecentlyViewed(): LibraryItem[] {
   try {
     const raw = localStorage.getItem('library-recent')
     if (raw) return JSON.parse(raw) as LibraryItem[]
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return []
 }
 
@@ -16,7 +18,9 @@ function loadFavorites(): Set<string> {
   try {
     const raw = localStorage.getItem('library-favorites')
     if (raw) return new Set(JSON.parse(raw) as string[])
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return new Set()
 }
 
@@ -61,13 +65,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   loadHomebrew: async () => {
     if (get().homebrewLoaded) return
-    try {
-      const raw = await window.api.loadAllHomebrew()
-      if (Array.isArray(raw)) {
-        set({ homebrewEntries: raw as unknown as HomebrewEntry[], homebrewLoaded: true })
-      }
-    } catch (err) {
-      logger.error('Failed to load homebrew entries:', err)
+    const raw = await window.api.loadAllHomebrew()
+    if (Array.isArray(raw)) {
+      set({ homebrewEntries: raw as unknown as HomebrewEntry[], homebrewLoaded: true })
     }
   },
 
@@ -114,7 +114,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ recentlyViewed: next })
     try {
       localStorage.setItem('library-recent', JSON.stringify(next))
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   },
 
   toggleFavorite: (itemId) => {
@@ -128,7 +130,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     set({ favorites: next })
     try {
       localStorage.setItem('library-favorites', JSON.stringify([...next]))
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   },
 
   isFavorite: (itemId) => get().favorites.has(itemId)

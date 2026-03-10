@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { addToast } from '../../../../hooks/use-toast'
 import { load5eCrafting, loadJson } from '../../../../services/data-provider'
 import type { CraftingToolEntry } from '../../../../types/data'
+import { logger } from '../../../../utils/logger'
 
 interface CraftingRecipe {
   id: string
@@ -47,8 +49,20 @@ export default function CraftingBrowser({ characterTools, onStartCrafting }: Cra
   const [category, setCategory] = useState<CraftingCategory>('all')
 
   useEffect(() => {
-    load5eCrafting().then(setCraftingData)
-    Promise.all(RECIPE_FILES.map((f) => loadJson<RecipeFile>(f))).then(setRecipes)
+    load5eCrafting()
+      .then(setCraftingData)
+      .catch((err) => {
+        logger.error('Failed to load crafting data', err)
+        addToast('Failed to load crafting data', 'error')
+        setCraftingData([])
+      })
+    Promise.all(RECIPE_FILES.map((f) => loadJson<RecipeFile>(f)))
+      .then(setRecipes)
+      .catch((err) => {
+        logger.error('Failed to load crafting recipes', err)
+        addToast('Failed to load crafting recipes', 'error')
+        setRecipes([])
+      })
   }, [])
 
   const hasTool = (toolName: string): boolean => characterTools.some((t) => t.toLowerCase() === toolName.toLowerCase())

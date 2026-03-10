@@ -1,7 +1,9 @@
 // DMG 2024 inspired weather generation — random weather by climate and season
 // with mechanical effects per DMG environmental hazards.
 
+import { addToast } from '../hooks/use-toast'
 import { load5eWeatherGeneration } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export type Climate = 'arctic' | 'temperate' | 'tropical' | 'desert' | 'coastal'
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
@@ -92,7 +94,10 @@ load5eWeatherGeneration()
     if (data.climates) CLIMATES = data.climates as typeof CLIMATES
     if (data.seasons) SEASONS = data.seasons as typeof SEASONS
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load weather data', err)
+    addToast('Failed to load weather data', 'error')
+  })
 
 // ---- Weighted Random Selection ---------------------------------------------
 

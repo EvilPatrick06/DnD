@@ -1,4 +1,6 @@
+import { addToast } from '../hooks/use-toast'
 import { type ConditionEntry, load5eConditions } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export interface ConditionDef {
   name: string
@@ -56,7 +58,10 @@ ensureLoaded()
     BUFFS_5E.length = 0
     BUFFS_5E.push(..._buffs!)
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load conditions data', err)
+    addToast('Failed to load conditions data', 'error')
+  })
 
 export function getConditionsForSystem(): ConditionDef[] {
   return CONDITIONS_5E

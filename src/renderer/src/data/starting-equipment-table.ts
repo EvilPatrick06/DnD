@@ -1,5 +1,7 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eStartingEquipment } from '../services/data-provider'
 import type { MagicItemRarity5e } from '../types/character-common'
+import { logger } from '../utils/logger'
 
 export interface HigherLevelEquipment {
   baseGold: number
@@ -35,7 +37,10 @@ load5eStartingEquipment()
       })
     }
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load starting equipment', err)
+    addToast('Failed to load starting equipment', 'error')
+  })
 
 /**
  * Get the higher-level starting equipment for a given character level.

@@ -1,4 +1,6 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eLanguages } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export const LANGUAGE_DESCRIPTIONS: Record<string, string> = {}
 
@@ -9,4 +11,7 @@ load5eLanguages()
       LANGUAGE_DESCRIPTIONS[lang.name] = `${scriptPart}${lang.description}`
     }
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load language descriptions', err)
+    addToast('Failed to load language descriptions', 'error')
+  })

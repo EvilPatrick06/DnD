@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { addToast } from '../../../../hooks/use-toast'
 import { LIFESTYLE_COSTS, type LifestyleLevel } from '../../../../services/character/stat-calculator-5e'
 import { type LanguageEntry, load5eLanguages } from '../../../../services/data-provider'
 import { rollSingle } from '../../../../services/dice/dice-service'
@@ -20,6 +21,7 @@ import {
 } from '../../../../services/downtime-service'
 import type { Campaign, DowntimeProgressEntry } from '../../../../types/campaign'
 import type { Character5e } from '../../../../types/character-5e'
+import { logger } from '../../../../utils/logger'
 import CraftingBrowser from './CraftingBrowser'
 
 type _ComplicationEntry = ComplicationEntry
@@ -96,9 +98,27 @@ export default function DowntimeModal({
   const [languages, setLanguages] = useState<LanguageEntry[]>([])
 
   useEffect(() => {
-    loadDowntimeActivities().then(setActivities)
-    loadExtendedDowntimeActivities().then(setExtendedActivities)
-    load5eLanguages().then(setLanguages)
+    loadDowntimeActivities()
+      .then(setActivities)
+      .catch((err) => {
+        logger.error('Failed to load downtime activities', err)
+        addToast('Failed to load downtime activities', 'error')
+        setActivities([])
+      })
+    loadExtendedDowntimeActivities()
+      .then(setExtendedActivities)
+      .catch((err) => {
+        logger.error('Failed to load extended downtime activities', err)
+        addToast('Failed to load extended downtime activities', 'error')
+        setExtendedActivities([])
+      })
+    load5eLanguages()
+      .then(setLanguages)
+      .catch((err) => {
+        logger.error('Failed to load languages', err)
+        addToast('Failed to load languages', 'error')
+        setLanguages([])
+      })
   }, [])
 
   const activeEntries = characterId ? getActiveDowntimeForCharacter(campaign, characterId) : []

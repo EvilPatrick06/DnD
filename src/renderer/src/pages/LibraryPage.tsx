@@ -18,9 +18,9 @@ import {
   filterItems,
   getFilterConfigs,
   getSortOptions,
-  sortItems,
   type SortDirection,
-  type SortField
+  type SortField,
+  sortItems
 } from '../services/library-sort-filter'
 import { useLibraryStore } from '../stores/use-library-store'
 import type { HomebrewEntry, LibraryCategory, LibraryItem } from '../types/library'
@@ -94,7 +94,13 @@ export default function LibraryPage(): JSX.Element {
 
   // Load homebrew on mount
   useEffect(() => {
-    loadHomebrew().then(() => setInitialLoading(false))
+    loadHomebrew()
+      .then(() => setInitialLoading(false))
+      .catch((err) => {
+        logger.error('Failed to load homebrew', err)
+        addToast('Failed to load library homebrew', 'error')
+        setInitialLoading(false)
+      })
   }, [loadHomebrew])
 
   // Compute homebrew counts per category
@@ -135,6 +141,13 @@ export default function LibraryPage(): JSX.Element {
       .then((result) => {
         if (!cancelled) setOfficialItems(result)
       })
+      .catch((err) => {
+        if (!cancelled) {
+          logger.error('Failed to load category items', selectedCategory, err)
+          addToast(`Failed to load ${selectedCategory}`, 'error')
+          setOfficialItems([])
+        }
+      })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
@@ -154,6 +167,13 @@ export default function LibraryPage(): JSX.Element {
     searchAllCategories(debouncedSearch, homebrewEntries)
       .then((results) => {
         if (!cancelled) setGlobalSearchResults(results)
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          logger.error('Failed to search library', err)
+          addToast('Search failed', 'error')
+          setGlobalSearchResults([])
+        }
       })
       .finally(() => {
         if (!cancelled) setGlobalSearching(false)
@@ -212,27 +232,65 @@ export default function LibraryPage(): JSX.Element {
     }
     let cancelled = false
     const allCats: LibraryCategory[] = [
-      'monsters', 'creatures', 'npcs', 'companions', 'spells', 'invocations', 'metamagic',
-      'classes', 'subclasses', 'species', 'backgrounds', 'feats', 'class-features',
-      'magic-items', 'equipment', 'weapons', 'armor', 'conditions', 'rules',
-      'encounter-presets', 'treasure-tables', 'random-tables', 'traps', 'hazards',
-      'poisons', 'diseases', 'supernatural-gifts', 'maps', 'portraits', 'sounds',
-      'deities', 'planes', 'adventure-seeds', 'calendars', 'npc-names',
-      'light-sources', 'sentient-items'
+      'monsters',
+      'creatures',
+      'npcs',
+      'companions',
+      'spells',
+      'invocations',
+      'metamagic',
+      'classes',
+      'subclasses',
+      'species',
+      'backgrounds',
+      'feats',
+      'class-features',
+      'magic-items',
+      'equipment',
+      'weapons',
+      'armor',
+      'conditions',
+      'rules',
+      'encounter-presets',
+      'treasure-tables',
+      'random-tables',
+      'traps',
+      'hazards',
+      'poisons',
+      'diseases',
+      'supernatural-gifts',
+      'maps',
+      'portraits',
+      'sounds',
+      'deities',
+      'planes',
+      'adventure-seeds',
+      'calendars',
+      'npc-names',
+      'light-sources',
+      'sentient-items'
     ] as LibraryCategory[]
 
-    Promise.all(
-      allCats.map((cat) => loadCategoryItems(cat, []).catch(() => [] as LibraryItem[]))
-    ).then((results) => {
-      if (cancelled) return
-      const allItems = results.flat()
-      const matched = allItems.filter((item) => favorites.has(item.id))
-      const recentMatched = recentlyViewed.filter(
-        (item) => favorites.has(item.id) && !matched.some((m) => m.id === item.id)
-      )
-      setFavoriteItems([...matched, ...recentMatched])
-    })
-    return () => { cancelled = true }
+    Promise.all(allCats.map((cat) => loadCategoryItems(cat, []).catch(() => [] as LibraryItem[])))
+      .then((results) => {
+        if (cancelled) return
+        const allItems = results.flat()
+        const matched = allItems.filter((item) => favorites.has(item.id))
+        const recentMatched = recentlyViewed.filter(
+          (item) => favorites.has(item.id) && !matched.some((m) => m.id === item.id)
+        )
+        setFavoriteItems([...matched, ...recentMatched])
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          logger.error('Failed to load favorites', err)
+          addToast('Failed to load favorites', 'error')
+          setFavoriteItems([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [showFavorites, favorites, homebrewEntries, recentlyViewed])
 
   // Sort/filter config for current category
@@ -272,12 +330,9 @@ export default function LibraryPage(): JSX.Element {
     setSearch('')
   }, [setCategory, setSearch])
 
-  const handleOpenBook = useCallback(
-    (book: { id: string; title: string; path: string }) => {
-      setPdfViewer({ bookId: book.id, filePath: book.path, title: book.title })
-    },
-    []
-  )
+  const handleOpenBook = useCallback((book: { id: string; title: string; path: string }) => {
+    setPdfViewer({ bookId: book.id, filePath: book.path, title: book.title })
+  }, [])
 
   const handleSelectItem = useCallback(
     (item: LibraryItem) => {

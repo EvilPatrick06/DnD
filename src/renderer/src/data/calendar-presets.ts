@@ -1,5 +1,7 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eCalendarPresets } from '../services/data-provider'
 import type { CalendarConfig, CalendarMonth, CalendarPresetId } from '../types/campaign'
+import { logger } from '../utils/logger'
 
 interface CalendarPresetData {
   months: CalendarMonth[]
@@ -36,7 +38,10 @@ load5eCalendarPresets()
       Object.assign(PRESET_LABELS, data.labels)
     }
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load calendar presets', err)
+    addToast('Failed to load calendar presets', 'error')
+  })
 
 export function buildCalendarConfig(
   preset: CalendarPresetId,

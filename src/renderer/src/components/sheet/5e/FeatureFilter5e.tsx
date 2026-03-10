@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { addToast } from '../../../hooks/use-toast'
 import { load5eFeats } from '../../../services/data-provider'
 import type { Character5e } from '../../../types/character-5e'
 import type { FeatData } from '../../../types/data'
@@ -21,7 +22,11 @@ export function FeatPicker({ character, takenFeatIds, onSelect, onClose }: FeatP
     if (allFeats.length === 0) {
       load5eFeats()
         .then(setAllFeats)
-        .catch(() => setAllFeats([]))
+        .catch((err) => {
+          logger.error('Failed to load feats', err)
+          addToast('Failed to load feats', 'error')
+          setAllFeats([])
+        })
     }
   }, [allFeats.length])
 
@@ -97,7 +102,11 @@ export function BonusFeatPicker({ character, bonusFeats, onSelect, onClose }: Bo
     if (allFeats.length === 0) {
       load5eFeats()
         .then(setAllFeats)
-        .catch(() => setAllFeats([]))
+        .catch((err) => {
+          logger.error('Failed to load feats', err)
+          addToast('Failed to load feats', 'error')
+          setAllFeats([])
+        })
     }
   }, [allFeats.length])
 

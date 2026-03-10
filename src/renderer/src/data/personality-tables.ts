@@ -1,5 +1,7 @@
+import { addToast } from '../hooks/use-toast'
 import { load5ePersonalityTables } from '../services/data-provider'
 import type { AbilityScoreSet } from '../types/character-common'
+import { logger } from '../utils/logger'
 
 export const ABILITY_PERSONALITY: Record<string, { high: string[]; low: string[] }> = {}
 export const ALIGNMENT_PERSONALITY: Record<string, string[]> = {}
@@ -9,7 +11,10 @@ load5ePersonalityTables()
     Object.assign(ABILITY_PERSONALITY, data.ability)
     Object.assign(ALIGNMENT_PERSONALITY, data.alignment)
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load personality tables', err)
+    addToast('Failed to load personality tables', 'error')
+  })
 
 function rollD4<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * 4)]

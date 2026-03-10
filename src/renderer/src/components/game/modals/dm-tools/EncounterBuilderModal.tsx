@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { addToast } from '../../../../hooks/use-toast'
 import { load5eEncounterBudgets, load5eMonsters } from '../../../../services/data-provider'
 import { logger } from '../../../../utils/logger'
 
@@ -105,14 +106,21 @@ export default function EncounterBuilderModal({ onClose, onBroadcastResult }: En
   useEffect(() => {
     load5eMonsters()
       .then((data) => setAllMonsters(data as unknown as MonsterData[]))
-      .catch(() => setAllMonsters([]))
+      .catch((err) => {
+        logger.error('Failed to load monsters', err)
+        addToast('Failed to load monsters', 'error')
+        setAllMonsters([])
+      })
 
     load5eEncounterBudgets()
       .then((data) => {
         const entries = data as unknown as BudgetEntry[]
         if (Array.isArray(entries) && entries.length > 0) setBudgetData(entries)
       })
-      .catch((e) => logger.warn('[EncounterBuilder] Failed to load budget data', e))
+      .catch((err) => {
+        logger.error('[EncounterBuilder] Failed to load budget data', err)
+        addToast('Failed to load encounter budget data', 'error')
+      })
   }, [])
 
   useEffect(() => {

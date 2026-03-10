@@ -1,4 +1,6 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eNpcAppearance } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export const NPC_HEIGHTS: readonly string[] = []
 export const NPC_BUILDS: readonly string[] = []
@@ -16,4 +18,7 @@ load5eNpcAppearance()
     ;(NPC_DISTINGUISHING_FEATURES as string[]).push(...(data.distinguishingFeatures ?? []))
     ;(NPC_CLOTHING_STYLES as string[]).push(...(data.clothingStyles ?? []))
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load NPC appearance data', err)
+    addToast('Failed to load NPC appearance data', 'error')
+  })

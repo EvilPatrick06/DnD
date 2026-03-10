@@ -1,4 +1,6 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eWearableItems } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 export const WEARABLE_ITEM_NAMES = new Set<string>()
 
@@ -8,7 +10,10 @@ load5eWearableItems()
       WEARABLE_ITEM_NAMES.add(item)
     }
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load wearable items', err)
+    addToast('Failed to load wearable items', 'error')
+  })
 
 export function isWearableItem(name: string): boolean {
   const lower = name.toLowerCase()

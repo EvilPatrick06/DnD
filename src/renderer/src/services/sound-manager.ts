@@ -8,6 +8,7 @@
  */
 
 import soundEventsJson from '@data/audio/sound-events.json'
+import { addToast } from '../hooks/use-toast'
 import { logger } from '../utils/logger'
 import { load5eAmbientTracks, load5eSoundEvents } from './data-provider'
 import {
@@ -297,8 +298,14 @@ export function reinit(): void {
   init()
 
   // Warm the data-store cache for sound data so homebrew/plugin sounds are available
-  load5eSoundEvents().catch(() => {})
-  load5eAmbientTracks().catch(() => {})
+  load5eSoundEvents().catch((err) => {
+    logger.error('Failed to load sound events', err)
+    addToast('Failed to load sound events', 'error')
+  })
+  load5eAmbientTracks().catch((err) => {
+    logger.error('Failed to load ambient tracks', err)
+    addToast('Failed to load ambient tracks', 'error')
+  })
 }
 
 /**

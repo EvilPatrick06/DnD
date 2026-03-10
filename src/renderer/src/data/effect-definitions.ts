@@ -1,5 +1,7 @@
+import { addToast } from '../hooks/use-toast'
 import { load5eEffectDefinitions } from '../services/data-provider'
 import type { EffectSource } from '../types/effects'
+import { logger } from '../utils/logger'
 
 // Module-level caches
 let magicItemEffects: Record<string, EffectSource> = {}
@@ -20,7 +22,10 @@ load5eEffectDefinitions()
     fightingStyleEffects = d.fightingStyles ?? {}
     consumableEffects = d.consumables ?? {}
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load effect definitions', err)
+    addToast('Failed to load effect definitions', 'error')
+  })
 
 // ─── Lookup Functions ────────────────────────────────────────
 

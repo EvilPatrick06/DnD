@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { addToast } from '../../../../hooks/use-toast'
 import { load5eMonsters, searchMonsters } from '../../../../services/data-provider'
 import type { Companion5e } from '../../../../types/companion'
 import type { MonsterStatBlock } from '../../../../types/monster'
 import { crToNumber } from '../../../../types/monster'
+import { logger } from '../../../../utils/logger'
 import { MonsterStatBlockView } from '../../dm'
 
 type CreatureTab = 'browse' | 'summon'
@@ -66,7 +68,13 @@ export default function CreatureModal({
   const [concentration, setConcentration] = useState(true)
 
   useEffect(() => {
-    load5eMonsters().then(setMonsters)
+    load5eMonsters()
+      .then(setMonsters)
+      .catch((err) => {
+        logger.error('Failed to load monsters', err)
+        addToast('Failed to load creatures', 'error')
+        setMonsters([])
+      })
   }, [])
 
   const filtered = (() => {

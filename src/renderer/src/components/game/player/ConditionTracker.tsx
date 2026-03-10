@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { type ConditionDef, getBuffs5e } from '../../../data/conditions'
+import { addToast } from '../../../hooks/use-toast'
 import type { EntityCondition } from '../../../types/game-state'
+import { logger } from '../../../utils/logger'
 
 interface ConditionTrackerProps {
   conditions: EntityCondition[]
@@ -36,7 +38,11 @@ export default function ConditionTracker({
   useEffect(() => {
     getBuffs5e()
       .then(setBuffs)
-      .catch(() => {})
+      .catch((err) => {
+        logger.error('Failed to load condition buffs', err)
+        addToast('Failed to load condition data', 'error')
+        setBuffs([])
+      })
   }, [])
   const buffNames = new Set(buffs.map((b) => b.name.toLowerCase()))
 

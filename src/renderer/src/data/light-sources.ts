@@ -1,4 +1,6 @@
+import { addToast } from '../hooks/use-toast'
 import { type LightSourceEntry, load5eLightSources } from '../services/data-provider'
+import { logger } from '../utils/logger'
 
 type _LightSourceEntry = LightSourceEntry
 
@@ -22,4 +24,7 @@ load5eLightSources()
       LIGHT_SOURCE_LABELS[key] = entry.label
     }
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load light sources', err)
+    addToast('Failed to load light sources', 'error')
+  })

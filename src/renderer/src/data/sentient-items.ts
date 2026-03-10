@@ -1,7 +1,9 @@
 // DMG 2024 Ch7 — Sentient Magic Items tables and generation logic
 
+import { addToast } from '../hooks/use-toast'
 import { load5eSentientItems } from '../services/data-provider'
 import type { SentientCommunication } from '../types/character-5e'
+import { logger } from '../utils/logger'
 
 // Module-level caches
 let ALIGNMENT_TABLE: { min: number; max: number; alignment: string }[] = []
@@ -26,7 +28,10 @@ load5eSentientItems()
     SPECIAL_PURPOSES = d.specialPurposes ?? []
     CONFLICT_DEMANDS = d.conflictDemands ?? []
   })
-  .catch(() => {})
+  .catch((err) => {
+    logger.error('Failed to load sentient items data', err)
+    addToast('Failed to load sentient items data', 'error')
+  })
 
 // ---- Types ----------------------------------------------------------------
 

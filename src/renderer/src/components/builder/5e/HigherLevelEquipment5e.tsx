@@ -4,10 +4,12 @@ import {
   type HigherLevelEquipment,
   rollStartingGold
 } from '../../../data/starting-equipment-table'
+import { addToast } from '../../../hooks/use-toast'
 import { load5eMagicItems } from '../../../services/data-provider'
 import { useBuilderStore } from '../../../stores/use-builder-store'
 import type { MagicItemRarity5e } from '../../../types/character-common'
 import type { MagicItemData } from '../../../types/data'
+import { logger } from '../../../utils/logger'
 import SectionBanner from '../shared/SectionBanner'
 
 const RARITY_COLORS: Record<string, string> = {
@@ -47,7 +49,11 @@ function MagicItemSlot({
     if (expanded && items.length === 0) {
       load5eMagicItems(rarity)
         .then(setItems)
-        .catch(() => setItems([]))
+        .catch((err) => {
+          logger.error('Failed to load magic items', err)
+          addToast('Failed to load magic items', 'error')
+          setItems([])
+        })
     }
   }, [expanded, rarity, items.length])
 

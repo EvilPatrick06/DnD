@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { addToast } from '../../../hooks/use-toast'
 import { formatPrerequisites, load5eFeats, load5eSpells } from '../../../services/data-provider'
 import { useLevelUpStore } from '../../../stores/use-level-up-store'
 import type { Character5e } from '../../../types/character-5e'
 import type { BuildSlot } from '../../../types/character-common'
 import type { FeatData } from '../../../types/data'
 import { meetsFeatPrerequisites } from '../../../utils/feat-prerequisites'
+import { logger } from '../../../utils/logger'
 
 export function EpicBoonSelector5e({
   slot,
@@ -23,7 +25,11 @@ export function EpicBoonSelector5e({
   useEffect(() => {
     load5eFeats('Epic Boon')
       .then(setFeats)
-      .catch(() => setFeats([]))
+      .catch((err) => {
+        logger.error('Failed to load epic boons', err)
+        addToast('Failed to load epic boons', 'error')
+        setFeats([])
+      })
   }, [])
 
   const isIncomplete = !selection
@@ -104,7 +110,11 @@ function BlessedWarriorCantripPicker(): JSX.Element {
   useEffect(() => {
     load5eSpells()
       .then(setAllSpells)
-      .catch(() => setAllSpells([]))
+      .catch((err) => {
+        logger.error('Failed to load spells', err)
+        addToast('Failed to load spells', 'error')
+        setAllSpells([])
+      })
   }, [])
 
   const clericCantrips = useMemo(
@@ -173,7 +183,11 @@ function DruidicWarriorCantripPicker(): JSX.Element {
   useEffect(() => {
     load5eSpells()
       .then(setAllSpells)
-      .catch(() => setAllSpells([]))
+      .catch((err) => {
+        logger.error('Failed to load spells', err)
+        addToast('Failed to load spells', 'error')
+        setAllSpells([])
+      })
   }, [])
 
   const druidCantrips = useMemo(
@@ -260,7 +274,11 @@ export function FightingStyleSelector5e({
           })
         )
       })
-      .catch(() => setFeats([]))
+      .catch((err) => {
+        logger.error('Failed to load fighting style feats', err)
+        addToast('Failed to load fighting styles', 'error')
+        setFeats([])
+      })
   }, [character.buildChoices.classId])
 
   // Filter out already-taken fighting styles
