@@ -1,6 +1,7 @@
 import { type MutableRefObject, useEffect } from 'react'
 import type { MessageType, TypingPayload } from '../network'
 import { startGameSync, stopGameSync } from '../network'
+import { startAiMemorySync, stopAiMemorySync } from '../services/io/ai-memory-sync'
 import { loadPersistedGameState, startAutoSave, stopAutoSave } from '../services/io/game-auto-save'
 import { init as initSounds } from '../services/sound-manager'
 import { useAiDmStore } from '../stores/use-ai-dm-store'
@@ -59,6 +60,13 @@ export function useGameEffects({
     startAutoSave(campaign.id)
     return () => stopAutoSave()
   }, [isDM, campaign.id])
+
+  // AI DM: sync live game state to AI memory files (world-state.json, combat-state.json)
+  useEffect(() => {
+    if (!isDM || !campaign.aiDm?.enabled) return
+    startAiMemorySync(campaign.id)
+    return () => stopAiMemorySync()
+  }, [isDM, campaign.id, campaign.aiDm?.enabled])
 
   // AI DM initialization (host only)
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -92,6 +92,10 @@ export const IPC_CHANNELS = {
   AI_READ_MEMORY_FILE: 'ai:read-memory-file',
   AI_CLEAR_MEMORY: 'ai:clear-memory',
 
+  // === AI DM: Live State Sync ===
+  AI_SYNC_WORLD_STATE: 'ai:sync-world-state',
+  AI_SYNC_COMBAT_STATE: 'ai:sync-combat-state',
+
   // === AI DM: NPC Relationship Tracking ===
   AI_LOG_NPC_INTERACTION: 'ai:log-npc-interaction',
   AI_SET_NPC_RELATIONSHIP: 'ai:set-npc-relationship',

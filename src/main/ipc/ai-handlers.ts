@@ -302,6 +302,36 @@ export function registerAiHandlers(): void {
     }
   })
 
+  // ── Live State Sync ──
+
+  ipcMain.handle(
+    IPC_CHANNELS.AI_SYNC_WORLD_STATE,
+    async (_event, campaignId: string, state: Record<string, unknown>) => {
+      try {
+        const memMgr = getMemoryManager(campaignId)
+        await memMgr.updateWorldState(state as Parameters<typeof memMgr.updateWorldState>[0])
+        return { success: true }
+      } catch (error) {
+        logToFile('error', `[AI Memory] Failed to sync world state: ${(error as Error).message}`)
+        return { success: false, error: (error as Error).message }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.AI_SYNC_COMBAT_STATE,
+    async (_event, campaignId: string, state: Record<string, unknown>) => {
+      try {
+        const memMgr = getMemoryManager(campaignId)
+        await memMgr.updateCombatState(state as Parameters<typeof memMgr.updateCombatState>[0])
+        return { success: true }
+      } catch (error) {
+        logToFile('error', `[AI Memory] Failed to sync combat state: ${(error as Error).message}`)
+        return { success: false, error: (error as Error).message }
+      }
+    }
+  )
+
   // ── NPC Relationship Tracking ──
 
   ipcMain.handle(

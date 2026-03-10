@@ -100,6 +100,11 @@ const api = {
     getTokenBudget: () => ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET),
     previewTokenBudget: (campaignId: string, characterIds: string[]) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_TOKEN_BUDGET_PREVIEW, campaignId, characterIds),
+    // Live state sync
+    syncWorldState: (campaignId: string, state: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_SYNC_WORLD_STATE, campaignId, state),
+    syncCombatState: (campaignId: string, state: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_SYNC_COMBAT_STATE, campaignId, state),
     // NPC relationship tracking
     logNpcInteraction: (campaignId: string, npcName: string, summary: string, attitudeAfter: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AI_LOG_NPC_INTERACTION, campaignId, npcName, summary, attitudeAfter),
