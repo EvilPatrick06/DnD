@@ -73,6 +73,10 @@ export const IPC_CHANNELS = {
   AI_LOAD_CONVERSATION: 'ai:load-conversation',
   AI_DELETE_CONVERSATION: 'ai:delete-conversation',
 
+  // === AI DM: Cloud Provider Models ===
+  AI_LIST_CLOUD_MODELS: 'ai:list-cloud-models',
+  AI_VALIDATE_API_KEY: 'ai:validate-api-key',
+
   // === AI DM: Ollama Management ===
   AI_DETECT_OLLAMA: 'ai:detect-ollama',
   AI_GET_VRAM: 'ai:get-vram',
@@ -199,7 +203,13 @@ export const IPC_CHANNELS = {
   BOOK_IMPORT: 'book:import',
   BOOK_READ_FILE: 'book:read-file',
   BOOK_LOAD_DATA: 'book:load-data',
-  BOOK_SAVE_DATA: 'book:save-data'
+  BOOK_SAVE_DATA: 'book:save-data',
+
+  // === Discord Integration ===
+  DISCORD_GET_CONFIG: 'discord:get-config',
+  DISCORD_SAVE_CONFIG: 'discord:save-config',
+  DISCORD_TEST_CONNECTION: 'discord:test-connection',
+  DISCORD_SEND_MESSAGE: 'discord:send-message'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

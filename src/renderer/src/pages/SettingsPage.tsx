@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import OllamaManagement, { type AvailableModelList, type InstalledModelList } from '../components/ui/OllamaManagement'
+import DiscordIntegrationSettings from '../components/ui/DiscordIntegrationSettings'
 
 /** Re-exported Ollama model list components for use by consumers importing from SettingsPage. */
 type _AvailableModelList = typeof AvailableModelList
@@ -933,6 +934,11 @@ export default function SettingsPage(): JSX.Element {
         {/* Ollama AI */}
         <Section title="Ollama AI">
           <OllamaManagement />
+        </Section>
+
+        {/* Discord Integration */}
+        <Section title="Discord Integration">
+          <DiscordIntegrationSettings />
         </Section>
 
         {/* Keybindings */}

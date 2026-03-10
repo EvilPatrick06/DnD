@@ -84,6 +84,10 @@ const api = {
     saveConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_SAVE_CONVERSATION, campaignId),
     loadConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LOAD_CONVERSATION, campaignId),
     deleteConversation: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_DELETE_CONVERSATION, campaignId),
+    // Cloud provider models
+    listCloudModels: (providerType: string) => ipcRenderer.invoke(IPC_CHANNELS.AI_LIST_CLOUD_MODELS, providerType),
+    validateApiKey: (providerType: string, apiKey: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_VALIDATE_API_KEY, providerType, apiKey),
     // Ollama management
     detectOllama: () => ipcRenderer.invoke(IPC_CHANNELS.AI_DETECT_OLLAMA),
     getVram: () => ipcRenderer.invoke(IPC_CHANNELS.AI_GET_VRAM),
@@ -405,7 +409,23 @@ const api = {
   bmoStopDm: () => ipcRenderer.invoke(IPC_CHANNELS.BMO_STOP_DM),
   bmoNarrate: (text: string, npc?: string, emotion?: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.BMO_NARRATE, text, npc, emotion),
-  bmoDmStatus: () => ipcRenderer.invoke(IPC_CHANNELS.BMO_STATUS)
+  bmoDmStatus: () => ipcRenderer.invoke(IPC_CHANNELS.BMO_STATUS),
+
+  // Discord Integration
+  discord: {
+    getConfig: () => ipcRenderer.invoke(IPC_CHANNELS.DISCORD_GET_CONFIG),
+    saveConfig: (config: {
+      enabled: boolean
+      botToken: string
+      webhookUrl: string
+      channelId?: string
+      userId?: string
+      dmMode: 'webhook' | 'bot-api'
+    }) => ipcRenderer.invoke(IPC_CHANNELS.DISCORD_SAVE_CONFIG, config),
+    testConnection: () => ipcRenderer.invoke(IPC_CHANNELS.DISCORD_TEST_CONNECTION),
+    sendMessage: (text: string, campaignName?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.DISCORD_SEND_MESSAGE, text, campaignName)
+  }
 }
 
 if (process.contextIsolated) {

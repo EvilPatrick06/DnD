@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { app, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { sendNarrationToDiscord } from '../discord-integration'
 import { logToFile } from '../log'
 import { saveConversation } from '../storage/ai-conversation-storage'
 import { parseRuleCitations, stripRuleCitations } from './ai-response-parser'
@@ -19,16 +20,17 @@ import {
   readRequestedFile,
   stripFileRead
 } from './file-reader'
+import type { AiProviderType } from './llm-provider'
 import { getMemoryManager } from './memory-manager'
-import {
-  getOllamaUrl,
-  isOllamaRunning,
-  listOllamaModels,
-  ollamaChatOnce,
-  ollamaStreamChat,
-  setOllamaUrl
-} from './ollama-client'
+import { isOllamaRunning, listOllamaModels, setOllamaUrl } from './ollama-client'
 import { OLLAMA_BASE_URL } from './ollama-manager'
+import {
+  checkAllProviders,
+  configureProviders,
+  getActiveProvider,
+  getActiveProviderType,
+  getProviderContextBlurb
+} from './provider-registry'
 import { SearchEngine } from './search-engine'
 import {
   applyLongRestMutations,
@@ -71,21 +73,50 @@ type _AiIndexProgress = AiIndexProgress
 // Per-campaign conversation managers
 const conversations = new Map<string, ConversationManager>()
 
-// Active stream abort controllers with creation timestamps for TTL cleanup
+// Active stream abort controllers with activity tracking for TTL cleanup
 const activeStreams = new Map<string, AbortController>()
 const activeStreamTimestamps = new Map<string, number>()
-const STREAM_TTL_MS = 10 * 60 * 1000 // 10 minutes
+const activeStreamLastHeartbeat = new Map<string, number>()
+const STREAM_TTL_MS = 10 * 60 * 1000 // 10 minutes base TTL
+const STREAM_MAX_TTL_MS = 30 * 60 * 1000 // 30 minutes max TTL (hard ceiling)
+const HEARTBEAT_WINDOW_MS = 5 * 60 * 1000 // Extend TTL when activity within last 5 minutes
 
 function removeStream(streamId: string): void {
   activeStreams.delete(streamId)
   activeStreamTimestamps.delete(streamId)
+  activeStreamLastHeartbeat.delete(streamId)
+}
+
+/** Update the heartbeat for an active stream to extend its TTL */
+function updateStreamHeartbeat(streamId: string): void {
+  if (activeStreamLastHeartbeat.has(streamId)) {
+    activeStreamLastHeartbeat.set(streamId, Date.now())
+  }
+}
+
+/** Calculate effective TTL for a stream based on creation time and activity */
+function getEffectiveTTL(streamId: string): number {
+  const createdAt = activeStreamTimestamps.get(streamId) || Date.now()
+  const lastHeartbeat = activeStreamLastHeartbeat.get(streamId) || createdAt
+  const totalAge = Date.now() - createdAt
+
+  // If there's been recent activity, extend TTL
+  const timeSinceLastActivity = Date.now() - lastHeartbeat
+  if (timeSinceLastActivity < HEARTBEAT_WINDOW_MS) {
+    // Extend TTL by HEARTBEAT_WINDOW_MS, but don't exceed max
+    const extendedTTL = Math.min(totalAge + HEARTBEAT_WINDOW_MS + STREAM_TTL_MS, STREAM_MAX_TTL_MS)
+    return extendedTTL
+  }
+
+  return STREAM_TTL_MS
 }
 
 // Periodically clean up stale streams
 setInterval(() => {
   const now = Date.now()
   for (const [streamId, timestamp] of activeStreamTimestamps) {
-    if (now - timestamp > STREAM_TTL_MS) {
+    const effectiveTTL = getEffectiveTTL(streamId)
+    if (now - timestamp > effectiveTTL) {
       const controller = activeStreams.get(streamId)
       if (controller) controller.abort()
       removeStream(streamId)
@@ -158,10 +189,15 @@ async function streamWithRetry(
 
 // Current config
 let currentConfig: {
-  ollamaModel: string
+  provider: AiProviderType
+  model: string
   ollamaUrl: string
+  claudeApiKey?: string
+  openaiApiKey?: string
+  geminiApiKey?: string
 } = {
-  ollamaModel: 'llama3.1',
+  provider: 'ollama',
+  model: 'llama3.1',
   ollamaUrl: OLLAMA_BASE_URL
 }
 
@@ -170,9 +206,11 @@ let streamCounter = 0
 
 /** Build stream handler dependencies for the current config. */
 function getStreamDeps(): StreamHandlerDeps {
+  const provider = getActiveProvider()
   return {
     activeStreams,
-    ollamaModel: currentConfig.ollamaModel,
+    model: currentConfig.model,
+    streamChat: provider.streamChat.bind(provider),
     streamWithRetry
   }
 }
@@ -185,32 +223,50 @@ function getConfigPath(): string {
 
 export function configure(config: AiConfig): void {
   currentConfig = {
-    ollamaModel: config.ollamaModel || 'llama3.1',
-    ollamaUrl: config.ollamaUrl || OLLAMA_BASE_URL
+    provider: config.provider ?? 'ollama',
+    model: config.model || config.ollamaModel || 'llama3.1',
+    ollamaUrl: config.ollamaUrl || OLLAMA_BASE_URL,
+    claudeApiKey: config.claudeApiKey,
+    openaiApiKey: config.openaiApiKey,
+    geminiApiKey: config.geminiApiKey
   }
 
   setOllamaUrl(currentConfig.ollamaUrl)
+  configureProviders({
+    provider: currentConfig.provider,
+    model: currentConfig.model,
+    ollamaUrl: currentConfig.ollamaUrl,
+    claudeApiKey: currentConfig.claudeApiKey,
+    openaiApiKey: currentConfig.openaiApiKey,
+    geminiApiKey: currentConfig.geminiApiKey
+  })
 
-  // Save config
   const configPath = getConfigPath()
   writeFileSync(
     configPath,
     JSON.stringify({
-      ollamaModel: currentConfig.ollamaModel,
-      ollamaUrl: currentConfig.ollamaUrl
+      provider: currentConfig.provider,
+      model: currentConfig.model,
+      ollamaUrl: currentConfig.ollamaUrl,
+      claudeApiKey: currentConfig.claudeApiKey,
+      openaiApiKey: currentConfig.openaiApiKey,
+      geminiApiKey: currentConfig.geminiApiKey
     })
   )
 }
 
 export function getConfig(): AiConfig {
-  // Load from disk if not yet loaded
   const configPath = getConfigPath()
   if (existsSync(configPath)) {
     try {
       const saved = JSON.parse(readFileSync(configPath, 'utf-8'))
       currentConfig = {
-        ollamaModel: saved.ollamaModel || 'llama3.1',
-        ollamaUrl: saved.ollamaUrl || OLLAMA_BASE_URL
+        provider: saved.provider ?? 'ollama',
+        model: saved.model || saved.ollamaModel || 'llama3.1',
+        ollamaUrl: saved.ollamaUrl || OLLAMA_BASE_URL,
+        claudeApiKey: saved.claudeApiKey,
+        openaiApiKey: saved.openaiApiKey,
+        geminiApiKey: saved.geminiApiKey
       }
     } catch {
       // Use defaults
@@ -218,17 +274,21 @@ export function getConfig(): AiConfig {
   }
 
   return {
-    ollamaModel: currentConfig.ollamaModel,
-    ollamaUrl: currentConfig.ollamaUrl
+    provider: currentConfig.provider,
+    model: currentConfig.model,
+    ollamaUrl: currentConfig.ollamaUrl,
+    claudeApiKey: currentConfig.claudeApiKey,
+    openaiApiKey: currentConfig.openaiApiKey,
+    geminiApiKey: currentConfig.geminiApiKey
   }
 }
 
 /** Initialize from saved config and auto-load chunk index. */
 export function initFromSavedConfig(): void {
-  getConfig() // Load config from disk
+  const config = getConfig()
   setOllamaUrl(currentConfig.ollamaUrl)
+  configureProviders(config)
 
-  // Auto-load pre-built chunk index so it's ready when any campaign starts
   loadIndex()
 }
 
@@ -237,8 +297,15 @@ export function initFromSavedConfig(): void {
 export async function checkProviders(): Promise<ProviderStatus> {
   const ollamaOk = await isOllamaRunning()
   const ollamaModels = ollamaOk ? await listOllamaModels() : []
+  const cloudStatus = await checkAllProviders()
 
-  return { ollama: ollamaOk, ollamaModels }
+  return {
+    ollama: ollamaOk,
+    ollamaModels,
+    claude: cloudStatus.claude,
+    openai: cloudStatus.openai,
+    gemini: cloudStatus.gemini
+  }
 }
 
 // ── Index Management ──
@@ -374,7 +441,9 @@ export function startChat(
   const streamId = `stream-${++streamCounter}`
   const abortController = new AbortController()
   activeStreams.set(streamId, abortController)
-  activeStreamTimestamps.set(streamId, Date.now())
+  const now = Date.now()
+  activeStreamTimestamps.set(streamId, now)
+  activeStreamLastHeartbeat.set(streamId, now)
 
   const conv = getConversation(request.campaignId)
   conv.setActiveCharacterIds(request.characterIds)
@@ -386,7 +455,6 @@ export function startChat(
   // Run async
   ;(async () => {
     try {
-      // Build context (includes campaign data + active creatures + game state)
       const context = await buildContext(
         request.message,
         request.characterIds,
@@ -394,7 +462,7 @@ export function startChat(
         request.activeCreatures,
         request.gameState
       )
-      const providerContext = `\n\n[PROVIDER CONTEXT]\nYou are running via Ollama at ${getOllamaUrl()}. You have no internet access unless you use the [WEB_SEARCH] action.\n[/PROVIDER CONTEXT]`
+      const providerContext = `\n\n[PROVIDER CONTEXT]\n${getProviderContextBlurb(getActiveProviderType())}\n[/PROVIDER CONTEXT]`
       const { systemPrompt, messages } = await conv.getMessagesForApi(context + providerContext)
 
       // Stream response
@@ -403,6 +471,8 @@ export function startChat(
       const callbacks = {
         onText: (text: string) => {
           fullText += text
+          // Update heartbeat on each chunk to extend TTL for active streams
+          updateStreamHeartbeat(streamId)
           onChunk(text)
         },
         onDone: (text: string) => {
@@ -420,8 +490,9 @@ export function startChat(
         }
       }
 
+      const provider = getActiveProvider()
       await streamWithRetry(
-        (signal) => ollamaStreamChat(systemPrompt, messages, callbacks, currentConfig.ollamaModel, signal),
+        (signal) => provider.streamChat(systemPrompt, messages, callbacks, currentConfig.model, signal),
         abortController,
         (errMsg) => {
           removeStream(streamId)
@@ -495,7 +566,7 @@ async function handleStreamCompletion(
     }
 
     await deps.streamWithRetry(
-      (signal) => ollamaStreamChat(sp, msgs, nextCallbacks, deps.ollamaModel, signal),
+      (signal) => deps.streamChat(sp, msgs, nextCallbacks, deps.model, signal),
       abortController,
       (errMsg) => {
         clearPendingWebSearchApproval(streamId, false)
@@ -590,6 +661,11 @@ async function handleStreamCompletion(
       // Non-fatal
     }
 
+    // Send to Discord if enabled (fire and forget - don't block on this)
+    sendNarrationToDiscord(displayText, request.campaignId).catch((err) => {
+      logToFile('ERROR', '[AI] Failed to send Discord notification:', String(err))
+    })
+
     onDone(cleaned, displayText, statChanges, dmActions, ruleCitations)
   } catch (err) {
     logToFile('ERROR', '[AI] Error parsing AI response, delivering raw text:', String(err))
@@ -609,8 +685,9 @@ export function cancelChat(streamId: string): void {
 
 /** Non-streaming chat for summarization and world state extraction. */
 async function chatOnce(systemPrompt: string, userMessage: string): Promise<string> {
+  const provider = getActiveProvider()
   const messages = [{ role: 'user' as const, content: userMessage }]
-  return await ollamaChatOnce(systemPrompt, messages, currentConfig.ollamaModel)
+  return await provider.chatOnce(systemPrompt, messages, currentConfig.model)
 }
 
 // ── Scene Preparation ──

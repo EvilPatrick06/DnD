@@ -8,6 +8,7 @@ import { isValidUUID } from '../../shared/utils/uuid'
 import { logToFile } from '../log'
 import { registerAiHandlers } from './ai-handlers'
 import { registerAudioHandlers } from './audio-handlers'
+import { registerDiscordHandlers } from './discord-handlers'
 import { registerGameDataHandlers } from './game-data-handlers'
 import { registerPluginHandlers } from './plugin-handlers'
 import { registerStorageHandlers } from './storage-handlers'
@@ -236,6 +237,9 @@ export function registerIpcHandlers(): void {
 
   // --- Audio handlers ---
   registerAudioHandlers()
+
+  // --- Discord integration handlers ---
+  registerDiscordHandlers()
 
   // --- Game data handlers ---
   registerGameDataHandlers()
