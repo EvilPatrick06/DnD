@@ -1,7 +1,7 @@
 import type { Application, Graphics } from 'pixi.js'
 import { useEffect } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
-import { recomputeVision } from '../../../services/map/vision-computation'
+import { buildMapLightSources, recomputeVision } from '../../../services/map/vision-computation'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap } from '../../../types/map'
@@ -13,6 +13,8 @@ import { drawLightingOverlay, type LightingConfig } from './lighting-overlay'
 import { clearMovementOverlay, drawMovementOverlay, drawTerrainOverlay } from './movement-overlay'
 import { drawWalls } from './wall-layer'
 import { presetToWeatherType, type WeatherOverlayLayer } from './weather-overlay'
+
+import type { AudioEmitterLayer } from './audio-emitter-overlay'
 
 /** Refs passed into the overlay effects hook */
 export interface OverlayRefs {
@@ -28,6 +30,7 @@ export interface OverlayRefs {
   aoeOverlayRef: React.RefObject<Graphics | null>
   moveOverlayRef: React.RefObject<Graphics | null>
   weatherOverlayRef: React.RefObject<WeatherOverlayLayer | null>
+  audioEmitterLayerRef: React.RefObject<AudioEmitterLayer | null>
   bgSpriteRef: React.RefObject<import('pixi.js').Sprite | null>
   zoomRef: React.MutableRefObject<number>
   panRef: React.MutableRefObject<{ x: number; y: number }>
@@ -90,6 +93,7 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
 
   // Draw fog of war
   const partyVisionCells = useGameStore((s) => s.partyVisionCells)
+  const activeLightSources = useGameStore((s) => s.activeLightSources)
 
   useEffect(() => {
     if (!initialized || !refs.fogGraphicsRef.current || !map) return
@@ -227,14 +231,15 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     refs
   ])
 
-  // Initial vision computation when dynamic fog is enabled or map/tokens change
+  // Vision computation when dynamic fog is enabled, or map/tokens/lights change
   useEffect(() => {
     if (!initialized || !map || !isHost) return
     if (!map.fogOfWar.dynamicFogEnabled) return
-    const { visibleCells } = recomputeVision(map)
+    const lightSources = buildMapLightSources(activeLightSources, map.tokens)
+    const { visibleCells } = recomputeVision(map, undefined, lightSources)
     useGameStore.getState().setPartyVisionCells(visibleCells)
     useGameStore.getState().addExploredCells(map.id, visibleCells)
-  }, [initialized, map?.fogOfWar.dynamicFogEnabled, map?.tokens, map?.wallSegments, map?.id, isHost, map])
+  }, [initialized, map?.fogOfWar.dynamicFogEnabled, map?.tokens, map?.wallSegments, map?.id, isHost, map, activeLightSources])
 
   // Weather overlay
   const weatherOverride = useGameStore((s) => s.weatherOverride)
@@ -249,4 +254,32 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     const weatherType = presetToWeatherType(weatherOverride?.preset)
     refs.weatherOverlayRef.current.setWeather(weatherType)
   }, [initialized, weatherOverride?.preset, showWeatherOverlay, refs])
+
+  // Audio emitters
+  useEffect(() => {
+    if (!initialized || !refs.audioEmitterLayerRef.current || !map) return
+    // Set the map reference for occlusion calculations
+    refs.audioEmitterLayerRef.current.setMap(map)
+
+    const emitters = map.audioEmitters ?? []
+    // For now, assume all emitters are playing if they exist
+    // TODO: Add playing state management
+    const emittersWithPlaying = emitters.map(emitter => ({
+      ...emitter,
+      playing: true // Temporary: will be managed by game state
+    }))
+    refs.audioEmitterLayerRef.current.updateEmitters(emittersWithPlaying)
+  }, [initialized, map?.audioEmitters, map, refs])
+
+  // Update listener position when tokens change (player moves)
+  useEffect(() => {
+    if (!initialized || !refs.audioEmitterLayerRef.current || !map) return
+    // Update listener position based on player token position
+    const playerToken = map.tokens.find(token => token.entityType === 'player')
+    if (playerToken) {
+      const listenerX = playerToken.gridX + playerToken.sizeX / 2
+      const listenerY = playerToken.gridY + playerToken.sizeY / 2
+      refs.audioEmitterLayerRef.current.setListenerPosition(listenerX, listenerY)
+    }
+  }, [initialized, map?.tokens, map, refs])
 }

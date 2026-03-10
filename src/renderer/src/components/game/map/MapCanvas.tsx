@@ -303,34 +303,35 @@ export default function MapCanvas({
     lastFogCellRef.current = null
   }, [])
 
-  // All overlay rendering effects (grid, fog, walls, lighting, terrain, AoE, movement, weather)
-  useMapOverlayEffects({
-    initialized,
-    map,
-    isHost,
-    selectedTokenId,
-    isInitiativeMode,
-    turnState,
-    activeAoE,
-    applyTransform,
-    refs: {
-      containerRef,
-      appRef,
-      gridGraphicsRef,
-      gridLabelContainerRef,
-      fogGraphicsRef,
-      wallGraphicsRef,
-      lightingGraphicsRef,
-      terrainOverlayRef,
-      drawingGraphicsRef,
-      aoeOverlayRef,
-      moveOverlayRef,
-      weatherOverlayRef,
-      bgSpriteRef,
-      zoomRef,
-      panRef
-    }
-  })
+    // All overlay rendering effects (grid, fog, walls, lighting, terrain, AoE, movement, weather, audio)
+    useMapOverlayEffects({
+      initialized,
+      map,
+      isHost,
+      selectedTokenId,
+      isInitiativeMode,
+      turnState,
+      activeAoE,
+      applyTransform,
+      refs: {
+        containerRef,
+        appRef,
+        gridGraphicsRef,
+        gridLabelContainerRef,
+        fogGraphicsRef,
+        wallGraphicsRef,
+        lightingGraphicsRef,
+        terrainOverlayRef,
+        drawingGraphicsRef,
+        aoeOverlayRef,
+        moveOverlayRef,
+        weatherOverlayRef,
+        audioEmitterLayerRef,
+        bgSpriteRef,
+        zoomRef,
+        panRef
+      }
+    })
 
   // Render tokens (diff-based)
   const hpBarsVisibility = useGameStore((s) => s.hpBarsVisibility)
