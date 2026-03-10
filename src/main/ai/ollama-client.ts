@@ -1,3 +1,4 @@
+import type { LLMProvider } from './llm-provider'
 import { OLLAMA_BASE_URL } from './ollama-manager'
 import type { ChatMessage, StreamCallbacks } from './types'
 
@@ -82,15 +83,17 @@ export async function ollamaStreamChat(
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let fullText = ''
-    let buffer = ''
+    let lineBuffer = ''
+    let jsonBuffer = ''
+    const MAX_JSON_BUFFER_SIZE = 64 * 1024 // 64KB limit for partial JSON buffering
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
 
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
+      lineBuffer += decoder.decode(value, { stream: true })
+      const lines = lineBuffer.split('\n')
+      lineBuffer = lines.pop() || ''
 
       for (const line of lines) {
         const trimmed = line.trim()
@@ -98,16 +101,68 @@ export async function ollamaStreamChat(
         const payload = trimmed.slice(6)
         if (payload === '[DONE]') continue
 
+        // Try to parse the payload - may be complete or partial JSON
+        let parsed: OllamaChatResponse | undefined
+
+        // First: try direct parse of this chunk
         try {
-          const parsed = JSON.parse(payload) as OllamaChatResponse
+          parsed = JSON.parse(payload) as OllamaChatResponse
+          jsonBuffer = '' // Clear buffer on successful parse
+        } catch {
+          // Direct parse failed - will try combining with buffer below
+        }
+
+        // Second: if direct parse failed, try combining with buffered partial JSON
+        if (!parsed && jsonBuffer) {
+          try {
+            const combined = jsonBuffer + payload
+            parsed = JSON.parse(combined) as OllamaChatResponse
+            jsonBuffer = '' // Clear buffer on successful combined parse
+          } catch {
+            // Combined parse also failed - will buffer below
+          }
+        }
+
+        // Third: buffer this chunk if it looks like partial JSON and we have no successful parse
+        if (!parsed) {
+          // Check if payload looks like the start/middle of a JSON object
+          const looksLikePartialJson =
+            payload.includes('{') ||
+            payload.includes('}') ||
+            payload.includes('"') ||
+            payload.includes(':') ||
+            payload.includes('[')
+
+          if (looksLikePartialJson && jsonBuffer.length + payload.length <= MAX_JSON_BUFFER_SIZE) {
+            jsonBuffer += payload
+            continue // Skip to next line - don't process yet
+          }
+          // Payload doesn't look like JSON or buffer would overflow - truly malformed, skip
+        }
+
+        // Process successfully parsed chunk
+        if (parsed) {
           const content = parsed.choices?.[0]?.delta?.content
           if (content) {
             fullText += content
             callbacks.onText(content)
           }
-        } catch {
-          // skip malformed SSE
         }
+      }
+    }
+
+    // Process any remaining buffered partial JSON at stream end
+    if (jsonBuffer) {
+      try {
+        const parsed = JSON.parse(jsonBuffer) as OllamaChatResponse
+        const content = parsed.choices?.[0]?.delta?.content
+        if (content) {
+          fullText += content
+          callbacks.onText(content)
+        }
+      } catch {
+        // Final buffered content is truly malformed - log but don't throw
+        // This prevents data loss from edge cases while maintaining stability
       }
     }
 
@@ -147,4 +202,13 @@ export async function ollamaChatOnce(
 
   const data = (await res.json()) as OllamaChatResponse
   return data.choices?.[0]?.message?.content || ''
+}
+
+/** LLMProvider implementation wrapping the module-level Ollama functions. */
+export const ollamaProvider: LLMProvider = {
+  type: 'ollama',
+  streamChat: ollamaStreamChat,
+  chatOnce: ollamaChatOnce,
+  isAvailable: isOllamaRunning,
+  listModels: listOllamaModels
 }

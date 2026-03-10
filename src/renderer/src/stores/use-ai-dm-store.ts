@@ -52,6 +52,7 @@ interface AiDmState {
   activeStreamId: string | null
   streamingText: string
   isTyping: boolean
+  safetyTimeoutId: ReturnType<typeof setTimeout> | null
 
   // Stat changes from last response
   lastStatChanges: AiStatChange[]
@@ -93,7 +94,7 @@ interface AiDmState {
     }>,
     gameState?: string
   ) => Promise<void>
-  cancelStream: () => void
+  cancelStream: () => Promise<void>
   setScene: (campaignId: string, characterIds: string[], gameState?: string) => Promise<void>
   prepareScene: (campaignId: string, characterIds: string[]) => Promise<void>
   checkSceneStatus: (campaignId: string) => Promise<void>
@@ -114,6 +115,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
   activeStreamId: null,
   streamingText: '',
   isTyping: false,
+  safetyTimeoutId: null,
 
   sceneStatus: 'idle',
   lastStatChanges: [],
@@ -200,20 +202,31 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
 
     // Cancel any active stream first
     if (state.activeStreamId) {
-      get().cancelStream()
+      await get().cancelStream()
     }
 
     set({ isTyping: true, streamingText: '', lastError: null, fileReadStatus: null, webSearchStatus: null })
 
     // Safety timeout: if still typing after 60s, auto-clear
     const streamStartTime = Date.now()
-    setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       const s = get()
       if (s.isTyping && s.activeStreamId && Date.now() - streamStartTime >= 59000) {
-        s.cancelStream()
-        set({ isTyping: false, lastError: 'AI response timed out' })
+        // Update UI state immediately to prevent race conditions
+        set({
+          isTyping: false,
+          lastError: 'AI response timed out',
+          activeStreamId: null,
+          streamingText: '',
+          safetyTimeoutId: null
+        })
+        // Then perform the async cancellation
+        await window.api.ai.cancelStream(s.activeStreamId)
       }
     }, 60000)
+
+    // Store timeout ID in state for cleanup when stream completes
+    set({ safetyTimeoutId: timeoutId })
 
     try {
       const result = await window.api.ai.chatStream({
@@ -238,15 +251,21 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     }
   },
 
-  cancelStream: () => {
-    const { activeStreamId } = get()
+  cancelStream: async () => {
+    const { activeStreamId, safetyTimeoutId } = get()
+    if (safetyTimeoutId) {
+      clearTimeout(safetyTimeoutId)
+    }
     if (activeStreamId) {
-      window.api.ai.cancelStream(activeStreamId)
+      // Update UI state immediately to prevent race conditions
       set({
         activeStreamId: null,
         isTyping: false,
-        streamingText: ''
+        streamingText: '',
+        safetyTimeoutId: null
       })
+      // Then perform the async cancellation
+      await window.api.ai.cancelStream(activeStreamId)
     }
   },
 
@@ -290,7 +309,10 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
   },
 
   reset: () => {
-    const { activeStreamId } = get()
+    const { activeStreamId, safetyTimeoutId } = get()
+    if (safetyTimeoutId) {
+      clearTimeout(safetyTimeoutId)
+    }
     if (activeStreamId) {
       window.api.ai.cancelStream(activeStreamId)
     }
@@ -302,6 +324,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
       activeStreamId: null,
       streamingText: '',
       isTyping: false,
+      safetyTimeoutId: null,
       lastStatChanges: [],
       lastDmActions: [],
       lastRuleCitations: [],
@@ -327,6 +350,11 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     }): void => {
       const state = get()
       if (data.streamId === state.activeStreamId) {
+        // Clear the safety timeout since stream completed successfully
+        if (state.safetyTimeoutId) {
+          clearTimeout(state.safetyTimeoutId)
+        }
+
         const dmActions = data.dmActions ?? []
         const ruleCitations = data.ruleCitations ?? []
 
@@ -347,6 +375,7 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
           activeStreamId: null,
           isTyping: false,
           streamingText: '',
+          safetyTimeoutId: null,
           lastStatChanges: data.statChanges,
           lastDmActions: dmActions,
           lastRuleCitations: ruleCitations,
@@ -358,10 +387,16 @@ export const useAiDmStore = create<AiDmState>((set, get) => ({
     const handleError = (data: { streamId: string; error: string }): void => {
       const state = get()
       if (data.streamId === state.activeStreamId) {
+        // Clear the safety timeout since stream ended with error
+        if (state.safetyTimeoutId) {
+          clearTimeout(state.safetyTimeoutId)
+        }
+
         set({
           activeStreamId: null,
           isTyping: false,
           streamingText: '',
+          safetyTimeoutId: null,
           lastError: data.error
         })
         pushDmAlert('error', `AI DM: ${data.error}`)
