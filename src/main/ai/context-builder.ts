@@ -99,6 +99,36 @@ function formatCreatureContext(creature: ActiveCreatureInfo): string {
   return line
 }
 
+function formatAvailableMonstersContext(query: string, limit = 24): string | null {
+  const monsters = Array.from(loadMonsterData().values())
+    .filter((entry) => typeof entry.name === 'string' && typeof entry.id === 'string')
+    .map((entry) => ({
+      id: entry.id as string,
+      name: entry.name as string,
+      cr: entry.cr
+    }))
+
+  if (monsters.length === 0) return null
+
+  const terms = query
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .filter((t) => t.length >= 3)
+  const scored = monsters.map((monster) => {
+    const hay = `${monster.name} ${monster.id}`.toLowerCase()
+    const score = terms.reduce((acc, term) => (hay.includes(term) ? acc + 1 : acc), 0)
+    return { ...monster, score }
+  })
+  const sorted = scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    return a.name.localeCompare(b.name)
+  })
+  const selected = sorted.slice(0, limit)
+
+  const lines = selected.map((m) => `- ${m.name} (id: ${m.id}${m.cr !== undefined ? `, CR ${String(m.cr)}` : ''})`)
+  return `[AVAILABLE MONSTERS]\n${lines.join('\n')}\n[/AVAILABLE MONSTERS]`
+}
+
 let searchEngine: SearchEngine | null = null
 let lastTokenBreakdown: ContextTokenBreakdown | null = null
 
@@ -199,6 +229,13 @@ export async function buildContext(
       // Encounter budget for dynamic encounter generation
       const encounterBudget = calculateEncounterBudget(charParts)
       if (encounterBudget) parts.push(encounterBudget)
+
+      const availableMonsters = formatAvailableMonstersContext(query)
+      if (availableMonsters) {
+        const trimmed = trimToTokenBudget(availableMonsters, Math.floor(TOKEN_BUDGETS.srdData * 0.4))
+        breakdown.srdData += estimateTokens(trimmed)
+        parts.push(trimmed)
+      }
 
       // Cache character context for persistence
       if (campaignId) {

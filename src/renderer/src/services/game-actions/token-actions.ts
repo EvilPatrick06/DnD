@@ -139,22 +139,29 @@ export function executePlaceCreature(
   stores: StoreAccessors
 ): boolean {
   if (!activeMap) throw new Error('No active map')
-  const creatureName = action.creatureName as string
-  if (!creatureName) throw new Error('Missing creatureName')
+  const creatureName = action.creatureName as string | undefined
+  const creatureId = action.creatureId as string | undefined
+  if (!creatureName && !creatureId) throw new Error('Missing creatureName or creatureId')
   const gridX = action.gridX as number
   const gridY = action.gridY as number
   if (typeof gridX !== 'number' || typeof gridY !== 'number') throw new Error('Missing gridX/gridY')
 
   // Look up creature from loaded monster data
   const monsters = monsterCache
-  const creature = monsters?.find((m) => m.name.toLowerCase() === creatureName.toLowerCase())
+  const creature = monsters?.find((m) => {
+    if (creatureId && m.id.toLowerCase() === creatureId.toLowerCase()) return true
+    if (creatureName && m.name.toLowerCase() === creatureName.toLowerCase()) return true
+    return false
+  })
+  const fallbackLabel = (action.label as string) || creatureName || creatureId || 'Creature'
+
   if (!creature) {
     // Fall back to basic place_token behavior
     const token: MapToken = {
       id: crypto.randomUUID(),
       entityId: crypto.randomUUID(),
       entityType: (action.entityType as 'player' | 'npc' | 'enemy') || 'enemy',
-      label: (action.label as string) || creatureName,
+      label: fallbackLabel,
       gridX,
       gridY,
       sizeX: (action.sizeX as number) || 1,

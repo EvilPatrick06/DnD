@@ -336,12 +336,12 @@ describe('token-actions', () => {
       expect(() => executePlaceCreature(action, gs, undefined, stores)).toThrow('No active map')
     })
 
-    it('throws if creatureName is missing', async () => {
+    it('throws if neither creatureName nor creatureId is provided', async () => {
       const { executePlaceCreature } = await import('./token-actions')
       const gs = makeGameStore()
       const map = makeActiveMap()
       const action: DmAction = { action: 'place_creature', creatureName: '', gridX: 0, gridY: 0 }
-      expect(() => executePlaceCreature(action, gs, map, stores)).toThrow('Missing creatureName')
+      expect(() => executePlaceCreature(action, gs, map, stores)).toThrow('Missing creatureName or creatureId')
     })
 
     it('throws if gridX/gridY missing', async () => {
@@ -375,6 +375,30 @@ describe('token-actions', () => {
           gridY: 4,
           currentHP: 50,
           ac: 18
+        })
+      )
+    })
+
+    it('accepts creatureId when placing a creature', async () => {
+      const { executePlaceCreature } = await import('./token-actions')
+      const gs = makeGameStore()
+      const map = makeActiveMap()
+      const action: DmAction = {
+        action: 'place_creature',
+        creatureId: 'goblin-1',
+        label: 'Goblin Scout',
+        gridX: 2,
+        gridY: 2
+      }
+
+      const result = executePlaceCreature(action, gs, map, stores)
+      expect(result).toBe(true)
+      expect(gs.addToken).toHaveBeenCalledWith(
+        'map-1',
+        expect.objectContaining({
+          label: 'Goblin Scout',
+          gridX: 2,
+          gridY: 2
         })
       )
     })

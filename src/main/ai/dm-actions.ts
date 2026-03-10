@@ -32,6 +32,16 @@ export type DmAction =
       visibleToPlayers?: boolean
       label_new?: string
     }
+  | {
+      action: 'place_creature'
+      creatureName?: string
+      creatureId?: string
+      label?: string
+      entityType?: 'player' | 'npc' | 'enemy'
+      gridX: number
+      gridY: number
+      visibleToPlayers?: boolean
+    }
 
   // Initiative
   | {
