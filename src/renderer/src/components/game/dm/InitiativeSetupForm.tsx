@@ -8,6 +8,7 @@ export interface NewEntry {
   surprised: boolean
   legendaryResistances: string
   inLair: boolean
+  tokenId?: string // Reference to the original map token ID
 }
 
 const TIMER_PRESETS = [30, 60, 90, 120] as const
@@ -189,7 +190,8 @@ export default function InitiativeSetupForm({
                         entityType: t.entityType,
                         surprised: false,
                         legendaryResistances: '',
-                        inLair: false
+                        inLair: false,
+                        tokenId: t.id
                       }))
                     onSetNewEntries((prev) => [...prev.filter((e) => e.name.trim()), ...toAdd])
                     onSetCheckedTokenIds(new Set())

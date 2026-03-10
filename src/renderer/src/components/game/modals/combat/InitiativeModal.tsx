@@ -14,6 +14,8 @@ export default function InitiativeModal({ onClose }: InitiativeModalProps): JSX.
   const endInitiative = useGameStore((s) => s.endInitiative)
   const updateInitiativeEntry = useGameStore((s) => s.updateInitiativeEntry)
   const removeFromInitiative = useGameStore((s) => s.removeFromInitiative)
+  const delayTurn = useGameStore((s) => s.delayTurn)
+  const undelay = useGameStore((s) => s.undelay)
   const activeMapId = useGameStore((s) => s.activeMapId)
   const maps = useGameStore((s) => s.maps)
   const activeMap = maps.find((m) => m.id === activeMapId) ?? null
@@ -46,6 +48,8 @@ export default function InitiativeModal({ onClose }: InitiativeModalProps): JSX.
             onEndInitiative={endInitiative}
             onUpdateEntry={updateInitiativeEntry}
             onRemoveEntry={removeFromInitiative}
+            onDelayTurn={delayTurn}
+            onUndelay={undelay}
             tokens={activeMap?.tokens ?? []}
             onCenterToken={requestCenterOnEntity}
             combatTimer={combatTimer ?? undefined}

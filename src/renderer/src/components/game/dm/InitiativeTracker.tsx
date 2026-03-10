@@ -7,6 +7,7 @@ import type { MapToken } from '../../../types/map'
 import InitiativeControls from './InitiativeControls'
 import InitiativeEntryRow from './InitiativeEntry'
 import type { NewEntry } from './InitiativeSetupForm'
+import type { MapToken } from '../../../types/map'
 import InitiativeSetupForm from './InitiativeSetupForm'
 
 interface InitiativeTrackerProps {
@@ -20,6 +21,8 @@ interface InitiativeTrackerProps {
   onUpdateEntry: (entryId: string, updates: Partial<InitiativeEntry>) => void
   onRemoveEntry: (entryId: string) => void
   onAddEntry?: (entry: InitiativeEntry) => void
+  onDelayTurn?: (entityId: string) => void
+  onUndelay?: (entityId: string) => void
   tokens?: MapToken[]
   /** Called when user clicks a portrait to center the map on that token */
   onCenterToken?: (entityId: string) => void
@@ -40,6 +43,8 @@ export default function InitiativeTracker({
   onUpdateEntry,
   onRemoveEntry,
   onAddEntry,
+  onDelayTurn,
+  onUndelay,
   tokens = [],
   onCenterToken,
   combatTimer,
@@ -53,7 +58,6 @@ export default function InitiativeTracker({
   const [editTotal, setEditTotal] = useState('')
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
-  const [delayedEntries, setDelayedEntries] = useState<InitiativeEntry[]>([])
   const reorderInitiative = useGameStore((s) => s.reorderInitiative)
 
   // Combat timer state
@@ -173,9 +177,19 @@ export default function InitiativeTracker({
           groupRolls.set(groupKey, roll)
         }
         const lr = parseInt(e.legendaryResistances, 10)
+
+        // Use the token's entityId if available, otherwise generate a new one
+        let entityId: string
+        if (e.tokenId) {
+          const token = tokens?.find((t) => t.id === e.tokenId)
+          entityId = token?.entityId || crypto.randomUUID()
+        } else {
+          entityId = crypto.randomUUID()
+        }
+
         return {
           id: crypto.randomUUID(),
-          entityId: crypto.randomUUID(),
+          entityId,
           entityName: e.surprised ? `${e.name.trim()} (Surprised)` : e.name.trim(),
           entityType: e.entityType,
           roll,
@@ -298,8 +312,13 @@ export default function InitiativeTracker({
               onUpdateEntry={onUpdateEntry}
               onRemoveEntry={onRemoveEntry}
               onDelayEntry={(e) => {
-                setDelayedEntries((prev) => [...prev, e])
-                onRemoveEntry(e.id)
+                if (onDelayTurn) {
+                  onDelayTurn(e.entityId)
+                } else {
+                  // Fallback to old behavior if no delay action provided
+                  setDelayedEntries((prev) => [...prev, e])
+                  onRemoveEntry(e.id)
+                }
               }}
               onCenterToken={onCenterToken}
             />
@@ -316,13 +335,19 @@ export default function InitiativeTracker({
         timerAction={timerAction}
         timeRemaining={timeRemaining}
         timerSeconds={timerSeconds}
-        delayedEntries={delayedEntries}
+        delayedEntries={initiative?.entries.filter(e => e.isDelaying) ?? []}
         onAddEntry={onAddEntry}
         onReenterDelayed={(entry) => {
-          onAddEntry?.({ ...entry, isActive: false })
-          setDelayedEntries((prev) => prev.filter((e) => e.id !== entry.id))
+          if (onUndelay) {
+            onUndelay(entry.entityId)
+          }
         }}
-        onRemoveDelayed={(id) => setDelayedEntries((prev) => prev.filter((e) => e.id !== id))}
+        onRemoveDelayed={(entityId) => {
+          // For now, just undelay - could add a separate remove action later if needed
+          if (onUndelay) {
+            onUndelay(entityId)
+          }
+        }}
         onPrevTurn={onPrevTurn}
         onNextTurn={onNextTurn}
         onEndInitiative={onEndInitiative}

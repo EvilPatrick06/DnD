@@ -59,6 +59,8 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
   const updateInitiativeEntry = useGameStore((s) => s.updateInitiativeEntry)
   const removeFromInitiative = useGameStore((s) => s.removeFromInitiative)
   const addToInitiative = useGameStore((s) => s.addToInitiative)
+  const delayTurn = useGameStore((s) => s.delayTurn)
+  const undelay = useGameStore((s) => s.undelay)
   const requestCenterOnEntity = useGameStore((s) => s.requestCenterOnEntity)
   const combatTimer = useGameStore((s) => s.combatTimer)
   const setCombatTimer = useGameStore((s) => s.setCombatTimer)
@@ -92,6 +94,8 @@ export default function InitiativeOverlay({ isDM }: InitiativeOverlayProps): JSX
             onUpdateEntry={updateInitiativeEntry}
             onRemoveEntry={removeFromInitiative}
             onAddEntry={addToInitiative}
+            onDelayTurn={delayTurn}
+            onUndelay={undelay}
             onCenterToken={requestCenterOnEntity}
             combatTimer={combatTimer ?? undefined}
             onCombatTimerChange={setCombatTimer}

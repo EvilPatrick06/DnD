@@ -12,7 +12,7 @@ interface InitiativeControlsProps {
   delayedEntries: InitiativeEntry[]
   onAddEntry?: (entry: InitiativeEntry) => void
   onReenterDelayed: (entry: InitiativeEntry) => void
-  onRemoveDelayed: (entryId: string) => void
+  onRemoveDelayed: (entityId: string) => void
   onPrevTurn: () => void
   onNextTurn: () => void
   onEndInitiative: () => void
@@ -112,7 +112,7 @@ export default function InitiativeControls({
                 Re-enter
               </button>
               <button
-                onClick={() => onRemoveDelayed(entry.id)}
+                onClick={() => onRemoveDelayed(entry.entityId)}
                 className="text-gray-600 hover:text-red-400 cursor-pointer"
               >
                 &#x2715;
