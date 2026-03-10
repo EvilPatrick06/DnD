@@ -5,6 +5,7 @@ import { createCombatLogSlice } from './combat-log-slice'
 import { createConditionsSlice } from './conditions-slice'
 import { createDrawingSlice } from './drawing-slice'
 import { createEffectsSlice } from './effects-slice'
+import { createFloorSlice } from './floor-slice'
 import { createFogSlice } from './fog-slice'
 import { createInitiativeSlice } from './initiative-slice'
 import { createJournalSlice } from './journal-slice'
@@ -27,6 +28,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
     ...createMapTokenSlice(...a),
     ...createInitiativeSlice(...a),
     ...createConditionsSlice(...a),
+    ...createFloorSlice(...a),
     ...createFogSlice(...a),
     ...createSidebarSlice(...a),
     ...createTimerSlice(...a),
@@ -92,6 +94,7 @@ export const useGameStore = create<GameStoreState>()((...a) => {
         combatLog: [],
         pendingGroupRoll: null,
         groupRollResults: [],
+        currentFloor: 0,
         centerOnEntityId: null,
         sessionLog: [],
         currentSessionId: `session-${Date.now()}`,

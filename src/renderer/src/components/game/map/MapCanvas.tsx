@@ -1,6 +1,6 @@
 import 'pixi.js/unsafe-eval' // CSP-compatible PixiJS shaders (must be before any pixi usage)
 import { Application, Assets, type Container, type Graphics, Sprite } from 'pixi.js'
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
 import {
   calculateZoomToFit,
@@ -28,6 +28,7 @@ type _Point = Point
 type _Segment = Segment
 type _VisibilityPolygon = VisibilityPolygon
 
+import { getPlayerFloor, getTokenFloor } from '../../../services/map/floor-filtering'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap, MapToken } from '../../../types/map'
@@ -149,7 +150,9 @@ export default function MapCanvas({
   const [initError, setInitError] = useState<string | null>(null)
   const [_retryCount, setRetryCount] = useState(0)
   const [bgLoadError, setBgLoadError] = useState<string | null>(null)
-  const [currentFloor, setCurrentFloor] = useState<string>(map?.floors?.[0]?.id ?? 'default')
+
+  const currentFloor = useGameStore((s) => s.currentFloor)
+  const setCurrentFloor = useGameStore((s) => s.setCurrentFloor)
 
   const applyTransform = useCallback(() => {
     if (!worldRef.current) return
@@ -303,6 +306,27 @@ export default function MapCanvas({
     lastFogCellRef.current = null
   }, [])
 
+  // Reset floor when switching maps (avoids stale floor index)
+  useEffect(() => {
+    if (currentFloor > 0 && (!map?.floors || currentFloor >= map.floors.length)) {
+      setCurrentFloor(0)
+    }
+  }, [map?.id, map?.floors, currentFloor, setCurrentFloor])
+
+  // Auto-lock players to their character token's floor
+  useEffect(() => {
+    if (isHost || !map || !myCharacterId) return
+    const playerFloor = getPlayerFloor(map.tokens, myCharacterId)
+    if (playerFloor !== currentFloor) {
+      setCurrentFloor(playerFloor)
+    }
+  }, [isHost, map?.tokens, myCharacterId, currentFloor, setCurrentFloor, map])
+
+  const hasMultipleFloors = useMemo(
+    () => (map?.floors?.length ?? 0) > 1,
+    [map?.floors?.length]
+  )
+
     // All overlay rendering effects (grid, fog, walls, lighting, terrain, AoE, movement, weather, audio)
     useMapOverlayEffects({
       initialized,
@@ -312,6 +336,7 @@ export default function MapCanvas({
       isInitiativeMode,
       turnState,
       activeAoE,
+      currentFloor,
       applyTransform,
       refs: {
         containerRef,
@@ -364,6 +389,11 @@ export default function MapCanvas({
     })
 
     for (const token of map.tokens) {
+      const tokenFloor = getTokenFloor(token)
+      const isOnCurrentFloor = tokenFloor === currentFloor
+
+      // Players: strictly locked to current floor — skip off-floor tokens entirely
+      if (!isHost && !isOnCurrentFloor) continue
       if (!isHost && !token.visibleToPlayers) continue
       // Dynamic vision: hide non-player tokens outside party vision
       if (visionSet && token.entityType !== 'player' && !isTokenInVisionSet(token, visionSet)) continue
@@ -380,7 +410,7 @@ export default function MapCanvas({
 
       // Split key: position and appearance are tracked separately for animation
       const posKey = `${token.gridX},${token.gridY}`
-      const appearanceKey = `${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost}`
+      const appearanceKey = `${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost},${isOnCurrentFloor}`
       const key = `${posKey},${appearanceKey}`
       const cached = cache.get(token.id)
       if (cached && cached.key === key) continue
@@ -402,6 +432,12 @@ export default function MapCanvas({
       }
       const sprite = createTokenSprite(token, map.grid.cellSize, isSelected, isActive, showHpBar, lighting, isHost)
       sprite.label = `token-${token.id}`
+
+      // DM: dim off-floor tokens so all floors are visible at a glance
+      if (isHost && !isOnCurrentFloor) {
+        sprite.alpha = 0.3
+      }
+
       sprite.on('pointerdown', (e) => {
         if (activeTool !== 'select') return
         if (e.button === 2) return
@@ -448,7 +484,8 @@ export default function MapCanvas({
     activeEntityId,
     onTokenContextMenu,
     hpBarsVisibility,
-    partyVisionCells
+    partyVisionCells,
+    currentFloor
   ])
 
   useEffect(() => {
@@ -676,7 +713,7 @@ export default function MapCanvas({
           Reset View
         </button>
       )}
-      {map?.floors && map.floors.length > 1 && (
+      {isHost && hasMultipleFloors && map?.floors && (
         <Suspense fallback={null}>
           <FloorSelector floors={map.floors} currentFloor={currentFloor} onFloorChange={setCurrentFloor} />
         </Suspense>

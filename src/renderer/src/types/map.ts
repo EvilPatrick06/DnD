@@ -43,6 +43,8 @@ export interface TerrainCell {
     gridX: number
     gridY: number
   }
+  /** Floor index this terrain cell is on (for multi-floor maps). Undefined = floor 0. */
+  floor?: number
 }
 
 /** Darkvision: derived from species data — Elf, Dwarf, Gnome, Tiefling, Half-Elf */
@@ -133,6 +135,8 @@ export interface WallSegment {
   y2: number
   type: 'solid' | 'door' | 'window'
   isOpen?: boolean
+  /** Floor index this wall is on (for multi-floor maps). Undefined = floor 0. */
+  floor?: number
 }
 
 export interface FogOfWarData {
@@ -159,4 +163,6 @@ export interface DrawingData {
   text?: string
   /** Whether this drawing is visible to players (DM can create hidden annotations) */
   visibleToPlayers?: boolean
+  /** Floor index this drawing is on (for multi-floor maps). Undefined = floor 0. */
+  floor?: number
 }

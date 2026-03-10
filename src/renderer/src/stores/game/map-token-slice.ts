@@ -3,6 +3,41 @@ import type { GameMap, MapToken } from '../../types/map'
 import { logger } from '../../utils/logger'
 import type { GameStoreState, MapTokenSliceState } from './types'
 
+function moveMountedPair(map: GameMap, tokenId: string, gridX: number, gridY: number): GameMap {
+  const movedToken = map.tokens.find((token) => token.id === tokenId)
+  if (!movedToken) return map
+
+  const riderId = movedToken.riderId
+
+  return {
+    ...map,
+    tokens: map.tokens.map((token) =>
+      token.id === tokenId || (riderId != null && token.entityId === riderId) ? { ...token, gridX, gridY } : token
+    )
+  }
+}
+
+function clearMountedTurnState(
+  turnStates: GameStoreState['turnStates'],
+  riderEntityId: string | undefined
+): GameStoreState['turnStates'] {
+  if (!riderEntityId) return turnStates
+
+  const riderTurnState = turnStates[riderEntityId]
+  if (!riderTurnState || (riderTurnState.mountedOn == null && riderTurnState.mountType == null)) {
+    return turnStates
+  }
+
+  return {
+    ...turnStates,
+    [riderEntityId]: {
+      ...riderTurnState,
+      mountedOn: undefined,
+      mountType: undefined
+    }
+  }
+}
+
 export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenSliceState> = (set, get) => ({
   // --- Map actions ---
 
@@ -54,14 +89,7 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
 
   moveToken: (mapId: string, tokenId: string, gridX: number, gridY: number) => {
     set((state) => ({
-      maps: state.maps.map((m) =>
-        m.id === mapId
-          ? {
-              ...m,
-              tokens: m.tokens.map((t) => (t.id === tokenId ? { ...t, gridX, gridY } : t))
-            }
-          : m
-      )
+      maps: state.maps.map((m) => (m.id === mapId ? moveMountedPair(m, tokenId, gridX, gridY) : m))
     }))
   },
 
@@ -75,6 +103,8 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
     const state = get()
     const map = state.maps.find((m) => m.id === mapId)
     const oldToken = map?.tokens.find((t) => t.id === tokenId)
+    const removedRiderId =
+      oldToken?.riderId && 'riderId' in updates && updates.riderId !== oldToken.riderId ? oldToken.riderId : undefined
 
     set((s) => ({
       maps: s.maps.map((m) =>
@@ -86,6 +116,12 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
           : m
       )
     }))
+
+    if (removedRiderId) {
+      set((s) => ({
+        turnStates: clearMountedTurnState(s.turnStates, removedRiderId)
+      }))
+    }
 
     // Force-dismount rider when mount drops to 0 HP
     if (
@@ -106,18 +142,9 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
         )
       }))
 
-      // Clear mountedOn/mountType on rider's turn state
-      if (riderId) {
-        const ts = state.turnStates[riderId]
-        if (ts?.mountedOn) {
-          set((s) => ({
-            turnStates: {
-              ...s.turnStates,
-              [riderId]: { ...s.turnStates[riderId], mountedOn: undefined, mountType: undefined }
-            }
-          }))
-        }
-      }
+      set((s) => ({
+        turnStates: clearMountedTurnState(s.turnStates, riderId)
+      }))
 
       // Log force-dismount (listeners can pick this up from state changes)
       if (riderToken) {
@@ -193,13 +220,14 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
   pendingPlacement: null,
   setPendingPlacement: (tokenData) => set({ pendingPlacement: tokenData ? { tokenData } : null }),
   commitPlacement: (mapId, gridX, gridY) => {
-    const { pendingPlacement } = get()
+    const { pendingPlacement, currentFloor } = get()
     if (!pendingPlacement) return
     const token: MapToken = {
       ...pendingPlacement.tokenData,
       id: crypto.randomUUID(),
       gridX,
-      gridY
+      gridY,
+      floor: currentFloor
     }
     get().addToken(mapId, token)
     set({ pendingPlacement: null })

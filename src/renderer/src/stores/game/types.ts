@@ -276,6 +276,12 @@ export interface EffectsSliceState {
   updatePlacedTrap: (id: string, updates: Partial<PlacedTrap>) => void
 }
 
+export interface FloorSliceState {
+  /** Currently viewed floor index (0-based). DM can switch freely; players auto-follow their token. */
+  currentFloor: number
+  setCurrentFloor: (floor: number) => void
+}
+
 export interface VisionSliceState {
   /** Currently visible cells (host-computed, synced to clients) */
   partyVisionCells: Array<{ x: number; y: number }>
@@ -386,6 +392,7 @@ export type GameStoreState = GameState &
   InitiativeSliceState &
   ConditionsSliceState &
   FogSliceState &
+  FloorSliceState &
   VisionSliceState &
   DrawingSliceState &
   SidebarSliceState &
