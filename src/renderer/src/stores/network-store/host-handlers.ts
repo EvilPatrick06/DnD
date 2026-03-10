@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type {
   BuyItemPayload,
   ColorChangePayload,
@@ -27,6 +28,26 @@ import type { NetworkState } from './index'
 
 // In-memory trade tracking
 const pendingTrades = new Map<string, TradeRequestPayload>()
+
+// ── Payload Validation Schemas ──
+
+const PriceSchema = z.object({
+  cp: z.number().optional(),
+  sp: z.number().optional(),
+  gp: z.number().optional(),
+  pp: z.number().optional()
+})
+
+const BuyItemPayloadSchema = z.object({
+  itemId: z.string(),
+  itemName: z.string(),
+  price: PriceSchema
+})
+
+const SellItemPayloadSchema = z.object({
+  itemName: z.string(),
+  price: PriceSchema
+})
 
 /**
  * Handle messages received by the host from connected peers.
@@ -106,7 +127,12 @@ export function handleHostMessage(
     }
 
     case 'player:buy-item': {
-      const buyPayload = message.payload as BuyItemPayload
+      const buyResult = BuyItemPayloadSchema.safeParse(message.payload)
+      if (!buyResult.success) {
+        console.warn('[host-handlers] Invalid buy-item payload:', buyResult.error.issues)
+        break
+      }
+      const buyPayload = buyResult.data as BuyItemPayload
       {
         const gameStore = useGameStore.getState()
         const updatedInventory = gameStore.shopInventory.map((item: ShopItem) => {
@@ -130,7 +156,12 @@ export function handleHostMessage(
       break
     }
     case 'player:sell-item': {
-      const sellPayload = message.payload as SellItemPayload
+      const sellResult = SellItemPayloadSchema.safeParse(message.payload)
+      if (!sellResult.success) {
+        console.warn('[host-handlers] Invalid sell-item payload:', sellResult.error.issues)
+        break
+      }
+      const sellPayload = sellResult.data as SellItemPayload
       {
         const gameStore = useGameStore.getState()
         const existing = gameStore.shopInventory.find(

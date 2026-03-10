@@ -86,7 +86,7 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     return () => {
       destroyFogAnimation()
     }
-  }, [initialized, map?.grid, map?.width, map?.height, refs])
+  }, [initialized, map?.grid, map?.width, map?.height, refs, map])
 
   // Draw fog of war
   const partyVisionCells = useGameStore((s) => s.partyVisionCells)

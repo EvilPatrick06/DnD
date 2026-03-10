@@ -358,13 +358,7 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
         const walls = map.wallSegments ?? []
         if (
           walls.length > 0 &&
-          isMovementBlockedByWall(
-            refs.drag.current.startGridX,
-            refs.drag.current.startGridY,
-            newGridX,
-            newGridY,
-            walls
-          )
+          isMovementBlockedByWall(refs.drag.current.startGridX, refs.drag.current.startGridY, newGridX, newGridY, walls)
         ) {
           renderTokens()
         } else if (isInitiativeMode && turnState) {

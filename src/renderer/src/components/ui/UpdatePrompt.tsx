@@ -77,9 +77,7 @@ export default function UpdatePrompt(): JSX.Element | null {
 
         {stage === 'prompt' && (
           <>
-            <p className="text-gray-400 text-sm mb-4">
-              Version {version} is available. Would you like to update now?
-            </p>
+            <p className="text-gray-400 text-sm mb-4">Version {version} is available. Would you like to update now?</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleLater}
@@ -114,9 +112,7 @@ export default function UpdatePrompt(): JSX.Element | null {
 
         {stage === 'ready' && (
           <>
-            <p className="text-gray-400 text-sm mb-4">
-              Version {version} is ready to install. The app will restart.
-            </p>
+            <p className="text-gray-400 text-sm mb-4">Version {version} is ready to install. The app will restart.</p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleLater}

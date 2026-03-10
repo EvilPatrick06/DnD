@@ -499,15 +499,33 @@ interface ShopTemplateEntry {
 }
 
 interface ShopTemplateAPI {
-  save: (template: { id: string; name: string; inventory: unknown[]; markup: number }) => Promise<{ success: boolean; error?: string }>
-  list: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; markup: number; itemCount: number; savedAt: string }>; error?: string }>
+  save: (template: {
+    id: string
+    name: string
+    inventory: unknown[]
+    markup: number
+  }) => Promise<{ success: boolean; error?: string }>
+  list: () => Promise<{
+    success: boolean
+    data?: Array<{ id: string; name: string; markup: number; itemCount: number; savedAt: string }>
+    error?: string
+  }>
   get: (id: string) => Promise<{ success: boolean; data?: ShopTemplateEntry; error?: string }>
   delete: (id: string) => Promise<{ success: boolean; error?: string }>
 }
 
 interface ImageLibraryAPI {
-  save: (id: string, name: string, buffer: ArrayBuffer, extension: string) => Promise<{ success: boolean; error?: string }>
-  list: () => Promise<{ success: boolean; data?: Array<{ id: string; name: string; fileName: string; savedAt: string }>; error?: string }>
+  save: (
+    id: string,
+    name: string,
+    buffer: ArrayBuffer,
+    extension: string
+  ) => Promise<{ success: boolean; error?: string }>
+  list: () => Promise<{
+    success: boolean
+    data?: Array<{ id: string; name: string; fileName: string; savedAt: string }>
+    error?: string
+  }>
   get: (id: string) => Promise<{ success: boolean; data?: { path: string; name: string }; error?: string }>
   delete: (id: string) => Promise<{ success: boolean; error?: string }>
 }
@@ -548,7 +566,11 @@ interface BooksAPI {
   loadConfig: () => Promise<BookConfigEntry[]>
   add: (config: BookConfigEntry) => Promise<{ success: boolean; error?: string }>
   remove: (bookId: string) => Promise<{ success: boolean; error?: string }>
-  import: (sourcePath: string, title: string, bookId: string) => Promise<{ success: boolean; path?: string; error?: string }>
+  import: (
+    sourcePath: string,
+    title: string,
+    bookId: string
+  ) => Promise<{ success: boolean; path?: string; error?: string }>
   readFile: (filePath: string) => Promise<{ success: boolean; data?: ArrayBuffer; error?: string }>
   loadData: (bookId: string) => Promise<BookDataEntry>
   saveData: (bookId: string, data: BookDataEntry) => Promise<{ success: boolean; error?: string }>

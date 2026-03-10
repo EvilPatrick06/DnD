@@ -11,7 +11,12 @@ interface AudioPlayerItemProps {
   onToggleFavorite?: (id: string) => void
 }
 
-export default function AudioPlayerItem({ item, onClick, isFavorite, onToggleFavorite }: AudioPlayerItemProps): JSX.Element {
+export default function AudioPlayerItem({
+  item,
+  onClick,
+  isFavorite,
+  onToggleFavorite
+}: AudioPlayerItemProps): JSX.Element {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)

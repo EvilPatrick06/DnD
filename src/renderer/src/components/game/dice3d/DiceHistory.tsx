@@ -27,7 +27,7 @@ export default function DiceHistory({ onClose }: DiceHistoryProps): JSX.Element 
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [filtered])
+  }, [])
 
   const formatTime = useCallback((ts: number) => {
     return new Date(ts).toLocaleTimeString(undefined, {

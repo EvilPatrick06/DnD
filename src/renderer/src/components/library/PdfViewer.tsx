@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import * as pdfjsLib from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import PdfDrawingOverlay, { DrawingToolbar } from './PdfDrawingOverlay'
-import type { DrawingTool, DrawingStroke, PageDrawings } from './PdfDrawingOverlay'
+import * as pdfjsLib from 'pdfjs-dist'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { DrawingStroke, DrawingTool, PageDrawings } from './PdfDrawingOverlay'
 
 // Fetch the worker script and create a blob URL — works in both dev and production Electron
+import PdfDrawingOverlay, { DrawingToolbar } from './PdfDrawingOverlay'
 ;(async () => {
   try {
     const resp = await fetch('/pdf.worker.min.mjs')
@@ -134,7 +134,7 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Running Combat', page: 46, level: 1 },
     { title: 'Rolling Initiative', page: 46, level: 2 },
     { title: 'Tracking Initiative', page: 46, level: 2 },
-    { title: 'Tracking Monsters\' Hit Points', page: 46, level: 2 },
+    { title: "Tracking Monsters' Hit Points", page: 46, level: 2 },
     { title: 'Using and Tracking Conditions', page: 47, level: 2 },
     { title: 'Miniatures', page: 48, level: 2 },
     { title: 'Tracking Position at Long Range', page: 49, level: 2 },
@@ -149,7 +149,7 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Leveling Up', page: 53, level: 2 },
 
     // Chapter 3: DM's Toolbox
-    { title: 'Ch 3: DM\'s Toolbox', page: 55, level: 0 },
+    { title: "Ch 3: DM's Toolbox", page: 55, level: 0 },
     { title: 'Alignment', page: 55, level: 1 },
     { title: 'Monster Alignment', page: 55, level: 2 },
     { title: 'Character Alignment', page: 55, level: 2 },
@@ -274,7 +274,7 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Your Campaign Journal', page: 131, level: 1 },
     { title: 'Campaign Premise', page: 133, level: 1 },
     { title: 'Campaign Characters', page: 133, level: 2 },
-    { title: 'DM\'s Character Tracker', page: 134, level: 2 },
+    { title: "DM's Character Tracker", page: 134, level: 2 },
     { title: 'Campaign Conflicts', page: 135, level: 2 },
     { title: 'Flavors of Fantasy', page: 135, level: 2 },
     { title: 'Campaign Setting', page: 140, level: 1 },
@@ -288,7 +288,7 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Ending a Campaign', page: 146, level: 1 },
     { title: 'Greyhawk', page: 147, level: 1 },
     { title: 'Important Names', page: 147, level: 2 },
-    { title: 'Greyhawk\'s Premise', page: 147, level: 2 },
+    { title: "Greyhawk's Premise", page: 147, level: 2 },
     { title: 'Greyhawk Conflicts', page: 147, level: 2 },
     { title: 'The Greyhawk Setting', page: 149, level: 2 },
     { title: 'Free City of Greyhawk', page: 153, level: 1 },
@@ -389,7 +389,7 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Barrow Crypt', page: 369, level: 1 },
     { title: 'Caravan Encampment', page: 370, level: 1 },
     { title: 'Crossroads Village', page: 371, level: 1 },
-    { title: 'Dragon\'s Lair', page: 372, level: 1 },
+    { title: "Dragon's Lair", page: 372, level: 1 },
     { title: 'Dungeon Hideout', page: 373, level: 1 },
     { title: 'Farmstead', page: 374, level: 1 },
     { title: 'Keep', page: 375, level: 1 },
@@ -400,8 +400,8 @@ const FALLBACK_TOC: Record<string, TocEntry[]> = {
     { title: 'Spooky House', page: 380, level: 1 },
     { title: 'Underdark Warren', page: 381, level: 1 },
     { title: 'Volcanic Caves', page: 382, level: 1 },
-    { title: 'Index', page: 384, level: 0 },
-  ],
+    { title: 'Index', page: 384, level: 0 }
+  ]
 }
 
 // Supplemental entries merged into extracted outlines for richer navigation
@@ -413,7 +413,7 @@ const SUPPLEMENTAL_TOC: Record<string, TocEntry[]> = {
     { title: 'Mounts and Other Animals Table', page: 228, level: 3 },
     { title: 'Lifestyle Expenses', page: 229, level: 3 },
     { title: 'Crafting Equipment', page: 232, level: 2 },
-    { title: 'Spell Scroll Costs Table', page: 232, level: 3 },
+    { title: 'Spell Scroll Costs Table', page: 232, level: 3 }
   ],
   'mm-2025': [
     { title: 'Stat Block Overview', page: 7, level: 1 },
@@ -423,8 +423,8 @@ const SUPPLEMENTAL_TOC: Record<string, TocEntry[]> = {
     { title: 'Monsters by Habitat', page: 377, level: 1 },
     { title: 'Monsters by Creature Type', page: 381, level: 1 },
     { title: 'Monsters by Group', page: 383, level: 1 },
-    { title: 'Monsters by Challenge Rating', page: 384, level: 1 },
-  ],
+    { title: 'Monsters by Challenge Rating', page: 384, level: 1 }
+  ]
 }
 
 // Cross-book references for core books (within-book refs like Wizard Spell List are already in the outline)
@@ -432,12 +432,12 @@ const CROSS_BOOK_REFS: Record<string, TocEntry[]> = {
   'dmg-2024': [
     { title: '→ PHB: Character Classes', page: 48, level: 1, crossRef: { bookId: 'phb-2024', page: 48 } },
     { title: '→ PHB: Spells', page: 234, level: 1, crossRef: { bookId: 'phb-2024', page: 234 } },
-    { title: '→ MM: Bestiary', page: 12, level: 1, crossRef: { bookId: 'mm-2025', page: 12 } },
+    { title: '→ MM: Bestiary', page: 12, level: 1, crossRef: { bookId: 'mm-2025', page: 12 } }
   ],
   'mm-2025': [
     { title: '→ PHB: Rules Glossary', page: 359, level: 1, crossRef: { bookId: 'phb-2024', page: 359 } },
-    { title: '→ DMG: Treasure', page: 217, level: 1, crossRef: { bookId: 'dmg-2024', page: 217 } },
-  ],
+    { title: '→ DMG: Treasure', page: 217, level: 1, crossRef: { bookId: 'dmg-2024', page: 217 } }
+  ]
 }
 
 function generateId(): string {
@@ -466,7 +466,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
   const [twoPageView, setTwoPageView] = useState(false)
 
   // Track which pages have been rendered and their dimensions
-  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set())
+  const [_renderedPages, setRenderedPages] = useState<Set<number>>(new Set())
   const renderedPagesRef = useRef<Set<number>>(new Set())
   const [pageDimensions, setPageDimensions] = useState<Map<number, { width: number; height: number }>>(new Map())
 
@@ -542,22 +542,19 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
 
             const outline = await doc.getOutline()
             if (outline && outline.length > 0) {
-              async function walkOutline(
-                items: typeof outline,
-                level: number
-              ): Promise<void> {
+              async function walkOutline(items: typeof outline, level: number): Promise<void> {
                 for (const item of items) {
                   let pageNum = 1
                   if (item.dest) {
                     try {
-                      const dest = typeof item.dest === 'string'
-                        ? await doc.getDestination(item.dest)
-                        : item.dest
-                      if (dest && dest[0]) {
+                      const dest = typeof item.dest === 'string' ? await doc.getDestination(item.dest) : item.dest
+                      if (dest?.[0]) {
                         const pageIdx = await doc.getPageIndex(dest[0])
                         pageNum = pageIdx + 1
                       }
-                    } catch { /* keep default page 1 */ }
+                    } catch {
+                      /* keep default page 1 */
+                    }
                   }
                   entries.push({ title: item.title, page: pageNum, level })
                   if (item.items && item.items.length > 0) {
@@ -668,8 +665,10 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
     }
 
     loadPdf()
-    return () => { cancelled = true }
-  }, [filePath])
+    return () => {
+      cancelled = true
+    }
+  }, [filePath, bookId])
 
   // Pre-fetch page dimensions so placeholders have the right size
   useEffect(() => {
@@ -693,7 +692,9 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
     }
 
     fetchDimensions()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [pdfDoc, scale])
 
   // Render a single page to its canvas
@@ -745,7 +746,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
     renderedPagesRef.current = new Set()
     setRenderedPages(new Set())
     renderingPages.current.clear()
-  }, [scale])
+  }, [])
 
   // Get the display label for a page
   const getPageLabel = useCallback(
@@ -774,7 +775,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
 
       // Try Arabic number
       const num = parseInt(trimmed, 10)
-      if (!isNaN(num) && num >= 1 && num <= totalPages) return num
+      if (!Number.isNaN(num) && num >= 1 && num <= totalPages) return num
 
       return null
     },
@@ -837,7 +838,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
     }
 
     return () => observer.disconnect()
-  }, [pdfDoc, pageDimensions, twoPageView])
+  }, [pdfDoc, pageDimensions])
 
   // Background pre-render using requestIdleCallback for smooth scrolling
   useEffect(() => {
@@ -854,7 +855,11 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       let rendered = 0
 
       while (nextPage <= totalPages && timeLimit() && rendered < 3) {
-        if (!renderedPagesRef.current.has(nextPage) && !renderingPages.current.has(nextPage) && canvasRefsMap.current.has(nextPage)) {
+        if (
+          !renderedPagesRef.current.has(nextPage) &&
+          !renderingPages.current.has(nextPage) &&
+          canvasRefsMap.current.has(nextPage)
+        ) {
           renderPageRef.current(nextPage)
           rendered++
         }
@@ -883,14 +888,14 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       cancelled = true
       clearTimeout(timer)
     }
-  }, [pdfDoc, totalPages, pageDimensions, twoPageView])
+  }, [pdfDoc, totalPages, pageDimensions])
 
   // Re-render all pages when view mode changes
   useEffect(() => {
     renderedPagesRef.current = new Set()
     setRenderedPages(new Set())
     renderingPages.current = new Set()
-  }, [twoPageView])
+  }, [])
 
   // Ref that always holds the best-known "last page" — survives React render cycles
   const savedLastPageRef = useRef(1)
@@ -925,7 +930,9 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
   // Helper to build save payload using ref for lastPage (never overwrites with 1)
   const doSave = useCallback(() => {
     window.api.books.saveData(bookId, {
-      bookmarks, annotations, drawings: pageDrawings,
+      bookmarks,
+      annotations,
+      drawings: pageDrawings,
       lastPage: savedLastPageRef.current
     })
   }, [bookId, bookmarks, annotations, pageDrawings])
@@ -973,7 +980,9 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       if (el) {
         isScrollingToPage.current = true
         el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        setTimeout(() => { isScrollingToPage.current = false }, 500)
+        setTimeout(() => {
+          isScrollingToPage.current = false
+        }, 500)
       }
     },
     [totalPages, getPageLabel]
@@ -987,8 +996,9 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       setPendingGoToPage(null)
 
       // Explicitly render the target page and nearby pages first
-      const pagesToRender = [target - 2, target - 1, target, target + 1, target + 2]
-        .filter((p) => p >= 1 && p <= totalPages)
+      const pagesToRender = [target - 2, target - 1, target, target + 1, target + 2].filter(
+        (p) => p >= 1 && p <= totalPages
+      )
       for (const p of pagesToRender) {
         if (!renderedPagesRef.current.has(p)) {
           renderPageRef.current(p)
@@ -1002,7 +1012,9 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
           if (el) {
             isScrollingToPage.current = true
             el.scrollIntoView({ behavior: 'instant', block: 'start' })
-            setTimeout(() => { isScrollingToPage.current = false }, 500)
+            setTimeout(() => {
+              isScrollingToPage.current = false
+            }, 500)
           }
           setCurrentPage(target)
           setPageInput(getPageLabel(target))
@@ -1207,7 +1219,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       const removed = existing[existing.length - 1]
       setRedoStack((rs) => ({
         ...rs,
-        [currentPage]: [...(rs[currentPage] || []), removed],
+        [currentPage]: [...(rs[currentPage] || []), removed]
       }))
       return { ...prev, [currentPage]: existing.slice(0, -1) }
     })
@@ -1220,7 +1232,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
       const restored = stack[stack.length - 1]
       setPageDrawings((pd) => ({
         ...pd,
-        [currentPage]: [...(pd[currentPage] || []), restored],
+        [currentPage]: [...(pd[currentPage] || []), restored]
       }))
       return { ...prev, [currentPage]: stack.slice(0, -1) }
     })
@@ -1232,7 +1244,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
     // Push all cleared strokes (reversed) onto redo so clear can be undone
     setRedoStack((prev) => ({
       ...prev,
-      [currentPage]: [...(prev[currentPage] || []), ...existing.slice().reverse()],
+      [currentPage]: [...(prev[currentPage] || []), ...existing.slice().reverse()]
     }))
     setPageDrawings((prev) => {
       const next = { ...prev }
@@ -1244,7 +1256,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
   const currentPageHasStrokes = (pageDrawings[currentPage]?.length ?? 0) > 0
   const currentPageHasRedo = (redoStack[currentPage]?.length ?? 0) > 0
 
-  const pageAnnotations = annotations.filter((a) => a.page === currentPage)
+  const _pageAnnotations = annotations.filter((a) => a.page === currentPage)
 
   if (loading) {
     return (
@@ -1377,7 +1389,15 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
           }`}
           title="Table of Contents"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 inline">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4 inline"
+          >
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="12" x2="16" y2="12" />
             <line x1="3" y1="18" x2="18" y2="18" />
@@ -1399,9 +1419,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
         <button
           onClick={addBookmark}
           className={`px-2 py-1 rounded text-sm transition-colors ${
-            isPageBookmarked
-              ? 'bg-amber-500/20 text-amber-400'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+            isPageBookmarked ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
           }`}
           title={isPageBookmarked ? 'Page bookmarked' : 'Bookmark this page'}
         >
@@ -1445,7 +1463,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                if (searchResults.length > 0 && searchQuery === searchQuery) {
+                if (searchResults.length > 0 && searchQuery.trim().length > 0) {
                   nextSearchResult()
                 } else {
                   handleSearch()
@@ -1466,10 +1484,16 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
               <span className="text-sm text-gray-400">
                 {currentSearchIdx + 1} of {searchResults.length} pages
               </span>
-              <button onClick={prevSearchResult} className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm">
+              <button
+                onClick={prevSearchResult}
+                className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm"
+              >
                 ▲
               </button>
-              <button onClick={nextSearchResult} className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm">
+              <button
+                onClick={nextSearchResult}
+                className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm"
+              >
                 ▼
               </button>
             </>
@@ -1537,83 +1561,87 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                 }
 
                 return tocEntries.map((entry, idx) => {
-                // Determine if this entry has children (next entry has higher level)
-                const hasChildren = idx < tocEntries.length - 1 && tocEntries[idx + 1].level > entry.level
-                const isCollapsed = collapsedSections.has(idx)
+                  // Determine if this entry has children (next entry has higher level)
+                  const hasChildren = idx < tocEntries.length - 1 && tocEntries[idx + 1].level > entry.level
+                  const isCollapsed = collapsedSections.has(idx)
 
-                // Check if this entry is hidden because an ancestor is collapsed
-                let hidden = false
-                {
-                  let searchLevel = entry.level
-                  for (let p = idx - 1; p >= 0 && searchLevel > 0; p--) {
-                    if (tocEntries[p].level < searchLevel) {
-                      if (collapsedSections.has(p)) {
-                        hidden = true
-                        break
+                  // Check if this entry is hidden because an ancestor is collapsed
+                  let hidden = false
+                  {
+                    let searchLevel = entry.level
+                    for (let p = idx - 1; p >= 0 && searchLevel > 0; p--) {
+                      if (tocEntries[p].level < searchLevel) {
+                        if (collapsedSections.has(p)) {
+                          hidden = true
+                          break
+                        }
+                        searchLevel = tocEntries[p].level
                       }
-                      searchLevel = tocEntries[p].level
                     }
                   }
-                }
 
-                if (hidden) return null
+                  if (hidden) return null
 
-                const isCrossRefDivider = entry.page === 0 && !entry.crossRef
-                const isActive = idx === activeIdx && !isCrossRefDivider
+                  const isCrossRefDivider = entry.page === 0 && !entry.crossRef
+                  const isActive = idx === activeIdx && !isCrossRefDivider
 
-                const toggleCollapse = (e: React.MouseEvent) => {
-                  e.stopPropagation()
-                  setCollapsedSections((prev) => {
-                    const next = new Set(prev)
-                    if (next.has(idx)) next.delete(idx)
-                    else next.add(idx)
-                    return next
-                  })
-                }
+                  const toggleCollapse = (e: React.MouseEvent) => {
+                    e.stopPropagation()
+                    setCollapsedSections((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(idx)) next.delete(idx)
+                      else next.add(idx)
+                      return next
+                    })
+                  }
 
-                return (
-                  <div
-                    key={`${entry.title}-${entry.page}-${idx}`}
-                    className={`flex items-center rounded transition-colors ${
-                      isActive
-                        ? 'bg-amber-600/20 text-amber-400'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-gray-200'
-                    }`}
-                    style={{ paddingLeft: `${4 + entry.level * 12}px` }}
-                  >
-                    {/* Expand/collapse toggle */}
-                    {hasChildren ? (
-                      <button
-                        onClick={toggleCollapse}
-                        className="w-4 h-4 flex items-center justify-center text-[10px] text-gray-500 hover:text-gray-300 shrink-0"
-                      >
-                        {isCollapsed ? '▶' : '▼'}
-                      </button>
-                    ) : (
-                      <span className="w-4 shrink-0" />
-                    )}
-
-                    {/* Navigation button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (entry.crossRef && onOpenBook) {
-                          onOpenBook(entry.crossRef.bookId, entry.crossRef.page)
-                        } else if (entry.page > 0) {
-                          setUserSelectedTocIdx(idx)
-                          goToPage(entry.page)
-                        }
-                      }}
-                      className={`flex-1 text-left px-1 py-1 text-xs flex items-center justify-between gap-1 min-w-0 ${
-                        entry.crossRef ? 'text-blue-400 hover:text-blue-300' : ''
+                  return (
+                    <div
+                      key={`${entry.title}-${entry.page}-${idx}`}
+                      className={`flex items-center rounded transition-colors ${
+                        isActive
+                          ? 'bg-amber-600/20 text-amber-400'
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-gray-200'
                       }`}
+                      style={{ paddingLeft: `${4 + entry.level * 12}px` }}
                     >
-                      <span className="truncate">{entry.title}</span>
-                      {entry.page > 0 && <span className="text-[10px] text-gray-500 shrink-0">{entry.crossRef ? '↗' : entry.page}</span>}
-                    </button>
-                  </div>
-                )
-              })
+                      {/* Expand/collapse toggle */}
+                      {hasChildren ? (
+                        <button
+                          onClick={toggleCollapse}
+                          className="w-4 h-4 flex items-center justify-center text-[10px] text-gray-500 hover:text-gray-300 shrink-0"
+                        >
+                          {isCollapsed ? '▶' : '▼'}
+                        </button>
+                      ) : (
+                        <span className="w-4 shrink-0" />
+                      )}
+
+                      {/* Navigation button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (entry.crossRef && onOpenBook) {
+                            onOpenBook(entry.crossRef.bookId, entry.crossRef.page)
+                          } else if (entry.page > 0) {
+                            setUserSelectedTocIdx(idx)
+                            goToPage(entry.page)
+                          }
+                        }}
+                        className={`flex-1 text-left px-1 py-1 text-xs flex items-center justify-between gap-1 min-w-0 ${
+                          entry.crossRef ? 'text-blue-400 hover:text-blue-300' : ''
+                        }`}
+                      >
+                        <span className="truncate">{entry.title}</span>
+                        {entry.page > 0 && (
+                          <span className="text-[10px] text-gray-500 shrink-0">
+                            {entry.crossRef ? '↗' : entry.page}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  )
+                })
               })()}
             </div>
           </div>
@@ -1634,9 +1662,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                       <button
                         onClick={() => goToPage(bm.page)}
                         className={`flex-1 text-left text-xs px-2 py-1 rounded transition-colors ${
-                          bm.page === currentPage
-                            ? 'bg-amber-600/20 text-amber-400'
-                            : 'text-gray-300 hover:bg-gray-800'
+                          bm.page === currentPage ? 'bg-amber-600/20 text-amber-400' : 'text-gray-300 hover:bg-gray-800'
                         }`}
                       >
                         🔖 {bm.label}
@@ -1694,7 +1720,8 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                 const pageStrokes = pageDrawings[pageNum]
                 const hasStrokes = pageStrokes && pageStrokes.length > 0
                 // Only mount drawing canvas on pages that need it
-                const showDrawingOverlay = dim && (hasStrokes || (drawingTool !== 'none' && Math.abs(pageNum - currentPage) <= 2))
+                const showDrawingOverlay =
+                  dim && (hasStrokes || (drawingTool !== 'none' && Math.abs(pageNum - currentPage) <= 2))
 
                 return (
                   <div key={pageNum} className="flex flex-col items-center">
@@ -1709,7 +1736,7 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                         width: dim ? dim.width : 600,
                         minHeight: dim ? dim.height : 800,
                         contentVisibility: 'auto',
-                        containIntrinsicSize: `${dim ? dim.width : 600}px ${dim ? dim.height : 800}px`,
+                        containIntrinsicSize: `${dim ? dim.width : 600}px ${dim ? dim.height : 800}px`
                       }}
                     >
                       <canvas
@@ -1753,7 +1780,10 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                       {pageAnns.length > 0 && (
                         <div className="absolute top-2 right-2 flex flex-col gap-1 max-w-48">
                           {pageAnns.map((ann) => (
-                            <span key={ann.id} className="text-[10px] text-amber-300 bg-amber-900/70 px-1.5 py-0.5 rounded truncate">
+                            <span
+                              key={ann.id}
+                              className="text-[10px] text-amber-300 bg-amber-900/70 px-1.5 py-0.5 rounded truncate"
+                            >
                               📝 {ann.text}
                             </span>
                           ))}
@@ -1772,7 +1802,8 @@ export default function PdfViewer({ bookId, filePath, title, onClose, onOpenBook
                   rows.push(
                     <div key={`spread-${i}`} className="flex flex-col items-center">
                       <div className="py-2 text-xs text-gray-500 select-none">
-                        {leftPage}{rightPage ? `–${rightPage}` : ''} / {totalPages}
+                        {leftPage}
+                        {rightPage ? `–${rightPage}` : ''} / {totalPages}
                       </div>
                       <div className="flex gap-1">
                         {renderPage(leftPage)}

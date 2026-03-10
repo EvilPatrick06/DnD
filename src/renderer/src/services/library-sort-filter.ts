@@ -248,9 +248,7 @@ export function getFilterConfigs(category: LibraryCategory, items: LibraryItem[]
 
   // Helper to extract unique sorted numeric values (as strings) from a data field
   const uniqueNumbers = (field: string): string[] =>
-    [...new Set(items.map((i) => String(i.data[field] ?? '')).filter(Boolean))].sort(
-      (a, b) => Number(a) - Number(b)
-    )
+    [...new Set(items.map((i) => String(i.data[field] ?? '')).filter(Boolean))].sort((a, b) => Number(a) - Number(b))
 
   switch (category) {
     case 'monsters':

@@ -25,6 +25,9 @@ async function bmoPiFetch(path: string, options?: RequestInit): Promise<BridgeRe
         ...options?.headers
       }
     })
+    if (!res.ok) {
+      return { ok: false, error: `HTTP ${res.status}: ${res.statusText}` }
+    }
     return await res.json()
   } catch (err) {
     return { error: err instanceof Error ? err.message : String(err) }
@@ -44,11 +47,7 @@ export async function stopDiscordDm(): Promise<BridgeResponse> {
   return bmoPiFetch('/api/discord/dm/stop', { method: 'POST' })
 }
 
-export async function sendNarration(
-  text: string,
-  npc?: string,
-  emotion?: string
-): Promise<BridgeResponse> {
+export async function sendNarration(text: string, npc?: string, emotion?: string): Promise<BridgeResponse> {
   return bmoPiFetch('/api/discord/dm/narrate', {
     method: 'POST',
     body: JSON.stringify({ text, npc, emotion })

@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import diceTypesJson from '@data/5e/game/mechanics/dice-types.json'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { load5eDiceTypes } from '../../../services/data-provider'
 import { parseDiceFormula, rollDice } from '../../../services/dice/dice-engine'
 import { play, playDiceSound } from '../../../services/sound-manager'

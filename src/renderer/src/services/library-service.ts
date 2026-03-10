@@ -80,40 +80,160 @@ export const SOUND_INVENTORY: { id: string; name: string; subcategory: string; p
   { id: 'combat-death', name: 'Death', subcategory: 'combat', path: '/sounds/combat/death.mp3' },
   { id: 'combat-instant-kill', name: 'Instant Kill', subcategory: 'combat', path: '/sounds/combat/instant-kill.mp3' },
   { id: 'combat-melee-attack', name: 'Melee Attack', subcategory: 'combat', path: '/sounds/combat/melee-attack.mp3' },
-  { id: 'combat-ranged-attack', name: 'Ranged Attack', subcategory: 'combat', path: '/sounds/combat/ranged-attack.mp3' },
+  {
+    id: 'combat-ranged-attack',
+    name: 'Ranged Attack',
+    subcategory: 'combat',
+    path: '/sounds/combat/ranged-attack.mp3'
+  },
   { id: 'combat-stabilize', name: 'Stabilize', subcategory: 'combat', path: '/sounds/combat/stabilize.mp3' },
   // Conditions (11)
   { id: 'conditions-apply', name: 'Apply Condition', subcategory: 'conditions', path: '/sounds/conditions/apply.mp3' },
   { id: 'conditions-blinded', name: 'Blinded', subcategory: 'conditions', path: '/sounds/conditions/blinded.mp3' },
   { id: 'conditions-charmed', name: 'Charmed', subcategory: 'conditions', path: '/sounds/conditions/charmed.mp3' },
-  { id: 'conditions-exhaustion', name: 'Exhaustion', subcategory: 'conditions', path: '/sounds/conditions/exhaustion.mp3' },
-  { id: 'conditions-frightened', name: 'Frightened', subcategory: 'conditions', path: '/sounds/conditions/frightened.mp3' },
-  { id: 'conditions-paralyzed', name: 'Paralyzed', subcategory: 'conditions', path: '/sounds/conditions/paralyzed.mp3' },
+  {
+    id: 'conditions-exhaustion',
+    name: 'Exhaustion',
+    subcategory: 'conditions',
+    path: '/sounds/conditions/exhaustion.mp3'
+  },
+  {
+    id: 'conditions-frightened',
+    name: 'Frightened',
+    subcategory: 'conditions',
+    path: '/sounds/conditions/frightened.mp3'
+  },
+  {
+    id: 'conditions-paralyzed',
+    name: 'Paralyzed',
+    subcategory: 'conditions',
+    path: '/sounds/conditions/paralyzed.mp3'
+  },
   { id: 'conditions-poisoned', name: 'Poisoned', subcategory: 'conditions', path: '/sounds/conditions/poisoned.mp3' },
   { id: 'conditions-prone', name: 'Prone', subcategory: 'conditions', path: '/sounds/conditions/prone.mp3' },
-  { id: 'conditions-restrained', name: 'Restrained', subcategory: 'conditions', path: '/sounds/conditions/restrained.mp3' },
+  {
+    id: 'conditions-restrained',
+    name: 'Restrained',
+    subcategory: 'conditions',
+    path: '/sounds/conditions/restrained.mp3'
+  },
   { id: 'conditions-stunned', name: 'Stunned', subcategory: 'conditions', path: '/sounds/conditions/stunned.mp3' },
-  { id: 'conditions-unconscious', name: 'Unconscious', subcategory: 'conditions', path: '/sounds/conditions/unconscious.mp3' },
+  {
+    id: 'conditions-unconscious',
+    name: 'Unconscious',
+    subcategory: 'conditions',
+    path: '/sounds/conditions/unconscious.mp3'
+  },
   // Creatures - Beasts (9)
-  { id: 'creatures-beasts-bat', name: 'Bat', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/bat.mp3' },
-  { id: 'creatures-beasts-bear', name: 'Bear', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/bear.mp3' },
-  { id: 'creatures-beasts-crow', name: 'Crow', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/crow.mp3' },
-  { id: 'creatures-beasts-horse', name: 'Horse', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/horse.mp3' },
-  { id: 'creatures-beasts-owl', name: 'Owl', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/owl.mp3' },
-  { id: 'creatures-beasts-rat', name: 'Rat', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/rat.mp3' },
-  { id: 'creatures-beasts-snake', name: 'Snake', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/snake.mp3' },
-  { id: 'creatures-beasts-spider', name: 'Spider', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/spider.mp3' },
-  { id: 'creatures-beasts-wolf', name: 'Wolf', subcategory: 'creatures/beasts', path: '/sounds/creatures/beasts/wolf.mp3' },
+  {
+    id: 'creatures-beasts-bat',
+    name: 'Bat',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/bat.mp3'
+  },
+  {
+    id: 'creatures-beasts-bear',
+    name: 'Bear',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/bear.mp3'
+  },
+  {
+    id: 'creatures-beasts-crow',
+    name: 'Crow',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/crow.mp3'
+  },
+  {
+    id: 'creatures-beasts-horse',
+    name: 'Horse',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/horse.mp3'
+  },
+  {
+    id: 'creatures-beasts-owl',
+    name: 'Owl',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/owl.mp3'
+  },
+  {
+    id: 'creatures-beasts-rat',
+    name: 'Rat',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/rat.mp3'
+  },
+  {
+    id: 'creatures-beasts-snake',
+    name: 'Snake',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/snake.mp3'
+  },
+  {
+    id: 'creatures-beasts-spider',
+    name: 'Spider',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/spider.mp3'
+  },
+  {
+    id: 'creatures-beasts-wolf',
+    name: 'Wolf',
+    subcategory: 'creatures/beasts',
+    path: '/sounds/creatures/beasts/wolf.mp3'
+  },
   // Creatures - Monsters (9)
-  { id: 'creatures-monsters-demon', name: 'Demon', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/demon.mp3' },
-  { id: 'creatures-monsters-dragon', name: 'Dragon', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/dragon.mp3' },
-  { id: 'creatures-monsters-elemental', name: 'Elemental', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/elemental.mp3' },
-  { id: 'creatures-monsters-ghost', name: 'Ghost', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/ghost.mp3' },
-  { id: 'creatures-monsters-giant', name: 'Giant', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/giant.mp3' },
-  { id: 'creatures-monsters-goblin', name: 'Goblin', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/goblin.mp3' },
-  { id: 'creatures-monsters-ogre', name: 'Ogre', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/ogre.mp3' },
-  { id: 'creatures-monsters-troll', name: 'Troll', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/troll.mp3' },
-  { id: 'creatures-monsters-undead', name: 'Undead', subcategory: 'creatures/monsters', path: '/sounds/creatures/monsters/undead.mp3' },
+  {
+    id: 'creatures-monsters-demon',
+    name: 'Demon',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/demon.mp3'
+  },
+  {
+    id: 'creatures-monsters-dragon',
+    name: 'Dragon',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/dragon.mp3'
+  },
+  {
+    id: 'creatures-monsters-elemental',
+    name: 'Elemental',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/elemental.mp3'
+  },
+  {
+    id: 'creatures-monsters-ghost',
+    name: 'Ghost',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/ghost.mp3'
+  },
+  {
+    id: 'creatures-monsters-giant',
+    name: 'Giant',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/giant.mp3'
+  },
+  {
+    id: 'creatures-monsters-goblin',
+    name: 'Goblin',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/goblin.mp3'
+  },
+  {
+    id: 'creatures-monsters-ogre',
+    name: 'Ogre',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/ogre.mp3'
+  },
+  {
+    id: 'creatures-monsters-troll',
+    name: 'Troll',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/troll.mp3'
+  },
+  {
+    id: 'creatures-monsters-undead',
+    name: 'Undead',
+    subcategory: 'creatures/monsters',
+    path: '/sounds/creatures/monsters/undead.mp3'
+  },
   // Dice (36)
   { id: 'dice-advantage-1', name: 'Advantage (1)', subcategory: 'dice', path: '/sounds/dice/advantage-1.mp3' },
   { id: 'dice-advantage-2', name: 'Advantage (2)', subcategory: 'dice', path: '/sounds/dice/advantage-2.mp3' },
@@ -161,7 +281,12 @@ export const SOUND_INVENTORY: { id: string; name: string; subcategory: string; p
   { id: 'spells-fizzle', name: 'Fizzle', subcategory: 'spells', path: '/sounds/spells/fizzle.mp3' },
   { id: 'spells-illusion', name: 'Illusion', subcategory: 'spells', path: '/sounds/spells/illusion.mp3' },
   { id: 'spells-necromancy', name: 'Necromancy', subcategory: 'spells', path: '/sounds/spells/necromancy.mp3' },
-  { id: 'spells-transmutation', name: 'Transmutation', subcategory: 'spells', path: '/sounds/spells/transmutation.mp3' },
+  {
+    id: 'spells-transmutation',
+    name: 'Transmutation',
+    subcategory: 'spells',
+    path: '/sounds/spells/transmutation.mp3'
+  },
   // UI (16)
   { id: 'ui-announcement', name: 'Announcement', subcategory: 'ui', path: '/sounds/ui/announcement.mp3' },
   { id: 'ui-bastion-event', name: 'Bastion Event', subcategory: 'ui', path: '/sounds/ui/bastion-event.mp3' },
@@ -180,23 +305,53 @@ export const SOUND_INVENTORY: { id: string; name: string; subcategory: string; p
   { id: 'ui-turn-notify', name: 'Turn Notify', subcategory: 'ui', path: '/sounds/ui/turn-notify.mp3' },
   { id: 'ui-xp-gain', name: 'XP Gain', subcategory: 'ui', path: '/sounds/ui/xp-gain.mp3' },
   // Weapons - Magic (4)
-  { id: 'weapons-magic-flaming', name: 'Flaming', subcategory: 'weapons/magic', path: '/sounds/weapons/magic/flaming.mp3' },
+  {
+    id: 'weapons-magic-flaming',
+    name: 'Flaming',
+    subcategory: 'weapons/magic',
+    path: '/sounds/weapons/magic/flaming.mp3'
+  },
   { id: 'weapons-magic-frost', name: 'Frost', subcategory: 'weapons/magic', path: '/sounds/weapons/magic/frost.mp3' },
   { id: 'weapons-magic-holy', name: 'Holy', subcategory: 'weapons/magic', path: '/sounds/weapons/magic/holy.mp3' },
-  { id: 'weapons-magic-lightning', name: 'Lightning', subcategory: 'weapons/magic', path: '/sounds/weapons/magic/lightning.mp3' },
+  {
+    id: 'weapons-magic-lightning',
+    name: 'Lightning',
+    subcategory: 'weapons/magic',
+    path: '/sounds/weapons/magic/lightning.mp3'
+  },
   // Weapons - Melee (9)
   { id: 'weapons-melee-axe', name: 'Axe', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/axe.mp3' },
-  { id: 'weapons-melee-dagger', name: 'Dagger', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/dagger.mp3' },
-  { id: 'weapons-melee-hammer', name: 'Hammer', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/hammer.mp3' },
+  {
+    id: 'weapons-melee-dagger',
+    name: 'Dagger',
+    subcategory: 'weapons/melee',
+    path: '/sounds/weapons/melee/dagger.mp3'
+  },
+  {
+    id: 'weapons-melee-hammer',
+    name: 'Hammer',
+    subcategory: 'weapons/melee',
+    path: '/sounds/weapons/melee/hammer.mp3'
+  },
   { id: 'weapons-melee-mace', name: 'Mace', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/mace.mp3' },
-  { id: 'weapons-melee-shield-bash', name: 'Shield Bash', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/shield-bash.mp3' },
+  {
+    id: 'weapons-melee-shield-bash',
+    name: 'Shield Bash',
+    subcategory: 'weapons/melee',
+    path: '/sounds/weapons/melee/shield-bash.mp3'
+  },
   { id: 'weapons-melee-spear', name: 'Spear', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/spear.mp3' },
   { id: 'weapons-melee-staff', name: 'Staff', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/staff.mp3' },
   { id: 'weapons-melee-sword', name: 'Sword', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/sword.mp3' },
   { id: 'weapons-melee-whip', name: 'Whip', subcategory: 'weapons/melee', path: '/sounds/weapons/melee/whip.mp3' },
   // Weapons - Ranged (2)
   { id: 'weapons-ranged-bow', name: 'Bow', subcategory: 'weapons/ranged', path: '/sounds/weapons/ranged/bow.mp3' },
-  { id: 'weapons-ranged-crossbow', name: 'Crossbow', subcategory: 'weapons/ranged', path: '/sounds/weapons/ranged/crossbow.mp3' }
+  {
+    id: 'weapons-ranged-crossbow',
+    name: 'Crossbow',
+    subcategory: 'weapons/ranged',
+    path: '/sounds/weapons/ranged/crossbow.mp3'
+  }
 ]
 
 export function summarizeItem(item: Record<string, unknown>, category: LibraryCategory): string {
@@ -607,9 +762,12 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
         for (const [i, seed] of seeds.entries()) {
           items.push({
             id: `adventure-seed-${range}-${i}`,
-            name: typeof seed === 'string' ? seed.slice(0, 80) : (seed as Record<string, unknown>).name ?? `Seed ${i + 1}`,
+            name:
+              typeof seed === 'string'
+                ? seed.slice(0, 80)
+                : ((seed as Record<string, unknown>).name ?? `Seed ${i + 1}`),
             levelRange: range,
-            description: typeof seed === 'string' ? seed : (seed as Record<string, unknown>).description ?? ''
+            description: typeof seed === 'string' ? seed : ((seed as Record<string, unknown>).description ?? '')
           })
         }
       }
@@ -621,7 +779,9 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
       if (!presets) return hbItems
       const items = Object.entries(presets).map(([key, val]) => ({
         id: key,
-        name: (val as Record<string, unknown>).name ?? key.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        name:
+          (val as Record<string, unknown>).name ??
+          key.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
         ...(val as Record<string, unknown>)
       }))
       return [...toLibraryItems(items as unknown as Record<string, unknown>[], category), ...hbItems]
@@ -654,7 +814,9 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
       const data = await load5eLightSources()
       const items = Object.entries(data).map(([key, val]) => ({
         id: key,
-        name: (val as Record<string, unknown>).label ?? key.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        name:
+          (val as Record<string, unknown>).label ??
+          key.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
         ...(val as Record<string, unknown>)
       }))
       return [...toLibraryItems(items as unknown as Record<string, unknown>[], category), ...hbItems]
@@ -663,7 +825,10 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
       const data = await load5eSentientItems()
       const items = Object.entries(data).map(([key, val]) => ({
         id: key,
-        name: key.replace(/([A-Z])/g, ' $1').replace(/^./, (c: string) => c.toUpperCase()).trim(),
+        name: key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (c: string) => c.toUpperCase())
+          .trim(),
         entries: Array.isArray(val) ? val : [],
         ...(typeof val === 'object' && !Array.isArray(val) ? (val as Record<string, unknown>) : {})
       }))
@@ -676,11 +841,11 @@ export async function loadCategoryItems(category: LibraryCategory, homebrew: Hom
         const presetMaps = await load5eBuiltInMaps()
         for (const m of presetMaps) {
           items.push({
-            id: (m as Record<string, unknown>).id as string ?? '',
-            name: (m as Record<string, unknown>).name as string ?? 'Unknown Map',
+            id: ((m as Record<string, unknown>).id as string) ?? '',
+            name: ((m as Record<string, unknown>).name as string) ?? 'Unknown Map',
             category: 'maps',
             source: 'official',
-            summary: (m as Record<string, unknown>).preview as string ?? 'Preset Map',
+            summary: ((m as Record<string, unknown>).preview as string) ?? 'Preset Map',
             data: m as unknown as Record<string, unknown>
           })
         }

@@ -9,7 +9,12 @@ interface ImagePreviewItemProps {
   onToggleFavorite?: (id: string) => void
 }
 
-export default function ImagePreviewItem({ item, onClick, isFavorite, onToggleFavorite }: ImagePreviewItemProps): JSX.Element {
+export default function ImagePreviewItem({
+  item,
+  onClick,
+  isFavorite,
+  onToggleFavorite
+}: ImagePreviewItemProps): JSX.Element {
   const imageData = (item.data.data as string) ?? (item.data.path as string) ?? ''
   const isDataUrl = imageData.startsWith('data:')
 

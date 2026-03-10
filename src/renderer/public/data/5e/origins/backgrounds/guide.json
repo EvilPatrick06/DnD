@@ -6,7 +6,19 @@
   "toolProficiency": "Cartographer's Tools",
   "feat": "Magic Initiate (Druid)",
   "equipment": [
-    { "option": "A", "items": ["Shortbow", "20 Arrows", "Cartographer's Tools", "Bedroll", "Quiver", "Tent", "Traveler's Clothes", "3 GP"] },
+    {
+      "option": "A",
+      "items": [
+        "Shortbow",
+        "20 Arrows",
+        "Cartographer's Tools",
+        "Bedroll",
+        "Quiver",
+        "Tent",
+        "Traveler's Clothes",
+        "3 GP"
+      ]
+    },
     { "option": "B", "items": ["50 GP"] }
   ],
   "source": "PHB 2024"

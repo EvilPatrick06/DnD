@@ -1,5 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import dmTabsJson from '@data/ui/dm-tabs.json'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { load5eDmTabs } from '../../../services/data-provider'
 import { useAiDmStore } from '../../../stores/use-ai-dm-store'
 import type { Campaign } from '../../../types/campaign'

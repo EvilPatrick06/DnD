@@ -15,6 +15,6 @@ export function useEquipmentData<T>(loader: () => Promise<T>, initial: T): T {
     loader()
       .then(setData)
       .catch((e) => logger.warn('[useEquipmentData] Failed to load equipment data', e))
-  }, [])
+  }, [loader])
   return data
 }

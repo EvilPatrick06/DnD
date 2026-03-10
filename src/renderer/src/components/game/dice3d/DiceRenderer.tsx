@@ -111,9 +111,7 @@ export default function DiceRenderer({
       renderer.domElement.remove()
       scene.clear()
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: one-time setup; resize handler manages dimensions
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [height, width])
 
   // ── Resize handler ──
 

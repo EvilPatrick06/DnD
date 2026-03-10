@@ -97,8 +97,7 @@ export function filterCombatLog(entries: CombatLogEntry[], filter: CombatLogFilt
   if (filter.actor) {
     const actor = filter.actor.toLowerCase()
     result = result.filter(
-      (e) =>
-        e.sourceEntityName?.toLowerCase().includes(actor) || e.targetEntityName?.toLowerCase().includes(actor)
+      (e) => e.sourceEntityName?.toLowerCase().includes(actor) || e.targetEntityName?.toLowerCase().includes(actor)
     )
   }
 

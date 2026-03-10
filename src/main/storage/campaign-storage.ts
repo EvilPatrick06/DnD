@@ -105,7 +105,7 @@ export async function deleteCampaign(id: string): Promise<StorageResult<boolean>
     // Cascade: remove all associated data
     const userData = app.getPath('userData')
     const cascadePaths = [
-      join(userData, 'campaigns', id),           // custom-audio, ai-context subdirs
+      join(userData, 'campaigns', id), // custom-audio, ai-context subdirs
       join(userData, 'game-states', `${id}.json`),
       join(userData, 'ai-conversations', `${id}.json`),
       join(userData, 'bans', `${id}.json`)

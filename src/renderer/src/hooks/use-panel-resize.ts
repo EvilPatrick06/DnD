@@ -29,7 +29,7 @@ export function usePanelResize(): PanelResizeResult {
     (delta: number) => {
       setBottomBarHeight(Math.max(160, Math.min(window.innerHeight * 0.6, bottomBarHeight - delta)))
     },
-    [bottomBarHeight, setBottomBarHeight]
+    [bottomBarHeight]
   )
 
   const handleBottomDoubleClick = useCallback(() => {
@@ -40,13 +40,13 @@ export function usePanelResize(): PanelResizeResult {
       prevBottomHeight.current = bottomBarHeight
       setBottomCollapsed(true)
     }
-  }, [bottomCollapsed, bottomBarHeight, setBottomCollapsed, setBottomBarHeight])
+  }, [bottomCollapsed, bottomBarHeight])
 
   const handleSidebarResize = useCallback(
     (delta: number) => {
       setSidebarWidth(Math.max(200, Math.min(500, sidebarWidth + delta)))
     },
-    [sidebarWidth, setSidebarWidth]
+    [sidebarWidth]
   )
 
   const handleSidebarDoubleClick = useCallback(() => {
@@ -57,7 +57,7 @@ export function usePanelResize(): PanelResizeResult {
       prevSidebarWidth.current = sidebarWidth
       setSidebarCollapsed(true)
     }
-  }, [sidebarCollapsed, sidebarWidth, setSidebarCollapsed, setSidebarWidth])
+  }, [sidebarCollapsed, sidebarWidth])
 
   return {
     bottomBarHeight,

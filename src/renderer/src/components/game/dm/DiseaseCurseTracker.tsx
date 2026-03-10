@@ -52,7 +52,7 @@ export default function DiseaseCurseTracker({ onBroadcastResult }: DiseaseCurseT
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [addCurseId, addDiseaseId])
 
   useEffect(() => {
     loadData()

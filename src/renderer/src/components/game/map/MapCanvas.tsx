@@ -301,7 +301,7 @@ export default function MapCanvas({
     measureStartRef.current = null
     isFogPaintingRef.current = false
     lastFogCellRef.current = null
-  }, [activeTool])
+  }, [])
 
   // All overlay rendering effects (grid, fog, walls, lighting, terrain, AoE, movement, weather)
   useMapOverlayEffects({

@@ -6,7 +6,19 @@
   "skillProficiencies": ["Medicine", "Religion"],
   "toolProficiency": "Herbalism Kit",
   "equipment": [
-    { "option": "A", "items": ["Quarterstaff", "Herbalism Kit", "Bedroll", "Book (philosophy)", "Lamp", "Oil (3 flasks)", "Traveler's Clothes", "16 GP"] },
+    {
+      "option": "A",
+      "items": [
+        "Quarterstaff",
+        "Herbalism Kit",
+        "Bedroll",
+        "Book (philosophy)",
+        "Lamp",
+        "Oil (3 flasks)",
+        "Traveler's Clothes",
+        "16 GP"
+      ]
+    },
     { "option": "B", "items": ["50 GP"] }
   ],
   "source": "PHB 2024"

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand'
-import { getOptionsForSlot, load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { addToast } from '../../../hooks/use-toast'
+import { getOptionsForSlot, load5eBackgrounds, load5eClasses, load5eSpecies } from '../../../services/data-provider'
 import { filterOptions } from '../../../types/builder'
 import type { SelectableOption } from '../../../types/character-common'
 import { logger } from '../../../utils/logger'
@@ -36,7 +36,7 @@ export const createSelectionSlice: StateCreator<BuilderState, [], [], SelectionS
       allOptions = await getOptionsForSlot(gameSystem, slot.category, context)
     } catch (err) {
       logger.error('[Builder] Failed to load options for slot', slotId, err)
-      addToast('Failed to load options for ' + slot.label, 'warning')
+      addToast(`Failed to load options for ${slot.label}`, 'warning')
       return
     }
     if (allOptions.length === 0) {

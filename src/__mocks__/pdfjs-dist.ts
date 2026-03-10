@@ -7,11 +7,12 @@ export function getDocument() {
   return {
     promise: Promise.resolve({
       numPages: 0,
-      getPage: () => Promise.resolve({
-        getViewport: () => ({ width: 100, height: 100 }),
-        render: () => ({ promise: Promise.resolve() }),
-        getTextContent: () => Promise.resolve({ items: [] })
-      })
+      getPage: () =>
+        Promise.resolve({
+          getViewport: () => ({ width: 100, height: 100 }),
+          render: () => ({ promise: Promise.resolve() }),
+          getTextContent: () => Promise.resolve({ items: [] })
+        })
     })
   }
 }

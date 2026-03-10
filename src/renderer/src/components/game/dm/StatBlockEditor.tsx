@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import creatureTypesJson from '@data/5e/dm/npcs/creature-types.json'
+import { useState } from 'react'
 import type { MonsterSpeed, MonsterSpellcasting, MonsterTrait } from '../../../services/data-provider'
 import { load5eCreatureTypes } from '../../../services/data-provider'
 import type { CreatureSize, CreatureType, MonsterAction, MonsterStatBlock } from '../../../types/monster'

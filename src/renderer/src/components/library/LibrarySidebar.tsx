@@ -130,7 +130,8 @@ export default function LibrarySidebar({
                       <span className="flex-1 truncate">{cat.label}</span>
                       {(total > 0 || hbCount > 0) && (
                         <span className="text-[10px] bg-gray-700/60 text-gray-400 px-1.5 rounded-full">
-                          {total > 0 ? total : ''}{hbCount > 0 ? `${total > 0 ? ' · ' : ''}${hbCount} custom` : ''}
+                          {total > 0 ? total : ''}
+                          {hbCount > 0 ? `${total > 0 ? ' · ' : ''}${hbCount} custom` : ''}
                         </span>
                       )}
                     </button>

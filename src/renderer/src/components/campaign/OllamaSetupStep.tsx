@@ -300,9 +300,7 @@ export default function OllamaSetupStep({
                 }`}
               />
               {ollamaUrl && !isValidUrl(ollamaUrl) && (
-                <p className="text-red-400 text-xs mt-1">
-                  Please enter a valid URL (e.g. http://localhost:11434)
-                </p>
+                <p className="text-red-400 text-xs mt-1">Please enter a valid URL (e.g. http://localhost:11434)</p>
               )}
               <p className="text-gray-500 text-xs mt-1">
                 Default: http://localhost:11434. Change this to point to a remote GPU server.

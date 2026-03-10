@@ -374,9 +374,7 @@ export default function Hotbar({ characterId, onExecuteMacro }: HotbarProps): JS
                 : `Slot ${SLOT_LABELS[index]} (empty)\nClick or right-click to assign`
             }
             aria-label={
-              slot
-                ? `Hotbar slot ${SLOT_LABELS[index]}: ${slot.name}`
-                : `Hotbar slot ${SLOT_LABELS[index]}: empty`
+              slot ? `Hotbar slot ${SLOT_LABELS[index]}: ${slot.name}` : `Hotbar slot ${SLOT_LABELS[index]}: empty`
             }
           >
             {slot ? (

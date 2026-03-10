@@ -3,7 +3,7 @@
  * Renders freehand paths, lines, rectangles, circles, and text labels.
  */
 
-import { Graphics, Text } from 'pixi.js'
+import { type Graphics, Text } from 'pixi.js'
 import type { DrawingData } from '../../../types/map'
 
 function parseColor(color: string): number {
@@ -17,11 +17,7 @@ function parseColor(color: string): number {
  * Render all drawings onto a PixiJS Graphics object.
  * Text drawings are added as Text children of the container.
  */
-export function drawDrawings(
-  graphics: Graphics,
-  drawings: DrawingData[],
-  isHost: boolean
-): void {
+export function drawDrawings(graphics: Graphics, drawings: DrawingData[], isHost: boolean): void {
   graphics.clear()
 
   // Remove old text children

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useGameEffects } from '../../hooks/use-game-effects'
 import { useGameHandlers } from '../../hooks/use-game-handlers'
@@ -842,31 +842,31 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       {/* Modals */}
       <ModalErrorBoundary modalName="Game Modal" onClose={() => setActiveModal(null)}>
         <GameModalDispatcher
-        activeModal={activeModal}
-        setActiveModal={setActiveModal}
-        effectiveIsDM={effectiveIsDM}
-        isDM={isDM}
-        character={character}
-        playerName={playerName}
-        campaign={campaign}
-        isMyTurn={isMyTurn}
-        handleAction={handleAction}
-        handleRestApply={handleRestApply}
-        getCampaignCharacterIds={getCampaignCharacterIds}
-        setActiveAoE={setActiveAoE}
-        disputeContext={disputeContext}
-        setDisputeContext={setDisputeContext}
-        editingToken={editingToken}
-        setEditingToken={setEditingToken}
-        viewingHandout={viewingHandout}
-        setViewingHandout={setViewingHandout}
-        setConcCheckPrompt={setConcCheckPrompt}
-        handleCompanionSummon={handleCompanionSummon}
-        handleWildShapeTransform={handleWildShapeTransform}
-        handleWildShapeRevert={handleWildShapeRevert}
-        handleWildShapeUseAdjust={handleWildShapeUseAdjust}
-        localPeerId={lobbyPeerId ?? ''}
-      />
+          activeModal={activeModal}
+          setActiveModal={setActiveModal}
+          effectiveIsDM={effectiveIsDM}
+          isDM={isDM}
+          character={character}
+          playerName={playerName}
+          campaign={campaign}
+          isMyTurn={isMyTurn}
+          handleAction={handleAction}
+          handleRestApply={handleRestApply}
+          getCampaignCharacterIds={getCampaignCharacterIds}
+          setActiveAoE={setActiveAoE}
+          disputeContext={disputeContext}
+          setDisputeContext={setDisputeContext}
+          editingToken={editingToken}
+          setEditingToken={setEditingToken}
+          viewingHandout={viewingHandout}
+          setViewingHandout={setViewingHandout}
+          setConcCheckPrompt={setConcCheckPrompt}
+          handleCompanionSummon={handleCompanionSummon}
+          handleWildShapeTransform={handleWildShapeTransform}
+          handleWildShapeRevert={handleWildShapeRevert}
+          handleWildShapeUseAdjust={handleWildShapeUseAdjust}
+          localPeerId={lobbyPeerId ?? ''}
+        />
       </ModalErrorBoundary>
 
       {/* Character Inspect Modal (driven by store state, not activeModal) */}

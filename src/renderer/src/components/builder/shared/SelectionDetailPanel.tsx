@@ -32,7 +32,7 @@ export default function SelectionDetailPanel({ option }: SelectionDetailPanelPro
           </span>
         )}
         <span className="text-xs text-gray-500">
-          {typeof option.source === 'string' ? option.source : (option.source as { book?: string })?.book ?? 'SRD'}
+          {typeof option.source === 'string' ? option.source : ((option.source as { book?: string })?.book ?? 'SRD')}
         </span>
       </div>
 

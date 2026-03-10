@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import type React from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // Drawing tool types
 export type DrawingTool = 'none' | 'highlighter' | 'pencil' | 'marker' | 'eraser'
@@ -26,12 +27,15 @@ interface PdfDrawingOverlayProps {
   onStrokeComplete: (page: number, stroke: DrawingStroke) => void
 }
 
-const TOOL_SETTINGS: Record<DrawingTool, { opacity: number; compositeOp: GlobalCompositeOperation; cap: CanvasLineCap }> = {
+const TOOL_SETTINGS: Record<
+  DrawingTool,
+  { opacity: number; compositeOp: GlobalCompositeOperation; cap: CanvasLineCap }
+> = {
   none: { opacity: 1, compositeOp: 'source-over', cap: 'round' },
   highlighter: { opacity: 0.3, compositeOp: 'source-over', cap: 'square' },
   pencil: { opacity: 1.0, compositeOp: 'source-over', cap: 'round' },
   marker: { opacity: 1.0, compositeOp: 'source-over', cap: 'square' },
-  eraser: { opacity: 1.0, compositeOp: 'destination-out', cap: 'round' },
+  eraser: { opacity: 1.0, compositeOp: 'destination-out', cap: 'round' }
 }
 
 function drawStroke(ctx: CanvasRenderingContext2D, stroke: DrawingStroke): void {
@@ -62,7 +66,7 @@ export default function PdfDrawingOverlay({
   color,
   size,
   strokes,
-  onStrokeComplete,
+  onStrokeComplete
 }: PdfDrawingOverlayProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawing = useRef(false)
@@ -98,7 +102,7 @@ export default function PdfDrawingOverlay({
 
   useEffect(() => {
     redrawAll()
-  }, [strokes, redrawAll])
+  }, [redrawAll])
 
   const getPos = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current
@@ -111,12 +115,12 @@ export default function PdfDrawingOverlay({
       const touch = e.touches[0]
       return {
         x: (touch.clientX - rect.left) * scaleX,
-        y: (touch.clientY - rect.top) * scaleY,
+        y: (touch.clientY - rect.top) * scaleY
       }
     }
     return {
       x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      y: (e.clientY - rect.top) * scaleY
     }
   }, [])
 
@@ -128,7 +132,7 @@ export default function PdfDrawingOverlay({
       color,
       size,
       opacity: settings.opacity,
-      points: [...currentPoints.current],
+      points: [...currentPoints.current]
     }
   }, [activeTool, color, size])
 
@@ -185,7 +189,7 @@ export default function PdfDrawingOverlay({
       style={{
         cursor: activeTool === 'none' ? 'default' : 'crosshair',
         pointerEvents: activeTool === 'none' ? 'none' : 'auto',
-        touchAction: activeTool === 'none' ? 'auto' : 'none',
+        touchAction: activeTool === 'none' ? 'auto' : 'none'
       }}
       onMouseDown={handleStart}
       onMouseMove={handleMove}
@@ -222,7 +226,7 @@ const TOOL_COLORS = [
   '#34D399', // green
   '#F472B6', // pink
   '#FFFFFF', // white
-  '#000000', // black
+  '#000000' // black
 ]
 
 const TOOL_SIZES: Record<DrawingTool, number[]> = {
@@ -230,7 +234,7 @@ const TOOL_SIZES: Record<DrawingTool, number[]> = {
   highlighter: [12, 20, 30, 40],
   pencil: [1, 2, 3, 5],
   marker: [4, 8, 12, 16],
-  eraser: [10, 20, 30, 50],
+  eraser: [10, 20, 30, 50]
 }
 
 export function DrawingToolbar({
@@ -244,7 +248,7 @@ export function DrawingToolbar({
   onRedo,
   onClearPage,
   hasStrokes,
-  hasRedo,
+  hasRedo
 }: DrawingToolbarProps): JSX.Element {
   const [showPicker, setShowPicker] = useState(false)
 
@@ -256,12 +260,20 @@ export function DrawingToolbar({
       id: 'eraser',
       label: 'Eraser',
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#E8998D" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#E8998D"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-4 h-4"
+        >
           <path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L14.6 1.6c.8-.8 2-.8 2.8 0L21 5.2c.8.8.8 2 0 2.8L12 17" />
           <path d="M6 11l5 5" />
         </svg>
-      ),
-    },
+      )
+    }
   ]
 
   const sizes = activeTool !== 'none' ? TOOL_SIZES[activeTool] : []
@@ -274,9 +286,7 @@ export function DrawingToolbar({
           key={tool.id}
           onClick={() => onToolChange(activeTool === tool.id ? 'none' : tool.id)}
           className={`px-2 py-1 rounded text-sm transition-colors ${
-            activeTool === tool.id
-              ? 'bg-amber-600 text-white'
-              : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+            activeTool === tool.id ? 'bg-amber-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
           }`}
           title={tool.label}
         >
@@ -330,7 +340,9 @@ export function DrawingToolbar({
         onClick={onClearPage}
         disabled={!hasStrokes}
         className={`px-2 py-1 rounded text-sm transition-colors ${
-          hasStrokes ? 'bg-gray-800 hover:bg-red-900/50 text-gray-300 hover:text-red-300' : 'bg-gray-800/50 text-gray-600 cursor-not-allowed'
+          hasStrokes
+            ? 'bg-gray-800 hover:bg-red-900/50 text-gray-300 hover:text-red-300'
+            : 'bg-gray-800/50 text-gray-600 cursor-not-allowed'
         }`}
         title="Clear page drawings"
       >
@@ -345,22 +357,25 @@ export function DrawingToolbar({
             <>
               <p className="text-[10px] text-gray-500 uppercase mb-1">Color</p>
               <div className="flex flex-wrap gap-1.5 mb-2">
-            {TOOL_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => {
-                  onColorChange(c)
-                }}
-                className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
-                  c === color ? 'border-amber-400 scale-110' : 'border-gray-600'
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
+                {TOOL_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      onColorChange(c)
+                    }}
+                    className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                      c === color ? 'border-amber-400 scale-110' : 'border-gray-600'
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
               {/* Color wheel + hex input */}
               <div className="flex items-center gap-2 mb-3">
-                <label className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-gray-600 cursor-pointer hover:border-amber-400 transition-colors" title="Pick any color">
+                <label
+                  className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-gray-600 cursor-pointer hover:border-amber-400 transition-colors"
+                  title="Pick any color"
+                >
                   <input
                     type="color"
                     value={color}
@@ -370,7 +385,7 @@ export function DrawingToolbar({
                   <span
                     className="block w-full h-full"
                     style={{
-                      background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                      background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'
                     }}
                   />
                 </label>
@@ -403,7 +418,9 @@ export function DrawingToolbar({
                   onSizeChange(s)
                 }}
                 className={`flex items-center justify-center w-8 h-8 rounded transition-colors ${
-                  s === size ? 'bg-amber-600/30 border border-amber-500' : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'
+                  s === size
+                    ? 'bg-amber-600/30 border border-amber-500'
+                    : 'bg-gray-800 hover:bg-gray-700 border border-gray-700'
                 }`}
                 title={`${s}px`}
               >
@@ -412,7 +429,7 @@ export function DrawingToolbar({
                   style={{
                     width: Math.min(s, 20),
                     height: Math.min(s, 20),
-                    color: activeTool === 'eraser' ? '#9CA3AF' : color,
+                    color: activeTool === 'eraser' ? '#9CA3AF' : color
                   }}
                 />
               </button>

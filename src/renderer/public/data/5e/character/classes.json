@@ -29,37 +29,16 @@
         "primary_ability": "Strength",
         "hit_point_die": "D12",
         "hit_point_die_per": "Barbarian level",
-        "saving_throw_proficiencies": [
-          "Strength",
-          "Constitution"
-        ],
+        "saving_throw_proficiencies": ["Strength", "Constitution"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Animal Handling",
-            "Athletics",
-            "Intimidation",
-            "Nature",
-            "Perception",
-            "Survival"
-          ]
+          "options": ["Animal Handling", "Athletics", "Intimidation", "Nature", "Perception", "Survival"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Medium armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons"],
+        "armor_training": ["Light armor", "Medium armor", "Shields"],
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Greataxe",
-              "4 Handaxes",
-              "Explorer's Pack"
-            ],
+            "items": ["Greataxe", "4 Handaxes", "Explorer's Pack"],
             "gold": 15
           },
           "option_b": {
@@ -71,11 +50,7 @@
         {
           "level": 1,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Rage",
-            "Unarmored Defense",
-            "Weapon Mastery"
-          ],
+          "class_features": ["Rage", "Unarmored Defense", "Weapon Mastery"],
           "rages": 2,
           "rage_damage": 2,
           "weapon_mastery": 2
@@ -83,10 +58,7 @@
         {
           "level": 2,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Danger Sense",
-            "Reckless Attack"
-          ],
+          "class_features": ["Danger Sense", "Reckless Attack"],
           "rages": 2,
           "rage_damage": 2,
           "weapon_mastery": 2
@@ -94,10 +66,7 @@
         {
           "level": 3,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Barbarian Subclass",
-            "Primal Knowledge"
-          ],
+          "class_features": ["Barbarian Subclass", "Primal Knowledge"],
           "rages": 3,
           "rage_damage": 2,
           "weapon_mastery": 2
@@ -105,9 +74,7 @@
         {
           "level": 4,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "rages": 3,
           "rage_damage": 2,
           "weapon_mastery": 3
@@ -115,10 +82,7 @@
         {
           "level": 5,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Extra Attack",
-            "Fast Movement"
-          ],
+          "class_features": ["Extra Attack", "Fast Movement"],
           "rages": 3,
           "rage_damage": 2,
           "weapon_mastery": 3
@@ -126,9 +90,7 @@
         {
           "level": 6,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Subclass feature"
-          ],
+          "class_features": ["Subclass feature"],
           "rages": 4,
           "rage_damage": 2,
           "weapon_mastery": 3
@@ -136,10 +98,7 @@
         {
           "level": 7,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Feral Instinct",
-            "Instinctive Pounce"
-          ],
+          "class_features": ["Feral Instinct", "Instinctive Pounce"],
           "rages": 4,
           "rage_damage": 2,
           "weapon_mastery": 3
@@ -147,9 +106,7 @@
         {
           "level": 8,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "rages": 4,
           "rage_damage": 2,
           "weapon_mastery": 3
@@ -157,9 +114,7 @@
         {
           "level": 9,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Brutal Strike"
-          ],
+          "class_features": ["Brutal Strike"],
           "rages": 4,
           "rage_damage": 3,
           "weapon_mastery": 3
@@ -167,9 +122,7 @@
         {
           "level": 10,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Subclass feature"
-          ],
+          "class_features": ["Subclass feature"],
           "rages": 4,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -177,9 +130,7 @@
         {
           "level": 11,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Relentless Rage"
-          ],
+          "class_features": ["Relentless Rage"],
           "rages": 4,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -187,9 +138,7 @@
         {
           "level": 12,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "rages": 5,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -197,9 +146,7 @@
         {
           "level": 13,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Improved Brutal Strike"
-          ],
+          "class_features": ["Improved Brutal Strike"],
           "rages": 5,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -207,9 +154,7 @@
         {
           "level": 14,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Subclass feature"
-          ],
+          "class_features": ["Subclass feature"],
           "rages": 5,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -217,9 +162,7 @@
         {
           "level": 15,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Persistent Rage"
-          ],
+          "class_features": ["Persistent Rage"],
           "rages": 5,
           "rage_damage": 3,
           "weapon_mastery": 4
@@ -227,9 +170,7 @@
         {
           "level": 16,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "rages": 5,
           "rage_damage": 4,
           "weapon_mastery": 4
@@ -237,9 +178,7 @@
         {
           "level": 17,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Improved Brutal Strike"
-          ],
+          "class_features": ["Improved Brutal Strike"],
           "rages": 6,
           "rage_damage": 4,
           "weapon_mastery": 4
@@ -247,9 +186,7 @@
         {
           "level": 18,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Indomitable Might"
-          ],
+          "class_features": ["Indomitable Might"],
           "rages": 6,
           "rage_damage": 4,
           "weapon_mastery": 4
@@ -257,9 +194,7 @@
         {
           "level": 19,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Epic Boon"
-          ],
+          "class_features": ["Epic Boon"],
           "rages": 6,
           "rage_damage": 4,
           "weapon_mastery": 4
@@ -267,9 +202,7 @@
         {
           "level": 20,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Primal Champion"
-          ],
+          "class_features": ["Primal Champion"],
           "rages": 6,
           "rage_damage": 4,
           "weapon_mastery": 4
@@ -292,11 +225,7 @@
           "active_effects": {
             "damage_resistance": {
               "description": "You have Resistance to Bludgeoning, Piercing, and Slashing damage.",
-              "damage_types": [
-                "Bludgeoning",
-                "Piercing",
-                "Slashing"
-              ]
+              "damage_types": ["Bludgeoning", "Piercing", "Slashing"]
             },
             "rage_damage": {
               "description": "When you make an attack using Strength — with either a weapon or an Unarmed Strike — and deal damage to the target, you gain a bonus to the damage that increases as you gain levels as a Barbarian, as shown in the Rage Damage column of the Barbarian Features table.",
@@ -312,10 +241,7 @@
           },
           "duration": {
             "base": "Until the end of your next turn",
-            "early_end_conditions": [
-              "Don Heavy armor",
-              "Have the Incapacitated condition"
-            ],
+            "early_end_conditions": ["Don Heavy armor", "Have the Incapacitated condition"],
             "extension": {
               "description": "If your Rage is still active on your next turn, you can extend the Rage for another round by doing one of the following:",
               "options": [
@@ -377,24 +303,11 @@
           "description": "You gain proficiency in another skill of your choice from the skill list available to Barbarians at level 1.",
           "additional_skill_proficiency": {
             "choose": 1,
-            "from": [
-              "Animal Handling",
-              "Athletics",
-              "Intimidation",
-              "Nature",
-              "Perception",
-              "Survival"
-            ]
+            "from": ["Animal Handling", "Athletics", "Intimidation", "Nature", "Perception", "Survival"]
           },
           "rage_channel": {
             "description": "While your Rage is active, you can channel primal power when you attempt certain tasks; whenever you make an ability check using one of the following skills, you can make it as a Strength check even if it normally uses a different ability: Acrobatics, Intimidation, Perception, Stealth, or Survival.",
-            "applicable_skills": [
-              "Acrobatics",
-              "Intimidation",
-              "Perception",
-              "Stealth",
-              "Survival"
-            ],
+            "applicable_skills": ["Acrobatics", "Intimidation", "Perception", "Stealth", "Survival"],
             "flavor": "When you use this ability, your Strength represents primal power coursing through you, honing your agility, bearing, and senses."
           }
         },
@@ -402,11 +315,7 @@
           "name": "Ability Score Improvement",
           "level": 4,
           "description": "You gain the Ability Score Improvement feat (see chapter 5) or another feat of your choice for which you qualify. You gain this feature again at Barbarian levels 8, 12, and 16.",
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Extra Attack",
@@ -499,10 +408,7 @@
             "recharge": "Long Rest"
           },
           "rage_auto_duration": "10 minutes",
-          "early_end_conditions": [
-            "Unconscious condition",
-            "Don Heavy armor"
-          ]
+          "early_end_conditions": ["Unconscious condition", "Don Heavy armor"]
         },
         {
           "name": "Improved Brutal Strike (Level 17)",
@@ -552,14 +458,8 @@
               "name": "Mindless Rage",
               "level": 6,
               "description": "You have Immunity to the Charmed and Frightened conditions while your Rage is active. If you're Charmed or Frightened when you enter your Rage, the condition ends on you.",
-              "immunities_while_raging": [
-                "Charmed",
-                "Frightened"
-              ],
-              "clears_on_rage_start": [
-                "Charmed",
-                "Frightened"
-              ]
+              "immunities_while_raging": ["Charmed", "Frightened"],
+              "clears_on_rage_start": ["Charmed", "Frightened"]
             },
             {
               "name": "Retaliation",
@@ -594,10 +494,7 @@
               "name": "Animal Speaker",
               "level": 3,
               "description": "You can cast the Beast Sense and Speak with Animals spells but only as Rituals. Wisdom is your spellcasting ability for them.",
-              "spells": [
-                "Beast Sense",
-                "Speak with Animals"
-              ],
+              "spells": ["Beast Sense", "Speak with Animals"],
               "casting_restriction": "Rituals only",
               "spellcasting_ability": "Wisdom"
             },
@@ -726,10 +623,7 @@
               "description": "During your turn, your reach is 10 feet greater with any Melee weapon that has the Heavy or Versatile property, as tendrils of the World Tree extend from you. When you hit with such a weapon on your turn, you can activate the Push or Topple mastery property in addition to a different mastery property you're using with that weapon.",
               "reach_bonus": 10,
               "weapon_requirement": "Heavy or Versatile Melee weapon",
-              "additional_mastery": [
-                "Push",
-                "Topple"
-              ]
+              "additional_mastery": ["Push", "Topple"]
             },
             {
               "name": "Travel along the Tree",
@@ -758,10 +652,7 @@
               "level": 3,
               "description": "You can channel divine power into your strikes. On each of your turns while your Rage is active, the first creature you hit with a weapon or an Unarmed Strike takes extra damage equal to 1d6 plus half your Barbarian level (round down). The extra damage is Necrotic or Radiant; you choose the type each time you deal the damage.",
               "extra_damage": "1d6 + half Barbarian level (round down)",
-              "damage_type_choices": [
-                "Necrotic",
-                "Radiant"
-              ],
+              "damage_type_choices": ["Necrotic", "Radiant"],
               "frequency": "First creature hit each turn while Rage active"
             },
             {
@@ -819,11 +710,7 @@
                 {
                   "name": "Resistance",
                   "description": "You have Resistance to Necrotic, Psychic, and Radiant damage.",
-                  "damage_types": [
-                    "Necrotic",
-                    "Psychic",
-                    "Radiant"
-                  ]
+                  "damage_types": ["Necrotic", "Psychic", "Radiant"]
                 },
                 {
                   "name": "Revivification",
@@ -861,32 +748,20 @@
         "primary_ability": "Charisma",
         "hit_point_die": "D8",
         "hit_point_die_per": "Bard level",
-        "saving_throw_proficiencies": [
-          "Dexterity",
-          "Charisma"
-        ],
+        "saving_throw_proficiencies": ["Dexterity", "Charisma"],
         "skill_proficiencies": {
           "choose": 3,
           "options": "Any skills"
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
         "tool_proficiencies": {
           "choose": 3,
           "options": "Musical Instruments"
         },
-        "armor_training": [
-          "Light armor"
-        ],
+        "armor_training": ["Light armor"],
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Leather Armor",
-              "2 Daggers",
-              "Musical Instrument of your choice",
-              "Entertainer's Pack"
-            ],
+            "items": ["Leather Armor", "2 Daggers", "Musical Instrument of your choice", "Entertainer's Pack"],
             "gold": 19
           },
           "option_b": {
@@ -898,10 +773,7 @@
         {
           "level": 1,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Bardic Inspiration",
-            "Spellcasting"
-          ],
+          "class_features": ["Bardic Inspiration", "Spellcasting"],
           "bardic_die": "D6",
           "cantrips": 2,
           "prepared_spells": 4,
@@ -912,10 +784,7 @@
         {
           "level": 2,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Expertise",
-            "Jack of All Trades"
-          ],
+          "class_features": ["Expertise", "Jack of All Trades"],
           "bardic_die": "D6",
           "cantrips": 2,
           "prepared_spells": 5,
@@ -926,9 +795,7 @@
         {
           "level": 3,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Bard Subclass"
-          ],
+          "class_features": ["Bard Subclass"],
           "bardic_die": "D6",
           "cantrips": 2,
           "prepared_spells": 6,
@@ -940,9 +807,7 @@
         {
           "level": 4,
           "proficiency_bonus": 2,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "bardic_die": "D6",
           "cantrips": 3,
           "prepared_spells": 7,
@@ -954,9 +819,7 @@
         {
           "level": 5,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Font of Inspiration"
-          ],
+          "class_features": ["Font of Inspiration"],
           "bardic_die": "D8",
           "cantrips": 3,
           "prepared_spells": 9,
@@ -969,9 +832,7 @@
         {
           "level": 6,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Subclass feature"
-          ],
+          "class_features": ["Subclass feature"],
           "bardic_die": "D8",
           "cantrips": 3,
           "prepared_spells": 10,
@@ -984,9 +845,7 @@
         {
           "level": 7,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Countercharm"
-          ],
+          "class_features": ["Countercharm"],
           "bardic_die": "D8",
           "cantrips": 3,
           "prepared_spells": 11,
@@ -1000,9 +859,7 @@
         {
           "level": 8,
           "proficiency_bonus": 3,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "bardic_die": "D8",
           "cantrips": 3,
           "prepared_spells": 12,
@@ -1016,9 +873,7 @@
         {
           "level": 9,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Expertise"
-          ],
+          "class_features": ["Expertise"],
           "bardic_die": "D8",
           "cantrips": 3,
           "prepared_spells": 14,
@@ -1033,9 +888,7 @@
         {
           "level": 10,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Magical Secrets"
-          ],
+          "class_features": ["Magical Secrets"],
           "bardic_die": "D10",
           "cantrips": 4,
           "prepared_spells": 15,
@@ -1066,9 +919,7 @@
         {
           "level": 12,
           "proficiency_bonus": 4,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "bardic_die": "D10",
           "cantrips": 4,
           "prepared_spells": 16,
@@ -1101,9 +952,7 @@
         {
           "level": 14,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Subclass feature"
-          ],
+          "class_features": ["Subclass feature"],
           "bardic_die": "D10",
           "cantrips": 4,
           "prepared_spells": 17,
@@ -1138,9 +987,7 @@
         {
           "level": 16,
           "proficiency_bonus": 5,
-          "class_features": [
-            "Ability Score Improvement"
-          ],
+          "class_features": ["Ability Score Improvement"],
           "bardic_die": "D12",
           "cantrips": 4,
           "prepared_spells": 18,
@@ -1177,9 +1024,7 @@
         {
           "level": 18,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Superior Inspiration"
-          ],
+          "class_features": ["Superior Inspiration"],
           "bardic_die": "D12",
           "cantrips": 4,
           "prepared_spells": 20,
@@ -1198,9 +1043,7 @@
         {
           "level": 19,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Epic Boon"
-          ],
+          "class_features": ["Epic Boon"],
           "bardic_die": "D12",
           "cantrips": 4,
           "prepared_spells": 21,
@@ -1219,9 +1062,7 @@
         {
           "level": 20,
           "proficiency_bonus": 6,
-          "class_features": [
-            "Words of Creation"
-          ],
+          "class_features": ["Words of Creation"],
           "bardic_die": "D12",
           "cantrips": 4,
           "prepared_spells": 22,
@@ -1281,25 +1122,14 @@
           "spellcasting_focus": "Musical Instrument",
           "cantrips": {
             "initial_known": 2,
-            "recommended": [
-              "Dancing Lights",
-              "Vicious Mockery"
-            ],
+            "recommended": ["Dancing Lights", "Vicious Mockery"],
             "replacement": "Whenever you gain a Bard level, replace one cantrip with another from Bard list",
-            "additional_at": [
-              4,
-              10
-            ]
+            "additional_at": [4, 10]
           },
           "spell_slots_recovery": "Long Rest",
           "prepared_spells": {
             "initial": 4,
-            "recommended": [
-              "Charm Person",
-              "Color Spray",
-              "Dissonant Whispers",
-              "Healing Word"
-            ],
+            "recommended": ["Charm Person", "Color Spray", "Dissonant Whispers", "Healing Word"],
             "changing": "Whenever you gain a Bard level, you can replace one spell on your list with another Bard spell for which you have spell slots."
           }
         },
@@ -1308,10 +1138,7 @@
           "level": 2,
           "description": "You gain Expertise in two of your skill proficiencies of your choice. Performance and Persuasion are recommended if you have proficiency in them.",
           "skills": 2,
-          "recommended": [
-            "Performance",
-            "Persuasion"
-          ],
+          "recommended": ["Performance", "Persuasion"],
           "additional_at_level_9": {
             "skills": 2
           }
@@ -1326,21 +1153,12 @@
         {
           "name": "Bard Subclass",
           "level": 3,
-          "subclass_options": [
-            "College of Dance",
-            "College of Glamour",
-            "College of Lore",
-            "College of Valor"
-          ]
+          "subclass_options": ["College of Dance", "College of Glamour", "College of Lore", "College of Valor"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Font of Inspiration",
@@ -1362,12 +1180,7 @@
           "name": "Magical Secrets",
           "level": 10,
           "description": "You've learned secrets from various magical traditions. Whenever you reach a Bard level (including this level) and the Prepared Spells number in the Bard Features table increases, you can choose any of your new prepared spells from the Bard, Cleric, Druid, and Wizard spell lists, and the chosen spells count as Bard spells for you. In addition, whenever you replace a spell prepared for this class, you can replace it with a spell from those lists.",
-          "expanded_spell_lists": [
-            "Bard",
-            "Cleric",
-            "Druid",
-            "Wizard"
-          ]
+          "expanded_spell_lists": ["Bard", "Cleric", "Druid", "Wizard"]
         },
         {
           "name": "Superior Inspiration",
@@ -1384,10 +1197,7 @@
           "name": "Words of Creation",
           "level": 20,
           "description": "You have mastered two of the Words of Creation: the words of life and death. You therefore always have the Power Word Heal and Power Word Kill spells prepared. When you cast either spell, you can target a second creature with it if that creature is within 10 feet of the first target.",
-          "always_prepared": [
-            "Power Word Heal",
-            "Power Word Kill"
-          ],
+          "always_prepared": ["Power Word Heal", "Power Word Kill"],
           "additional_target_range": 10
         }
       ],
@@ -2129,10 +1939,7 @@
             {
               "name": "Beguiling Magic",
               "level": 3,
-              "always_prepared": [
-                "Charm Person",
-                "Mirror Image"
-              ],
+              "always_prepared": ["Charm Person", "Mirror Image"],
               "additional_effect": {
                 "trigger": "Immediately after you cast an Enchantment or Illusion spell using a spell slot",
                 "target": "A creature you can see within 60 feet",
@@ -2153,9 +1960,7 @@
             {
               "name": "Mantle of Majesty",
               "level": 6,
-              "always_prepared": [
-                "Command"
-              ],
+              "always_prepared": ["Command"],
               "action_type": "Bonus Action",
               "effect": "Cast Command without expending a spell slot, take on unearthly appearance for 1 minute or until Concentration ends. During this time, can cast Command as a Bonus Action without spell slot.",
               "charmed_auto_fail": "Any creature Charmed by you automatically fails its save against Command cast with this feature.",
@@ -2193,11 +1998,7 @@
               "name": "Magical Discoveries",
               "level": 6,
               "spells_learned": 2,
-              "spell_sources": [
-                "Cleric",
-                "Druid",
-                "Wizard"
-              ],
+              "spell_sources": ["Cleric", "Druid", "Wizard"],
               "spell_restriction": "Cantrip or spell for which you have spell slots",
               "always_prepared": true,
               "replacement": "Whenever you gain a Bard level, you can replace one spell with another meeting requirements."
@@ -2238,13 +2039,8 @@
             {
               "name": "Martial Training",
               "level": 3,
-              "proficiencies": [
-                "Martial weapons"
-              ],
-              "armor_training": [
-                "Medium armor",
-                "Shields"
-              ],
+              "proficiencies": ["Martial weapons"],
+              "armor_training": ["Medium armor", "Shields"],
               "spellcasting_focus": "Simple or Martial weapon can be used as Spellcasting Focus for Bard spells"
             },
             {
@@ -2270,37 +2066,16 @@
       "core_traits": {
         "primary_ability": "Wisdom",
         "hit_point_die": "D8",
-        "saving_throw_proficiencies": [
-          "Wisdom",
-          "Charisma"
-        ],
+        "saving_throw_proficiencies": ["Wisdom", "Charisma"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "History",
-            "Insight",
-            "Medicine",
-            "Persuasion",
-            "Religion"
-          ]
+          "options": ["History", "Insight", "Medicine", "Persuasion", "Religion"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Medium armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
+        "armor_training": ["Light armor", "Medium armor", "Shields"],
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Chain Shirt",
-              "Shield",
-              "Mace",
-              "Holy Symbol",
-              "Priest's Pack"
-            ],
+            "items": ["Chain Shirt", "Shield", "Mace", "Holy Symbol", "Priest's Pack"],
             "gold": 7
           },
           "option_b": {
@@ -2324,24 +2099,12 @@
           "spellcasting_focus": "Holy Symbol",
           "cantrips": {
             "initial_known": 3,
-            "recommended": [
-              "Guidance",
-              "Sacred Flame",
-              "Thaumaturgy"
-            ],
-            "additional_at": [
-              4,
-              10
-            ]
+            "recommended": ["Guidance", "Sacred Flame", "Thaumaturgy"],
+            "additional_at": [4, 10]
           },
           "prepared_spells": {
             "initial": 4,
-            "recommended": [
-              "Bless",
-              "Cure Wounds",
-              "Guiding Bolt",
-              "Shield of Faith"
-            ],
+            "recommended": ["Bless", "Cure Wounds", "Guiding Bolt", "Shield of Faith"],
             "changing": "Whenever you finish a Long Rest, you can change your list of prepared spells."
           }
         },
@@ -2398,32 +2161,19 @@
               "range": 30,
               "save": "Wisdom",
               "failed_effect": "Frightened and Incapacitated for 1 minute; tries to move as far from you as possible",
-              "early_end": [
-                "Takes any damage",
-                "You have Incapacitated condition",
-                "You die"
-              ]
+              "early_end": ["Takes any damage", "You have Incapacitated condition", "You die"]
             }
           ]
         },
         {
           "name": "Cleric Subclass",
           "level": 3,
-          "subclass_options": [
-            "Life Domain",
-            "Light Domain",
-            "Trickery Domain",
-            "War Domain"
-          ]
+          "subclass_options": ["Life Domain", "Light Domain", "Trickery Domain", "War Domain"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Sear Undead",
@@ -2692,24 +2442,10 @@
               "name": "Life Domain Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Aid",
-                  "Bless",
-                  "Cure Wounds",
-                  "Lesser Restoration"
-                ],
-                "5": [
-                  "Mass Healing Word",
-                  "Revivify"
-                ],
-                "7": [
-                  "Aura of Life",
-                  "Death Ward"
-                ],
-                "9": [
-                  "Greater Restoration",
-                  "Mass Cure Wounds"
-                ]
+                "3": ["Aid", "Bless", "Cure Wounds", "Lesser Restoration"],
+                "5": ["Mass Healing Word", "Revivify"],
+                "7": ["Aura of Life", "Death Ward"],
+                "9": ["Greater Restoration", "Mass Cure Wounds"]
               }
             },
             {
@@ -2742,24 +2478,10 @@
               "name": "Light Domain Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Burning Hands",
-                  "Faerie Fire",
-                  "Scorching Ray",
-                  "See Invisibility"
-                ],
-                "5": [
-                  "Daylight",
-                  "Fireball"
-                ],
-                "7": [
-                  "Arcane Eye",
-                  "Wall of Fire"
-                ],
-                "9": [
-                  "Flame Strike",
-                  "Scrying"
-                ]
+                "3": ["Burning Hands", "Faerie Fire", "Scorching Ray", "See Invisibility"],
+                "5": ["Daylight", "Fireball"],
+                "7": ["Arcane Eye", "Wall of Fire"],
+                "9": ["Flame Strike", "Scrying"]
               }
             },
             {
@@ -2829,24 +2551,10 @@
               "name": "Trickery Domain Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Charm Person",
-                  "Disguise Self",
-                  "Invisibility",
-                  "Pass without Trace"
-                ],
-                "5": [
-                  "Hypnotic Pattern",
-                  "Nondetection"
-                ],
-                "7": [
-                  "Confusion",
-                  "Dimension Door"
-                ],
-                "9": [
-                  "Dominate Person",
-                  "Modify Memory"
-                ]
+                "3": ["Charm Person", "Disguise Self", "Invisibility", "Pass without Trace"],
+                "5": ["Hypnotic Pattern", "Nondetection"],
+                "7": ["Confusion", "Dimension Door"],
+                "9": ["Dominate Person", "Modify Memory"]
               }
             },
             {
@@ -2886,24 +2594,10 @@
               "name": "War Domain Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Guiding Bolt",
-                  "Magic Weapon",
-                  "Shield of Faith",
-                  "Spiritual Weapon"
-                ],
-                "5": [
-                  "Crusader's Mantle",
-                  "Spirit Guardians"
-                ],
-                "7": [
-                  "Fire Shield",
-                  "Freedom of Movement"
-                ],
-                "9": [
-                  "Hold Monster",
-                  "Steel Wind Strike"
-                ]
+                "3": ["Guiding Bolt", "Magic Weapon", "Shield of Faith", "Spiritual Weapon"],
+                "5": ["Crusader's Mantle", "Spirit Guardians"],
+                "7": ["Fire Shield", "Freedom of Movement"],
+                "9": ["Hold Monster", "Steel Wind Strike"]
               }
             },
             {
@@ -2919,20 +2613,12 @@
               "level": 6,
               "cost": "Channel Divinity",
               "effect": "Cast Shield of Faith or Spiritual Weapon without spell slot; no Concentration, lasts 1 minute",
-              "early_end": [
-                "Cast that spell again",
-                "Incapacitated",
-                "Die"
-              ]
+              "early_end": ["Cast that spell again", "Incapacitated", "Die"]
             },
             {
               "name": "Avatar of Battle",
               "level": 17,
-              "resistances": [
-                "Bludgeoning",
-                "Piercing",
-                "Slashing"
-              ]
+              "resistances": ["Bludgeoning", "Piercing", "Slashing"]
             }
           ]
         }
@@ -2945,10 +2631,7 @@
       "core_traits": {
         "primary_ability": "Wisdom",
         "hit_point_die": "D8",
-        "saving_throw_proficiencies": [
-          "Intelligence",
-          "Wisdom"
-        ],
+        "saving_throw_proficiencies": ["Intelligence", "Wisdom"],
         "skill_proficiencies": {
           "choose": 2,
           "options": [
@@ -2962,16 +2645,9 @@
             "Survival"
           ]
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
-        "tool_proficiencies": [
-          "Herbalism Kit"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
+        "tool_proficiencies": ["Herbalism Kit"],
+        "armor_training": ["Light armor", "Shields"],
         "starting_equipment": {
           "option_a": {
             "items": [
@@ -3031,21 +2707,12 @@
         {
           "name": "Druid Subclass",
           "level": 3,
-          "options": [
-            "Circle of the Land",
-            "Circle of the Moon",
-            "Circle of the Sea",
-            "Circle of the Stars"
-          ]
+          "options": ["Circle of the Land", "Circle of the Moon", "Circle of the Sea", "Circle of the Stars"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Wild Resurgence",
@@ -3113,12 +2780,7 @@
       "wild_shape": {
         "activation": "Bonus Action",
         "duration": "Half Druid level in hours",
-        "early_end": [
-          "Use Wild Shape again",
-          "Incapacitated",
-          "Die",
-          "Bonus Action to leave early"
-        ],
+        "early_end": ["Use Wild Shape again", "Incapacitated", "Die", "Bonus Action to leave early"],
         "uses": {
           "initial": 2,
           "recovery": {
@@ -3130,12 +2792,7 @@
           "initial": 4,
           "max_cr": "1/4",
           "fly_speed": false,
-          "recommended": [
-            "Rat",
-            "Riding Horse",
-            "Spider",
-            "Wolf"
-          ],
+          "recommended": ["Rat", "Riding Horse", "Spider", "Wolf"],
           "replacement": "One form on Long Rest",
           "scaling": [
             {
@@ -3189,68 +2846,28 @@
               "changeable_on": "Long Rest",
               "land_types": {
                 "arid": {
-                  "3": [
-                    "Blur",
-                    "Burning Hands",
-                    "Fire Bolt"
-                  ],
-                  "5": [
-                    "Fireball"
-                  ],
-                  "7": [
-                    "Blight"
-                  ],
-                  "9": [
-                    "Wall of Stone"
-                  ]
+                  "3": ["Blur", "Burning Hands", "Fire Bolt"],
+                  "5": ["Fireball"],
+                  "7": ["Blight"],
+                  "9": ["Wall of Stone"]
                 },
                 "polar": {
-                  "3": [
-                    "Fog Cloud",
-                    "Hold Person",
-                    "Ray of Frost"
-                  ],
-                  "5": [
-                    "Sleet Storm"
-                  ],
-                  "7": [
-                    "Ice Storm"
-                  ],
-                  "9": [
-                    "Cone of Cold"
-                  ]
+                  "3": ["Fog Cloud", "Hold Person", "Ray of Frost"],
+                  "5": ["Sleet Storm"],
+                  "7": ["Ice Storm"],
+                  "9": ["Cone of Cold"]
                 },
                 "temperate": {
-                  "3": [
-                    "Misty Step",
-                    "Shocking Grasp",
-                    "Sleep"
-                  ],
-                  "5": [
-                    "Lightning Bolt"
-                  ],
-                  "7": [
-                    "Freedom of Movement"
-                  ],
-                  "9": [
-                    "Tree Stride"
-                  ]
+                  "3": ["Misty Step", "Shocking Grasp", "Sleep"],
+                  "5": ["Lightning Bolt"],
+                  "7": ["Freedom of Movement"],
+                  "9": ["Tree Stride"]
                 },
                 "tropical": {
-                  "3": [
-                    "Acid Splash",
-                    "Ray of Sickness",
-                    "Web"
-                  ],
-                  "5": [
-                    "Stinking Cloud"
-                  ],
-                  "7": [
-                    "Polymorph"
-                  ],
-                  "9": [
-                    "Insect Plague"
-                  ]
+                  "3": ["Acid Splash", "Ray of Sickness", "Web"],
+                  "5": ["Stinking Cloud"],
+                  "7": ["Polymorph"],
+                  "9": ["Insect Plague"]
                 }
               }
             },
@@ -3297,10 +2914,7 @@
               "cost": "Wild Shape use",
               "area": "15-foot Cube on ground within 120 feet",
               "duration": "1 minute or until Incapacitated/die",
-              "benefits": [
-                "Half Cover for you and allies",
-                "Allies gain Nature's Ward Resistance"
-              ],
+              "benefits": ["Half Cover for you and allies", "Allies gain Nature's Ward Resistance"],
               "moveable": "Bonus Action, 60 feet"
             }
           ]
@@ -3321,20 +2935,10 @@
               "level": 3,
               "note": "Can cast these in Wild Shape form",
               "spells": {
-                "3": [
-                  "Cure Wounds",
-                  "Moonbeam",
-                  "Starry Wisp"
-                ],
-                "5": [
-                  "Conjure Animals"
-                ],
-                "7": [
-                  "Fount of Moonlight"
-                ],
-                "9": [
-                  "Mass Cure Wounds"
-                ]
+                "3": ["Cure Wounds", "Moonbeam", "Starry Wisp"],
+                "5": ["Conjure Animals"],
+                "7": ["Fount of Moonlight"],
+                "9": ["Mass Cure Wounds"]
               }
             },
             {
@@ -3368,25 +2972,10 @@
               "name": "Circle of the Sea Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Fog Cloud",
-                  "Gust of Wind",
-                  "Ray of Frost",
-                  "Shatter",
-                  "Thunderwave"
-                ],
-                "5": [
-                  "Lightning Bolt",
-                  "Water Breathing"
-                ],
-                "7": [
-                  "Control Water",
-                  "Ice Storm"
-                ],
-                "9": [
-                  "Conjure Elemental",
-                  "Hold Monster"
-                ]
+                "3": ["Fog Cloud", "Gust of Wind", "Ray of Frost", "Shatter", "Thunderwave"],
+                "5": ["Lightning Bolt", "Water Breathing"],
+                "7": ["Control Water", "Ice Storm"],
+                "9": ["Conjure Elemental", "Hold Monster"]
               }
             },
             {
@@ -3409,11 +2998,7 @@
               "level": 10,
               "while_wrath_active": {
                 "fly_speed": "Equal to Speed",
-                "resistances": [
-                  "Cold",
-                  "Lightning",
-                  "Thunder"
-                ]
+                "resistances": ["Cold", "Lightning", "Thunder"]
               }
             },
             {
@@ -3433,10 +3018,7 @@
               "level": 3,
               "object_size": "Tiny",
               "spellcasting_focus": true,
-              "always_prepared": [
-                "Guidance",
-                "Guiding Bolt"
-              ],
+              "always_prepared": ["Guidance", "Guiding Bolt"],
               "free_guiding_bolt": "Wisdom modifier times per Long Rest",
               "replacement_ceremony": "1-hour during Short or Long Rest",
               "map_forms": [
@@ -3512,10 +3094,7 @@
       "core_traits": {
         "primary_ability": "Strength or Dexterity",
         "hit_point_die": "D10",
-        "saving_throw_proficiencies": [
-          "Strength",
-          "Constitution"
-        ],
+        "saving_throw_proficiencies": ["Strength", "Constitution"],
         "skill_proficiencies": {
           "choose": 2,
           "options": [
@@ -3530,25 +3109,11 @@
             "Survival"
           ]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Medium armor",
-          "Heavy armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons"],
+        "armor_training": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Chain Mail",
-              "Greatsword",
-              "Flail",
-              "8 Javelins",
-              "Dungeoneer's Pack"
-            ],
+            "items": ["Chain Mail", "Greatsword", "Flail", "8 Javelins", "Dungeoneer's Pack"],
             "gold": 4
           },
           "option_b": {
@@ -3630,23 +3195,12 @@
         {
           "name": "Fighter Subclass",
           "level": 3,
-          "options": [
-            "Battle Master",
-            "Champion",
-            "Eldritch Knight",
-            "Psi Warrior"
-          ]
+          "options": ["Battle Master", "Champion", "Eldritch Knight", "Psi Warrior"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            6,
-            8,
-            12,
-            14,
-            16
-          ]
+          "repeat_levels": [6, 8, 12, 14, 16]
         },
         {
           "name": "Extra Attack",
@@ -3926,9 +3480,7 @@
               "focus": "Arcane Focus",
               "cantrips": {
                 "initial": 2,
-                "additional_at": [
-                  10
-                ]
+                "additional_at": [10]
               },
               "third_caster": true
             },
@@ -4076,25 +3628,12 @@
       "core_traits": {
         "primary_ability": "Dexterity and Wisdom",
         "hit_point_die": "D8",
-        "saving_throw_proficiencies": [
-          "Strength",
-          "Dexterity"
-        ],
+        "saving_throw_proficiencies": ["Strength", "Dexterity"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Acrobatics",
-            "Athletics",
-            "History",
-            "Insight",
-            "Religion",
-            "Stealth"
-          ]
+          "options": ["Acrobatics", "Athletics", "History", "Insight", "Religion", "Stealth"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons that have the Light property"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons that have the Light property"],
         "tool_proficiencies": {
           "choose": 1,
           "options": "Artisan's Tools or Musical Instrument"
@@ -4102,12 +3641,7 @@
         "armor_training": "None",
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Spear",
-              "5 Daggers",
-              "Artisan's Tools or Musical Instrument",
-              "Explorer's Pack"
-            ],
+            "items": ["Spear", "5 Daggers", "Artisan's Tools or Musical Instrument", "Explorer's Pack"],
             "gold": 11
           },
           "option_b": {
@@ -4211,11 +3745,7 @@
           "level": 3,
           "action_type": "Reaction",
           "reduction": "1d10 + Dexterity modifier + Monk level",
-          "damage_types": [
-            "Bludgeoning",
-            "Piercing",
-            "Slashing"
-          ],
+          "damage_types": ["Bludgeoning", "Piercing", "Slashing"],
           "redirect": {
             "cost": "1 Focus Point",
             "condition": "Reduce damage to 0",
@@ -4334,11 +3864,7 @@
             {
               "name": "Implements of Mercy",
               "level": 3,
-              "proficiencies": [
-                "Insight",
-                "Medicine",
-                "Herbalism Kit"
-              ]
+              "proficiencies": ["Insight", "Medicine", "Herbalism Kit"]
             },
             {
               "name": "Physician's Touch",
@@ -4439,13 +3965,7 @@
               "cost": "2 Focus Points",
               "area": "20-foot-radius Sphere within 120 feet",
               "damage": "Three Martial Arts die rolls",
-              "damage_types": [
-                "Acid",
-                "Cold",
-                "Fire",
-                "Lightning",
-                "Thunder"
-              ],
+              "damage_types": ["Acid", "Cold", "Fire", "Lightning", "Thunder"],
               "save": "Dexterity (half on success)"
             },
             {
@@ -4526,41 +4046,16 @@
       "core_traits": {
         "primary_ability": "Strength and Charisma",
         "hit_point_die": "D10",
-        "saving_throw_proficiencies": [
-          "Wisdom",
-          "Charisma"
-        ],
+        "saving_throw_proficiencies": ["Wisdom", "Charisma"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Athletics",
-            "Insight",
-            "Intimidation",
-            "Medicine",
-            "Persuasion",
-            "Religion"
-          ]
+          "options": ["Athletics", "Insight", "Intimidation", "Medicine", "Persuasion", "Religion"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Medium armor",
-          "Heavy armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons"],
+        "armor_training": ["Light armor", "Medium armor", "Heavy armor", "Shields"],
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Chain Mail",
-              "Shield",
-              "Longsword",
-              "6 Javelins",
-              "Holy Symbol",
-              "Priest's Pack"
-            ],
+            "items": ["Chain Mail", "Shield", "Longsword", "6 Javelins", "Holy Symbol", "Priest's Pack"],
             "gold": 9
           },
           "option_b": {
@@ -4622,12 +4117,7 @@
               "name": "Divine Sense",
               "action_type": "Bonus Action",
               "duration": "10 minutes",
-              "detects": [
-                "Celestials",
-                "Fiends",
-                "Undead",
-                "Consecrated/desecrated places/objects"
-              ],
+              "detects": ["Celestials", "Fiends", "Undead", "Consecrated/desecrated places/objects"],
               "range": 60
             }
           ]
@@ -4635,21 +4125,12 @@
         {
           "name": "Paladin Subclass",
           "level": 3,
-          "options": [
-            "Oath of Devotion",
-            "Oath of Glory",
-            "Oath of the Ancients",
-            "Oath of Vengeance"
-          ]
+          "options": ["Oath of Devotion", "Oath of Glory", "Oath of the Ancients", "Oath of Vengeance"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Extra Attack",
@@ -4720,26 +4201,11 @@
               "name": "Oath of Devotion Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Protection from Evil and Good",
-                  "Shield of Faith"
-                ],
-                "5": [
-                  "Aid",
-                  "Zone of Truth"
-                ],
-                "9": [
-                  "Beacon of Hope",
-                  "Dispel Magic"
-                ],
-                "13": [
-                  "Freedom of Movement",
-                  "Guardian of Faith"
-                ],
-                "17": [
-                  "Commune",
-                  "Flame Strike"
-                ]
+                "3": ["Protection from Evil and Good", "Shield of Faith"],
+                "5": ["Aid", "Zone of Truth"],
+                "9": ["Beacon of Hope", "Dispel Magic"],
+                "13": ["Freedom of Movement", "Guardian of Faith"],
+                "17": ["Commune", "Flame Strike"]
               }
             },
             {
@@ -4795,26 +4261,11 @@
               "name": "Oath of Glory Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Guiding Bolt",
-                  "Heroism"
-                ],
-                "5": [
-                  "Enhance Ability",
-                  "Magic Weapon"
-                ],
-                "9": [
-                  "Haste",
-                  "Protection from Energy"
-                ],
-                "13": [
-                  "Compulsion",
-                  "Freedom of Movement"
-                ],
-                "17": [
-                  "Legend Lore",
-                  "Yolande's Regal Presence"
-                ]
+                "3": ["Guiding Bolt", "Heroism"],
+                "5": ["Enhance Ability", "Magic Weapon"],
+                "9": ["Haste", "Protection from Energy"],
+                "13": ["Compulsion", "Freedom of Movement"],
+                "17": ["Legend Lore", "Yolande's Regal Presence"]
               }
             },
             {
@@ -4857,11 +4308,7 @@
         {
           "name": "Oath of the Ancients",
           "tagline": "Preserve Life and Light in the World",
-          "tenets": [
-            "Kindle the light of hope.",
-            "Shelter life.",
-            "Delight in art and laughter."
-          ],
+          "tenets": ["Kindle the light of hope.", "Shelter life.", "Delight in art and laughter."],
           "features": [
             {
               "name": "Nature's Wrath",
@@ -4876,26 +4323,11 @@
               "name": "Oath of the Ancients Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Ensnaring Strike",
-                  "Speak with Animals"
-                ],
-                "5": [
-                  "Misty Step",
-                  "Moonbeam"
-                ],
-                "9": [
-                  "Plant Growth",
-                  "Protection from Energy"
-                ],
-                "13": [
-                  "Ice Storm",
-                  "Stoneskin"
-                ],
-                "17": [
-                  "Commune with Nature",
-                  "Tree Stride"
-                ]
+                "3": ["Ensnaring Strike", "Speak with Animals"],
+                "5": ["Misty Step", "Moonbeam"],
+                "9": ["Plant Growth", "Protection from Energy"],
+                "13": ["Ice Storm", "Stoneskin"],
+                "17": ["Commune with Nature", "Tree Stride"]
               }
             },
             {
@@ -4928,36 +4360,17 @@
         {
           "name": "Oath of Vengeance",
           "tagline": "Punish Evildoers at Any Cost",
-          "tenets": [
-            "Show the wicked no mercy.",
-            "Fight injustice and its causes.",
-            "Aid those harmed by injustice."
-          ],
+          "tenets": ["Show the wicked no mercy.", "Fight injustice and its causes.", "Aid those harmed by injustice."],
           "features": [
             {
               "name": "Oath of Vengeance Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Bane",
-                  "Hunter's Mark"
-                ],
-                "5": [
-                  "Hold Person",
-                  "Misty Step"
-                ],
-                "9": [
-                  "Haste",
-                  "Protection from Energy"
-                ],
-                "13": [
-                  "Banishment",
-                  "Dimension Door"
-                ],
-                "17": [
-                  "Hold Monster",
-                  "Scrying"
-                ]
+                "3": ["Bane", "Hunter's Mark"],
+                "5": ["Hold Person", "Misty Step"],
+                "9": ["Haste", "Protection from Energy"],
+                "13": ["Banishment", "Dimension Door"],
+                "17": ["Hold Monster", "Scrying"]
               }
             },
             {
@@ -5003,10 +4416,7 @@
       "core_traits": {
         "primary_ability": "Dexterity and Wisdom",
         "hit_point_die": "D10",
-        "saving_throw_proficiencies": [
-          "Strength",
-          "Dexterity"
-        ],
+        "saving_throw_proficiencies": ["Strength", "Dexterity"],
         "skill_proficiencies": {
           "choose": 3,
           "options": [
@@ -5020,15 +4430,8 @@
             "Survival"
           ]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons"
-        ],
-        "armor_training": [
-          "Light armor",
-          "Medium armor",
-          "Shields"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons"],
+        "armor_training": ["Light armor", "Medium armor", "Shields"],
         "starting_equipment": {
           "option_a": {
             "items": [
@@ -5106,21 +4509,12 @@
         {
           "name": "Ranger Subclass",
           "level": 3,
-          "options": [
-            "Beast Master",
-            "Fey Wanderer",
-            "Gloom Stalker",
-            "Hunter"
-          ]
+          "options": ["Beast Master", "Fey Wanderer", "Gloom Stalker", "Hunter"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Extra Attack",
@@ -5225,10 +4619,7 @@
                   "hp": "5 + 5 × Ranger level",
                   "speed": "5 ft., Swim 60 ft.",
                   "senses": "Darkvision 90 ft.",
-                  "traits": [
-                    "Amphibious",
-                    "Primal Bond"
-                  ],
+                  "traits": ["Amphibious", "Primal Bond"],
                   "attack": {
                     "damage": "1d6 + 2 + Wisdom modifier",
                     "grapple": "Grappled (escape DC = spell save DC)"
@@ -5249,10 +4640,7 @@
                     "WIS": 14,
                     "CHA": 11
                   },
-                  "traits": [
-                    "Flyby",
-                    "Primal Bond"
-                  ],
+                  "traits": ["Flyby", "Primal Bond"],
                   "attack": {
                     "damage": "1d4 + 3 + Wisdom modifier Slashing"
                   }
@@ -5298,21 +4686,11 @@
               "name": "Fey Wanderer Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Charm Person"
-                ],
-                "5": [
-                  "Misty Step"
-                ],
-                "9": [
-                  "Summon Fey"
-                ],
-                "13": [
-                  "Dimension Door"
-                ],
-                "17": [
-                  "Mislead"
-                ]
+                "3": ["Charm Person"],
+                "5": ["Misty Step"],
+                "9": ["Summon Fey"],
+                "13": ["Dimension Door"],
+                "17": ["Mislead"]
               }
             },
             {
@@ -5380,21 +4758,11 @@
               "name": "Gloom Stalker Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Disguise Self"
-                ],
-                "5": [
-                  "Rope Trick"
-                ],
-                "9": [
-                  "Fear"
-                ],
-                "13": [
-                  "Greater Invisibility"
-                ],
-                "17": [
-                  "Seeming"
-                ]
+                "3": ["Disguise Self"],
+                "5": ["Rope Trick"],
+                "9": ["Fear"],
+                "13": ["Greater Invisibility"],
+                "17": ["Seeming"]
               }
             },
             {
@@ -5493,10 +4861,7 @@
       "core_traits": {
         "primary_ability": "Dexterity",
         "hit_point_die": "D8",
-        "saving_throw_proficiencies": [
-          "Dexterity",
-          "Intelligence"
-        ],
+        "saving_throw_proficiencies": ["Dexterity", "Intelligence"],
         "skill_proficiencies": {
           "choose": 4,
           "options": [
@@ -5512,16 +4877,9 @@
             "Stealth"
           ]
         },
-        "weapon_proficiencies": [
-          "Simple weapons",
-          "Martial weapons that have the Finesse or Light property"
-        ],
-        "tool_proficiencies": [
-          "Thieves' Tools"
-        ],
-        "armor_training": [
-          "Light armor"
-        ],
+        "weapon_proficiencies": ["Simple weapons", "Martial weapons that have the Finesse or Light property"],
+        "tool_proficiencies": ["Thieves' Tools"],
+        "armor_training": ["Light armor"],
         "starting_equipment": {
           "option_a": {
             "items": [
@@ -5598,10 +4956,7 @@
         {
           "name": "Thieves' Cant",
           "level": 1,
-          "languages": [
-            "Thieves' Cant",
-            "One other language of choice"
-          ]
+          "languages": ["Thieves' Cant", "One other language of choice"]
         },
         {
           "name": "Weapon Mastery",
@@ -5611,21 +4966,12 @@
         {
           "name": "Cunning Action",
           "level": 2,
-          "bonus_action_options": [
-            "Dash",
-            "Disengage",
-            "Hide"
-          ]
+          "bonus_action_options": ["Dash", "Disengage", "Hide"]
         },
         {
           "name": "Rogue Subclass",
           "level": 3,
-          "options": [
-            "Arcane Trickster",
-            "Assassin",
-            "Soulknife",
-            "Thief"
-          ]
+          "options": ["Arcane Trickster", "Assassin", "Soulknife", "Thief"]
         },
         {
           "name": "Steady Aim",
@@ -5637,12 +4983,7 @@
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            10,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 10, 12, 16]
         },
         {
           "name": "Cunning Strike",
@@ -5716,10 +5057,7 @@
         {
           "name": "Slippery Mind",
           "level": 15,
-          "proficiencies": [
-            "Wisdom saving throws",
-            "Charisma saving throws"
-          ]
+          "proficiencies": ["Wisdom saving throws", "Charisma saving throws"]
         },
         {
           "name": "Elusive",
@@ -5794,10 +5132,7 @@
             {
               "name": "Assassin's Tools",
               "level": 3,
-              "grants": [
-                "Disguise Kit",
-                "Poisoner's Kit"
-              ]
+              "grants": ["Disguise Kit", "Poisoner's Kit"]
             },
             {
               "name": "Infiltration Expertise",
@@ -5879,10 +5214,7 @@
               "level": 3,
               "weapon_type": "Simple Melee",
               "damage": "1d6 Psychic + ability modifier",
-              "properties": [
-                "Finesse",
-                "Thrown 60/120"
-              ],
+              "properties": ["Finesse", "Thrown 60/120"],
               "mastery": "Vex (free)",
               "bonus_attack": "1d4 instead of 1d6"
             },
@@ -5962,33 +5294,16 @@
       "core_traits": {
         "primary_ability": "Charisma",
         "hit_point_die": "D6",
-        "saving_throw_proficiencies": [
-          "Constitution",
-          "Charisma"
-        ],
+        "saving_throw_proficiencies": ["Constitution", "Charisma"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Arcana",
-            "Deception",
-            "Insight",
-            "Intimidation",
-            "Persuasion",
-            "Religion"
-          ]
+          "options": ["Arcana", "Deception", "Insight", "Intimidation", "Persuasion", "Religion"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
         "armor_training": "None",
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "Spear",
-              "2 Daggers",
-              "Arcane Focus (crystal)",
-              "Dungeoneer's Pack"
-            ],
+            "items": ["Spear", "2 Daggers", "Arcane Focus (crystal)", "Dungeoneer's Pack"],
             "gold": 28
           },
           "option_b": {
@@ -6011,10 +5326,7 @@
           "level": 1,
           "action_type": "Bonus Action",
           "duration": "1 minute",
-          "benefits": [
-            "Spell save DC increases by 1",
-            "Advantage on Sorcerer spell attack rolls"
-          ],
+          "benefits": ["Spell save DC increases by 1", "Advantage on Sorcerer spell attack rolls"],
           "uses": 2,
           "recovery": "Long Rest"
         },
@@ -6061,21 +5373,12 @@
         {
           "name": "Sorcerer Subclass",
           "level": 3,
-          "options": [
-            "Aberrant Sorcery",
-            "Clockwork Sorcery",
-            "Draconic Sorcery",
-            "Wild Magic Sorcery"
-          ]
+          "options": ["Aberrant Sorcery", "Clockwork Sorcery", "Draconic Sorcery", "Wild Magic Sorcery"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Sorcerous Restoration",
@@ -6160,25 +5463,10 @@
               "name": "Psionic Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Arms of Hadar",
-                  "Calm Emotions",
-                  "Detect Thoughts",
-                  "Dissonant Whispers",
-                  "Mind Sliver"
-                ],
-                "5": [
-                  "Hunger of Hadar",
-                  "Sending"
-                ],
-                "7": [
-                  "Evard's Black Tentacles",
-                  "Summon Aberration"
-                ],
-                "9": [
-                  "Rary's Telepathic Bond",
-                  "Telekinesis"
-                ]
+                "3": ["Arms of Hadar", "Calm Emotions", "Detect Thoughts", "Dissonant Whispers", "Mind Sliver"],
+                "5": ["Hunger of Hadar", "Sending"],
+                "7": ["Evard's Black Tentacles", "Summon Aberration"],
+                "9": ["Rary's Telepathic Bond", "Telekinesis"]
               }
             },
             {
@@ -6243,24 +5531,10 @@
               "name": "Clockwork Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Aid",
-                  "Alarm",
-                  "Lesser Restoration",
-                  "Protection from Evil and Good"
-                ],
-                "5": [
-                  "Dispel Magic",
-                  "Protection from Energy"
-                ],
-                "7": [
-                  "Freedom of Movement",
-                  "Summon Construct"
-                ],
-                "9": [
-                  "Greater Restoration",
-                  "Wall of Force"
-                ]
+                "3": ["Aid", "Alarm", "Lesser Restoration", "Protection from Evil and Good"],
+                "5": ["Dispel Magic", "Protection from Energy"],
+                "7": ["Freedom of Movement", "Summon Construct"],
+                "9": ["Greater Restoration", "Wall of Force"]
               }
             },
             {
@@ -6320,36 +5594,16 @@
               "name": "Draconic Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Alter Self",
-                  "Chromatic Orb",
-                  "Command",
-                  "Dragon's Breath"
-                ],
-                "5": [
-                  "Fear",
-                  "Fly"
-                ],
-                "7": [
-                  "Arcane Eye",
-                  "Charm Monster"
-                ],
-                "9": [
-                  "Legend Lore",
-                  "Summon Dragon"
-                ]
+                "3": ["Alter Self", "Chromatic Orb", "Command", "Dragon's Breath"],
+                "5": ["Fear", "Fly"],
+                "7": ["Arcane Eye", "Charm Monster"],
+                "9": ["Legend Lore", "Summon Dragon"]
               }
             },
             {
               "name": "Elemental Affinity",
               "level": 6,
-              "choose_type": [
-                "Acid",
-                "Cold",
-                "Fire",
-                "Lightning",
-                "Poison"
-              ],
+              "choose_type": ["Acid", "Cold", "Fire", "Lightning", "Poison"],
               "resistance": "Chosen type",
               "damage_bonus": "Charisma modifier to one damage roll of chosen type spell"
             },
@@ -6520,28 +5774,13 @@
       "core_traits": {
         "primary_ability": "Charisma",
         "hit_point_die": "D8",
-        "saving_throw_proficiencies": [
-          "Wisdom",
-          "Charisma"
-        ],
+        "saving_throw_proficiencies": ["Wisdom", "Charisma"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Arcana",
-            "Deception",
-            "History",
-            "Intimidation",
-            "Investigation",
-            "Nature",
-            "Religion"
-          ]
+          "options": ["Arcana", "Deception", "History", "Intimidation", "Investigation", "Nature", "Religion"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
-        "armor_training": [
-          "Light armor"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
+        "armor_training": ["Light armor"],
         "starting_equipment": {
           "option_a": {
             "items": [
@@ -6627,21 +5866,12 @@
         {
           "name": "Warlock Subclass",
           "level": 3,
-          "options": [
-            "Archfey Patron",
-            "Celestial Patron",
-            "Fiend Patron",
-            "Great Old One Patron"
-          ]
+          "options": ["Archfey Patron", "Celestial Patron", "Fiend Patron", "Great Old One Patron"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Contact Patron",
@@ -6834,25 +6064,10 @@
               "name": "Archfey Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Calm Emotions",
-                  "Faerie Fire",
-                  "Misty Step",
-                  "Phantasmal Force",
-                  "Sleep"
-                ],
-                "5": [
-                  "Blink",
-                  "Plant Growth"
-                ],
-                "7": [
-                  "Dominate Beast",
-                  "Greater Invisibility"
-                ],
-                "9": [
-                  "Dominate Person",
-                  "Seeming"
-                ]
+                "3": ["Calm Emotions", "Faerie Fire", "Misty Step", "Phantasmal Force", "Sleep"],
+                "5": ["Blink", "Plant Growth"],
+                "7": ["Dominate Beast", "Greater Invisibility"],
+                "9": ["Dominate Person", "Seeming"]
               }
             },
             {
@@ -6912,26 +6127,10 @@
               "name": "Celestial Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Aid",
-                  "Cure Wounds",
-                  "Guiding Bolt",
-                  "Lesser Restoration",
-                  "Light",
-                  "Sacred Flame"
-                ],
-                "5": [
-                  "Daylight",
-                  "Revivify"
-                ],
-                "7": [
-                  "Guardian of Faith",
-                  "Wall of Fire"
-                ],
-                "9": [
-                  "Greater Restoration",
-                  "Summon Celestial"
-                ]
+                "3": ["Aid", "Cure Wounds", "Guiding Bolt", "Lesser Restoration", "Light", "Sacred Flame"],
+                "5": ["Daylight", "Revivify"],
+                "7": ["Guardian of Faith", "Wall of Fire"],
+                "9": ["Greater Restoration", "Summon Celestial"]
               }
             },
             {
@@ -6979,24 +6178,10 @@
               "name": "Fiend Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Burning Hands",
-                  "Command",
-                  "Scorching Ray",
-                  "Suggestion"
-                ],
-                "5": [
-                  "Fireball",
-                  "Stinking Cloud"
-                ],
-                "7": [
-                  "Fire Shield",
-                  "Wall of Fire"
-                ],
-                "9": [
-                  "Geas",
-                  "Insect Plague"
-                ]
+                "3": ["Burning Hands", "Command", "Scorching Ray", "Suggestion"],
+                "5": ["Fireball", "Stinking Cloud"],
+                "7": ["Fire Shield", "Wall of Fire"],
+                "9": ["Geas", "Insect Plague"]
               }
             },
             {
@@ -7038,24 +6223,10 @@
               "name": "Great Old One Spells",
               "level": 3,
               "spells": {
-                "3": [
-                  "Detect Thoughts",
-                  "Dissonant Whispers",
-                  "Phantasmal Force",
-                  "Tasha's Hideous Laughter"
-                ],
-                "5": [
-                  "Clairvoyance",
-                  "Hunger of Hadar"
-                ],
-                "7": [
-                  "Confusion",
-                  "Summon Aberration"
-                ],
-                "9": [
-                  "Modify Memory",
-                  "Telekinesis"
-                ]
+                "3": ["Detect Thoughts", "Dissonant Whispers", "Phantasmal Force", "Tasha's Hideous Laughter"],
+                "5": ["Clairvoyance", "Hunger of Hadar"],
+                "7": ["Confusion", "Summon Aberration"],
+                "9": ["Modify Memory", "Telekinesis"]
               }
             },
             {
@@ -7100,35 +6271,16 @@
       "core_traits": {
         "primary_ability": "Intelligence",
         "hit_point_die": "D6",
-        "saving_throw_proficiencies": [
-          "Intelligence",
-          "Wisdom"
-        ],
+        "saving_throw_proficiencies": ["Intelligence", "Wisdom"],
         "skill_proficiencies": {
           "choose": 2,
-          "options": [
-            "Arcana",
-            "History",
-            "Insight",
-            "Investigation",
-            "Medicine",
-            "Nature",
-            "Religion"
-          ]
+          "options": ["Arcana", "History", "Insight", "Investigation", "Medicine", "Nature", "Religion"]
         },
-        "weapon_proficiencies": [
-          "Simple weapons"
-        ],
+        "weapon_proficiencies": ["Simple weapons"],
         "armor_training": "None",
         "starting_equipment": {
           "option_a": {
-            "items": [
-              "2 Daggers",
-              "Arcane Focus (Quarterstaff)",
-              "Robe",
-              "Spellbook",
-              "Scholar's Pack"
-            ],
+            "items": ["2 Daggers", "Arcane Focus (Quarterstaff)", "Robe", "Spellbook", "Scholar's Pack"],
             "gold": 5
           },
           "option_b": {
@@ -7147,14 +6299,7 @@
             "description": "Tiny object, 3 pounds, 100 pages, readable only by you or Identify",
             "initial_spells": 6,
             "spells_per_level": 2,
-            "recommended": [
-              "Detect Magic",
-              "Feather Fall",
-              "Mage Armor",
-              "Magic Missile",
-              "Sleep",
-              "Thunderwave"
-            ],
+            "recommended": ["Detect Magic", "Feather Fall", "Mage Armor", "Magic Missile", "Sleep", "Thunderwave"],
             "prepared_from_book": true,
             "change_prepared": "On Long Rest, replace any with spells from spellbook"
           },
@@ -7187,21 +6332,12 @@
         {
           "name": "Wizard Subclass",
           "level": 3,
-          "options": [
-            "Abjurer",
-            "Diviner",
-            "Evoker",
-            "Illusionist"
-          ]
+          "options": ["Abjurer", "Diviner", "Evoker", "Illusionist"]
         },
         {
           "name": "Ability Score Improvement",
           "level": 4,
-          "repeat_levels": [
-            8,
-            12,
-            16
-          ]
+          "repeat_levels": [8, 12, 16]
         },
         {
           "name": "Memorize Spell",
@@ -7254,10 +6390,7 @@
             {
               "name": "Spell Breaker",
               "level": 10,
-              "always_prepared": [
-                "Counterspell",
-                "Dispel Magic"
-              ],
+              "always_prepared": ["Counterspell", "Dispel Magic"],
               "dispel_magic_bonus_action": true,
               "add_proficiency_bonus": true,
               "slot_preserved_on_fail": true
@@ -7369,10 +6502,7 @@
             {
               "name": "Phantasmal Creatures",
               "level": 6,
-              "always_prepared": [
-                "Summon Beast",
-                "Summon Fey"
-              ],
+              "always_prepared": ["Summon Beast", "Summon Fey"],
               "school_change": "Can cast as Illusion school (spectral)",
               "free_cast": "Each once per Long Rest without slot (half HP)"
             },

@@ -7,7 +7,11 @@ interface LibraryCategoryGridProps {
   totalCounts?: Record<string, number>
 }
 
-export default function LibraryCategoryGrid({ onSelectCategory, itemCounts, totalCounts }: LibraryCategoryGridProps): JSX.Element {
+export default function LibraryCategoryGrid({
+  onSelectCategory,
+  itemCounts,
+  totalCounts
+}: LibraryCategoryGridProps): JSX.Element {
   return (
     <div className="space-y-8">
       {LIBRARY_GROUPS.filter((g) => g.categories.length > 0).map((group) => (
@@ -31,7 +35,8 @@ export default function LibraryCategoryGrid({ onSelectCategory, itemCounts, tota
                   </span>
                   {(total > 0 || hbCount > 0) && (
                     <span className="text-xs text-gray-500">
-                      {total > 0 ? `${total} items` : ''}{hbCount > 0 ? `${total > 0 ? ' · ' : ''}${hbCount} custom` : ''}
+                      {total > 0 ? `${total} items` : ''}
+                      {hbCount > 0 ? `${total > 0 ? ' · ' : ''}${hbCount} custom` : ''}
                     </span>
                   )}
                 </button>

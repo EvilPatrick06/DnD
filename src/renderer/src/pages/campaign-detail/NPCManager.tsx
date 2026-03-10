@@ -63,7 +63,7 @@ export default function NPCManager({ campaign, saveCampaign }: NPCManagerProps):
       }
     }
     loadNpcStatBlocks()
-  }, [campaign.npcs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [campaign.npcs, npcStatBlocks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openAdd = (): void => {
     setEditing(null)

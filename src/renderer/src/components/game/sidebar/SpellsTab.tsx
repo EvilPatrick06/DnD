@@ -102,7 +102,7 @@ export default function SpellsTab(): JSX.Element {
     }
   }, [])
 
-  const casterClasses = useMemo(() => Object.keys(CANTRIPS_KNOWN), [spells])
+  const casterClasses = useMemo(() => Object.keys(CANTRIPS_KNOWN), [])
 
   const filtered = useMemo(() => {
     let result = spells

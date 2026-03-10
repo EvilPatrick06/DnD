@@ -62,9 +62,7 @@ export async function saveMapToLibrary(
 /**
  * List all saved maps in the library. Returns summary (id, name, savedAt) without full data.
  */
-export async function listMapLibrary(): Promise<
-  StorageResult<Array<{ id: string; name: string; savedAt: string }>>
-> {
+export async function listMapLibrary(): Promise<StorageResult<Array<{ id: string; name: string; savedAt: string }>>> {
   try {
     const dir = await getMapLibraryDir()
     const files = await readdir(dir)

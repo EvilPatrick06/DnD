@@ -206,9 +206,7 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     if (isNewRound) {
       const currentInit = get().initiative
       if (currentInit) {
-        const clearedEntries = currentInit.entries.map((e) =>
-          e.isDelaying ? { ...e, isDelaying: false } : e
-        )
+        const clearedEntries = currentInit.entries.map((e) => (e.isDelaying ? { ...e, isDelaying: false } : e))
         set({
           initiative: { ...currentInit, entries: clearedEntries }
         })
@@ -339,9 +337,7 @@ export const createInitiativeSlice: StateCreator<GameStoreState, [], [], Initiat
     if (entryIndex < 0) return
 
     // Insert the entity back at the current position by clearing delay flag
-    const updatedEntries = initiative.entries.map((e) =>
-      e.entityId === entityId ? { ...e, isDelaying: false } : e
-    )
+    const updatedEntries = initiative.entries.map((e) => (e.entityId === entityId ? { ...e, isDelaying: false } : e))
 
     // Reorder: move the un-delayed entity to just after the current active entry
     const currentIdx = initiative.currentIndex

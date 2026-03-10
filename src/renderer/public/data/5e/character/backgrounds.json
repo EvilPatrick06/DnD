@@ -5,20 +5,13 @@
   "backgrounds": [
     {
       "name": "Acolyte",
-      "ability_scores": [
-        "Intelligence",
-        "Wisdom",
-        "Charisma"
-      ],
+      "ability_scores": ["Intelligence", "Wisdom", "Charisma"],
       "feat": {
         "name": "Magic Initiate",
         "parenthetical": "Cleric",
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Insight",
-        "Religion"
-      ],
+      "skill_proficiencies": ["Insight", "Religion"],
       "tool_proficiency": {
         "fixed": "Calligrapher's Supplies",
         "choice": null
@@ -61,20 +54,13 @@
     },
     {
       "name": "Artisan",
-      "ability_scores": [
-        "Strength",
-        "Dexterity",
-        "Intelligence"
-      ],
+      "ability_scores": ["Strength", "Dexterity", "Intelligence"],
       "feat": {
         "name": "Crafter",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Investigation",
-        "Persuasion"
-      ],
+      "skill_proficiencies": ["Investigation", "Persuasion"],
       "tool_proficiency": {
         "fixed": null,
         "choice": {
@@ -112,20 +98,13 @@
     },
     {
       "name": "Charlatan",
-      "ability_scores": [
-        "Dexterity",
-        "Constitution",
-        "Charisma"
-      ],
+      "ability_scores": ["Dexterity", "Constitution", "Charisma"],
       "feat": {
         "name": "Skilled",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Deception",
-        "Sleight of Hand"
-      ],
+      "skill_proficiencies": ["Deception", "Sleight of Hand"],
       "tool_proficiency": {
         "fixed": "Forgery Kit",
         "choice": null
@@ -158,20 +137,13 @@
     },
     {
       "name": "Criminal",
-      "ability_scores": [
-        "Dexterity",
-        "Constitution",
-        "Intelligence"
-      ],
+      "ability_scores": ["Dexterity", "Constitution", "Intelligence"],
       "feat": {
         "name": "Alert",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Sleight of Hand",
-        "Stealth"
-      ],
+      "skill_proficiencies": ["Sleight of Hand", "Stealth"],
       "tool_proficiency": {
         "fixed": "Thieves' Tools",
         "choice": null
@@ -212,20 +184,13 @@
     },
     {
       "name": "Entertainer",
-      "ability_scores": [
-        "Strength",
-        "Dexterity",
-        "Charisma"
-      ],
+      "ability_scores": ["Strength", "Dexterity", "Charisma"],
       "feat": {
         "name": "Musician",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Acrobatics",
-        "Performance"
-      ],
+      "skill_proficiencies": ["Acrobatics", "Performance"],
       "tool_proficiency": {
         "fixed": null,
         "choice": {
@@ -271,20 +236,13 @@
     },
     {
       "name": "Farmer",
-      "ability_scores": [
-        "Strength",
-        "Constitution",
-        "Wisdom"
-      ],
+      "ability_scores": ["Strength", "Constitution", "Wisdom"],
       "feat": {
         "name": "Tough",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Animal Handling",
-        "Nature"
-      ],
+      "skill_proficiencies": ["Animal Handling", "Nature"],
       "tool_proficiency": {
         "fixed": "Carpenter's Tools",
         "choice": null
@@ -329,20 +287,13 @@
     },
     {
       "name": "Guard",
-      "ability_scores": [
-        "Strength",
-        "Intelligence",
-        "Wisdom"
-      ],
+      "ability_scores": ["Strength", "Intelligence", "Wisdom"],
       "feat": {
         "name": "Alert",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Athletics",
-        "Perception"
-      ],
+      "skill_proficiencies": ["Athletics", "Perception"],
       "tool_proficiency": {
         "fixed": null,
         "choice": {
@@ -400,20 +351,13 @@
     },
     {
       "name": "Guide",
-      "ability_scores": [
-        "Dexterity",
-        "Constitution",
-        "Wisdom"
-      ],
+      "ability_scores": ["Dexterity", "Constitution", "Wisdom"],
       "feat": {
         "name": "Magic Initiate",
         "parenthetical": "Druid",
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Stealth",
-        "Survival"
-      ],
+      "skill_proficiencies": ["Stealth", "Survival"],
       "tool_proficiency": {
         "fixed": "Cartographer's Tools",
         "choice": null
@@ -462,20 +406,13 @@
     },
     {
       "name": "Hermit",
-      "ability_scores": [
-        "Constitution",
-        "Wisdom",
-        "Charisma"
-      ],
+      "ability_scores": ["Constitution", "Wisdom", "Charisma"],
       "feat": {
         "name": "Healer",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Medicine",
-        "Religion"
-      ],
+      "skill_proficiencies": ["Medicine", "Religion"],
       "tool_proficiency": {
         "fixed": "Herbalism Kit",
         "choice": null
@@ -526,20 +463,13 @@
     },
     {
       "name": "Merchant",
-      "ability_scores": [
-        "Constitution",
-        "Intelligence",
-        "Charisma"
-      ],
+      "ability_scores": ["Constitution", "Intelligence", "Charisma"],
       "feat": {
         "name": "Lucky",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Animal Handling",
-        "Persuasion"
-      ],
+      "skill_proficiencies": ["Animal Handling", "Persuasion"],
       "tool_proficiency": {
         "fixed": "Navigator's Tools",
         "choice": null
@@ -572,20 +502,13 @@
     },
     {
       "name": "Noble",
-      "ability_scores": [
-        "Strength",
-        "Intelligence",
-        "Charisma"
-      ],
+      "ability_scores": ["Strength", "Intelligence", "Charisma"],
       "feat": {
         "name": "Skilled",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "History",
-        "Persuasion"
-      ],
+      "skill_proficiencies": ["History", "Persuasion"],
       "tool_proficiency": {
         "fixed": null,
         "choice": {
@@ -623,20 +546,13 @@
     },
     {
       "name": "Sage",
-      "ability_scores": [
-        "Constitution",
-        "Intelligence",
-        "Wisdom"
-      ],
+      "ability_scores": ["Constitution", "Intelligence", "Wisdom"],
       "feat": {
         "name": "Magic Initiate",
         "parenthetical": "Wizard",
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Arcana",
-        "History"
-      ],
+      "skill_proficiencies": ["Arcana", "History"],
       "tool_proficiency": {
         "fixed": "Calligrapher's Supplies",
         "choice": null
@@ -679,20 +595,13 @@
     },
     {
       "name": "Sailor",
-      "ability_scores": [
-        "Strength",
-        "Dexterity",
-        "Wisdom"
-      ],
+      "ability_scores": ["Strength", "Dexterity", "Wisdom"],
       "feat": {
         "name": "Tavern Brawler",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Acrobatics",
-        "Perception"
-      ],
+      "skill_proficiencies": ["Acrobatics", "Perception"],
       "tool_proficiency": {
         "fixed": "Navigator's Tools",
         "choice": null
@@ -729,20 +638,13 @@
     },
     {
       "name": "Scribe",
-      "ability_scores": [
-        "Dexterity",
-        "Intelligence",
-        "Wisdom"
-      ],
+      "ability_scores": ["Dexterity", "Intelligence", "Wisdom"],
       "feat": {
         "name": "Skilled",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Investigation",
-        "Perception"
-      ],
+      "skill_proficiencies": ["Investigation", "Perception"],
       "tool_proficiency": {
         "fixed": "Calligrapher's Supplies",
         "choice": null
@@ -785,20 +687,13 @@
     },
     {
       "name": "Soldier",
-      "ability_scores": [
-        "Strength",
-        "Dexterity",
-        "Constitution"
-      ],
+      "ability_scores": ["Strength", "Dexterity", "Constitution"],
       "feat": {
         "name": "Savage Attacker",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Athletics",
-        "Intimidation"
-      ],
+      "skill_proficiencies": ["Athletics", "Intimidation"],
       "tool_proficiency": {
         "fixed": null,
         "choice": {
@@ -852,20 +747,13 @@
     },
     {
       "name": "Wayfarer",
-      "ability_scores": [
-        "Dexterity",
-        "Wisdom",
-        "Charisma"
-      ],
+      "ability_scores": ["Dexterity", "Wisdom", "Charisma"],
       "feat": {
         "name": "Lucky",
         "parenthetical": null,
         "reference": "see chapter 5"
       },
-      "skill_proficiencies": [
-        "Insight",
-        "Stealth"
-      ],
+      "skill_proficiencies": ["Insight", "Stealth"],
       "tool_proficiency": {
         "fixed": "Thieves' Tools",
         "choice": null
@@ -914,11 +802,7 @@
     "unique_feats_referenced": [
       {
         "name": "Magic Initiate",
-        "variants": [
-          "Cleric",
-          "Druid",
-          "Wizard"
-        ],
+        "variants": ["Cleric", "Druid", "Wizard"],
         "reference": "chapter 5"
       },
       {
@@ -993,23 +877,15 @@
     "tool_choice_categories": {
       "Artisan's Tools": {
         "reference": "see chapter 6",
-        "used_by": [
-          "Artisan"
-        ]
+        "used_by": ["Artisan"]
       },
       "Musical Instrument": {
         "reference": "see chapter 6",
-        "used_by": [
-          "Entertainer"
-        ]
+        "used_by": ["Entertainer"]
       },
       "Gaming Set": {
         "reference": "see chapter 6",
-        "used_by": [
-          "Guard",
-          "Noble",
-          "Soldier"
-        ]
+        "used_by": ["Guard", "Noble", "Soldier"]
       }
     }
   },

@@ -42,7 +42,7 @@ export function BastionTurnModal({
       setTurnMaintain(false)
       setTurnStep('orders')
     }
-  }, [open, activeTurnNumber])
+  }, [open])
 
   const activeTurn = selectedBastion?.turns.find((t) => t.turnNumber === activeTurnNumber) ?? null
 

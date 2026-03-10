@@ -152,125 +152,125 @@ function App(): JSX.Element {
       <main id="main-content">
         <ErrorBoundary>
           <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-screen">
-              <Spinner size="lg" />
-            </div>
-          }
-        >
-          <Routes>
-            <Route path="/" element={<MainMenuPage />} />
-            <Route path="/characters" element={<ViewCharactersPage />} />
-            <Route
-              path="/characters/create"
-              element={
-                <ErrorBoundary>
-                  <CreateCharacterPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/characters/5e/create"
-              element={
-                <ErrorBoundary>
-                  <CreateCharacterPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/characters/5e/edit/:id"
-              element={
-                <ErrorBoundary>
-                  <CreateCharacterPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/characters/5e/:id"
-              element={
-                <ErrorBoundary>
-                  <CharacterSheet5ePage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/characters/5e/:id/levelup"
-              element={
-                <ErrorBoundary>
-                  <LevelUp5ePage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/characters/edit/:id"
-              element={
-                <ErrorBoundary>
-                  <CreateCharacterPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route path="/join" element={<JoinGamePage />} />
-            <Route path="/make" element={<MakeGamePage />} />
-            <Route
-              path="/campaign/:id"
-              element={
-                <ErrorBoundary>
-                  <CampaignDetailPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route path="/about" element={<AboutPage />} />
-            <Route
-              path="/lobby/:campaignId"
-              element={
-                <ErrorBoundary>
-                  <LobbyPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/game/:campaignId"
-              element={
-                <ErrorBoundary>
-                  <InGamePage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/library"
-              element={
-                <ErrorBoundary>
-                  <LibraryPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/bastions"
-              element={
-                <ErrorBoundary>
-                  <BastionPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ErrorBoundary>
-                  <CalendarPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ErrorBoundary>
-                  <SettingsPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
+            fallback={
+              <div className="flex items-center justify-center h-screen">
+                <Spinner size="lg" />
+              </div>
+            }
+          >
+            <Routes>
+              <Route path="/" element={<MainMenuPage />} />
+              <Route path="/characters" element={<ViewCharactersPage />} />
+              <Route
+                path="/characters/create"
+                element={
+                  <ErrorBoundary>
+                    <CreateCharacterPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/characters/5e/create"
+                element={
+                  <ErrorBoundary>
+                    <CreateCharacterPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/characters/5e/edit/:id"
+                element={
+                  <ErrorBoundary>
+                    <CreateCharacterPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/characters/5e/:id"
+                element={
+                  <ErrorBoundary>
+                    <CharacterSheet5ePage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/characters/5e/:id/levelup"
+                element={
+                  <ErrorBoundary>
+                    <LevelUp5ePage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/characters/edit/:id"
+                element={
+                  <ErrorBoundary>
+                    <CreateCharacterPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route path="/join" element={<JoinGamePage />} />
+              <Route path="/make" element={<MakeGamePage />} />
+              <Route
+                path="/campaign/:id"
+                element={
+                  <ErrorBoundary>
+                    <CampaignDetailPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route path="/about" element={<AboutPage />} />
+              <Route
+                path="/lobby/:campaignId"
+                element={
+                  <ErrorBoundary>
+                    <LobbyPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/game/:campaignId"
+                element={
+                  <ErrorBoundary>
+                    <InGamePage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/library"
+                element={
+                  <ErrorBoundary>
+                    <LibraryPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/bastions"
+                element={
+                  <ErrorBoundary>
+                    <BastionPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/calendar"
+                element={
+                  <ErrorBoundary>
+                    <CalendarPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ErrorBoundary>
+                    <SettingsPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
     </div>

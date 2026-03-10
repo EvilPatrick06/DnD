@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from 'fs/promises'
+import { copyFile, mkdir, readdir, readFile, stat, unlink, writeFile } from 'fs/promises'
 import { basename, extname, join } from 'path'
 import { logToFile } from '../log'
 

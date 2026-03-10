@@ -11,7 +11,6 @@ import type { ValidationResult } from '../network'
 
 type _ValidationResult = ValidationResult
 
-
 import type { AutoSaveConfig, SaveVersion } from '../services/io/auto-save'
 
 type _AutoSaveConfig = AutoSaveConfig

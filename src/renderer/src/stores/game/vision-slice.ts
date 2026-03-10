@@ -45,11 +45,7 @@ export const createVisionSlice: StateCreator<GameStoreState, [], [], VisionSlice
 
   clearVision: (mapId: string) => {
     set((state) => ({
-      maps: state.maps.map((m) =>
-        m.id === mapId
-          ? { ...m, fogOfWar: { ...m.fogOfWar, exploredCells: [] } }
-          : m
-      )
+      maps: state.maps.map((m) => (m.id === mapId ? { ...m, fogOfWar: { ...m.fogOfWar, exploredCells: [] } } : m))
     }))
   },
 

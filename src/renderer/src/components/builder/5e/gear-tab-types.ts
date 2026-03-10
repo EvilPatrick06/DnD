@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import currencyConfigJson from '@data/5e/equipment/currency-config.json'
+import { useEffect, useState } from 'react'
 import { load5eCurrencyConfig, load5eEquipment } from '../../../services/data-provider'
 import { logger } from '../../../utils/logger'
 

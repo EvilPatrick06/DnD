@@ -113,7 +113,7 @@ export default function CraftingBrowser({ characterTools, onStartCrafting }: Cra
     }
 
     return items
-  }, [craftingData, recipes, characterTools])
+  }, [craftingData, recipes, hasTool])
 
   const filtered = useMemo(() => {
     let result = allItems

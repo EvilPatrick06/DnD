@@ -1,9 +1,5 @@
 import { useEffect, useRef } from 'react'
-import {
-  destroy,
-  init,
-  registerHandler
-} from '../services/keyboard-shortcuts'
+import { destroy, init, registerHandler } from '../services/keyboard-shortcuts'
 import { useGameStore } from '../stores/use-game-store'
 
 export interface GameShortcutCallbacks {

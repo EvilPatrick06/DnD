@@ -196,10 +196,7 @@ export default function CoreBooksGrid({ onOpenBook }: CoreBooksGridProps): JSX.E
         </div>
 
         {customBooks.length === 0 ? (
-          <EmptyState
-            title="No custom books"
-            description="Import your own PDF books to read them here."
-          />
+          <EmptyState title="No custom books" description="Import your own PDF books to read them here." />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {customBooks.map((book) => (
@@ -211,9 +208,7 @@ export default function CoreBooksGrid({ onOpenBook }: CoreBooksGridProps): JSX.E
                   <span className="text-2xl">📓</span>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-gray-200 truncate">{book.title}</h4>
-                    <p className="text-[10px] text-gray-500">
-                      Added {new Date(book.addedAt).toLocaleDateString()}
-                    </p>
+                    <p className="text-[10px] text-gray-500">Added {new Date(book.addedAt).toLocaleDateString()}</p>
                   </div>
                   <div className="flex gap-1">
                     <button

@@ -149,15 +149,7 @@ export default function SpellSelectionSection5e({
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [
-    isCaster,
-    maxSpellLevel,
-    className,
-    isThirdCasterClass,
-    character.knownSpells?.map,
-    showAllSpells,
-    spellListClass
-  ])
+  }, [isCaster, maxSpellLevel, character.knownSpells?.map, showAllSpells, spellListClass])
 
   if (!isCaster || maxSpellLevel === 0) return null
 

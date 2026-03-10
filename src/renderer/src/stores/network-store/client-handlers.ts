@@ -690,7 +690,10 @@ export function handleClientMessage(
       if (payload.characterData) {
         useLobbyStore
           .getState()
-          .setRemoteCharacter(payload.characterId, payload.characterData as import('../../types/character-5e').Character5e)
+          .setRemoteCharacter(
+            payload.characterId,
+            payload.characterData as import('../../types/character-5e').Character5e
+          )
       }
       break
     }

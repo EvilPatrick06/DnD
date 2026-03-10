@@ -3,7 +3,7 @@
 // loss, and warns when a new concentration spell replaces an existing one.
 // ─────────────────────────────────────────────────────────────────────
 
-import type { InitiativeEntry, TurnState } from '../../types/game-state'
+import type { TurnState } from '../../types/game-state'
 import { resolveConcentrationCheck } from './death-mechanics'
 
 // ─── Types ───────────────────────────────────────────────────
@@ -42,13 +42,7 @@ export function checkConcentrationOnDamage(
   }
 
   const spell = ts.concentratingSpell
-  const checkResult = resolveConcentrationCheck(
-    entityId,
-    entityName,
-    damageTaken,
-    conSaveModifier,
-    hasWarCaster
-  )
+  const checkResult = resolveConcentrationCheck(entityId, entityName, damageTaken, conSaveModifier, hasWarCaster)
 
   return {
     needsCheck: true,
@@ -66,10 +60,7 @@ export function checkConcentrationOnDamage(
  * Handle concentration being lost: clears the concentrating spell
  * from the entity's turn state. Returns the spell that was lost.
  */
-export function onConcentrationLost(
-  entityId: string,
-  turnStates: Record<string, TurnState>
-): string | null {
+export function onConcentrationLost(entityId: string, turnStates: Record<string, TurnState>): string | null {
   const ts = turnStates[entityId]
   if (!ts?.concentratingSpell) return null
   return ts.concentratingSpell

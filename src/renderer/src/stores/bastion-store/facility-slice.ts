@@ -373,9 +373,10 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
     const keptTurns = bastion.turns.slice(0, turnIndex)
 
     // Restore last bastion turn day from the most recent kept turn
-    const lastTurnDay = keptTurns.length > 0
-      ? bastion.inGameTime.lastBastionTurnDay // Keep current if there are still turns
-      : 0
+    const lastTurnDay =
+      keptTurns.length > 0
+        ? bastion.inGameTime.lastBastionTurnDay // Keep current if there are still turns
+        : 0
 
     // Clear current orders on facilities since we're rolling back
     const clearedFacilities = bastion.specialFacilities.map((f) => ({
@@ -425,9 +426,7 @@ export const createFacilitySlice: StateCreator<BastionState, [], [], FacilitySli
 
     const updated: Bastion = {
       ...bastion,
-      defenders: bastion.defenders.map((d) =>
-        d.id === defenderId ? { ...d, barrackId: newFacilityId } : d
-      ),
+      defenders: bastion.defenders.map((d) => (d.id === defenderId ? { ...d, barrackId: newFacilityId } : d)),
       updatedAt: new Date().toISOString()
     }
     get().saveBastion(updated)

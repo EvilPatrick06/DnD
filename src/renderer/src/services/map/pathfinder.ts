@@ -280,44 +280,44 @@ export function findPath(
         ]
 
     for (const { dx, dy } of neighbors) {
-        const nx = current.x + dx
-        const ny = current.y + dy
+      const nx = current.x + dx
+      const ny = current.y + dy
 
-        if (nx < 0 || ny < 0 || nx >= gridWidth || ny >= gridHeight) continue
+      if (nx < 0 || ny < 0 || nx >= gridWidth || ny >= gridHeight) continue
 
-        const nKey = `${nx},${ny}`
-        if (closed.has(nKey)) continue
+      const nKey = `${nx},${ny}`
+      if (closed.has(nKey)) continue
 
-        // Check wall blocking
-        if (isMovementBlockedByWall(current.x, current.y, nx, ny, walls)) continue
+      // Check wall blocking
+      if (isMovementBlockedByWall(current.x, current.y, nx, ny, walls)) continue
 
-        // Hex grids have no diagonals — all moves cost 5ft
-        const isDiagonal = !hexMode && dx !== 0 && dy !== 0
-        let newDiagCount = current.diagCount
-        let baseCost = 5
-        if (isDiagonal && diagonalRule === 'alternate') {
-          newDiagCount++
-          baseCost = newDiagCount % 2 === 0 ? 10 : 5
-        }
+      // Hex grids have no diagonals — all moves cost 5ft
+      const isDiagonal = !hexMode && dx !== 0 && dy !== 0
+      let newDiagCount = current.diagCount
+      let baseCost = 5
+      if (isDiagonal && diagonalRule === 'alternate') {
+        newDiagCount++
+        baseCost = newDiagCount % 2 === 0 ? 10 : 5
+      }
 
-        const cost = stepCost(nx, ny, terrain, tokenSpeeds, baseCost)
-        const newG = current.g + cost
+      const cost = stepCost(nx, ny, terrain, tokenSpeeds, baseCost)
+      const newG = current.g + cost
 
-        // Enforce movement budget
-        if (movementBudget > 0 && newG > movementBudget) continue
+      // Enforce movement budget
+      if (movementBudget > 0 && newG > movementBudget) continue
 
-        const existing = open.get(nKey)
-        if (existing && existing.g <= newG) continue
+      const existing = open.get(nKey)
+      if (existing && existing.g <= newG) continue
 
-        const node: PathNode = {
-          x: nx,
-          y: ny,
-          g: newG,
-          f: newG + heuristic(nx, ny, goalX, goalY, diagonalRule),
-          parent: current,
-          diagCount: newDiagCount
-        }
-        open.set(nKey, node)
+      const node: PathNode = {
+        x: nx,
+        y: ny,
+        g: newG,
+        f: newG + heuristic(nx, ny, goalX, goalY, diagonalRule),
+        parent: current,
+        diagCount: newDiagCount
+      }
+      open.set(nKey, node)
     }
   }
 
@@ -376,34 +376,34 @@ export function getReachableCellsWithWalls(
         ]
 
     for (const { dx, dy } of neighbors) {
-        const nx = x + dx
-        const ny = y + dy
+      const nx = x + dx
+      const ny = y + dy
 
-        if (nx < 0 || ny < 0 || nx >= gridWidth || ny >= gridHeight) continue
+      if (nx < 0 || ny < 0 || nx >= gridWidth || ny >= gridHeight) continue
 
-        // Check wall blocking
-        if (isMovementBlockedByWall(x, y, nx, ny, walls)) continue
+      // Check wall blocking
+      if (isMovementBlockedByWall(x, y, nx, ny, walls)) continue
 
-        const isDiagonal = !hexMode && dx !== 0 && dy !== 0
-        let newDiagCount = diagCount
-        let baseCost = 5
-        if (isDiagonal && diagonalRule === 'alternate') {
-          newDiagCount++
-          baseCost = newDiagCount % 2 === 0 ? 10 : 5
-        }
+      const isDiagonal = !hexMode && dx !== 0 && dy !== 0
+      let newDiagCount = diagCount
+      let baseCost = 5
+      if (isDiagonal && diagonalRule === 'alternate') {
+        newDiagCount++
+        baseCost = newDiagCount % 2 === 0 ? 10 : 5
+      }
 
-        const cost = stepCost(nx, ny, terrain, tokenSpeeds, baseCost)
-        const totalCost = costSoFar + cost
+      const cost = stepCost(nx, ny, terrain, tokenSpeeds, baseCost)
+      const totalCost = costSoFar + cost
 
-        if (totalCost > movementBudget) continue
+      if (totalCost > movementBudget) continue
 
-        const key = `${nx},${ny}`
-        const existingCost = visited.get(key)
-        if (existingCost !== undefined && existingCost <= totalCost) continue
+      const key = `${nx},${ny}`
+      const existingCost = visited.get(key)
+      if (existingCost !== undefined && existingCost <= totalCost) continue
 
-        visited.set(key, totalCost)
-        reachable.push({ x: nx, y: ny, cost: totalCost })
-        queue.push({ x: nx, y: ny, costSoFar: totalCost, diagCount: newDiagCount })
+      visited.set(key, totalCost)
+      reachable.push({ x: nx, y: ny, cost: totalCost })
+      queue.push({ x: nx, y: ny, costSoFar: totalCost, diagCount: newDiagCount })
     }
   }
 

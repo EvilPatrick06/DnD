@@ -1,6 +1,5 @@
 import type { StateCreator } from 'zustand'
-import type { GameMap } from '../../types/map'
-import type { MapToken } from '../../types/map'
+import type { GameMap, MapToken } from '../../types/map'
 import { logger } from '../../utils/logger'
 import type { GameStoreState, MapTokenSliceState } from './types'
 

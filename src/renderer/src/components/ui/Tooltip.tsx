@@ -61,7 +61,7 @@ export default function Tooltip({ text, children, delay = 300, position = 'top' 
     } else if (rect.right > window.innerWidth - 4) {
       el.style.transform = `translateX(${window.innerWidth - 4 - rect.right}px)`
     }
-  }, [visible, coords])
+  }, [visible])
 
   if (!tooltipsEnabled) {
     return <>{children}</>

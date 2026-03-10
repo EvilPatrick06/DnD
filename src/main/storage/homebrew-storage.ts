@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import { access, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { app } from 'electron'
 import { isValidUUID } from '../../shared/utils/uuid'
 import type { StorageResult } from './types'

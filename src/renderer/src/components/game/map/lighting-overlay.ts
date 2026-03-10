@@ -54,8 +54,9 @@ export function drawLightingOverlay(
   if (walls.length === 0 && config.ambientLight === 'bright') return
 
   const cellSize = map.grid.cellSize
-  const pixelWidth = map.width * cellSize
-  const pixelHeight = map.height * cellSize
+  // map.width and map.height are already in pixels, not grid cells
+  const pixelWidth = map.width
+  const pixelHeight = map.height
 
   // Convert wall segments to raycast segments
   const segments = wallsToSegments(walls, cellSize)

@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import abilityScoreConfigJson from '@data/5e/character/ability-score-config.json'
+import { useState } from 'react'
 import type { AbilityScoreMethod } from '../../../stores/use-builder-store'
 import { POINT_BUY_BUDGET, POINT_BUY_COSTS, STANDARD_ARRAY, useBuilderStore } from '../../../stores/use-builder-store'
 import type { AbilityName } from '../../../types/character-common'

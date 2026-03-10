@@ -125,7 +125,7 @@ export default function LibraryPage(): JSX.Element {
     setSortField('name')
     setSortDirection('asc')
     setActiveFilters({})
-  }, [selectedCategory])
+  }, [])
 
   // Load official items when category changes (not on homebrew changes)
   const [officialItems, setOfficialItems] = useState<LibraryItem[]>([])
@@ -291,7 +291,7 @@ export default function LibraryPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [showFavorites, favorites, homebrewEntries, recentlyViewed])
+  }, [showFavorites, favorites, recentlyViewed])
 
   // Sort/filter config for current category
   const sortOptions = useMemo(
@@ -425,7 +425,7 @@ export default function LibraryPage(): JSX.Element {
   const catDef = selectedCategory ? getCategoryDef(selectedCategory) : null
 
   // Items to display in the list depending on mode
-  const displayItems = showFavorites ? favoriteItems : selectedCategory ? filteredItems : globalSearchResults
+  const _displayItems = showFavorites ? favoriteItems : selectedCategory ? filteredItems : globalSearchResults
 
   if (initialLoading) {
     return (

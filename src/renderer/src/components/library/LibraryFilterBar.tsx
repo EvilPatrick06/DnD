@@ -68,9 +68,7 @@ export default function LibraryFilterBar({
       </div>
 
       {/* Separator */}
-      {(activeFilterEntries.length > 0 || unusedFilters.length > 0) && (
-        <div className="w-px h-5 bg-gray-700" />
-      )}
+      {(activeFilterEntries.length > 0 || unusedFilters.length > 0) && <div className="w-px h-5 bg-gray-700" />}
 
       {/* Active filter chips */}
       {activeFilterEntries.map(([field, values]) => {

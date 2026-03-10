@@ -1,6 +1,6 @@
 import { type Container, type Graphics, Text } from 'pixi.js'
-import type { GridSettings } from '../../../types/map'
 import { generateGridLabels } from '../../../services/map/map-utils'
+import type { GridSettings } from '../../../types/map'
 
 /**
  * Draws grid lines onto a PixiJS Graphics object.

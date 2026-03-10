@@ -154,11 +154,7 @@ export function formatPrerequisites(prereqs: FeatData['prerequisites']): string[
 function speciesToOption(species: SpeciesData): SelectableOption {
   const size = species.size
   const sizeStr =
-    typeof size === 'string'
-      ? size
-      : size.type === 'choice'
-        ? (size.options ?? []).join(' or ')
-        : (size.value ?? '')
+    typeof size === 'string' ? size : size.type === 'choice' ? (size.options ?? []).join(' or ') : (size.value ?? '')
 
   const speed = typeof species.speed === 'number' ? species.speed : parseInt(String(species.speed), 10) || 30
 
@@ -227,12 +223,23 @@ function classToOption(cls: ClassData): SelectableOption {
 }
 
 function backgroundToOption(bg: BackgroundData): SelectableOption {
-  const toolProf = typeof bg.toolProficiency === 'string' ? bg.toolProficiency : (bg.toolProficiency as { type?: string })?.type ?? 'None'
+  const toolProf =
+    typeof bg.toolProficiency === 'string'
+      ? bg.toolProficiency
+      : ((bg.toolProficiency as { type?: string })?.type ?? 'None')
   const details: DetailField[] = [
-    { label: 'Skill Proficiencies', value: Array.isArray(bg.skillProficiencies) ? bg.skillProficiencies.join(', ') : String(bg.skillProficiencies ?? '') },
+    {
+      label: 'Skill Proficiencies',
+      value: Array.isArray(bg.skillProficiencies)
+        ? bg.skillProficiencies.join(', ')
+        : String(bg.skillProficiencies ?? '')
+    },
     { label: 'Tool Proficiency', value: toolProf || 'None' },
     { label: 'Feat', value: bg.feat },
-    { label: 'Ability Scores', value: Array.isArray(bg.abilityScores) ? bg.abilityScores.join(', ') : String(bg.abilityScores ?? '') }
+    {
+      label: 'Ability Scores',
+      value: Array.isArray(bg.abilityScores) ? bg.abilityScores.join(', ') : String(bg.abilityScores ?? '')
+    }
   ]
 
   const equipment = Array.isArray(bg.equipment) ? bg.equipment : []

@@ -2,9 +2,9 @@ import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
 import { deleteBastion, loadBastion, loadBastions, saveBastion } from '../storage/bastion-storage'
 import {
+  addBook,
   type BookConfig,
   type BookData,
-  addBook,
   importBook,
   loadBookConfig,
   loadBookData,
@@ -47,12 +47,7 @@ import {
   saveMapToLibrary
 } from '../storage/map-library-storage'
 import { type AppSettings, loadSettings, saveSettings } from '../storage/settings-storage'
-import {
-  deleteShopTemplate,
-  getShopTemplate,
-  listShopTemplates,
-  saveShopTemplate
-} from '../storage/shop-storage'
+import { deleteShopTemplate, getShopTemplate, listShopTemplates, saveShopTemplate } from '../storage/shop-storage'
 
 // Ensure imported types are used for type-safety
 type _CharacterVersion = CharacterVersion

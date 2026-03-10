@@ -264,9 +264,10 @@ function mergeHomebrew<T>(
 
   for (const entry of homebrewEntries) {
     // Homebrew entries wrap actual data under .data — unwrap if present
-    const raw = entry.data && typeof entry.data === 'object' && !Array.isArray(entry.data)
-      ? { ...(entry.data as Record<string, unknown>), id: entry.id ?? (entry.data as Record<string, unknown>).id }
-      : entry
+    const raw =
+      entry.data && typeof entry.data === 'object' && !Array.isArray(entry.data)
+        ? { ...(entry.data as Record<string, unknown>), id: entry.id ?? (entry.data as Record<string, unknown>).id }
+        : entry
     const entryWithSource = { ...raw, source: 'homebrew' }
     result.push(entryWithSource as (typeof result)[number])
   }
