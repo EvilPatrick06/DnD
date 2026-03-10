@@ -13,6 +13,7 @@ export interface GameMap {
   wallSegments?: WallSegment[]
   terrain: TerrainCell[]
   drawings?: DrawingData[]
+  regions?: SceneRegion[]
   floors?: Array<{ id: string; name: string }>
   audioEmitters?: Array<{
     id: string
@@ -125,6 +126,45 @@ export interface MapToken {
   borderStyle?: 'solid' | 'dashed' | 'double'
   /** Font size for the token label (8-24) */
   labelFontSize?: number
+  /** Aura configuration for visual range indicators */
+  aura?: {
+    /** Aura radius in feet */
+    radius: number
+    /** Aura color as hex string */
+    color: string
+    /** Aura opacity (0-1) */
+    opacity: number
+    /** Aura visibility: 'all' = everyone, 'dm-only' = host only */
+    visibility: 'all' | 'dm-only'
+  }
+}
+
+// ─── Scene Regions & Trigger Zones ─────────────────────────────
+
+export type RegionShape =
+  | { type: 'circle'; centerX: number; centerY: number; radius: number }
+  | { type: 'polygon'; points: Array<{ x: number; y: number }> }
+  | { type: 'rectangle'; x: number; y: number; width: number; height: number }
+
+export type RegionTrigger = 'enter' | 'leave' | 'start-turn' | 'end-turn'
+
+export type RegionAction =
+  | { type: 'alert-dm'; message: string }
+  | { type: 'teleport'; targetMapId: string; targetGridX: number; targetGridY: number }
+  | { type: 'apply-condition'; condition: string; duration?: number | 'permanent' }
+
+export interface SceneRegion {
+  id: string
+  name: string
+  shape: RegionShape
+  trigger: RegionTrigger
+  action: RegionAction
+  enabled: boolean
+  visibleToPlayers: boolean
+  /** If true, the region disables itself after firing once */
+  oneShot: boolean
+  color?: string
+  floor?: number
 }
 
 export interface WallSegment {

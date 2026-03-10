@@ -209,7 +209,13 @@ export const IPC_CHANNELS = {
   DISCORD_GET_CONFIG: 'discord:get-config',
   DISCORD_SAVE_CONFIG: 'discord:save-config',
   DISCORD_TEST_CONNECTION: 'discord:test-connection',
-  DISCORD_SEND_MESSAGE: 'discord:send-message'
+  DISCORD_SEND_MESSAGE: 'discord:send-message',
+
+  // === Cloud Sync (Google Drive via Rclone on Pi) ===
+  CLOUD_SYNC_STATUS: 'cloud:sync-status',
+  CLOUD_SYNC_BACKUP: 'cloud:sync-backup',
+  CLOUD_SYNC_CHECK_STATUS: 'cloud:sync-check-campaign',
+  CLOUD_SYNC_LIST_CAMPAIGNS: 'cloud:sync-list-campaigns'
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

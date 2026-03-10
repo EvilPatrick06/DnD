@@ -68,6 +68,26 @@ export function createTokenSprite(
     container.addChild(turnGlow)
   }
 
+  // Aura ring (drawn behind the token, beneath selection ring)
+  if (token.aura && (token.aura.visibility === 'all' || isDM)) {
+    // Convert aura radius from feet to pixels (assuming 5ft per grid cell)
+    const auraRadiusPixels = (token.aura.radius / 5) * cellSize
+    const auraRing = new Graphics()
+
+    // Convert hex color string to number
+    const auraColor = parseInt(token.aura.color.replace('#', ''), 16)
+
+    // Draw filled circle for the aura
+    auraRing.circle(cx, cy, auraRadiusPixels)
+    auraRing.fill({ color: auraColor, alpha: token.aura.opacity })
+
+    // Optional: add a subtle border to the aura
+    auraRing.circle(cx, cy, auraRadiusPixels)
+    auraRing.stroke({ width: 1, color: auraColor, alpha: token.aura.opacity * 0.5 })
+
+    container.addChild(auraRing)
+  }
+
   // Selection ring (drawn behind the token)
   if (isSelected) {
     const selRing = new Graphics()

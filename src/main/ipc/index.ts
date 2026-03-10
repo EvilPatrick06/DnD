@@ -8,6 +8,7 @@ import { isValidUUID } from '../../shared/utils/uuid'
 import { logToFile } from '../log'
 import { registerAiHandlers } from './ai-handlers'
 import { registerAudioHandlers } from './audio-handlers'
+import { registerCloudSyncHandlers } from './cloud-sync-handlers'
 import { registerDiscordHandlers } from './discord-handlers'
 import { registerGameDataHandlers } from './game-data-handlers'
 import { registerPluginHandlers } from './plugin-handlers'
@@ -246,4 +247,7 @@ export function registerIpcHandlers(): void {
 
   // --- Plugin handlers ---
   registerPluginHandlers()
+
+  // --- Cloud sync handlers (Google Drive via Rclone on Pi) ---
+  registerCloudSyncHandlers()
 }

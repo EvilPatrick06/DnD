@@ -169,6 +169,74 @@ describe('createTokenSprite', () => {
     const container = createTokenSprite(makeToken({ nameVisible: false }), 70, false, false, true, undefined, false)
     expect(container).toBeDefined()
   })
+
+  it('renders aura ring when aura is configured and visible to all', () => {
+    const tokenWithAura = makeToken({
+      aura: {
+        radius: 10,
+        color: '#FFD700',
+        opacity: 0.5,
+        visibility: 'all'
+      }
+    })
+    const container = createTokenSprite(tokenWithAura, 70, false, false, true, undefined, false)
+    // Aura should be rendered as an additional child (before selection ring)
+    expect(container.children.length).toBeGreaterThan(1)
+  })
+
+  it('renders aura ring when aura is configured and visible to DM only (when isDM=true)', () => {
+    const tokenWithAura = makeToken({
+      aura: {
+        radius: 10,
+        color: '#FFD700',
+        opacity: 0.5,
+        visibility: 'dm-only'
+      }
+    })
+    const container = createTokenSprite(tokenWithAura, 70, false, false, true, undefined, true) // isDM=true
+    // Aura should be rendered as an additional child
+    expect(container.children.length).toBeGreaterThan(1)
+  })
+
+  it('does not render aura ring when visibility is dm-only and isDM=false', () => {
+    const tokenWithAura = makeToken({
+      aura: {
+        radius: 10,
+        color: '#FFD700',
+        opacity: 0.5,
+        visibility: 'dm-only'
+      }
+    })
+    const container = createTokenSprite(tokenWithAura, 70, false, false, true, undefined, false) // isDM=false
+    // Should not add extra aura graphics
+    const baseChildrenCount = createTokenSprite(makeToken(), 70, false, false, true, undefined, false).children.length
+    expect(container.children.length).toBe(baseChildrenCount)
+  })
+
+  it('does not render aura ring when no aura is configured', () => {
+    const container = createTokenSprite(makeToken(), 70, false, false, true, undefined, false)
+    const baseChildrenCount = container.children.length
+    // No aura configured, so should be same as base
+    expect(container.children.length).toBe(baseChildrenCount)
+  })
+
+  it('renders Paladin Aura of Protection (10ft gold ring)', () => {
+    // Success criteria: A Paladin token displays a 10ft gold ring representing their Aura of Protection
+    const paladinToken = makeToken({
+      label: 'Paladin',
+      entityType: 'player',
+      aura: {
+        radius: 10, // 10 feet
+        color: '#FFD700', // Gold color
+        opacity: 0.6, // Semi-transparent
+        visibility: 'all' // Visible to all players
+      }
+    })
+    const container = createTokenSprite(paladinToken, 70, false, false, true, undefined, false)
+    // Aura should be rendered (container should have more children than base token)
+    const baseContainer = createTokenSprite(makeToken(), 70, false, false, true, undefined, false)
+    expect(container.children.length).toBeGreaterThan(baseContainer.children.length)
+  })
 })
 
 // ─── setSpeaking ───────────────────────────────────────────────

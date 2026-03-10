@@ -425,6 +425,15 @@ const api = {
     testConnection: () => ipcRenderer.invoke(IPC_CHANNELS.DISCORD_TEST_CONNECTION),
     sendMessage: (text: string, campaignName?: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.DISCORD_SEND_MESSAGE, text, campaignName)
+  },
+
+  // Cloud Sync (Google Drive via Rclone on Pi)
+  cloudSync: {
+    getStatus: () => ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_STATUS),
+    backupCampaign: (campaignId: string, campaignName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_BACKUP, campaignId, campaignName),
+    checkCampaignStatus: (campaignId: string) => ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_CHECK_STATUS, campaignId),
+    listRemoteCampaigns: () => ipcRenderer.invoke(IPC_CHANNELS.CLOUD_SYNC_LIST_CAMPAIGNS)
   }
 }
 

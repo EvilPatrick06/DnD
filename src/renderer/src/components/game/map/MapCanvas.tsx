@@ -62,11 +62,13 @@ interface MapCanvasProps {
   map: GameMap | null
   isHost: boolean
   myCharacterId?: string | null
-  selectedTokenId: string | null
-  activeTool: 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill'
+  selectedTokenIds: string[]
+  activeTool: 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill' | 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text'
+  drawingStrokeWidth?: number
+  drawingColor?: string
   fogBrushSize: number
   onTokenMove: (tokenId: string, gridX: number, gridY: number) => void
-  onTokenSelect: (tokenId: string | null) => void
+  onTokenSelect: (tokenIds: string[]) => void
   onCellClick: (gridX: number, gridY: number) => void
   onWallPlace?: (x1: number, y1: number, x2: number, y2: number) => void
   onDoorToggle?: (wallId: string) => void
@@ -76,7 +78,7 @@ interface MapCanvasProps {
   /** Entity ID of the creature whose turn it is (for active turn glow) */
   activeEntityId?: string | null
   /** Callback for right-click on a token (context menu) */
-  onTokenContextMenu?: (x: number, y: number, token: MapToken, mapId: string) => void
+  onTokenContextMenu?: (x: number, y: number, token: MapToken, mapId: string, selectedTokenIds: string[]) => void
   /** Callback for right-click on an empty cell (DM only) */
   onEmptyCellContextMenu?: (gridX: number, gridY: number, screenX: number, screenY: number) => void
 }
@@ -85,7 +87,7 @@ export default function MapCanvas({
   map,
   isHost,
   myCharacterId,
-  selectedTokenId,
+  selectedTokenIds,
   activeTool,
   fogBrushSize: _fogBrushSize,
   onTokenMove,
@@ -98,7 +100,9 @@ export default function MapCanvas({
   activeAoE,
   activeEntityId,
   onTokenContextMenu,
-  onEmptyCellContextMenu
+  onEmptyCellContextMenu,
+  drawingStrokeWidth,
+  drawingColor
 }: MapCanvasProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
@@ -107,11 +111,13 @@ export default function MapCanvas({
   const gridLabelContainerRef = useRef<Container | null>(null)
   const fogGraphicsRef = useRef<Graphics | null>(null)
   const tokenContainerRef = useRef<Container | null>(null)
+  const selectionBoxGraphicsRef = useRef<Graphics | null>(null)
   const pingGraphicsRef = useRef<Graphics | null>(null)
   const measureGraphicsRef = useRef<Graphics | null>(null)
   const moveOverlayRef = useRef<Graphics | null>(null)
   const drawingGraphicsRef = useRef<Graphics | null>(null)
   const terrainOverlayRef = useRef<Graphics | null>(null)
+  const regionGraphicsRef = useRef<Graphics | null>(null)
   const aoeOverlayRef = useRef<Graphics | null>(null)
   const bgSpriteRef = useRef<Sprite | null>(null)
   const weatherOverlayRef = useRef<WeatherOverlayLayer | null>(null)
@@ -133,6 +139,16 @@ export default function MapCanvas({
     startGridY: number
     offsetX: number
     offsetY: number
+    selectedTokenIds: string[]
+    selectedStartPositions: Array<{ tokenId: string; gridX: number; gridY: number }>
+  } | null>(null)
+
+  // Selection box
+  const selectionBoxRef = useRef<{
+    startX: number
+    startY: number
+    currentX: number
+    currentY: number
   } | null>(null)
 
   // Fog painting state
@@ -145,6 +161,11 @@ export default function MapCanvas({
   const wallGraphicsRef = useRef<Graphics | null>(null)
   const lightingGraphicsRef = useRef<Graphics | null>(null)
   const ghostRef = useRef<Graphics | null>(null)
+
+  // Drawing refs
+  const drawingStartRef = useRef<{ x: number; y: number } | null>(null)
+  const drawingPointsRef = useRef<Array<{ x: number; y: number }>>([])
+  const drawingGraphicsRef = useRef<Graphics | null>(null)
 
   const [initialized, setInitialized] = useState(false)
   const [initError, setInitError] = useState<string | null>(null)
@@ -206,10 +227,12 @@ export default function MapCanvas({
       gridGraphicsRef.current = layers.gridGraphics
       gridLabelContainerRef.current = layers.gridLabelContainer
       terrainOverlayRef.current = layers.terrainOverlay
+      regionGraphicsRef.current = layers.regionGraphics
       drawingGraphicsRef.current = layers.drawingGraphics
       moveOverlayRef.current = layers.moveOverlay
       aoeOverlayRef.current = layers.aoeOverlay
       tokenContainerRef.current = layers.tokenContainer
+      selectionBoxGraphicsRef.current = layers.selectionBoxGraphics
       pingGraphicsRef.current = layers.pingGraphics
       fogGraphicsRef.current = layers.fogGraphics
       lightingGraphicsRef.current = layers.lightingGraphics
@@ -301,9 +324,13 @@ export default function MapCanvas({
   // Clear stale drag/measurement state when tool changes
   useEffect(() => {
     dragRef.current = null
+    selectionBoxRef.current = null
     measureStartRef.current = null
     isFogPaintingRef.current = false
     lastFogCellRef.current = null
+    if (selectionBoxGraphicsRef.current) {
+      selectionBoxGraphicsRef.current.clear()
+    }
   }, [])
 
   // Reset floor when switching maps (avoids stale floor index)
@@ -347,6 +374,7 @@ export default function MapCanvas({
         wallGraphicsRef,
         lightingGraphicsRef,
         terrainOverlayRef,
+        regionGraphicsRef,
         drawingGraphicsRef,
         aoeOverlayRef,
         moveOverlayRef,
@@ -398,7 +426,7 @@ export default function MapCanvas({
       // Dynamic vision: hide non-player tokens outside party vision
       if (visionSet && token.entityType !== 'player' && !isTokenInVisionSet(token, visionSet)) continue
       visibleTokenIds.add(token.id)
-      const isSelected = token.id === selectedTokenId
+      const isSelected = selectedTokenIds.includes(token.id)
       const isActive = !!activeEntityId && token.entityId === activeEntityId
 
       // Compute lighting condition at token center
@@ -410,7 +438,7 @@ export default function MapCanvas({
 
       // Split key: position and appearance are tracked separately for animation
       const posKey = `${token.gridX},${token.gridY}`
-      const appearanceKey = `${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost},${isOnCurrentFloor}`
+      const appearanceKey = `${isSelected},${isActive},${token.label},${token.color ?? ''},${token.currentHP ?? ''},${token.maxHP ?? ''},${showHpBar},${token.sizeX ?? 1},${token.sizeY ?? 1},${(token.conditions ?? []).join(',')},${lighting},${token.nameVisible ?? ''},${isHost},${isOnCurrentFloor},${JSON.stringify(token.aura ?? null)}`
       const key = `${posKey},${appearanceKey}`
       const cached = cache.get(token.id)
       if (cached && cached.key === key) continue
@@ -442,18 +470,54 @@ export default function MapCanvas({
         if (activeTool !== 'select') return
         if (e.button === 2) return
         e.stopPropagation()
-        onTokenSelect(token.id)
+
+        // Handle multi-selection logic
+        const isCtrlPressed = e.ctrlKey || e.metaKey
+        let newSelection: string[]
+
+        if (isCtrlPressed) {
+          // Add/remove from selection
+          if (selectedTokenIds.includes(token.id)) {
+            // Remove from selection
+            newSelection = selectedTokenIds.filter(id => id !== token.id)
+          } else {
+            // Add to selection
+            newSelection = [...selectedTokenIds, token.id]
+          }
+        } else {
+          // Single selection - clear and select this token
+          newSelection = [token.id]
+        }
+
+        onTokenSelect(newSelection)
+
         if (!isHost && token.entityType !== 'player') return
         // Block players from dragging tokens that don't belong to them
         if (!isHost && myCharacterId && token.entityId !== myCharacterId) return
+
+        // Only allow dragging if this token is in the selection
+        if (!newSelection.includes(token.id)) return
+
         const worldPos = worldRef.current?.toLocal(e.global)
         if (!worldPos) return
+        // Get starting positions for all selected tokens
+        const selectedStartPositions = selectedTokenIds.map(tokenId => {
+          const selectedToken = map.tokens.find(t => t.id === tokenId)
+          return selectedToken ? {
+            tokenId,
+            gridX: selectedToken.gridX,
+            gridY: selectedToken.gridY
+          } : null
+        }).filter(Boolean) as Array<{ tokenId: string; gridX: number; gridY: number }>
+
         dragRef.current = {
           tokenId: token.id,
           startGridX: token.gridX,
           startGridY: token.gridY,
           offsetX: worldPos.x - token.gridX * map.grid.cellSize,
-          offsetY: worldPos.y - token.gridY * map.grid.cellSize
+          offsetY: worldPos.y - token.gridY * map.grid.cellSize,
+          selectedTokenIds,
+          selectedStartPositions
         }
       })
       sprite.on('rightclick', (e) => {
@@ -462,7 +526,7 @@ export default function MapCanvas({
         const canvas = containerRef.current?.querySelector('canvas')
         if (!canvas) return
         const rect = canvas.getBoundingClientRect()
-        onTokenContextMenu(e.global.x + rect.left, e.global.y + rect.top, token, map.id)
+        onTokenContextMenu(e.global.x + rect.left, e.global.y + rect.top, token, map.id, selectedTokenIds)
       })
       container.addChild(sprite)
       cache.set(token.id, { sprite, key })
@@ -474,9 +538,9 @@ export default function MapCanvas({
         cache.delete(tokenId)
       }
     }
-  }, [
+  },     [
     map,
-    selectedTokenId,
+    selectedTokenIds,
     isHost,
     myCharacterId,
     activeTool,
@@ -517,6 +581,7 @@ export default function MapCanvas({
       panStart: panStartRef,
       spaceHeld: spaceHeldRef,
       drag: dragRef,
+      selectionBox: selectionBoxRef,
       isFogPainting: isFogPaintingRef,
       lastFogCell: lastFogCellRef,
       measureStart: measureStartRef,
@@ -524,8 +589,12 @@ export default function MapCanvas({
       ghost: ghostRef,
       world: worldRef,
       tokenContainer: tokenContainerRef,
+      selectionBoxGraphics: selectionBoxGraphicsRef,
       measureGraphics: measureGraphicsRef,
-      wallGraphics: wallGraphicsRef
+      wallGraphics: wallGraphicsRef,
+      drawingStart: drawingStartRef,
+      drawingPoints: drawingPointsRef,
+      drawingGraphics: drawingGraphicsRef
     }
     return setupMouseHandlers(el, {
       refs: eventRefs,
@@ -534,13 +603,16 @@ export default function MapCanvas({
       isHost,
       isInitiativeMode,
       turnState,
+      selectedTokenIds,
       applyTransform,
       onTokenMove,
       onTokenSelect,
       onCellClick,
       onWallPlace,
       onDoorToggle,
-      renderTokens
+      renderTokens,
+      drawingStrokeWidth,
+      drawingColor
     })
   }, [
     map,
