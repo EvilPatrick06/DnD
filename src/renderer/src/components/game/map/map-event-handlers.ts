@@ -16,6 +16,8 @@ export interface DragState {
   startGridY: number
   offsetX: number
   offsetY: number
+  selectedTokenIds: string[]
+  selectedStartPositions: Array<{ tokenId: string; gridX: number; gridY: number }>
 }
 
 export interface MapEventRefs {
@@ -25,6 +27,7 @@ export interface MapEventRefs {
   panStart: React.MutableRefObject<{ x: number; y: number }>
   spaceHeld: React.MutableRefObject<boolean>
   drag: React.MutableRefObject<DragState | null>
+  selectionBox: React.MutableRefObject<{ startX: number; startY: number; currentX: number; currentY: number } | null>
   isFogPainting: React.MutableRefObject<boolean>
   lastFogCell: React.MutableRefObject<{ x: number; y: number } | null>
   measureStart: React.MutableRefObject<{ x: number; y: number } | null>
@@ -32,11 +35,15 @@ export interface MapEventRefs {
   ghost: React.MutableRefObject<Graphics | null>
   world: React.MutableRefObject<Container | null>
   tokenContainer: React.MutableRefObject<Container | null>
+  selectionBoxGraphics: React.MutableRefObject<Graphics | null>
   measureGraphics: React.MutableRefObject<Graphics | null>
   wallGraphics: React.MutableRefObject<Graphics | null>
+  drawingStart: React.MutableRefObject<{ x: number; y: number } | null>
+  drawingPoints: React.MutableRefObject<Array<{ x: number; y: number }>>
+  drawingGraphics: React.MutableRefObject<Graphics | null>
 }
 
-type ActiveTool = 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill'
+type ActiveTool = 'select' | 'token' | 'fog-reveal' | 'fog-hide' | 'measure' | 'terrain' | 'wall' | 'fill' | 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text'
 
 // ── Wheel zoom ────────────────────────────────────────────────────────────────
 
@@ -154,17 +161,20 @@ interface MouseHandlerOptions {
   isHost: boolean
   isInitiativeMode: boolean | undefined
   turnState: TurnState | null | undefined
+  selectedTokenIds: string[]
   applyTransform: () => void
   onTokenMove: (tokenId: string, gridX: number, gridY: number) => void
-  onTokenSelect: (tokenId: string | null) => void
+  onTokenSelect: (tokenIds: string[]) => void
   onCellClick: (gridX: number, gridY: number) => void
   onWallPlace?: (x1: number, y1: number, x2: number, y2: number) => void
   onDoorToggle?: (wallId: string) => void
   renderTokens: () => void
+  drawingStrokeWidth?: number
+  drawingColor?: string
 }
 
 export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): () => void {
-  const { refs, map, activeTool, isHost, isInitiativeMode, turnState, applyTransform } = opts
+  const { refs, map, activeTool, isHost, isInitiativeMode, turnState, selectedTokenIds, applyTransform, drawingStrokeWidth = 3, drawingColor = '#ffffff' } = opts
   const { onTokenMove, onTokenSelect, onCellClick, onWallPlace, onDoorToggle, renderTokens } = opts
 
   const onMouseDown = (e: MouseEvent): void => {
@@ -222,6 +232,15 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
         return
       }
 
+      // Drawing tools
+      if (activeTool.startsWith('draw-')) {
+        if (!refs.drawingStart.current) {
+          refs.drawingStart.current = { x: worldX, y: worldY }
+          refs.drawingPoints.current = [{ x: worldX, y: worldY }]
+        }
+        return
+      }
+
       // Click-to-place token
       const pending = useGameStore.getState().pendingPlacement
       if (pending && map) {
@@ -247,7 +266,9 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       }
 
       if (activeTool === 'select' && !refs.drag.current) {
-        onTokenSelect(null)
+        // Start selection box if clicking on empty space
+        refs.selectionBox.current = { startX: worldX, startY: worldY, currentX: worldX, currentY: worldY }
+        onTokenSelect([])
       }
     }
   }
@@ -276,6 +297,32 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       return
     }
 
+    // Selection box dragging
+    if (refs.selectionBox.current && !refs.drag.current && refs.selectionBoxGraphics.current) {
+      const rect = el.getBoundingClientRect()
+      const canvasX = e.clientX - rect.left
+      const canvasY = e.clientY - rect.top
+      const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
+      const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
+
+      refs.selectionBox.current.currentX = worldX
+      refs.selectionBox.current.currentY = worldY
+
+      // Draw selection box
+      const box = refs.selectionBox.current
+      const graphics = refs.selectionBoxGraphics.current
+      graphics.clear()
+      graphics.setStrokeStyle({ width: 2, color: 0x00ff00, alpha: 0.8 })
+      graphics.setFillStyle({ color: 0x00ff00, alpha: 0.1 })
+      const minX = Math.min(box.startX, box.currentX)
+      const minY = Math.min(box.startY, box.currentY)
+      const width = Math.abs(box.currentX - box.startX)
+      const height = Math.abs(box.currentY - box.startY)
+      graphics.rect(minX, minY, width, height)
+      graphics.fill()
+      graphics.stroke()
+    }
+
     // Token dragging
     if (refs.drag.current && map && refs.world.current) {
       const rect = el.getBoundingClientRect()
@@ -284,13 +331,22 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
       const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
 
-      const tokenSprite = refs.tokenContainer.current?.children.find(
-        (c) => c.label === `token-${refs.drag.current?.tokenId}`
-      )
-      if (tokenSprite) {
-        tokenSprite.x = worldX - refs.drag.current.offsetX
-        tokenSprite.y = worldY - refs.drag.current.offsetY
-      }
+      // Move all selected tokens by the same delta
+      const deltaX = worldX - refs.drag.current.offsetX - refs.drag.current.startGridX * map.grid.cellSize
+      const deltaY = worldY - refs.drag.current.offsetY - refs.drag.current.startGridY * map.grid.cellSize
+
+      refs.drag.current.selectedTokenIds.forEach(tokenId => {
+        const tokenSprite = refs.tokenContainer.current?.children.find(
+          (c) => c.label === `token-${tokenId}`
+        )
+        if (tokenSprite) {
+          const startPos = refs.drag.current!.selectedStartPositions.find(p => p.tokenId === tokenId)
+          if (startPos) {
+            tokenSprite.x = startPos.gridX * map.grid.cellSize + deltaX
+            tokenSprite.y = startPos.gridY * map.grid.cellSize + deltaY
+          }
+        }
+      })
     }
 
     // Ghost token for click-to-place
@@ -318,12 +374,95 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
         }
       )
     }
+
+    // Drawing tools (live preview)
+    if (refs.drawingStart.current && activeTool.startsWith('draw-') && refs.drawingGraphics.current) {
+      const rect = el.getBoundingClientRect()
+      const canvasX = e.clientX - rect.left
+      const canvasY = e.clientY - rect.top
+      const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
+      const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
+
+      // Add point to drawing path for free drawing
+      if (activeTool === 'draw-free') {
+        refs.drawingPoints.current.push({ x: worldX, y: worldY })
+      } else if (['draw-line', 'draw-rect', 'draw-circle'].includes(activeTool)) {
+        // For shapes, update the end point
+        refs.drawingPoints.current = [refs.drawingStart.current, { x: worldX, y: worldY }]
+      }
+
+      // TODO: Render live preview
+    }
   }
 
   const onMouseUp = (e: MouseEvent): void => {
     if (refs.isFogPainting.current) {
       refs.isFogPainting.current = false
       refs.lastFogCell.current = null
+      return
+    }
+
+    // Finish selection box
+    if (refs.selectionBox.current && map && refs.selectionBoxGraphics.current) {
+      const box = refs.selectionBox.current
+
+      // Calculate selection bounds in world coordinates
+      const minX = Math.min(box.startX, box.currentX)
+      const maxX = Math.max(box.startX, box.currentX)
+      const minY = Math.min(box.startY, box.currentY)
+      const maxY = Math.max(box.startY, box.currentY)
+
+      // Find tokens within the selection box
+      const selectedTokenIds: string[] = []
+      for (const token of map.tokens) {
+        const tokenCenterX = token.gridX * map.grid.cellSize + (token.sizeX * map.grid.cellSize) / 2
+        const tokenCenterY = token.gridY * map.grid.cellSize + (token.sizeY * map.grid.cellSize) / 2
+        const tokenRadius = (Math.min(token.sizeX, token.sizeY) * map.grid.cellSize) / 2
+
+        // Check if token center is within selection box (with some tolerance for token size)
+        if (tokenCenterX + tokenRadius >= minX && tokenCenterX - tokenRadius <= maxX &&
+            tokenCenterY + tokenRadius >= minY && tokenCenterY - tokenRadius <= maxY) {
+          selectedTokenIds.push(token.id)
+        }
+      }
+
+      // Update selection
+      onTokenSelect(selectedTokenIds)
+
+      // Clear selection box
+      refs.selectionBoxGraphics.current.clear()
+      refs.selectionBox.current = null
+      return
+    }
+
+    // Finish drawing
+    if (refs.drawingStart.current && activeTool.startsWith('draw-')) {
+      const drawingData = {
+        id: crypto.randomUUID(),
+        type: activeTool as 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text',
+        points: refs.drawingPoints.current,
+        color: drawingColor,
+        strokeWidth: drawingStrokeWidth,
+        visibleToPlayers: true // All drawings are visible by default
+      }
+
+      // For text tool, prompt for text input
+      if (activeTool === 'draw-text') {
+        const text = prompt('Enter text:')
+        if (text && text.trim()) {
+          drawingData.text = text.trim()
+          useGameStore.getState().addDrawing(map!.id, drawingData)
+        }
+      } else {
+        useGameStore.getState().addDrawing(map!.id, drawingData)
+      }
+
+      // Reset drawing state
+      refs.drawingStart.current = null
+      refs.drawingPoints.current = []
+      if (refs.drawingGraphics.current) {
+        refs.drawingGraphics.current.clear()
+      }
       return
     }
 
@@ -340,8 +479,15 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
       const worldX = (canvasX - refs.pan.current.x) / refs.zoom.current
       const worldY = (canvasY - refs.pan.current.y) / refs.zoom.current
 
-      let newGridX: number
-      let newGridY: number
+      // Calculate the delta movement from the primary dragged token
+      const primaryToken = map.tokens.find(t => t.id === refs.drag.current!.tokenId)
+      if (!primaryToken) {
+        refs.drag.current = null
+        return
+      }
+
+      let primaryNewGridX: number
+      let primaryNewGridY: number
       const gridType = map.grid.type
       if (gridType === 'hex' || gridType === 'hex-flat' || gridType === 'hex-pointy') {
         const orientation = gridType === 'hex-pointy' ? 'pointy' : 'flat'
@@ -353,41 +499,55 @@ export function setupMouseHandlers(el: HTMLElement, opts: MouseHandlerOptions): 
           map.grid.offsetY,
           orientation
         )
-        newGridX = hex.col
-        newGridY = hex.row
+        primaryNewGridX = hex.col
+        primaryNewGridY = hex.row
       } else {
-        newGridX = Math.round((worldX - refs.drag.current.offsetX) / map.grid.cellSize)
-        newGridY = Math.round((worldY - refs.drag.current.offsetY) / map.grid.cellSize)
+        primaryNewGridX = Math.round((worldX - refs.drag.current.offsetX) / map.grid.cellSize)
+        primaryNewGridY = Math.round((worldY - refs.drag.current.offsetY) / map.grid.cellSize)
       }
 
-      if (newGridX !== refs.drag.current.startGridX || newGridY !== refs.drag.current.startGridY) {
-        // Check if walls block this movement
-        const walls = map.wallSegments ?? []
-        if (
-          walls.length > 0 &&
-          isMovementBlockedByWall(refs.drag.current.startGridX, refs.drag.current.startGridY, newGridX, newGridY, walls)
-        ) {
-          renderTokens()
-        } else if (isInitiativeMode && turnState) {
-          const moveCheck = canMoveToPosition(
-            refs.drag.current.startGridX,
-            refs.drag.current.startGridY,
-            newGridX,
-            newGridY,
-            turnState,
-            map.terrain ?? []
-          )
-          if (moveCheck.allowed) {
-            onTokenMove(refs.drag.current.tokenId, newGridX, newGridY)
-          } else {
-            renderTokens()
+      // Calculate delta from primary token's original position
+      const deltaX = primaryNewGridX - primaryToken.gridX
+      const deltaY = primaryNewGridY - primaryToken.gridY
+
+      // Move all selected tokens by the same delta
+      refs.drag.current.selectedTokenIds.forEach(tokenId => {
+        const token = map.tokens.find(t => t.id === tokenId)
+        if (!token) return
+
+        const startPos = refs.drag.current!.selectedStartPositions.find(p => p.tokenId === tokenId)
+        if (!startPos) return
+
+        const newGridX = startPos.gridX + deltaX
+        const newGridY = startPos.gridY + deltaY
+
+        // Only move if position actually changed
+        if (newGridX !== startPos.gridX || newGridY !== startPos.gridY) {
+          // Check if walls block this movement (simplified - only check primary token for now)
+          const walls = map.wallSegments ?? []
+          const movementBlocked = walls.length > 0 &&
+            isMovementBlockedByWall(startPos.gridX, startPos.gridY, newGridX, newGridY, walls)
+
+          if (!movementBlocked) {
+            if (isInitiativeMode && turnState && tokenId === refs.drag.current!.tokenId) {
+              // Only apply initiative checks to the primary dragged token
+              const moveCheck = canMoveToPosition(
+                startPos.gridX,
+                startPos.gridY,
+                newGridX,
+                newGridY,
+                turnState,
+                map.terrain ?? []
+              )
+              if (moveCheck.allowed) {
+                onTokenMove(tokenId, newGridX, newGridY)
+              }
+            } else {
+              onTokenMove(tokenId, newGridX, newGridY)
+            }
           }
-        } else {
-          onTokenMove(refs.drag.current.tokenId, newGridX, newGridY)
         }
-      } else {
-        renderTokens()
-      }
+      })
 
       refs.drag.current = null
     }

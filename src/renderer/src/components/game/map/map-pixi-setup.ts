@@ -8,10 +8,12 @@ export interface MapLayers {
   gridGraphics: Graphics
   gridLabelContainer: Container
   terrainOverlay: Graphics
+  regionGraphics: Graphics
   drawingGraphics: Graphics
   moveOverlay: Graphics
   aoeOverlay: Graphics
   tokenContainer: Container
+  selectionBoxGraphics: Graphics
   pingGraphics: Graphics
   fogGraphics: Graphics
   lightingGraphics: Graphics
@@ -100,7 +102,12 @@ export function createMapLayers(app: Application): MapLayers {
   terrainOverlay.label = 'terrain'
   world.addChild(terrainOverlay)
 
-  // Drawing/annotation layer (above terrain, below movement)
+  // Region overlay layer (above terrain, below drawings)
+  const regionGraphics = new Graphics()
+  regionGraphics.label = 'regions'
+  world.addChild(regionGraphics)
+
+  // Drawing/annotation layer (above regions, below movement)
   const drawingGraphics = new Graphics()
   drawingGraphics.label = 'drawings'
   world.addChild(drawingGraphics)
@@ -120,7 +127,12 @@ export function createMapLayers(app: Application): MapLayers {
   tokenContainer.label = 'tokens'
   world.addChild(tokenContainer)
 
-  // Ping overlay (above tokens, below fog)
+  // Selection box overlay (above tokens, below pings)
+  const selectionBoxGraphics = new Graphics()
+  selectionBoxGraphics.label = 'selection-box'
+  world.addChild(selectionBoxGraphics)
+
+  // Ping overlay (above selection box, below fog)
   const pingGraphics = new Graphics()
   pingGraphics.label = 'pings'
   world.addChild(pingGraphics)
@@ -156,10 +168,12 @@ export function createMapLayers(app: Application): MapLayers {
     gridGraphics,
     gridLabelContainer,
     terrainOverlay,
+    regionGraphics,
     drawingGraphics,
     moveOverlay,
     aoeOverlay,
     tokenContainer,
+    selectionBoxGraphics,
     pingGraphics,
     fogGraphics,
     lightingGraphics,

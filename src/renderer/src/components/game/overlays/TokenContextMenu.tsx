@@ -18,6 +18,7 @@ interface TokenContextMenuProps {
   y: number
   token: MapToken
   mapId: string
+  selectedTokenIds: string[]
   isDM: boolean
   characterId?: string | null
   onClose: () => void
@@ -31,6 +32,7 @@ export default function TokenContextMenu({
   y,
   token,
   mapId,
+  selectedTokenIds,
   isDM,
   characterId,
   onClose,
@@ -71,6 +73,7 @@ export default function TokenContextMenu({
 
   const [showSetHP, setShowSetHP] = useState(false)
   const [hpValue, setHpValue] = useState(String(token.currentHP ?? 0))
+  const [showGroupConditions, setShowGroupConditions] = useState(false)
 
   const activeMap = maps.find((map) => map.id === mapId)
   const currentCharacterToken = characterId
@@ -96,6 +99,10 @@ export default function TokenContextMenu({
     !isMounted &&
     isAdjacent(currentCharacterToken, token) &&
     getTokenSizeCategory(token) > getTokenSizeCategory(currentCharacterToken)
+
+  // Check if multiple tokens are selected
+  const isMultiSelection = selectedTokenIds.length > 1
+  const selectedTokens = isMultiSelection ? activeMap?.tokens.filter(t => selectedTokenIds.includes(t.id)) ?? [] : []
 
   const mountActionLabel =
     characterId == null
@@ -134,6 +141,23 @@ export default function TokenContextMenu({
   }
 
   const handleApplyCondition = (): void => {
+    onClose()
+  }
+
+  const handleApplyGroupCondition = (): void => {
+    setShowGroupConditions(!showGroupConditions)
+  }
+
+  const handleSelectGroupCondition = (condition: string): void => {
+    // Apply condition to all selected tokens
+    selectedTokens.forEach(selectedToken => {
+      const currentConditions = selectedToken.conditions ?? []
+      if (!currentConditions.includes(condition)) {
+        updateToken(mapId, selectedToken.id, {
+          conditions: [...currentConditions, condition]
+        })
+      }
+    })
     onClose()
   }
 
@@ -284,6 +308,29 @@ export default function TokenContextMenu({
       >
         Apply Condition
       </button>
+      {isMultiSelection && (
+        <>
+          <button
+            onClick={handleApplyGroupCondition}
+            className="w-full px-4 py-2 text-xs text-left text-amber-300 hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            Apply Group Condition ({selectedTokens.length} tokens)
+          </button>
+          {showGroupConditions && (
+            <div className="ml-4 space-y-1">
+              {['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious'].map((condition) => (
+                <button
+                  key={condition}
+                  onClick={() => handleSelectGroupCondition(condition)}
+                  className="w-full px-4 py-1.5 text-xs text-left text-gray-300 hover:bg-gray-800 transition-colors cursor-pointer"
+                >
+                  {condition}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
       {mountActionLabel && (
         <button
           onClick={handleMountedCombatAction}

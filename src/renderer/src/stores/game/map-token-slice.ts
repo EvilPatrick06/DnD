@@ -176,6 +176,23 @@ export const createMapTokenSlice: StateCreator<GameStoreState, [], [], MapTokenS
     }
   },
 
+  // --- Token selection actions ---
+
+  setSelectedTokenIds: (tokenIds: string[]) => set({ selectedTokenIds: tokenIds }),
+  addToSelection: (tokenId: string) => {
+    set((state) => ({
+      selectedTokenIds: state.selectedTokenIds.includes(tokenId)
+        ? state.selectedTokenIds
+        : [...state.selectedTokenIds, tokenId]
+    }))
+  },
+  removeFromSelection: (tokenId: string) => {
+    set((state) => ({
+      selectedTokenIds: state.selectedTokenIds.filter(id => id !== tokenId)
+    }))
+  },
+  clearSelection: () => set({ selectedTokenIds: [] }),
+
   // --- Bulk token actions ---
 
   revealAllTokens: () => {

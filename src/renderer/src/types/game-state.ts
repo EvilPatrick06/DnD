@@ -33,6 +33,8 @@ export interface GameState {
   marchingOrder: string[]
   /** HP bar visibility on map tokens: 'all' = everyone, 'dm-only' = host only, 'none' = hidden */
   hpBarsVisibility: 'all' | 'dm-only' | 'none'
+  /** Currently selected token IDs for multi-selection */
+  selectedTokenIds: string[]
 }
 
 export interface TurnState {

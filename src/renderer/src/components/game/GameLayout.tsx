@@ -50,6 +50,7 @@ import {
 } from './overlays/GamePrompts'
 import {
   AoEDismissButton,
+  DrawingToolbar,
   FogToolbar,
   LongRestWarning,
   PhaseChangeToast,
@@ -151,9 +152,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     [campaign.id]
   )
   const [showCharacterPicker, setShowCharacterPicker] = useState(false)
-  const [activeTool, setActiveTool] = useState<'select' | 'fog-reveal' | 'fog-hide' | 'wall'>('select')
+  const [activeTool, setActiveTool] = useState<'select' | 'fog-reveal' | 'fog-hide' | 'wall' | 'draw-free' | 'draw-line' | 'draw-rect' | 'draw-circle' | 'draw-text'>('select')
   const [fogBrushSize, setFogBrushSize] = useState(1)
   const [wallType, setWallType] = useState<'solid' | 'door' | 'window'>('solid')
+  const [drawingStrokeWidth, setDrawingStrokeWidth] = useState(3)
+  const [drawingColor, setDrawingColor] = useState('#ffffff')
   const [timeRequestToast, setTimeRequestToast] = useState<{ requesterId: string; requesterName: string } | null>(null)
   const [phaseChangeToast, setPhaseChangeToast] = useState<{
     phase: string
@@ -164,7 +167,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
     null
   )
   const [disputeContext, setDisputeContext] = useState<{ ruling: string; citation: string } | null>(null)
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; token: MapToken; mapId: string } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; token: MapToken; mapId: string; selectedTokenIds: string[] } | null>(null)
   const [emptyCellMenu, setEmptyCellMenu] = useState<{
     gridX: number
     gridY: number
@@ -181,6 +184,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
   const [shieldPrompt, setShieldPrompt] = useState<ShieldPromptState | null>(null)
   const [counterspellPrompt, setCounterspellPrompt] = useState<CounterspellPromptState | null>(null)
   const [showCompactHUD, _setShowCompactHUD] = useState(false)
+  const [groupConditionEntities, setGroupConditionEntities] = useState<string[] | null>(null)
   const [pendingPortal, setPendingPortal] = useState<PortalEntryInfo | null>(null)
   const prevEntityIdRef = useRef<string | null>(null)
 
@@ -233,6 +237,12 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       setSidebarCollapsed(true)
     }
   }, [sidebarCollapsed, sidebarWidth])
+
+  const handleLinkClick = useCallback((category: string, name: string) => {
+    // For now, just open the compendium modal
+    // TODO: Could enhance to pre-select the specific item
+    setActiveModal('compendium')
+  }, [])
 
   const effectiveIsDM = isDM && viewMode === 'dm'
   const activeMap = gameStore.maps.find((m) => m.id === gameStore.activeMapId) ?? null
@@ -478,11 +488,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           map={activeMap}
           isHost={effectiveIsDM}
           myCharacterId={character?.id ?? null}
-          selectedTokenId={null}
+          selectedTokenIds={gameStore.selectedTokenIds}
           activeTool={activeTool}
           fogBrushSize={fogBrushSize}
           onTokenMove={handleTokenMoveWithOA}
-          onTokenSelect={() => {}}
+          onTokenSelect={(tokenIds) => gameStore.setSelectedTokenIds(tokenIds)}
           onCellClick={handleCellClick}
           onWallPlace={(x1, y1, x2, y2) => {
             if (!activeMap) return
@@ -516,7 +526,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           }}
           activeAoE={activeAoE}
           activeEntityId={gameStore.initiative?.entries[gameStore.initiative.currentIndex]?.entityId ?? null}
-          onTokenContextMenu={(x, y, token, mapId) => setContextMenu({ x, y, token, mapId })}
+          onTokenContextMenu={(x, y, token, mapId, selectedTokenIds) => setContextMenu({ x, y, token, mapId, selectedTokenIds })}
           onEmptyCellContextMenu={
             effectiveIsDM
               ? (gridX, gridY, screenX, screenY) => setEmptyCellMenu({ gridX, gridY, screenX, screenY })
@@ -608,6 +618,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
               setDisputeContext({ ruling, citation: '' })
               setActiveModal('dispute')
             }}
+            onLinkClick={handleLinkClick}
           />
         ) : (
           <PlayerBottomBar
@@ -642,6 +653,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
             collapsed={bottomCollapsed}
             onToggleCollapse={() => setBottomCollapsed((c) => !c)}
             onOpenModal={(modal) => setActiveModal(modal as ActiveModal)}
+            onLinkClick={handleLinkClick}
           />
         )}
       </div>
@@ -702,6 +714,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           y={contextMenu.y}
           token={contextMenu.token}
           mapId={contextMenu.mapId}
+          selectedTokenIds={contextMenu.selectedTokenIds}
           isDM={effectiveIsDM}
           characterId={character?.id}
           onClose={() => setContextMenu(null)}
@@ -814,6 +827,61 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
       )}
       {effectiveIsDM && activeTool === 'wall' && (
         <WallToolbar wallType={wallType} onSetWallType={setWallType} onDone={() => setActiveTool('select')} />
+      )}
+      {/* Drawing tools button - appears when not in drawing mode */}
+      {activeTool === 'select' && (
+        <div className="absolute top-16 right-4 z-20 flex flex-col gap-1 bg-gray-900/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-2 shadow-xl">
+          <p className="text-[10px] text-gray-500 uppercase tracking-wider text-center mb-1">Drawing</p>
+          <button
+            onClick={() => setActiveTool('draw-free')}
+            title="Free Draw (F)"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => setActiveTool('draw-line')}
+            title="Draw Line (L)"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer"
+          >
+            📏
+          </button>
+          <button
+            onClick={() => setActiveTool('draw-rect')}
+            title="Draw Rectangle (R)"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer"
+          >
+            ▭
+          </button>
+          <button
+            onClick={() => setActiveTool('draw-circle')}
+            title="Draw Circle (C)"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer"
+          >
+            ○
+          </button>
+          <button
+            onClick={() => setActiveTool('draw-text')}
+            title="Add Text (T)"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer"
+          >
+            📝
+          </button>
+        </div>
+      )}
+
+      {/* Drawing toolbar - appears when in drawing mode */}
+      {(activeTool === 'draw-free' || activeTool === 'draw-line' || activeTool === 'draw-rect' || activeTool === 'draw-circle' || activeTool === 'draw-text') && (
+        <DrawingToolbar
+          activeTool={activeTool}
+          strokeWidth={drawingStrokeWidth}
+          color={drawingColor}
+          onSetTool={setActiveTool}
+          onSetStrokeWidth={setDrawingStrokeWidth}
+          onSetColor={setDrawingColor}
+          onClearDrawings={effectiveIsDM && activeMap ? () => gameStore.clearDrawings(activeMap.id) : undefined}
+          isHost={effectiveIsDM}
+        />
       )}
 
       {!effectiveIsDM && <ShopView />}

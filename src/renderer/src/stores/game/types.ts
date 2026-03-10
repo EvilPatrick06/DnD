@@ -18,7 +18,7 @@ import type {
   SidebarEntry,
   TurnState
 } from '../../types/game-state'
-import type { GameMap, MapToken, WallSegment } from '../../types/map'
+import type { GameMap, MapToken, SceneRegion, WallSegment } from '../../types/map'
 
 // --- Session log entry ---
 
@@ -52,7 +52,8 @@ export const initialState: GameState = {
   ambientLight: 'bright',
   travelPace: null,
   marchingOrder: [],
-  hpBarsVisibility: 'all'
+  hpBarsVisibility: 'all',
+  selectedTokenIds: []
 }
 
 // --- Helper ---
@@ -101,6 +102,10 @@ export interface MapTokenSliceState {
   removeToken: (mapId: string, tokenId: string) => void
   updateToken: (mapId: string, tokenId: string, updates: Partial<MapToken>) => void
   revealAllTokens: () => void
+  setSelectedTokenIds: (tokenIds: string[]) => void
+  addToSelection: (tokenId: string) => void
+  removeFromSelection: (tokenId: string) => void
+  clearSelection: () => void
   addWallSegment: (mapId: string, wall: WallSegment) => void
   removeWallSegment: (mapId: string, wallId: string) => void
   updateWallSegment: (mapId: string, wallId: string, updates: Partial<WallSegment>) => void
@@ -305,6 +310,13 @@ export interface DrawingSliceState {
   clearDrawings: (mapId: string) => void
 }
 
+export interface RegionSliceState {
+  addRegion: (mapId: string, region: SceneRegion) => void
+  removeRegion: (mapId: string, regionId: string) => void
+  updateRegion: (mapId: string, regionId: string, updates: Partial<SceneRegion>) => void
+  clearRegions: (mapId: string) => void
+}
+
 export interface JournalSliceState {
   sharedJournal: SharedJournalEntry[]
   addJournalEntry: (entry: SharedJournalEntry) => void
@@ -395,6 +407,7 @@ export type GameStoreState = GameState &
   FloorSliceState &
   VisionSliceState &
   DrawingSliceState &
+  RegionSliceState &
   SidebarSliceState &
   TimerSliceState &
   CombatLogSliceState &

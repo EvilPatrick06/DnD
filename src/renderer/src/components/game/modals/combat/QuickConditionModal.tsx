@@ -5,9 +5,10 @@ import { useLobbyStore } from '../../../../stores/use-lobby-store'
 
 interface QuickConditionModalProps {
   onClose: () => void
+  preselectedEntities?: string[]
 }
 
-export default function QuickConditionModal({ onClose }: QuickConditionModalProps): JSX.Element {
+export default function QuickConditionModal({ onClose, preselectedEntities = [] }: QuickConditionModalProps): JSX.Element {
   const conditions = useGameStore((s) => s.conditions)
   const initiative = useGameStore((s) => s.initiative)
   const maps = useGameStore((s) => s.maps)
@@ -16,7 +17,7 @@ export default function QuickConditionModal({ onClose }: QuickConditionModalProp
   const addCondition = useGameStore((s) => s.addCondition)
   const removeCondition = useGameStore((s) => s.removeCondition)
 
-  const [selectedEntity, setSelectedEntity] = useState('')
+  const [selectedEntities, setSelectedEntities] = useState<string[]>(preselectedEntities)
   const [selectedCondition, setSelectedCondition] = useState('')
   const [duration, setDuration] = useState('1')
   const [exhaustionLevel, setExhaustionLevel] = useState(1)
@@ -43,37 +44,42 @@ export default function QuickConditionModal({ onClose }: QuickConditionModalProp
   }
 
   const handleApply = (): void => {
-    if (!selectedEntity || !selectedCondition) return
-    const entity = entities.find((e) => e.id === selectedEntity)
-    if (!entity) return
+    if (selectedEntities.length === 0 || !selectedCondition) return
 
-    addCondition({
-      id: crypto.randomUUID(),
-      entityId: entity.id,
-      entityName: entity.name,
-      condition: selectedCondition,
-      ...(needsValue ? { value: exhaustionLevel } : {}),
-      duration: duration === 'permanent' ? 'permanent' : parseInt(duration, 10),
-      source: 'DM',
-      appliedRound: round,
-      ...(needsSource && sourceEntityId ? { sourceEntityId } : {})
+    selectedEntities.forEach(entityId => {
+      const entity = entities.find((e) => e.id === entityId)
+      if (!entity) return
+
+      addCondition({
+        id: crypto.randomUUID(),
+        entityId: entity.id,
+        entityName: entity.name,
+        condition: selectedCondition,
+        ...(needsValue ? { value: exhaustionLevel } : {}),
+        duration: duration === 'permanent' ? 'permanent' : parseInt(duration, 10),
+        source: 'DM',
+        appliedRound: round,
+        ...(needsSource && sourceEntityId ? { sourceEntityId } : {})
+      })
+
+      // Flying fall warning: if Incapacitated or Prone applied to a token with flySpeed
+      const condLower = selectedCondition.toLowerCase()
+      if (condLower === 'incapacitated' || condLower === 'prone') {
+        const token = activeMap?.tokens.find((t) => t.entityId === entity.id)
+        if (token?.flySpeed && token.flySpeed > 0) {
+          useLobbyStore.getState().addChatMessage({
+            id: crypto.randomUUID(),
+            senderId: 'system',
+            senderName: 'System',
+            content: `${entity.name} is flying and gained ${selectedCondition} — they fall!`,
+            timestamp: Date.now(),
+            isSystem: true
+          })
+        }
+      }
     })
 
-    // Flying fall warning: if Incapacitated or Prone applied to a token with flySpeed
-    const condLower = selectedCondition.toLowerCase()
-    if (condLower === 'incapacitated' || condLower === 'prone') {
-      const token = activeMap?.tokens.find((t) => t.entityId === entity.id)
-      if (token?.flySpeed && token.flySpeed > 0) {
-        useLobbyStore.getState().addChatMessage({
-          id: crypto.randomUUID(),
-          senderId: 'system',
-          senderName: 'System',
-          content: `${entity.name} is flying and gained ${selectedCondition} — they fall!`,
-          timestamp: Date.now(),
-          isSystem: true
-        })
-      }
-    }
+    onClose()
   }
 
   const handleRemove = (conditionId: string): void => {
@@ -97,19 +103,25 @@ export default function QuickConditionModal({ onClose }: QuickConditionModalProp
 
         {/* Apply new condition */}
         <div className="space-y-2 mb-4">
-          <div className="flex gap-2">
-            <select
-              value={selectedEntity}
-              onChange={(e) => setSelectedEntity(e.target.value)}
-              className="flex-1 px-2 py-1.5 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-xs focus:outline-none focus:border-amber-500"
-            >
-              <option value="">Entity...</option>
-              {entities.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {entities.map((entity) => (
+              <label key={entity.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-800/50 px-2 py-1 rounded">
+                <input
+                  type="checkbox"
+                  checked={selectedEntities.includes(entity.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedEntities([...selectedEntities, entity.id])
+                    } else {
+                      setSelectedEntities(selectedEntities.filter(id => id !== entity.id))
+                    }
+                  }}
+                  className="w-3 h-3 text-amber-500 bg-gray-800 border-gray-600 rounded focus:ring-amber-500 focus:ring-2"
+                />
+                <span className="text-xs text-gray-200">{entity.name}</span>
+              </label>
+            ))}
+          </div>
             <select
               value={selectedCondition}
               onChange={(e) => setSelectedCondition(e.target.value)}
@@ -171,11 +183,11 @@ export default function QuickConditionModal({ onClose }: QuickConditionModalProp
             </select>
             <button
               onClick={handleApply}
-              disabled={!selectedEntity || !selectedCondition}
+              disabled={selectedEntities.length === 0 || !selectedCondition}
               className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white
                 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Apply
+              Apply to {selectedEntities.length} {selectedEntities.length === 1 ? 'Entity' : 'Entities'}
             </button>
           </div>
         </div>
