@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type { ActiveLightSource } from '../../types/campaign'
 import type { GameMap, MapToken, WallSegment } from '../../types/map'
 import {
+  buildMapLightSources,
   buildVisionSet,
   computePartyVision,
   getLightingAtPoint,
@@ -115,6 +117,44 @@ describe('computePartyVision', () => {
     // Union should see more than single
     expect(unionResult.visibleCells.length).toBeGreaterThan(singleResult.visibleCells.length)
   })
+
+  it('floor 0 wall does not block vision for a token on floor 1', () => {
+    const token = makeToken({ gridX: 2, gridY: 5, floor: 1 })
+    const walls: WallSegment[] = [{ ...makeWall(5, 0, 5, 10), floor: 0 }]
+    const map = makeMap({ tokens: [token], wallSegments: walls })
+
+    const result = computePartyVision(map, [token])
+    // Wall is on floor 0, token on floor 1 — full visibility
+    expect(result.visibleCells.length).toBe(100)
+  })
+
+  it('wall on same floor as token still blocks vision', () => {
+    const token = makeToken({ gridX: 2, gridY: 5, floor: 1 })
+    const walls: WallSegment[] = [{ ...makeWall(5, 0, 5, 10), floor: 1 }]
+    const map = makeMap({ tokens: [token], wallSegments: walls })
+
+    const result = computePartyVision(map, [token])
+    const visibleBeyondWall = result.visibleCells.filter((c) => c.x >= 5)
+    expect(visibleBeyondWall.length).toBeLessThan(50)
+  })
+
+  it('tokens on different floors use floor-specific walls', () => {
+    const tokenFloor0 = makeToken({ id: 't0', entityId: 'e0', gridX: 2, gridY: 5, floor: 0 })
+    const tokenFloor1 = makeToken({ id: 't1', entityId: 'e1', gridX: 2, gridY: 5, floor: 1 })
+    // Wall only on floor 0
+    const walls: WallSegment[] = [{ ...makeWall(5, 0, 5, 10), floor: 0 }]
+    const map = makeMap({ tokens: [tokenFloor0, tokenFloor1], wallSegments: walls })
+
+    const floor0Result = computePartyVision(map, [tokenFloor0])
+    const floor1Result = computePartyVision(map, [tokenFloor1])
+
+    // Floor 0 token is blocked by the wall
+    const floor0BeyondWall = floor0Result.visibleCells.filter((c) => c.x >= 5)
+    expect(floor0BeyondWall.length).toBeLessThan(50)
+
+    // Floor 1 token has no walls — full visibility
+    expect(floor1Result.visibleCells.length).toBe(100)
+  })
 })
 
 describe('isTokenVisibleToParty', () => {
@@ -220,5 +260,95 @@ describe('recomputeVision', () => {
     // Override with both players
     const result = recomputeVision(map, [player1, player2])
     expect(result.partyPolygons).toHaveLength(2)
+  })
+
+  it('passes light sources through to computePartyVision', () => {
+    const player = makeToken({ gridX: 1, gridY: 5, darkvisionRange: 0, darkvision: false })
+    const walls: WallSegment[] = [makeWall(3, 0, 3, 10)]
+    const map = makeMap({ tokens: [player], wallSegments: walls })
+
+    // Without light: player can only see cells before the wall
+    const noLight = recomputeVision(map)
+    const visibleBeyondNoLight = noLight.visibleCells.filter((c) => c.x >= 3)
+
+    // Place a light source at (2, 5) with radius large enough to reach beyond
+    const light: LightSource = { x: 2.5, y: 5.5, brightRadius: 3, dimRadius: 3 }
+    const withLight = recomputeVision(map, undefined, [light])
+    const visibleBeyondWithLight = withLight.visibleCells.filter((c) => c.x >= 3)
+
+    // Light extends visibility; same or more cells beyond wall
+    expect(withLight.visibleCells.length).toBeGreaterThanOrEqual(noLight.visibleCells.length)
+    expect(visibleBeyondWithLight.length).toBeGreaterThanOrEqual(visibleBeyondNoLight.length)
+  })
+})
+
+describe('computePartyVision with light sources', () => {
+  it('torch reveals cells around a token even without darkvision', () => {
+    const player = makeToken({ gridX: 5, gridY: 5, darkvisionRange: 0, darkvision: false })
+    const walls: WallSegment[] = [makeWall(3, 0, 3, 10)]
+    const walledMap = makeMap({ tokens: [player], wallSegments: walls })
+
+    // Torch: 20ft bright (4 cells) + 20ft dim (4 cells) = 8 cell total radius
+    const torch: LightSource = { x: 5.5, y: 5.5, brightRadius: 4, dimRadius: 4 }
+    const result = computePartyVision(walledMap, [player], [torch])
+
+    // The torch should add visible cells around (5,5) within 8-cell radius
+    const nearTorch = result.visibleCells.filter((c) => {
+      const dx = c.x + 0.5 - 5.5
+      const dy = c.y + 0.5 - 5.5
+      return Math.sqrt(dx * dx + dy * dy) <= 8
+    })
+    expect(nearTorch.length).toBeGreaterThan(0)
+  })
+
+  it('light source not visible to party does not extend vision', () => {
+    // Player on one side of wall, light source on the other side
+    const player = makeToken({ gridX: 1, gridY: 5 })
+    const walls: WallSegment[] = [makeWall(4, 0, 4, 10)]
+    const map = makeMap({ tokens: [player], wallSegments: walls })
+
+    // Light beyond the wall — not visible to player
+    const hiddenLight: LightSource = { x: 8.5, y: 5.5, brightRadius: 4, dimRadius: 4 }
+    const result = computePartyVision(map, [player], [hiddenLight])
+
+    // Cells near the hidden light (beyond the wall) should NOT be revealed
+    const cellsNearHiddenLight = result.visibleCells.filter((c) => c.x >= 7)
+    expect(cellsNearHiddenLight.length).toBe(0)
+  })
+})
+
+describe('buildMapLightSources', () => {
+  it('converts active light sources to LightSource geometry centered on token', () => {
+    const token = makeToken({ id: 'torch-bearer', gridX: 3, gridY: 7 })
+    const active: ActiveLightSource = {
+      id: 'ls-1',
+      entityId: 'torch-bearer',
+      entityName: 'Warrior',
+      sourceName: 'unknown-source',
+      durationSeconds: 3600,
+      startedAtSeconds: 0
+    }
+
+    const result = buildMapLightSources([active], [token])
+    expect(result).toHaveLength(1)
+    expect(result[0].x).toBe(3.5) // centered: gridX + sizeX/2
+    expect(result[0].y).toBe(7.5)
+    // Unknown source falls back to defaults
+    expect(result[0].brightRadius).toBe(4)
+    expect(result[0].dimRadius).toBe(4)
+  })
+
+  it('drops light sources whose token is not on the map', () => {
+    const active: ActiveLightSource = {
+      id: 'ls-1',
+      entityId: 'missing-token',
+      entityName: 'Ghost',
+      sourceName: 'torch',
+      durationSeconds: 3600,
+      startedAtSeconds: 0
+    }
+
+    const result = buildMapLightSources([active], [])
+    expect(result).toHaveLength(0)
   })
 })

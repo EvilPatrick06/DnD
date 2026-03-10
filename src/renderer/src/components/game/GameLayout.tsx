@@ -7,7 +7,7 @@ import { useGameShortcuts } from '../../hooks/use-game-shortcuts'
 import type { PortalEntryInfo } from '../../hooks/use-token-movement'
 import { useTokenMovement } from '../../hooks/use-token-movement'
 import { executeMacro } from '../../services/macro-engine'
-import { hasDarkvision, recomputeVision } from '../../services/map/vision-computation'
+import { buildMapLightSources, hasDarkvision, recomputeVision } from '../../services/map/vision-computation'
 import { useAiDmStore } from '../../stores/use-ai-dm-store'
 import { useCharacterStore } from '../../stores/use-character-store'
 import { useGameStore } from '../../stores/use-game-store'
@@ -502,11 +502,11 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
               gameStore.updateWallSegment(activeMap.id, wallId, { isOpen: !wall.isOpen })
               // Recompute vision when a door is toggled
               if (activeMap.fogOfWar.dynamicFogEnabled) {
-                // Need to get the updated map state after the wall change
                 setTimeout(() => {
                   const updatedMap = gameStore.maps.find((m) => m.id === activeMap.id)
                   if (updatedMap) {
-                    const { visibleCells } = recomputeVision(updatedMap)
+                    const lightSources = buildMapLightSources(gameStore.activeLightSources, updatedMap.tokens)
+                    const { visibleCells } = recomputeVision(updatedMap, undefined, lightSources)
                     gameStore.setPartyVisionCells(visibleCells)
                     gameStore.addExploredCells(updatedMap.id, visibleCells)
                   }
@@ -705,6 +705,7 @@ export default function GameLayout({ campaign, isDM, character, playerName }: Ga
           isDM={effectiveIsDM}
           characterId={character?.id}
           onClose={() => setContextMenu(null)}
+          onOpenMountModal={() => setActiveModal('mount')}
           onEditToken={(token) => {
             setEditingToken({ token, mapId: contextMenu.mapId })
             setActiveModal('tokenEditor')

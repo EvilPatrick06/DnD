@@ -1,11 +1,13 @@
 import type { Application, Graphics } from 'pixi.js'
 import { useEffect } from 'react'
 import { LIGHT_SOURCES } from '../../../data/light-sources'
+import { filterDrawingsByFloor, filterTerrainByFloor, filterWallsByFloor } from '../../../services/map/floor-filtering'
 import { buildMapLightSources, recomputeVision } from '../../../services/map/vision-computation'
 import { useGameStore } from '../../../stores/use-game-store'
 import type { TurnState } from '../../../types/game-state'
 import type { GameMap } from '../../../types/map'
 import { type AoEConfig, clearAoEOverlay, drawAoEOverlay } from './aoe-overlay'
+import type { AudioEmitterLayer } from './audio-emitter-overlay'
 import { clearDrawingLayer, drawDrawings } from './drawing-layer'
 import { destroyFogAnimation, drawFogOfWar, initFogAnimation } from './fog-overlay'
 import { drawGrid, drawGridLabels } from './grid-layer'
@@ -13,8 +15,6 @@ import { drawLightingOverlay, type LightingConfig } from './lighting-overlay'
 import { clearMovementOverlay, drawMovementOverlay, drawTerrainOverlay } from './movement-overlay'
 import { drawWalls } from './wall-layer'
 import { presetToWeatherType, type WeatherOverlayLayer } from './weather-overlay'
-
-import type { AudioEmitterLayer } from './audio-emitter-overlay'
 
 /** Refs passed into the overlay effects hook */
 export interface OverlayRefs {
@@ -44,6 +44,7 @@ interface OverlayEffectsOptions {
   isInitiativeMode?: boolean
   turnState?: TurnState | null
   activeAoE?: AoEConfig | null
+  currentFloor: number
   applyTransform: () => void
   refs: OverlayRefs
 }
@@ -53,8 +54,18 @@ interface OverlayEffectsOptions {
  * grid, fog animation, fog draw, walls, lighting, terrain, AoE, movement, weather.
  */
 export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
-  const { initialized, map, isHost, selectedTokenId, isInitiativeMode, turnState, activeAoE, applyTransform, refs } =
-    opts
+  const {
+    initialized,
+    map,
+    isHost,
+    selectedTokenId,
+    isInitiativeMode,
+    turnState,
+    activeAoE,
+    currentFloor,
+    applyTransform,
+    refs
+  } = opts
 
   // Draw grid
   useEffect(() => {
@@ -108,23 +119,23 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     )
   }, [initialized, map?.fogOfWar, map?.grid, map?.width, map?.height, isHost, map, refs, partyVisionCells])
 
-  // Draw walls (DM only)
+  // Draw walls (DM only), filtered by current floor
   useEffect(() => {
     if (!initialized || !refs.wallGraphicsRef.current || !map) return
-    const walls = map.wallSegments ?? []
+    const walls = filterWallsByFloor(map.wallSegments ?? [], currentFloor)
     if (isHost && walls.length > 0) {
       drawWalls(refs.wallGraphicsRef.current, walls, map.grid, isHost)
     } else {
       refs.wallGraphicsRef.current.clear()
     }
-  }, [initialized, map?.wallSegments, map?.grid, isHost, map, refs])
+  }, [initialized, map?.wallSegments, map?.grid, isHost, map, refs, currentFloor])
 
-  // Draw lighting overlay
+  // Draw lighting overlay (floor-filtered walls for shadow casting)
   useEffect(() => {
     if (!initialized || !refs.lightingGraphicsRef.current || !map) return
     const ambientLight = useGameStore.getState().ambientLight
     const activeLightSources = useGameStore.getState().activeLightSources
-    const walls = map.wallSegments ?? []
+    const walls = filterWallsByFloor(map.wallSegments ?? [], currentFloor)
 
     if (walls.length === 0 && ambientLight === 'bright') {
       refs.lightingGraphicsRef.current.clear()
@@ -155,29 +166,29 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
       tokenDarkvisionRanges
     }
     drawLightingOverlay(refs.lightingGraphicsRef.current, map, viewerTokens, lightSources, config, isHost)
-  }, [initialized, map, isHost, refs])
+  }, [initialized, map, isHost, refs, currentFloor])
 
-  // Draw terrain overlay
+  // Draw terrain overlay (floor-filtered)
   useEffect(() => {
     if (!initialized || !refs.terrainOverlayRef.current || !map) return
-    const terrain = map.terrain ?? []
+    const terrain = filterTerrainByFloor(map.terrain ?? [], currentFloor)
     if (terrain.length > 0) {
       drawTerrainOverlay(refs.terrainOverlayRef.current, terrain, map.grid.cellSize)
     } else {
       refs.terrainOverlayRef.current.clear()
     }
-  }, [initialized, map?.terrain, map?.grid.cellSize, map, refs])
+  }, [initialized, map?.terrain, map?.grid.cellSize, map, refs, currentFloor])
 
-  // Draw map annotations/drawings
+  // Draw map annotations/drawings (floor-filtered)
   useEffect(() => {
     if (!initialized || !refs.drawingGraphicsRef.current || !map) return
-    const drawings = map.drawings ?? []
+    const drawings = filterDrawingsByFloor(map.drawings ?? [], currentFloor)
     if (drawings.length > 0) {
       drawDrawings(refs.drawingGraphicsRef.current, drawings, isHost)
     } else {
       clearDrawingLayer(refs.drawingGraphicsRef.current)
     }
-  }, [initialized, map?.drawings, isHost, map, refs])
+  }, [initialized, map?.drawings, isHost, map, refs, currentFloor])
 
   // Draw AoE overlay
   useEffect(() => {
@@ -203,6 +214,8 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     }
     const gridWidth = Math.ceil(map.width / map.grid.cellSize)
     const gridHeight = Math.ceil(map.height / map.grid.cellSize)
+    const floorTerrain = filterTerrainByFloor(map.terrain ?? [], currentFloor)
+    const floorWalls = filterWallsByFloor(map.wallSegments ?? [], currentFloor)
     drawMovementOverlay(
       refs.moveOverlayRef.current,
       token.gridX,
@@ -210,10 +223,10 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
       turnState.movementRemaining,
       turnState.movementMax,
       map.grid.cellSize,
-      map.terrain ?? [],
+      floorTerrain,
       gridWidth,
       gridHeight,
-      map.wallSegments
+      floorWalls
     )
   }, [
     initialized,
@@ -228,7 +241,8 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     map?.wallSegments,
     map,
     turnState,
-    refs
+    refs,
+    currentFloor
   ])
 
   // Vision computation when dynamic fog is enabled, or map/tokens/lights change
@@ -239,7 +253,16 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     const { visibleCells } = recomputeVision(map, undefined, lightSources)
     useGameStore.getState().setPartyVisionCells(visibleCells)
     useGameStore.getState().addExploredCells(map.id, visibleCells)
-  }, [initialized, map?.fogOfWar.dynamicFogEnabled, map?.tokens, map?.wallSegments, map?.id, isHost, map, activeLightSources])
+  }, [
+    initialized,
+    map?.fogOfWar.dynamicFogEnabled,
+    map?.tokens,
+    map?.wallSegments,
+    map?.id,
+    isHost,
+    map,
+    activeLightSources
+  ])
 
   // Weather overlay
   const weatherOverride = useGameStore((s) => s.weatherOverride)
@@ -264,7 +287,7 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
     const emitters = map.audioEmitters ?? []
     // For now, assume all emitters are playing if they exist
     // TODO: Add playing state management
-    const emittersWithPlaying = emitters.map(emitter => ({
+    const emittersWithPlaying = emitters.map((emitter) => ({
       ...emitter,
       playing: true // Temporary: will be managed by game state
     }))
@@ -275,7 +298,7 @@ export function useMapOverlayEffects(opts: OverlayEffectsOptions): void {
   useEffect(() => {
     if (!initialized || !refs.audioEmitterLayerRef.current || !map) return
     // Update listener position based on player token position
-    const playerToken = map.tokens.find(token => token.entityType === 'player')
+    const playerToken = map.tokens.find((token) => token.entityType === 'player')
     if (playerToken) {
       const listenerX = playerToken.gridX + playerToken.sizeX / 2
       const listenerY = playerToken.gridY + playerToken.sizeY / 2

@@ -7,7 +7,7 @@ import {
   triggersOpportunityAttack
 } from '../services/combat/combat-rules'
 import { checkOpportunityAttack } from '../services/combat/reaction-tracker'
-import { recomputeVision } from '../services/map/vision-computation'
+import { buildMapLightSources, debouncedRecomputeVision } from '../services/map/vision-computation'
 import { getWeatherEffects, type WeatherType } from '../services/weather-mechanics'
 import { useGameStore } from '../stores/use-game-store'
 import type { GameMap, TerrainCell } from '../types/map'
@@ -281,13 +281,19 @@ export function useTokenMovement({
 
       gameStore.moveToken(activeMap.id, tokenId, gridX, gridY)
 
-      // Auto-reveal fog when dynamic fog is enabled
+      // Auto-reveal fog when dynamic fog is enabled (debounced to avoid perf spikes during drag)
       if (activeMap.fogOfWar.dynamicFogEnabled) {
-        // Build patched tokens with the moved token at its new position
         const patchedTokens = activeMap.tokens.map((t) => (t.id === tokenId ? { ...t, gridX, gridY } : t))
-        const { visibleCells } = recomputeVision(activeMap, patchedTokens)
-        gameStore.setPartyVisionCells(visibleCells)
-        gameStore.addExploredCells(activeMap.id, visibleCells)
+        const lightSources = buildMapLightSources(useGameStore.getState().activeLightSources, patchedTokens)
+        debouncedRecomputeVision(
+          activeMap,
+          ({ visibleCells }) => {
+            gameStore.setPartyVisionCells(visibleCells)
+            gameStore.addExploredCells(activeMap.id, visibleCells)
+          },
+          patchedTokens,
+          lightSources
+        )
       }
 
       // Terrain hazard damage on entry
@@ -341,23 +347,6 @@ export function useTokenMovement({
         })
       }
 
-      // Mount/rider sync
-      if (activeMap) {
-        const movedToken = activeMap.tokens.find((t) => t.id === tokenId)
-        if (movedToken?.riderId) {
-          const riderToken = activeMap.tokens.find((t) => t.entityId === movedToken.riderId)
-          if (riderToken) {
-            gameStore.moveToken(activeMap.id, riderToken.id, gridX, gridY)
-          }
-        }
-        const entityTs = gameStore.turnStates[movedToken?.entityId ?? '']
-        if (entityTs?.mountedOn) {
-          const mountTk = activeMap.tokens.find((t) => t.id === entityTs.mountedOn)
-          if (mountTk) {
-            gameStore.moveToken(activeMap.id, mountTk.id, gridX, gridY)
-          }
-        }
-      }
     },
     [activeMap, gameStore, teleportMove, addChatMessage, setOaPrompt, onPortalEntry]
   )
