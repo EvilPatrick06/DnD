@@ -68,7 +68,27 @@ export function useGameEffects({
     aiInitRef.current = true
 
     // Set up stream listeners
-    const cleanup = aiDmStore.setupListeners()
+    const cleanupListeners = aiDmStore.setupListeners()
+
+    // Track timers for cleanup
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let pollTimeout: ReturnType<typeof setTimeout> | null = null
+    let sceneTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const cleanupTimers = (): void => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
+      if (pollTimeout) {
+        clearTimeout(pollTimeout)
+        pollTimeout = null
+      }
+      if (sceneTimeout) {
+        clearTimeout(sceneTimeout)
+        sceneTimeout = null
+      }
+    }
 
     // Initialize AI DM (preserves sceneStatus if already set from lobby)
     aiDmStore.initFromCampaign(campaign)
@@ -144,10 +164,13 @@ export function useGameEffects({
 
       if (status.status === 'preparing') {
         // Scene still streaming — poll until ready, then load conversation
-        const poll = setInterval(async () => {
+        pollInterval = setInterval(async () => {
           const s = await window.api.ai.getSceneStatus(campaign.id)
           if (s.status === 'ready') {
-            clearInterval(poll)
+            if (pollInterval) {
+              clearInterval(pollInterval)
+              pollInterval = null
+            }
             const result = await window.api.ai.loadConversation(campaign.id)
             if (result.success && result.data) {
               const data = result.data as { messages?: Array<{ role: string; content: string; timestamp?: string }> }
@@ -164,7 +187,12 @@ export function useGameEffects({
           }
         }, 1000)
         // Safety: stop polling after 60s
-        setTimeout(() => clearInterval(poll), 60000)
+        pollTimeout = setTimeout(() => {
+          if (pollInterval) {
+            clearInterval(pollInterval)
+            pollInterval = null
+          }
+        }, 60000)
         return
       }
 
@@ -173,7 +201,7 @@ export function useGameEffects({
       const characterIds = getCharacterIds()
 
       if (characterIds.length > 0) {
-        setTimeout(() => {
+        sceneTimeout = setTimeout(() => {
           useAiDmStore.getState().setScene(campaign.id, characterIds)
         }, 1500)
       }
@@ -181,7 +209,10 @@ export function useGameEffects({
 
     checkAndSetScene()
 
-    return cleanup
+    return (): void => {
+      cleanupTimers()
+      cleanupListeners()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isDM,
