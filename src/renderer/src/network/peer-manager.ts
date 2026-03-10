@@ -8,28 +8,46 @@ export { generateInviteCode } from '../utils/invite-code'
 let peer: Peer | null = null
 let localPeerId: string | null = null
 
-// Pi relay server — all multiplayer traffic routes through the Pi
-const PI_HOST = '10.10.20.242'
-
-// ICE servers — Pi coturn TURN relay (forces all traffic through Pi)
-const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
-  {
-    urls: `turn:${PI_HOST}:3478?transport=udp`,
-    username: 'dndvtt',
-    credential: 'dndvtt-relay'
-  },
-  {
-    urls: `turn:${PI_HOST}:3478?transport=tcp`,
-    username: 'dndvtt',
-    credential: 'dndvtt-relay'
-  }
-]
-
-// PeerJS signaling server on the Pi (Docker container, port 9000)
-let customSignalingHost: string | null = PI_HOST
+// Configurable host for signaling server and TURN relay
+let customHost: string | null = null
 let customSignalingPort: number | null = 9000
 let customSignalingPath: string = '/myapp'
 let customSignalingSecure: boolean = false
+
+// ICE servers — configurable TURN relay
+const getDefaultIceServers = (): RTCIceServer[] => {
+  if (customHost) {
+    return [
+      {
+        urls: `turn:${customHost}:3478?transport=udp`,
+        username: 'dndvtt',
+        credential: 'dndvtt-relay'
+      },
+      {
+        urls: `turn:${customHost}:3478?transport=tcp`,
+        username: 'dndvtt',
+        credential: 'dndvtt-relay'
+      }
+    ]
+  }
+  return CLOUD_ICE_SERVERS
+}
+
+let iceServers: RTCIceServer[] = getDefaultIceServers()
+
+/**
+ * Configure the host IP for both signaling server and TURN relay.
+ * This is the simplest way to configure networking for a custom setup.
+ * @param host The host IP or domain name
+ * @param port Optional port for signaling server (defaults to 9000)
+ */
+export function setHost(host: string, port?: number): void {
+  customHost = host
+  customSignalingPort = port ?? 9000
+  customSignalingPath = '/myapp'
+  customSignalingSecure = false
+  iceServers = getDefaultIceServers()
+}
 
 /**
  * Configure a custom PeerJS signaling server (e.g. Pi via Cloudflare Tunnel).
@@ -48,23 +66,25 @@ export function setSignalingServer(host: string, port?: number, path?: string, s
     // Strip any scheme prefix — PeerJS expects a bare hostname
     host = host.replace(/^[a-z]+:\/\//i, '')
   }
-  customSignalingHost = host
+  customHost = host
   customSignalingPort = port ?? (secure !== false ? 443 : 80)
   customSignalingPath = path ?? '/'
   customSignalingSecure = secure !== false
+  // Update ICE servers to match the new host
+  iceServers = getDefaultIceServers()
 }
 
 /**
- * Reset signaling server to Pi default.
+ * Reset signaling server configuration.
  */
 export function resetSignalingServer(): void {
-  customSignalingHost = PI_HOST
+  customHost = null
   customSignalingPort = 9000
   customSignalingPath = '/myapp'
   customSignalingSecure = false
+  iceServers = getDefaultIceServers()
 }
 
-let iceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS
 let forceRelay = true
 
 /**
@@ -72,7 +92,7 @@ let forceRelay = true
  * Call before createPeer() to take effect.
  */
 export function setIceConfig(servers: RTCIceServer[]): void {
-  iceServers = servers.length > 0 ? servers : DEFAULT_ICE_SERVERS
+  iceServers = servers.length > 0 ? servers : getDefaultIceServers()
 }
 
 /**
@@ -86,7 +106,7 @@ export function getIceConfig(): RTCIceServer[] {
  * Reset ICE servers to defaults.
  */
 export function resetIceConfig(): void {
-  iceServers = DEFAULT_ICE_SERVERS
+  iceServers = getDefaultIceServers()
 }
 
 /**
@@ -106,11 +126,18 @@ export function getForceRelay(): boolean {
 }
 
 /**
+ * Get the current host configuration.
+ */
+export function getHost(): string | null {
+  return customHost
+}
+
+/**
  * Configure networking for cloud-based hosting (PeerJS cloud + public STUN).
- * Used as fallback when the Pi signaling server is unreachable.
+ * Used as fallback when custom signaling server is unreachable.
  */
 export function configureForCloud(): void {
-  customSignalingHost = null
+  customHost = null
   customSignalingPort = null
   customSignalingPath = '/'
   customSignalingSecure = true
@@ -119,8 +146,8 @@ export function configureForCloud(): void {
 }
 
 /**
- * Reset all networking config back to Pi defaults.
- * Called when a session ends so the next session tries Pi first.
+ * Reset all networking config back to defaults.
+ * Called when a session ends so the next session tries configured host or cloud fallback.
  */
 export function resetToDefaults(): void {
   resetSignalingServer()
@@ -148,9 +175,9 @@ export function createPeer(customId?: string): Promise<Peer> {
       }
     }
 
-    // Use custom signaling server if configured (Pi via Cloudflare Tunnel)
-    if (customSignalingHost) {
-      options.host = customSignalingHost
+    // Use custom signaling server if configured (e.g. Pi via Cloudflare Tunnel)
+    if (customHost) {
+      options.host = customHost
       options.port = customSignalingPort ?? 443
       options.path = customSignalingPath
       options.secure = customSignalingSecure

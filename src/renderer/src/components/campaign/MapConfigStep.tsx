@@ -74,19 +74,33 @@ export default function MapConfigStep({ maps, campaignId, onChange, adventureMap
   }
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       setDragOver(false)
 
       const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'))
 
-      const newMaps = files.map((file) => {
-        const map = createMapEntry(file.name.replace(/\.[^.]+$/, ''), 40)
-        // In a future phase, the image would be copied to app data.
-        // For now we just store the name as a placeholder.
-        map.imagePath = file.name
-        return map
-      })
+      const newMaps: GameMap[] = []
+      for (const file of files) {
+        try {
+          const arrayBuffer = await file.arrayBuffer()
+          const extension = file.name.split('.').pop() || 'png'
+          const imageId = crypto.randomUUID()
+
+          // Save the image to the image library
+          await window.api.imageLibrary.save(imageId, file.name, arrayBuffer, extension)
+
+          const map = createMapEntry(file.name.replace(/\.[^.]+$/, ''), 40)
+          map.imagePath = `image-library://${imageId}`
+          newMaps.push(map)
+        } catch (error) {
+          logger.error('Failed to save map image:', error)
+          // Create map with placeholder if image save fails
+          const map = createMapEntry(file.name.replace(/\.[^.]+$/, ''), 40)
+          map.imagePath = file.name // fallback to filename as placeholder
+          newMaps.push(map)
+        }
+      }
 
       if (newMaps.length > 0) {
         onChange([...maps, ...newMaps])

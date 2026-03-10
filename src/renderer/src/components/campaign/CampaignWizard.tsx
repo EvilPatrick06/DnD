@@ -39,6 +39,7 @@ const STEPS = [
 export default function CampaignWizard(): JSX.Element {
   const navigate = useNavigate()
   const createCampaign = useCampaignStore((s) => s.createCampaign)
+  const saveCampaign = useCampaignStore((s) => s.saveCampaign)
 
   // Start mode: show campaign browser first, then wizard
   const [startMode, setStartMode] = useState<'start' | 'wizard'>('start')
@@ -244,6 +245,21 @@ export default function CampaignWizard(): JSX.Element {
             }
           : undefined
       })
+
+      // Resolve pending map IDs to the actual campaign ID
+      const resolvedMaps = campaign.maps.map((map) => ({
+        ...map,
+        campaignId: map.campaignId === 'pending' ? campaign.id : map.campaignId
+      }))
+
+      // If maps were updated, save the campaign again with resolved IDs
+      if (resolvedMaps.some((map, index) => map.campaignId !== campaign.maps[index].campaignId)) {
+        const updatedCampaign = {
+          ...campaign,
+          maps: resolvedMaps
+        }
+        await saveCampaign(updatedCampaign)
+      }
 
       // If AI DM enabled, configure Ollama
       if (aiEnabled) {
