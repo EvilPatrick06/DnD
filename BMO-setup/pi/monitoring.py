@@ -400,7 +400,8 @@ class HealthChecker:
         "svc_docker": "🐳 Docker engine",
         "svc_bmo-dm-bot": "🐉 DM Discord Bot",
         "svc_bmo-social-bot": "🎵 Social Discord Bot",
-        "svc_lightdm": "🖥️ Display manager",
+        "svc_bmo_kiosk": "🖥️ BMO Kiosk (touchscreen UI)",
+        "svc_bmo_fan": "🌀 BMO Fan Controller",
         "net_wlan0": "📶 Wi-Fi (wlan0)",
         "net_eth0": "🔌 Ethernet (eth0)",
         "pi_load": "📊 System load",
@@ -872,7 +873,7 @@ class HealthChecker:
     # ── Systemd Service Checks ───────────────────────────────────────
 
     _CRITICAL_SERVICES = ["bmo", "docker"]
-    _MONITORED_SERVICES = ["bmo", "docker", "bmo-dm-bot", "bmo-social-bot", "lightdm"]
+    _MONITORED_SERVICES = ["bmo", "docker", "bmo-dm-bot", "bmo-social-bot", "bmo-kiosk", "bmo-fan"]
 
     def _check_systemd_services(self):
         """Check critical systemd service units are active."""
