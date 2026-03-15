@@ -35,6 +35,13 @@ EXPLICIT_PREFIXES = {
     "!list": "list",
     "!routine": "routine",
     "!alert": "alert",
+    "!encounter": "encounter",
+    "!npc": "npc_dialogue",
+    "!lore": "lore",
+    "!rules": "rules",
+    "!treasure": "treasure",
+    "!loot": "treasure",
+    "!recap": "session_recap",
 }
 
 
@@ -59,6 +66,8 @@ KEYWORD_PATTERNS: dict[str, list[str]] = {
         "play music", "play a song", "play some", "next song", "skip song",
         "pause music", "resume music", "play my playlist", "cast to speaker",
         "what's playing", "now playing", "music volume", "stop music",
+        "set volume", "set the volume", "volume to", "turn down", "turn up",
+        "lower the volume", "raise the volume",
     ],
     "smart_home": [
         "turn on the", "turn off the", "cast to tv", "open netflix",
@@ -141,9 +150,46 @@ KEYWORD_PATTERNS: dict[str, list[str]] = {
         "alert", "recent alerts", "alert settings", "quiet hours",
         "notification settings", "alert history",
     ],
+    "encounter": [
+        "generate encounter", "random encounter", "build an encounter",
+        "encounter for level", "cr encounter", "combat encounter",
+        "what monsters", "enemy encounter",
+    ],
+    "npc_dialogue": [
+        "npc says", "npc dialogue", "talk to the", "what does the npc say",
+        "in character as", "roleplay as", "speak as the",
+        "tavern keeper says", "merchant says", "guard says",
+    ],
+    "lore": [
+        "lore about", "tell me about the", "forgotten realms",
+        "what is a", "history of", "deity", "pantheon", "plane of",
+        "who is", "where is", "what are the", "setting lore",
+    ],
+    "rules": [
+        "rules question", "how does", "can i", "does this work",
+        "rules for", "phb says", "dmg says", "ruling on",
+        "grapple rules", "concentration rules", "opportunity attack",
+        "multiclass rules", "feat requirement",
+    ],
+    "treasure": [
+        "generate loot", "treasure hoard", "random loot",
+        "roll for treasure", "what loot", "treasure table",
+        "generate treasure", "magic item roll",
+    ],
+    "session_recap": [
+        "session recap", "previously on", "what happened last session",
+        "recap the session", "summarize the adventure", "where did we leave off",
+    ],
     "conversation": [
         "learn my voice", "remember my voice", "enroll my voice",
         "voice enrollment", "recognize my voice", "who am i",
+        "tell me a joke", "joke", "how are you", "what's up",
+        "good morning", "good night", "hello", "hi bmo", "hey bmo",
+        "what time is it", "sing a song", "bmo chop", "are you alive",
+        "thank you", "thanks", "goodbye", "bye",
+        "what's your name", "who are you", "what can you do",
+        "how's it going", "what do you think", "tell me something",
+        "tell me a story", "what's your favorite", "do you like",
     ],
 }
 
@@ -174,6 +220,12 @@ Available agents:
 - list: Managing named lists (shopping, todo, grocery), adding/removing/checking items
 - routine: Creating, managing, triggering automation routines (morning, bedtime, leaving)
 - alert: Querying alert history, configuring alert settings, quiet hours
+- encounter: Generating balanced D&D combat encounters for a given party level and environment
+- npc_dialogue: Generating in-character NPC dialogue and roleplay responses
+- lore: D&D lore questions about settings, deities, planes, history, factions
+- rules: D&D 5e rules questions, mechanics, rulings, citations from PHB/DMG
+- treasure: Generating level-appropriate treasure, loot, magic items from DMG tables
+- session_recap: Summarizing recent D&D session events into a narrative recap
 - conversation: General chat, jokes, opinions, questions about BMO itself, voice enrollment ("learn my voice", "remember my voice", "my name is X" when about voice recognition)
 
 Respond with ONLY the agent name, nothing else.
@@ -242,11 +294,15 @@ class AgentRouter:
             if agent:
                 return agent
 
-        # Tier 3: LLM classification
-        if "llm" not in disabled_tiers:
-            agent = self._llm_classify(message)
-            if agent:
-                return agent
+        # Tier 3: LLM classification — DISABLED for voice pipeline speed
+        # LLM classification adds 10-20s latency for marginal routing benefit.
+        # Keywords already cover all specialized agents; unmatched messages
+        # are overwhelmingly conversational.
+        # To re-enable: remove "llm" from router.disable_tiers in settings.
+        # if "llm" not in disabled_tiers:
+        #     agent = self._llm_classify(message)
+        #     if agent:
+        #         return agent
 
         return default_agent
 

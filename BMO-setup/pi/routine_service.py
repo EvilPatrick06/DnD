@@ -232,7 +232,8 @@ class RoutineService:
                 if action_type == "speak":
                     text = action.get("text", "")
                     if text and self._voice:
-                        self._voice.speak(text)
+                        # Routine speech bypasses bedtime mode (routines are intentional)
+                        self._voice.speak(text, priority="alarm")
 
                 elif action_type == "command":
                     cmd = action.get("action", "")
@@ -321,7 +322,12 @@ class RoutineService:
         self.create_routine(
             name="Bedtime",
             triggers=[
-                {"type": "voice", "phrases": ["bedtime bmo", "good night bmo", "goodnight bmo"]},
+                {"type": "voice", "phrases": [
+                    "bedtime bmo", "good night bmo", "goodnight bmo",
+                    "good night", "goodnight", "bedtime", "time for bed",
+                    "i need sleep", "i'm going to sleep", "going to bed",
+                    "nighty night", "lights out",
+                ]},
             ],
             actions=[
                 {"type": "command", "action": "smart_home", "params": {"action": "scene", "scene": "bedtime"}, "delay_sec": 0},

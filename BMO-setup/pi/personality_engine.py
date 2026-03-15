@@ -25,6 +25,26 @@ CHATTINESS_COOLDOWNS = {
 
 CHECK_INTERVAL = 30  # seconds between personality checks
 
+SCREENSAVER_INTERVAL = 1800  # 30 minutes between random thoughts
+
+SCREENSAVER_TOPICS = [
+    "interesting animal facts",
+    "weird science discoveries",
+    "fun math facts",
+    "cool space facts",
+    "unusual world records",
+    "surprising history facts",
+    "amazing ocean creatures",
+    "fun food facts",
+    "cool weather phenomena",
+    "interesting robot facts",
+    "bizarre plant facts",
+    "fascinating deep sea discoveries",
+    "unexpected music history",
+    "strange geography facts",
+    "mind-blowing technology facts",
+]
+
 
 class PersonalityEngine:
     """Background personality engine — BMO speaks up on its own."""
@@ -40,6 +60,7 @@ class PersonalityEngine:
         self._last_greeting_time = 0.0
         self._last_music_reaction = 0.0
         self._last_weather_reaction = 0.0
+        self._last_screensaver_time = 0.0
         self._idle_since = time.monotonic()
         self._settings = self._load_settings()
         self._quips = self._load_quips()
@@ -110,6 +131,10 @@ class PersonalityEngine:
 
         # Seasonal
         self._check_seasonal()
+
+        # Screensaver random thoughts
+        if self._settings.get("screensaver_facts", True):
+            self._check_screensaver()
 
     # ── Time-based Greetings ──────────────────────────────────────────
 
@@ -280,6 +305,44 @@ class PersonalityEngine:
                     self.socketio.emit("led_effect", {"mode": "chase", "colors": ["red", "green"]})
                 elif month == 4 and day == 5:
                     self.socketio.emit("led_effect", {"mode": "rainbow"})
+
+    # ── Screensaver Facts ─────────────────────────────────────────────
+
+    def _check_screensaver(self):
+        """Search web for a random topic and share a fun fact."""
+        mono_now = time.monotonic()
+        if mono_now - self._last_screensaver_time < SCREENSAVER_INTERVAL:
+            return
+
+        idle_time = mono_now - self._idle_since
+        if idle_time < 600:  # need 10+ min idle
+            return
+
+        self._last_screensaver_time = mono_now
+
+        try:
+            from dev_tools import web_search
+            topic = random.choice(SCREENSAVER_TOPICS)
+            results = web_search(topic, num_results=3)
+            if not results or not results.get("results"):
+                return
+
+            snippet = random.choice(results["results"])
+            fact_text = snippet.get("snippet", "")
+            if not fact_text:
+                return
+
+            prefixes = [
+                "BMO just learned something cool!",
+                "Hey, did you know?",
+                "Fun fact time!",
+                "BMO found something interesting!",
+                "Ooh, listen to this!",
+            ]
+            bmo_fact = f"{random.choice(prefixes)} {fact_text}"
+            self._deliver(bmo_fact, expression="happy")
+        except Exception as e:
+            print(f"[personality] Screensaver fact failed: {e}")
 
     # ── Easter Eggs ───────────────────────────────────────────────────
 

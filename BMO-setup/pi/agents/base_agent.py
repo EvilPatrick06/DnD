@@ -73,6 +73,7 @@ class AgentResult:
     agent_name: str = ""                          # Which agent produced this
     nested_results: list[AgentResult] = field(default_factory=list)  # Sub-agent results
     scratchpad_writes: list[str] = field(default_factory=list)  # Sections written to
+    pending_confirmations: list[dict] = field(default_factory=list)  # Destructive ops awaiting user "yes"
 
 
 class BaseAgent:
@@ -114,12 +115,31 @@ class BaseAgent:
         """Build the full system prompt. Subclasses can override to add context."""
         prompt = self.config.system_prompt
 
-        # Inject scratchpad summary if there's content
+        prompt += f"""
+
+[Agent Identity]
+You are currently operating as the "{self.config.display_name}" agent ({self.config.name}).
+Stay in your lane — only respond to topics within your expertise.
+If a request is outside your scope, DO NOT say "I can't do that" or "ask the X agent."
+Instead, output [RELAY:agent_name] followed by the user's request on the next line.
+BMO will automatically hand the request to the right agent.
+Example: if someone asks about the weather and you're the code agent, output:
+[RELAY:weather]
+What's the weather like today?
+
+Available agents to relay to: code, dnd_dm, music, smart_home, timer, calendar, weather, security, test, plan, research, cleanup, monitoring, deploy, docs, review, design, learning, list, routine, alert, encounter, npc_dialogue, lore, rules, treasure, session_recap, conversation
+
+[Grounding Rules]
+- NEVER fabricate information. If you don't know something, say "I'm not sure about that."
+- NEVER claim you performed an action unless you actually executed a command.
+- NEVER invent capabilities you don't have.
+- Keep responses concise and factual.
+- Do NOT use markdown formatting (no **, *, #, ```, etc). Your text is spoken aloud via TTS."""
+
         summary = self.scratchpad.summary()
         if summary:
             prompt += f"\n\n[Scratchpad Context]\n{summary}"
 
-        # Inject auto-memory if enabled
         if self.orchestrator and self.orchestrator.settings:
             settings = self.orchestrator.settings
             if settings.get("memory.enabled", True):
@@ -151,12 +171,20 @@ class BaseAgent:
         return llm_chat(messages, options, agent_name=self.config.name)
 
     def get_available_tools(self) -> list[str]:
-        """Return tools available to this agent, respecting plan mode and settings."""
+        """Return tools available to this agent, respecting plan mode and settings.
+
+        Plan mode (read-only) restriction applies only to the Plan Agent during
+        exploration/design. Code Agent and other agents always get full tools.
+        """
         from agents.orchestrator import OrchestratorMode
 
-        in_plan_mode = self.orchestrator and self.orchestrator.mode in (
-            OrchestratorMode.PLAN_EXPLORE,
-            OrchestratorMode.PLAN_DESIGN,
+        in_plan_mode = (
+            self.config.name == "plan"
+            and self.orchestrator
+            and self.orchestrator.mode in (
+                OrchestratorMode.PLAN_EXPLORE,
+                OrchestratorMode.PLAN_DESIGN,
+            )
         )
 
         if in_plan_mode:
@@ -170,7 +198,6 @@ class BaseAgent:
             mcp_names = [t["name"] for t in mcp_tools]
 
             if in_plan_mode:
-                # Only allow read-only MCP tools during plan mode
                 readonly_mcp = set(self.orchestrator.mcp_manager.get_readonly_tools())
                 mcp_names = [n for n in mcp_names if n in readonly_mcp]
 

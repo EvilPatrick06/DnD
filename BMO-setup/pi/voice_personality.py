@@ -39,6 +39,21 @@ NPC_PROSODY: dict[str, dict] = {
     "tavern_keeper": {"speed": 0.95, "pitch": -1},
 }
 
+# ── Piper BMO Emotion Prosody (speed/pitch modulation for sox) ───
+# Applied when using local Piper BMO model. Speed = tempo factor, pitch = semitones.
+PIPER_EMOTION_PROSODY: dict[str, dict] = {
+    "happy": {"speed": 1.10, "pitch": 2},
+    "excited": {"speed": 1.20, "pitch": 3},
+    "calm": {"speed": 0.95, "pitch": 0},
+    "dramatic": {"speed": 0.85, "pitch": -1},
+    "sleepy": {"speed": 0.80, "pitch": -2},
+    "sad": {"speed": 0.85, "pitch": -2},
+    "scared": {"speed": 1.15, "pitch": 2},
+    "sassy": {"speed": 1.05, "pitch": 1},
+    "mischievous": {"speed": 1.10, "pitch": 2},
+    "shy": {"speed": 0.90, "pitch": -1},
+}
+
 # ── BMO Emotion Voice Mapping (Fish Audio voice IDs per emotion) ──────
 # Default all to the main FISH_AUDIO_VOICE_ID; override per-emotion later
 # once different emotion voice clones are uploaded to Fish Audio.
@@ -206,14 +221,15 @@ def get_speaker_file(npc: str | None = None, emotion: str | None = None) -> str:
 
 
 def get_prosody(npc: str | None = None, emotion: str | None = None) -> dict:
-    """Get prosody settings (speed/pitch) for NPC voice modulation.
+    """Get prosody settings (speed/pitch) for NPC or emotion voice modulation.
 
-    Uses NPC_PROSODY profiles for character-specific voice modulation.
+    Uses NPC_PROSODY profiles for character-specific voice modulation,
+    or PIPER_EMOTION_PROSODY for BMO emotion-based modulation via sox.
     Returns a dict with 'speed' and 'pitch' keys.
 
     Args:
         npc: NPC archetype name (e.g. 'gruff_dwarf')
-        emotion: BMO emotion name (influences speed slightly)
+        emotion: BMO emotion name (e.g. 'happy', 'dramatic')
 
     Returns:
         {"speed": float, "pitch": int} — defaults to {"speed": 1.0, "pitch": 0}
@@ -221,18 +237,8 @@ def get_prosody(npc: str | None = None, emotion: str | None = None) -> dict:
     if npc and npc in NPC_PROSODY:
         return dict(NPC_PROSODY[npc])
 
-    # Emotion-based speed adjustments (subtle)
-    emotion_speed = {
-        "excited": 1.1,
-        "dramatic": 0.9,
-        "sleepy": 0.85,
-        "calm": 0.95,
-        "happy": 1.05,
-        "sad": 0.9,
-        "sassy": 1.05,
-    }
-    if emotion and emotion in emotion_speed:
-        return {"speed": emotion_speed[emotion], "pitch": 0}
+    if emotion and emotion in PIPER_EMOTION_PROSODY:
+        return dict(PIPER_EMOTION_PROSODY[emotion])
 
     return {"speed": 1.0, "pitch": 0}
 

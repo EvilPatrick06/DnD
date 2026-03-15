@@ -124,8 +124,11 @@ class AlertService:
             text = f"Alert! {title}. {body}"
         else:
             text = f"{title}. {body}" if len(body) < 100 else title
+        # Pass priority so alarms/emergencies bypass bedtime mode
+        speak_priority = "emergency" if priority == "critical" else "alarm"
         threading.Thread(
-            target=self.voice.speak, args=(text,), daemon=True
+            target=self.voice.speak, args=(text,),
+            kwargs={"priority": speak_priority}, daemon=True
         ).start()
 
     def _deliver_kiosk(self, alert: dict):

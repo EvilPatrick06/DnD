@@ -21,6 +21,7 @@ def _run(cmd: list[str], timeout: int = 10) -> tuple[int, str, str]:
     """Run a shell command, return (returncode, stdout, stderr)."""
     env = os.environ.copy()
     env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+    env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
         return r.returncode, r.stdout, r.stderr

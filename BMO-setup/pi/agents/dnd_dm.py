@@ -13,6 +13,7 @@ import random
 import datetime
 from typing import Any
 
+from agents.vtt_sync import push_discord_message
 from agents.base_agent import AgentConfig, AgentResult, BaseAgent
 
 # Re-use the existing DM data functions from agent.py
@@ -76,6 +77,12 @@ class DndDmAgent(BaseAgent):
 
         # LLM call
         reply = self.llm_call(messages)
+
+        # Forward response to VTT sync
+        try:
+            push_discord_message('DM', reply[:2000])
+        except Exception:
+            pass  # Non-critical
 
         # Parse game state updates
         reply = self._parse_gamestate(reply)

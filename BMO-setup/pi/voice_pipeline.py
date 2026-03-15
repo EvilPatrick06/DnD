@@ -34,7 +34,7 @@ EDGE_TTS_VOICE = "en-US-AnaNeural"  # Young/playful voice for BMO
 SAMPLE_RATE = 16000
 CHANNELS = 1
 SILENCE_THRESHOLD = 600       # RMS threshold for silence detection
-SILENCE_DURATION = 1.2        # Seconds of silence to stop recording (extended from 0.8)
+SILENCE_DURATION = 0.8        # Seconds of silence to stop recording
 MAX_RECORD_SECONDS = 15       # Max recording length (extended from 10)
 SILENCE_DURATION_EXTENDED = 2.0  # Extended silence duration after 3s+ of speech
 SPEECH_DURATION_FOR_EXTEND = 3.0  # How long user must speak before extending silence window
@@ -43,13 +43,19 @@ WAKE_PHRASE = "bmo"           # actual phrase to listen for via STT
 WAKE_VARIANTS = {"bmo", "beemo", "bemo", "beamo", "b.m.o", "bimo",
                  "vemo", "beema", "bima", "pmo", "beo", "bee mo", "be mo"}
 
-# Custom-trained "hey BMO" model — single-stage detection, no STT confirmation needed
+# Picovoice Porcupine wake word (primary — best accuracy)
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PORCUPINE_MODEL = os.path.join(_SCRIPT_DIR, "hey_bmo.ppn")
+PORCUPINE_ACCESS_KEY = os.environ.get("PICOVOICE_ACCESS_KEY", "")
+PORCUPINE_AVAILABLE = os.path.isfile(PORCUPINE_MODEL) and bool(PORCUPINE_ACCESS_KEY)
+PORCUPINE_SENSITIVITY = 0.9  # 0.0-1.0, higher = more sensitive but more false positives
+
+# OpenWakeWord fallback — custom-trained "hey BMO" ONNX model
 WAKE_CUSTOM_MODEL = os.path.join(_SCRIPT_DIR, "hey_bmo.onnx")
 WAKE_USE_CUSTOM = os.path.isfile(WAKE_CUSTOM_MODEL)
 
 # openwakeword threshold — configurable via BMO_WAKE_THRESHOLD env var
-WAKE_OWW_THRESHOLD = float(os.environ.get("BMO_WAKE_THRESHOLD", "0.5"))
+WAKE_OWW_THRESHOLD = float(os.environ.get("BMO_WAKE_THRESHOLD", "0.05"))
 
 # TTS cache directory
 TTS_CACHE_DIR = os.path.expanduser("~/.audiocache/tts")
@@ -108,6 +114,8 @@ def _get_native_input_rate() -> int:
 
 # Local Piper TTS config (fallback)
 PIPER_MODEL = os.path.join(MODELS_DIR, "piper", "en_US-hfc_female-medium.onnx")
+PIPER_BMO_MODEL = os.path.join(MODELS_DIR, "piper", "bmo-voice.onnx")
+PIPER_BMO_AVAILABLE = os.path.isfile(PIPER_BMO_MODEL)
 PITCH_SHIFT = 400  # Semitone-cents to raise pitch for BMO voice
 
 
@@ -172,6 +180,7 @@ class VoicePipeline:
         self._silence_threshold = voice_settings.get("silence_threshold", SILENCE_THRESHOLD)
         self._vad_sensitivity = voice_settings.get("vad_sensitivity", 1.8)
         self._tts_provider = voice_settings.get("tts_provider", "auto")
+        self._stt_provider = voice_settings.get("stt_provider", "auto")
         self._wake_enabled = voice_settings.get("wake_enabled", True)
 
     # ── Model Loading (local fallback models) ─────────────────────────
@@ -179,7 +188,7 @@ class VoicePipeline:
     def _load_whisper(self):
         if self._whisper is None:
             from faster_whisper import WhisperModel
-            self._whisper = WhisperModel("base", device="cpu", compute_type="int8")
+            self._whisper = WhisperModel("small", device="cpu", compute_type="int8")
         return self._whisper
 
     def _load_wake_model(self):
@@ -261,6 +270,7 @@ class VoicePipeline:
             "silence_threshold": getattr(self, '_silence_threshold', SILENCE_THRESHOLD),
             "vad_sensitivity": getattr(self, '_vad_sensitivity', 1.8),
             "tts_provider": getattr(self, '_tts_provider', 'auto'),
+            "stt_provider": getattr(self, '_stt_provider', 'auto'),
             "wake_enabled": getattr(self, '_wake_enabled', True),
             "wake_variants": list(WAKE_VARIANTS),
         }
@@ -273,6 +283,8 @@ class VoicePipeline:
             self._vad_sensitivity = float(value)
         elif key == "tts_provider":
             self._tts_provider = str(value)
+        elif key == "stt_provider":
+            self._stt_provider = str(value)
         elif key == "wake_enabled":
             self._wake_enabled = bool(value)
         # Persist
@@ -291,6 +303,7 @@ class VoicePipeline:
                 "silence_threshold": getattr(self, '_silence_threshold', SILENCE_THRESHOLD),
                 "vad_sensitivity": getattr(self, '_vad_sensitivity', 1.8),
                 "tts_provider": getattr(self, '_tts_provider', 'auto'),
+                "stt_provider": getattr(self, '_stt_provider', 'auto'),
                 "wake_enabled": getattr(self, '_wake_enabled', True),
             }
             os.makedirs(os.path.dirname(settings_path), exist_ok=True)
@@ -314,25 +327,43 @@ class VoicePipeline:
         self._running = False
 
     def _wake_word_loop(self):
-        """Listen for 'hey BMO' using the custom-trained OWW model.
+        """Listen for 'hey BMO' wake word.
 
-        With custom hey_bmo model: single-stage detection — OWW trigger = immediate wake.
-        With fallback hey_jarvis model: two-stage — OWW trigger + local STT confirmation.
-        Auto-detects mic native sample rate and resamples to 16kHz.
-        Falls back to energy+Silero+STT combo if openwakeword unavailable.
+        Priority: Picovoice Porcupine (best accuracy) → OpenWakeWord → energy+STT fallback.
         """
-        chunk_size = 1280  # 80ms at 16kHz
-        ring_buffer = []   # rolling 2-second buffer
-        max_ring_chunks = int(2.0 * SAMPLE_RATE / chunk_size)  # ~2s of audio
+        self._wake_triggered = False
+
+        # Pre-warm TTS cache in background
+        threading.Thread(target=self._prewarm_tts_cache, daemon=True).start()
+        # Pre-load Silero VAD so first recording doesn't have 3s load delay
+        threading.Thread(target=self._load_silero_vad, daemon=True).start()
+        # Verify AEC on startup
+        self._check_aec()
+
+        # Try Porcupine first (best accuracy)
+        if PORCUPINE_AVAILABLE:
+            print("[wake] Using Picovoice Porcupine for wake word detection")
+            while self._running:
+                try:
+                    self._wake_listen_cycle_porcupine()
+                    if self._wake_triggered:
+                        self._wake_triggered = False
+                        time.sleep(0.2)
+                        self._on_wake()
+                except Exception as e:
+                    print(f"[wake] Porcupine error: {e}, restarting in 2s...")
+                    time.sleep(2)
+            return
+
+        # Fallback to OpenWakeWord
+        chunk_size = 1280
+        ring_buffer = []
+        max_ring_chunks = int(2.0 * SAMPLE_RATE / chunk_size)
         energy_threshold = 2500
-        ambient_rms_avg = 0.0
-        ambient_alpha = 0.02
-        ENERGY_HEADROOM = 1.8
         cooldown_until = 0.0
         consecutive_active = 0
         ACTIVE_CHUNKS_NEEDED = 6
 
-        # Try to load openwakeword model for Stage 1
         oww_model = None
         try:
             oww_model = self._load_wake_model()
@@ -340,13 +371,6 @@ class VoicePipeline:
             print(f"[wake] Listening for 'hey BMO' ({mode})...")
         except Exception as e:
             print(f"[wake] openwakeword not available ({e}), using energy+STT fallback...")
-
-        self._wake_triggered = False
-
-        # Pre-warm TTS cache in background
-        threading.Thread(target=self._prewarm_tts_cache, daemon=True).start()
-        # Verify AEC on startup
-        self._check_aec()
 
         while self._running:
             try:
@@ -367,6 +391,112 @@ class VoicePipeline:
             except Exception as e:
                 print(f"[wake] Listener error: {e}, restarting in 2s...")
                 time.sleep(2)
+
+    def _wake_listen_cycle_porcupine(self):
+        """Wake word detection using Picovoice Porcupine.
+
+        Porcupine handles all audio processing internally — frame size is 512 samples
+        at 16kHz. Much higher accuracy than OpenWakeWord with near-zero false positives.
+        """
+        import pvporcupine
+
+        # Use custom .ppn if available, otherwise fall back to built-in "bumblebee"
+        if os.path.isfile(PORCUPINE_MODEL):
+            porcupine = pvporcupine.create(
+                access_key=PORCUPINE_ACCESS_KEY,
+                keyword_paths=[PORCUPINE_MODEL],
+                sensitivities=[PORCUPINE_SENSITIVITY],
+            )
+            wake_phrase = "hey BMO"
+        else:
+            porcupine = pvporcupine.create(
+                access_key=PORCUPINE_ACCESS_KEY,
+                keywords=["bumblebee"],
+                sensitivities=[PORCUPINE_SENSITIVITY],
+            )
+            wake_phrase = "bumblebee"
+
+        frame_length = porcupine.frame_length  # 512 samples
+        cooldown_until = 0.0
+
+        # Try 16kHz directly (avoids resampling artifacts)
+        # Fall back to native rate + resampling if 16kHz fails
+        try:
+            _test = sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, dtype="int16", blocksize=frame_length)
+            _test.close()
+            stream_rate = SAMPLE_RATE
+            stream_blocksize = frame_length
+            use_resampling = False
+            print(f"[wake] Porcupine mic: direct {SAMPLE_RATE}Hz (no resampling needed)")
+        except Exception:
+            stream_rate = _get_native_input_rate()
+            stream_blocksize = int(frame_length * (stream_rate / SAMPLE_RATE))
+            use_resampling = True
+            print(f"[wake] Porcupine mic: {stream_rate}Hz → resampling to {SAMPLE_RATE}Hz")
+
+        def audio_callback(indata, frames, time_info, status):
+            if status:
+                print(f"[audio] {status}")
+            self._audio_queue.put(indata.copy())
+
+        print(f"[wake] Porcupine listening for '{wake_phrase}' (frame={frame_length}, sensitivity={PORCUPINE_SENSITIVITY})")
+
+        try:
+            with sd.InputStream(
+                samplerate=stream_rate,
+                channels=CHANNELS,
+                dtype="int16",
+                blocksize=stream_blocksize,
+                callback=audio_callback,
+            ):
+                chunks_processed = 0
+                speech_threshold = 1500  # Log chunks above this RMS
+                while self._running:
+                    try:
+                        chunk = self._audio_queue.get(timeout=1.0)
+                    except queue.Empty:
+                        continue
+
+                    chunks_processed += 1
+
+                    if use_resampling:
+                        chunk = scipy.signal.resample(
+                            chunk.flatten(), frame_length
+                        ).astype(np.int16)
+                    else:
+                        chunk = chunk.flatten()
+
+                    # Track ambient noise level
+                    rms = np.sqrt(np.mean(chunk.astype(np.float32) ** 2))
+                    if rms < 800:
+                        if self._ambient_rms_avg == 0.0:
+                            self._ambient_rms_avg = rms
+                        else:
+                            self._ambient_rms_avg = 0.02 * rms + 0.98 * self._ambient_rms_avg
+
+                    # Log periodic status + speech-level chunks
+                    if chunks_processed <= 3 or chunks_processed % 1000 == 0:
+                        print(f"[wake] Porcupine #{chunks_processed}: rms={rms:.0f}, ambient={self._ambient_rms_avg:.0f}")
+                    elif rms > speech_threshold:
+                        print(f"[wake] SPEECH? rms={rms:.0f} (ambient={self._ambient_rms_avg:.0f})")
+
+                    keyword_index = porcupine.process(chunk)
+
+                    if keyword_index >= 0:
+                        now = time.time()
+                        if now < cooldown_until:
+                            continue
+                        cooldown_until = now + 1.5
+
+                        print(f"[wake] Porcupine detected 'hey BMO'!")
+                        self._emit("status", {"state": "listening"})
+                        # Drain audio queue
+                        while not self._audio_queue.empty():
+                            self._audio_queue.get_nowait()
+                        self._wake_triggered = True
+                        return
+        finally:
+            porcupine.delete()
 
     def _wake_listen_cycle_oww(self, oww_model, chunk_size, ring_buffer, max_ring_chunks):
         """Wake detection with auto sample rate and single-stage for custom model.
@@ -441,7 +571,7 @@ class VoicePipeline:
 
                 triggered = False
                 for key, score in prediction.items():
-                    if score > 0.001:
+                    if score > 0.04:  # Only log scores approaching threshold
                         print(f"[wake] OWW score: {key}={score:.4f} (threshold={WAKE_OWW_THRESHOLD})")
                     if score > WAKE_OWW_THRESHOLD:
                         print(f"[wake] OWW triggered: {key}={score:.3f}")
@@ -457,7 +587,15 @@ class VoicePipeline:
                 cooldown_until = now + 1.5
 
                 if use_single_stage:
-                    print("[wake] 'hey BMO' detected (single-stage)")
+                    # Silero VAD gate: confirm there's actual speech, not just noise
+                    ring_audio = np.concatenate(ring_buffer) if ring_buffer else chunk.flatten()
+                    speech_prob = self._silero_check_speech(ring_audio)
+                    if speech_prob < 0.3:
+                        print(f"[wake] OWW triggered but Silero says no speech (prob={speech_prob:.2f}), ignoring")
+                        oww_model.reset()
+                        continue
+
+                    print(f"[wake] 'hey BMO' detected (single-stage, VAD={speech_prob:.2f})")
                     self._emit("status", {"state": "listening"})
                     ring_buffer.clear()
                     while not self._audio_queue.empty():
@@ -513,17 +651,11 @@ class VoicePipeline:
             pass
 
     def _mute_mic(self, mute: bool):
-        """Mute/unmute the mic during TTS to prevent echo pickup."""
-        try:
-            val = "1" if mute else "0"
-            subprocess.run(
-                ["wpctl", "set-mute", "@DEFAULT_SOURCE@", val],
-                capture_output=True, timeout=3,
-                env={**os.environ, "XDG_RUNTIME_DIR": "/run/user/1000",
-                     "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus"},
-            )
-        except Exception:
-            pass
+        """No-op: mic muting disabled. AEC source handles echo cancellation.
+        Previous implementation caused gevent blocking (5s+ delays) and left
+        the mic permanently muted, making BMO deaf.
+        """
+        pass
 
     def _wake_listen_cycle(self, chunk_size, ring_buffer, max_ring_chunks,
                            energy_threshold, cooldown_until, consecutive_active,
@@ -699,7 +831,8 @@ class VoicePipeline:
     def _tts_worker(self):
         """Background thread: pops sentences from queue and speaks them.
 
-        Runs until it receives a None sentinel or is interrupted.
+        Batches short consecutive sentences (< 80 chars) together to reduce
+        API round-trips and inter-sentence gaps.
         """
         while True:
             try:
@@ -710,14 +843,40 @@ class VoicePipeline:
                 break
             if self._tts_interrupted.is_set():
                 continue
+
+            # Batch short sentences: peek at queue for more short items
+            if len(text) < 80:
+                batch = [text]
+                batch_len = len(text)
+                while batch_len < 250:
+                    try:
+                        next_text = self._tts_queue.get_nowait()
+                    except queue.Empty:
+                        break
+                    if next_text is None:
+                        self._tts_queue.put(None)  # put sentinel back
+                        break
+                    batch.append(next_text)
+                    batch_len += len(next_text)
+                    if len(next_text) >= 80:
+                        break  # long sentence ends the batch
+                text = " ".join(batch)
+
             self._tts_worker_active.set()
             try:
-                self._cloud_speak(text)
+                provider = getattr(self, '_tts_provider', 'auto')
+                if provider == "piper_bmo" or (provider == "auto" and PIPER_BMO_AVAILABLE):
+                    self._bmo_speak(text)
+                elif provider == "edge":
+                    self._edge_speak(text)
+                else:
+                    # Fish Audio has the BMO voice clone — best quality
+                    self._cloud_speak(text)
             except Exception:
                 try:
                     self._edge_speak(text)
                 except Exception as e:
-                    print(f"[tts-worker] TTS failed: {e}")
+                    print(f"[tts-worker] All TTS failed: {e}")
             finally:
                 self._tts_worker_active.clear()
 
@@ -751,8 +910,10 @@ class VoicePipeline:
         """
         self._emit("status", {"state": "speaking"})
         self._is_speaking = True
-        self._speak_volume = None
+        # Don't reset _speak_volume — it's set by the volume slider and should persist
         self._tts_interrupted.clear()
+        # NOTE: mic muting removed — gevent blocks Popen for 5s, causing
+        # more latency than echo pickup. The AEC source handles echo cancellation.
 
         # Drain any leftover items from previous runs
         while not self._tts_queue.empty():
@@ -816,7 +977,6 @@ class VoicePipeline:
             return full_text
         finally:
             self._is_speaking = False
-            time.sleep(0.5)
             while not self._audio_queue.empty():
                 try:
                     self._audio_queue.get_nowait()
@@ -831,9 +991,16 @@ class VoicePipeline:
             self._emit("status", {"state": "idle"})
             return None
 
+        # Minimum energy check — reject if recording is just ambient noise
+        rms = np.sqrt(np.mean(audio_data.astype(np.float32) ** 2))
+        if rms < 200:
+            print(f"[conv] Rejected recording (rms={rms:.0f}, too quiet for speech)")
+            self._emit("status", {"state": "idle"})
+            return None
+
         # Silero VAD check — reject recordings that are just noise, not speech
         speech_prob = self._silero_check_speech(audio_data)
-        if speech_prob < 0.3:
+        if speech_prob < 0.4:
             print(f"[conv] Silero rejected recording (prob={speech_prob:.2f})")
             self._emit("status", {"state": "idle"})
             return None
@@ -844,11 +1011,17 @@ class VoicePipeline:
             self._save_wav(f, audio_data)
 
         try:
+            _t_spk0 = time.time()
             speaker = self.identify_speaker(temp_path)
+            _t_spk1 = time.time()
+            print(f"[timing] identify_speaker() took {_t_spk1 - _t_spk0:.2f}s")
 
             # Transcribe
             self._emit("status", {"state": "thinking"})
+            _t_stt0 = time.time()
             text = self.transcribe(temp_path)
+            _t_stt1 = time.time()
+            print(f"[timing] transcribe() took {_t_stt1 - _t_stt0:.2f}s")
             if not text or text.strip() == "":
                 self._emit("status", {"state": "idle"})
                 return None
@@ -882,10 +1055,13 @@ class VoicePipeline:
             # Use streaming path for non-closing turns (faster response)
             if self._chat_stream_callback and not is_closing:
                 try:
+                    _t_chat0 = time.time()
+                    print(f"[timing] calling _chat_stream_callback...")
                     text_gen = self._chat_stream_callback(text, speaker)
                     response = self._stream_and_speak(text_gen)
-                    if response:
-                        self._emit("response", {"text": response, "speaker": speaker})
+                    if response and response.strip():
+                        clean = self._strip_markdown(response)
+                        self._emit("response", {"text": clean, "speaker": speaker})
                         return response
                 except Exception as e:
                     print(f"[stream] Streaming failed ({e}), falling back to sync")
@@ -919,9 +1095,13 @@ class VoicePipeline:
             return None
         except Exception as e:
             print(f"[wake] Response error: {e}")
+            self._emit("status", {"state": "idle"})
             return None
         finally:
-            os.unlink(temp_path)
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
     def listen_for_followup(self, timeout: float = 10.0):
         """Listen briefly for a user response after proactive speech.
@@ -947,9 +1127,9 @@ class VoicePipeline:
 
     def _follow_up_loop(self):
         """Listen for follow-up speech without wake word. Exits on silence or inactivity."""
-        FOLLOW_UP_WAIT = 6.0  # seconds to wait for user to start speaking per turn
-        BASE_TIMEOUT = 30.0   # inactivity timeout for first exchanges
-        EXTENDED_TIMEOUT = 45.0  # extended timeout after 2+ exchanges
+        FOLLOW_UP_WAIT_FIRST = 4.0   # seconds to wait on first follow-up (short — most people don't follow up)
+        FOLLOW_UP_WAIT = 5.0         # seconds to wait after an active conversation
+        INACTIVITY_TIMEOUT = 10.0    # exit after this much total silence
         import time as _time
         last_activity = _time.monotonic()
         exchange_count = 0
@@ -957,20 +1137,26 @@ class VoicePipeline:
         self._emit("conversation_mode", {"active": True})
 
         while self._running:
-            timeout = EXTENDED_TIMEOUT if exchange_count >= 2 else BASE_TIMEOUT
-            print(f"[conv] Listening for follow-up (timeout={timeout}s, exchanges={exchange_count})...")
+            wait_time = FOLLOW_UP_WAIT_FIRST if exchange_count == 0 else FOLLOW_UP_WAIT
+            print(f"[conv] Listening for follow-up (wait={wait_time}s, exchanges={exchange_count})...")
             self._emit("status", {"state": "follow_up"})
 
             # Wait for speech energy within the follow-up window
-            heard_speech = self._wait_for_speech(FOLLOW_UP_WAIT)
+            heard_speech = self._wait_for_speech(wait_time)
             if not heard_speech:
+                # First follow-up: exit immediately if no speech (most interactions are single-turn)
+                if exchange_count == 0:
+                    print("[conv] No follow-up speech — back to wake word mode")
+                    self._emit("status", {"state": "idle"})
+                    self._emit("conversation_mode", {"active": False})
+                    return
+                # Subsequent: check inactivity timeout
                 elapsed = _time.monotonic() - last_activity
-                if elapsed >= timeout:
+                if elapsed >= INACTIVITY_TIMEOUT:
                     print("[conv] Inactivity timeout — back to wake word mode")
                     self._emit("status", {"state": "idle"})
                     self._emit("conversation_mode", {"active": False})
                     return
-                # No speech this turn, but still within inactivity window — keep listening
                 continue
 
             last_activity = _time.monotonic()
@@ -1140,15 +1326,32 @@ class VoicePipeline:
 
     @staticmethod
     def _strip_markdown(text: str) -> str:
-        """Strip markdown formatting and hardware tags before TTS."""
-        # Remove hardware control tags: [FACE:x], [LED:x], [EMOTION:x], [SOUND:x], [MUSIC:x], [NPC:x]
+        """Strip all markdown/formatting from text for plain-English TTS and chat display."""
+        # Hardware control tags
         text = re.sub(r'\[(?:FACE|LED|EMOTION|SOUND|MUSIC|NPC):[^\]]*\]', '', text)
+        # Fenced code blocks (triple backticks, with optional language tag)
+        text = re.sub(r'```[\s\S]*?```', '', text)
+        # Bold/italic asterisks and underscores
         text = re.sub(r'\*+', '', text)
+        text = re.sub(r'_+', ' ', text)
+        # Headings
         text = re.sub(r'#+\s*', '', text)
-        text = re.sub(r'`[^`]*`', lambda m: m.group(0).strip('`'), text)
-        # Clean up extra whitespace from removed tags
-        text = re.sub(r'  +', ' ', text).strip()
-        return text
+        # Inline code backticks
+        text = re.sub(r'`([^`]*)`', r'\1', text)
+        # Bullet points (-, *, +)
+        text = re.sub(r'(?m)^\s*[-*+]\s+', '', text)
+        # Numbered lists
+        text = re.sub(r'(?m)^\s*\d+[.)]\s+', '', text)
+        # Blockquotes
+        text = re.sub(r'(?m)^>\s*', '', text)
+        # Markdown links [text](url) -> text
+        text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)
+        # Horizontal rules
+        text = re.sub(r'(?m)^-{3,}$', '', text)
+        # Collapse whitespace
+        text = re.sub(r'  +', ' ', text)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
 
     # ── Recording ────────────────────────────────────────────────────
 
@@ -1220,8 +1423,8 @@ class VoicePipeline:
             np.sqrt(np.mean(c.astype(np.float32) ** 2))
             for c in chunks
         ) if chunks else 0
-        if max_rms < silence_thresh * 1.5:
-            print(f"[record] Discarded — max RMS {max_rms:.0f} too low (need {silence_thresh * 1.5:.0f})")
+        if max_rms < silence_thresh * 2.0:
+            print(f"[record] Discarded — max RMS {max_rms:.0f} too low (need {silence_thresh * 2.0:.0f})")
             return None
 
         return audio
@@ -1239,25 +1442,53 @@ class VoicePipeline:
 
     # ── Speech-to-Text (Groq Whisper → local fallback) ──────────────
 
+    # Whisper hallucinations on silence/noise (expanded list for main transcription)
+    _TRANSCRIPTION_HALLUCINATIONS = frozenset({
+        "", ".", "so", "the", "i", "a", "oh", "oh.", "okay", "okay.",
+        "thank you", "thank you.", "thanks", "thanks.", "bye", "bye.",
+        "hmm", "uh", "um", "mm", "you", "it", "is", "no", "yes",
+        "you know", "you know.", "right", "right.", "yeah", "yeah.",
+        "i mean", "like", "well", "so.", "and", "but", "just",
+        "what", "that", "this", "here", "there",
+    })
+
     def transcribe(self, audio_path: str) -> str:
         """Transcribe audio file to text.
 
-        Routes to Groq Whisper Large-v3 API for best accuracy.
-        Falls back to local Whisper-base if cloud unreachable.
+        Routes to local Whisper-small (primary) with Groq Whisper API fallback.
+        Respects stt_provider setting: 'auto' (local-first), 'local', 'groq'.
         """
-        if _check_cloud():
-            try:
-                return self._cloud_transcribe(audio_path)
-            except Exception as e:
-                print(f"[stt] Cloud STT failed ({e}), falling back to local")
+        provider = getattr(self, '_stt_provider', 'auto')
+        text = ""
 
-        return self._local_transcribe(audio_path)
+        if provider == "groq":
+            text = self._cloud_transcribe(audio_path)
+        elif provider == "local":
+            text = self._local_transcribe(audio_path)
+        else:
+            # Auto: local Whisper first, Groq fallback
+            try:
+                text = self._local_transcribe(audio_path)
+            except Exception as e:
+                print(f"[stt] Local STT failed ({e}), falling back to Groq")
+                if _check_cloud():
+                    try:
+                        text = self._cloud_transcribe(audio_path)
+                    except Exception as e2:
+                        print(f"[stt] Groq STT also failed: {e2}")
+
+        cleaned = text.strip().lower().rstrip(".,!?")
+        if cleaned in self._TRANSCRIPTION_HALLUCINATIONS:
+            print(f"[stt] Filtered hallucination: '{text}'")
+            return ""
+        return text
 
     def _cloud_transcribe(self, audio_path: str) -> str:
         """Send audio to Groq Whisper API for transcription.
 
         Preprocesses audio (high-pass filter, normalize) before sending.
         Uses dynamic prompt with enrolled speaker names.
+        Rejects silence/noise before hitting the API to prevent hallucinations.
         """
         # Read and preprocess audio
         with open(audio_path, "rb") as f:
@@ -1265,62 +1496,131 @@ class VoicePipeline:
                 raw = wf.readframes(wf.getnframes())
                 audio_int16 = np.frombuffer(raw, dtype=np.int16)
 
+        # Pre-API energy gate: reject recordings that are mostly silence/noise
+        # Whisper hallucinates on quiet audio (invents "Good morning", "Thank you", etc.)
+        rms = np.sqrt(np.mean(audio_int16.astype(np.float32) ** 2))
+        if rms < 200:
+            print(f"[stt] Pre-API rejection: audio too quiet (rms={rms:.0f})")
+            return ""
+
+        # Check that at least 5% of frames have speech-level energy
+        frame_size = SAMPLE_RATE // 10  # 100ms frames
+        speech_frames = 0
+        total_frames = max(1, len(audio_int16) // frame_size)
+        for i in range(0, len(audio_int16) - frame_size, frame_size):
+            frame_rms = np.sqrt(np.mean(audio_int16[i:i+frame_size].astype(np.float32) ** 2))
+            if frame_rms > 500:
+                speech_frames += 1
+        speech_ratio = speech_frames / total_frames
+        if speech_ratio < 0.05:
+            print(f"[stt] Pre-API rejection: only {speech_ratio:.0%} speech frames")
+            return ""
+
         processed = self._preprocess_audio(audio_int16)
         wav_buf = self._pcm_to_wav(processed.tobytes())
 
-        # Build dynamic prompt with enrolled speaker names
+        # Build dynamic prompt — vocabulary hints only, no full sentences.
+        # Whisper regurgitates full-sentence prompts when given silence.
         profiles = self._load_voice_profiles()
         speaker_names = ", ".join(profiles.keys()) if profiles else "Gavin"
-        prompt = (
-            f"Hey BMO, tell me a joke. What time is it? Play some music. "
-            f"Set a timer for five minutes. Turn off the lights. "
-            f"Learn my voice, my name is {speaker_names}. Good morning BMO. "
-            f"What's the weather? Add milk to shopping list. Good morning."
-        )
+        prompt = f"BMO, {speaker_names}"
 
         result = groq_stt(wav_buf, prompt=prompt)
+
+        text = result.get("text", "").strip()
 
         # Confidence filtering: reject segments with high no_speech_probability
         segments = result.get("segments", [])
         if segments:
             avg_no_speech = sum(s.get("no_speech_probability", 0) for s in segments) / len(segments)
-            if avg_no_speech > 0.6:
-                print(f"[stt] Rejected (avg no_speech_prob={avg_no_speech:.2f})")
+            if avg_no_speech > 0.4:
+                print(f"[stt] Rejected (avg no_speech_prob={avg_no_speech:.2f}): '{text}'")
+                return ""
+            # Also check avg_logprob — hallucinated text has very low confidence
+            avg_logprob = sum(s.get("avg_logprob", 0) for s in segments) / len(segments)
+            if avg_logprob < -0.7:
+                print(f"[stt] Rejected (avg_logprob={avg_logprob:.2f}): '{text}'")
                 return ""
 
-        return result.get("text", "")
+        # Short text from long recordings is common with voice commands
+        # (e.g., "what time is it" from 8s recording with silence padding)
+        # Only reject truly trivial single-word outputs from very long recordings
+        duration = result.get("duration", 0)
+        if duration > 8 and len(text.split()) <= 1:
+            print(f"[stt] Rejected (single word from {duration:.1f}s recording): '{text}'")
+            return ""
+
+        return text
 
     def _local_transcribe(self, audio_path: str) -> str:
-        """Transcribe with local Whisper-base model (CPU, lower accuracy)."""
+        """Transcribe with local Whisper-small model (CPU, good accuracy)."""
         model = self._load_whisper()
         segments, _ = model.transcribe(audio_path, beam_size=5)
         return " ".join(seg.text.strip() for seg in segments)
 
     # ── Text-to-Speech (Fish Audio → local fallback) ────────────────
 
-    def speak(self, text: str, speaker: str = "bmo_calm", emotion: str | None = None, volume: int | None = None):
+    def speak(self, text: str, speaker: str = "bmo_calm", emotion: str | None = None, volume: int | None = None, priority: str | None = None):
         """Convert text to speech and play through speakers.
 
-        Mutes mic during playback to prevent echo. Uses TTS disk cache for
-        repeated phrases. Falls through: Fish Audio → edge-tts → local Piper.
+        TTS chain: cache → Piper BMO → Fish Audio → edge-tts → generic Piper.
+        Respects tts_provider setting for forced provider selection.
+        Suppressed during bedtime scene UNLESS priority is set to bypass.
+
+        Args:
+            priority: If "alarm", "timer", or "emergency", bypasses bedtime suppression.
         """
+        # Suppress speech during bedtime mode (but allow alarms, timers, emergencies)
+        BEDTIME_BYPASS = {"alarm", "timer", "emergency", "critical"}
+        scene_svc = getattr(self, '_scene_service', None)
+        if scene_svc and scene_svc.get_active() == "bedtime":
+            if priority not in BEDTIME_BYPASS:
+                print(f"[tts] Suppressed (bedtime mode): {text[:60]}...")
+                return
+            else:
+                print(f"[tts] Bedtime bypass ({priority}): {text[:60]}...")
+
         self._emit("status", {"state": "speaking"})
         self._is_speaking = True
-        self._speak_volume = volume
+        # Use caller's volume for this playback only; don't change persisted level
+        original_volume = self._speak_volume
+        if volume is not None:
+            self._speak_volume = volume
 
         if emotion:
             speaker = f"bmo_{emotion}"
 
-        # Mute mic during TTS to prevent echo
         self._mute_mic(True)
 
         try:
-            # Check TTS cache first
             cached = self._tts_cache_get(text, speaker)
             if cached:
                 print(f"[tts] Cache hit for: {text[:40]}...")
                 self._play_audio(cached)
                 return
+
+            provider = getattr(self, '_tts_provider', 'auto')
+
+            if provider == "piper_bmo":
+                self._bmo_speak(text, emotion)
+                return
+            elif provider == "fish":
+                self._cloud_speak(text, speaker)
+                return
+            elif provider == "edge":
+                self._edge_speak(text)
+                return
+            elif provider == "local":
+                self._local_speak(text)
+                return
+
+            # Auto: Piper BMO → Fish Audio → edge-tts → generic Piper
+            if PIPER_BMO_AVAILABLE:
+                try:
+                    self._bmo_speak(text, emotion)
+                    return
+                except Exception as e:
+                    print(f"[tts] Piper BMO failed ({e}), trying Fish Audio")
 
             try:
                 self._cloud_speak(text, speaker)
@@ -1338,8 +1638,10 @@ class VoicePipeline:
         except Exception as e:
             print(f"[tts] All TTS failed: {e}")
         finally:
+            # Restore persisted volume if we temporarily changed it
+            if volume is not None:
+                self._speak_volume = original_volume
             self._is_speaking = False
-            # Unmute mic
             self._mute_mic(False)
             time.sleep(0.5)
             while not self._audio_queue.empty():
@@ -1412,15 +1714,28 @@ class VoicePipeline:
         """Pre-warm TTS cache with common phrases on startup."""
         cached = 0
         for phrase in TTS_PREWARM_PHRASES:
-            if self._tts_cache_get(phrase, "bmo_calm"):
+            speaker = "piper_bmo_neutral" if PIPER_BMO_AVAILABLE else "bmo_calm"
+            if self._tts_cache_get(phrase, speaker):
                 cached += 1
                 continue
             try:
-                audio = fish_audio_tts(phrase, format="opus")
-                self._tts_cache_put(phrase, "bmo_calm", audio, ext=".opus")
+                if PIPER_BMO_AVAILABLE:
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                        raw_path = f.name
+                    subprocess.run(
+                        ["piper", "--model", PIPER_BMO_MODEL, "--output_file", raw_path],
+                        input=phrase, text=True, capture_output=True, check=True,
+                    )
+                    with open(raw_path, "rb") as f:
+                        audio = f.read()
+                    os.unlink(raw_path)
+                    self._tts_cache_put(phrase, speaker, audio, ext=".wav")
+                else:
+                    audio = fish_audio_tts(phrase, format="opus")
+                    self._tts_cache_put(phrase, speaker, audio, ext=".opus")
                 cached += 1
             except Exception:
-                pass  # Non-critical — just skip
+                pass
         print(f"[tts-cache] Pre-warmed {cached}/{len(TTS_PREWARM_PHRASES)} phrases")
 
     # ── Audio Preprocessing for STT ──────────────────────────────────
@@ -1493,16 +1808,31 @@ class VoicePipeline:
             print(f"[tts] Playback done ({elapsed:.1f}s)")
 
     def _edge_speak(self, text: str):
-        """Generate speech via edge-tts (fast, free) and play locally."""
+        """Generate speech via edge-tts (fast, free) and play locally.
+
+        Uses subprocess CLI to bypass gevent monkey-patching which breaks
+        asyncio.run() inside the Flask-SocketIO process.
+        """
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
             temp_path = f.name
 
         try:
-            communicate = edge_tts.Communicate(text, EDGE_TTS_VOICE)
-            asyncio.run(communicate.save(temp_path))
+            _t0 = time.time()
+            # Try venv edge-tts first, then system
+            edge_tts_bin = os.path.expanduser("~/bmo/venv/bin/edge-tts")
+            if not os.path.isfile(edge_tts_bin):
+                edge_tts_bin = "edge-tts"
+            result = subprocess.run(
+                [edge_tts_bin, "--voice", EDGE_TTS_VOICE, "--text", text,
+                 "--write-media", temp_path],
+                capture_output=True, timeout=15,
+            )
+            _t1 = time.time()
+            if result.returncode != 0:
+                raise RuntimeError(f"edge-tts failed: {result.stderr.decode()[:200]}")
+            print(f"[tts] edge-tts generated in {_t1 - _t0:.2f}s")
             self._play_audio(temp_path)
         finally:
-            # Browser mode handles its own cleanup via _play_audio
             if getattr(self, "_tts_output_mode", "pi") != "browser":
                 if os.path.exists(temp_path):
                     os.unlink(temp_path)
@@ -1612,6 +1942,54 @@ class VoicePipeline:
             subprocess.run(["pw-play", raw_path], capture_output=True)
         finally:
             for p in (raw_path, pitched_path):
+                if os.path.exists(p):
+                    os.unlink(p)
+
+    def _bmo_speak(self, text: str, emotion: str | None = None):
+        """Generate speech with custom Piper BMO voice + emotion prosody via sox."""
+        from voice_personality import get_prosody
+
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as raw_file:
+            raw_path = raw_file.name
+        prosody_path = raw_path.replace(".wav", "_prosody.wav")
+
+        try:
+            subprocess.run(
+                ["piper", "--model", PIPER_BMO_MODEL, "--output_file", raw_path],
+                input=text, text=True, capture_output=True, check=True,
+            )
+
+            prosody = get_prosody(emotion=emotion)
+            speed = prosody.get("speed", 1.0)
+            pitch = prosody.get("pitch", 0)
+
+            sox_effects = []
+            if speed != 1.0:
+                sox_effects += ["tempo", str(speed)]
+            if pitch != 0:
+                sox_effects += ["pitch", str(pitch * 100)]
+
+            if sox_effects:
+                subprocess.run(
+                    ["sox", raw_path, prosody_path] + sox_effects,
+                    capture_output=True, check=True,
+                )
+                play_path = prosody_path
+            else:
+                play_path = raw_path
+
+            # Cache the result
+            cache_speaker = f"piper_bmo_{emotion or 'neutral'}"
+            with open(play_path, "rb") as f:
+                audio_bytes = f.read()
+            self._tts_cache_put(text, cache_speaker, audio_bytes, ext=".wav")
+
+            self._play_audio(play_path)
+        except FileNotFoundError as e:
+            print(f"[tts] Piper BMO not available: {e}")
+            raise
+        finally:
+            for p in (raw_path, prosody_path):
                 if os.path.exists(p):
                     os.unlink(p)
 

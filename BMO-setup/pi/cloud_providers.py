@@ -60,6 +60,7 @@ def _gemini_model_id(model: str) -> str:
         "gemini-3-flash-lite": "gemini-3.1-flash-lite-preview",
         "gemini-2.5-pro": "gemini-2.5-pro",
         "gemini-2.5-flash": "gemini-2.5-flash",
+        "gemini-2.0-flash": "gemini-2.0-flash",
     }
     return mapping.get(model, model)
 
@@ -67,10 +68,10 @@ def _gemini_model_id(model: str) -> str:
 def _gemini_thinking_budget(model: str) -> int | None:
     """Return thinkingBudget for a model, or None to use default.
 
-    Gemini 3 Flash: disable thinking (budget=0) — faster with equal quality
-    for conversational use. Other models: leave default.
+    All Flash models: disable thinking (budget=0) — faster for voice pipeline.
+    Thinking adds 10-15s latency for no benefit on conversational tasks.
     """
-    if "flash" in model and ("3-flash" in model or "3.1-flash" in model):
+    if "flash" in model:
         return 0
     return None
 
@@ -87,7 +88,8 @@ def gemini_chat(messages: list[dict], model: str = "",
     for msg in messages:
         role = msg["role"]
         if role == "system":
-            system_instruction = msg["content"]
+            if system_instruction is None:
+                system_instruction = msg["content"]
         else:
             gemini_role = "model" if role == "assistant" else "user"
             contents.append({
@@ -142,9 +144,13 @@ def gemini_chat_stream(messages: list[dict], model: str = "",
                        temperature: float = 0.8, max_tokens: int = 2048):
     """Stream Gemini response, yielding text chunks as they arrive.
 
-    Same interface as gemini_chat but yields partial text strings.
-    Used by the voice pipeline to start TTS before the full response is ready.
+    Uses subprocess curl to bypass gevent monkey-patching, which causes
+    requests.post() to be starved by the SocketIO event loop (~17s delay).
+    Curl runs as a native OS process, unaffected by gevent.
     """
+    import subprocess
+    import time as _time
+
     model = model or PRIMARY_MODEL
     model_id = _gemini_model_id(model)
 
@@ -153,7 +159,8 @@ def gemini_chat_stream(messages: list[dict], model: str = "",
     for msg in messages:
         role = msg["role"]
         if role == "system":
-            system_instruction = msg["content"]
+            if system_instruction is None:
+                system_instruction = msg["content"]
         else:
             gemini_role = "model" if role == "assistant" else "user"
             contents.append({
@@ -180,23 +187,53 @@ def gemini_chat_stream(messages: list[dict], model: str = "",
 
     url = f"{GEMINI_BASE}/models/{model_id}:streamGenerateContent?key={GEMINI_API_KEY}&alt=sse"
 
-    r = _gemini_session.post(url, json=payload, timeout=120, stream=True)
-    r.raise_for_status()
+    import tempfile
+    import shlex
 
-    for line in r.iter_lines(decode_unicode=True):
-        if not line or not line.startswith("data: "):
-            continue
-        try:
-            data = json.loads(line[6:])
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                for part in parts:
-                    text = part.get("text", "")
-                    if text:
-                        yield text
-        except (json.JSONDecodeError, KeyError):
-            continue
+    # Write payload to temp file to avoid shell escaping issues with large JSON
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as pf:
+        json.dump(payload, pf)
+        payload_path = pf.name
+
+    out_path = payload_path + ".out"
+
+    try:
+        _t0 = _time.time()
+        # os.system bypasses gevent monkey-patching (gevent patches subprocess but not os.system)
+        ret = os.system(
+            f"curl -sS -X POST {shlex.quote(url)} "
+            f"-H 'Content-Type: application/json' "
+            f"-d @{shlex.quote(payload_path)} "
+            f"-o {shlex.quote(out_path)} 2>/dev/null"
+        )
+        _t1 = _time.time()
+        print(f"[timing] gemini curl took {_t1 - _t0:.2f}s (exit={ret})")
+
+        if ret != 0:
+            raise RuntimeError(f"Gemini curl failed (exit code {ret})")
+
+        with open(out_path, "r") as f:
+            for line in f:
+                line = line.rstrip("\n\r")
+                if not line or not line.startswith("data: "):
+                    continue
+                try:
+                    data = json.loads(line[6:])
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        for part in parts:
+                            text = part.get("text", "")
+                            if text:
+                                yield text
+                except (json.JSONDecodeError, KeyError):
+                    continue
+    finally:
+        for p in (payload_path, out_path):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
 
 # ── Anthropic (Claude) Provider ───────────────────────────────────────────
@@ -224,7 +261,10 @@ def claude_chat(messages: list[dict], model: str = "",
     api_messages = []
     for msg in messages:
         if msg["role"] == "system":
-            system_text = msg["content"]
+            # Keep only the first system message (agent instructions).
+            # Later ones (e.g. from compact) would overwrite and break the Code Agent.
+            if system_text is None:
+                system_text = msg["content"]
         else:
             api_messages.append({
                 "role": msg["role"],
@@ -245,10 +285,17 @@ def claude_chat(messages: list[dict], model: str = "",
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
     }
+    # Extended output (128K) for long Code Agent / DM responses (2026)
+    if max_tokens > 8192:
+        headers["anthropic-beta"] = "output-128k-2025-02-19"
 
     r = _claude_session.post(f"{ANTHROPIC_BASE}/messages", json=payload,
                       headers=headers, timeout=120)
-    r.raise_for_status()
+
+    if not r.ok:
+        err_body = r.text[:2000] if r.text else "(no body)"
+        print(f"[claude] API error {r.status_code}: {err_body}")
+        r.raise_for_status()
 
     data = r.json()
     content_blocks = data.get("content", [])
@@ -355,27 +402,49 @@ def groq_stt(audio_bytes: bytes, language: str = "en", prompt: str = "") -> dict
     Returns:
         {"text": "transcribed text", "language": "en", "duration": 5.2}
     """
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
-    files = {
-        "file": ("audio.wav", io.BytesIO(audio_bytes), "audio/wav"),
-        "model": (None, "whisper-large-v3"),
-        "language": (None, language),
-        "response_format": (None, "verbose_json"),
-    }
-    if prompt:
-        files["prompt"] = (None, prompt)
+    # Use os.system curl to bypass gevent monkey-patching (gevent patches subprocess but not os.system)
+    import tempfile
+    import shlex
+    import time as _time
 
-    r = _groq_session.post(f"{GROQ_BASE}/audio/transcriptions",
-                      headers=headers, files=files, timeout=30)
-    r.raise_for_status()
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        f.write(audio_bytes)
+        tmp_path = f.name
 
-    data = r.json()
-    return {
-        "text": data.get("text", ""),
-        "language": data.get("language", language),
-        "duration": data.get("duration", 0),
-        "segments": data.get("segments", []),
-    }
+    out_path = tmp_path + ".json"
+
+    try:
+        prompt_flag = f" -F prompt={shlex.quote(prompt)}" if prompt else ""
+        _t0 = _time.time()
+        ret = os.system(
+            f"curl -sS -X POST {shlex.quote(GROQ_BASE + '/audio/transcriptions')} "
+            f"-H 'Authorization: Bearer {GROQ_API_KEY}' "
+            f"-F 'file=@{tmp_path};type=audio/wav' "
+            f"-F model=whisper-large-v3 "
+            f"-F language={shlex.quote(language)} "
+            f"-F response_format=verbose_json"
+            f"{prompt_flag} "
+            f"-o {shlex.quote(out_path)} 2>/dev/null"
+        )
+        _t1 = _time.time()
+        if ret != 0:
+            raise RuntimeError(f"Groq STT curl failed (exit code {ret})")
+
+        with open(out_path, "r") as f:
+            data = json.loads(f.read())
+        print(f"[timing] groq_stt curl took {_t1 - _t0:.2f}s")
+        return {
+            "text": data.get("text", ""),
+            "language": data.get("language", language),
+            "duration": data.get("duration", 0),
+            "segments": data.get("segments", []),
+        }
+    finally:
+        for p in (tmp_path, out_path):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
 
 # ── Fish Audio TTS ───────────────────────────────────────────────────────
@@ -417,11 +486,42 @@ def fish_audio_tts(text: str, voice_id: str = "",
         if pitch != 0:
             payload["prosody"]["pitch"] = pitch
 
-    r = _fish_session.post(f"{FISH_AUDIO_BASE}/tts", json=payload,
-                      headers=headers, timeout=30)
-    r.raise_for_status()
+    # Use os.system curl to bypass gevent monkey-patching (gevent patches subprocess but not os.system)
+    import tempfile
+    import shlex
+    import time as _time
 
-    return r.content
+    # Write payload and capture binary output to temp files
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as pf:
+        json.dump(payload, pf)
+        payload_path = pf.name
+
+    out_path = payload_path + ".audio"
+
+    try:
+        _t0 = _time.time()
+        ret = os.system(
+            f"curl -sS -X POST {shlex.quote(FISH_AUDIO_BASE + '/tts')} "
+            f"-H 'Authorization: Bearer {FISH_AUDIO_API_KEY}' "
+            f"-H 'Content-Type: application/json' "
+            f"-H 'model: s1' "
+            f"-d @{shlex.quote(payload_path)} "
+            f"-o {shlex.quote(out_path)} 2>/dev/null"
+        )
+        _t1 = _time.time()
+        if ret != 0:
+            raise RuntimeError(f"Fish Audio curl failed (exit code {ret})")
+
+        with open(out_path, "rb") as f:
+            audio_data = f.read()
+        print(f"[timing] fish_audio_tts curl took {_t1 - _t0:.2f}s ({len(audio_data)} bytes)")
+        return audio_data
+    finally:
+        for p in (payload_path, out_path):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
 
 # ── Google Cloud Vision ──────────────────────────────────────────────────

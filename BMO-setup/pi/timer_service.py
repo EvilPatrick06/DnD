@@ -341,7 +341,7 @@ class TimerService:
         self._emit("timer_fired", {"id": timer.id, "label": timer.label, "message": msg})
 
         if self.voice:
-            self.voice.speak(msg, volume=self.alarm_volume)
+            self.voice.speak(msg, volume=self.alarm_volume, priority="timer")
             if hasattr(self.voice, 'start_conversation'):
                 self.voice.start_conversation()
 
@@ -360,7 +360,7 @@ class TimerService:
                 "type": "alarm", "tag": alarm.tag, "repeat": alarm.repeat,
             })
             if self.voice:
-                self.voice.speak(msg, volume=self.alarm_volume)
+                self.voice.speak(msg, volume=self.alarm_volume, priority="alarm")
                 if hasattr(self.voice, 'start_conversation'):
                     self.voice.start_conversation()
         else:
@@ -371,7 +371,7 @@ class TimerService:
                 "type": "alarm", "tag": alarm.tag, "repeat": alarm.repeat,
             })
             if self.voice:
-                self.voice.speak(msg, volume=self.alarm_volume)
+                self.voice.speak(msg, volume=self.alarm_volume, priority="alarm")
                 if hasattr(self.voice, 'start_conversation'):
                     self.voice.start_conversation()
 
@@ -418,7 +418,7 @@ class TimerService:
 
         print(f"[alarm] Wake-up message: {msg[:80]}...")
         if self.voice:
-            self.voice.speak(msg, volume=self.alarm_volume)
+            self.voice.speak(msg, volume=self.alarm_volume, priority="alarm")
             if hasattr(self.voice, 'start_conversation'):
                 self.voice.start_conversation()
 
@@ -538,7 +538,7 @@ class TimerService:
                     print(f"[timer] EXPIRED DURING DOWNTIME: {item['label']}")
                     self._emit("timer_fired", {"id": item["id"], "label": item["label"], "message": msg})
                     if self.voice:
-                        threading.Timer(2.0, lambda m=msg: self.voice.speak(m, volume=self.alarm_volume)).start()
+                        threading.Timer(2.0, lambda m=msg: self.voice.speak(m, volume=self.alarm_volume, priority="timer")).start()
                     continue
 
                 timer = Timer(item["duration"], item["label"])

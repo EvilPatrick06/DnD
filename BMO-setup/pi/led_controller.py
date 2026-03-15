@@ -103,6 +103,8 @@ class LedController:
         self._custom_color = None  # (r, g, b) or None
         self._custom_mode = None   # MODE_* int or None
         self._brightness = 100     # 0-100 percent
+        # User-disabled flag: persists across expression changes & reboots
+        self._user_disabled = False
 
     def start(self):
         """Initialize I2C bus, restore saved state, and apply."""
@@ -113,8 +115,12 @@ class LedController:
         try:
             self._bus = SMBus(I2C_BUS)
             self._load_state()
-            self._apply_state()
-            print("[led] LED controller started (I2C 0x{:02X})".format(I2C_ADDR))
+            if self._user_disabled:
+                self._set_mode(MODE_OFF)
+            else:
+                self._apply_state()
+            print("[led] LED controller started (I2C 0x{:02X}, enabled={})".format(
+                I2C_ADDR, not self._user_disabled))
         except Exception as e:
             print(f"[led] Failed to init I2C bus: {e}")
 
@@ -127,7 +133,20 @@ class LedController:
             self._bus = None
 
     def set_state(self, state: str):
-        """Change LED mood state (clears custom overrides)."""
+        """Change LED mood state (clears custom overrides).
+
+        If the user has disabled LEDs via the settings toggle, this is a
+        no-op so expression changes don't re-enable the lights.
+        """
+        if self._user_disabled:
+            # Still track the logical state for get_full_state, but don't
+            # touch the hardware or clear custom overrides.
+            try:
+                self._state = LedState(state)
+            except ValueError:
+                pass
+            return
+
         try:
             self._state = LedState(state)
         except ValueError:
@@ -142,8 +161,35 @@ class LedController:
 
     # ── Direct Control API ───────────────────────────────────────────
 
+    # ── Enable / Disable (persists across expression changes) ──────
+
+    def set_enabled(self, enabled: bool):
+        """Enable or disable LEDs.  When disabled, expression-driven
+        set_state() calls are ignored and the hardware is turned off.
+        Persisted to settings.json so it survives reboots."""
+        self._user_disabled = not enabled
+        if self._user_disabled:
+            self._stop_flash()
+            self._set_mode(MODE_OFF)
+            print("[led] LEDs disabled by user")
+        else:
+            # Re-apply whatever the current logical state is
+            if self._custom_color is not None or self._custom_mode is not None:
+                self._apply_custom()
+            else:
+                self._apply_state()
+            print("[led] LEDs re-enabled by user")
+        self._save_state()
+
+    @property
+    def is_enabled(self) -> bool:
+        return not self._user_disabled
+
     def set_color(self, r: int, g: int, b: int):
-        """Set a custom RGB color directly."""
+        """Set a custom RGB color directly.
+
+        This is an explicit user action so it re-enables LEDs if disabled."""
+        self._user_disabled = False
         self._custom_color = (
             max(0, min(255, r)),
             max(0, min(255, g)),
@@ -163,29 +209,38 @@ class LedController:
         return True
 
     def set_mode(self, mode: str) -> bool:
-        """Set LED mode by name (static, breathing, chase, rainbow, off)."""
+        """Set LED mode by name (static, breathing, chase, rainbow, off).
+
+        Off sets _user_disabled so expression changes won't turn them back on.
+        Any non-off mode re-enables LEDs if they were disabled."""
         mode_val = MODE_NAMES.get(mode.lower())
         if mode_val is None:
             return False
-        self._custom_mode = mode_val
         if mode_val == MODE_OFF:
+            self._user_disabled = True
             self._stop_flash()
             self._set_mode(MODE_OFF)
-        elif mode_val == MODE_RAINBOW:
-            self._stop_flash()
-            self._set_mode(MODE_RAINBOW)
         else:
-            self._apply_custom()
+            self._user_disabled = False
+            self._custom_mode = mode_val
+            if mode_val == MODE_RAINBOW:
+                self._stop_flash()
+                self._set_mode(MODE_RAINBOW)
+            else:
+                self._apply_custom()
         self._save_state()
         return True
 
     def set_brightness(self, level: int):
-        """Set brightness 0-100. Scales the current color."""
+        """Set brightness 0-100. Scales the current color.
+
+        If LEDs are disabled, just save the value without touching hardware."""
         self._brightness = max(0, min(100, level))
-        if self._custom_color:
-            self._apply_custom()
-        else:
-            self._apply_state()
+        if not self._user_disabled:
+            if self._custom_color:
+                self._apply_custom()
+            else:
+                self._apply_state()
         self._save_state()
 
     def get_full_state(self) -> dict:
@@ -208,6 +263,7 @@ class LedController:
             "mode": mode_name,
             "brightness": self._brightness,
             "custom": self._custom_color is not None,
+            "enabled": not self._user_disabled,
         }
 
     @property
@@ -264,6 +320,7 @@ class LedController:
                 "custom_color": list(self._custom_color) if self._custom_color else None,
                 "custom_mode": self._custom_mode,
                 "brightness": self._brightness,
+                "user_disabled": self._user_disabled,
             }
             with open(SETTINGS_PATH, "w") as f:
                 json.dump(settings, f, indent=2)
@@ -286,7 +343,8 @@ class LedController:
                     self._custom_color = tuple(led["custom_color"])
                 self._custom_mode = led.get("custom_mode")
                 self._brightness = led.get("brightness", 100)
-                print(f"[led] Restored state: {self._state.value}, brightness={self._brightness}%")
+                self._user_disabled = led.get("user_disabled", False)
+                print(f"[led] Restored state: {self._state.value}, brightness={self._brightness}%, disabled={self._user_disabled}")
         except Exception as e:
             print(f"[led] Load state failed: {e}")
 

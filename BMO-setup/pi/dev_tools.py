@@ -531,13 +531,13 @@ TOOL_DEFINITIONS = [
     },
     {
         "name": "find_files",
-        "description": "Glob search for files by pattern.",
-        "parameters": {"pattern": "string (e.g. '**/*.py')", "path": "string (optional)"},
+        "description": "Find files by FILENAME pattern (glob). E.g. '**/*.py' or '*config*'. Does NOT search inside files.",
+        "parameters": {"pattern": "string (glob, e.g. '**/*.py')", "path": "string (optional)"},
     },
     {
         "name": "grep_files",
-        "description": "Search file contents by regex pattern.",
-        "parameters": {"pattern": "string", "path": "string (optional)", "file_glob": "string (optional)"},
+        "description": "Search INSIDE file contents by regex. Use this to find where code/strings appear (e.g. 'volume', 'slider', 'volumeLevels'). Prefer over find_files when investigating bugs or features.",
+        "parameters": {"pattern": "string (regex)", "path": "string (optional)", "file_glob": "string (optional, e.g. '*.{py,js,html}')"},
     },
     {
         "name": "web_search",

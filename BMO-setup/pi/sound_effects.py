@@ -63,6 +63,7 @@ class SoundEffects:
 
         Non-blocking — audio plays in a background thread.
         Does nothing if the event has no mapped sound file.
+        If the mapped sound name is a directory, picks a random file from it.
         """
         if not self._enabled:
             return
@@ -71,16 +72,27 @@ class SoundEffects:
         if not sound_name:
             return
 
-        # Find the sound file (try .wav, .ogg, .mp3)
-        sound_path = None
-        for ext in (".wav", ".ogg", ".mp3"):
-            candidate = os.path.join(self._sounds_dir, sound_name + ext)
-            if os.path.exists(candidate):
-                sound_path = candidate
-                break
-
-        if not sound_path:
-            return
+        # Check if it's a directory of variations
+        dir_path = os.path.join(self._sounds_dir, sound_name)
+        if os.path.isdir(dir_path):
+            candidates = [
+                f for f in os.listdir(dir_path)
+                if f.endswith((".wav", ".ogg", ".mp3"))
+            ]
+            if not candidates:
+                return
+            import random
+            sound_path = os.path.join(dir_path, random.choice(candidates))
+        else:
+            # Single file lookup (existing logic)
+            sound_path = None
+            for ext in (".wav", ".ogg", ".mp3"):
+                candidate = os.path.join(self._sounds_dir, sound_name + ext)
+                if os.path.exists(candidate):
+                    sound_path = candidate
+                    break
+            if not sound_path:
+                return
 
         # Play in background thread
         threading.Thread(
@@ -90,22 +102,18 @@ class SoundEffects:
         ).start()
 
     def _play_file(self, path: str):
-        """Play an audio file using aplay (WAV) or ffplay (other formats)."""
+        """Play an audio file using ffplay (respects volume for all formats)."""
         try:
-            if path.endswith(".wav"):
-                subprocess.run(
-                    ["aplay", "-q", path],
-                    capture_output=True,
-                    timeout=10,
-                )
-            else:
-                # Use ffplay for other formats
-                subprocess.run(
-                    ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet",
-                     "-volume", str(self._volume), path],
-                    capture_output=True,
-                    timeout=10,
-                )
+            # Always use ffplay so volume control works for all formats
+            env = os.environ.copy()
+            env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+            subprocess.run(
+                ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet",
+                 "-volume", str(self._volume), path],
+                capture_output=True,
+                timeout=10,
+                env=env,
+            )
         except FileNotFoundError:
             # Try VLC as last resort
             try:
@@ -162,13 +170,19 @@ class SoundEffects:
 
     @property
     def available_sounds(self) -> list[str]:
-        """List sound files present in the sounds directory."""
+        """List sound files present in the sounds directory (including subdirectories)."""
         if not os.path.exists(self._sounds_dir):
             return []
-        return [
-            f for f in os.listdir(self._sounds_dir)
-            if f.endswith((".wav", ".ogg", ".mp3"))
-        ]
+        result = []
+        for f in os.listdir(self._sounds_dir):
+            path = os.path.join(self._sounds_dir, f)
+            if os.path.isfile(path) and f.endswith((".wav", ".ogg", ".mp3")):
+                result.append(f)
+            elif os.path.isdir(path):
+                for sf in os.listdir(path):
+                    if sf.endswith((".wav", ".ogg", ".mp3")):
+                        result.append(f"{f}/{sf}")
+        return result
 
 
 def generate_tone(filename: str, frequency: float = 440, duration: float = 0.5,

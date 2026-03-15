@@ -38,3 +38,14 @@ BMO-setup/.env
 BMO-setup/pi/*.pem
 BMO-setup/config/.env
 BMO-setup/pi/config/credentials.json
+
+# BMO runtime
+BMO-setup/pi/__pycache__/
+BMO-setup/pi/agents/__pycache__/
+BMO-setup/pi/venv/
+BMO-setup/pi/data/
+BMO-setup/pi/logs/
+BMO-setup/pi/.bmo/
+BMO-setup/pi/.audiocache/
+BMO-setup/pi/wake_clips/
+BMO-setup/pi/*.ppn

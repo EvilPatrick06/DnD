@@ -79,26 +79,28 @@ class AgentOrchestrator:
         for agent in agents:
             self.register_agent(agent)
 
-    def handle(self, message: str, speaker: str, history: list[dict], services: dict) -> dict:
+    def handle(self, message: str, speaker: str, history: list[dict], services: dict, agent_override: str | None = None) -> dict:
         """Route a message to the best agent and return the result.
 
         This is the main entry point called by BmoAgent.chat().
+        If agent_override is set, bypasses the router and uses that agent directly.
 
         Returns dict with: text, commands_executed, tags, agent_used
         """
-        # Strip explicit prefix for content, but use original for routing
         from agents.router import AgentRouter
         clean_message = AgentRouter.strip_prefix(message)
 
-        # Handle plan mode state transitions
         if self.mode == OrchestratorMode.PLAN_REVIEW:
             return self._handle_plan_review(message, speaker, history)
 
         if self.mode == OrchestratorMode.EXECUTING:
             return self._handle_plan_execution(message, speaker, history)
 
-        # Route to best agent
-        agent_name = self.router.route(message)
+        if agent_override and agent_override != "auto" and agent_override in self.agents:
+            agent_name = agent_override
+            print(f"[orchestrator] Agent override: {agent_name}")
+        else:
+            agent_name = self.router.route(message)
 
         # Announce agent selection
         self._emit("agent_selected", {
@@ -122,6 +124,7 @@ class AgentOrchestrator:
         message: str,
         history: list[dict] | None = None,
         context: dict | None = None,
+        _relay_depth: int = 0,
     ) -> AgentResult:
         """Run a specific agent. Used for both direct routing and sub-agent spawning."""
         agent = self.agents.get(agent_name)
@@ -138,6 +141,13 @@ class AgentOrchestrator:
         try:
             result = agent.run(message, history or [], context)
             result.agent_name = agent.config.name
+
+            # Check if the agent wants to relay to another agent
+            if _relay_depth < 2:  # Prevent infinite relay loops
+                relayed = self._check_relay(result.text, message, history or [], _relay_depth)
+                if relayed:
+                    return relayed
+
             return result
         except Exception as e:
             print(f"[orchestrator] Agent '{agent_name}' failed: {e}")
@@ -147,6 +157,28 @@ class AgentOrchestrator:
             )
         finally:
             self._nesting_depth -= 1
+
+    def _check_relay(self, reply: str, original_message: str, history: list[dict], relay_depth: int) -> AgentResult | None:
+        """Detect [RELAY:agent_name] in an agent's response and re-route."""
+        match = re.search(r"\[RELAY:(\w+)\]\s*(.*)", reply, re.DOTALL)
+        if not match:
+            return None
+
+        target_agent = match.group(1).strip()
+        relay_message = match.group(2).strip() or original_message
+
+        if target_agent not in self.agents:
+            return None
+
+        print(f"[orchestrator] Relaying to {target_agent}: {relay_message[:80]}")
+
+        self._emit("agent_relay", {
+            "from": "previous_agent",
+            "to": target_agent,
+            "display_name": self._get_display_name(target_agent),
+        })
+
+        return self.run_agent(target_agent, relay_message, history=history, _relay_depth=relay_depth + 1)
 
     # ── Plan Mode ────────────────────────────────────────────────────
 
@@ -405,12 +437,15 @@ class AgentOrchestrator:
 
     def _result_to_dict(self, result: AgentResult, speaker: str) -> dict:
         """Convert AgentResult to the dict format expected by BmoAgent.chat()."""
-        return {
+        out = {
             "text": result.text,
             "commands_executed": result.commands,
             "tags": result.tags,
             "agent_used": result.agent_name,
         }
+        if result.pending_confirmations:
+            out["pending_confirmations"] = result.pending_confirmations
+        return out
 
     def _emit(self, event: str, data: dict) -> None:
         """Emit a SocketIO event if available."""

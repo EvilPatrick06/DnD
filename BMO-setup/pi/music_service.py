@@ -42,6 +42,7 @@ class MusicService:
         self.shuffle: bool = False
         self.repeat: str = "off"  # "off", "all", "one"
         self.autoplay: bool = True  # When queue ends, play related songs
+        self._volume: int = 50  # Cached volume level
 
         # Auto-advance thread
         self._monitor_thread = None
@@ -312,6 +313,8 @@ class MusicService:
 
     def set_volume(self, volume: int):
         """Set volume (0-100)."""
+        volume = max(0, min(100, int(volume)))
+        self._volume = volume
         if self._output_device == OUTPUT_PI:
             self._player.audio_set_volume(volume)
         elif self._output_device == OUTPUT_TV:
@@ -388,7 +391,7 @@ class MusicService:
             "is_playing": is_playing,
             "position": round(position, 1),
             "duration": round(duration, 1),
-            "volume": max(0, self._player.audio_get_volume()) if self._output_device == OUTPUT_PI else 50,
+            "volume": self._volume,
             "output_device": self._output_device,
             "queue_length": len(self.queue),
             "queue_index": self.queue_index,

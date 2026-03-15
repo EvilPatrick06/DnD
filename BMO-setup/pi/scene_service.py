@@ -252,6 +252,7 @@ class SceneService:
                     "mode": mode,
                     "color": getattr(led, "_custom_color", None),
                     "brightness": getattr(led, "_brightness", 128),
+                    "user_disabled": getattr(led, "_user_disabled", False),
                 }
             except Exception:
                 pass
@@ -280,24 +281,28 @@ class SceneService:
         led = self._services.get("leds")
         if led_state and led:
             try:
-                mode = led_state.get("mode", 0)
-                mode_names = {0: "off", 1: "static", 2: "chase", 3: "breathing", 4: "rainbow"}
-                mode_name = mode_names.get(mode, "off")
-
-                if mode == 0:
-                    # Just turn off, don't set color (avoids flash)
-                    led.set_mode("off")
+                # Restore the user-disabled flag first so set_mode/set_color
+                # don't fight with it
+                was_disabled = led_state.get("user_disabled", False)
+                if was_disabled:
+                    led.set_enabled(False)
                 else:
-                    # Set mode first, then color+brightness
-                    led.set_mode(mode_name)
-                    color = led_state.get("color")
-                    if color:
-                        if isinstance(color, list):
-                            color = tuple(color)
-                        led.set_color(*color)
-                    brightness = led_state.get("brightness", 128)
-                    led.set_brightness(brightness)
-                print(f"[scene] Restored LED: mode={mode_name}, color={led_state.get('color')}, brightness={led_state.get('brightness')}")
+                    mode = led_state.get("mode", 0)
+                    mode_names = {0: "off", 1: "static", 2: "chase", 3: "breathing", 4: "rainbow"}
+                    mode_name = mode_names.get(mode, "off")
+
+                    if mode == 0:
+                        led.set_mode("off")
+                    else:
+                        led.set_mode(mode_name)
+                        color = led_state.get("color")
+                        if color:
+                            if isinstance(color, list):
+                                color = tuple(color)
+                            led.set_color(*color)
+                        brightness = led_state.get("brightness", 128)
+                        led.set_brightness(brightness)
+                print(f"[scene] Restored LED: disabled={was_disabled}, mode={led_state.get('mode')}, color={led_state.get('color')}")
             except Exception as e:
                 print(f"[scene] LED restore failed: {e}")
 

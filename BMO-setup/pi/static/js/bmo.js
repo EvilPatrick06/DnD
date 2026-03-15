@@ -1,5 +1,21 @@
 /** BMO Touchscreen UI — Alpine.js data + WebSocket handlers */
 
+// Global error handler — logs JS errors to server for debugging
+window.addEventListener('error', (e) => {
+  fetch('/api/ide/js-error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ msg: e.message, file: e.filename, line: e.lineno, col: e.colno, stack: e.error?.stack }),
+  }).catch(() => {});
+});
+window.addEventListener('unhandledrejection', (e) => {
+  fetch('/api/ide/js-error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ msg: 'Unhandled rejection: ' + String(e.reason), stack: e.reason?.stack }),
+  }).catch(() => {});
+});
+
 // ── Google Places Autocomplete ──────────────────────────────────
 let _placesLoaded = false;
 let _placesCallbacks = [];
@@ -63,6 +79,7 @@ function bmo() {
       { id: 'chat', icon: '\u{1F4AC}', label: 'Chat' },
       { id: 'home', icon: '\u{1F3E0}', label: 'Home' },
       { id: 'music', icon: '\u{1F3B5}', label: 'Music' },
+      { id: 'ide', icon: '\u{1F4BB}', label: 'IDE' },
       { id: 'calendar', icon: '\u{1F4C5}', label: 'Cal' },
       { id: 'timers', icon: '\u23F1', label: 'Timers' },
       { id: 'controls', icon: '\u2699', label: 'Settings' },
@@ -250,7 +267,7 @@ function bmo() {
     _touchStartY: 0,
 
     // Voice settings (Phase 6)
-    voiceSettings: { wake_enabled: true, silence_threshold: 600, vad_sensitivity: 1.8, tts_provider: 'auto', wake_variants: [] },
+    voiceSettings: { wake_enabled: true, silence_threshold: 600, vad_sensitivity: 1.8, tts_provider: 'auto', stt_provider: 'auto', wake_variants: [] },
 
     // Agent/Model picker (Phase 7)
     selectedAgent: 'auto',
@@ -262,6 +279,21 @@ function bmo() {
     ambientMode: 'clock',  // 'clock', 'now_playing', 'bmo_face'
     _idleTimer: null,
     _idleTimeout: 300000,  // 5 minutes
+
+    // Procedural BMO face
+    _faceCanvas: null,
+    _faceCtx: null,
+    _faceAnimFrame: null,
+    _faceState: 'idle',
+    _faceEmotion: null,
+    _faceBlink: 0,
+    _faceBlinkState: false,
+    _faceMouth: 0,
+    _faceThinkAngle: 0,
+    _faceLookOffset: 0,
+    _faceLookTarget: 0,
+    _faceLookTimer: 0,
+    _faceFrame: 0,
 
     // Lists
     lists: {},
@@ -284,6 +316,51 @@ function bmo() {
     gameActive: false,
     currentGame: null,
     gameState: {},
+
+    // ── IDE Tab ──────────────────────────────────────────────
+    ideFileTree: [],
+    ideCurrentPath: '~',
+    ideMachine: 'pi',
+    ideOpenFiles: [],
+    ideActiveFile: null,
+    ideMonacoReady: false,
+    _monacoEditor: null,
+    _monacoEditorSplit: null,
+    _monacoModels: {},
+    ideSplitMode: false,
+    ideSplitFile: null,
+    idePanels: {
+      left: { open: true, width: 240 },
+      right: { open: true, width: 280 },
+      bottom: { open: false, height: 200 },
+    },
+    ideLeftPanel: 'files',
+    ideResizing: null,
+    ideTerminals: [],
+    ideActiveTerminal: null,
+    ideNextTermId: 1,
+    ideShowChat: true,
+    ideAgentJobs: [],
+    ideAutoApprove: false,
+    idePendingDiffs: [],
+    ideChatMessages: [],
+    ideChatInput: '',
+    ideFocusedJob: null,           // job ID when in conversation mode
+    ideShowArchived: false,        // toggle to show archived jobs
+    ideCompletedJobCount: 0,       // badge count for jobs that finished while focused elsewhere
+    ideSearchQuery: '',
+    ideSearchResults: [],
+    ideShowQuickOpen: false,
+    ideQuickOpenQuery: '',
+    ideQuickOpenResults: [],
+    ideGitBranch: '',
+    ideGitChanges: [],
+    ideGitCommitMsg: '',
+    ideGitBranches: [],
+    ideWinConnected: false,
+    _ideExpandedDirs: {},
+    _ideDirCache: {},
+    _ideInitDone: false,
 
     // ── Init ──────────────────────────────────────────────────
 
@@ -376,6 +453,47 @@ function bmo() {
         if (c.maps_api_key) loadPlacesAPI(c.maps_api_key);
       }).catch(() => {});
 
+      // IDE: Restore panel sizes from localStorage
+      try {
+        const saved = localStorage.getItem('ide-panel-sizes');
+        if (saved) {
+          const sizes = JSON.parse(saved);
+          if (sizes.left) this.idePanels.left.width = sizes.left;
+          if (sizes.right) this.idePanels.right.width = sizes.right;
+          if (sizes.bottom) this.idePanels.bottom.height = sizes.bottom;
+        }
+      } catch {}
+
+      // IDE: Init on tab switch
+      this.$watch('tab', (v) => {
+        if (v === 'ide' && !this._ideInitDone) {
+          this._ideInitDone = true;
+          this.ideLoadTree();
+          this.ideLoadGitStatus();
+          this.ideInitMonaco();
+          this._ideInitMarkdown();
+        }
+      });
+
+      // IDE keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (this.tab !== 'ide') return;
+        if (e.ctrlKey && e.key === 's') { e.preventDefault(); this.ideSaveFile(); }
+        if (e.ctrlKey && e.key === 'w') { e.preventDefault(); this.ideCloseActiveTab(); }
+        if (e.ctrlKey && e.key === 'p') {
+          e.preventDefault();
+          this.ideShowQuickOpen = !this.ideShowQuickOpen;
+          if (this.ideShowQuickOpen) {
+            this.$nextTick(() => {
+              const el = document.querySelector('#ide-quick-open-input');
+              if (el) el.focus();
+            });
+          }
+        }
+        if (e.ctrlKey && e.key === '`') { e.preventDefault(); this.ideToggleTerminal(); }
+        if (e.ctrlKey && e.shiftKey && e.key === 'F') { e.preventDefault(); this.ideLeftPanel = 'search'; this.idePanels.left.open = true; }
+      });
+
     },
 
     // ── Swipe ─────────────────────────────────────────────────
@@ -409,6 +527,8 @@ function bmo() {
       main.addEventListener('mousedown', (e) => {
         if (usedTouch) return;
         if (e.target.closest('input, button, select, textarea, a')) return;
+        // Allow text selection in chat bubbles (PC mouse copy)
+        if (e.target.closest('#chatScroll [class*="select-text"]')) return;
         mouseDown = true;
         dragged = false;
         this._touchStartX = e.clientX;
@@ -490,22 +610,72 @@ function bmo() {
           this.fetchMostPlayed();
         }
         this.musicState = data;
-        if (this.volumeLevels && data.volume > 0) this.volumeLevels.music = data.volume;
+        // Don't let music_state override the settings slider — settings API is source of truth
       });
       this.socket.on('next_event', (data) => { this.nextEvent = data; });
       this.socket.on('timers_tick', (data) => { this.timerItems = data; });
-      this.socket.on('status', (data) => { this.status = data.state; });
+      this.socket.on('status', (data) => {
+        this.status = data.state;
+        this._faceState = data.state;
+      });
+      this.socket.on('expression', (data) => {
+        if (data.expression) this._faceEmotion = data.expression;
+      });
 
       this.socket.on('chat_response', (data) => {
-        this.status = 'yapping';
-        this.messages.push({ role: 'assistant', text: data.text, agent: data.agent_used || '' });
+        this.status = data.agent_used === 'code'
+          ? (data.incomplete ? 'code_incomplete' : 'code_done')
+          : 'yapping';
+        let text = (data.text || '').trim();
+        // Remove progress placeholders for non-Code agents. For Code Agent, keep progress
+        // so the user can see what work was done—especially when the summary says "still
+        // doing work" or sounds incomplete.
+        if (data.agent_used !== 'code') {
+          while (this.messages.length > 0 && this.messages[this.messages.length - 1].role === 'progress') {
+            this.messages.pop();
+          }
+        }
+        if (!text) {
+          text = "Something went wrong—BMO couldn't produce a response. Try again or check the logs.";
+        }
+        const last = this.messages[this.messages.length - 1];
+        if (last && last.role === 'assistant' && last.text === text) return;
+        this.messages.push({
+          role: 'assistant',
+          text,
+          agent: data.agent_used || '',
+          incomplete: data.incomplete === true
+        });
         if (data.agent_used) this.agentUsed = data.agent_used;
         this.scrollChat();
-        setTimeout(() => { this.status = 'idle'; }, 2000);
+        const codeDelay = (data.agent_used === 'code') ? 6000 : 2000;
+        setTimeout(() => { this.status = 'idle'; }, codeDelay);
+      });
+
+      this.socket.on('agent_ack', (data) => {
+        const text = (data.text || '').trim();
+        if (text) {
+          this.messages.push({ role: 'assistant', text, agent: data.agent || '', isAck: true });
+          this.scrollChat();
+        }
+      });
+
+      this.socket.on('agent_progress', (data) => {
+        const label = data.label || data.tool || 'Working';
+        const status = data.status === 'running' ? '...' : data.status === 'done' ? '✓' : data.status === 'failed' ? '✗' : data.status;
+        const msg = status === '✓' ? `${label} ✓` : status === '✗' ? `${label} ✗` : `${label} ${status}`;
+        const failed = data.status === 'failed';
+        const last = this.messages[this.messages.length - 1];
+        if (last && last.role === 'progress') {
+          last.text = msg;
+          last.failed = failed;
+        } else {
+          this.messages.push({ role: 'progress', text: msg, failed });
+        }
+        this.scrollChat();
       });
 
       this.socket.on('transcription', (data) => {
-        // Deduplicate: skip if last message has same text (voice echo of typed message)
         const last = this.messages[this.messages.length - 1];
         if (last && last.role === 'user' && last.text === data.text) return;
         this.messages.push({ role: 'user', text: data.text, speaker: data.speaker });
@@ -647,6 +817,79 @@ function bmo() {
       });
       this.socket.on('routine_done', (data) => {
         this.showNotification(`Routine complete: ${data.name}`);
+      });
+
+      // ── IDE SocketIO events ───────────────────────────
+      this.socket.on('ide_file_changed', (data) => {
+        const f = this.ideOpenFiles.find(f => f.path === data.path);
+        if (f && !f.dirty) {
+          this.ideReloadFile(f);
+        } else if (f && f.dirty) {
+          f.conflict = true;
+        }
+      });
+
+      this.socket.on('ide_agent_diff', (data) => {
+        this.idePendingDiffs.push(data);
+      });
+
+      this.socket.on('ide_win_proxy_status', (data) => {
+        this.ideWinConnected = data.connected;
+      });
+
+      this.socket.on('ide_job_started', (data) => {
+        if (data.followup) {
+          // Follow-up: don't create new job, just update status
+          const j = this.ideAgentJobs.find(j => j.id === data.id);
+          if (j) { j.status = 'running'; j.chunks = []; }
+          return;
+        }
+        this.ideAgentJobs.unshift({
+          id: data.id, task: data.task, status: 'running', ts: Date.now(),
+          agent: data.agent || 'auto', customName: null, autoApprove: false,
+          chunks: [], messages: [{ role: 'user', text: data.task, ts: Date.now() }],
+          archived: false,
+        });
+      });
+
+      this.socket.on('ide_job_agent', (data) => {
+        const j = this.ideAgentJobs.find(j => j.id === data.id);
+        if (j) j.agent = data.agent;
+      });
+
+      this.socket.on('ide_job_progress', (data) => {
+        const j = this.ideAgentJobs.find(j => j.id === data.id);
+        if (j) {
+          j.progress = data.text || '';
+          if (data.chunk) j.chunks.push(data.chunk);
+        }
+      });
+
+      this.socket.on('ide_job_done', (data) => {
+        const j = this.ideAgentJobs.find(j => j.id === data.id);
+        if (j) {
+          j.status = data.status;
+          j.result = data.result || data.error || '';
+          j.progress = '';
+          if (data.result) {
+            j.messages.push({ role: 'assistant', text: data.result, ts: Date.now() });
+          }
+          j.chunks = [];
+          // Badge count: if focused on a different job, increment
+          if (this.ideFocusedJob && this.ideFocusedJob !== j.id) {
+            this.ideCompletedJobCount++;
+          }
+        }
+      });
+
+      this.socket.on('ide_job_archived', (data) => {
+        const j = this.ideAgentJobs.find(j => j.id === data.id);
+        if (j) j.archived = true;
+      });
+
+      this.socket.on('terminal_output', (data) => {
+        const t = this.ideTerminals.find(t => t.id === data.term_id);
+        if (t && t.term) t.term.write(data.data);
       });
 
       // Personality quips
@@ -2102,10 +2345,12 @@ function bmo() {
     get statusColor() {
       return {
         idle: 'bg-green-500',
-        listening: 'bg-blue-500 animate-pulse',
-        thinking: 'bg-amber-500 animate-pulse',
-        yapping: 'bg-orange-500 animate-pulse',
-        speaking: 'bg-purple-500 animate-pulse',
+        listening: 'bg-blue-500',
+        thinking: 'bg-amber-500',
+        yapping: 'bg-orange-500',
+        speaking: 'bg-purple-500',
+        code_done: 'bg-green-500',
+        code_incomplete: 'bg-amber-500',
       }[this.status] || 'bg-gray-500';
     },
 
@@ -2116,6 +2361,8 @@ function bmo() {
         thinking: 'BMO is thinking!',
         yapping: 'BMO is yapping!',
         speaking: 'BMO is talking!',
+        code_done: 'Code Agent finished ✓',
+        code_incomplete: 'Response may be incomplete',
       }[this.status] || 'BMO';
     },
 
@@ -2126,6 +2373,8 @@ function bmo() {
         thinking: 'text-amber-400',
         yapping: 'text-orange-400',
         speaking: 'text-purple-400',
+        code_done: 'text-green-400',
+        code_incomplete: 'text-amber-400',
       }[this.status] || 'text-text-muted';
     },
 
@@ -2522,24 +2771,22 @@ function bmo() {
       } catch {}
     },
 
+    _volumeTimers: {},
     async setVolume(category, level) {
       const val = parseInt(level);
       if (this.volumeLevels) this.volumeLevels[category] = val;
-      if (category === 'music') {
-        this.musicState.volume = val;
-        fetch('/api/music/volume', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ volume: val }),
-        }).catch(() => {});
-      }
-      try {
-        await fetch('/api/volume', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category, level: val }),
-        });
-      } catch {}
+      if (category === 'music') this.musicState.volume = val;
+      // Debounce: wait 150ms after last change before sending to server
+      clearTimeout(this._volumeTimers[category]);
+      this._volumeTimers[category] = setTimeout(async () => {
+        try {
+          await fetch('/api/volume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category, level: val }),
+          });
+        } catch {}
+      }, 150);
     },
 
     async clearKdeNotifications() {
@@ -2696,14 +2943,324 @@ function bmo() {
       if (this.musicState.is_playing && this.musicState.song) {
         this.ambientMode = 'now_playing';
       } else {
-        this.ambientMode = 'clock';
+        this.ambientMode = 'bmo_face';
       }
       this.ambientActive = true;
+      if (this.ambientMode === 'bmo_face') {
+        this.$nextTick(() => this.initFaceCanvas());
+      }
     },
 
     exitAmbient() {
+      this._stopFaceAnimation();
       this.ambientActive = false;
       this.resetIdleTimer();
+    },
+
+    // ── Procedural BMO Face ─────────────────────────────────
+    initFaceCanvas() {
+      const el = document.getElementById('bmo-face-canvas');
+      if (!el) return;
+      this._faceCanvas = el;
+      this._faceCtx = el.getContext('2d');
+      el.width = 320;
+      el.height = 240;
+      this._faceFrame = 0;
+      this._faceBlink = 0;
+      this._faceBlinkState = false;
+      this._faceLookOffset = 0;
+      this._faceLookTarget = 0;
+      this._faceLookTimer = 0;
+      this._faceThinkAngle = 0;
+      this._startFaceAnimation();
+    },
+
+    _startFaceAnimation() {
+      const animate = () => {
+        if (!this.ambientActive || this.ambientMode !== 'bmo_face') return;
+        this._renderFace();
+        this._faceFrame++;
+        this._faceAnimFrame = requestAnimationFrame(animate);
+      };
+      animate();
+    },
+
+    _stopFaceAnimation() {
+      if (this._faceAnimFrame) {
+        cancelAnimationFrame(this._faceAnimFrame);
+        this._faceAnimFrame = null;
+      }
+    },
+
+    _renderFace() {
+      const ctx = this._faceCtx;
+      if (!ctx) return;
+      const W = 320, H = 240;
+      const green = '#4AE0A5';
+      const darkBg = '#1a1a2e';
+      const pupilColor = '#1a1a2e';
+
+      ctx.fillStyle = darkBg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Use emotion as override, otherwise use status state
+      const state = this._faceEmotion || this._faceState || 'idle';
+
+      switch (state) {
+        case 'listening': this._drawListening(ctx, W, H, green, pupilColor); break;
+        case 'thinking':  this._drawThinking(ctx, W, H, green, pupilColor); break;
+        case 'speaking':  this._drawSpeaking(ctx, W, H, green); break;
+        case 'follow_up': this._drawListening(ctx, W, H, green, pupilColor); break;
+        case 'happy':     this._drawHappy(ctx, W, H, green); break;
+        case 'excited':   this._drawHappy(ctx, W, H, green); break;
+        case 'sad':       this._drawSad(ctx, W, H, green, pupilColor); break;
+        case 'scared':    this._drawScared(ctx, W, H, green, pupilColor); break;
+        case 'sleeping':  this._drawSleeping(ctx, W, H, green); break;
+        case 'error':     this._drawError(ctx, W, H, green); break;
+        case 'mischievous': this._drawMischievous(ctx, W, H, green, pupilColor); break;
+        default:          this._drawIdle(ctx, W, H, green, pupilColor); break;
+      }
+
+      // Clear emotion after a few seconds
+      if (this._faceEmotion && this._faceFrame % 300 === 299) {
+        this._faceEmotion = null;
+      }
+    },
+
+    _drawFaceOutline(ctx, W, H, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      const r = 20, x = 25, y = 10, w = W - 50, h = H - 20;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.stroke();
+    },
+
+    _drawEllipse(ctx, cx, cy, rx, ry, fill, stroke) {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+    },
+
+    _drawIdle(ctx, W, H, green, pupilColor) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Blink every ~5 seconds (at ~60fps = 300 frames)
+      this._faceBlink++;
+      if (this._faceBlink >= 300) {
+        this._faceBlinkState = true;
+        if (this._faceBlink >= 312) {
+          this._faceBlinkState = false;
+          this._faceBlink = 0;
+        }
+      }
+
+      // Look-around
+      this._faceLookTimer++;
+      if (this._faceLookTimer >= 480) {
+        this._faceLookTarget = [-1, 0, 0, 1][Math.floor(Math.random() * 4)];
+        if (this._faceLookTimer >= 600) { this._faceLookTarget = 0; this._faceLookTimer = 0; }
+      }
+      const diff = this._faceLookTarget - this._faceLookOffset;
+      if (Math.abs(diff) > 0.05) this._faceLookOffset += diff * 0.08;
+      else this._faceLookOffset = this._faceLookTarget;
+      const shift = this._faceLookOffset * 8;
+
+      if (this._faceBlinkState) {
+        ctx.strokeStyle = green; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(88, 80); ctx.lineTo(128, 80); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(192, 80); ctx.lineTo(232, 80); ctx.stroke();
+      } else {
+        this._drawEllipse(ctx, 108, 75, 20, 18, green);
+        this._drawEllipse(ctx, 212, 75, 20, 18, green);
+        this._drawEllipse(ctx, 103 + shift, 73, 7, 8, pupilColor);
+        this._drawEllipse(ctx, 207 + shift, 73, 7, 8, pupilColor);
+      }
+
+      // Mouth — small line
+      ctx.strokeStyle = green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(130, 150); ctx.lineTo(190, 150); ctx.stroke();
+    },
+
+    _drawListening(ctx, W, H, green, pupilColor) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Wide eyes
+      this._drawEllipse(ctx, 105, 72, 25, 24, green);
+      this._drawEllipse(ctx, 215, 72, 25, 24, green);
+      this._drawEllipse(ctx, 105, 70, 10, 10, pupilColor);
+      this._drawEllipse(ctx, 215, 70, 10, 10, pupilColor);
+
+      // Small O mouth
+      this._drawEllipse(ctx, 160, 152, 15, 12, null, green);
+
+      // Pulsing mic arcs
+      const pulse = this._faceFrame % 60 < 30;
+      if (pulse) {
+        ctx.strokeStyle = green; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(15, 120, 12, -Math.PI / 3, Math.PI / 3); ctx.stroke();
+        ctx.beginPath(); ctx.arc(305, 120, 12, Math.PI * 2 / 3, Math.PI * 4 / 3); ctx.stroke();
+      }
+    },
+
+    _drawThinking(ctx, W, H, green, pupilColor) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Eyes looking up-right
+      this._drawEllipse(ctx, 108, 75, 20, 18, green);
+      this._drawEllipse(ctx, 212, 75, 20, 18, green);
+      this._drawEllipse(ctx, 115, 68, 7, 8, pupilColor);
+      this._drawEllipse(ctx, 219, 68, 7, 8, pupilColor);
+
+      // Slight frown
+      ctx.strokeStyle = green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(160, 155, 25, 0.2, Math.PI - 0.2); ctx.stroke();
+
+      // Rotating dots
+      this._faceThinkAngle += 0.04;
+      const cx = 160, cy = 155, r = 20;
+      for (let i = 0; i < 3; i++) {
+        const a = this._faceThinkAngle + (i * Math.PI * 2 / 3);
+        const x = cx + r * Math.cos(a);
+        const y = cy + r * Math.sin(a);
+        const sz = i === 0 ? 5 : 3;
+        this._drawEllipse(ctx, x, y, sz, sz, green);
+      }
+    },
+
+    _drawSpeaking(ctx, W, H, green) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Happy squint eyes (arcs)
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(108, 82, 18, Math.PI + 0.5, -0.5); ctx.stroke();
+      ctx.beginPath(); ctx.arc(212, 82, 18, Math.PI + 0.5, -0.5); ctx.stroke();
+
+      // Animated mouth
+      const mouthSize = 8 + Math.abs(Math.sin(this._faceFrame * 0.15)) * 16;
+      this._drawEllipse(ctx, 160, 150, 25, mouthSize, null, green);
+    },
+
+    _drawHappy(ctx, W, H, green) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Squinted happy eyes
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(108, 80, 20, Math.PI + 0.4, -0.4); ctx.stroke();
+      ctx.beginPath(); ctx.arc(212, 80, 20, Math.PI + 0.4, -0.4); ctx.stroke();
+
+      // Big smile
+      ctx.beginPath(); ctx.arc(160, 130, 50, 0.15, Math.PI - 0.15); ctx.stroke();
+    },
+
+    _drawSad(ctx, W, H, green, pupilColor) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Droopy eyes
+      this._drawEllipse(ctx, 108, 80, 18, 14, green);
+      this._drawEllipse(ctx, 212, 80, 18, 14, green);
+      this._drawEllipse(ctx, 108, 82, 7, 7, pupilColor);
+      this._drawEllipse(ctx, 212, 82, 7, 7, pupilColor);
+
+      // Sad eyebrows
+      ctx.strokeStyle = green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(85, 58); ctx.lineTo(130, 62); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(235, 58); ctx.lineTo(190, 62); ctx.stroke();
+
+      // Frown
+      ctx.beginPath(); ctx.arc(160, 170, 30, Math.PI + 0.3, -0.3); ctx.stroke();
+    },
+
+    _drawScared(ctx, W, H, green, pupilColor) {
+      // Trembling outline
+      const off = this._faceFrame % 12 < 6 ? 2 : -2;
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      const r = 20, x = 25 + off, y = 10, w = W - 50, h = H - 20;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.stroke();
+
+      // Wide scared eyes
+      this._drawEllipse(ctx, 105, 72, 28, 28, green);
+      this._drawEllipse(ctx, 215, 72, 28, 28, green);
+      this._drawEllipse(ctx, 105, 66, 7, 8, pupilColor);
+      this._drawEllipse(ctx, 215, 66, 7, 8, pupilColor);
+
+      // Small O mouth
+      this._drawEllipse(ctx, 160, 158, 14, 12, null, green);
+    },
+
+    _drawSleeping(ctx, W, H, green) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Closed eyes
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(88, 80); ctx.lineTo(128, 80); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(192, 80); ctx.lineTo(232, 80); ctx.stroke();
+
+      // Slight smile
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(160, 140, 25, 0.2, Math.PI - 0.2); ctx.stroke();
+
+      // Animated Zzz
+      const phase = Math.floor(this._faceFrame / 50) % 3;
+      ctx.fillStyle = green; ctx.font = 'bold 16px monospace';
+      for (let i = 0; i <= phase; i++) {
+        const x = 240 + i * 15, y = 60 - i * 18;
+        const sz = 12 + i * 4;
+        ctx.font = `bold ${sz}px monospace`;
+        ctx.fillText('Z', x, y);
+      }
+    },
+
+    _drawError(ctx, W, H, green) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // X eyes
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(90, 60); ctx.lineTo(126, 96); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(126, 60); ctx.lineTo(90, 96); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(194, 60); ctx.lineTo(230, 96); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(230, 60); ctx.lineTo(194, 96); ctx.stroke();
+
+      // Frown
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(160, 175, 35, Math.PI + 0.3, -0.3); ctx.stroke();
+    },
+
+    _drawMischievous(ctx, W, H, green, pupilColor) {
+      this._drawFaceOutline(ctx, W, H, green);
+
+      // Angled brows
+      ctx.strokeStyle = green; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(80, 62); ctx.lineTo(130, 52); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(190, 52); ctx.lineTo(240, 62); ctx.stroke();
+
+      // Narrowed eyes
+      this._drawEllipse(ctx, 108, 78, 18, 10, green);
+      this._drawEllipse(ctx, 212, 78, 18, 10, green);
+      this._drawEllipse(ctx, 108, 77, 6, 6, pupilColor);
+      this._drawEllipse(ctx, 212, 77, 6, 6, pupilColor);
+
+      // Wide grin
+      ctx.strokeStyle = green; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(160, 135, 55, 0.1, Math.PI - 0.1); ctx.stroke();
     },
 
     // ── Lists ────────────────────────────────────────────────
@@ -2869,6 +3426,828 @@ function bmo() {
       } catch (e) {
         console.warn('[bmo] Failed to delete routine:', e);
       }
+    },
+
+    // ── IDE: Monaco Editor ──────────────────────────────────
+
+    _ideInitMarkdown() {
+      if (window.marked) return;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/static/vendor/hljs/github-dark.css';
+      document.head.appendChild(link);
+      const s1 = document.createElement('script');
+      s1.src = '/static/vendor/marked.min.js';
+      document.head.appendChild(s1);
+      const s2 = document.createElement('script');
+      s2.src = '/static/vendor/hljs/highlight.min.js';
+      document.head.appendChild(s2);
+    },
+
+    ideInitMonaco() {
+      if (this.ideMonacoReady || window._monacoLoading) return;
+      window._monacoLoading = true;
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js';
+      script.onload = () => {
+        const amdRequire = window.require;
+        amdRequire.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } });
+        amdRequire(['vs/editor/editor.main'], () => {
+          this.ideMonacoReady = true;
+          window._monacoLoading = false;
+          const editorEl = document.getElementById('ide-editor');
+          if (editorEl) {
+            this._monacoEditor = monaco.editor.create(editorEl, {
+              theme: 'vs-dark', automaticLayout: true, minimap: { enabled: true },
+              wordWrap: 'on', fontSize: 14, scrollBeyondLastLine: false,
+              renderWhitespace: 'selection',
+            });
+            this._monacoEditor.onDidChangeModelContent(() => {
+              const f = this.ideOpenFiles.find(f => f.path === this.ideActiveFile);
+              if (f) f.dirty = true;
+            });
+            // If a file was already selected before Monaco loaded, apply it now
+            if (this.ideActiveFile) {
+              this.ideSetActiveFile(this.ideActiveFile);
+            }
+          }
+        });
+      };
+      document.head.appendChild(script);
+    },
+
+    // ── IDE: File Tree ──────────────────────────────────────
+
+    _ideJoinPath(parent, child) {
+      // Use backslash for Windows paths, forward slash for Pi
+      if (this.ideMachine === 'win' && parent.includes('\\')) {
+        return parent.replace(/\\$/, '') + '\\' + child;
+      }
+      return parent.replace(/\/$/, '') + '/' + child;
+    },
+
+    async ideLoadTree(path) {
+      path = path || this.ideCurrentPath;
+      try {
+        const res = await fetch(`/api/ide/tree?path=${encodeURIComponent(path)}&machine=${this.ideMachine}`);
+        const data = await res.json();
+        if (data.error) {
+          console.warn('[ide] Tree error:', data.error);
+          // Clear tree on error so stale data from other machine doesn't show
+          if (path === this.ideCurrentPath) this.ideFileTree = [];
+          return;
+        }
+        const nodes = [];
+        for (const d of (data.dirs || [])) {
+          const name = d.replace(/\/$/, '');
+          const fullPath = this._ideJoinPath(path, name);
+          nodes.push({ name, path: fullPath, isDir: true, children: null });
+        }
+        for (const f of (data.files || [])) {
+          const fullPath = this._ideJoinPath(path, f.name);
+          nodes.push({ name: f.name, path: fullPath, isDir: false, size: f.size });
+        }
+        if (path === this.ideCurrentPath) {
+          this.ideFileTree = nodes;
+        }
+        this._ideDirCache[path] = nodes;
+      } catch (e) {
+        console.warn('[ide] Failed to load tree:', e);
+        if (path === this.ideCurrentPath) this.ideFileTree = [];
+      }
+    },
+
+    async ideToggleDir(node) {
+      if (this._ideExpandedDirs[node.path]) {
+        delete this._ideExpandedDirs[node.path];
+        // Force reactivity
+        this._ideExpandedDirs = { ...this._ideExpandedDirs };
+        return;
+      }
+      this._ideExpandedDirs[node.path] = true;
+      this._ideExpandedDirs = { ...this._ideExpandedDirs };
+      if (!this._ideDirCache[node.path]) {
+        await this.ideLoadTree(node.path);
+      }
+    },
+
+    ideGetChildren(path) {
+      return this._ideDirCache[path] || [];
+    },
+
+    ideNavigateTo(path) {
+      this.ideCurrentPath = path;
+      this._ideExpandedDirs = {};
+      this._ideDirCache = {};
+      this.ideLoadTree(path);
+    },
+
+    ideSetMachine(machine) {
+      this.ideMachine = machine;
+      this._ideExpandedDirs = {};
+      this._ideDirCache = {};
+      this.ideCurrentPath = machine === 'pi' ? '~' : 'C:\\Users\\evilp';
+      this.ideLoadTree();
+    },
+
+    ideBreadcrumbs() {
+      const parts = this.ideCurrentPath.replace(/\\/g, '/').split('/');
+      const crumbs = [];
+      let accum = '';
+      for (const part of parts) {
+        accum = accum ? `${accum}/${part}` : part;
+        crumbs.push({ label: part || '/', path: accum });
+      }
+      return crumbs;
+    },
+
+    // ── IDE: File Operations ────────────────────────────────
+
+    async ideOpenFile(path) {
+      // Check if already open
+      const existing = this.ideOpenFiles.find(f => f.path === path);
+      if (existing) { this.ideSetActiveFile(path); return; }
+      try {
+        const res = await fetch('/api/ide/file/read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, machine: this.ideMachine }),
+        });
+        const data = await res.json();
+        if (data.error) { console.warn('[ide] Read error:', data.error); return; }
+        const file = {
+          path, content: data.content, language: data.language || 'plaintext',
+          dirty: false, machine: this.ideMachine, conflict: false,
+        };
+        // Use spread to create new array (avoids Alpine.js x-for DOM diffing bug with .push())
+        this.ideOpenFiles = [...this.ideOpenFiles, file];
+        // Defer setActiveFile to next tick so Alpine finishes rendering the new tab first
+        this.$nextTick(() => this.ideSetActiveFile(path));
+        // Watch file
+        this.socket.emit('ide_watch_file', { path });
+      } catch (e) {
+        console.warn('[ide] Failed to open file:', e);
+      }
+    },
+
+    _idePathToUri(path) {
+      // Create a stable unique URI for Monaco models from any path format
+      const normalized = path.replace(/\\/g, '/').replace(/^~/, '/home');
+      return 'inmemory://ide/' + encodeURIComponent(normalized);
+    },
+
+    ideSetActiveFile(path) {
+      this.ideActiveFile = path;
+      const f = this.ideOpenFiles.find(f => f.path === path);
+      if (!f) return;
+      if (!this._monacoEditor || !this.ideMonacoReady) {
+        // Monaco not ready yet — it will pick up ideActiveFile when it initializes
+        return;
+      }
+      try {
+        const uri = monaco.Uri.parse(this._idePathToUri(path));
+        let model = monaco.editor.getModel(uri);
+        if (!model) {
+          model = monaco.editor.createModel(f.content, f.language, uri);
+        } else if (model.getValue() !== f.content && !f.dirty) {
+          // Content changed externally, update model
+          model.setValue(f.content);
+        }
+        this._monacoEditor.setModel(model);
+      } catch (e) {
+        console.warn('[ide] Monaco error:', e);
+      }
+    },
+
+    async ideSaveFile() {
+      const f = this.ideOpenFiles.find(f => f.path === this.ideActiveFile);
+      if (!f) return;
+      const content = this._monacoEditor ? this._monacoEditor.getValue() : f.content;
+      try {
+        const res = await fetch('/api/ide/file/write', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: f.path, content, machine: f.machine }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          f.dirty = false;
+          f.content = content;
+          f.conflict = false;
+        }
+      } catch (e) {
+        console.warn('[ide] Save failed:', e);
+      }
+    },
+
+    ideCloseTab(path) {
+      const idx = this.ideOpenFiles.findIndex(f => f.path === path);
+      if (idx === -1) return;
+      // Dispose Monaco model
+      if (this.ideMonacoReady) {
+        try {
+          const uri = monaco.Uri.parse(this._idePathToUri(path));
+          const model = monaco.editor.getModel(uri);
+          if (model) model.dispose();
+        } catch {}
+      }
+      this.socket.emit('ide_unwatch_file', { path });
+      // Use spread to create new array (avoids Alpine.js x-for DOM diffing bug)
+      this.ideOpenFiles = this.ideOpenFiles.filter(f => f.path !== path);
+      if (this.ideActiveFile === path) {
+        if (this.ideOpenFiles.length > 0) {
+          const newIdx = Math.min(idx, this.ideOpenFiles.length - 1);
+          this.ideSetActiveFile(this.ideOpenFiles[newIdx].path);
+        } else {
+          this.ideActiveFile = null;
+          if (this._monacoEditor) this._monacoEditor.setModel(null);
+        }
+      }
+    },
+
+    ideCloseActiveTab() {
+      if (this.ideActiveFile) this.ideCloseTab(this.ideActiveFile);
+    },
+
+    async ideReloadFile(f) {
+      try {
+        const res = await fetch('/api/ide/file/read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: f.path, machine: f.machine }),
+        });
+        const data = await res.json();
+        if (!data.error) {
+          f.content = data.content;
+          f.conflict = false;
+          if (this.ideActiveFile === f.path && this._monacoEditor) {
+            const model = this._monacoEditor.getModel();
+            if (model) model.setValue(data.content);
+            f.dirty = false;
+          }
+        }
+      } catch (e) {
+        console.warn('[ide] Reload failed:', e);
+      }
+    },
+
+    ideFileName(path) {
+      if (!path) return '';
+      return path.split('/').pop().split('\\').pop();
+    },
+
+    ideFileIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      const icons = { py: '\u{1F40D}', js: '\u{1F7E1}', ts: '\u{1F535}', html: '\u{1F310}', css: '\u{1F3A8}', json: '{}', md: '\u{1F4DD}', sh: '\u{1F4DF}' };
+      return icons[ext] || '\u{1F4C4}';
+    },
+
+    // ── IDE: New / Rename / Delete ──────────────────────────
+
+    async ideCreateFile(parentPath, name, isDir) {
+      const path = this._ideJoinPath(parentPath, name);
+      try {
+        await fetch('/api/ide/file/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, is_dir: isDir, machine: this.ideMachine }),
+        });
+        // Refresh parent
+        await this.ideLoadTree(parentPath);
+      } catch (e) {
+        console.warn('[ide] Create failed:', e);
+      }
+    },
+
+    async ideRenameFile(oldPath, newPath) {
+      try {
+        await fetch('/api/ide/file/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_path: oldPath, new_path: newPath, machine: this.ideMachine }),
+        });
+        // Update open tab if renamed
+        const f = this.ideOpenFiles.find(f => f.path === oldPath);
+        if (f) f.path = newPath;
+        if (this.ideActiveFile === oldPath) this.ideActiveFile = newPath;
+        // Refresh tree
+        const parent = this._ideParentPath(oldPath);
+        if (parent) await this.ideLoadTree(parent);
+      } catch (e) {
+        console.warn('[ide] Rename failed:', e);
+      }
+    },
+
+    _ideParentPath(path) {
+      // Get parent directory, handling both / and \ separators
+      const normalized = path.replace(/\\/g, '/');
+      const lastSlash = normalized.lastIndexOf('/');
+      if (lastSlash <= 0) return '';
+      const parent = normalized.substring(0, lastSlash);
+      // Restore original separator style
+      return path.includes('\\') ? parent.replace(/\//g, '\\') : parent;
+    },
+
+    async ideDeleteFile(path) {
+      if (!confirm(`Delete ${this.ideFileName(path)}?`)) return;
+      try {
+        await fetch('/api/ide/file/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, machine: this.ideMachine }),
+        });
+        this.ideCloseTab(path);
+        const parent = this._ideParentPath(path);
+        if (parent) await this.ideLoadTree(parent);
+      } catch (e) {
+        console.warn('[ide] Delete failed:', e);
+      }
+    },
+
+    // ── IDE: Search ─────────────────────────────────────────
+
+    async ideSearch() {
+      if (!this.ideSearchQuery) return;
+      try {
+        const res = await fetch(`/api/ide/search?pattern=${encodeURIComponent(this.ideSearchQuery)}&path=${encodeURIComponent(this.ideCurrentPath)}&machine=${this.ideMachine}`);
+        const data = await res.json();
+        this.ideSearchResults = data.matches || [];
+      } catch (e) {
+        console.warn('[ide] Search failed:', e);
+      }
+    },
+
+    // ── IDE: Terminal ────────────────────────────────────────
+
+    ideToggleTerminal() {
+      this.idePanels.bottom.open = !this.idePanels.bottom.open;
+      if (this.idePanels.bottom.open && this.ideTerminals.length === 0) {
+        this.ideNewTerminal();
+      }
+      this.ideSavePanelSizes();
+    },
+
+    ideNewTerminal() {
+      const id = `term-${this.ideNextTermId++}`;
+      const label = `Term ${this.ideTerminals.length + 1}`;
+      this.ideTerminals.push({ id, label, term: null, active: true });
+      // Deactivate others
+      this.ideTerminals.forEach(t => t.active = (t.id === id));
+      this.ideActiveTerminal = id;
+      // Open PTY via socket
+      this.socket.emit('terminal_open', { term_id: id, cols: 80, rows: 24 });
+      // Init xterm.js after DOM update
+      this.$nextTick(() => this._ideInitXterm(id));
+    },
+
+    _ideInitXterm(termId) {
+      if (window.Terminal) {
+        this._ideCreateXterm(termId);
+        return;
+      }
+      // Already loading — queue this termId
+      if (window._xtermLoading) {
+        window._xtermPending = window._xtermPending || [];
+        window._xtermPending.push(termId);
+        return;
+      }
+      window._xtermLoading = true;
+      // Load xterm.js from CDN
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css';
+      document.head.appendChild(link);
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js';
+      script.onload = () => {
+        const fitScript = document.createElement('script');
+        fitScript.src = 'https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js';
+        fitScript.onload = () => {
+          window._xtermLoading = false;
+          this._ideCreateXterm(termId);
+          (window._xtermPending || []).forEach(id => this._ideCreateXterm(id));
+          window._xtermPending = [];
+        };
+        document.head.appendChild(fitScript);
+      };
+      document.head.appendChild(script);
+    },
+
+    _ideCreateXterm(termId) {
+      const container = document.getElementById(`xterm-${termId}`);
+      if (!container) return;
+      const t = this.ideTerminals.find(t => t.id === termId);
+      if (!t || t.term) return;
+      const term = new Terminal({
+        theme: { background: '#111827', foreground: '#f3f4f6', cursor: '#d97706' },
+        fontFamily: 'monospace', fontSize: 13, cursorBlink: true,
+      });
+      const fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(container);
+      fitAddon.fit();
+      term.onData((data) => {
+        this.socket.emit('terminal_input', { term_id: termId, data });
+      });
+      t.term = term;
+      t._fitAddon = fitAddon;
+      // Observe resize
+      const ro = new ResizeObserver(() => { try { fitAddon.fit(); } catch {} });
+      ro.observe(container);
+    },
+
+    ideSetActiveTerminal(id) {
+      this.ideActiveTerminal = id;
+      this.ideTerminals.forEach(t => t.active = (t.id === id));
+      this.$nextTick(() => {
+        const t = this.ideTerminals.find(t => t.id === id);
+        if (t && t._fitAddon) try { t._fitAddon.fit(); } catch {}
+      });
+    },
+
+    ideCloseTerminal(id) {
+      this.socket.emit('terminal_close', { term_id: id });
+      const idx = this.ideTerminals.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        const t = this.ideTerminals[idx];
+        if (t.term) t.term.dispose();
+        this.ideTerminals.splice(idx, 1);
+      }
+      if (this.ideActiveTerminal === id) {
+        if (this.ideTerminals.length > 0) {
+          this.ideSetActiveTerminal(this.ideTerminals[0].id);
+        } else {
+          this.ideActiveTerminal = null;
+        }
+      }
+    },
+
+    // ── IDE: Git Panel ──────────────────────────────────────
+
+    async ideLoadGitStatus() {
+      if (this.ideMachine !== 'pi') {
+        this.ideGitBranch = '';
+        this.ideGitChanges = [];
+        return;
+      }
+      try {
+        const res = await fetch(`/api/ide/git/status?path=${encodeURIComponent(this.ideCurrentPath)}`);
+        const data = await res.json();
+        this.ideGitBranch = data.branch || '';
+        this.ideGitChanges = data.changes || [];
+      } catch (e) {
+        console.warn('[ide] Git status failed:', e);
+      }
+    },
+
+    async ideGitStage(path) {
+      await fetch('/api/ide/git/stage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, repo: this.ideCurrentPath }),
+      });
+      await this.ideLoadGitStatus();
+    },
+
+    async ideGitUnstage(path) {
+      await fetch('/api/ide/git/unstage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, repo: this.ideCurrentPath }),
+      });
+      await this.ideLoadGitStatus();
+    },
+
+    async ideGitCommit() {
+      if (!this.ideGitCommitMsg.trim()) return;
+      await fetch('/api/ide/git/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: this.ideGitCommitMsg, repo: this.ideCurrentPath }),
+      });
+      this.ideGitCommitMsg = '';
+      await this.ideLoadGitStatus();
+    },
+
+    async ideLoadGitBranches() {
+      try {
+        const res = await fetch(`/api/ide/git/branches?path=${encodeURIComponent(this.ideCurrentPath)}`);
+        const data = await res.json();
+        this.ideGitBranches = data.branches || [];
+      } catch {}
+    },
+
+    async ideGitCheckout(branch) {
+      await fetch('/api/ide/git/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch, repo: this.ideCurrentPath }),
+      });
+      await this.ideLoadGitStatus();
+    },
+
+    ideGitStatusIcon(status) {
+      const icons = { M: '\u{270F}\uFE0F', A: '\u{2795}', D: '\u{274C}', '?': '\u{2753}', '??': '\u{2753}', R: '\u{1F504}' };
+      return icons[status] || status;
+    },
+
+    // ── IDE: Agent Chat ─────────────────────────────────────
+
+    async ideSendChat() {
+      const msg = this.ideChatInput.trim();
+      if (!msg) return;
+      this.ideChatInput = '';
+
+      if (this.ideFocusedJob) {
+        // Follow-up to focused job
+        const job = this.ideAgentJobs.find(j => j.id === this.ideFocusedJob);
+        if (job) {
+          job.messages.push({ role: 'user', text: msg, ts: Date.now() });
+          job.chunks = [];
+        }
+        try {
+          await fetch(`/api/ide/jobs/${this.ideFocusedJob}/followup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg }),
+          });
+        } catch (e) {
+          if (job) job.messages.push({ role: 'assistant', text: `Error: ${e.message}`, ts: Date.now() });
+        }
+        this.$nextTick(() => {
+          const el = document.getElementById('ide-convo-scroll');
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+        return;
+      }
+
+      // Create new job (existing behavior)
+      this.ideChatMessages.push({ role: 'user', text: msg });
+      try {
+        const res = await fetch('/api/ide/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task: msg,
+            auto_approve: this.ideAutoApprove,
+            model: this.selectedModel !== 'auto' ? this.selectedModel : undefined,
+            agent: this.selectedAgent !== 'auto' ? this.selectedAgent : undefined,
+          }),
+        });
+        const data = await res.json();
+        this.ideChatMessages.push({ role: 'assistant', text: `Job ${data.id} started...`, jobId: data.id });
+        // Auto-focus the new job
+        this.ideFocusJob(data.id);
+      } catch (e) {
+        this.ideChatMessages.push({ role: 'assistant', text: `Error: ${e.message}` });
+      }
+      this.$nextTick(() => {
+        const el = document.getElementById('ide-chat-scroll');
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    },
+
+    async ideStopJob(jobId) {
+      try {
+        await fetch(`/api/ide/jobs/${jobId}/cancel`, { method: 'POST' });
+      } catch {}
+    },
+
+    ideFollowUpJob(job) {
+      this.ideFocusJob(job.id);
+    },
+
+    ideFocusJob(jobId) {
+      this.ideFocusedJob = jobId;
+      this.ideCompletedJobCount = 0;
+      const job = this.ideAgentJobs.find(j => j.id === jobId);
+      if (job && job.messages.length <= 1) {
+        // Load messages from server if we only have the initial user message
+        fetch(`/api/ide/jobs/${jobId}/messages`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.messages) job.messages = data.messages;
+          })
+          .catch(() => {});
+      }
+      this.$nextTick(() => {
+        const el = document.getElementById('ide-convo-scroll');
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    },
+
+    ideUnfocusJob() {
+      this.ideFocusedJob = null;
+      this.ideCompletedJobCount = 0;
+    },
+
+    ideFocusedMessages() {
+      if (!this.ideFocusedJob) return this.ideChatMessages;
+      const job = this.ideAgentJobs.find(j => j.id === this.ideFocusedJob);
+      if (!job) return [];
+      const msgs = [...job.messages];
+      // Add live streaming message if running
+      if (job.status === 'running' && job.chunks && job.chunks.length > 0) {
+        msgs.push({ role: 'assistant', text: job.chunks.join(''), ts: Date.now(), streaming: true });
+      }
+      return msgs;
+    },
+
+    async ideRenameJob(jobId, name) {
+      const job = this.ideAgentJobs.find(j => j.id === jobId);
+      if (!job || !name) return;
+      job.customName = name;
+      try {
+        await fetch(`/api/ide/jobs/${jobId}/rename`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        });
+      } catch {}
+    },
+
+    async ideArchiveJob(jobId) {
+      const job = this.ideAgentJobs.find(j => j.id === jobId);
+      if (!job) return;
+      job.archived = true;
+      if (this.ideFocusedJob === jobId) this.ideUnfocusJob();
+      try {
+        await fetch(`/api/ide/jobs/${jobId}/archive`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch {}
+    },
+
+    async ideToggleJobAutoApprove(jobId) {
+      const job = this.ideAgentJobs.find(j => j.id === jobId);
+      if (!job) return;
+      job.autoApprove = !job.autoApprove;
+      try {
+        await fetch(`/api/ide/jobs/${jobId}/auto-approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto_approve: job.autoApprove }),
+        });
+      } catch {}
+    },
+
+    ideVisibleJobs() {
+      return this.ideAgentJobs.filter(j => this.ideShowArchived || !j.archived);
+    },
+
+    ideRenderMarkdown(text) {
+      if (!text) return '';
+      if (!window.marked) return this._ideEscapeHtml(text).replace(/\n/g, '<br>');
+      try {
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, lang) {
+          if (window.hljs && lang) {
+            try { return '<pre><code class="hljs">' + hljs.highlight(code, {language: lang}).value + '</code></pre>'; }
+            catch {}
+          }
+          return '<pre><code>' + (typeof code === 'string' ? code : '') + '</code></pre>';
+        };
+        let html = marked.parse(text, { renderer });
+        return this._ideAddFileLinks(html);
+      } catch {
+        return this._ideEscapeHtml(text).replace(/\n/g, '<br>');
+      }
+    },
+
+    _ideEscapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    },
+
+    _ideAddFileLinks(html) {
+      // Detect file paths like ~/bmo/app.py, /home/patrick/foo.js
+      return html.replace(/((?:~\/|\/[\w.-]+\/)[\w.\\/\-]+\.\w+)/g,
+        '<a class="text-accent hover:underline cursor-pointer" onclick="Alpine.store(\'bmo\')?.ideOpenFile(\'$1\')" title="Open $1">$1</a>');
+    },
+
+    ideJobDisplayName(job) {
+      return job.customName || job.task;
+    },
+
+    idePromptRenameJob(jobId) {
+      const job = this.ideAgentJobs.find(j => j.id === jobId);
+      if (!job) return;
+      const name = prompt('Rename job:', job.customName || job.task);
+      if (name !== null && name.trim()) this.ideRenameJob(jobId, name.trim());
+    },
+
+    // ── IDE: Accept/Reject Diffs ────────────────────────────
+
+    ideAcceptDiff(idx) {
+      const diff = this.idePendingDiffs[idx];
+      if (diff) {
+        this.socket.emit('ide_agent_diff_response', {
+          accepted: true, path: diff.path, new_content: diff.new_content,
+        });
+        this.idePendingDiffs.splice(idx, 1);
+      }
+    },
+
+    ideRejectDiff(idx) {
+      const diff = this.idePendingDiffs[idx];
+      if (diff) {
+        this.socket.emit('ide_agent_diff_response', { accepted: false, path: diff.path });
+        this.idePendingDiffs.splice(idx, 1);
+      }
+    },
+
+    // ── IDE: Run Button ─────────────────────────────────────
+
+    ideRunFile(path) {
+      const ext = path.split('.').pop().toLowerCase();
+      const name = this.ideFileName(path);
+      let cmd = '';
+      if (ext === 'py') {
+        cmd = name.includes('test') ? `pytest -v ${path}` : `python3 ${path}`;
+      } else if (ext === 'sh') {
+        cmd = `bash ${path}`;
+      } else if (ext === 'js') {
+        cmd = name.includes('test') ? `npx vitest run ${path}` : `node ${path}`;
+      } else if (ext === 'ts') {
+        cmd = name.includes('test') ? `npx vitest run ${path}` : `npx tsx ${path}`;
+      }
+      if (!cmd) return;
+      // Ensure terminal is open
+      if (!this.idePanels.bottom.open) this.ideToggleTerminal();
+      if (this.ideTerminals.length === 0) this.ideNewTerminal();
+      // Save first if dirty
+      const f = this.ideOpenFiles.find(f => f.path === path);
+      if (f && f.dirty) this.ideSaveFile();
+      // Send to active terminal
+      this.socket.emit('terminal_input', {
+        term_id: this.ideActiveTerminal,
+        data: cmd + '\r',
+      });
+    },
+
+    ideIsRunnable(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      return ['py', 'sh', 'js', 'ts'].includes(ext);
+    },
+
+    // ── IDE: Panel Resize ───────────────────────────────────
+
+    ideStartResize(panel, event) {
+      this.ideResizing = panel;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startW = panel === 'left' ? this.idePanels.left.width : this.idePanels.right.width;
+      const startH = this.idePanels.bottom.height;
+
+      const onMove = (e) => {
+        if (panel === 'left') {
+          this.idePanels.left.width = Math.max(160, startW + (e.clientX - startX));
+        } else if (panel === 'right') {
+          this.idePanels.right.width = Math.max(200, startW - (e.clientX - startX));
+        } else if (panel === 'bottom') {
+          this.idePanels.bottom.height = Math.max(100, startH - (e.clientY - startY));
+        }
+      };
+      const onUp = () => {
+        this.ideResizing = null;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        this.ideSavePanelSizes();
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+
+    ideTogglePanel(panel) {
+      this.idePanels[panel].open = !this.idePanels[panel].open;
+      this.ideSavePanelSizes();
+    },
+
+    ideSavePanelSizes() {
+      localStorage.setItem('ide-panel-sizes', JSON.stringify({
+        left: this.idePanels.left.width,
+        right: this.idePanels.right.width,
+        bottom: this.idePanels.bottom.height,
+      }));
+    },
+
+    // ── IDE: Quick Open ─────────────────────────────────────
+
+    async ideQuickOpen() {
+      if (!this.ideQuickOpenQuery) { this.ideQuickOpenResults = []; return; }
+      try {
+        const res = await fetch(`/api/ide/find?pattern=${encodeURIComponent(this.ideQuickOpenQuery)}&path=${encodeURIComponent(this.ideCurrentPath)}&machine=${this.ideMachine}`);
+        const data = await res.json();
+        this.ideQuickOpenResults = (data.matches || []).map(f => ({ file: f })).slice(0, 20);
+      } catch {}
+    },
+
+    ideQuickOpenSelect(filePath) {
+      this.ideShowQuickOpen = false;
+      this.ideQuickOpenQuery = '';
+      this.ideOpenFile(filePath);
     },
   };
 }

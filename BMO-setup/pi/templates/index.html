@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
   <title>BMO</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <script src="/static/js/tailwind.js"></script>
-  <script src="/static/js/socket.io.min.js"></script>
+  <script defer src="/static/js/socket.io.min.js"></script>
   <script defer src="/static/js/alpine.min.js"></script>
   <script>
     tailwind.config = {
@@ -38,11 +39,11 @@
         <span x-text="weatherIcon(weather.icon)" class="ml-1 text-base"></span>
       </span>
       <!-- Notification bell -->
-      <div class="relative" @click.stop="showNotifications = !showNotifications; unreadNotifications = 0">
+      <div class="relative" @click.stop="showNotifications = !showNotifications; unreadNotifications = 0; ideCompletedJobCount = 0">
         <span class="text-text-muted cursor-pointer text-lg">&#x1F514;</span>
-        <span x-show="unreadNotifications > 0"
+        <span x-show="unreadNotifications > 0 || ideCompletedJobCount > 0"
               class="absolute -top-1 -right-1 bg-accent text-surface-dark text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
-              x-text="unreadNotifications"></span>
+              x-text="unreadNotifications + ideCompletedJobCount"></span>
         <!-- Notification History Dropdown -->
         <div x-show="showNotifications" @click.away="showNotifications = false"
              class="absolute top-10 right-0 w-72 bg-surface border border-surface-light rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
@@ -85,9 +86,9 @@
         <div class="text-sm text-text-muted mt-1" x-text="musicState.song?.artist"></div>
         <div class="text-xs text-text-dim mt-4" x-text="clock"></div>
       </div>
-      <!-- BMO Face mode -->
+      <!-- BMO Face mode (procedural canvas animation) -->
       <div x-show="ambientMode === 'bmo_face'" class="text-center">
-        <div class="text-8xl">&#x1F916;</div>
+        <canvas id="bmo-face-canvas" class="mx-auto" style="image-rendering: pixelated;" width="320" height="240"></canvas>
         <div class="text-xs text-text-dim mt-4" x-text="clock"></div>
       </div>
     </div>
@@ -276,16 +277,17 @@
 
       <div class="flex-1 overflow-y-auto p-3 space-y-2" id="chatScroll" x-ref="chatScroll">
         <template x-for="(msg, i) in messages" :key="i">
-          <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-            <div class="max-w-[75%] rounded-xl px-3 py-2 text-base"
-                 :class="msg.role === 'user' ? 'bg-accent text-surface-dark' : (msg.isRecap ? 'bg-accent-dim/30 text-accent-light italic border border-accent-dim' : 'bg-surface-light text-text')">
+          <div :class="msg.role === 'user' ? 'flex justify-end' : (msg.role === 'progress' ? 'flex justify-center' : 'flex justify-start')">
+            <div class="rounded-xl px-3 py-2 text-base select-text"
+                 :class="msg.role === 'user' ? 'max-w-[75%] bg-accent text-surface-dark' : (msg.role === 'progress' ? (msg.failed ? 'text-xs text-red-400 italic' : 'text-xs text-text-dim italic') : (msg.isRecap ? 'max-w-[75%] bg-accent-dim/30 text-accent-light italic border border-accent-dim' : (msg.incomplete ? 'max-w-[75%] bg-surface-light text-text border border-amber-500/40' : 'max-w-[75%] bg-surface-light text-text')))">
               <div x-show="msg.speaker && msg.role === 'user'" class="text-xs opacity-70 mb-0.5" x-text="msg.speaker"></div>
-              <div x-text="msg.text"></div>
+              <div class="select-text" x-text="msg.text"></div>
             </div>
           </div>
         </template>
-        <div x-show="status === 'thinking' || status === 'yapping'" class="flex justify-start">
-          <div class="bg-surface-light rounded-xl px-3 py-2 text-base text-text-muted animate-pulse" x-text="status === 'yapping' ? 'BMO is yapping!' : 'BMO is thinking!'"></div>
+        <div x-show="status === 'thinking' || status === 'yapping' || status === 'code_done' || status === 'code_incomplete'" class="flex justify-start">
+          <div class="rounded-xl px-3 py-2 text-base" :class="status === 'code_incomplete' ? 'bg-amber-900/30 text-amber-400' : (status === 'code_done' ? 'bg-green-900/30 text-green-400' : 'bg-surface-light text-text-muted')"
+               x-text="status === 'code_incomplete' ? 'Response may be incomplete — try again to continue' : (status === 'code_done' ? 'Code Agent finished ✓' : (status === 'yapping' ? 'BMO is yapping!' : 'BMO is thinking!'))"></div>
         </div>
       </div>
       <!-- Player Selector (D&D mode) -->
@@ -307,9 +309,9 @@
         <div x-show="showAgentPicker" class="py-1.5 space-y-1.5">
           <!-- Agent pills -->
           <div class="flex flex-wrap gap-1">
-            <template x-for="a in ['auto', 'conversation', 'code', 'music', 'smart_home', 'dnd_dm']" :key="a">
+            <template x-for="a in ['auto', 'conversation', 'code', 'dnd_dm', 'plan', 'research', 'music', 'smart_home', 'timer', 'calendar', 'weather', 'design', 'review', 'docs', 'test', 'security', 'deploy', 'monitoring', 'cleanup', 'learning', 'list', 'alert', 'routine']" :key="a">
               <button @click="selectedAgent = a" class="px-3 py-1 rounded-full text-xs font-medium"
-                      :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="a === 'auto' ? 'Auto' : a === 'dnd_dm' ? 'D&D DM' : a === 'smart_home' ? 'Smart Home' : a.charAt(0).toUpperCase() + a.slice(1)"></button>
+                      :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="({'auto':'Auto','dnd_dm':'D&D DM','smart_home':'Smart Home'})[a] || a.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())"></button>
             </template>
           </div>
           <!-- Model pills -->
@@ -867,6 +869,555 @@
         </div>
       </div>
       </div><!-- /relative container -->
+    </div>
+
+    <!-- IDE Tab -->
+    <div x-show="tab === 'ide'"
+         :class="swipeDirection === 'left' ? 'tab-slide-enter-left' : swipeDirection === 'right' ? 'tab-slide-enter-right' : ''"
+         class="h-full flex flex-col">
+
+      <!-- Mobile IDE layout (chat + agent feed only) -->
+      <div class="md:hidden flex flex-col h-full">
+
+        <!-- Mobile: Conversation mode (focused job) -->
+        <template x-if="ideFocusedJob">
+          <div class="flex flex-col h-full">
+            <!-- Header bar -->
+            <div class="border-b border-surface-light">
+              <div class="flex items-center gap-2 px-3 py-2">
+                <button @click="ideUnfocusJob()" class="text-text-muted hover:text-text text-lg relative shrink-0">
+                  &#x2190;
+                  <span x-show="ideCompletedJobCount > 0"
+                        class="absolute -top-1 -right-2 bg-accent text-surface-dark text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                        x-text="ideCompletedJobCount"></span>
+                </button>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-light text-accent shrink-0"
+                      x-text="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).agent || 'code'"></span>
+                <span class="text-sm text-text truncate flex-1 cursor-pointer hover:text-accent"
+                      @click="let j = ideAgentJobs.find(j => j.id === ideFocusedJob); if(j){ let n = prompt('Rename job:', j.customName || j.task); if(n && n.trim()) ideRenameJob(j.id, n.trim()); }"
+                      x-text="((ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).customName || (ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).task || '').substring(0,50)"></span>
+                <button x-show="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'running'"
+                        @click="ideStopJob(ideFocusedJob)" class="text-red-400 hover:text-red-300 text-sm px-1 shrink-0" title="Stop">&#x25A0;</button>
+                <button @click="ideArchiveJob(ideFocusedJob)" class="text-text-dim hover:text-red-400 text-sm px-1 shrink-0" title="End task">&#x2298;</button>
+              </div>
+              <div class="flex items-center gap-3 px-3 pb-2 text-[10px]">
+                <button @click="showAgentPicker = !showAgentPicker" class="text-text-dim hover:text-accent flex items-center gap-1">
+                  &#9881; <span x-text="selectedModel !== 'auto' ? selectedModel : 'Auto'"></span>
+                </button>
+                <label class="flex items-center gap-1 text-text-dim cursor-pointer">
+                  <input type="checkbox" :checked="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).autoApprove"
+                         @change="ideToggleJobAutoApprove(ideFocusedJob)" class="w-3 h-3 accent-accent"> Auto-approve
+                </label>
+              </div>
+              <div x-show="showAgentPicker" class="px-3 pb-2 space-y-1.5">
+                <div class="flex flex-wrap gap-1">
+                  <template x-for="a in ['auto', 'conversation', 'code', 'dnd_dm', 'plan', 'research', 'music', 'smart_home', 'timer', 'calendar', 'weather', 'design', 'review', 'docs', 'test', 'security', 'deploy', 'monitoring', 'cleanup', 'learning', 'list', 'alert', 'routine']" :key="a">
+                    <button @click="selectedAgent = a" class="px-3 py-1 rounded-full text-xs font-medium"
+                            :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="({'auto':'Auto','dnd_dm':'D&D DM','smart_home':'Smart Home'})[a] || a.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())"></button>
+                  </template>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <template x-for="m in ['auto', 'flash', 'pro', 'opus', 'local']" :key="m">
+                    <button @click="selectedModel = m" class="px-3 py-1 rounded text-xs font-medium"
+                            :class="selectedModel === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m === 'auto' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)"></button>
+                  </template>
+                </div>
+              </div>
+            </div>
+            <!-- Conversation messages -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-3" id="ide-convo-scroll-mobile"
+                 x-effect="$nextTick(() => { const el = document.getElementById('ide-convo-scroll-mobile'); if(el) el.scrollTop = el.scrollHeight; })">
+              <template x-for="(msg, mi) in ideFocusedMessages()" :key="mi">
+                <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                  <div class="rounded-xl px-3 py-2 text-sm max-w-[85%]"
+                       :class="msg.role === 'user' ? 'bg-accent text-surface-dark' : 'bg-surface-light text-text'">
+                    <div x-show="msg.role === 'assistant'" x-html="ideRenderMarkdown(msg.text)" class="prose prose-invert prose-sm max-w-none [&_pre]:bg-surface-dark [&_pre]:rounded [&_pre]:p-2 [&_pre]:overflow-x-auto [&_pre]:text-xs [&_code]:text-accent-light"></div>
+                    <span x-show="msg.role === 'user'" x-text="msg.text"></span>
+                    <span x-show="msg.streaming" class="inline-block w-2 h-4 bg-accent animate-pulse ml-0.5 align-middle"></span>
+                  </div>
+                </div>
+              </template>
+              <!-- Done badge -->
+              <div x-show="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'done'"
+                   class="flex justify-center">
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-600/20 text-green-400 border border-green-500/30">&#x2705; Done</span>
+              </div>
+            </div>
+            <!-- Follow-up input -->
+            <form @submit.prevent="ideSendChat()" class="p-2 border-t border-surface-light flex gap-2">
+              <input x-model="ideChatInput" type="text" :placeholder="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'running' ? 'Send while running...' : 'Follow up...'"
+                     class="flex-1 bg-surface-light rounded-lg px-3 py-2 text-sm text-text outline-none focus:ring-1 focus:ring-accent">
+              <button type="submit" class="bg-accent text-surface-dark px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+            </form>
+          </div>
+        </template>
+
+        <!-- Mobile: Jobs list view (no focused job) -->
+        <template x-if="!ideFocusedJob">
+          <div class="flex flex-col h-full">
+            <div class="flex items-center gap-2 px-3 py-2 border-b border-surface-light">
+              <span class="text-sm font-medium text-text">IDE Agent</span>
+              <span class="ml-auto text-xs text-text-dim" x-text="ideAgentJobs.filter(j => j.status==='running').length + ' running'"></span>
+              <button @click="ideShowArchived = !ideShowArchived" class="text-[10px] px-2 py-0.5 rounded"
+                      :class="ideShowArchived ? 'bg-accent text-surface-dark' : 'bg-surface-light text-text-dim'"
+                      x-text="ideShowArchived ? 'Hide archived' : 'Archived'"></button>
+            </div>
+            <!-- Agent jobs feed -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2">
+              <template x-for="(job, i) in ideVisibleJobs()" :key="job.id">
+                <div class="bg-surface-light rounded-lg px-3 py-2" :class="job.archived ? 'opacity-50' : ''"
+                     @dblclick="idePromptRenameJob(job.id)">
+                  <div class="flex items-center gap-2">
+                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-surface text-accent shrink-0" x-text="job.agent || 'code'"></span>
+                    <span class="text-sm text-text truncate flex-1" x-text="job.progress && job.status === 'running' ? job.progress.substring(0,50) : ideJobDisplayName(job)"></span>
+                    <button x-show="job.status === 'running'" @click.stop="ideStopJob(job.id)" class="text-red-400 hover:text-red-300 text-xs px-1 shrink-0" title="Stop">&#x25A0;</button>
+                    <button @click.stop="ideFocusJob(job.id)" class="text-accent hover:text-accent-light text-xs px-1 shrink-0" title="Open conversation">&#x1F4AC;</button>
+                  </div>
+                  <div x-show="job.status !== 'running' && job.result" class="mt-1 text-xs text-text-muted line-clamp-2" x-text="job.result"></div>
+                </div>
+              </template>
+              <div x-show="ideVisibleJobs().length === 0" class="text-center text-text-dim text-sm py-8">No agent jobs yet</div>
+              <!-- Pending diffs -->
+              <template x-for="(diff, i) in idePendingDiffs" :key="i">
+                <div class="bg-amber-900/20 border border-amber-500/40 rounded-lg px-3 py-2">
+                  <div class="text-sm text-amber-400 mb-1" x-text="'Edit: ' + diff.path"></div>
+                  <div class="flex gap-2">
+                    <button @click="ideAcceptDiff(i)" class="px-3 py-1 bg-green-600 text-white rounded text-xs">Accept</button>
+                    <button @click="ideRejectDiff(i)" class="px-3 py-1 bg-red-600 text-white rounded text-xs">Reject</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <!-- Agent/Model picker + chat input -->
+            <div class="px-2 pt-1 border-t border-surface-light">
+              <button @click="showAgentPicker = !showAgentPicker" class="text-xs text-text-dim hover:text-accent flex items-center gap-1">
+                &#9881; <span x-text="(selectedAgent && selectedAgent !== 'auto' ? selectedAgent : '') + (selectedModel && selectedModel !== 'auto' ? (selectedAgent && selectedAgent !== 'auto' ? ' &middot; ' : '') + selectedModel : '') || 'Auto'"></span>
+              </button>
+              <div x-show="showAgentPicker" class="py-1.5 space-y-1.5">
+                <div class="flex flex-wrap gap-1">
+                  <template x-for="a in ['auto', 'conversation', 'code', 'dnd_dm', 'plan', 'research', 'music', 'smart_home', 'timer', 'calendar', 'weather', 'design', 'review', 'docs', 'test', 'security', 'deploy', 'monitoring', 'cleanup', 'learning', 'list', 'alert', 'routine']" :key="a">
+                    <button @click="selectedAgent = a" class="px-3 py-1 rounded-full text-xs font-medium"
+                            :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="({'auto':'Auto','dnd_dm':'D&D DM','smart_home':'Smart Home'})[a] || a.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())"></button>
+                  </template>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <template x-for="m in ['auto', 'flash', 'pro', 'opus', 'local']" :key="m">
+                    <button @click="selectedModel = m" class="px-3 py-1 rounded text-xs font-medium"
+                            :class="selectedModel === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m === 'auto' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)"></button>
+                  </template>
+                </div>
+              </div>
+            </div>
+            <form @submit.prevent="ideSendChat()" class="p-2 border-t border-surface-light flex gap-2">
+              <input x-model="ideChatInput" type="text" placeholder="Ask agent..."
+                     class="flex-1 bg-surface-light rounded-lg px-3 py-2 text-sm text-text outline-none focus:ring-1 focus:ring-accent">
+              <button type="submit" class="bg-accent text-surface-dark px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+            </form>
+          </div>
+        </template>
+
+      </div>
+
+      <!-- Desktop IDE layout (VS Code-style panels) -->
+      <div class="hidden md:flex flex-1 min-h-0 overflow-hidden">
+
+        <!-- Left Sidebar (File Tree + Git) -->
+        <div x-show="idePanels.left.open" class="flex flex-col bg-surface border-r border-surface-light shrink-0 overflow-hidden"
+             :style="'width:' + idePanels.left.width + 'px'">
+          <!-- Sidebar tabs -->
+          <div class="flex border-b border-surface-light text-xs">
+            <button @click="ideLeftPanel = 'files'" class="flex-1 px-2 py-1.5 text-center"
+                    :class="ideLeftPanel === 'files' ? 'text-accent border-b border-accent' : 'text-text-dim'">Files</button>
+            <button @click="ideLeftPanel = 'search'" class="flex-1 px-2 py-1.5 text-center"
+                    :class="ideLeftPanel === 'search' ? 'text-accent border-b border-accent' : 'text-text-dim'">Search</button>
+            <button @click="ideLeftPanel = 'git'; ideLoadGitStatus()" class="flex-1 px-2 py-1.5 text-center"
+                    :class="ideLeftPanel === 'git' ? 'text-accent border-b border-accent' : 'text-text-dim'">Git</button>
+            <button @click="ideTogglePanel('left')" class="px-1.5 text-text-dim hover:text-text">&times;</button>
+          </div>
+
+          <!-- Machine switcher -->
+          <div x-show="ideLeftPanel === 'files'" class="flex items-center gap-1 px-2 py-1.5 border-b border-surface-light">
+            <button @click="ideSetMachine('pi')" class="px-2 py-0.5 rounded text-xs"
+                    :class="ideMachine === 'pi' ? 'bg-accent text-surface-dark' : 'text-text-dim'">Pi</button>
+            <button @click="ideSetMachine('win')" class="px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                    :class="ideMachine === 'win' ? 'bg-accent text-surface-dark' : 'text-text-dim'">
+              Win <span x-show="ideWinConnected" class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+              <span x-show="!ideWinConnected && ideMachine === 'win'" class="text-red-400 text-[10px]">offline</span>
+            </button>
+            <!-- New file/folder buttons -->
+            <div class="ml-auto flex gap-0.5">
+              <button @click="let n = prompt('File name:'); if(n) ideCreateFile(ideCurrentPath, n, false)" class="text-text-dim hover:text-accent text-xs px-1" title="New file">+f</button>
+              <button @click="let n = prompt('Folder name:'); if(n) ideCreateFile(ideCurrentPath, n, true)" class="text-text-dim hover:text-accent text-xs px-1" title="New folder">+d</button>
+            </div>
+          </div>
+
+          <!-- Breadcrumbs -->
+          <div x-show="ideLeftPanel === 'files'" class="flex items-center gap-0.5 px-2 py-1 text-xs text-text-dim overflow-x-auto border-b border-surface-light">
+            <template x-for="(crumb, i) in ideBreadcrumbs()" :key="crumb.path">
+              <div class="flex items-center">
+                <span x-show="i > 0" class="mx-0.5 text-text-dim">/</span>
+                <button @click="ideNavigateTo(crumb.path)" class="hover:text-accent truncate max-w-[80px]" x-text="crumb.label"></button>
+              </div>
+            </template>
+          </div>
+
+          <!-- File Tree (recursive) -->
+          <div x-show="ideLeftPanel === 'files'" class="flex-1 overflow-y-auto text-sm">
+            <template x-for="node in ideFileTree" :key="node.path">
+              <div>
+                <div class="flex items-center gap-1 px-2 py-0.5 cursor-pointer hover:bg-surface-light group"
+                     @click="node.isDir ? ideToggleDir(node) : ideOpenFile(node.path)"
+                     @contextmenu.prevent="ideDeleteFile(node.path)">
+                  <span class="text-xs w-4 text-center text-text-dim" x-text="node.isDir ? (_ideExpandedDirs[node.path] ? '\u25BE' : '\u25B8') : ''"></span>
+                  <span class="text-xs" x-text="node.isDir ? '\u{1F4C1}' : ideFileIcon(node.name)"></span>
+                  <span class="truncate flex-1 text-text-muted" x-text="node.name"></span>
+                  <button x-show="!node.isDir && ideIsRunnable(node.name)"
+                          @click.stop="ideRunFile(node.path)"
+                          class="hidden group-hover:block text-green-400 text-xs px-1" title="Run">&triangleright;</button>
+                </div>
+                <!-- Children (expanded dirs) -->
+                <div x-show="node.isDir && _ideExpandedDirs[node.path]" class="ml-3">
+                  <template x-for="child in ideGetChildren(node.path)" :key="child.path">
+                    <div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 cursor-pointer hover:bg-surface-light group"
+                           @click="child.isDir ? ideToggleDir(child) : ideOpenFile(child.path)"
+                           @contextmenu.prevent="ideDeleteFile(child.path)">
+                        <span class="text-xs w-4 text-center text-text-dim" x-text="child.isDir ? (_ideExpandedDirs[child.path] ? '\u25BE' : '\u25B8') : ''"></span>
+                        <span class="text-xs" x-text="child.isDir ? '\u{1F4C1}' : ideFileIcon(child.name)"></span>
+                        <span class="truncate flex-1 text-text-muted" x-text="child.name"></span>
+                        <button x-show="!child.isDir && ideIsRunnable(child.name)"
+                                @click.stop="ideRunFile(child.path)"
+                                class="hidden group-hover:block text-green-400 text-xs px-1">&triangleright;</button>
+                      </div>
+                      <!-- Grandchildren (2 levels deep) -->
+                      <div x-show="child.isDir && _ideExpandedDirs[child.path]" class="ml-3">
+                        <template x-for="gc in ideGetChildren(child.path)" :key="gc.path">
+                          <div class="flex items-center gap-1 px-2 py-0.5 cursor-pointer hover:bg-surface-light group"
+                               @click="gc.isDir ? ideToggleDir(gc) : ideOpenFile(gc.path)"
+                               @contextmenu.prevent="ideDeleteFile(gc.path)">
+                            <span class="text-xs w-4 text-center text-text-dim" x-text="gc.isDir ? (_ideExpandedDirs[gc.path] ? '\u25BE' : '\u25B8') : ''"></span>
+                            <span class="text-xs" x-text="gc.isDir ? '\u{1F4C1}' : ideFileIcon(gc.name)"></span>
+                            <span class="truncate flex-1 text-text-muted" x-text="gc.name"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Search panel -->
+          <div x-show="ideLeftPanel === 'search'" class="flex-1 flex flex-col overflow-hidden">
+            <form @submit.prevent="ideSearch()" class="flex gap-1 px-2 py-1.5 border-b border-surface-light">
+              <input x-model="ideSearchQuery" type="text" placeholder="Search files..."
+                     class="flex-1 bg-surface-light rounded px-2 py-1 text-xs text-text outline-none focus:ring-1 focus:ring-accent">
+              <button type="submit" class="text-accent text-xs px-1">Go</button>
+            </form>
+            <div class="flex-1 overflow-y-auto text-xs">
+              <template x-for="(r, i) in ideSearchResults" :key="i">
+                <div @click="ideOpenFile(r.file)" class="px-2 py-1 hover:bg-surface-light cursor-pointer border-b border-surface-light/50">
+                  <div class="text-text-muted truncate" x-text="r.file.split('/').pop()"></div>
+                  <div class="text-text-dim truncate" x-text="r.content"></div>
+                  <div class="text-text-dim/60" x-text="'Line ' + r.line"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Git panel -->
+          <div x-show="ideLeftPanel === 'git'" class="flex-1 flex flex-col overflow-hidden">
+            <div class="px-2 py-1.5 border-b border-surface-light flex items-center gap-2">
+              <span class="text-xs text-text-dim">Branch:</span>
+              <span class="text-xs text-accent font-medium" x-text="ideGitBranch || '(none)'"></span>
+              <button @click="ideLoadGitStatus()" class="ml-auto text-xs text-text-dim hover:text-accent">&#x21BB;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+              <template x-for="(c, i) in ideGitChanges" :key="i">
+                <div class="flex items-center gap-1 px-2 py-0.5 hover:bg-surface-light text-xs group">
+                  <span class="w-5 text-center" x-text="ideGitStatusIcon(c.status)"></span>
+                  <span class="truncate flex-1 text-text-muted cursor-pointer" @click="ideOpenFile(_ideJoinPath(ideCurrentPath, c.path))" x-text="c.path"></span>
+                  <button @click="ideGitStage(c.path)" class="hidden group-hover:block text-green-400 px-1" title="Stage">+</button>
+                  <button @click="ideGitUnstage(c.path)" class="hidden group-hover:block text-red-400 px-1" title="Unstage">-</button>
+                </div>
+              </template>
+              <div x-show="ideGitChanges.length === 0" class="px-2 py-4 text-xs text-text-dim text-center">No changes</div>
+            </div>
+            <div class="border-t border-surface-light p-2">
+              <input x-model="ideGitCommitMsg" type="text" placeholder="Commit message..."
+                     class="w-full bg-surface-light rounded px-2 py-1 text-xs text-text outline-none focus:ring-1 focus:ring-accent mb-1"
+                     @keydown.enter="ideGitCommit()">
+              <button @click="ideGitCommit()" class="w-full bg-accent text-surface-dark rounded py-1 text-xs font-medium"
+                      :class="!ideGitCommitMsg.trim() ? 'opacity-50' : ''">Commit</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Left resize handle -->
+        <div x-show="idePanels.left.open" class="w-1 bg-surface-light hover:bg-accent cursor-col-resize shrink-0"
+             @mousedown="ideStartResize('left', $event)"
+             @dblclick="ideTogglePanel('left')"></div>
+
+        <!-- Center (Editor + Terminal) -->
+        <div class="flex-1 flex flex-col min-w-[300px] min-h-0 overflow-hidden">
+
+          <!-- Tab bar -->
+          <div class="flex items-center bg-surface border-b border-surface-light overflow-x-auto shrink-0" style="height:32px">
+            <template x-for="f in ideOpenFiles" :key="f.path">
+              <div @click="ideSetActiveFile(f.path)"
+                   class="flex items-center gap-1 px-3 py-1 text-xs cursor-pointer border-r border-surface-light shrink-0"
+                   :class="ideActiveFile === f.path ? 'bg-surface-dark text-text' : 'text-text-dim hover:text-text'">
+                <span x-show="f.dirty" class="text-accent">&bull;</span>
+                <span x-show="f.conflict" class="text-amber-400" title="File changed externally">!</span>
+                <span class="truncate max-w-[120px]" x-text="ideFileName(f.path)"></span>
+                <button @click.stop="ideCloseTab(f.path)" class="ml-1 text-text-dim hover:text-text">&times;</button>
+              </div>
+            </template>
+            <!-- View menu buttons (reopen panels) -->
+            <div class="ml-auto flex items-center gap-1 px-2">
+              <button x-show="!idePanels.left.open" @click="ideTogglePanel('left')" class="text-text-dim hover:text-accent text-[10px]" title="Show sidebar">&#x2630;</button>
+              <button x-show="!idePanels.right.open" @click="ideTogglePanel('right')" class="text-text-dim hover:text-accent text-[10px]" title="Show agent">&#x1F916;</button>
+              <button x-show="!idePanels.bottom.open" @click="ideToggleTerminal()" class="text-text-dim hover:text-accent text-[10px]" title="Show terminal">&#x2328;</button>
+            </div>
+          </div>
+
+          <!-- Run button bar -->
+          <div x-show="ideActiveFile && ideIsRunnable(ideFileName(ideActiveFile))" class="flex items-center gap-2 px-3 py-0.5 bg-surface-dark border-b border-surface-light">
+            <button @click="ideRunFile(ideActiveFile)" class="text-green-400 hover:text-green-300 text-xs flex items-center gap-1">
+              &#9654; Run <span class="text-text-dim" x-text="ideFileName(ideActiveFile)"></span>
+            </button>
+          </div>
+
+          <!-- Editor area -->
+          <div class="flex-1 min-h-0 relative">
+            <div id="ide-editor" class="absolute inset-0"
+                 x-show="ideActiveFile"></div>
+            <div x-show="!ideActiveFile" class="absolute inset-0 flex items-center justify-center text-text-dim text-sm">
+              <div class="text-center">
+                <div class="text-4xl mb-2">&#x1F4BB;</div>
+                <div>Open a file to start editing</div>
+                <div class="text-xs text-text-dim mt-1">Ctrl+P to quick open</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom resize handle -->
+          <div x-show="idePanels.bottom.open" class="h-1 bg-surface-light hover:bg-accent cursor-row-resize shrink-0"
+               @mousedown="ideStartResize('bottom', $event)"
+               @dblclick="ideTogglePanel('bottom')"></div>
+
+          <!-- Terminal area -->
+          <div x-show="idePanels.bottom.open" class="shrink-0 flex flex-col bg-surface-dark border-t border-surface-light"
+               :style="'height:' + idePanels.bottom.height + 'px'">
+            <!-- Terminal tab bar -->
+            <div class="flex items-center border-b border-surface-light text-xs shrink-0" style="height:28px">
+              <template x-for="t in ideTerminals" :key="t.id">
+                <div @click="ideSetActiveTerminal(t.id)"
+                     class="flex items-center gap-1 px-2 py-1 cursor-pointer border-r border-surface-light"
+                     :class="ideActiveTerminal === t.id ? 'text-accent' : 'text-text-dim'">
+                  <span x-text="t.label"></span>
+                  <button @click.stop="ideCloseTerminal(t.id)" class="text-text-dim hover:text-text">&times;</button>
+                </div>
+              </template>
+              <button @click="ideNewTerminal()" class="px-2 text-text-dim hover:text-accent">+</button>
+              <button @click="ideTogglePanel('bottom')" class="ml-auto px-2 text-text-dim hover:text-text">&times;</button>
+            </div>
+            <!-- Terminal containers -->
+            <div class="flex-1 relative min-h-0">
+              <template x-for="t in ideTerminals" :key="t.id">
+                <div :id="'xterm-' + t.id" class="absolute inset-0"
+                     :style="ideActiveTerminal === t.id ? '' : 'display:none'"></div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right resize handle -->
+        <div x-show="idePanels.right.open" class="w-1 bg-surface-light hover:bg-accent cursor-col-resize shrink-0"
+             @mousedown="ideStartResize('right', $event)"
+             @dblclick="ideTogglePanel('right')"></div>
+
+        <!-- Right Panel (Agent Chat + Activity) -->
+        <div x-show="idePanels.right.open" class="flex flex-col bg-surface border-l border-surface-light shrink-0 overflow-hidden"
+             :style="'width:' + idePanels.right.width + 'px'">
+
+          <!-- Desktop: Conversation mode (focused job) -->
+          <template x-if="ideFocusedJob">
+            <div class="flex flex-col h-full">
+              <!-- Header bar -->
+              <div class="border-b border-surface-light">
+                <div class="flex items-center gap-1.5 px-2 py-1.5">
+                  <button @click="ideUnfocusJob()" class="text-text-muted hover:text-text text-sm relative shrink-0" title="Back to jobs">
+                    &#x2190;
+                    <span x-show="ideCompletedJobCount > 0"
+                          class="absolute -top-1 -right-2 bg-accent text-surface-dark text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center"
+                          x-text="ideCompletedJobCount"></span>
+                  </button>
+                  <span class="px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-surface-light text-accent shrink-0"
+                        x-text="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).agent || 'code'"></span>
+                  <span class="text-[11px] text-text truncate flex-1 cursor-pointer hover:text-accent"
+                        @click="let j = ideAgentJobs.find(j => j.id === ideFocusedJob); if(j){ let n = prompt('Rename job:', j.customName || j.task); if(n && n.trim()) ideRenameJob(j.id, n.trim()); }"
+                        x-text="((ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).customName || (ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).task || '').substring(0,40)"></span>
+                  <button x-show="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'running'"
+                          @click="ideStopJob(ideFocusedJob)" class="text-red-400 hover:text-red-300 text-[10px] px-1 shrink-0" title="Stop">&#x25A0;</button>
+                  <button @click="ideArchiveJob(ideFocusedJob)" class="text-text-dim hover:text-red-400 text-[10px] px-1 shrink-0" title="End task">&#x2298;</button>
+                </div>
+                <div class="flex items-center gap-2 px-2 pb-1 text-[9px]">
+                  <button @click="showAgentPicker = !showAgentPicker" class="text-text-dim hover:text-accent flex items-center gap-0.5">
+                    &#9881; <span x-text="selectedModel !== 'auto' ? selectedModel : 'Auto'"></span>
+                  </button>
+                  <label class="flex items-center gap-0.5 text-text-dim cursor-pointer">
+                    <input type="checkbox" :checked="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).autoApprove"
+                           @change="ideToggleJobAutoApprove(ideFocusedJob)" class="w-2.5 h-2.5 accent-accent"> Auto-approve
+                  </label>
+                </div>
+                <div x-show="showAgentPicker" class="px-2 pb-1 space-y-1">
+                  <div class="flex flex-wrap gap-0.5">
+                    <template x-for="a in ['auto', 'conversation', 'code', 'dnd_dm', 'plan', 'research', 'music', 'smart_home', 'timer', 'calendar', 'weather', 'design', 'review', 'docs', 'test', 'security', 'deploy', 'monitoring', 'cleanup', 'learning', 'list', 'alert', 'routine']" :key="a">
+                      <button @click="selectedAgent = a" class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                              :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="({'auto':'Auto','dnd_dm':'D&D DM','smart_home':'Smart Home'})[a] || a.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())"></button>
+                    </template>
+                  </div>
+                  <div class="flex gap-0.5">
+                    <template x-for="m in ['auto', 'flash', 'pro', 'opus', 'local']" :key="m">
+                      <button @click="selectedModel = m" class="px-2 py-0.5 rounded text-[10px] font-medium"
+                              :class="selectedModel === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m === 'auto' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)"></button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              <!-- Conversation messages -->
+              <div class="flex-1 overflow-y-auto p-2 space-y-2" id="ide-convo-scroll"
+                   x-effect="$nextTick(() => { const el = document.getElementById('ide-convo-scroll'); if(el) el.scrollTop = el.scrollHeight; })">
+                <template x-for="(msg, mi) in ideFocusedMessages()" :key="mi">
+                  <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                    <div class="rounded-lg px-2 py-1.5 text-xs max-w-[95%]"
+                         :class="msg.role === 'user' ? 'bg-accent text-surface-dark' : 'bg-surface-light text-text'">
+                      <div x-show="msg.role === 'assistant'" x-html="ideRenderMarkdown(msg.text)" class="prose prose-invert prose-xs max-w-none [&_pre]:bg-surface-dark [&_pre]:rounded [&_pre]:p-1.5 [&_pre]:overflow-x-auto [&_pre]:text-[10px] [&_code]:text-accent-light"></div>
+                      <span x-show="msg.role === 'user'" x-text="msg.text"></span>
+                      <span x-show="msg.streaming" class="inline-block w-1.5 h-3 bg-accent animate-pulse ml-0.5 align-middle"></span>
+                    </div>
+                  </div>
+                </template>
+                <!-- Done badge -->
+                <div x-show="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'done'"
+                     class="flex justify-center">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-600/20 text-green-400 border border-green-500/30">&#x2705; Done</span>
+                </div>
+              </div>
+              <!-- Follow-up input -->
+              <form @submit.prevent="ideSendChat()" class="p-2 border-t border-surface-light flex gap-1">
+                <input id="ide-chat-input" x-model="ideChatInput" type="text"
+                       :placeholder="(ideAgentJobs.find(j => j.id === ideFocusedJob) || {}).status === 'running' ? 'Send while running...' : 'Follow up...'"
+                       class="flex-1 bg-surface-light rounded px-2 py-1.5 text-xs text-text outline-none focus:ring-1 focus:ring-accent">
+                <button type="submit" class="bg-accent text-surface-dark px-2 py-1.5 rounded text-xs font-medium">&#x23CE;</button>
+              </form>
+            </div>
+          </template>
+
+          <!-- Desktop: Jobs list view (no focused job) -->
+          <template x-if="!ideFocusedJob">
+            <div class="flex flex-col h-full">
+              <div class="flex items-center justify-between px-2 py-1.5 border-b border-surface-light">
+                <span class="text-xs font-medium text-accent">Jobs</span>
+                <div class="flex items-center gap-2">
+                  <button @click="ideShowArchived = !ideShowArchived" class="text-[9px] px-1.5 py-0.5 rounded"
+                          :class="ideShowArchived ? 'bg-accent text-surface-dark' : 'bg-surface-light text-text-dim'"
+                          x-text="ideShowArchived ? 'Hide' : 'Archived'"></button>
+                  <button @click="ideTogglePanel('right')" class="text-text-dim hover:text-text text-xs">&times;</button>
+                </div>
+              </div>
+
+              <!-- Agent activity feed -->
+              <div class="flex-none max-h-[40%] overflow-y-auto border-b border-surface-light">
+                <template x-for="(job, i) in ideVisibleJobs()" :key="job.id">
+                  <div class="px-2 py-1.5 text-xs border-b border-surface-light/30 cursor-pointer hover:bg-surface-light/30"
+                       :class="job.archived ? 'opacity-50' : ''"
+                       @click="ideFocusJob(job.id)" @dblclick.stop="idePromptRenameJob(job.id)">
+                    <div class="flex items-center gap-1.5">
+                      <span class="px-1 py-0.5 rounded-full text-[8px] font-medium bg-surface-light text-accent shrink-0" x-text="job.agent || 'code'"></span>
+                      <span class="truncate flex-1 text-text-muted" x-text="job.progress && job.status === 'running' ? job.progress.substring(0,50) : ideJobDisplayName(job)"></span>
+                      <button x-show="job.status === 'running'" @click.stop="ideStopJob(job.id)" class="text-red-400 hover:text-red-300 text-[10px] px-1 shrink-0" title="Stop">&#x25A0;</button>
+                      <button @click.stop="ideFocusJob(job.id)" class="text-accent hover:text-accent-light text-[10px] px-1 shrink-0" title="Open conversation">&#x1F4AC;</button>
+                    </div>
+                  </div>
+                </template>
+                <div x-show="ideVisibleJobs().length === 0" class="px-2 py-3 text-xs text-text-dim text-center">No jobs</div>
+              </div>
+
+              <!-- Pending diffs -->
+              <template x-for="(diff, i) in idePendingDiffs" :key="i">
+                <div class="mx-2 mt-1 bg-amber-900/20 border border-amber-500/40 rounded px-2 py-1.5 text-xs">
+                  <div class="text-amber-400 truncate mb-1" x-text="diff.path"></div>
+                  <div class="flex gap-1">
+                    <button @click="ideAcceptDiff(i)" class="px-2 py-0.5 bg-green-600 text-white rounded text-[10px]">Accept</button>
+                    <button @click="ideRejectDiff(i)" class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px]">Reject</button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Chat messages (general, non-job) -->
+              <div class="flex-1 overflow-y-auto p-2 space-y-1.5" id="ide-chat-scroll">
+                <template x-for="(msg, i) in ideChatMessages" :key="i">
+                  <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                    <div class="rounded-lg px-2 py-1 text-xs max-w-[90%]"
+                         :class="msg.role === 'user' ? 'bg-accent text-surface-dark' : 'bg-surface-light text-text'"
+                         x-text="msg.text"></div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Agent/Model picker -->
+              <div class="px-2 pt-1 border-t border-surface-light">
+                <button @click="showAgentPicker = !showAgentPicker" class="text-xs text-text-dim hover:text-accent flex items-center gap-1">
+                  &#9881; <span x-text="(selectedAgent && selectedAgent !== 'auto' ? selectedAgent : '') + (selectedModel && selectedModel !== 'auto' ? (selectedAgent && selectedAgent !== 'auto' ? ' &middot; ' : '') + selectedModel : '') || 'Auto'"></span>
+                </button>
+                <div x-show="showAgentPicker" class="py-1 space-y-1">
+                  <div class="flex flex-wrap gap-0.5">
+                    <template x-for="a in ['auto', 'conversation', 'code', 'dnd_dm', 'plan', 'research', 'music', 'smart_home', 'timer', 'calendar', 'weather', 'design', 'review', 'docs', 'test', 'security', 'deploy', 'monitoring', 'cleanup', 'learning', 'list', 'alert', 'routine']" :key="a">
+                      <button @click="selectedAgent = a" class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                              :class="selectedAgent === a ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="({'auto':'Auto','dnd_dm':'D&D DM','smart_home':'Smart Home'})[a] || a.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())"></button>
+                    </template>
+                  </div>
+                  <div class="flex gap-0.5">
+                    <template x-for="m in ['auto', 'flash', 'pro', 'opus', 'local']" :key="m">
+                      <button @click="selectedModel = m" class="px-2 py-0.5 rounded text-[10px] font-medium"
+                              :class="selectedModel === m ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="m === 'auto' ? 'Auto' : m.charAt(0).toUpperCase() + m.slice(1)"></button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat input -->
+              <form @submit.prevent="ideSendChat()" class="p-2 border-t border-surface-light flex gap-1">
+                <input id="ide-chat-input" x-model="ideChatInput" type="text" placeholder="Ask agent..."
+                       class="flex-1 bg-surface-light rounded px-2 py-1.5 text-xs text-text outline-none focus:ring-1 focus:ring-accent">
+                <button type="submit" class="bg-accent text-surface-dark px-2 py-1.5 rounded text-xs font-medium">&#x23CE;</button>
+              </form>
+            </div>
+          </template>
+
+        </div>
+      </div>
+
+      <!-- Quick Open overlay -->
+      <div x-show="ideShowQuickOpen" x-transition @click.self="ideShowQuickOpen = false"
+           class="absolute inset-0 z-50 flex justify-center pt-16 bg-black/40">
+        <div class="bg-surface w-[500px] max-w-[90%] rounded-xl shadow-2xl overflow-hidden" style="max-height:400px">
+          <input id="ide-quick-open-input" x-model="ideQuickOpenQuery" @input.debounce.200ms="ideQuickOpen()" @keydown.escape="ideShowQuickOpen = false"
+                 type="text" placeholder="Search files..." autofocus
+                 class="w-full bg-surface-light px-4 py-3 text-sm text-text outline-none border-b border-surface-light">
+          <div class="max-h-[320px] overflow-y-auto">
+            <template x-for="(r, i) in ideQuickOpenResults" :key="i">
+              <div @click="ideQuickOpenSelect(r.file)" class="px-4 py-2 hover:bg-surface-light cursor-pointer flex items-center gap-2">
+                <span class="text-sm text-text" x-text="r.file.split('/').pop()"></span>
+                <span class="text-xs text-text-dim truncate" x-text="r.file"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Calendar Tab -->
@@ -1691,9 +2242,19 @@
           <div class="flex items-center gap-2">
             <label class="text-sm text-text-muted w-20">TTS</label>
             <div class="flex gap-1 flex-1">
-              <template x-for="p in ['auto', 'fish', 'edge', 'local']" :key="p">
+              <template x-for="p in ['auto', 'piper_bmo', 'fish', 'edge', 'local']" :key="p">
                 <button @click="updateVoiceSetting('tts_provider', p)" class="flex-1 py-1 rounded text-[10px] capitalize"
-                        :class="(voiceSettings.tts_provider || 'auto') === p ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="p"></button>
+                        :class="(voiceSettings.tts_provider || 'auto') === p ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="p === 'piper_bmo' ? 'BMO' : p"></button>
+              </template>
+            </div>
+          </div>
+          <!-- STT Provider -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-text-muted w-20">STT</label>
+            <div class="flex gap-1 flex-1">
+              <template x-for="p in ['auto', 'local', 'groq']" :key="p">
+                <button @click="updateVoiceSetting('stt_provider', p)" class="flex-1 py-1 rounded text-[10px] capitalize"
+                        :class="(voiceSettings.stt_provider || 'auto') === p ? 'bg-accent text-surface-dark' : 'bg-surface text-text-muted'" x-text="p"></button>
               </template>
             </div>
           </div>
@@ -1791,7 +2352,7 @@
   <div x-cloak x-show="showCameraOverlay" x-transition style="display:none"
        class="fixed inset-0 bg-surface-dark z-40 flex flex-col">
     <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden min-h-0">
-      <img src="/api/camera/stream" class="w-full h-full object-contain" x-show="cameraActive" @error="cameraActive=false">
+      <img :src="showCameraOverlay ? '/api/camera/stream' : ''" class="w-full h-full object-contain" x-show="cameraActive" @error="cameraActive=false">
       <div x-show="!cameraActive" class="text-text-muted">Camera offline</div>
       <div x-show="visionResult" class="absolute bottom-0 left-0 right-0 bg-surface-dark/80 p-3 text-sm max-h-[40%] overflow-y-auto break-words whitespace-pre-wrap" x-text="visionResult"></div>
     </div>

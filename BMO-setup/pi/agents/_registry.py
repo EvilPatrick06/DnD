@@ -66,4 +66,23 @@ def create_all_agents(scratchpad: SharedScratchpad, services: dict[str, Any], so
     from agents.routine_agent import create_routine_agent
     agents.append(create_routine_agent(scratchpad, services, socketio))
 
+    # D&D-specific agents
+    from agents.encounter_agent import create_encounter_agent
+    agents.append(create_encounter_agent(scratchpad, services, socketio))
+
+    from agents.npc_dialogue_agent import create_npc_dialogue_agent
+    agents.append(create_npc_dialogue_agent(scratchpad, services, socketio))
+
+    from agents.lore_agent import create_lore_agent
+    agents.append(create_lore_agent(scratchpad, services, socketio))
+
+    from agents.rules_agent import create_rules_agent
+    agents.append(create_rules_agent(scratchpad, services, socketio))
+
+    from agents.treasure_agent import create_treasure_agent
+    agents.append(create_treasure_agent(scratchpad, services, socketio))
+
+    from agents.session_recap_agent import create_session_recap_agent
+    agents.append(create_session_recap_agent(scratchpad, services, socketio))
+
     return agents

@@ -29,12 +29,14 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 
 
 @app.after_request
-def _no_cache(response):
-    """Prevent browser from caching HTML/JS/CSS so updates are served immediately."""
-    if "text/html" in response.content_type or "javascript" in response.content_type or "text/css" in response.content_type:
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+def _cache_policy(response):
+    """Smart caching: static assets cached 1 h, HTML revalidates each load."""
+    if "text/html" in response.content_type:
+        # HTML: always revalidate (browser still uses ETag / 304)
+        response.headers["Cache-Control"] = "no-cache"
+    elif request.path.startswith("/static/"):
+        # JS / CSS / images: cache 1 hour, revalidate after
+        response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
     return response
 
 
@@ -287,15 +289,17 @@ def init_services():
             # Save voice responses (assistant messages) to chat history
             # and emit as chat_response so the frontend shows them
             elif event == "response":
+                from voice_pipeline import VoicePipeline
                 response_text = data.get("text", "")
                 if response_text:
+                    clean_text = VoicePipeline._strip_markdown(response_text)
                     _save_chat_message({
                         "role": "assistant",
-                        "text": response_text,
+                        "text": clean_text,
                         "ts": time.time(),
                     })
                     socketio.emit("chat_response", {
-                        "text": response_text,
+                        "text": clean_text,
                         "speaker": data.get("speaker", ""),
                         "agent_used": "",
                     })
@@ -306,6 +310,9 @@ def init_services():
 
     # Restore chat history into agent memory
     _restore_agent_history()
+
+    # Auto-resume after Code Agent restart (runs shortly after startup)
+    threading.Thread(target=_auto_resume_after_restart, daemon=True).start()
 
     # Try to connect to TV (non-blocking — don't hold up startup)
     threading.Thread(target=init_tv_remote, daemon=True).start()
@@ -402,6 +409,8 @@ def init_services():
         from scene_service import SceneService
         scene_service = SceneService(services=service_map, socketio=socketio)
         service_map["scenes"] = scene_service
+        if voice:
+            voice._scene_service = scene_service
         print("[bmo]   Scene engine: OK")
     except Exception as e:
         print(f"[bmo]   Scene engine: SKIPPED ({e})")
@@ -499,6 +508,13 @@ def _sync_expression(expression: str):
 
 # ── Pages ────────────────────────────────────────────────────────────
 
+@app.route("/favicon.ico")
+def favicon():
+    resp = send_from_directory(app.static_folder, "favicon.ico", mimetype="image/x-icon")
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -589,22 +605,8 @@ def api_status_summary():
 
 def _strip_markdown(text: str) -> str:
     """Remove markdown formatting so the web UI shows plain English."""
-    # Remove bold/italic markers
-    text = re.sub(r'\*{1,3}(.+?)\*{1,3}', r'\1', text)
-    text = re.sub(r'_{1,3}(.+?)_{1,3}', r'\1', text)
-    # Remove headers
-    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
-    # Remove inline code
-    text = re.sub(r'`([^`]+)`', r'\1', text)
-    # Remove code fences
-    text = re.sub(r'```[\s\S]*?```', '', text)
-    # Remove link syntax [text](url) → text
-    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
-    # Remove bullet markers (-, *, +) at line start
-    text = re.sub(r'^[\s]*[-*+]\s+', '• ', text, flags=re.MULTILINE)
-    # Collapse multiple blank lines
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    return text.strip()
+    from voice_pipeline import VoicePipeline
+    return VoicePipeline._strip_markdown(text)
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -2036,6 +2038,34 @@ def _save_chat_message(msg: dict):
         _save_dnd_message(msg)
 
 
+def _auto_resume_after_restart():
+    """If BMO restarted after a Code Agent task, auto-generate resume message and push to clients."""
+    time.sleep(4)
+    try:
+        summary = agent._read_and_clear_resume()
+        if not summary:
+            return
+        print("[chat] Auto-resuming after Code Agent restart")
+
+        with app.app_context():
+            result = agent.chat(
+                f"[Auto-resume] BMO just came back up. You restarted to apply changes. "
+                f"Context: {summary[:400]}. Confirm the restart completed and briefly summarize what was done.",
+                speaker="system",
+                agent_override="code",
+            )
+            text = result.get("text", "")
+            if text:
+                _save_chat_message({"role": "assistant", "text": text, "ts": time.time()})
+                socketio.emit("chat_response", {
+                    "text": text,
+                    "speaker": "system",
+                    "agent_used": "code",
+                })
+    except Exception as e:
+        print(f"[chat] Auto-resume failed: {e}")
+
+
 def _restore_agent_history():
     """On startup, restore the agent's conversation history from the recent chat buffer."""
     messages = _load_recent_chat()
@@ -3312,50 +3342,131 @@ def on_connect(auth=None):
         print(f"[ws] Alerts init failed: {e}")
 
 
+def _finish_chat_response(sid, result, model_override, voice, speaker):
+    """Emit chat_response and run TTS. Called from main handler or background thread."""
+    from flask_socketio import emit
+    from voice_pipeline import VoicePipeline
+
+    raw_text = result.get("text", "").strip()
+    agent_used = result.get("agent_used", "")
+    if not raw_text:
+        if agent_used == "code":
+            raw_text = "The Code Agent looked into it but didn't produce a summary. Try asking again or rephrasing."
+        else:
+            raw_text = "Hmm, BMO doesn't know what to say about that."
+
+    clean_text = VoicePipeline._strip_markdown(raw_text)
+
+    # Detect likely truncated Code Agent response (ends mid-thought)
+    if agent_used == "code" and len(clean_text) > 100:
+        tail = clean_text[-120:].lower().rstrip()
+        truncated = (
+            tail.endswith(":") or
+            tail.endswith("let me") or tail.endswith("i'll") or tail.endswith("i will") or
+            tail.endswith("so ") or tail.endswith("then ") or tail.endswith("next,") or
+            tail.endswith("to see") or tail.endswith("to check") or tail.endswith("if ")
+        )
+        if truncated:
+            clean_text += "\n\n_Response may have been cut off — try asking again to continue._"
+            result["incomplete"] = True
+
+    result["text"] = clean_text
+
+    assistant_msg = {"role": "assistant", "text": clean_text, "ts": time.time()}
+    if agent_used:
+        assistant_msg["agent_used"] = agent_used
+    if model_override and model_override != "auto":
+        assistant_msg["model"] = model_override
+    _save_chat_message(assistant_msg)
+
+    with app.app_context():
+        # Code Agent: chat-only, no speak, no OLED expression changes
+        if agent_used != "code":
+            socketio.emit("status", {"state": "yapping"})
+            _sync_expression("speaking")
+        # Broadcast to ALL connected clients so other devices see the response
+        socketio.emit("chat_response", result)
+        if agent_used != "code":
+            _sync_expression("idle")
+
+    # Code Agent output is chat-only (no TTS) — summaries are long and technical
+    if voice and clean_text and agent_used != "code":
+        threading.Thread(target=voice.speak, args=(clean_text,), daemon=True).start()
+
+
 @socketio.on("chat_message")
 def on_chat_message(data):
     from flask_socketio import emit
     message = data.get("message", "")
     speaker = data.get("speaker", "unknown")
-    agent_override = data.get("agent")  # Phase 7: optional agent override
-    model_override = data.get("model")  # Phase 7: optional model override
+    agent_override = data.get("agent")
+    model_override = data.get("model")
 
     try:
-        # Save user message immediately
-        _save_chat_message({"role": "user", "text": message, "speaker": speaker, "ts": time.time()})
+        user_msg = {"role": "user", "text": message, "speaker": speaker, "ts": time.time()}
+        if agent_override and agent_override != "auto":
+            user_msg["agent"] = agent_override
+        if model_override and model_override != "auto":
+            user_msg["model"] = model_override
+        _save_chat_message(user_msg)
 
         emit("status", {"state": "thinking"})
-        _sync_expression("thinking")
+        if agent_override != "code":
+            _sync_expression("thinking")
 
-        # Apply temporary model override if specified
-        prev_model_override = getattr(agent, '_model_override', None)
+        if agent_override == "code":
+            emit("agent_ack", {"text": "I'm on it! The Code Agent is investigating your request.", "agent": "code"})
+            emit("agent_progress", {"agent": "code", "label": "Analyzing request", "status": "running"})
+
+        prev_model_override = agent.model_override
         if model_override and model_override != "auto":
-            agent._model_override = model_override
+            agent.model_override = model_override
+            print(f"[chat] Model override: {model_override} (agent={agent_override or 'auto'})")
+        else:
+            agent.model_override = None
 
-        result = agent.chat(message, speaker=speaker)
+        # Code Agent runs in background so the user isn't blocked for minutes
+        if agent_override == "code":
+            sid = request.sid
 
-        # Restore previous model override
+            def _code_agent_task():
+                try:
+                    result = agent.chat(message, speaker=speaker, agent_override=agent_override)
+                    if model_override and model_override != "auto":
+                        agent.model_override = prev_model_override
+                    _finish_chat_response(sid, result, model_override, voice, speaker)
+                except Exception as e:
+                    print(f"[chat] Code Agent error: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    with app.app_context():
+                        socketio.emit(
+                            "chat_response",
+                            {"text": f"Oops! BMO's brain got fuzzy: {e}", "speaker": speaker, "commands_executed": []},
+                            room=sid,
+                        )
+                    # Code Agent: no OLED expression change on error
+                finally:
+                    if model_override and model_override != "auto":
+                        agent.model_override = prev_model_override
+
+            threading.Thread(target=_code_agent_task, daemon=True).start()
+            return  # Handler exits; response will be emitted when the task completes
+
+        # Non-Code-Agent: run synchronously
+        result = agent.chat(message, speaker=speaker, agent_override=agent_override)
+
         if model_override and model_override != "auto":
-            agent._model_override = prev_model_override
+            agent.model_override = prev_model_override
 
-        emit("status", {"state": "yapping"})
-        _sync_expression("speaking")
-
-        # Save assistant response immediately
-        _save_chat_message({"role": "assistant", "text": result["text"], "ts": time.time()})
-
-        emit("chat_response", result)  # emit() sends only to sender, not broadcast
-
-        # Speak the response
-        if voice:
-            threading.Thread(target=voice.speak, args=(result["text"],), daemon=True).start()
-        _sync_expression("idle")
+        _finish_chat_response(request.sid, result, model_override, voice, speaker)
     except Exception as e:
         print(f"[chat] ERROR in chat_message handler: {e}")
         import traceback
         traceback.print_exc()
-        emit("chat_response", {"text": f"Something went wrong: {e}", "speaker": speaker, "commands_executed": []})
-        _sync_expression("error")
+        emit("chat_response", {"text": f"Oops! BMO's brain got fuzzy: {e}", "speaker": speaker, "commands_executed": []})
+        if agent_override != "code":
+            _sync_expression("error")
 
 
 @socketio.on("scratchpad_read")
@@ -3392,6 +3503,730 @@ def on_scratchpad_clear(data):
 @socketio.on("disconnect")
 def on_disconnect():
     print("[ws] Client disconnected")
+    # Clean up terminal sessions for this client
+    if _terminal_mgr:
+        _terminal_mgr.close_all(request.sid)
+    # Clean up Windows proxy if this was the proxy client
+    global _win_proxy_sid
+    if request.sid == _win_proxy_sid:
+        _win_proxy_sid = None
+        socketio.emit("ide_win_proxy_status", {"connected": False})
+
+
+# ── IDE Tab API ──────────────────────────────────────────────────────
+
+import shutil as _shutil
+from gevent.event import AsyncResult as _AsyncResult
+
+# Terminal manager (lazy init)
+_terminal_mgr = None
+
+def _get_terminal_mgr():
+    global _terminal_mgr
+    if _terminal_mgr is None:
+        from terminal_service import TerminalManager
+        _terminal_mgr = TerminalManager()
+    return _terminal_mgr
+
+# File watcher (lazy init)
+_file_watcher = None
+
+def _get_file_watcher():
+    global _file_watcher
+    if _file_watcher is None:
+        from file_watcher import FileWatcher
+        def _on_file_change(path, mtime):
+            socketio.emit("ide_file_changed", {"path": path, "mtime": mtime})
+        _file_watcher = FileWatcher(_on_file_change)
+    return _file_watcher
+
+# Windows proxy state
+_win_proxy_sid = None
+_win_proxy_pending: dict[str, _AsyncResult] = {}
+
+# IDE agent jobs
+_ide_jobs: dict[str, dict] = {}
+_ide_job_counter = 0
+_current_running_job_id = None
+_IDE_JOBS_FILE = os.path.expanduser("~/bmo/data/ide_jobs.json")
+
+
+def _save_ide_jobs():
+    """Persist IDE jobs to disk, keeping only the last 50."""
+    try:
+        os.makedirs(os.path.dirname(_IDE_JOBS_FILE), exist_ok=True)
+        serializable = {}
+        items = list(_ide_jobs.items())
+        # Keep last 50
+        if len(items) > 50:
+            items = items[-50:]
+        for jid, job in items:
+            serializable[jid] = {k: v for k, v in job.items() if not k.startswith("_")}
+        with open(_IDE_JOBS_FILE, "w") as f:
+            json.dump(serializable, f)
+    except Exception:
+        pass
+
+
+def _load_ide_jobs():
+    """Restore IDE jobs from disk on startup."""
+    global _ide_job_counter
+    try:
+        if os.path.exists(_IDE_JOBS_FILE):
+            with open(_IDE_JOBS_FILE, "r") as f:
+                data = json.load(f)
+            for jid, job in data.items():
+                # Don't restore running jobs — they're dead
+                if job.get("status") == "running":
+                    job["status"] = "failed"
+                    job.setdefault("error", "Server restarted")
+                _ide_jobs[jid] = job
+                # Update counter to avoid ID collisions
+                try:
+                    num = int(jid.split("-")[-1])
+                    if num > _ide_job_counter:
+                        _ide_job_counter = num
+                except (ValueError, IndexError):
+                    pass
+    except Exception:
+        pass
+
+
+_load_ide_jobs()
+
+# Language detection for Monaco
+_LANG_MAP = {
+    ".py": "python", ".js": "javascript", ".ts": "typescript", ".tsx": "typescript",
+    ".jsx": "javascript", ".html": "html", ".htm": "html", ".css": "css",
+    ".scss": "scss", ".less": "less", ".json": "json", ".yaml": "yaml",
+    ".yml": "yaml", ".xml": "xml", ".md": "markdown", ".sh": "shell",
+    ".bash": "shell", ".zsh": "shell", ".sql": "sql", ".rs": "rust",
+    ".go": "go", ".java": "java", ".c": "c", ".cpp": "cpp", ".h": "c",
+    ".hpp": "cpp", ".rb": "ruby", ".php": "php", ".lua": "lua",
+    ".toml": "toml", ".ini": "ini", ".cfg": "ini", ".conf": "ini",
+    ".dockerfile": "dockerfile", ".r": "r", ".swift": "swift",
+    ".kt": "kotlin", ".dart": "dart", ".vue": "html",
+}
+
+def _detect_language(path: str) -> str:
+    """Map file extension to Monaco language ID."""
+    basename = os.path.basename(path).lower()
+    if basename == "dockerfile":
+        return "dockerfile"
+    if basename in ("makefile", "gnumakefile"):
+        return "makefile"
+    _, ext = os.path.splitext(basename)
+    return _LANG_MAP.get(ext, "plaintext")
+
+
+def _proxy_to_windows(op: str, params: dict, timeout: float = 10.0) -> dict:
+    """Send a request to the Windows proxy and wait for the response."""
+    if not _win_proxy_sid:
+        return {"error": "Windows proxy not connected"}
+    import uuid
+    request_id = str(uuid.uuid4())
+    result_event = _AsyncResult()
+    _win_proxy_pending[request_id] = result_event
+    try:
+        socketio.emit("win_proxy_request", {
+            "request_id": request_id,
+            "op": op,
+            "params": params,
+        }, room=_win_proxy_sid)
+        result = result_event.get(timeout=timeout)
+        return result
+    except Exception:
+        return {"error": "Windows proxy request timed out"}
+    finally:
+        _win_proxy_pending.pop(request_id, None)
+
+
+# ── IDE File API routes ──────────────────────────────────────────────
+
+@app.route("/api/ide/tree")
+def api_ide_tree():
+    """List directory contents for the file tree."""
+    path = request.args.get("path", "~")
+    machine = request.args.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("list_directory", {"path": path}))
+    from dev_tools import list_directory
+    return jsonify(list_directory(path))
+
+
+@app.route("/api/ide/file/read", methods=["POST"])
+def api_ide_file_read():
+    """Read a file's contents."""
+    data = request.json or {}
+    path = data.get("path", "")
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        result = _proxy_to_windows("read_file", {"path": path, "limit": 50000})
+    else:
+        from dev_tools import read_file
+        result = read_file(path, limit=50000)
+    if "error" not in result:
+        result["language"] = _detect_language(path)
+    return jsonify(result)
+
+
+@app.route("/api/ide/file/write", methods=["POST"])
+def api_ide_file_write():
+    """Write/overwrite a file (IDE save bypasses confirmation)."""
+    data = request.json or {}
+    path = data.get("path", "")
+    content = data.get("content", "")
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("write_file", {"path": path, "content": content}))
+    path = os.path.expanduser(path)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        watcher = _get_file_watcher()
+        watcher.notify_change(path)
+        return jsonify({"success": True, "path": path})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/ide/file/edit", methods=["POST"])
+def api_ide_file_edit():
+    """Find & replace in a file."""
+    data = request.json or {}
+    path = data.get("path", "")
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("edit_file", {
+            "path": path,
+            "old_string": data.get("old_string", ""),
+            "new_string": data.get("new_string", ""),
+        }))
+    from dev_tools import edit_file
+    result = edit_file(path, data.get("old_string", ""), data.get("new_string", ""))
+    if result.get("success"):
+        watcher = _get_file_watcher()
+        watcher.notify_change(os.path.expanduser(path))
+    return jsonify(result)
+
+
+@app.route("/api/ide/file/create", methods=["POST"])
+def api_ide_file_create():
+    """Create a new file or directory."""
+    data = request.json or {}
+    path = data.get("path", "")
+    is_dir = data.get("is_dir", False)
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("create_file", {"path": path, "is_dir": is_dir}))
+    path = os.path.expanduser(path)
+    try:
+        if is_dir:
+            os.makedirs(path, exist_ok=True)
+        else:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                pass
+        return jsonify({"success": True, "path": path})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/ide/file/rename", methods=["POST"])
+def api_ide_file_rename():
+    """Rename a file or directory."""
+    data = request.json or {}
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("rename_file", {
+            "old_path": data.get("old_path", ""),
+            "new_path": data.get("new_path", ""),
+        }))
+    old = os.path.expanduser(data.get("old_path", ""))
+    new = os.path.expanduser(data.get("new_path", ""))
+    try:
+        os.rename(old, new)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/ide/file/delete", methods=["POST"])
+def api_ide_file_delete():
+    """Delete a file or directory."""
+    data = request.json or {}
+    path = data.get("path", "")
+    machine = data.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("delete_file", {"path": path}))
+    path = os.path.expanduser(path)
+    try:
+        if os.path.isdir(path):
+            _shutil.rmtree(path)
+        else:
+            os.remove(path)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/ide/search")
+def api_ide_search():
+    """Global grep search."""
+    pattern = request.args.get("pattern", "")
+    path = request.args.get("path", "~")
+    file_glob = request.args.get("file_glob", "*")
+    machine = request.args.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("grep_files", {
+            "pattern": pattern, "path": path, "file_glob": file_glob,
+        }))
+    from dev_tools import grep_files
+    return jsonify(grep_files(pattern, path, file_glob))
+
+
+@app.route("/api/ide/js-error", methods=["POST"])
+def api_ide_js_error():
+    """Log client-side JS errors for debugging."""
+    data = request.json or {}
+    print(f"[js-error] {data.get('msg', '?')} at {data.get('file', '?')}:{data.get('line', '?')}:{data.get('col', '?')}")
+    if data.get("stack"):
+        for line in data["stack"].split("\n")[:5]:
+            print(f"[js-error]   {line}")
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ide/find")
+def api_ide_find():
+    """Find files by name pattern (for Ctrl+P quick open)."""
+    pattern = request.args.get("pattern", "*")
+    path = request.args.get("path", "~")
+    machine = request.args.get("machine", "pi")
+    if machine == "win":
+        return jsonify(_proxy_to_windows("find_files", {"path": path, "pattern": f"*{pattern}*"}))
+    from dev_tools import find_files
+    return jsonify(find_files(f"**/*{pattern}*", path))
+
+
+# ── IDE Git API ──────────────────────────────────────────────────────
+
+@app.route("/api/ide/git/status")
+def api_ide_git_status():
+    """Get git branch and changed files."""
+    path = request.args.get("path", "~")
+    from dev_tools import git_command
+    branch_result = git_command("rev-parse --abbrev-ref HEAD", path)
+    status_result = git_command("status --porcelain", path)
+    branch = ""
+    if branch_result.get("exit_code", 1) == 0:
+        branch = branch_result.get("output", "").strip()
+    changes = []
+    status_output = ""
+    if status_result.get("exit_code", 1) == 0:
+        status_output = status_result.get("output", "") or ""
+    for line in status_output.splitlines():
+        if len(line) >= 4:
+            status_code = line[:2].strip()
+            filepath = line[3:].strip()
+            changes.append({"status": status_code, "path": filepath})
+    return jsonify({"branch": branch, "changes": changes})
+
+
+@app.route("/api/ide/git/stage", methods=["POST"])
+def api_ide_git_stage():
+    """Stage a file."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command(f"add {data.get('path', '')}", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/unstage", methods=["POST"])
+def api_ide_git_unstage():
+    """Unstage a file."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command(f"restore --staged {data.get('path', '')}", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/commit", methods=["POST"])
+def api_ide_git_commit():
+    """Commit staged changes."""
+    data = request.json or {}
+    msg = data.get("message", "").replace('"', '\\"')
+    from dev_tools import git_command
+    return jsonify(git_command(f'commit -m "{msg}"', data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/log")
+def api_ide_git_log():
+    """Get recent commits."""
+    path = request.args.get("path", "~")
+    count = request.args.get("count", "20")
+    from dev_tools import git_command
+    result = git_command(f"log --oneline -n {count}", path)
+    commits = []
+    for line in (result.get("output", "") or "").splitlines():
+        parts = line.split(" ", 1)
+        if len(parts) == 2:
+            commits.append({"hash": parts[0], "message": parts[1]})
+    return jsonify({"commits": commits})
+
+
+@app.route("/api/ide/git/diff")
+def api_ide_git_diff():
+    """Get diff for a file."""
+    path = request.args.get("path", "")
+    repo = request.args.get("repo", "~")
+    from dev_tools import git_command
+    return jsonify(git_command(f"diff {path}", repo))
+
+
+@app.route("/api/ide/git/checkout", methods=["POST"])
+def api_ide_git_checkout():
+    """Switch branch."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command(f"checkout {data.get('branch', '')}", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/branches")
+def api_ide_git_branches():
+    """List branches."""
+    path = request.args.get("path", "~")
+    from dev_tools import git_command
+    result = git_command("branch -a", path)
+    branches = []
+    current = ""
+    for line in (result.get("output", "") or "").splitlines():
+        line = line.strip()
+        if line.startswith("* "):
+            current = line[2:]
+            branches.append(current)
+        elif line:
+            branches.append(line)
+    return jsonify({"branches": branches, "current": current})
+
+
+# ── IDE Agent Jobs API ───────────────────────────────────────────────
+
+@app.route("/api/ide/jobs", methods=["GET"])
+def api_ide_jobs_list():
+    """List all IDE agent jobs."""
+    jobs = []
+    for jid, job in _ide_jobs.items():
+        # Shallow messages: just role + text, no heavy content
+        messages = [{"role": m.get("role", ""), "text": m.get("text", "")} for m in job.get("messages", [])]
+        jobs.append({
+            "id": jid,
+            "task": job.get("task", ""),
+            "status": job.get("status", "pending"),
+            "files_touched": job.get("files_touched", []),
+            "created": job.get("created", 0),
+            "agent_name": job.get("agent_name", "code"),
+            "custom_name": job.get("custom_name"),
+            "archived": job.get("archived", False),
+            "auto_approve": job.get("auto_approve", False),
+            "messages": messages,
+        })
+    return jsonify({"jobs": jobs})
+
+
+@app.route("/api/ide/jobs", methods=["POST"])
+def api_ide_jobs_create():
+    """Spawn a new IDE agent job."""
+    global _ide_job_counter
+    data = request.json or {}
+    task = data.get("task", "")
+    auto_approve = data.get("auto_approve", False)
+    if not task:
+        return jsonify({"error": "No task provided"}), 400
+
+    _ide_job_counter += 1
+    job_id = f"ide-job-{_ide_job_counter}"
+    agent_name = data.get("agent") or "code"
+    _ide_jobs[job_id] = {
+        "task": task,
+        "status": "running",
+        "auto_approve": auto_approve,
+        "files_touched": [],
+        "created": time.time(),
+        "agent_name": agent_name,
+        "custom_name": None,
+        "messages": [{"role": "user", "text": task, "ts": time.time()}],
+        "archived": False,
+        "_cancel": threading.Event(),
+    }
+
+    socketio.emit("ide_job_started", {"id": job_id, "task": task, "agent": agent_name})
+
+    def _run_job():
+        global _current_running_job_id
+        _current_running_job_id = job_id
+        try:
+            resolved_agent = data.get("agent") or "code"
+            model = data.get("model")
+            _ide_jobs[job_id]["agent_name"] = resolved_agent
+            socketio.emit("ide_job_agent", {"id": job_id, "agent": resolved_agent})
+            socketio.emit("ide_job_progress", {"id": job_id, "text": f"Routing to {resolved_agent} agent...", "chunk": ""})
+            # Use streaming to show progress
+            chunks = []
+            for chunk in agent.chat_stream(task, speaker="ide"):
+                if _ide_jobs[job_id]["_cancel"].is_set():
+                    break
+                chunks.append(chunk)
+                # Show a preview of the response as it streams
+                preview = "".join(chunks)[-200:]
+                socketio.emit("ide_job_progress", {"id": job_id, "text": preview, "chunk": chunk})
+            full_text = "".join(chunks)
+            if _ide_jobs[job_id]["_cancel"].is_set():
+                _ide_jobs[job_id]["status"] = "cancelled"
+                socketio.emit("ide_job_done", {"id": job_id, "status": "cancelled"})
+                _save_ide_jobs()
+            else:
+                _ide_jobs[job_id]["status"] = "done"
+                _ide_jobs[job_id]["result"] = full_text
+                _ide_jobs[job_id]["messages"].append({"role": "assistant", "text": full_text, "ts": time.time()})
+                socketio.emit("ide_job_done", {
+                    "id": job_id,
+                    "status": "done",
+                    "result": full_text,
+                })
+                _save_ide_jobs()
+        except Exception as e:
+            _ide_jobs[job_id]["status"] = "failed"
+            _ide_jobs[job_id]["error"] = str(e)
+            _ide_jobs[job_id]["messages"].append({"role": "assistant", "text": f"Error: {e}", "ts": time.time()})
+            socketio.emit("ide_job_done", {
+                "id": job_id,
+                "status": "failed",
+                "error": str(e),
+            })
+            _save_ide_jobs()
+        finally:
+            _current_running_job_id = None
+
+    threading.Thread(target=_run_job, daemon=True).start()
+    return jsonify({"id": job_id, "status": "running"})
+
+
+@app.route("/api/ide/jobs/<job_id>/cancel", methods=["POST"])
+def api_ide_jobs_cancel(job_id):
+    """Cancel a running job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    cancel_ev = job.get("_cancel")
+    if cancel_ev:
+        cancel_ev.set()
+    job["status"] = "cancelled"
+    socketio.emit("ide_job_done", {"id": job_id, "status": "cancelled"})
+    _save_ide_jobs()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ide/jobs/<job_id>/followup", methods=["POST"])
+def api_ide_jobs_followup(job_id):
+    """Send a follow-up message to a specific job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    data = request.json or {}
+    msg = data.get("message", "")
+    if not msg:
+        return jsonify({"error": "No message"}), 400
+    job["messages"].append({"role": "user", "text": msg, "ts": time.time()})
+    job["status"] = "running"
+    job["_cancel"] = threading.Event()  # fresh cancel event
+
+    def _run_followup():
+        global _current_running_job_id
+        _current_running_job_id = job_id
+        try:
+            # Build context from previous messages
+            context = " | ".join(m["text"] for m in job["messages"] if m["role"] == "user")
+            chunks = []
+            for chunk in agent.chat_stream(context, speaker="ide"):
+                if job["_cancel"].is_set():
+                    break
+                chunks.append(chunk)
+                preview = "".join(chunks)[-200:]
+                socketio.emit("ide_job_progress", {"id": job_id, "text": preview, "chunk": chunk})
+            full_text = "".join(chunks)
+            if job["_cancel"].is_set():
+                job["status"] = "cancelled"
+                socketio.emit("ide_job_done", {"id": job_id, "status": "cancelled"})
+            else:
+                job["status"] = "done"
+                job["result"] = full_text
+                job["messages"].append({"role": "assistant", "text": full_text, "ts": time.time()})
+                socketio.emit("ide_job_done", {"id": job_id, "status": "done", "result": full_text})
+            _save_ide_jobs()
+        except Exception as e:
+            job["status"] = "failed"
+            job["error"] = str(e)
+            job["messages"].append({"role": "assistant", "text": f"Error: {e}", "ts": time.time()})
+            socketio.emit("ide_job_done", {"id": job_id, "status": "failed", "error": str(e)})
+            _save_ide_jobs()
+        finally:
+            _current_running_job_id = None
+
+    socketio.emit("ide_job_started", {"id": job_id, "task": msg, "agent": job.get("agent_name", "code"), "followup": True})
+    threading.Thread(target=_run_followup, daemon=True).start()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ide/jobs/<job_id>/messages", methods=["GET"])
+def api_ide_jobs_messages(job_id):
+    """Return conversation history for a job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    messages = [{"role": m.get("role", ""), "text": m.get("text", ""), "ts": m.get("ts", 0)} for m in job.get("messages", [])]
+    return jsonify({"messages": messages})
+
+
+@app.route("/api/ide/jobs/<job_id>/rename", methods=["POST"])
+def api_ide_jobs_rename(job_id):
+    """Set a custom name for a job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    data = request.json or {}
+    job["custom_name"] = data.get("name")
+    _save_ide_jobs()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ide/jobs/<job_id>/archive", methods=["POST"])
+def api_ide_jobs_archive(job_id):
+    """Archive a job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    job["archived"] = True
+    socketio.emit("ide_job_archived", {"id": job_id})
+    _save_ide_jobs()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ide/jobs/<job_id>/auto-approve", methods=["POST"])
+def api_ide_jobs_auto_approve(job_id):
+    """Toggle auto-approve for a job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    job["auto_approve"] = not job.get("auto_approve", False)
+    return jsonify({"ok": True, "auto_approve": job["auto_approve"]})
+
+
+# ── IDE Terminal SocketIO events ─────────────────────────────────────
+
+@socketio.on("terminal_open")
+def on_terminal_open(data):
+    """Open a new PTY terminal session."""
+    term_id = data.get("term_id", "term-1")
+    cols = data.get("cols", 80)
+    rows = data.get("rows", 24)
+    sid = request.sid
+    mgr = _get_terminal_mgr()
+
+    def _output_cb(tid, raw_data):
+        socketio.emit("terminal_output", {
+            "term_id": tid,
+            "data": raw_data.decode("utf-8", errors="replace"),
+        }, room=sid)
+
+    mgr.open_terminal(sid, term_id, cols, rows, _output_cb)
+
+
+@socketio.on("terminal_input")
+def on_terminal_input(data):
+    """Send keystrokes to a terminal."""
+    term_id = data.get("term_id", "term-1")
+    input_data = data.get("data", "")
+    mgr = _get_terminal_mgr()
+    session = mgr.get_session(request.sid, term_id)
+    if session:
+        session.write(input_data.encode("utf-8"))
+
+
+@socketio.on("terminal_resize")
+def on_terminal_resize(data):
+    """Resize a terminal."""
+    term_id = data.get("term_id", "term-1")
+    mgr = _get_terminal_mgr()
+    session = mgr.get_session(request.sid, term_id)
+    if session:
+        session.resize(data.get("cols", 80), data.get("rows", 24))
+
+
+@socketio.on("terminal_close")
+def on_terminal_close(data):
+    """Close a specific terminal session."""
+    term_id = data.get("term_id", "term-1")
+    mgr = _get_terminal_mgr()
+    mgr.close_terminal(request.sid, term_id)
+
+
+# ── IDE File Watch SocketIO events ───────────────────────────────────
+
+@socketio.on("ide_watch_file")
+def on_ide_watch_file(data):
+    """Start watching a file for changes."""
+    path = data.get("path", "")
+    if path:
+        watcher = _get_file_watcher()
+        watcher.watch(path)
+
+
+@socketio.on("ide_unwatch_file")
+def on_ide_unwatch_file(data):
+    """Stop watching a file."""
+    path = data.get("path", "")
+    if path:
+        watcher = _get_file_watcher()
+        watcher.unwatch(path)
+
+
+# ── IDE Agent Diff SocketIO events ───────────────────────────────────
+
+@socketio.on("ide_agent_diff_response")
+def on_ide_agent_diff_response(data):
+    """Handle accept/reject of agent edit."""
+    accepted = data.get("accepted", False)
+    path = data.get("path", "")
+    new_content = data.get("new_content", "")
+    if accepted and path and new_content:
+        path = os.path.expanduser(path)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(new_content)
+            watcher = _get_file_watcher()
+            watcher.notify_change(path)
+        except Exception as e:
+            print(f"[ide] Failed to apply agent edit: {e}")
+
+
+# ── Windows Proxy SocketIO events ────────────────────────────────────
+
+@socketio.on("win_proxy_register")
+def on_win_proxy_register(data):
+    """Windows proxy client registers itself."""
+    global _win_proxy_sid
+    _win_proxy_sid = request.sid
+    print(f"[ide] Windows proxy connected (root: {data.get('root', '?')})")
+    socketio.emit("ide_win_proxy_status", {"connected": True, "root": data.get("root", "")})
+
+
+@socketio.on("win_proxy_response")
+def on_win_proxy_response(data):
+    """Windows proxy responds to a request."""
+    request_id = data.get("request_id", "")
+    result = data.get("result", {})
+    pending = _win_proxy_pending.get(request_id)
+    if pending:
+        pending.set(result)
 
 
 # ── Main ─────────────────────────────────────────────────────────────

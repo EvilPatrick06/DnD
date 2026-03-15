@@ -19,6 +19,8 @@ import ollama as ollama_client
 from cloud_providers import cloud_chat, gemini_chat_stream, groq_llm_chat_stream, PRIMARY_MODEL, ROUTER_MODEL, DND_MODEL
 from dev_tools import dispatch_tool, get_tool_descriptions, MAX_TOOL_CALLS_PER_TURN
 from voice_personality import parse_response_tags
+
+CODE_AGENT_RESUME_FILE = os.path.expanduser("~/bmo/data/code_agent_resume.json")
 from agents.settings import init_settings, get_settings
 
 # ── Cloud API Configuration ──────────────────────────────────────────
@@ -30,6 +32,16 @@ LOCAL_MODEL = "bmo"
 _cloud_available = None  # None = unknown, True/False = last known state
 _cloud_last_check = 0
 CLOUD_HEALTH_CHECK_INTERVAL = 60  # seconds between health checks
+
+# Session-level model override — set by UI, read by llm_chat()
+# Maps UI names to actual model identifiers
+_active_model_override: str | None = None
+MODEL_UI_MAP = {
+    "flash": ROUTER_MODEL,
+    "pro": PRIMARY_MODEL,
+    "opus": DND_MODEL,
+    "local": "__local__",
+}
 
 # ── Platform Detection ────────────────────────────────────────────────
 _IS_PI = platform.machine().startswith("aarch64") or platform.machine().startswith("arm")
@@ -114,12 +126,13 @@ def _local_chat(messages: list[dict], options: dict | None = None) -> str:
 #   Pro    — general conversation, code, research, planning (balanced)
 #   Opus   — D&D DM narration, creative writing, complex reasoning (premium)
 
-# Agents that need premium creative output → DND_MODEL (Claude Opus)
-_OPUS_AGENTS = frozenset({"dnd_dm"})
+# Agents that need premium creative output or reliable tool use → DND_MODEL (Claude Opus)
+# Code Agent uses Claude for native tool-use API (fixes "let me check" then stops bug)
+_OPUS_AGENTS = frozenset({"dnd_dm", "code"})
 
 # Agents that need solid reasoning → PRIMARY_MODEL (Gemini Pro)
 _PRO_AGENTS = frozenset({
-    "code", "plan", "research", "review", "design",
+    "plan", "research", "review", "design",
     "security", "deploy", "docs", "test", "learning",
 })
 
@@ -138,8 +151,16 @@ def _select_model(agent_name: str, messages: list[dict] | None = None) -> str:
         return PRIMARY_MODEL
     if agent_name in _FLASH_AGENTS:
         return ROUTER_MODEL
-    # Unknown agent → default to Pro
     return PRIMARY_MODEL
+
+
+def get_resolved_model(agent_name: str = "") -> str:
+    """Return the model that would be used for the next LLM call."""
+    global _active_model_override
+    if _active_model_override:
+        resolved = MODEL_UI_MAP.get(_active_model_override, _active_model_override)
+        return resolved if resolved != "__local__" else PRIMARY_MODEL
+    return _select_model(agent_name)
 
 
 def llm_chat(messages: list[dict], options: dict | None = None,
@@ -147,19 +168,37 @@ def llm_chat(messages: list[dict], options: dict | None = None,
     """Route LLM call to cloud API, falling back to local Ollama.
 
     This is the primary entry point for all LLM calls.
-    Model selection:
-      - Explicit model param overrides everything
-      - agent_name triggers tiered routing (DM → Opus, code/plan → Pro, etc.)
-      - Default: PRIMARY_MODEL (Gemini Pro)
+    Model selection priority:
+      1. _active_model_override (set by UI model picker)
+      2. Explicit model param
+      3. agent_name triggers tiered routing (DM → Opus, code/plan → Pro, etc.)
+      4. Default: PRIMARY_MODEL (Gemini Pro)
     """
-    if not model:
+    global _active_model_override
+
+    if _active_model_override:
+        resolved = MODEL_UI_MAP.get(_active_model_override, _active_model_override)
+        if resolved == "__local__":
+            return _local_chat(messages, options)
+        model = resolved
+        print(f"[agent] Using model override: {_active_model_override} -> {model}")
+    elif not model:
         model = _select_model(agent_name, messages)
 
     if _check_cloud_available():
         try:
             return _cloud_chat(messages, options, model=model)
         except Exception as e:
-            print(f"[agent] Cloud LLM failed ({e}), falling back to local")
+            err_detail = ""
+            if hasattr(e, "response") and e.response is not None:
+                try:
+                    err_detail = e.response.text[:1500] if e.response.text else ""
+                except Exception:
+                    pass
+            if err_detail:
+                print(f"[agent] Cloud LLM failed ({e}), falling back to local\n  Response: {err_detail}")
+            else:
+                print(f"[agent] Cloud LLM failed ({e}), falling back to local")
             global _cloud_available
             _cloud_available = False
 
@@ -179,9 +218,14 @@ def llm_chat_stream(messages: list[dict], options: dict | None = None,
     temperature = (options or {}).get("temperature", 0.8)
     max_tokens = (options or {}).get("num_predict", 2048)
 
-    if _check_cloud_available():
+    _t_cloud0 = time.time()
+    cloud_ok = _check_cloud_available()
+    _t_cloud1 = time.time()
+    print(f"[timing] _check_cloud_available() took {_t_cloud1 - _t_cloud0:.2f}s (result={cloud_ok})")
+    if cloud_ok:
         if model.startswith("gemini"):
             try:
+                print(f"[timing] starting gemini_chat_stream with model={model}")
                 yield from gemini_chat_stream(messages, model=model,
                                               temperature=temperature,
                                               max_tokens=max_tokens)
@@ -841,7 +885,9 @@ class BmoAgent:
 
     @model_override.setter
     def model_override(self, value):
+        global _active_model_override
         self._model_override = value
+        _active_model_override = value
 
     # ── Context Compression ──────────────────────────────────────────
 
@@ -882,11 +928,12 @@ class BmoAgent:
 
     # ── Chat ─────────────────────────────────────────────────────────
 
-    def chat(self, user_message: str, speaker: str = "unknown") -> dict:
+    def chat(self, user_message: str, speaker: str = "unknown", agent_override: str | None = None) -> dict:
         """Send a message to BMO and get a response.
 
         Delegates to the multi-agent orchestrator for routing, then handles
         command parsing, tag extraction, and history management.
+        If agent_override is set (from UI), bypasses the router and uses that agent directly.
 
         Returns {text, commands_executed, tags} where tags contains parsed
         hardware control tags (face, led, sound, emotion, music, npc).
@@ -894,6 +941,15 @@ class BmoAgent:
         # Handle pending destructive confirmations (from code agent)
         if self._pending_confirmations and user_message.lower().strip() in ("yes", "y", "confirm", "do it"):
             return self._execute_pending_confirmation(speaker)
+
+        # Check for post-restart resume (user sent message before auto-resume ran)
+        resume_context = self._read_and_clear_resume()
+        if resume_context:
+            user_message = (
+                f"[Post-restart] BMO just came back up. You restarted to apply changes. "
+                f"Context: {resume_context[:300]}. Confirm the restart completed and briefly summarize. "
+                f"User's message: {user_message}"
+            )
 
         # Add time and speaker context
         now = datetime.datetime.now()
@@ -922,14 +978,16 @@ class BmoAgent:
                 speaker=speaker,
                 history=self.conversation_history,
                 services=self.services,
+                agent_override=agent_override,
             )
             reply = result.get("text", "")
             agent_used = result.get("agent_used", "conversation")
+            self._pending_confirmations = result.get("pending_confirmations", [])
         except Exception as e:
             reply = f"Oh no! BMO's brain is fuzzy right now... ({e})"
             agent_used = "error"
 
-        self.conversation_history.append({"role": "assistant", "content": reply})
+        self.conversation_history.append({"role": "assistant", "content": f"[{agent_used}] {reply}"})
 
         # Parse and execute BMO command blocks (music, tv, calendar, etc.)
         text, commands = self._parse_response(reply)
@@ -992,8 +1050,11 @@ class BmoAgent:
         if threshold > 0 and len(self.conversation_history) >= threshold:
             self.compact()
 
-        # Route to agent
-        agent_name = self.orchestrator.router.route(user_message)
+        # Voice pipeline always uses conversation agent directly — no routing.
+        # Routing adds 15+ seconds of latency for an LLM classification call.
+        # Specialized agents are only reachable via !prefix commands or web chat.
+        _t0 = time.time()
+        agent_name = "conversation"
         self.orchestrator._emit("agent_selected", {
             "agent": agent_name,
             "display_name": self.orchestrator._get_display_name(agent_name),
@@ -1001,16 +1062,24 @@ class BmoAgent:
         })
 
         # Stream conversation agent directly via LLM streaming
-        if agent_name == "conversation" and not self.orchestrator.is_plan_mode:
+        if not self.orchestrator.is_plan_mode:
             agent = self.orchestrator.agents.get("conversation")
             if agent:
                 system_prompt = agent._build_system_prompt(None)
                 messages = [{"role": "system", "content": system_prompt}]
                 messages.extend(self.conversation_history[-20:])
+                _total_chars = sum(len(m.get("content", "")) for m in messages)
+                print(f"[timing] prompt: {len(system_prompt)} chars, {len(messages)} msgs, {_total_chars} total chars")
 
                 full_text = ""
+                _t4 = time.time()
+                _first_chunk = True
                 try:
                     for chunk in llm_chat_stream(messages, agent_name=agent_name):
+                        if _first_chunk:
+                            _t5 = time.time()
+                            print(f"[timing] first LLM chunk took {_t5 - _t4:.2f}s (total from route: {_t5 - _t0:.2f}s)")
+                            _first_chunk = False
                         full_text += chunk
                         yield chunk
                 except Exception as e:
@@ -1048,6 +1117,38 @@ class BmoAgent:
 
     # ── Confirmation Handling (shared across agents) ────────────────
 
+    def _write_resume_before_restart(self, cmd: str) -> None:
+        """Write resume context so the agent can continue after BMO restarts."""
+        try:
+            summary = "Restarted to apply changes."
+            for msg in reversed(self.conversation_history[-10:]):
+                content = msg.get("content", "")
+                if isinstance(content, str) and msg.get("role") == "assistant":
+                    if len(content) > 30:
+                        summary = content[:500].replace("\n", " ")
+                        break
+            os.makedirs(os.path.dirname(CODE_AGENT_RESUME_FILE), exist_ok=True)
+            with open(CODE_AGENT_RESUME_FILE, "w", encoding="utf-8") as f:
+                json.dump({
+                    "pre_restart_summary": summary,
+                    "command": cmd,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                }, f)
+        except Exception as e:
+            print(f"[agent] Failed to write resume file: {e}")
+
+    def _read_and_clear_resume(self) -> str | None:
+        """If BMO restarted as part of a task, return resume context and clear the file."""
+        try:
+            if os.path.exists(CODE_AGENT_RESUME_FILE):
+                with open(CODE_AGENT_RESUME_FILE, encoding="utf-8") as f:
+                    data = json.load(f)
+                os.remove(CODE_AGENT_RESUME_FILE)
+                return data.get("pre_restart_summary", "Restarted to apply changes.")
+        except Exception as e:
+            print(f"[agent] Failed to read resume file: {e}")
+        return None
+
     def _execute_pending_confirmation(self, speaker: str) -> dict:
         """Execute all pending destructive operations after user confirmation."""
         from dev_tools import execute_confirmed, write_file_confirmed
@@ -1059,7 +1160,10 @@ class BmoAgent:
             print(f"[agent] Confirmed: {tool}({json.dumps(args)[:100]})")
 
             if tool == "execute_command":
-                result = execute_confirmed(args.get("cmd", ""), args.get("cwd"))
+                cmd = args.get("cmd", "")
+                if re.search(r"systemctl\s+restart\s+bmo\b", cmd):
+                    self._write_resume_before_restart(cmd)
+                result = execute_confirmed(cmd, args.get("cwd"))
             elif tool == "write_file":
                 result = write_file_confirmed(args.get("path", ""), args.get("content", ""))
             elif tool == "ssh_command":
@@ -1348,8 +1452,13 @@ class BmoAgent:
     def _handle_music_volume(self, params):
         music = self.services.get("music")
         if music:
-            music.set_volume(params.get("level", 50))
-            return f"Volume set to {params.get('level', 50)}%"
+            level = max(0, min(100, int(params.get("level", 50))))
+            music.set_volume(level)
+            # Persist and broadcast so sliders stay in sync
+            from app import _save_setting, socketio
+            _save_setting("volume.music", level)
+            socketio.emit("volume_update", {"category": "music", "level": level})
+            return f"Volume set to {level}%"
 
     def _handle_music_cast(self, params):
         music = self.services.get("music")
