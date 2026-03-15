@@ -3241,8 +3241,13 @@ def api_chat_compact():
 def api_voice_settings():
     """Get voice pipeline settings."""
     if not voice:
-        return jsonify({"error": "Voice pipeline not available"}), 503
-    return jsonify(voice.get_voice_settings())
+        return jsonify({
+            "wake_enabled": False, "silence_threshold": 600,
+            "vad_sensitivity": 1.8, "tts_provider": "auto",
+            "stt_provider": "auto", "wake_variants": [],
+            "available": False
+        })
+    return jsonify({**voice.get_voice_settings(), "available": True})
 
 
 @app.route("/api/voice/settings", methods=["POST"])

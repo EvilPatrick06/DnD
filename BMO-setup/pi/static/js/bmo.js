@@ -24,7 +24,7 @@ function loadPlacesAPI(apiKey) {
   if (_placesLoaded || !apiKey) return;
   _placesLoaded = true;
   const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=_onPlacesReady`;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=_onPlacesReady&loading=async`;
   script.async = true;
   script.onerror = () => console.warn('Failed to load Google Places API');
   document.head.appendChild(script);
