@@ -1047,7 +1047,7 @@ def api_calendar_auth_url():
     """Generate OAuth URL for Google Calendar authorization."""
     try:
         from google_auth_oauthlib.flow import Flow
-        creds_path = os.path.expanduser("~/bmo/config/credentials.json")
+        creds_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "credentials.json")
         flow = Flow.from_client_secrets_file(
             creds_path,
             scopes=["https://www.googleapis.com/auth/calendar"],
@@ -1070,7 +1070,7 @@ def api_calendar_auth_callback():
         return jsonify({"error": "No code provided"}), 400
     try:
         import urllib.parse
-        token_path = os.path.expanduser("~/bmo/config/token.json")
+        token_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "token.json")
 
         # Reuse the flow from auth URL generation (has PKCE code_verifier)
         flow = app.config.get("_cal_auth_flow")

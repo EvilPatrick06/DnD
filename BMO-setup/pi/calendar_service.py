@@ -5,7 +5,7 @@ import os
 import threading
 import time
 
-CONFIG_DIR = os.path.expanduser("~/bmo/config")
+CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 CREDENTIALS_PATH = os.path.join(CONFIG_DIR, "credentials.json")
 TOKEN_PATH = os.path.join(CONFIG_DIR, "token.json")
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
