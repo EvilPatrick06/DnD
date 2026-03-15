@@ -2388,7 +2388,7 @@
         </div>
         <!-- Day headers -->
         <div class="grid grid-cols-7 gap-0.5 text-center">
-          <template x-for="h in ['S','M','T','W','T','F','S']" :key="h">
+          <template x-for="(h, hi) in ['S','M','T','W','T','F','S']" :key="hi">
             <div class="text-xs text-text-dim py-0.5" x-text="h"></div>
           </template>
         </div>
