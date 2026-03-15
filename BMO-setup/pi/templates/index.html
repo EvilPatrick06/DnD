@@ -1313,7 +1313,6 @@
       </div>
 
       <!-- Full-Screen System Status Overlay -->
-      <template x-teleport="body">
         <div x-show="showStatusDetail" x-cloak
              class="fixed inset-0 bg-black/95 z-[9999] flex flex-col overflow-hidden"
              @keydown.escape.window="showStatusDetail = false">
@@ -1429,7 +1428,7 @@
             </template>
           </div>
         </div>
-      </template>
+
 
       <!-- LED Controls -->
       <div class="bg-surface-light rounded-lg p-3">
