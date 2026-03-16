@@ -334,32 +334,74 @@ class AudioOutputService:
         return devices
 
     def bluetooth_pair(self, address: str) -> tuple[bool, str]:
-        """Pair and connect to a Bluetooth device with fresh A2DP negotiation."""
+        """Pair and connect to a Bluetooth device with proper A2DP negotiation.
+
+        Uses a single persistent bluetoothctl session to maintain state during
+        the pair→trust→connect flow, which is required for A2DP transport setup.
+        """
+        import subprocess as _sp
         import time as _t
 
-        _run(["bluetoothctl", "power", "on"])
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
 
-        # Remove stale pairing (required for fresh A2DP transport negotiation)
-        _run(["bluetoothctl", "disconnect", address], timeout=5)
-        _run(["bluetoothctl", "remove", address], timeout=5)
-        _t.sleep(1)
+        try:
+            proc = _sp.Popen(
+                ["bluetoothctl"],
+                stdin=_sp.PIPE, stdout=_sp.PIPE, stderr=_sp.PIPE,
+                text=True, env=env,
+            )
+            # Power on
+            proc.stdin.write("power on\n")
+            proc.stdin.flush()
+            _t.sleep(0.5)
 
-        # Brief scan to re-discover the device
-        _run(["bluetoothctl", "--timeout", "5", "scan", "on"], timeout=8)
-        _t.sleep(1)
+            # Remove stale pairing for fresh A2DP negotiation
+            proc.stdin.write(f"remove {address}\n")
+            proc.stdin.flush()
+            _t.sleep(1)
 
-        rc, out, err = _run(["bluetoothctl", "pair", address], timeout=15)
-        if rc != 0 and "already exists" not in (out + err).lower():
-            return False, f"Pair failed: {err or out}"
+            # Scan to re-discover the device
+            proc.stdin.write("scan on\n")
+            proc.stdin.flush()
+            _t.sleep(8)  # give enough time to discover
 
-        _run(["bluetoothctl", "trust", address], timeout=5)
+            # Pair + trust + connect in the same session
+            proc.stdin.write(f"pair {address}\n")
+            proc.stdin.flush()
+            _t.sleep(5)
 
-        rc, out, err = _run(["bluetoothctl", "connect", address], timeout=15)
-        if rc != 0:
-            return False, f"Connect failed: {err or out}"
+            proc.stdin.write(f"trust {address}\n")
+            proc.stdin.flush()
+            _t.sleep(1)
+
+            proc.stdin.write("scan off\n")
+            proc.stdin.flush()
+            _t.sleep(0.5)
+
+            proc.stdin.write(f"connect {address}\n")
+            proc.stdin.flush()
+            _t.sleep(5)
+
+            proc.stdin.write("quit\n")
+            proc.stdin.flush()
+            out, _ = proc.communicate(timeout=5)
+        except Exception as e:
+            print(f"[bt] Pair session error: {e}")
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            return False, f"Pair failed: {e}"
+
+        # Check for errors in output
+        out_lower = out.lower() if out else ""
+        if "not available" in out_lower and "already exists" not in out_lower:
+            return False, "Device not available — make sure it's nearby and in pairing mode"
 
         # Wait for PipeWire to register the new BT A2DP sink
-        _t.sleep(8)
+        _t.sleep(5)
         for sink in self.list_sinks():
             if address.replace(":", "_").upper() in sink.name.upper() or \
                (sink.description and sink.description not in ("Built-in Audio Digital Stereo (HDMI)", "")):
