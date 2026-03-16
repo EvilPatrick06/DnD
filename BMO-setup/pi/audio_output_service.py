@@ -52,12 +52,63 @@ class AudioOutputService:
 
     def __init__(self):
         self._lock = threading.Lock()
+        self._pw_procs: list[subprocess.Popen] = []
+        self._ensure_pipewire()
         # Per-function device assignments: function -> pw_id
         self._routing: dict[str, int | None] = {}
         # Per-function device descriptions for resolving across reboots
         self._routing_desc: dict[str, str | None] = {}
         self._load_routing()
         self._resolve_and_apply_routing()
+
+    def _ensure_pipewire(self):
+        """Start PipeWire stack if not already running."""
+        import time
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+        env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
+
+        # Check if PipeWire is already running and connectable
+        r = subprocess.run(["wpctl", "status"], capture_output=True, text=True, timeout=5, env=env)
+        if r.returncode == 0 and "Sinks:" in r.stdout:
+            print("[audio] PipeWire already running")
+            return
+
+        # Kill any stale processes and sockets
+        for proc_name in ["pipewire-pulse", "wireplumber", "pipewire"]:
+            subprocess.run(["pkill", "-u", str(os.getuid()), "-x", proc_name],
+                           capture_output=True, timeout=3)
+        time.sleep(1)
+        # Remove stale sockets
+        import glob
+        for f in glob.glob("/run/user/1000/pipewire*"):
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
+        print("[audio] Starting PipeWire stack...")
+        # Start PipeWire
+        pw = subprocess.Popen(["pipewire"], env=env)
+        self._pw_procs.append(pw)
+        time.sleep(3)
+
+        # Start WirePlumber
+        wp = subprocess.Popen(["wireplumber"], env=env)
+        self._pw_procs.append(wp)
+        time.sleep(2)
+
+        # Start PipeWire-Pulse
+        pp = subprocess.Popen(["pipewire-pulse"], env=env)
+        self._pw_procs.append(pp)
+        time.sleep(2)
+
+        # Verify
+        r = subprocess.run(["wpctl", "status"], capture_output=True, text=True, timeout=5, env=env)
+        if r.returncode == 0 and "Sinks:" in r.stdout:
+            print("[audio] PipeWire stack started successfully")
+        else:
+            print(f"[audio] PipeWire stack may not be fully ready: rc={r.returncode}")
 
     # ── Device Enumeration ──────────────────────────────────────────
 
