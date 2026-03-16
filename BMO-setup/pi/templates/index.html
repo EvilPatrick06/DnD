@@ -1312,122 +1312,6 @@
         <p x-show="!systemStatus" class="text-sm text-text-dim">Loading...</p>
       </div>
 
-      <!-- Full-Screen System Status Overlay -->
-        <div x-show="showStatusDetail" x-cloak
-             class="fixed inset-0 bg-black/95 z-[9999] flex flex-col overflow-hidden"
-             @keydown.escape.window="showStatusDetail = false">
-          <!-- Header -->
-          <div class="flex items-center justify-between p-3 bg-surface-dark border-b border-surface shrink-0">
-            <h2 class="text-lg font-bold">📊 System Status</h2>
-            <div class="flex items-center gap-2">
-              <button @click="navigator.clipboard.writeText($refs.statusText.innerText).then(() => { copiedStatus = true; setTimeout(() => copiedStatus = false, 2000) })"
-                      class="px-3 py-1.5 rounded-lg bg-surface text-sm text-text-muted hover:bg-accent/20">
-                <span x-show="!copiedStatus">📋 Copy</span>
-                <span x-show="copiedStatus" class="text-green-400">✓ Copied</span>
-              </button>
-              <button @click="fetchDetailedStatus()" class="px-3 py-1.5 rounded-lg bg-surface text-sm text-accent">↻ Refresh</button>
-              <button @click="showStatusDetail = false" class="px-3 py-1.5 rounded-lg bg-red-900/40 text-sm text-red-400">✕ Close</button>
-            </div>
-          </div>
-          <!-- Status Content -->
-          <div class="flex-1 overflow-y-auto p-3" x-ref="statusText">
-            <template x-if="!detailedStatus">
-              <p class="text-text-dim text-center mt-8">Loading detailed status...</p>
-            </template>
-            <template x-if="detailedStatus">
-              <div class="space-y-4 text-sm font-mono">
-                <!-- Overall -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="w-3 h-3 rounded-full" :class="detailedStatus.overall === 'healthy' ? 'bg-green-500' : detailedStatus.overall === 'warning' ? 'bg-amber-500' : 'bg-red-500'"></span>
-                    <span class="text-base font-bold uppercase" x-text="'OVERALL: ' + detailedStatus.overall"></span>
-                  </div>
-                  <template x-if="detailedStatus.down_services.length > 0">
-                    <p class="text-red-400">DOWN: <span x-text="detailedStatus.down_services.join(', ')"></span></p>
-                  </template>
-                  <template x-if="detailedStatus.degraded_services.length > 0">
-                    <p class="text-amber-400">DEGRADED: <span x-text="detailedStatus.degraded_services.join(', ')"></span></p>
-                  </template>
-                </div>
-
-                <!-- Pi Hardware -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <h3 class="text-base font-bold mb-2 text-accent">⚙️ Hardware</h3>
-                  <template x-if="detailedStatus.pi_stats">
-                    <div class="grid grid-cols-2 gap-1 text-xs">
-                      <div>🌡️ CPU Temp: <span :class="(detailedStatus.pi_stats.cpu_temp || 0) > 70 ? 'text-red-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.cpu_temp || '?') + '°C'"></span></div>
-                      <div>💻 CPU: <span :class="(detailedStatus.pi_stats.cpu_percent || 0) > 80 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.cpu_percent || '?') + '%'"></span></div>
-                      <div>🧠 RAM: <span :class="(detailedStatus.pi_stats.ram_percent || 0) > 80 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.ram_percent || '?') + '%'"></span></div>
-                      <div>💾 Disk: <span :class="(detailedStatus.pi_stats.disk_percent || 0) > 85 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.disk_percent || '?') + '%'"></span></div>
-                    </div>
-                  </template>
-                  <!-- Extra hardware services -->
-                  <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('pi_') || k === 'internet')" :key="name">
-                    <div class="flex items-center gap-2 mt-1 text-xs">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
-                      <span class="text-text-muted w-32 shrink-0" x-text="name"></span>
-                      <span :class="info.status === 'up' ? 'text-green-400' : info.status === 'degraded' ? 'text-amber-400' : 'text-red-400'" x-text="info.message || info.status"></span>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Systemd Services -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <h3 class="text-base font-bold mb-2 text-accent">⚙️ Services</h3>
-                  <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('svc_'))" :key="name">
-                    <div class="flex items-center gap-2 mb-1 text-xs">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
-                      <span class="text-text-muted w-36 shrink-0" x-text="name.replace('svc_', '')"></span>
-                      <span class="uppercase w-12 shrink-0" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
-                      <span class="text-text-dim truncate" x-text="info.message"></span>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Docker Containers -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <h3 class="text-base font-bold mb-2 text-accent">🐳 Docker Containers</h3>
-                  <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('docker_'))" :key="name">
-                    <div class="flex items-center gap-2 mb-1 text-xs">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
-                      <span class="text-text-muted w-36 shrink-0" x-text="name.replace('docker_', '')"></span>
-                      <span class="uppercase w-12 shrink-0" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
-                      <span class="text-text-dim truncate" x-text="info.message"></span>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Cloud APIs -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <h3 class="text-base font-bold mb-2 text-accent">☁️ Cloud APIs</h3>
-                  <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.endsWith('_api') || k === 'ollama_local' || k === 'peerjs' || k === 'pihole' || k.startsWith('pihole_'))" :key="name">
-                    <div class="flex items-center gap-2 mb-1 text-xs">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
-                      <span class="text-text-muted w-36 shrink-0" x-text="name"></span>
-                      <span class="uppercase w-12 shrink-0" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
-                      <span class="text-text-dim" x-text="info.response_time ? info.message + ' (' + info.response_time + 's)' : info.message"></span>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Network -->
-                <div class="bg-surface-light rounded-lg p-3">
-                  <h3 class="text-base font-bold mb-2 text-accent">📡 Network</h3>
-                  <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('net_') || k.startsWith('port_'))" :key="name">
-                    <div class="flex items-center gap-2 mb-1 text-xs">
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
-                      <span class="text-text-muted w-36 shrink-0" x-text="name"></span>
-                      <span :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.message || info.status"></span>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- Timestamp -->
-                <p class="text-xs text-text-dim text-center">Last check interval: <span x-text="detailedStatus.check_interval + 's'"></span> | Data from /api/health/full</p>
-              </div>
-            </template>
-          </div>
-        </div>
 
 
       <!-- LED Controls -->
@@ -2076,6 +1960,164 @@
             class="px-8 py-3 rounded-xl bg-accent text-surface-dark text-sm font-medium hover:bg-accent-light transition-colors mt-2">
       Dismiss
     </button>
+  </div>
+
+  <!-- ═══════ FULL-SCREEN SYSTEM STATUS PAGE ═══════ -->
+  <div x-show="showStatusDetail" x-cloak
+       style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:#0a0a0a;"
+       class="flex flex-col overflow-hidden"
+       @keydown.escape.window="showStatusDetail = false">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 bg-surface-dark border-b border-surface shrink-0">
+      <button @click="showStatusDetail = false" class="flex items-center gap-2 text-accent text-xl font-medium">
+        ← Back
+      </button>
+      <h2 class="text-3xl font-bold">📊 System Status</h2>
+      <div class="flex items-center gap-3">
+        <button @click="navigator.clipboard.writeText($refs.statusText.innerText).then(() => { copiedStatus = true; setTimeout(() => copiedStatus = false, 2000) })"
+                class="px-4 py-2 rounded-lg bg-surface text-lg text-text-muted hover:bg-accent/20">
+          <span x-show="!copiedStatus">📋 Copy All</span>
+          <span x-show="copiedStatus" class="text-green-400">✓ Copied</span>
+        </button>
+        <button @click="fetchDetailedStatus()" class="px-4 py-2 rounded-lg bg-surface text-lg text-accent">↻</button>
+        <button @click="restartAll()" class="px-4 py-2 rounded-lg bg-red-900/40 text-lg text-red-400">🔄 Restart All</button>
+      </div>
+    </div>
+    <!-- Status Content -->
+    <div class="flex-1 overflow-y-auto p-5" x-ref="statusText">
+      <template x-if="!detailedStatus">
+        <p class="text-text-dim text-center mt-8 text-xl">Loading detailed status...</p>
+      </template>
+      <template x-if="detailedStatus">
+        <div class="space-y-5 font-mono max-w-4xl mx-auto" style="zoom:2;">
+          <!-- Overall -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="w-5 h-5 rounded-full" :class="detailedStatus.overall === 'healthy' ? 'bg-green-500' : detailedStatus.overall === 'warning' ? 'bg-amber-500' : 'bg-red-500'"></span>
+              <span class="text-2xl font-bold uppercase" x-text="'OVERALL: ' + detailedStatus.overall"></span>
+            </div>
+            <p class="text-text-muted text-base" x-show="detailedStatus.pi_uptime">🖥️ Pi Uptime: <span class="text-green-400 font-bold" x-text="formatPiUptime(detailedStatus.pi_uptime)"></span></p>
+            <template x-if="detailedStatus.down_services.length > 0">
+              <p class="text-red-400 mt-1 text-base">DOWN: <span x-text="detailedStatus.down_services.join(', ')"></span></p>
+            </template>
+            <template x-if="detailedStatus.degraded_services.length > 0">
+              <p class="text-amber-400 mt-1 text-base">DEGRADED: <span x-text="detailedStatus.degraded_services.join(', ')"></span></p>
+            </template>
+          </div>
+
+          <!-- Pi Hardware -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <h3 class="text-xl font-bold mb-3 text-accent">⚙️ Hardware</h3>
+            <template x-if="detailedStatus.pi_stats">
+              <div class="grid grid-cols-2 gap-3 text-base mb-3">
+                <div>🌡️ CPU Temp: <span :class="(detailedStatus.pi_stats.cpu_temp || 0) > 70 ? 'text-red-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.cpu_temp || '?') + '°C'"></span></div>
+                <div>💻 CPU: <span :class="(detailedStatus.pi_stats.cpu_percent || 0) > 80 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.cpu_percent || '?') + '%'"></span></div>
+                <div>🧠 RAM: <span :class="(detailedStatus.pi_stats.ram_percent || 0) > 80 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.ram_percent || '?') + '%'"></span></div>
+                <div>💾 Disk: <span :class="(detailedStatus.pi_stats.disk_percent || 0) > 85 ? 'text-amber-400' : 'text-green-400'" x-text="(detailedStatus.pi_stats.disk_percent || '?') + '%'"></span></div>
+              </div>
+            </template>
+            <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('pi_') || k === 'internet')" :key="name">
+              <div class="flex items-center gap-2 py-1 text-base">
+                <span class="w-4 h-4 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
+                <span class="text-text-muted w-36 shrink-0" x-text="name"></span>
+                <span :class="info.status === 'up' ? 'text-green-400' : info.status === 'degraded' ? 'text-amber-400' : 'text-red-400'" x-text="info.message || info.status"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Systemd Services -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <h3 class="text-lg font-bold mb-3 text-accent">⚙️ Services</h3>
+            <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('svc_'))" :key="name">
+              <div class="mb-3">
+                <div class="flex items-center gap-2 text-base">
+                  <span class="w-4 h-4 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
+                  <span class="text-text-muted w-44 shrink-0" x-text="name.replace('svc_', '')"></span>
+                  <span class="uppercase w-16 shrink-0 font-bold" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
+                  <span class="text-text-dim flex-1" x-text="info.message"></span>
+                  <button @click="restartService(name.replace('svc_', '').replace('_', '-'))" class="px-3 py-1.5 rounded bg-surface text-base text-accent hover:bg-accent/20 shrink-0">🔄</button>
+                </div>
+                <div x-show="info.started_at" class="ml-8 text-base text-text-dim mt-0.5">
+                  ⏱️ Started: <span x-text="formatTimestamp(info.started_at)"></span>
+                  · Up: <span class="text-green-400" x-text="formatUptime(info.started_at, detailedStatus.server_time)"></span>
+                </div>
+                <template x-if="info.recent_errors && info.recent_errors.length > 0">
+                  <div class="ml-8 mt-1">
+                    <template x-for="(err, i) in info.recent_errors" :key="i">
+                      <div class="text-base text-red-400/80 truncate" x-text="'⚠ ' + err"></div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <!-- Docker Containers -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <h3 class="text-lg font-bold mb-3 text-accent">🐳 Docker Containers</h3>
+            <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('docker_'))" :key="name">
+              <div class="mb-3">
+                <div class="flex items-center gap-2 text-base">
+                  <span class="w-3 h-3 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
+                  <span class="text-text-muted w-44 shrink-0" x-text="name.replace('docker_', '')"></span>
+                  <span class="uppercase w-16 shrink-0 font-bold" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
+                  <span class="text-text-dim flex-1" x-text="info.message"></span>
+                  <button @click="restartService(name.replace('docker_', ''))" class="px-3 py-1.5 rounded bg-surface text-base text-accent hover:bg-accent/20 shrink-0">🔄</button>
+                </div>
+                <div x-show="info.started_at" class="ml-8 text-base text-text-dim mt-0.5">
+                  ⏱️ Started: <span x-text="formatTimestamp(info.started_at)"></span>
+                  · Up: <span class="text-green-400" x-text="formatUptime(info.started_at, detailedStatus.server_time)"></span>
+                </div>
+                <template x-if="info.recent_errors && info.recent_errors.length > 0">
+                  <div class="ml-8 mt-1">
+                    <template x-for="(err, i) in info.recent_errors" :key="i">
+                      <div class="text-base text-red-400/80 truncate" x-text="'⚠ ' + err"></div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <!-- Cloud APIs & Local Services -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <h3 class="text-lg font-bold mb-3 text-accent">☁️ APIs & Local Services</h3>
+            <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.endsWith('_api') || k === 'ollama_local' || k === 'peerjs' || k === 'pihole' || k.startsWith('pihole_') || k === 'google_calendar' || k === 'cloudflared' || k === 'rclone')" :key="name">
+              <div class="mb-3">
+                <div class="flex items-center gap-2 text-base">
+                  <span class="w-4 h-4 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
+                  <span class="text-text-muted w-44 shrink-0" x-text="name"></span>
+                  <span class="uppercase w-16 shrink-0 font-bold" :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.status"></span>
+                  <span class="text-text-dim" x-text="info.response_time ? info.message + ' (' + info.response_time + 's)' : info.message"></span>
+                </div>
+                <template x-if="info.recent_errors && info.recent_errors.length > 0">
+                  <div class="ml-8 mt-1">
+                    <template x-for="(err, i) in info.recent_errors" :key="i">
+                      <div class="text-sm text-red-400/80 truncate" x-text="'⚠ ' + err"></div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <!-- Network -->
+          <div class="bg-surface-light rounded-lg p-5">
+            <h3 class="text-lg font-bold mb-3 text-accent">📡 Network</h3>
+            <template x-for="[name, info] in Object.entries(detailedStatus.services).filter(([k]) => k.startsWith('net_') || k.startsWith('port_'))" :key="name">
+              <div class="flex items-center gap-2 py-1 text-base">
+                <span class="w-4 h-4 rounded-full shrink-0" :class="info.status === 'up' ? 'bg-green-500' : info.status === 'degraded' ? 'bg-amber-500' : info.status === 'down' ? 'bg-red-500' : 'bg-gray-500'"></span>
+                <span class="text-text-muted w-44 shrink-0" x-text="name"></span>
+                <span :class="info.status === 'up' ? 'text-green-400' : info.status === 'down' ? 'text-red-400' : 'text-amber-400'" x-text="info.message || info.status"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Timestamp -->
+          <p class="text-base text-text-dim text-center py-2">Check interval: <span x-text="detailedStatus.check_interval + 's'"></span> | Source: /api/health/full</p>
+        </div>
+      </template>
+    </div>
   </div>
 
   <script src="/static/js/bmo.js"></script>

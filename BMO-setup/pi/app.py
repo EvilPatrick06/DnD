@@ -533,6 +533,65 @@ def api_health_full():
     return jsonify({"overall": "unknown", "services": {}, "pi_stats": {}})
 
 
+@app.route("/api/service/restart", methods=["POST"])
+def api_service_restart():
+    """Restart a single service or Docker container."""
+    import subprocess
+    data = request.get_json() or {}
+    target = data.get("target", "")
+    if not target:
+        return jsonify({"error": "Missing target"}), 400
+
+    # Allowed systemd services
+    allowed_svcs = ["bmo", "bmo-dm-bot", "bmo-social-bot", "bmo-kiosk", "bmo-fan", "cloudflared"]
+    # Allowed Docker containers
+    allowed_docker = ["bmo-pihole", "bmo-ollama", "bmo-coturn", "bmo-peerjs"]
+
+    try:
+        if target in allowed_svcs:
+            result = subprocess.run(
+                ["sudo", "systemctl", "restart", f"{target}.service"],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode == 0:
+                return jsonify({"ok": True, "message": f"{target} restarted"})
+            return jsonify({"ok": False, "message": result.stderr.strip()}), 500
+        elif target in allowed_docker:
+            result = subprocess.run(
+                ["docker", "restart", target],
+                capture_output=True, text=True, timeout=30,
+            )
+            if result.returncode == 0:
+                return jsonify({"ok": True, "message": f"{target} restarted"})
+            return jsonify({"ok": False, "message": result.stderr.strip()}), 500
+        else:
+            return jsonify({"error": f"Unknown target: {target}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/service/restart-all", methods=["POST"])
+def api_service_restart_all():
+    """Restart all services and Docker containers."""
+    import subprocess
+    results = {}
+    for svc in ["bmo", "bmo-dm-bot", "bmo-social-bot", "bmo-kiosk", "bmo-fan"]:
+        try:
+            r = subprocess.run(["sudo", "systemctl", "restart", f"{svc}.service"],
+                               capture_output=True, text=True, timeout=15)
+            results[svc] = "ok" if r.returncode == 0 else r.stderr.strip()
+        except Exception as e:
+            results[svc] = str(e)
+    for c in ["bmo-pihole", "bmo-ollama", "bmo-coturn", "bmo-peerjs"]:
+        try:
+            r = subprocess.run(["docker", "restart", c],
+                               capture_output=True, text=True, timeout=30)
+            results[c] = "ok" if r.returncode == 0 else r.stderr.strip()
+        except Exception as e:
+            results[c] = str(e)
+    return jsonify({"ok": True, "results": results})
+
+
 @app.route("/api/status/summary")
 def api_status_summary():
     """Human-readable status summary for TTS and voice queries."""
@@ -1685,7 +1744,8 @@ def api_audio_bt_pair():
     """Pair + connect Bluetooth device. Body: {address: "XX:XX:..."}."""
     if not audio_service:
         return jsonify({"error": "Audio service not available"}), 503
-    address = (request.json or {}).get("address")
+    data = request.get_json(force=True, silent=True) or {}
+    address = data.get("address")
     if not address:
         return jsonify({"error": "address required"}), 400
     ok, msg = audio_service.bluetooth_pair(address)
@@ -1697,7 +1757,8 @@ def api_audio_bt_disconnect():
     """Disconnect a Bluetooth device. Body: {address: "XX:XX:..."}."""
     if not audio_service:
         return jsonify({"error": "Audio service not available"}), 503
-    address = (request.json or {}).get("address")
+    data = request.get_json(force=True, silent=True) or {}
+    address = data.get("address")
     if not address:
         return jsonify({"error": "address required"}), 400
     ok, msg = audio_service.bluetooth_disconnect(address)
@@ -2467,12 +2528,12 @@ TV_KEYS = {
 }
 
 TV_APPS = {
-    "youtube": "com.google.android.youtube.tv",
-    "netflix": "com.netflix.ninja",
+    "youtube": "market://launch?id=com.google.android.youtube.tv",
+    "netflix": "market://launch?id=com.netflix.ninja",
     "prime": "https://app.primevideo.com",
-    "crunchyroll": "com.crunchyroll.crunchyroid",
-    "twitch": "tv.twitch.android.app",
-    "plex": "com.plexapp.android",
+    "crunchyroll": "market://launch?id=com.crunchyroll.crunchyroid",
+    "twitch": "market://launch?id=tv.twitch.android.app",
+    "plex": "market://launch?id=com.plexapp.android",
 }
 
 

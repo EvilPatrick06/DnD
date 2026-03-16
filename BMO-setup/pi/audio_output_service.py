@@ -337,8 +337,17 @@ class AudioOutputService:
         """Pair and connect to a Bluetooth device."""
         _run(["bluetoothctl", "power", "on"])
 
-        rc, _, err = _run(["bluetoothctl", "pair", address], timeout=15)
-        if rc != 0 and "already exists" not in err.lower():
+        # Disconnect first if already connected (stale connection without audio sink)
+        _run(["bluetoothctl", "disconnect", address], timeout=5)
+        import time as _t
+        _t.sleep(1)
+
+        # Restart WirePlumber so BT audio module picks up the new connection cleanly
+        _run(["systemctl", "--user", "restart", "wireplumber"], timeout=10)
+        _t.sleep(2)
+
+        rc, out, err = _run(["bluetoothctl", "pair", address], timeout=15)
+        if rc != 0 and "already exists" not in (out + err).lower():
             return False, f"Pair failed: {err}"
 
         rc, _, err = _run(["bluetoothctl", "trust", address], timeout=5)
@@ -349,14 +358,12 @@ class AudioOutputService:
         if rc != 0:
             return False, f"Connect failed: {err}"
 
-        # Auto-set BT device as default audio sink after connect
-        import time as _t
-        _t.sleep(3)  # wait for PipeWire to register the new BT sink
+        # Wait for PipeWire/WirePlumber to register the new BT sink
+        _t.sleep(5)
         for sink in self.list_sinks():
             if address.replace(":", "_").upper() in sink.name.upper() or \
                (sink.description and sink.description != "Built-in Audio Digital Stereo (HDMI)"):
-                # Found the BT sink — check it's new (not HDMI)
-                if "bluez" in sink.name.lower() or sink.pw_id != self.get_default_sink().pw_id:
+                if "bluez" in sink.name.lower() or sink.pw_id != (self.get_default_sink() or sink).pw_id:
                     self.set_default_output(sink.pw_id)
                     print(f"[audio] Auto-set BT device {sink.description} as default")
                     break

@@ -8,6 +8,17 @@ window.addEventListener('error', (e) => {
     body: JSON.stringify({ msg: e.message, file: e.filename, line: e.lineno, col: e.colno, stack: e.error?.stack }),
   }).catch(() => {});
 });
+
+// Auto-reload when returning to page (tab switch, phone→PC, etc.)
+let _bmoHiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _bmoHiddenAt = Date.now();
+  } else if (_bmoHiddenAt && (Date.now() - _bmoHiddenAt) > 30000) {
+    // Page was hidden for >30s — reload for fresh data
+    location.reload();
+  }
+});
 window.addEventListener('unhandledrejection', (e) => {
   fetch('/api/ide/js-error', {
     method: 'POST',
@@ -2752,6 +2763,81 @@ function bmo() {
         const res = await fetch('/api/health/full');
         if (res.ok) this.detailedStatus = await res.json();
       } catch {}
+    },
+
+    formatUptime(startedAt, serverTime) {
+      if (!startedAt || !serverTime) return '';
+      const secs = Math.max(0, serverTime - startedAt);
+      const d = Math.floor(secs / 86400);
+      const h = Math.floor((secs % 86400) / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      if (d > 0) return `${d}d ${h}h ${m}m`;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
+    },
+
+    formatTimestamp(epoch) {
+      if (!epoch) return '';
+      const d = new Date(epoch * 1000);
+      return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+    },
+
+    formatPiUptime(secs) {
+      if (!secs) return '?';
+      const d = Math.floor(secs / 86400);
+      const h = Math.floor((secs % 86400) / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      if (d > 0) return `${d}d ${h}h ${m}m`;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
+    },
+
+    async restartService(target) {
+      if (!confirm(`Restart ${target}?`)) return;
+      try {
+        const res = await fetch('/api/service/restart', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({target}),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert(`✅ ${target} restarted`);
+          setTimeout(() => this.fetchDetailedStatus(), 3000);
+        } else {
+          alert(`❌ Failed: ${data.message || data.error}`);
+        }
+      } catch (e) {
+        // If we restarted BMO itself, the server goes down — that's expected
+        if (target === 'bmo') {
+          alert('🔄 BMO is restarting... page will reload in 5 seconds.');
+          setTimeout(() => location.reload(), 5000);
+        } else {
+          alert('❌ Restart failed: ' + e.message);
+        }
+      }
+    },
+
+    async restartAll() {
+      if (!confirm('Restart ALL services and containers? This will briefly interrupt everything.')) return;
+      try {
+        const res = await fetch('/api/service/restart-all', {method: 'POST'});
+        const data = await res.json();
+        if (data.ok) {
+          let msg = '✅ Restart results:\n';
+          for (const [k, v] of Object.entries(data.results)) {
+            msg += `  ${k}: ${v}\n`;
+          }
+          alert(msg);
+          // BMO restarts itself so page will need a reload
+          alert('🔄 BMO is restarting... page will reload in 8 seconds.');
+          setTimeout(() => location.reload(), 8000);
+        }
+      } catch (e) {
+        // Expected — BMO killed itself mid-restart
+        alert('🔄 All services restarting... page will reload in 8 seconds.');
+        setTimeout(() => location.reload(), 8000);
+      }
     },
 
     // ── Voice Settings (Phase 6) ────────────────────────────

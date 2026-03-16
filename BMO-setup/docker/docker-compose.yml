@@ -36,7 +36,9 @@ services:
       - "9000:9000"
     working_dir: /app
     command: >
-      sh -c "npm install peer 2>/dev/null && npx peerjs --port 9000 --path /myapp"
+      sh -c "[ -d /app/node_modules/peer ] || npm install --loglevel=error peer && npx peerjs --port 9000 --path /myapp"
+    environment:
+      NODE_NO_WARNINGS: "1"
     deploy:
       resources:
         limits:

@@ -37,7 +37,12 @@ DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 FISH_AUDIO_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "")
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 PIHOLE_API_PASSWORD = os.environ.get("PIHOLE_API_PASSWORD", "bmo-ads-begone")
+
+# Calendar token path
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CALENDAR_TOKEN_PATH = os.path.join(_SCRIPT_DIR, "config", "token.json")
 
 # Health check targets: service name → config
 HEALTH_CHECKS = {
@@ -65,6 +70,11 @@ CLOUD_HEALTH_CHECKS = {
         "timeout": 5,
         "headers": {"Authorization": f"Bearer {FISH_AUDIO_API_KEY}"},
         "enabled": bool(FISH_AUDIO_API_KEY),
+    },
+    "google_maps_api": {
+        "url": f"https://maps.googleapis.com/maps/api/geocode/json?address=test&key={GOOGLE_MAPS_API_KEY}",
+        "timeout": 5,
+        "enabled": bool(GOOGLE_MAPS_API_KEY),
     },
 }
 
@@ -375,6 +385,15 @@ class HealthChecker:
         # Check Pi power supply / throttle status
         self._check_pi_power()
 
+        # Check Google Calendar token
+        self._check_calendar_token()
+
+        # Check Cloudflare Tunnel
+        self._check_cloudflared()
+
+        # Check rclone remotes
+        self._check_rclone()
+
         # Detect state transitions and emit recovery events
         self._process_state_transitions()
 
@@ -413,6 +432,10 @@ class HealthChecker:
         "pi_disk": "💾 Disk usage",
         "pi_power": "⚡ Power supply",
         "pi_resources": "📊 Pi resources",
+        "google_maps_api": "🗺️ Google Maps API",
+        "google_calendar": "📅 Google Calendar",
+        "cloudflared": "🌐 Cloudflare Tunnel",
+        "rclone": "☁️ Rclone (Google Drive)",
     }
 
     def _service_label(self, name: str) -> str:
@@ -662,11 +685,30 @@ class HealthChecker:
                 info = json.loads(result.stdout.strip())
                 if info.get("running"):
                     status_msg = f"Running (restarts: {info.get('restarts', 0)})"
+                    # Get container start time
+                    started_at = None
+                    try:
+                        ts_result = subprocess.run(
+                            ["docker", "inspect", "--format", "{{.State.StartedAt}}", name],
+                            capture_output=True, text=True, timeout=3,
+                        )
+                        ts_str = ts_result.stdout.strip()
+                        if ts_str:
+                            from datetime import datetime, timezone
+                            # Docker uses ISO 8601 in UTC with nanoseconds
+                            ts_str = ts_str.split(".")[0]  # strip nanoseconds
+                            dt = datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S")
+                            # Mark as UTC, then convert to epoch
+                            dt = dt.replace(tzinfo=timezone.utc)
+                            started_at = dt.timestamp()
+                    except Exception:
+                        pass
                     self._service_status[f"docker_{name}"] = {
                         "status": "up",
                         "last_check": time.time(),
                         "message": status_msg,
                         "response_time": None,
+                        "started_at": started_at,
                     }
                     restarts = info.get("restarts", 0)
                     if restarts > 5:
@@ -888,10 +930,25 @@ class HealthChecker:
                     capture_output=True, text=True, timeout=5,
                 )
                 state = result.stdout.strip()
+                # Get service start time
+                started_at = None
+                try:
+                    ts_result = subprocess.run(
+                        ["systemctl", "show", f"{svc}.service", "--property=ActiveEnterTimestamp"],
+                        capture_output=True, text=True, timeout=3,
+                    )
+                    ts_str = ts_result.stdout.strip().split("=", 1)[-1].strip()
+                    if ts_str:
+                        from datetime import datetime
+                        dt = datetime.strptime(ts_str, "%a %Y-%m-%d %H:%M:%S %Z")
+                        started_at = dt.timestamp()
+                except Exception:
+                    pass
                 if state == "active":
                     self._service_status[key] = {
                         "status": "up", "last_check": now,
                         "message": "Running", "response_time": None,
+                        "started_at": started_at,
                     }
                 else:
                     self._service_status[key] = {
@@ -1165,6 +1222,121 @@ class HealthChecker:
                 "throttle_flags": hex(throttle_flags),
             }
 
+    # ── Google Calendar Token Check ───────────────────────────────────
+
+    def _check_calendar_token(self):
+        """Check if Google Calendar OAuth token is present and valid."""
+        now = time.time()
+        try:
+            if not os.path.exists(CALENDAR_TOKEN_PATH):
+                self._service_status["google_calendar"] = {
+                    "status": "down", "last_check": now,
+                    "message": "token.json missing — run authorize_calendar.py",
+                    "response_time": None,
+                }
+                self._emit_alert(
+                    Severity.WARNING, "google_calendar",
+                    "📅 Google Calendar token missing — calendar features won't work",
+                )
+                return
+
+            # Check token age and validity
+            stat = os.stat(CALENDAR_TOKEN_PATH)
+            age_days = (now - stat.st_mtime) / 86400
+
+            # Try to parse token to check expiry
+            try:
+                with open(CALENDAR_TOKEN_PATH) as f:
+                    token_data = json.load(f)
+                expiry = token_data.get("expiry", "")
+                if expiry:
+                    from datetime import datetime
+                    exp_dt = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+                    if exp_dt.timestamp() < now:
+                        self._service_status["google_calendar"] = {
+                            "status": "degraded", "last_check": now,
+                            "message": f"Token expired — auto-refresh should handle this",
+                            "response_time": None,
+                        }
+                        return
+            except Exception:
+                pass
+
+            self._service_status["google_calendar"] = {
+                "status": "up", "last_check": now,
+                "message": f"Token OK (modified {age_days:.0f}d ago)",
+                "response_time": None,
+            }
+        except Exception as e:
+            self._service_status["google_calendar"] = {
+                "status": "unknown", "last_check": now,
+                "message": str(e), "response_time": None,
+            }
+
+    # ── Cloudflare Tunnel Check ───────────────────────────────────────
+
+    def _check_cloudflared(self):
+        """Check if cloudflared tunnel service is running."""
+        import subprocess
+        now = time.time()
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "cloudflared.service"],
+                capture_output=True, text=True, timeout=5,
+            )
+            state = result.stdout.strip()
+            if state == "active":
+                self._service_status["cloudflared"] = {
+                    "status": "up", "last_check": now,
+                    "message": "Tunnel active", "response_time": None,
+                }
+            else:
+                self._service_status["cloudflared"] = {
+                    "status": "down", "last_check": now,
+                    "message": f"State: {state}", "response_time": None,
+                }
+        except Exception as e:
+            self._service_status["cloudflared"] = {
+                "status": "unknown", "last_check": now,
+                "message": str(e), "response_time": None,
+            }
+
+    # ── Rclone Check ─────────────────────────────────────────────────
+
+    def _check_rclone(self):
+        """Check if rclone is configured with remotes."""
+        import subprocess
+        now = time.time()
+        try:
+            result = subprocess.run(
+                ["rclone", "listremotes"],
+                capture_output=True, text=True, timeout=5,
+            )
+            remotes = [r.strip() for r in result.stdout.strip().split("\n") if r.strip()]
+            if remotes:
+                self._service_status["rclone"] = {
+                    "status": "up", "last_check": now,
+                    "message": f"{len(remotes)} remote(s): {', '.join(remotes)}",
+                    "response_time": None,
+                }
+            else:
+                self._service_status["rclone"] = {
+                    "status": "down", "last_check": now,
+                    "message": "No remotes configured",
+                    "response_time": None,
+                }
+        except FileNotFoundError:
+            self._service_status["rclone"] = {
+                "status": "down", "last_check": now,
+                "message": "rclone not installed",
+                "response_time": None,
+            }
+        except Exception as e:
+            self._service_status["rclone"] = {
+                "status": "unknown", "last_check": now,
+                "message": str(e), "response_time": None,
+            }
+
     # ── State Transition Detection ───────────────────────────────────
 
     def _process_state_transitions(self):
@@ -1259,7 +1431,43 @@ class HealthChecker:
                 entry["stats"] = info["stats"]
             if "throttle_flags" in info:
                 entry["throttle_flags"] = info["throttle_flags"]
+            if "started_at" in info:
+                entry["started_at"] = info["started_at"]
             services[name] = entry
+
+        # Collect recent errors for services and containers
+        import subprocess
+        for name in list(services.keys()):
+            errors = []
+            try:
+                if name.startswith("svc_"):
+                    svc = name[4:].replace("_", "-")
+                    r = subprocess.run(
+                        ["journalctl", "-u", f"{svc}.service", "--no-pager",
+                         "-n", "50", "--since", "-1h", "-p", "err"],
+                        capture_output=True, text=True, timeout=5,
+                    )
+                    lines = [l.strip() for l in r.stdout.strip().split("\n")
+                             if l.strip() and "-- No entries --" not in l
+                             and not l.startswith("--")]
+                    errors = lines[-3:] if lines else []
+                elif name.startswith("docker_"):
+                    container = name[7:]
+                    r = subprocess.run(
+                        ["docker", "logs", "--tail", "20", "--since", "1h", container],
+                        capture_output=True, text=True, timeout=5,
+                    )
+                    combined = r.stdout + r.stderr
+                    err_lines = [l.strip() for l in combined.split("\n")
+                                 if any(w in l.lower() for w in ["error", "fail", "traceback", "exception", "critical"])
+                                 and "npm warn" not in l.lower()
+                                 and "deprecated" not in l.lower()
+                                 and "info" not in l.lower().split()[0:1]]
+                    errors = err_lines[-3:] if err_lines else []
+            except Exception:
+                pass
+            if errors:
+                services[name]["recent_errors"] = errors
 
         pi_stats = get_pi_stats()
 
@@ -1279,6 +1487,14 @@ class HealthChecker:
         elif degraded_services:
             overall = "warning"
 
+        # Get Pi uptime
+        pi_uptime = None
+        try:
+            with open("/proc/uptime") as f:
+                pi_uptime = float(f.read().split()[0])
+        except Exception:
+            pass
+
         return {
             "overall": overall,
             "down_services": down_services,
@@ -1286,6 +1502,8 @@ class HealthChecker:
             "services": services,
             "pi_stats": pi_stats,
             "check_interval": self.check_interval,
+            "pi_uptime": pi_uptime,
+            "server_time": time.time(),
         }
 
     # ── Manual Alert Injection ───────────────────────────────────────
