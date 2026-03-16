@@ -520,6 +520,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/ide")
+def ide_page():
+    """Serve the IDE as a full-page standalone app."""
+    return render_template("ide.html")
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})

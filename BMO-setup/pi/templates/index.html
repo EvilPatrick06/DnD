@@ -857,30 +857,10 @@
       </div>
       </div><!-- /relative container -->
     </div>
-    <!-- IDE Tab -->
-    <div x-show="tab === 'ide'"
-         :class="swipeDirection === 'left' ? 'tab-slide-enter-left' : swipeDirection === 'right' ? 'tab-slide-enter-right' : ''"
-         class="h-full flex flex-col items-center justify-center p-6">
-      <div class="text-center max-w-md">
-        <div class="text-6xl mb-4">🚧</div>
-        <h2 class="text-2xl font-bold text-accent mb-2">Under Construction</h2>
-        <p class="text-text-muted text-sm mb-4">The IDE is being completely rebuilt from scratch with a fresh architecture.</p>
-        <div class="bg-surface-light rounded-xl p-4 text-left space-y-2">
-          <div class="flex items-center gap-2 text-sm text-text-muted">
-            <span class="text-green-400">✓</span> Monaco Editor
-          </div>
-          <div class="flex items-center gap-2 text-sm text-text-muted">
-            <span class="text-green-400">✓</span> Golden Layout v2
-          </div>
-          <div class="flex items-center gap-2 text-sm text-text-muted">
-            <span class="text-green-400">✓</span> Cross-device terminals
-          </div>
-          <div class="flex items-center gap-2 text-sm text-text-muted">
-            <span class="text-green-400">✓</span> Agent system
-          </div>
-        </div>
-        <p class="text-text-dim text-xs mt-4">New IDE available at <span class="text-accent">port 5001</span> when ready</p>
-      </div>
+    <!-- IDE Tab — navigates to full-screen IDE page -->
+    <div x-show="tab === 'ide'" x-init="$watch('tab', v => { if(v === 'ide') window.location.href = '/ide'; })"
+         class="h-full flex flex-col items-center justify-center">
+      <p class="text-text-muted">Redirecting to IDE...</p>
     </div>
 
     <!-- Calendar Tab -->
@@ -1800,7 +1780,7 @@
   <!-- Bottom Tab Bar -->
   <nav class="h-[60px] shrink-0 bg-surface border-t border-surface-light flex overflow-x-auto z-10 relative">
     <template x-for="t in tabs" :key="t.id">
-      <button @click="tab = t.id" class="flex-1 min-w-[70px] flex flex-col items-center justify-center gap-0.5 transition-colors"
+      <button @click="if(t.id === 'ide') { window.location.href = '/ide'; return; } tab = t.id" class="flex-1 min-w-[70px] flex flex-col items-center justify-center gap-0.5 transition-colors"
               :class="tab === t.id ? 'text-accent' : 'text-text-dim'">
         <span class="text-2xl" x-text="t.icon"></span>
         <span class="text-[11px] font-medium" x-text="t.label"></span>
