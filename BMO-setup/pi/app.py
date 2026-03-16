@@ -2528,12 +2528,12 @@ TV_KEYS = {
 }
 
 TV_APPS = {
-    "youtube": "market://launch?id=com.google.android.youtube.tv",
-    "netflix": "market://launch?id=com.netflix.ninja",
+    "youtube": "vnd.youtube://",
+    "netflix": "netflix://",
     "prime": "https://app.primevideo.com",
-    "crunchyroll": "market://launch?id=com.crunchyroll.crunchyroid",
-    "twitch": "market://launch?id=tv.twitch.android.app",
-    "plex": "market://launch?id=com.plexapp.android",
+    "crunchyroll": "crunchyroll://",
+    "twitch": "twitch://",
+    "plex": "plex://",
 }
 
 
