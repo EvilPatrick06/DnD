@@ -209,8 +209,11 @@ def init_services():
 
     # Start background services that loaded successfully
     if smart_home:
-        print("[bmo]   Starting smart home discovery...")
-        smart_home.start_discovery()
+        # Chromecast discovery disabled at boot — zeroconf ServiceBrowser
+        # crashes repeatedly and disrupts PipeWire/Bluetooth audio.
+        # Discovery runs lazily on first Cast API call instead.
+        # smart_home.start_discovery()
+        print("[bmo]   Smart home: ready (discovery on-demand)")
     if calendar:
         calendar.start_polling()
     if weather:
@@ -1930,14 +1933,14 @@ def _save_setting(key: str, value):
         os.makedirs(os.path.dirname(settings_path), exist_ok=True)
         settings = {}
         if os.path.exists(settings_path):
-            with open(settings_path, "r") as f:
+            with open(settings_path, "r", encoding="utf-8") as f:
                 settings = json.load(f)
         parts = key.split(".")
         obj = settings
         for part in parts[:-1]:
             obj = obj.setdefault(part, {})
         obj[parts[-1]] = value
-        with open(settings_path, "w") as f:
+        with open(settings_path, "w", encoding="utf-8") as f:
             json.dump(settings, f, indent=2)
     except Exception as e:
         print(f"[settings] Save failed for {key}: {e}")
@@ -2069,15 +2072,21 @@ def _load_recent_chat() -> list[dict]:
     return []
 
 
+_chat_lock = threading.Lock()
+
 def _save_recent_message(msg: dict):
     """Append a message to the recent chat buffer (rolling, all chats)."""
-    messages = _load_recent_chat()
-    messages.append(msg)
-    if len(messages) > _MAX_RECENT:
-        messages = messages[-_MAX_RECENT:]
-    os.makedirs(os.path.dirname(RECENT_CHAT_FILE), exist_ok=True)
-    with open(RECENT_CHAT_FILE, "w", encoding="utf-8") as f:
-        json.dump(messages, f, ensure_ascii=False)
+    with _chat_lock:
+        try:
+            messages = _load_recent_chat()
+            messages.append(msg)
+            if len(messages) > _MAX_RECENT:
+                messages = messages[-_MAX_RECENT:]
+            os.makedirs(os.path.dirname(RECENT_CHAT_FILE), exist_ok=True)
+            with open(RECENT_CHAT_FILE, "w", encoding="utf-8") as f:
+                json.dump(messages, f, ensure_ascii=False)
+        except Exception as e:
+            print(f"[chat] Failed to save recent chat: {e}")
 
 
 def _save_dnd_message(msg: dict):
@@ -2231,7 +2240,7 @@ def _load_notes():
     global _notes_list
     try:
         if os.path.exists(NOTES_FILE):
-            with open(NOTES_FILE) as f:
+            with open(NOTES_FILE, "r", encoding="utf-8") as f:
                 _notes_list = json.load(f)
     except Exception:
         _notes_list = []
@@ -2239,8 +2248,8 @@ def _load_notes():
 
 def _save_notes():
     os.makedirs(os.path.dirname(NOTES_FILE), exist_ok=True)
-    with open(NOTES_FILE, "w") as f:
-        json.dump(_notes_list, f)
+    with open(NOTES_FILE, "w", encoding="utf-8") as f:
+        json.dump(_notes_list, f, ensure_ascii=False)
 
 
 @app.route("/api/notes")
@@ -3623,21 +3632,33 @@ _current_running_job_id = None
 _IDE_JOBS_FILE = os.path.expanduser("~/bmo/data/ide_jobs.json")
 
 
+_ide_jobs_lock = threading.Lock()
+
 def _save_ide_jobs():
     """Persist IDE jobs to disk, keeping only the last 50."""
-    try:
-        os.makedirs(os.path.dirname(_IDE_JOBS_FILE), exist_ok=True)
-        serializable = {}
-        items = list(_ide_jobs.items())
-        # Keep last 50
-        if len(items) > 50:
-            items = items[-50:]
-        for jid, job in items:
-            serializable[jid] = {k: v for k, v in job.items() if not k.startswith("_")}
-        with open(_IDE_JOBS_FILE, "w") as f:
-            json.dump(serializable, f)
-    except Exception:
-        pass
+    with _ide_jobs_lock:
+        try:
+            os.makedirs(os.path.dirname(_IDE_JOBS_FILE), exist_ok=True)
+            serializable = {}
+            items = list(_ide_jobs.items())
+            # Keep last 50
+            if len(items) > 50:
+                items = items[-50:]
+            for jid, job in items:
+                # Shallow copy of the job keys
+                s_job = {k: v for k, v in job.items() if not k.startswith("_")}
+                # Make shallow copies of lists to avoid iteration errors during json.dump
+                if "messages" in s_job:
+                    s_job["messages"] = list(s_job["messages"])
+                if "activity_log" in s_job:
+                    s_job["activity_log"] = list(s_job["activity_log"])
+                if "files_touched" in s_job:
+                    s_job["files_touched"] = list(s_job["files_touched"])
+                serializable[jid] = s_job
+            with open(_IDE_JOBS_FILE, "w", encoding="utf-8") as f:
+                json.dump(serializable, f, ensure_ascii=False)
+        except Exception as e:
+            print(f"[ide] Failed to save jobs: {e}")
 
 
 def _load_ide_jobs():
@@ -3645,7 +3666,7 @@ def _load_ide_jobs():
     global _ide_job_counter
     try:
         if os.path.exists(_IDE_JOBS_FILE):
-            with open(_IDE_JOBS_FILE, "r") as f:
+            with open(_IDE_JOBS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
             for jid, job in data.items():
                 # Don't restore running jobs — they're dead
@@ -3798,7 +3819,7 @@ def api_ide_file_create():
             os.makedirs(path, exist_ok=True)
         else:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 pass
         return jsonify({"success": True, "path": path})
     except Exception as e:
@@ -3980,6 +4001,72 @@ def api_ide_git_branches():
     return jsonify({"branches": branches, "current": current})
 
 
+@app.route("/api/ide/git/push", methods=["POST"])
+def api_ide_git_push():
+    """Push to remote."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command("push", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/pull", methods=["POST"])
+def api_ide_git_pull():
+    """Pull from remote."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command("pull", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/fetch", methods=["POST"])
+def api_ide_git_fetch():
+    """Fetch from remote."""
+    data = request.json or {}
+    from dev_tools import git_command
+    return jsonify(git_command("fetch --all", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/stash", methods=["POST"])
+def api_ide_git_stash():
+    """Stash operations: save, pop, list."""
+    data = request.json or {}
+    action = data.get("action", "save")
+    from dev_tools import git_command
+    if action == "save":
+        msg = data.get("message", "")
+        cmd = f'stash push -m "{msg}"' if msg else "stash push"
+    elif action == "pop":
+        cmd = "stash pop"
+    elif action == "list":
+        cmd = "stash list"
+    elif action == "drop":
+        cmd = f"stash drop {data.get('index', 0)}"
+    else:
+        return jsonify({"error": "Invalid action"}), 400
+    return jsonify(git_command(cmd, data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/branch/create", methods=["POST"])
+def api_ide_git_branch_create():
+    """Create and switch to a new branch."""
+    data = request.json or {}
+    name = data.get("name", "")
+    if not name:
+        return jsonify({"error": "Branch name required"}), 400
+    from dev_tools import git_command
+    return jsonify(git_command(f"checkout -b {name}", data.get("repo", "~")))
+
+
+@app.route("/api/ide/git/branch/delete", methods=["POST"])
+def api_ide_git_branch_delete():
+    """Delete a branch."""
+    data = request.json or {}
+    name = data.get("name", "")
+    if not name:
+        return jsonify({"error": "Branch name required"}), 400
+    from dev_tools import git_command
+    return jsonify(git_command(f"branch -d {name}", data.get("repo", "~")))
+
+
 # ── IDE Agent Jobs API ───────────────────────────────────────────────
 
 @app.route("/api/ide/jobs", methods=["GET"])
@@ -3993,6 +4080,7 @@ def api_ide_jobs_list():
             "id": jid,
             "task": job.get("task", ""),
             "status": job.get("status", "pending"),
+            "mode": job.get("mode", "normal"),
             "files_touched": job.get("files_touched", []),
             "created": job.get("created", 0),
             "agent_name": job.get("agent_name", "code"),
@@ -4017,15 +4105,18 @@ def api_ide_jobs_create():
     _ide_job_counter += 1
     job_id = f"ide-job-{_ide_job_counter}"
     agent_name = data.get("agent") or "code"
+    job_mode = data.get("mode", "normal")
     _ide_jobs[job_id] = {
         "task": task,
         "status": "running",
+        "mode": job_mode,
         "auto_approve": auto_approve,
         "files_touched": [],
         "created": time.time(),
         "agent_name": agent_name,
         "custom_name": None,
         "messages": [{"role": "user", "text": task, "ts": time.time()}],
+        "activity_log": [],
         "archived": False,
         "_cancel": threading.Event(),
     }
@@ -4035,30 +4126,181 @@ def api_ide_jobs_create():
     def _run_job():
         global _current_running_job_id
         _current_running_job_id = job_id
+
+        def _emit_activity(activity_type, content, **extra):
+            """Emit a structured activity event for the IDE job chat."""
+            entry = {"type": activity_type, "content": content, "ts": time.time(), **extra}
+            _ide_jobs[job_id]["activity_log"].append(entry)
+            payload = {"id": job_id, **entry}
+            socketio.emit("ide_job_activity", payload)
+
+        # Capture stdout/stderr to stream all agent output live
+        # Thread-local: only capture output from the job thread
+        _job_thread_id = threading.current_thread().ident
+
+        class _IdeJobWriter:
+            """Intercepts print() from job thread and streams to IDE chat."""
+            def __init__(self, original, stream_name="stdout"):
+                self._original = original
+                self._stream_name = stream_name
+
+            def write(self, text):
+                self._original.write(text)
+                # Only capture output from the job thread, not voice/timer/etc.
+                if text.strip() and threading.current_thread().ident == _job_thread_id:
+                    _emit_activity("log", text.rstrip("\n"))
+                return len(text)
+
+            def flush(self):
+                self._original.flush()
+
+            def __getattr__(self, name):
+                return getattr(self._original, name)
+
+        import sys as _sys
+        _old_stdout = _sys.stdout
+        _old_stderr = _sys.stderr
+        _sys.stdout = _IdeJobWriter(_old_stdout, "stdout")
+        _sys.stderr = _IdeJobWriter(_old_stderr, "stderr")
+
         try:
             resolved_agent = data.get("agent") or "code"
-            model = data.get("model")
+            model_tier = data.get("model")
+            job_mode = _ide_jobs[job_id].get("mode", "normal")
             _ide_jobs[job_id]["agent_name"] = resolved_agent
             socketio.emit("ide_job_agent", {"id": job_id, "agent": resolved_agent})
-            socketio.emit("ide_job_progress", {"id": job_id, "text": f"Routing to {resolved_agent} agent...", "chunk": ""})
-            # Use streaming to show progress
-            chunks = []
-            for chunk in agent.chat_stream(task, speaker="ide"):
-                if _ide_jobs[job_id]["_cancel"].is_set():
-                    break
-                chunks.append(chunk)
-                # Show a preview of the response as it streams
-                preview = "".join(chunks)[-200:]
-                socketio.emit("ide_job_progress", {"id": job_id, "text": preview, "chunk": chunk})
-            full_text = "".join(chunks)
+            _emit_activity("status", f"Using {resolved_agent} agent (mode: {job_mode})")
+
+            # ── Mode-dependent agent execution ──────────────────────────
+            # Autopilot: auto-continue up to MAX turns, no confirmation
+            # Normal:    single turn, pause for user follow-up
+            # Plan:      first turn = plan only, pause for approval, then execute
+
+            DONE_PHRASES = [
+                "all tasks complete", "all todos complete", "i've completed all",
+                "all done", "everything is done", "finished all", "completed all 8",
+                "that covers all", "all changes have been", "all tasks are done",
+                "i have completed", "tasks are complete",
+            ]
+
+            if job_mode == "autopilot":
+                # ── AUTOPILOT: loop until agent is done or cancelled ──
+                from claude_tools import set_auto_approve
+                set_auto_approve(True)  # Auto-approve destructive commands
+                all_responses = []
+                current_message = task
+                turn = 0
+
+                while True:
+                    turn += 1
+                    if _ide_jobs[job_id]["_cancel"].is_set():
+                        break
+
+                    _emit_activity("thinking", f"🚀 Autopilot turn {turn}...")
+
+                    result = agent.chat(
+                        current_message,
+                        speaker="ide",
+                        agent_override=resolved_agent,
+                    )
+                    response_text = result.get("text", "") if isinstance(result, dict) else str(result)
+                    all_responses.append(response_text)
+
+                    _ide_jobs[job_id]["messages"].append({
+                        "role": "assistant", "text": response_text, "ts": time.time(),
+                    })
+                    _emit_activity("status", f"Turn {turn} done ({len(response_text)} chars)")
+
+                    socketio.emit("ide_job_progress", {
+                        "id": job_id, "text": response_text[-200:], "chunk": response_text,
+                    })
+
+                    response_lower = response_text.lower()
+                    if any(p in response_lower for p in DONE_PHRASES):
+                        _emit_activity("status", "Agent signaled completion")
+                        break
+                    if len(response_text.strip()) < 50 and turn > 1:
+                        _emit_activity("status", "Short response — done")
+                        break
+
+                    current_message = (
+                        "Continue working on the remaining tasks. "
+                        "Do NOT summarize — just keep implementing. "
+                        "When ALL tasks are fully complete, say 'All tasks complete'."
+                    )
+                    _ide_jobs[job_id]["messages"].append({
+                        "role": "user", "text": current_message, "ts": time.time(),
+                    })
+
+                full_text = "\n\n---\n\n".join(all_responses)
+
+            elif job_mode == "plan":
+                # ── PLAN: first get a plan, then wait for approval ──
+                plan_prompt = (
+                    f"Create a DETAILED implementation plan for the following task. "
+                    f"Do NOT implement anything yet — just plan. List every file you'll "
+                    f"change, what you'll change, and in what order. "
+                    f"When the plan is ready, say 'Plan ready for approval'.\n\n{task}"
+                )
+                _emit_activity("thinking", "📋 Plan mode — creating plan...")
+
+                result = agent.chat(
+                    plan_prompt,
+                    speaker="ide",
+                    agent_override=resolved_agent,
+                )
+                full_text = result.get("text", "") if isinstance(result, dict) else str(result)
+
+                _ide_jobs[job_id]["messages"].append({
+                    "role": "assistant", "text": full_text, "ts": time.time(),
+                })
+                socketio.emit("ide_job_progress", {
+                    "id": job_id, "text": full_text[-200:], "chunk": full_text,
+                })
+                _emit_activity("status", "📋 Plan ready — waiting for your approval via follow-up. Say 'approve' or 'go' to start execution.")
+
+                # Mark as waiting — user sends follow-up to continue
+                _ide_jobs[job_id]["status"] = "waiting"
+                _ide_jobs[job_id]["_waiting_for"] = "plan_approval"
+                socketio.emit("ide_job_done", {
+                    "id": job_id, "status": "waiting",
+                    "result": full_text, "waiting_for": "plan_approval",
+                })
+                _save_ide_jobs()
+                return  # Exit — follow-up handler will resume
+
+            else:
+                # ── NORMAL: single turn, confirm before changes ──
+                _emit_activity("thinking", "🛡️ Normal mode — executing with confirmation...")
+
+                normal_prompt = (
+                    f"Work on the following task. Before making any destructive changes "
+                    f"(deleting files, overwriting code), describe what you're about to do "
+                    f"and ask for confirmation.\n\n{task}"
+                )
+                result = agent.chat(
+                    normal_prompt,
+                    speaker="ide",
+                    agent_override=resolved_agent,
+                )
+                full_text = result.get("text", "") if isinstance(result, dict) else str(result)
+
+                _ide_jobs[job_id]["messages"].append({
+                    "role": "assistant", "text": full_text, "ts": time.time(),
+                })
+                socketio.emit("ide_job_progress", {
+                    "id": job_id, "text": full_text[-200:], "chunk": full_text,
+                })
+
             if _ide_jobs[job_id]["_cancel"].is_set():
                 _ide_jobs[job_id]["status"] = "cancelled"
+                _emit_activity("status", "Job cancelled")
                 socketio.emit("ide_job_done", {"id": job_id, "status": "cancelled"})
                 _save_ide_jobs()
             else:
                 _ide_jobs[job_id]["status"] = "done"
                 _ide_jobs[job_id]["result"] = full_text
-                _ide_jobs[job_id]["messages"].append({"role": "assistant", "text": full_text, "ts": time.time()})
+                _emit_activity("done", f"Completed in {len(all_responses)} turns")
                 socketio.emit("ide_job_done", {
                     "id": job_id,
                     "status": "done",
@@ -4069,6 +4311,7 @@ def api_ide_jobs_create():
             _ide_jobs[job_id]["status"] = "failed"
             _ide_jobs[job_id]["error"] = str(e)
             _ide_jobs[job_id]["messages"].append({"role": "assistant", "text": f"Error: {e}", "ts": time.time()})
+            _emit_activity("error", str(e))
             socketio.emit("ide_job_done", {
                 "id": job_id,
                 "status": "failed",
@@ -4076,7 +4319,14 @@ def api_ide_jobs_create():
             })
             _save_ide_jobs()
         finally:
+            _sys.stdout = _old_stdout
+            _sys.stderr = _old_stderr
             _current_running_job_id = None
+            try:
+                from claude_tools import set_auto_approve
+                set_auto_approve(False)
+            except Exception:
+                pass
 
     threading.Thread(target=_run_job, daemon=True).start()
     return jsonify({"id": job_id, "status": "running"})
@@ -4114,33 +4364,121 @@ def api_ide_jobs_followup(job_id):
     def _run_followup():
         global _current_running_job_id
         _current_running_job_id = job_id
+        resolved_agent = job.get("agent_name", "code")
+        job_mode = job.get("mode", "normal")
+
+        def _emit_activity(activity_type, content, **extra):
+            entry = {"type": activity_type, "content": content, "ts": time.time(), **extra}
+            job.setdefault("activity_log", []).append(entry)
+            socketio.emit("ide_job_activity", {"id": job_id, **entry})
+
+        # Thread-local stdout capture
+        _job_thread_id = threading.current_thread().ident
+        class _FUWriter:
+            def __init__(self, orig):
+                self._original = orig
+            def write(self, text):
+                self._original.write(text)
+                if text.strip() and threading.current_thread().ident == _job_thread_id:
+                    _emit_activity("log", text.rstrip("\n"))
+                return len(text)
+            def flush(self):
+                self._original.flush()
+            def __getattr__(self, name):
+                return getattr(self._original, name)
+
+        import sys as _sys
+        _old_stdout, _old_stderr = _sys.stdout, _sys.stderr
+        _sys.stdout = _FUWriter(_old_stdout)
+        _sys.stderr = _FUWriter(_old_stderr)
+
         try:
-            # Build context from previous messages
-            context = " | ".join(m["text"] for m in job["messages"] if m["role"] == "user")
-            chunks = []
-            for chunk in agent.chat_stream(context, speaker="ide"):
-                if job["_cancel"].is_set():
-                    break
-                chunks.append(chunk)
-                preview = "".join(chunks)[-200:]
-                socketio.emit("ide_job_progress", {"id": job_id, "text": preview, "chunk": chunk})
-            full_text = "".join(chunks)
+            # Plan approval → switch to autopilot execution
+            waiting_for = job.get("_waiting_for", "")
+            msg_lower = msg.lower().strip()
+            is_plan_approval = waiting_for == "plan_approval" and msg_lower in (
+                "approve", "approved", "go", "do it", "yes", "execute", "start", "lgtm",
+            )
+
+            if is_plan_approval:
+                _emit_activity("status", "📋 Plan approved! Switching to autopilot execution...")
+                job["mode"] = "autopilot"
+                job.pop("_waiting_for", None)
+
+                from claude_tools import set_auto_approve
+                set_auto_approve(True)
+
+                # Execute the original task in autopilot mode
+                original_task = job.get("task", "")
+                current_message = (
+                    f"The plan has been approved. Now IMPLEMENT everything from the plan. "
+                    f"Original task: {original_task}\n\n"
+                    f"Do NOT re-plan. Start implementing immediately. "
+                    f"When ALL tasks are fully complete, say 'All tasks complete'."
+                )
+
+                DONE_PHRASES = [
+                    "all tasks complete", "all todos complete", "i've completed all",
+                    "all done", "everything is done", "finished all",
+                    "all changes have been", "all tasks are done",
+                    "i have completed", "tasks are complete",
+                ]
+
+                turn = 0
+                all_responses = []
+                while True:
+                    turn += 1
+                    if job["_cancel"].is_set():
+                        break
+                    _emit_activity("thinking", f"🚀 Autopilot turn {turn}...")
+                    result = agent.chat(current_message, speaker="ide", agent_override=resolved_agent)
+                    response_text = result.get("text", "") if isinstance(result, dict) else str(result)
+                    all_responses.append(response_text)
+                    job["messages"].append({"role": "assistant", "text": response_text, "ts": time.time()})
+                    _emit_activity("status", f"Turn {turn} done ({len(response_text)} chars)")
+                    socketio.emit("ide_job_progress", {"id": job_id, "text": response_text[-200:], "chunk": response_text})
+
+                    if any(p in response_text.lower() for p in DONE_PHRASES):
+                        _emit_activity("status", "Agent signaled completion")
+                        break
+                    if len(response_text.strip()) < 50 and turn > 1:
+                        break
+
+                    current_message = (
+                        "Continue working on the remaining tasks. "
+                        "Do NOT summarize — just keep implementing. "
+                        "When ALL tasks are fully complete, say 'All tasks complete'."
+                    )
+                    job["messages"].append({"role": "user", "text": current_message, "ts": time.time()})
+
+                full_text = "\n\n---\n\n".join(all_responses)
+            else:
+                # Regular follow-up — single agent call with context
+                _emit_activity("thinking", "Processing follow-up...")
+                result = agent.chat(msg, speaker="ide", agent_override=resolved_agent)
+                full_text = result.get("text", "") if isinstance(result, dict) else str(result)
+                job["messages"].append({"role": "assistant", "text": full_text, "ts": time.time()})
+                socketio.emit("ide_job_progress", {"id": job_id, "text": full_text[-200:], "chunk": full_text})
+
             if job["_cancel"].is_set():
                 job["status"] = "cancelled"
                 socketio.emit("ide_job_done", {"id": job_id, "status": "cancelled"})
             else:
                 job["status"] = "done"
                 job["result"] = full_text
-                job["messages"].append({"role": "assistant", "text": full_text, "ts": time.time()})
+                _emit_activity("done", "Follow-up complete")
                 socketio.emit("ide_job_done", {"id": job_id, "status": "done", "result": full_text})
             _save_ide_jobs()
         except Exception as e:
             job["status"] = "failed"
             job["error"] = str(e)
             job["messages"].append({"role": "assistant", "text": f"Error: {e}", "ts": time.time()})
+            _emit_activity("error", str(e))
             socketio.emit("ide_job_done", {"id": job_id, "status": "failed", "error": str(e)})
             _save_ide_jobs()
         finally:
+            _sys.stdout = _old_stdout
+            _sys.stderr = _old_stderr
             _current_running_job_id = None
 
     socketio.emit("ide_job_started", {"id": job_id, "task": msg, "agent": job.get("agent_name", "code"), "followup": True})
@@ -4155,7 +4493,8 @@ def api_ide_jobs_messages(job_id):
     if not job:
         return jsonify({"error": "Job not found"}), 404
     messages = [{"role": m.get("role", ""), "text": m.get("text", ""), "ts": m.get("ts", 0)} for m in job.get("messages", [])]
-    return jsonify({"messages": messages})
+    activity_log = job.get("activity_log", [])
+    return jsonify({"messages": messages, "activity_log": activity_log, "status": job.get("status", "pending")})
 
 
 @app.route("/api/ide/jobs/<job_id>/rename", methods=["POST"])
@@ -4168,6 +4507,21 @@ def api_ide_jobs_rename(job_id):
     job["custom_name"] = data.get("name")
     _save_ide_jobs()
     return jsonify({"ok": True})
+
+
+@app.route("/api/ide/jobs/<job_id>/mode", methods=["POST"])
+def api_ide_jobs_mode(job_id):
+    """Update the mode for a job (autopilot/normal/plan)."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    data = request.json or {}
+    new_mode = data.get("mode", "normal")
+    if new_mode not in ("autopilot", "normal", "plan"):
+        return jsonify({"error": "Invalid mode"}), 400
+    job["mode"] = new_mode
+    _save_ide_jobs()
+    return jsonify({"ok": True, "mode": new_mode})
 
 
 @app.route("/api/ide/jobs/<job_id>/archive", methods=["POST"])
@@ -4191,6 +4545,75 @@ def api_ide_jobs_auto_approve(job_id):
     job["auto_approve"] = not job.get("auto_approve", False)
     return jsonify({"ok": True, "auto_approve": job["auto_approve"]})
 
+
+@app.route("/api/ide/jobs/<job_id>/delete", methods=["DELETE"])
+def api_ide_jobs_delete(job_id):
+    """Permanently delete a job."""
+    if job_id in _ide_jobs:
+        del _ide_jobs[job_id]
+        socketio.emit("ide_job_deleted", {"id": job_id})
+        _save_ide_jobs()
+        return jsonify({"ok": True})
+    return jsonify({"error": "Job not found"}), 404
+
+
+@app.route("/api/ide/jobs/<job_id>/unarchive", methods=["POST"])
+def api_ide_jobs_unarchive(job_id):
+    """Restore an archived job."""
+    job = _ide_jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    job["archived"] = False
+    job["status"] = "done"
+    socketio.emit("ide_job_unarchived", {"id": job_id})
+    _save_ide_jobs()
+    return jsonify({"ok": True})
+
+
+# ── IDE State Persistence ────────────────────────────────────────────
+
+_IDE_STATE_FILE = os.path.expanduser("~/bmo/data/ide_state.json")
+
+
+@app.route("/api/ide/state", methods=["GET"])
+def api_ide_state_get():
+    """Load IDE state (tabs, cursor positions, settings, etc.)."""
+    if os.path.exists(_IDE_STATE_FILE):
+        try:
+            with open(_IDE_STATE_FILE, "r", encoding="utf-8") as f:
+                return jsonify(json.load(f))
+        except Exception:
+            pass
+    return jsonify({
+        "workspaces": ["~/DnD"],
+        "openTabs": [],
+        "activeTab": None,
+        "cursorPositions": {},
+        "scrollPositions": {},
+        "settings": {
+            "fontSize": 14,
+            "tabSize": 4,
+            "theme": "dark",
+            "autoSave": True,
+            "wordWrap": False,
+        },
+        "activePanel": "explorer",
+        "agentMode": "autopilot",
+        "terminalHistory": [],
+    })
+
+
+@app.route("/api/ide/state", methods=["POST"])
+def api_ide_state_save():
+    """Save IDE state to disk."""
+    data = request.json or {}
+    try:
+        os.makedirs(os.path.dirname(_IDE_STATE_FILE), exist_ok=True)
+        with open(_IDE_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 # ── IDE Terminal SocketIO events ─────────────────────────────────────
 
