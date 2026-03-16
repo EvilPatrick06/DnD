@@ -334,39 +334,38 @@ class AudioOutputService:
         return devices
 
     def bluetooth_pair(self, address: str) -> tuple[bool, str]:
-        """Pair and connect to a Bluetooth device."""
+        """Pair and connect to a Bluetooth device with fresh A2DP negotiation."""
+        import time as _t
+
         _run(["bluetoothctl", "power", "on"])
 
-        # Disconnect first if already connected (stale connection without audio sink)
+        # Remove stale pairing (required for fresh A2DP transport negotiation)
         _run(["bluetoothctl", "disconnect", address], timeout=5)
-        import time as _t
+        _run(["bluetoothctl", "remove", address], timeout=5)
         _t.sleep(1)
 
-        # Restart WirePlumber so BT audio module picks up the new connection cleanly
-        _run(["systemctl", "--user", "restart", "wireplumber"], timeout=10)
-        _t.sleep(2)
+        # Brief scan to re-discover the device
+        _run(["bluetoothctl", "--timeout", "5", "scan", "on"], timeout=8)
+        _t.sleep(1)
 
         rc, out, err = _run(["bluetoothctl", "pair", address], timeout=15)
         if rc != 0 and "already exists" not in (out + err).lower():
-            return False, f"Pair failed: {err}"
+            return False, f"Pair failed: {err or out}"
 
-        rc, _, err = _run(["bluetoothctl", "trust", address], timeout=5)
+        _run(["bluetoothctl", "trust", address], timeout=5)
+
+        rc, out, err = _run(["bluetoothctl", "connect", address], timeout=15)
         if rc != 0:
-            return False, f"Trust failed: {err}"
+            return False, f"Connect failed: {err or out}"
 
-        rc, _, err = _run(["bluetoothctl", "connect", address], timeout=15)
-        if rc != 0:
-            return False, f"Connect failed: {err}"
-
-        # Wait for PipeWire/WirePlumber to register the new BT sink
-        _t.sleep(5)
+        # Wait for PipeWire to register the new BT A2DP sink
+        _t.sleep(8)
         for sink in self.list_sinks():
             if address.replace(":", "_").upper() in sink.name.upper() or \
-               (sink.description and sink.description != "Built-in Audio Digital Stereo (HDMI)"):
-                if "bluez" in sink.name.lower() or sink.pw_id != (self.get_default_sink() or sink).pw_id:
-                    self.set_default_output(sink.pw_id)
-                    print(f"[audio] Auto-set BT device {sink.description} as default")
-                    break
+               (sink.description and sink.description not in ("Built-in Audio Digital Stereo (HDMI)", "")):
+                self.set_default_output(sink.pw_id)
+                print(f"[audio] Auto-set BT device {sink.description} (id={sink.pw_id}) as default")
+                break
 
         return True, f"Connected to {address}"
 
