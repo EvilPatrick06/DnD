@@ -154,6 +154,7 @@ export const IPC_CHANNELS = {
 
   // === App Info ===
   APP_VERSION: 'app:version',
+  APP_GET_PHASE: 'app:get-phase',
 
   // === Game Data ===
   GAME_LOAD_JSON: 'game:load-json',
