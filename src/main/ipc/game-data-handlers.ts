@@ -1,8 +1,9 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { is } from '@electron-toolkit/utils'
 import { app, ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../../shared/ipc-channels'
+import { getCurrentPhaseFromFiles } from '../../shared/utils/phase'
 
 export function registerGameDataHandlers(): void {
   // In dev: public/ files are under src/renderer/public/
@@ -27,5 +28,11 @@ export function registerGameDataHandlers(): void {
 
     const content = await readFile(fullPath, 'utf-8')
     return JSON.parse(content)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.APP_GET_PHASE, async () => {
+    const appPath = app.getAppPath()
+    const entries = await readdir(appPath)
+    return getCurrentPhaseFromFiles(entries)
   })
 }
